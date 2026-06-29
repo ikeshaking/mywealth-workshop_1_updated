@@ -1920,7 +1920,9 @@ function buildInsuranceRecText(){
       const isSuper=r=>/super/i.test(String(r.owner||''));
       const superTot=g.filter(isSuper).reduce((a,r)=>a+prem(r),0);
       const cashTot =g.filter(r=>!isSuper(r)).reduce((a,r)=>a+prem(r),0);
-      const mo=n=>'$'+Math.round(n).toLocaleString('en-AU');
+      // F.insurance premiums are stored ANNUALLY (editor labels them "$/yr"); the cost
+      // summary is quoted per month, so convert here rather than mislabelling the figure.
+      const mo=n=>'$'+Math.round(n/12).toLocaleString('en-AU');
       if(superTot>0) out.push("Total Super Cost: "+mo(superTot)+" per month");
       if(cashTot>0)  out.push("Total Cash Flow Cost: "+mo(cashTot)+" per month");
       const ps=[...new Set(g.map(r=>r.premStruct).filter(Boolean))];
@@ -4009,6 +4011,10 @@ function v190ImportGaps(){
   (Array.isArray(F2.superAccounts)?F2.superAccounts:[]).forEach(a=>{
     if(a && blank(a.balance)) out.push('Super balance missing — '+((a.fund||'super account').toString().slice(0,40)));
   });
+  // Conflicting super balances detected at import (adviser picks which to use)
+  (Array.isArray(F2._superBalAmbiguous)?F2._superBalAmbiguous:[]).forEach(x=>{
+    if(x) out.push('Super balance ambiguous — '+((x.fund||'super account').toString().slice(0,32))+': '+x.a+' vs '+x.b+' (confirm which to use)');
+  });
   // Insurance rows missing sum insured or premium
   (Array.isArray(F2.insurance)?F2.insurance:[]).forEach(r=>{
     if(!r) return; const who=(r.cover||'cover').toString().slice(0,32);
@@ -5700,12 +5706,38 @@ function v141ApplyExcelSuper(cells, person){ person=(person==='partner')?'partne
   // Treat template placeholders as "not supplied" so we don't import "[not yet selected]" /
   // "TBC" as if it were a real fund name (which then has to be manually deleted from the SOA).
   const clean=function(s){ s=String(s||'').trim(); return /^(\[.*\]|tbc|tbd|t\.?b\.?c\.?|n\/?a|na|none|-+|to be confirmed|not yet selected|select\.{0,3}|choose\.{0,3})$/i.test(s)?'':s; };
-  const fund   = clean(val(/^\s*fund name/i)) || clean(val(/^\s*product name/i));
+  let fund     = clean(val(/^\s*fund name/i)) || clean(val(/^\s*product name/i));
   const product= clean(val(/^\s*product name/i));
   const curVal = val(/current value/i);
   const accum  = val(/^\s*accumulation/i);
   const client = val(/^\s*client name/i);
+  // Fallback: many data-collection sheets carry the fund in an unlabelled value cell
+  // (e.g. UniSuper templates put it in B9). Scan every cell for a known super-fund name
+  // so the account is never imported nameless.
+  if(!fund){
+    const KNOWN=/\b(UniSuper|AustralianSuper|Australian Retirement Trust|Hostplus|HESTA|CareSuper|Cbus|REST(?:\s*Super)?|Aware Super|Colonial First State|MLC(?:\s*Super)?|Sunsuper|Spirit Super|Vanguard Super|MilitarySuper|ADF Super|Australian Defence Force|PSSap|GESB|Mercer Super|Equip(?:super)?|Brighter Super|TelstraSuper|legalsuper|NGS Super|Australian Catholic Super|Future Super|Netwealth|Macquarie|Hub24)\b/i;
+    for(const ref in cells){ const mm=String(cells[ref]||'').match(KNOWN); if(mm){ fund=mm[1].replace(/^unisuper$/i,'UniSuper'); break; } }
+  }
   if(!fund && !curVal){ alert('Could not find Fund Name / Current Value in that spreadsheet \u2014 is it the standard data-collection template?'); return; }
+  // Some sheets show TWO balances \u2014 the labelled "Current Value?" AND a separately-dated
+  // "Current Account Balance" (often in a side column, not col B). Import the labelled
+  // Current Value, but when a different account-balance figure exists, record it so the
+  // import checklist can ask the adviser to pick rather than silently guessing.
+  let altBal='';
+  (function(){
+    let lblRow=null;
+    Object.keys(byRow).forEach(function(rn){ const cols=byRow[rn]||{};
+      Object.keys(cols).forEach(function(c){ if(/current account balance|account balance|today'?s balance/i.test(String(cols[c]||''))) lblRow=(lblRow==null)?Number(rn):Math.min(lblRow,Number(rn)); }); });
+    if(lblRow==null) return; let bestN=0;
+    for(let rr=lblRow; rr<=lblRow+2; rr++){ const cols=byRow[rr]||{};
+      Object.keys(cols).forEach(function(c){ const mm=String(cols[c]||'').match(/^\s*\$?\s*([\d,]+(?:\.\d{2})?)\s*$/);
+        if(mm){ const n=Number(mm[1].replace(/,/g,'')); if(n>1000 && n>bestN){ bestN=n; altBal='$'+n.toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2}); } } }); }
+  })();
+  const _bn=v=>{ const n=Number(String(v||'').replace(/[^0-9.]/g,'')); return isFinite(n)?n:0; };
+  if(altBal && Math.abs(_bn(altBal)-_bn(curVal))>1){
+    if(!Array.isArray(F._superBalAmbiguous)) F._superBalAmbiguous=[];
+    F._superBalAmbiguous.push({fund:(fund||product||'super account'), a:(curVal||('$'+_bn(curVal).toLocaleString('en-AU'))), b:altBal});
+  }
   v141UpsertSuperAccount({fund:fund||product, balance:curVal, person:person, src:'Excel data collection', accum:/yes/i.test(accum), client:client});
 }
 function v141ApplySuperPdf(txt, person){ person=(person==='partner')?'partner':'client';
@@ -14466,8 +14498,13 @@ window.v50AllocGroups = function(){
       const yearly=field(body,'Yearly premium'), monthly=field(body,'Monthly premium');
       const mo=monthly?_num(monthly):(yearly?_num(yearly)/12:0);
       let owner=ftext(body,'Ownership'); owner=(owner||'').replace(/\b(Premium|Cover|TPD|Optional|Linked|Occupation|Loadings).*$/i,'').trim();
-      let struct=ftext(body,'Premium type'); struct=(struct||'Variable age-stepped').replace(/\s+/g,' ').replace(/\b(Cover|Optional|Linked).*$/i,'').trim();
-      struct=struct.replace(/variable age-stepped/i,'Variable Age-Stepped').replace(/^stepped$/i,'Stepped').replace(/^level$/i,'Level');
+      // Normalise the premium type to a single clean label — the raw field text runs on
+      // into the next row's label ("Variable age-stepped TPD definition Super …"), which
+      // otherwise pollutes the SOA's "We recommend a … premium structure" sentence.
+      let struct=ftext(body,'Premium type');
+      struct=/variable\s*age[\s-]*stepped/i.test(struct)?'Variable Age-Stepped'
+            :/\blevel\b/i.test(struct)?'Level'
+            :/\bstepped\b/i.test(struct)?'Stepped':'Variable Age-Stepped';
       covers[ckey]={ sum:field(body,'Sum insured'), monthly:mo, ownership:owner,
         structure:struct, scOption:field(body,'Superannuation contribution option amount'),
         waiting:(ftext(body,'Waiting period')||'').replace(/\b(Benefit|Optional|Cover).*$/i,'').trim(),
@@ -14476,6 +14513,41 @@ window.v50AllocGroups = function(){
     return {covers};
   }
   window.parseNeosQuote=parseNeosQuote;
+
+  // v190b — mirror parsed NEOS covers into F.insurance so the Recommendation / "Why"
+  // WORDING builders (buildInsuranceRecText / buildInsuranceWhyText, which read
+  // F.insurance — NOT F.neos) fill with the client's real figures, exactly as a
+  // ClearView import already does. The rich product TABLE still builds from F.neos via
+  // v140FillInsRows; this only feeds the prose and the commission estimate.
+  function _neosWaitLabel(w){ w=String(w||'').trim();
+    const wk=w.match(/(\d+)\s*week/i);
+    if(wk){ const n=+wk[1]; if(n<=4) return '30 day'; if(n<=8) return '60 day'; if(n<=13) return '90 day'; return n+' week'; }
+    const dy=w.match(/(\d+)\s*day/i); if(dy) return dy[1]+' day';
+    return w; }
+  function _neosAnnualPrem(c){ const mo=Number(c&&c.monthly)||0; return mo>0?String(Math.round(mo*12*100)/100):''; }
+  function v190MirrorNeosToInsurance(person, q){
+    person=(person==='partner')?'partner':'client';
+    if(!Array.isArray(F.insurance)) F.insurance=[];
+    // Re-import safe: drop rows previously mirrored from a NEOS quote for THIS person.
+    F.insurance=F.insurance.filter(r=>!(r && r._neos && (r.person||'client')===person));
+    const cv=(q&&q.covers)||{};
+    const mk=()=>(typeof blankInsuranceRow==='function'?blankInsuranceRow():{person:person});
+    const push=o=>{ F.insurance.push(Object.assign(mk(),o,{person:person,_neos:true,insurer:'NEOS',status:'Recommend'})); };
+    if(cv.life) push({cover:'Life (Linked)', amount:cv.life.sum, owner:cv.life.ownership||'Super',
+      premStruct:cv.life.structure||'Variable Age-Stepped', premium:_neosAnnualPrem(cv.life)});
+    if(cv.tpd || cv.split){
+      const base=cv.tpd||cv.split;
+      const ann=Math.round(((Number(cv.tpd&&cv.tpd.monthly)||0)+(Number(cv.split&&cv.split.monthly)||0))*12*100)/100;
+      push({cover:'TPD (Linked & Own-Occupation)', amount:(base&&base.sum)||'', owner:(cv.tpd&&cv.tpd.ownership)||'Super',
+        premStruct:(base&&base.structure)||'Variable Age-Stepped', premium:ann>0?String(ann):''});
+    }
+    if(cv.trauma) push({cover:'Trauma (Linked, Plus & Reinstatement)', amount:cv.trauma.sum, owner:cv.trauma.ownership||'Ordinary',
+      premStruct:cv.trauma.structure||'Variable Age-Stepped', premium:_neosAnnualPrem(cv.trauma)});
+    if(cv.ip) push({cover:'Income Protection', amount:cv.ip.sum, owner:cv.ip.ownership||'Ordinary',
+      premStruct:cv.ip.structure||'Variable Age-Stepped', premium:_neosAnnualPrem(cv.ip),
+      waitPeriod:_neosWaitLabel(cv.ip.waiting), benefitPeriod:cv.ip.benefitPd||'', scOption:cv.ip.scOption||''});
+  }
+  window.v190MirrorNeosToInsurance=v190MirrorNeosToInsurance;
 
   async function _readText(file){
     try{ if(typeof extractAnyText==='function') return await extractAnyText(file); }catch(_){}
@@ -14494,6 +14566,7 @@ window.v50AllocGroups = function(){
       }
       if(!F.neos) F.neos={};
       F.neos[person]=q;
+      try{ v190MirrorNeosToInsurance(person, q); }catch(_){}
       F.recInsurer='NEOS';
       if(!F.insCompare) F.insCompare=[];
       let cmp=null; for(let i=0;i<F.insCompare.length;i++){ if(F.insCompare[i].insurer==='NEOS'){ cmp=F.insCompare[i]; break; } }
