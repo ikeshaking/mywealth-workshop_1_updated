@@ -2325,8 +2325,9 @@ function buildCurrentSituationText(){
     } else {
       superSentence = `You have superannuation through ${sFund||'[super fund name]'} fund with a balance of approximately ${M(sBal)||'$XXX'}.`;
     }
-    if(insEmp) parts.push(`You have an employer paid insurance cover (${insEmp}).`);
+    // Order per the SOA template: employment, then superannuation, then insurance.
     parts.push(superSentence);
+    if(insEmp) parts.push(`You have an employer paid insurance cover (${insEmp}).`);
     return parts.join(' ');
   }
 
@@ -3171,8 +3172,12 @@ function importProjectorJSON(raw){
   // ---- super accounts ----
   const _stripQ=v=>String(v||"").replace(/^"+|"+$/g,"").trim();
   const _superName=v=>{ const x=_stripQ(v); if(/^adf\b|australian defence force/i.test(x)) return "Australian Defence Force Super"; if(/^MSBS$/i.test(x)||/military/i.test(x)) return "Military Super"; if(/aus(tralian)?\s*super/i.test(x)) return "Australian Super"; return x; };
+  // A free-text fund field can list multiple funds ("Unisuper and msbs") — keep only the first named
+  // fund so the Current Situation reads one clean fund name (the second fund pulls through separately
+  // as its own nest-egg/super entry rather than being jammed into one messy name).
+  const _firstFund=v=>String(_stripQ(v)||'').split(/\s+(?:and|&|,|\/|\+)\s+/i)[0].trim();
   const _mkAcct=(person,balKey,fundKeys,noteKey,rollKey)=>{ const bal=_stripQ(jget(raw,balKey));
-    let fund=""; for(const fk of fundKeys){ const v=jget(raw,fk); if(v && String(v).trim()){ fund=_superName(v); break; } }
+    let fund=""; for(const fk of fundKeys){ const v=jget(raw,fk); if(v && String(v).trim()){ fund=_superName(_firstFund(v)); break; } }
     if(!fund){ const nv=jget(raw,noteKey); if(nv && String(nv).trim()) fund=_superName(nv); }
     if(!bal && !fund) return null;
     const rv=String(jget(raw,rollKey)||""); const action=rv.includes("100")?"Rollover":(rv?"Partial Rollover":"Rollover");
@@ -3182,8 +3187,10 @@ function importProjectorJSON(raw){
     return {person:person,fund:fund||"Existing fund",balance:bal,platform:"Hub24 Super Choice",action}; };
   // disc_super2 belongs to client 2 (the partner) for a couple; for a single client it is a 2nd account of theirs.
   const _acct2Person = (typeof hasPartner==='function' && hasPartner()) ? "partner" : "client";
-  const _accts=[ _mkAcct("client","disc_super1_balance",["disc_c1_superFund","disc_super1_fund","disc_nestLabel_super1"],"disc_note_super1","soa_super_m1_rollover"),
-                 _mkAcct(_acct2Person,"disc_super2_balance",["disc_c2_superFund","disc_super2_fund","disc_nestLabel_super2"],"disc_note_super2","soa_super_m2_rollover") ].filter(Boolean);
+  // Prefer the short, clean nestLabel name ("ART Super", "UniSuper") over the free-text fund field
+  // ("Australian retirement trust", "Unisuper and msbs") which is often messy or lists two funds.
+  const _accts=[ _mkAcct("client","disc_super1_balance",["disc_nestLabel_super1","disc_super1_fund","disc_c1_superFund"],"disc_note_super1","soa_super_m1_rollover"),
+                 _mkAcct(_acct2Person,"disc_super2_balance",["disc_nestLabel_super2","disc_super2_fund","disc_c2_superFund"],"disc_note_super2","soa_super_m2_rollover") ].filter(Boolean);
   if(_accts.length) F.superAccounts=_accts;
 
   // ---- v181: relabeled "investment property" nest-egg slots --------------------------------
@@ -3249,7 +3256,9 @@ function importProjectorJSON(raw){
     const _fn1=_stripQ(jget(raw,"client_firstName1")), _fn2=_stripQ(jget(raw,"client_firstName2"));
     const _isSuperLabel=s=>/super|superannuation|defined benefit|ancillary|military|msbs|\badf\b|defence|\bpss\b|\bcss\b|\bcsc\b|dfrdb|smsf|pension/i.test(String(s||''));
     const _ownerFromNote=note=>{ const n=String(note||'').trim().toLowerCase(); if(!n) return '';
-      if(_fn2 && n===_fn2.toLowerCase() && (typeof hasPartner==='function'&&hasPartner())) return 'partner';
+      // Match the note's first name to client/partner. A note naming the second client implies the
+      // partner regardless of the hasPartner() timing (it was previously gated and could mis-route).
+      if(_fn2 && n===_fn2.toLowerCase()) return 'partner';
       if(_fn1 && n===_fn1.toLowerCase()) return 'client'; return ''; };
     extra.forEach(it=>{
       if(!it) return;
@@ -3257,7 +3266,20 @@ function importProjectorJSON(raw){
       const val=Number(String(it.value||'').replace(/[$,]/g,''))||0;
       if(!label || !val) return;
       const note=_stripQ(jget(raw,"disc_note_nest_extra_"+it.id));
-      const person=_ownerFromNote(note);
+      let person=_ownerFromNote(note);
+      // Owner inference for a super item with no note (e.g. a "Military Super" row): match the fund
+      // kind in the label against whichever person's free-text super fund mentions it, so it lands in
+      // the right person's super rather than defaulting onto Client 1 or a generic asset.
+      if(!person && _isSuperLabel(label)){
+        const joint=(typeof hasPartner==='function' && hasPartner());
+        const mil=/military|msbs|defence|\badf\b|dfrdb/i;
+        const f1=String(jget(raw,"disc_c1_superFund")||'').toLowerCase();
+        const f2=String(jget(raw,"disc_c2_superFund")||'').toLowerCase();
+        const kws=(label.toLowerCase().match(/military|msbs|defence|adf|dfrdb|\bpss\b|\bcss\b|\bcsc\b|smsf|unisuper|\bart\b|hostplus|hesta|rest|cbus|aware|australiansuper|sunsuper/g)||[]);
+        const hit=ft=> kws.some(k=>ft.includes(k)) || (mil.test(label)&&mil.test(ft));
+        if(joint && hit(f2)) person='partner';
+        else if(hit(f1)) person='client';
+      }
       const debt=Number(String(it.debt||'').replace(/[$,]/g,''))||0;
       if(_isSuperLabel(label) && person){
         const p=person; const fund=_superName(label.replace(/\s+$/,''));
@@ -3955,7 +3977,7 @@ function v145ShowSmartModal(items){
   const hp=(typeof hasPartner==='function')&&hasPartner();
   const c1=(typeof pref==='function')?pref('client'):'Client 1';
   const c2=hp?((typeof pref==='function')?pref('partner'):'Client 2'):'';
-  const typeOpts=sel=>[['commission','Commission report'],['clearview','ClearView quote'],['neos','NEOS quote'],['quote','Insurer quote'],['rr','Risk Researcher'],['datacol','Data collection'],['care','CARE portfolio doc'],['wealthsolver','WealthSolver comparison'],['advicereq','Advice Request'],['json','Projector JSON'],['skip','Skip this file']]
+  const typeOpts=sel=>[['commission','Commission report'],['clearview','ClearView quote'],['neos','NEOS quote'],['quote','Insurer quote'],['rr','Risk Researcher'],['care','CARE portfolio doc'],['wealthsolver','WealthSolver comparison'],['advicereq','Advice Request'],['json','Projector JSON'],['skip','Skip this file']]
     .map(o=>'<option value="'+o[0]+'"'+(sel===o[0]?' selected':'')+'>'+o[1]+'</option>').join('');
   const rows=items.map((it,i)=>
     '<tr data-row="'+i+'" style="border-top:1px solid var(--border-soft)">'+
@@ -4013,7 +4035,13 @@ async function v145ApplySmartMapping(items){
         else if(type==='neos'){ await v141ImportNeos(it.file, person); v147ApplyCommissionFromText(it.text, person); }
         else if(type==='quote'){ parseAndApplyQuote(person, it.text); v147ApplyCommissionFromText(it.text, person); }
         else if(type==='rr'){ parseAndApplyRR(person, it.text); }
-        else if(type==='datacol'){ await v141ImportDataCollection(it.file, person); }
+        else if(type==='datacol'){
+          // Data-collection import has been retired: assets, liabilities and superannuation now come
+          // exclusively from the Projector JSON (the single source of truth). Skip the file with a note
+          // rather than importing potentially duplicate/mismatched figures.
+          skipped.push('• '+it.name+'  —  data-collection import has been removed; assets, liabilities & super now come from the Projector JSON');
+          continue;
+        }
         else if(type==='care'){ if(typeof v48ImportCareDoc==='function') await v48ImportCareDoc(it.file); }
         else if(type==='wealthsolver'){ if(typeof v54ImportWealthSolver==='function') await v54ImportWealthSolver(it.file); }
         else if(type==='advicereq'){ if(typeof v143ImportAdviceRequest==='function') await v143ImportAdviceRequest(it.file); }
@@ -4785,7 +4813,6 @@ function secImport(){
       return `<div class="card"><div class="card-head"><h3>${label} — documents</h3><span class="badge" style="background:var(--blue-light);color:var(--blue)">${p==='client'?'Primary':'Partner'}</span></div><div class="card-body">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           ${ZN('dropzone-rr-'+p,'📄','Risk Researcher','Compare Differences — cover levels & premiums','.pdf,.docx,.doc,.txt',"handleResearchFile(this.files[0],'"+p+"');")}
-          ${ZN('dropzone-datacol-'+p,'🗂️','Data collection','','.xlsx,.xlsm,.pdf,.docx',"v141ImportDataCollection(this.files[0],'"+p+"');")}
           ${ZN('dropzone-quote-'+p,'📄','Insurer quote (any insurer)','ClearView auto-detected → per-cover product table; others override the research premium','.pdf,.docx,.doc,.txt',"handleAnyQuote(this.files[0],'"+p+"');")}
           ${ZN('dropzone-comm-'+p,'💸','Insurance commission report','Upfront / ongoing % → disclosure','.pdf,.docx,.doc,.txt',"handleCommissionFile(this.files[0],'"+p+"');")}
         </div>
@@ -6201,7 +6228,6 @@ function wireResearchDropzones(){
     bindOne('dropzone-rr-'+person,      f=>handleResearchFile(f,person));
     bindOne('dropzone-quote-'+person,   f=>{ if(typeof handleAnyQuote==='function') handleAnyQuote(f,person); else handleQuoteFile(f,person); });
     bindOne('dropzone-comm-'+person,    f=>handleCommissionFile(f,person));
-    bindOne('dropzone-datacol-'+person, f=>{ if(typeof v141ImportDataCollection==='function') v141ImportDataCollection(f,person); });
   });
   // joint / household zones
   bindOne('dropzone-care',      f=>{ if(typeof v48ImportCareDoc==='function') v48ImportCareDoc(f); });
