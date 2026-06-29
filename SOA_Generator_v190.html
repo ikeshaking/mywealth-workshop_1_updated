@@ -3175,6 +3175,9 @@ function importProjectorJSON(raw){
   (function(){
     const initInv=_ln(jget(raw,"shares_initLoan"));
     const ongoingAnnual=_ln(jget(raw,"shares_t1l_1")||jget(raw,"shares_t1l_2"));
+    // Stash the plan figures + proposed rate so the Term Loan can be (re)computed later by
+    // v193ApplyTermLoan when the row is added via the advice-request term-loan module too.
+    F.investInitial=initInv; F.investOngoingAnnual=ongoingAnnual; F.loanRateProp=_ln(ratePr||jget(raw,"wc_homeLoanRate"));
     const pref=String(jget(raw,"wc_mortgagePref")||'');
     const isRecycle=(initInv>0||ongoingAnnual>0) && (/invest|share/i.test(pref) || initInv>0);
     if(!isRecycle){ if(loans.length) F.loans=loans; return; }
@@ -3186,7 +3189,7 @@ function importProjectorJSON(raw){
     const drawdown12=initInv + ongoingAnnual;                          // initial + 12 months ongoing
     const rate=_ln(ratePr||jget(raw,"wc_homeLoanRate"));               // proposed loan-structure rate
     const interestMo=rate? (drawdown12 * (rate/100) / 12) : 0;
-    loans.push({limit:String(termLoan), noteRef:true, type:"Investment \u2013 Interest Only",
+    loans.push({limit:String(termLoan), noteRef:true, _autoTermLoan:true, type:"Investment \u2013 Interest Only",
       purpose:"Instalment Gearing Plan \u2013 Term Loan (Initial deposit and Regular Gearing)",
       repayments:(interestMo?(money(Math.round(interestMo))+" per month"):"")+"\nInterest only from the ICA"});
     F.debtNote={years:years, drawdown12:drawdown12};
@@ -4948,6 +4951,9 @@ function summaryDragEnd(ev){ _sumClearDrop(); _sumDrag=null; }
 window.summaryDragStart=summaryDragStart; window.summaryDragOver=summaryDragOver; window.summaryDrop=summaryDrop;
 window.summaryDragLeave=summaryDragLeave; window.summaryDragEnd=summaryDragEnd;
 function autoSyncSummary(){
+  // Keep the Term Loan limit + repayment + note in step with the latest plan figures (covers the
+  // advice-request term-loan module path and any figure that arrived after the JSON import).
+  try{ if(typeof window.v193ApplyTermLoan==='function') window.v193ApplyTermLoan(); }catch(_){}
   // Build the full pool of ALL possible auto-suggestions (active + inactive) to recognise auto-lines
   const allAuto=new Set();
   const canonOrder={sug:[],prod:[],out:[],svc:[]};   // canonical order = order produced when all strategies active
@@ -5254,6 +5260,41 @@ window.v192ActiveDebtModules = function(){
   if(!sel.length) return [];
   const propScoped=window.v192IPpurchaseScoped('');
   return window.DEBT_MODULES.filter(m=> sel.indexOf(m.id)>=0 && !(m.needsIPpurchase && !propScoped));
+};
+
+// v193: prepopulate the Term Loan row in the debt loan-limit table (and the *Note below it). The loan
+// amount = the LOWER of (a) the maximum available equity at 80% LVR [home value × 0.80 − home loan
+// balance] and (b) the amount needed to fund 5 years of the investment plan [initial + 5 years of
+// ongoing]. The interest repayment = the proposed loan rate applied to the estimated 12-month drawdown
+// [initial + 12 months of ongoing], shown per month. Only fills an auto / empty row, so a manual edit
+// to the limit is never overwritten; always refreshes F.debtNote (the estimated 12-month balance).
+window.v193ApplyTermLoan = function(){
+  try{
+    if(typeof F==='undefined' || !Array.isArray(F.loans)) return;
+    const row=F.loans.find(l=>l && /term loan|instalment gearing/i.test(String((l&&l.purpose)||'')));
+    if(!row) return;
+    const _n=v=>{ const x=Number(String(v==null?'':v).replace(/[^0-9.\-]/g,'')); return isFinite(x)?x:0; };
+    const initial=_n(F.investInitial!=null&&F.investInitial!==''?F.investInitial:F.planInitial);
+    let ongoingAnnual=_n(F.investOngoingAnnual);
+    if(!ongoingAnnual) ongoingAnnual=_n(F.planMonthly)*12;          // F.planMonthly is a per-month figure
+    const homeVal=_n(F.homeValue||F.homeLoanCurr);
+    const homeBal=_n(F.homeDebt||F.homeLoanBalance||F.mortCurr);
+    const maxEquity=Math.max(0, Math.round(homeVal*0.80 - homeBal));
+    const years=5;
+    const fiveYr=initial + ongoingAnnual*years;
+    if(fiveYr<=0) return;                                            // no plan figures yet → leave the row
+    const termLoan=Math.round(Math.min(maxEquity>0?maxEquity:fiveYr, fiveYr));   // whichever is lower
+    const drawdown12=initial + ongoingAnnual;                       // initial + 12 months of ongoing
+    const rate=_n(F.loanRateProp||(F.rates&&F.rates.homeLoan)||F.homeLoanRate);   // proposed loan-structure rate first
+    const interestMo=rate ? (drawdown12 * (rate/100) / 12) : 0;
+    if(termLoan>0 && (!row.limit || _n(row.limit)===0 || row._autoTermLoan)){
+      row.limit=String(termLoan); row.noteRef=true; row._autoTermLoan=true;
+      if(!row.type) row.type="Investment – Interest Only";
+      if(!/instalment gearing|term loan/i.test(String(row.purpose||''))) row.purpose="Instalment Gearing Plan – Term Loan (Initial deposit and Regular Gearing)";
+      row.repayments=(interestMo?(money(Math.round(interestMo))+" per month"):"")+"\nInterest only from the ICA";
+    }
+    if(drawdown12>0) F.debtNote={years:years, drawdown12:drawdown12};
+  }catch(_){}
 };
 
 function collectSummarySuggestions(){
@@ -6221,8 +6262,8 @@ function v143ApplyAdviceRequest(txt){
   }
   // Investment
   if(/Investment Advice/i.test(t)){ act('investplan');
-    const im=num(/\$([\d,]+(?:\.\d+)?)\s*per month\s*\(Ongoing\)/i); if(im){ F.planMonthly=im; }
-    const ii=num(/\$([\d,]+(?:\.\d+)?)\s*\(Initial\)/i); if(ii){ F.planInitial=ii; }
+    const im=num(/\$([\d,]+(?:\.\d+)?)\s*per month\s*\(Ongoing\)/i); if(im){ F.planMonthly=im; F.investOngoingAnnual=Number(String(im).replace(/[^0-9.]/g,''))*12; }
+    const ii=num(/\$([\d,]+(?:\.\d+)?)\s*\(Initial\)/i); if(ii){ F.planInitial=ii; F.investInitial=Number(String(ii).replace(/[^0-9.]/g,'')); }
     // Pull the Initial / Ongoing amounts through into the investment strategy recommendation.
     if(typeof window.v180FillInvestAmounts==='function') window.v180FillInvestAmounts();
     // Instalment gearing (funded from a term loan) vs a regular investment (funded from cashflow).
