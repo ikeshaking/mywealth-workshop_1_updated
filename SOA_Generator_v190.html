@@ -3995,9 +3995,45 @@ async function v145ApplySmartMapping(items){
     }
   } finally { window.alert=realAlert; }
   try{ render(); }catch(_){}
-  realAlert('Smart drop complete — '+done.length+' file(s) applied:\n\n'+(done.length?done.join('\n'):'Nothing applied.')+(skipped.length?('\n\nSkipped:\n'+skipped.join('\n')):''));
+  let gaps=''; try{ gaps=v190ImportGaps(); }catch(_){ gaps=''; }
+  realAlert('Smart drop complete — '+done.length+' file(s) applied:\n\n'+(done.length?done.join('\n'):'Nothing applied.')+(skipped.length?('\n\nSkipped:\n'+skipped.join('\n')):'')+gaps);
 }
 window.v145ApplySmartMapping=v145ApplySmartMapping;
+// After an import, list the key figures that came through EMPTY so the adviser sees exactly what
+// still needs manual entry instead of re-checking the whole SOA. Read-only: inspects F, writes nothing.
+function v190ImportGaps(){
+  const out=[]; const F2=(typeof F==='object'&&F)?F:{};
+  const blank=v=>{ const s=String(v==null?'':v).trim(); return !s || /^\$?\s*(0(\.0{1,2})?|xxx|tbc|tbd|n\/?a|-+)$/i.test(s); };
+  const money=v=>{ const n=Number(String(v==null?'':v).replace(/[^0-9.\-]/g,'')); return isFinite(n)?n:0; };
+  // Super accounts missing a balance
+  (Array.isArray(F2.superAccounts)?F2.superAccounts:[]).forEach(a=>{
+    if(a && blank(a.balance)) out.push('Super balance missing — '+((a.fund||'super account').toString().slice(0,40)));
+  });
+  // Insurance rows missing sum insured or premium
+  (Array.isArray(F2.insurance)?F2.insurance:[]).forEach(r=>{
+    if(!r) return; const who=(r.cover||'cover').toString().slice(0,32);
+    if(blank(r.amount)) out.push('Sum insured missing — '+who);
+    if(blank(r.premium)) out.push('Premium missing — '+who);
+  });
+  // Insurance commission disclosure not captured (only relevant once there is insurance)
+  try{
+    const hasIns=(Array.isArray(F2.insurance)?F2.insurance:[]).length>0;
+    const cbp=F2.insCommissionByPerson||{}; const haveComm=Object.keys(cbp).some(k=>cbp[k]&&!blank(cbp[k].year1Comm));
+    if(hasIns && !haveComm) out.push('Insurance commission not captured — disclosure will show a placeholder');
+  }catch(_){}
+  // Advice fees: flag only if nothing came through at all
+  if([F2.commitmentFee,F2.upfrontFeeSuper,F2.upfrontFeeMcma,F2.ongoingFeeSuper,F2.ongoingFeeMcma].every(blank))
+    out.push('Advice fees not captured — Remuneration table will need manual entry');
+  // Retirement projections not imported
+  try{ const p=F2.proj||{}; if(blank(p.superBefore)&&blank(p.superAfter)&&blank(p.projectedWealth)&&!(Array.isArray(p.chart)&&p.chart.length))
+    out.push('Retirement projections not imported — Projections annexure will be blank'); }catch(_){}
+  if(!out.length) return '';
+  // De-dup and cap the list so the dialog stays readable
+  const seen={}, uniq=out.filter(x=>seen[x]?false:(seen[x]=true));
+  const shown=uniq.slice(0,12), extra=uniq.length-shown.length;
+  return '\n\n⚠ Still needs your attention ('+uniq.length+'):\n'+shown.map(x=>'• '+x).join('\n')+(extra>0?('\n• …and '+extra+' more'):'');
+}
+window.v190ImportGaps=v190ImportGaps;
 window.v95SetRecInsurer=function(ins){
   F.recInsurer=ins||'';
   if(ins){
@@ -5661,8 +5697,11 @@ function v141ApplyExcelSuper(cells, person){ person=(person==='partner')?'partne
   const findRow=function(re){ const rows=Object.keys(byRow).map(Number).sort(function(a,b){return a-b;});
     for(var k=0;k<rows.length;k++){ var r=byRow[rows[k]]; if(r && r['A'] && re.test(String(r['A']))) return r; } return null; };
   const val=function(re){ var r=findRow(re); return r?String(r['B']||'').trim():''; };
-  const fund   = val(/^\s*fund name/i) || val(/^\s*product name/i);
-  const product= val(/^\s*product name/i);
+  // Treat template placeholders as "not supplied" so we don't import "[not yet selected]" /
+  // "TBC" as if it were a real fund name (which then has to be manually deleted from the SOA).
+  const clean=function(s){ s=String(s||'').trim(); return /^(\[.*\]|tbc|tbd|t\.?b\.?c\.?|n\/?a|na|none|-+|to be confirmed|not yet selected|select\.{0,3}|choose\.{0,3})$/i.test(s)?'':s; };
+  const fund   = clean(val(/^\s*fund name/i)) || clean(val(/^\s*product name/i));
+  const product= clean(val(/^\s*product name/i));
   const curVal = val(/current value/i);
   const accum  = val(/^\s*accumulation/i);
   const client = val(/^\s*client name/i);
@@ -5678,7 +5717,9 @@ function v141ApplySuperPdf(txt, person){ person=(person==='partner')?'partner':'
   else if(/\bCSS\b|commonwealth superannuation scheme/i.test(t)) fund='Commonwealth Superannuation Scheme';
   else if(/\bPSSap\b|public sector superannuation/i.test(t)) fund='PSSap';
   else { var fm=t.match(/Fund Name[:\s]+([A-Za-z0-9 &\/().-]{3,50})/i); fund=fm?fm[1].trim():''; }
-  let bal=grab(/Total Balance\s*\$([\d,]+\.\d{2})/i) || grab(/MilitarySuper Benefit\s*\$([\d,]+\.\d{2})/i) || grab(/Account Balance\s*\$([\d,]+\.\d{2})/i) || grab(/Current Value\s*\$([\d,]+\.\d{2})/i);
+  // Cents are optional — statements often show whole-dollar balances ("$250,500"), which the
+  // previous \.\d{2} requirement silently dropped, leaving the super account with no balance.
+  let bal=grab(/Total Balance\s*\$([\d,]+(?:\.\d{2})?)/i) || grab(/MilitarySuper Benefit\s*\$([\d,]+(?:\.\d{2})?)/i) || grab(/Account Balance\s*\$([\d,]+(?:\.\d{2})?)/i) || grab(/Current Value\s*\$([\d,]+(?:\.\d{2})?)/i);
   const member=grab(/Member Benefit\s*\$([\d,]+(?:\.\d{2})?)/i);
   const anc=grab(/Ancillary Benefit\s*\$([\d,]+(?:\.\d{2})?)/i);
   // Employer / defined-benefit portion (the part that gets scoped out for Military/CSC funds).
