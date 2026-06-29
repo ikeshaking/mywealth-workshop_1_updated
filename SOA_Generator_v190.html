@@ -3174,7 +3174,8 @@ function importProjectorJSON(raw){
   // (initial investment + 12 months of the ongoing plan), shown per month.
   (function(){
     const initInv=_ln(jget(raw,"shares_initLoan"));
-    const ongoingAnnual=_ln(jget(raw,"shares_t1l_1")||jget(raw,"shares_t1l_2"));
+    const monthlyOngoing=_ln(jget(raw,"shares_t1l_1")||jget(raw,"shares_t1l_2"));   // per-month ongoing
+    const ongoingAnnual=monthlyOngoing*12;                                          // initial + ongoing × 12 × 5
     // Stash the plan figures + proposed rate so the Term Loan can be (re)computed later by
     // v193ApplyTermLoan when the row is added via the advice-request term-loan module too.
     F.investInitial=initInv; F.investOngoingAnnual=ongoingAnnual; F.loanRateProp=_ln(ratePr||jget(raw,"wc_homeLoanRate"));
@@ -5285,14 +5286,14 @@ window.v193ApplyTermLoan = function(){
     const row=F.loans.find(l=>l && /term loan|instalment gearing/i.test(String((l&&l.purpose)||'')));
     if(!row) return;
     const _n=v=>{ const x=Number(String(v==null?'':v).replace(/[^0-9.\-]/g,'')); return isFinite(x)?x:0; };
-    const initial=_n(F.investInitial!=null&&F.investInitial!==''?F.investInitial:F.planInitial);
-    let ongoingAnnual=_n(F.investOngoingAnnual);
-    if(!ongoingAnnual) ongoingAnnual=_n(F.planMonthly)*12;          // F.planMonthly is a per-month figure
+    const initial=_n(F.planInitial!=null&&F.planInitial!==''?F.planInitial:F.investInitial);
+    const monthly=_n(F.planMonthly);                                // the ongoing investment, per month
+    const ongoingAnnual=monthly*12;
     const homeVal=_n(F.homeValue||F.homeLoanCurr);
     const homeBal=_n(F.homeDebt||F.homeLoanBalance||F.mortCurr);
     const maxEquity=Math.max(0, Math.round(homeVal*0.80 - homeBal));
     const years=5;
-    const fiveYr=initial + ongoingAnnual*years;
+    const fiveYr=initial + monthly*12*years;                        // initial + (ongoing × 12 × 5 years)
     if(fiveYr<=0) return;                                            // no plan figures yet → leave the row
     const termLoan=Math.round(Math.min(maxEquity>0?maxEquity:fiveYr, fiveYr));   // whichever is lower
     const drawdown12=initial + ongoingAnnual;                       // initial + 12 months of ongoing
@@ -5305,6 +5306,80 @@ window.v193ApplyTermLoan = function(){
       row.repayments=(interestMo?(money(Math.round(interestMo))+" per month"):"")+"\nInterest only from the ICA";
     }
     if(drawdown12>0) F.debtNote={years:years, drawdown12:drawdown12};
+  }catch(_){}
+};
+
+// v194: build the Advice "Debt Management" section from the scoped debt modules — the Recommendation,
+// the "Why / In Line with your goals" bullets, the Risks & Disadvantages and the Alternatives — so the
+// section syncs the strategy lines shown in Summary — Strategies PLUS the standard template wording that
+// always appears, and the GEARING-specific wording (equity / debt recycling / term loan) is included
+// only when a gearing strategy is scoped in (term loan, equity release, or an equity-funded IP
+// purchase). When no gearing is scoped the gearing wording is removed automatically.
+window.v194IsGearingScoped = function(){
+  // Gearing is decided by what the advice request scopes in — NOT by a leftover term-loan row the
+  // projector JSON may have modelled. (A debt-recycling JSON can pre-create a term loan even when the
+  // advice request only asks for an offset; that must not force the gearing wording on.)
+  try{
+    const sel=(typeof F!=='undefined'&&Array.isArray(F.debtModules))?F.debtModules:[];
+    if(sel.length){ return sel.indexOf('equity_release')>=0||sel.indexOf('term_loan')>=0||sel.indexOf('ip_deposit')>=0; }
+    if(typeof F!=='undefined'&&F&&F.debtEquityScoped===true) return true;
+    if(typeof blockActive==='function'&&blockActive('property')) return true;
+  }catch(_){}
+  return false;
+};
+window.v194BuildDebtWording = function(){
+  try{
+    if(typeof F==='undefined' || !Array.isArray(F.debtModules) || !F.debtModules.length) return;
+    if(typeof B==='undefined' || !B.debt || !B.debt.content) return;
+    const act=window.v192ActiveDebtModules();
+    const gearing=window.v194IsGearingScoped();
+    // No gearing/restructure scoped → no loan-limit table or *Note in the debt section: drop the
+    // restructure rows (term loan / instalment gearing / home-loan refinance / IP-purchase) that a
+    // debt-recycling JSON may have pre-created, so only the offset/pay-down/consolidation wording remains.
+    if(!gearing){
+      if(Array.isArray(F.loans)) F.loans=F.loans.filter(l=> l && !/term loan|instalment gearing|refinance existing home loan|investment property|held against|20%? deposit/i.test(String(l.purpose||'')));
+      F.debtNote=null;
+    }
+    const _n=v=>{ const x=Number(String(v==null?'':v).replace(/[^0-9.]/g,'')); return isFinite(x)?x:0; };
+    const M=v=>{ const n=_n(v); return n?('$'+n.toLocaleString('en-AU',{maximumFractionDigits:0})):''; };
+    const uniq=arr=>{ const s=new Set(),o=[]; arr.forEach(x=>{ const k=String(x||'').trim(); if(k&&!s.has(k)){s.add(k);o.push(x);} }); return o; };
+    // ── Recommendation: synced strategy lines + the standard surplus/tax direction (always) ──
+    const rec=act.map(m=>window.v192StratLine(m)).filter(Boolean);
+    const _remW=(F.remainingSurplusWeekly!=null&&F.remainingSurplusWeekly!=='')?_n(F.remainingSurplusWeekly):Math.max(0,_n(F.surplusWeekly)-_n(F.mcmaWeekly));
+    const _remWk=_remW?M(_remW):'$XX', _taxPa=F.taxRefundAnnual?M(F.taxRefundAnnual):'$XX';
+    rec.push("We recommend you direct all surplus income remaining after the recommendations made throughout this plan towards your existing home loan offset account. This is estimated to be "+_remWk+" per week.");
+    rec.push("We recommend you direct all tax refunds towards your existing home loan offset account. This is estimated to be "+_taxPa+" per annum.");
+    B.debt.content.recommendation=rec.join('\n');
+    // ── Why: synced outcomes + standard bullets + gearing bullets (figure-filled) ──
+    const _lf=(F.outcomes&&F.outcomes.loanFrom)||'XX', _lt=(F.outcomes&&F.outcomes.loanTo)||'XX';
+    const _isav=(F.outcomes&&F.outcomes.interestSaving)?M(F.outcomes.interestSaving):'$XXX';
+    const _aw=(F.outcomes&&F.outcomes.postLoanInvestWealth)?M(F.outcomes.postLoanInvestWealth):'$XXX';
+    const why=["In Line with your goals:"];
+    act.forEach(m=>{ if(m.outcome) why.push(m.outcome); });                       // synced summary — outcomes
+    if(gearing){
+      why.push("Refinance of your existing loan structure to use available equity will allow you to begin investing more now as opposed to waiting until the loan is fully repaid.");
+      why.push("Replaces “bad” (non tax deductible) debt with “good” (tax deductible) investment debt.");
+    }
+    why.push("Allows for your home loan to be repaid in approximately "+_lt+" years instead of "+_lf+" years.");
+    why.push("An offset account will allow you to reduce your current interest payments but still provide you the flexibility to withdraw these funds for your liquidity needs.");
+    why.push("The offset account use will provide estimated interest savings of "+_isav+" over the life of the loan compared to repayment over the regular term.");
+    if(gearing) why.push("Allows you to utilise your Term Loan to invest in assets sooner than would have otherwise been possible.");
+    why.push("On repayment of your home loan, redirecting your mortgage repayments to be invested will generate additional wealth estimated at "+_aw+" over the last year of your plan.");
+    why.push("Additional Benefits:");
+    why.push("Interest on investment debt provides ongoing tax deductions, reducing the amount of interest you pay.");
+    if(gearing) why.push("Debt recycling helps to establish an investment portfolio sooner and allows a portfolio to realise long term growth.");
+    B.debt.content.why=why.join('\n');
+    // ── Risks: module risks + standard gearing risks (only when gearing) ──
+    let risks=act.reduce((a,m)=>a.concat(m.risk||[]),[]);
+    if(gearing) risks=risks.concat([
+      "As you are gearing into investments, if those investments fall in value you might receive extra tax deductions over time, but you might actually lose funds;",
+      "Given the high risk nature of a gearing strategy, I recommend that you review the suitability of your leveraged portfolio on at least an annual basis;",
+      "A geared investment requires a long term investment horizon. Investment returns can be volatile, and in order to withstand short term fluctuations, I recommend a minimum 5 year investment time horizon;"
+    ]);
+    risks=uniq(risks); if(risks.length) B.debt.content.risks=risks.join('\n');
+    // ── Alternatives: module alternatives ──
+    const alts=uniq(act.reduce((a,m)=>a.concat(m.alt||[]),[]));
+    if(alts.length) B.debt.content.alternatives=alts.join('\n');
   }catch(_){}
 };
 
@@ -6265,18 +6340,9 @@ function v143ApplyAdviceRequest(txt){
         if(B.debt.content.details && /debt recycl|equity[\s\S]{0,40}security|sub[- ]?account|loan limit|restructur/i.test(B.debt.content.details)) B.debt.content.details='';
         if(B.debt.content.intro && /debt recycl|equity[\s\S]{0,40}security|loan limit|restructur/i.test(B.debt.content.intro)) B.debt.content.intro='';
       }
-      // v194: auto-select the Risks & Disadvantages and Alternatives bullets for the Advice debt
-      // section from the scoped debt modules (e.g. the car-loan consolidation risk only appears when
-      // a consolidation is scoped, the P&I->IO risk only when switching, etc.). De-duplicates shared
-      // bullets (e.g. the offset "lower returns" risk shared by the offset + buffer modules).
-      if(_mods.length && B.debt && B.debt.content){
-        const _actDM=window.v192ActiveDebtModules();
-        const _uniq=arr=>{ const s=new Set(), o=[]; arr.forEach(x=>{ const k=String(x||'').trim(); if(k && !s.has(k)){ s.add(k); o.push(x); } }); return o; };
-        const _risks=_uniq(_actDM.reduce((a,m)=>a.concat(m.risk||[]),[]));
-        const _alts =_uniq(_actDM.reduce((a,m)=>a.concat(m.alt||[]),[]));
-        if(_risks.length) B.debt.content.risks=_risks.join('\n');
-        if(_alts.length)  B.debt.content.alternatives=_alts.join('\n');
-      }
+      // The full Advice debt wording (Recommendation / Why / Risks / Alternatives) is built from the
+      // scoped modules by v194BuildDebtWording(), called once at the end of this importer so the
+      // surplus / tax / outcome figures from the other sections are all available.
       applied.push('Debt management: '+(equityScoped?'debt recycling (equity / term loan)':'offset / surplus management')+(sw?(' \u2014 surplus $'+sw+'/wk'):'')+(tx?(' \u2014 tax $'+tx+'/pa'):''));
     } else if(debtMentioned){
       if(B.debt){ B.debt.active=false; }
@@ -6436,6 +6502,10 @@ function v143ApplyAdviceRequest(txt){
   // already-imported projector figures (F.outcomes.postLoanInvestWealth etc.) regardless of import order.
   try{ if(typeof injectFiguresIntoStrategies==='function') injectFiguresIntoStrategies(); }catch(_){}
   try{ F.currentSituation=buildCurrentSituationText(); }catch(_){}
+  // Compute the Term Loan limit/repayment, then build the full Advice debt wording from the scoped
+  // modules (now that every section's figures — surplus, tax, outcomes — have been parsed).
+  try{ if(typeof window.v193ApplyTermLoan==='function') window.v193ApplyTermLoan(); }catch(_){}
+  try{ if(typeof window.v194BuildDebtWording==='function') window.v194BuildDebtWording(); }catch(_){}
   try{ if(typeof autoSyncSummary==='function') autoSyncSummary(); }catch(_){}
   try{ if(typeof refreshTaxLine==='function') refreshTaxLine(); }catch(_){}
   try{ if(typeof fillRemunerationTables==='function') fillRemunerationTables(); }catch(_){}
