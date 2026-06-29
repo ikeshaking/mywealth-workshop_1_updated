@@ -5190,26 +5190,37 @@ function v180SanitizeSummary(){
 // so when that isn't scoped, the deposit/equity-for-purchase wording is automatically removed.
 window.DEBT_MODULES = [
   { id:'offset',        kw:/\boffset\b/i,
-    strat:"We recommend you establish/utilise an offset account against your home loan.", outcome:"" },
+    strat:"We recommend you establish/utilise an offset account against your home loan.", outcome:"",
+    risk:["The effectiveness of an offset account depends on maintaining a sufficient cash balance. Withdrawing funds from the offset will increase the interest payable on your loan.",
+          "Holding funds in an offset account may result in lower investment returns than investing those funds in growth assets over the long term."] },
   { id:'paydown',       kw:/pay[\s-]?down|pay off (?:the |your )?(?:home ?loan|mortgage)|reduce (?:the |your )?(?:home ?loan|mortgage)|clear (?:the |your )?(?:home ?loan|mortgage)|sale proceeds/i,
     strat:"We recommend using {amt} from your existing cash or sale proceeds to reduce your home loan.",
-    outcome:"Paying down your home loan will release available equity for investment opportunities while reducing your minimum loan repayments, improving your ongoing cashflow." },
+    outcome:"Paying down your home loan will release available equity for investment opportunities while reducing your minimum loan repayments, improving your ongoing cashflow.",
+    risk:["Applying cash to debt reduction may reduce your available liquidity and emergency funds. It may also limit your ability to access these funds without further borrowing."],
+    alt:["We considered retaining your available cash rather than reducing your home loan. This was not recommended as reducing your home loan improves your cash flow, reduces interest costs and/or provides greater flexibility to implement your investment strategy."] },
   { id:'buffer',        kw:/emergency (?:cash )?buffer|cash buffer|buffer in (?:the |your )?offset/i,
     strat:"We recommend retaining {amt} in your offset account as an emergency cash buffer.",
-    outcome:"Retaining cash in your home loan offset account provides a readily accessible emergency reserve while continuing to reduce the interest payable on your home loan." },
+    outcome:"Retaining cash in your home loan offset account provides a readily accessible emergency reserve while continuing to reduce the interest payable on your home loan.",
+    risk:["Holding funds in an offset account may result in lower investment returns than investing those funds in growth assets over the long term."] },
   { id:'carloan',       kw:/consolidat[^.\n]*car loan|car loan[^.\n]*(?:in)?to[^.\n]*home ?loan|roll[^.\n]*car loan/i,
     strat:"We recommend consolidating your existing car loan into your home loan.",
-    outcome:"Consolidating your car loan into your home loan will reduce your overall borrowing costs by replacing higher-interest debt with lower-interest home loan debt, while simplifying the management of your debts." },
+    outcome:"Consolidating your car loan into your home loan will reduce your overall borrowing costs by replacing higher-interest debt with lower-interest home loan debt, while simplifying the management of your debts.",
+    risk:["While this may reduce your interest rate and repayments, extending short-term debt over a longer home loan term could result in paying more total interest if additional repayments are not made."],
+    alt:["We considered retaining your existing car loan. This was not recommended as consolidating your debt reduces interest costs and simplifies your lending arrangements."] },
   { id:'ip_io',         kw:/investment propert[^.\n]*interest only|interest only[^.\n]*investment propert|(?:principal and interest|p ?and ?i|p&i)[^.\n]*interest only[^.\n]*propert/i,
     strat:"We recommend refinancing your investment property loan from principal and interest to interest only repayments.",
-    outcome:"Switching your investment property loan from principal and interest to interest-only repayments will improve your short-term cash flow. Following the debt restructure, surplus funds can be redirected towards other wealth creation opportunities." },
+    outcome:"Switching your investment property loan from principal and interest to interest-only repayments will improve your short-term cash flow. Following the debt restructure, surplus funds can be redirected towards other wealth creation opportunities.",
+    risk:["Interest only repayments do not reduce the loan principal, meaning the outstanding balance will remain unchanged and total interest paid over the life of the loan may be higher."],
+    alt:["We considered retaining principal and interest repayments. This was not recommended as interest-only repayments improve short-term cash flow, allowing surplus funds to be directed towards other wealth creation opportunities."] },
   { id:'equity_release',kw:/draw[\s-]?(?:on|down)?[^.\n]*equity|release[^.\n]*equity|equity release|refinanc[^.\n]*equity/i,
     strat:"We recommend you refinance your existing home and/or investment property loan to draw on your available equity.",
-    outcome:"Your home loan will be split into tax deductible and non-deductible components, increasing your tax efficiency." },
+    outcome:"Your home loan will be split into tax deductible and non-deductible components, increasing your tax efficiency.",
+    alt:["We considered investing only from surplus cashflow without borrowing. This was not recommended as using investment debt may allow you to accelerate your wealth creation strategy while maintaining appropriate liquidity."] },
   { id:'ip_deposit',    kw:/investment propert[^.\n]*purchas|purchas[^.\n]*investment propert|20\s?%? deposit|deposit[^.\n]*investment propert/i, needsIPpurchase:true,
     strat:"We recommend you use the equity to fund the 20% deposit (plus costs) for an investment property purchase.", outcome:"" },
   { id:'term_loan',     kw:/term loan|debt recycl|instal?ment gearing|borrow to invest/i,
-    strat:"We recommend you establish a Term Loan for investment purposes using your existing home or investment property loan as equity.", outcome:"" }
+    strat:"We recommend you establish a Term Loan for investment purposes using your existing home or investment property loan as equity.", outcome:"",
+    alt:["We considered investing only from surplus cashflow without borrowing. This was not recommended as using investment debt may allow you to accelerate your wealth creation strategy while maintaining appropriate liquidity."] }
 ];
 // Is an investment-property purchase funded by equity actually scoped in? (gates the ip_deposit module)
 window.v192IPpurchaseScoped = function(extraText){
@@ -6253,6 +6264,18 @@ function v143ApplyAdviceRequest(txt){
           + "We considered making additional home loan repayments instead of utilising your existing offset account, however we discounted this strategy as your offset account will provide you with flexible access to your funds, should you need to draw upon these at any point.";
         if(B.debt.content.details && /debt recycl|equity[\s\S]{0,40}security|sub[- ]?account|loan limit|restructur/i.test(B.debt.content.details)) B.debt.content.details='';
         if(B.debt.content.intro && /debt recycl|equity[\s\S]{0,40}security|loan limit|restructur/i.test(B.debt.content.intro)) B.debt.content.intro='';
+      }
+      // v194: auto-select the Risks & Disadvantages and Alternatives bullets for the Advice debt
+      // section from the scoped debt modules (e.g. the car-loan consolidation risk only appears when
+      // a consolidation is scoped, the P&I->IO risk only when switching, etc.). De-duplicates shared
+      // bullets (e.g. the offset "lower returns" risk shared by the offset + buffer modules).
+      if(_mods.length && B.debt && B.debt.content){
+        const _actDM=window.v192ActiveDebtModules();
+        const _uniq=arr=>{ const s=new Set(), o=[]; arr.forEach(x=>{ const k=String(x||'').trim(); if(k && !s.has(k)){ s.add(k); o.push(x); } }); return o; };
+        const _risks=_uniq(_actDM.reduce((a,m)=>a.concat(m.risk||[]),[]));
+        const _alts =_uniq(_actDM.reduce((a,m)=>a.concat(m.alt||[]),[]));
+        if(_risks.length) B.debt.content.risks=_risks.join('\n');
+        if(_alts.length)  B.debt.content.alternatives=_alts.join('\n');
       }
       applied.push('Debt management: '+(equityScoped?'debt recycling (equity / term loan)':'offset / surplus management')+(sw?(' \u2014 surplus $'+sw+'/wk'):'')+(tx?(' \u2014 tax $'+tx+'/pa'):''));
     } else if(debtMentioned){
