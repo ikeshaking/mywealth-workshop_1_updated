@@ -2765,7 +2765,7 @@ function importProjectorJSON(raw){
   const _PRESERVE=['careRecSuper','careAccounts','wsHoldings','wsFunds','wsProvOrder','insurance','insCompare','recInsurer','superAccounts','_src'];
   const _stash={}; if(!_differentClient){ try{ _PRESERVE.forEach(function(k){ if(F[k]!==undefined && F[k]!==null) _stash[k]=F[k]; }); }catch(_){} }
   const _Bprev = _hasPrior ? B : null;
-  const _Fkeep = ['goals','scopeOut','scopeOutText','scopeInText','customScopeIn','customScopeOut','limitedAdvice','refByIncorporation','refByIncDate','currentSituation','summaryStrategies','summaryProducts','summaryOutcomes','summaryServices','loans','allocCurrent','allocTarget','portfolio'];
+  const _Fkeep = ['goals','scopeOut','scopeOutText','scopeInText','customScopeIn','customScopeOut','limitedAdvice','refByIncorporation','refByIncDate','currentSituation','summaryStrategies','summaryProducts','summaryOutcomes','summaryServices','loans','allocCurrent','allocTarget','portfolio','debtModules','debtIPpurchaseScoped'];
   const _Ffill = ['clientFirst','clientLast','clientPreferred','partnerFirst','partnerLast','partnerPreferred','clientType','adviserName','adviserEmail','adviserPhone','secondaryAdviserOn','secondaryAdviserName','secondaryAdviserEmail','insSpecialistOn','insSpecialistName','insSpecialistEmail'];
   const _Fprev = {}; if(_hasPrior){ _Fkeep.concat(_Ffill).forEach(function(k){ _Fprev[k]=F[k]; }); }
   resetState();
@@ -5175,18 +5175,84 @@ function v180SanitizeSummary(){
 }
 
 // Shared suggestion collector (used by autoSummary + autoSyncSummary)
+// ── v192: modular debt-management strategy library ──────────────────────────────────────────
+// Each module is a self-contained debt strategy the adviser triggers from the advice request with a
+// short keyword phrase (e.g. "consolidate car loan to home loan"). A matched module syncs THREE
+// places: the Summary — Strategies line (strat), the Summary — Outcomes line (outcome) and the
+// Advice "Debt Management" recommendation (built from the strat lines). Modules flagged
+// needsIPpurchase only appear when an investment-property purchase funded by equity is scoped in —
+// so when that isn't scoped, the deposit/equity-for-purchase wording is automatically removed.
+window.DEBT_MODULES = [
+  { id:'offset',        kw:/\boffset\b/i,
+    strat:"We recommend you establish/utilise an offset account against your home loan.", outcome:"" },
+  { id:'paydown',       kw:/pay[\s-]?down|pay off (?:the |your )?(?:home ?loan|mortgage)|reduce (?:the |your )?(?:home ?loan|mortgage)|clear (?:the |your )?(?:home ?loan|mortgage)|sale proceeds/i,
+    strat:"We recommend using surplus cash or sale proceeds to reduce your home loan.",
+    outcome:"Paying down your home loan will release available equity for investment opportunities while reducing your minimum loan repayments, improving your ongoing cashflow." },
+  { id:'buffer',        kw:/emergency (?:cash )?buffer|cash buffer|buffer in (?:the |your )?offset/i,
+    strat:"We recommend retaining funds in your offset account as an emergency cash buffer.",
+    outcome:"Retaining cash in your home loan offset account provides a readily accessible emergency reserve while continuing to reduce the interest payable on your home loan." },
+  { id:'carloan',       kw:/consolidat[^.\n]*car loan|car loan[^.\n]*(?:in)?to[^.\n]*home ?loan|roll[^.\n]*car loan/i,
+    strat:"We recommend consolidating your existing car loan into your home loan.",
+    outcome:"Consolidating your car loan into your home loan will reduce your overall borrowing costs by replacing higher-interest debt with lower-interest home loan debt, while simplifying the management of your debts." },
+  { id:'ip_io',         kw:/investment propert[^.\n]*interest only|interest only[^.\n]*investment propert|(?:principal and interest|p ?and ?i|p&i)[^.\n]*interest only[^.\n]*propert/i,
+    strat:"We recommend refinancing your investment property loan from principal and interest to interest only repayments.",
+    outcome:"Switching your investment property loan from principal and interest to interest-only repayments will improve your short-term cash flow. Following the debt restructure, surplus funds can be redirected towards other wealth creation opportunities." },
+  { id:'equity_release',kw:/draw[\s-]?(?:on|down)?[^.\n]*equity|release[^.\n]*equity|equity release|refinanc[^.\n]*equity/i,
+    strat:"We recommend you refinance your existing home and/or investment property loan to draw on your available equity.",
+    outcome:"Your home loan will be split into tax deductible and non-deductible components, increasing your tax efficiency." },
+  { id:'ip_deposit',    kw:/investment propert[^.\n]*purchas|purchas[^.\n]*investment propert|20\s?%? deposit|deposit[^.\n]*investment propert/i, needsIPpurchase:true,
+    strat:"We recommend you use the equity to fund the 20% deposit (plus costs) for an investment property purchase.", outcome:"" },
+  { id:'term_loan',     kw:/term loan|debt recycl|instal?ment gearing|borrow to invest/i,
+    strat:"We recommend you establish a Term Loan for investment purposes using your existing home or investment property loan as equity.", outcome:"" }
+];
+// Is an investment-property purchase funded by equity actually scoped in? (gates the ip_deposit module)
+window.v192IPpurchaseScoped = function(extraText){
+  try{
+    if(typeof F!=='undefined' && F && F.debtIPpurchaseScoped===true) return true;   // explicitly scoped via the advice request
+    if(typeof F!=='undefined' && F && F.debtIPpurchaseScoped===false) return false;  // explicitly de-scoped
+    if(typeof blockActive==='function' && blockActive('property')) return true;
+    if(Number(String((typeof F!=='undefined'&&F&&F.propPurchase)||'').replace(/[^0-9.]/g,''))>0) return true;
+    if(Number(String((typeof F!=='undefined'&&F&&F.propertyValue)||'').replace(/[^0-9.]/g,''))>0) return true;
+    if(/investment propert[^.\n]*purchas/i.test(String(extraText||''))) return true;
+  }catch(_){}
+  return false;
+};
+// Match the debt modules present in a block of advice-request text, in canonical order, applying the
+// IP-purchase gate. Returns an array of module ids.
+window.v192MatchDebtModules = function(text){
+  const t=String(text||''); const propScoped=window.v192IPpurchaseScoped(t); const ids=[];
+  window.DEBT_MODULES.forEach(m=>{ if(!m.kw.test(t)) return; if(m.needsIPpurchase && !propScoped) return; ids.push(m.id); });
+  return ids;
+};
+// The active debt modules for the summary/advice builders (respecting the live IP-purchase gate, so a
+// later scope change removes the deposit wording without re-importing).
+window.v192ActiveDebtModules = function(){
+  const sel=(typeof F!=='undefined'&&Array.isArray(F.debtModules))?F.debtModules:[];
+  if(!sel.length) return [];
+  const propScoped=window.v192IPpurchaseScoped('');
+  return window.DEBT_MODULES.filter(m=> sel.indexOf(m.id)>=0 && !(m.needsIPpurchase && !propScoped));
+};
+
 function collectSummarySuggestions(){
   const sug=[];
-  if(blockActive("debt") && F.debtEquityScoped!==false){
-    const _hasInvProp = !!(F.invPropValue||F.invPropDebt);
-    const _hasHome = !!(F.homeValue||F.homeDebt);
-    const _hasHomeLoan = !!(F.homeValue||F.homeDebt||F.homeLoan||F.hasHomeOffset);
-    const _loanType = (_hasInvProp && _hasHomeLoan) ? "existing home and investment property loans" : (_hasInvProp ? "existing investment property loan" : "existing home loan");
-    // The refinance/equity-release line is only correct when the advice request explicitly scopes it
-    // (debt recycling / equity release / refinance to invest → F.debtEquityScoped===true). It must NOT
-    // appear by default just because the debt block is active.
-    if(F.debtEquityScoped===true) sug.push(`We recommend you restructure and refinance your ${_loanType} to draw on available equity.`);
-    if(_hasHome) sug.push(F.hasHomeOffset===true ? "We recommend you utilise your existing offset account against your home loan." : (F.hasHomeOffset===false ? "We recommend you establish an offset account against your home loan." : "We recommend you establish/utilise an offset account against your home loan."));
+  if(blockActive("debt")){
+    // v192: when debt-management modules have been recognised from the advice request keywords, emit
+    // each matched module's Summary — Strategies line (the canonical templated wording). The
+    // investment-property-purchase module is dropped automatically when that purchase isn't scoped in.
+    const _dm=window.v192ActiveDebtModules();
+    if(_dm.length){
+      _dm.forEach(m=>{ if(m.strat) sug.push(m.strat); });
+    } else if(F.debtEquityScoped!==false){
+      const _hasInvProp = !!(F.invPropValue||F.invPropDebt);
+      const _hasHome = !!(F.homeValue||F.homeDebt);
+      const _hasHomeLoan = !!(F.homeValue||F.homeDebt||F.homeLoan||F.hasHomeOffset);
+      const _loanType = (_hasInvProp && _hasHomeLoan) ? "existing home and investment property loans" : (_hasInvProp ? "existing investment property loan" : "existing home loan");
+      // The refinance/equity-release line is only correct when the advice request explicitly scopes it
+      // (debt recycling / equity release / refinance to invest → F.debtEquityScoped===true). It must NOT
+      // appear by default just because the debt block is active.
+      if(F.debtEquityScoped===true) sug.push(`We recommend you restructure and refinance your ${_loanType} to draw on available equity.`);
+      if(_hasHome) sug.push(F.hasHomeOffset===true ? "We recommend you utilise your existing offset account against your home loan." : (F.hasHomeOffset===false ? "We recommend you establish an offset account against your home loan." : "We recommend you establish/utilise an offset account against your home loan."));
+    }
   }
   if(blockActive("property")&&F.propertyValue) sug.push(`We recommend you use your available equity to fund the ${F.propertyDeposit||'XX'}% deposit on an investment property purchase of approximately ${money(F.propertyValue)} (plus costs).`);
   if(blockActive("investbond")&&(F.bondInitial||F.bondMonthly)) sug.push(`We recommend you establish a new investment bond and invest ${money(F.bondInitial)||'$XXX'} initially${F.bondMonthly?` and ${money(F.bondMonthly)} per month`:''}.`);
@@ -5515,7 +5581,13 @@ function collectSummarySuggestions(){
     const _mp=String(F.mortgagePref||'').toLowerCase();
     const _dphrase = /super/.test(_mp)?'towards your superannuation':(/share|invest in shares/.test(_mp)?'towards further investments':(/pay off|investment debt/.test(_mp)?'towards paying down your investment debt':(/saving/.test(_mp)?'towards your savings':'towards further investments')));
     const _noWealth = /spend|gift|charity/.test(_mp);
-    out.push(`Directing your surplus income towards your existing home loan offset will save you an estimated ${_is} in interest costs and reduce the repayment period on your loan from ${_lf} to ${_lt} years.`+(_noWealth?'':` On repayment of your home loan, directing all home loan repayments ${_dphrase} may generate additional wealth estimated up to ${_aw}.`)); }
+    const _dm=window.v192ActiveDebtModules();
+    // The figure-rich surplus→offset outcome applies whenever an offset is in play (the offset module, or
+    // the legacy non-module path); the other matched modules then add their own templated outcome lines.
+    if(!_dm.length || _dm.some(m=>m.id==='offset') || F.surplusDest==='offset'){
+      out.push(`Directing your surplus income towards your existing home loan offset will save you an estimated ${_is} in interest costs and reduce the repayment period on your loan from ${_lf} to ${_lt} years.`+(_noWealth?'':` On repayment of your home loan, directing all home loan repayments ${_dphrase} may generate additional wealth estimated up to ${_aw}.`));
+    }
+    _dm.forEach(m=>{ if(m.outcome) out.push(m.outcome); }); }
   if(blockActive("investbond")&&F.proj&&F.proj.projectedWealth) out.push(`The investment bond will generate additional wealth estimated at ${money(F.outcomes&&F.outcomes.prop2Wealth||'')||'$XXX'} over the projection term.`);
   if(blockActive("property")&&F.outcomes&&F.outcomes.propWealth) out.push(`The investment property will generate additional wealth estimated at ${money(F.outcomes.propWealth)} over the term.`);
   // v139: investment-plan wealth outcome (matches the example SOAs, e.g. Kataia "$355,000 over 20 years")
@@ -6039,15 +6111,32 @@ function v143ApplyAdviceRequest(txt){
   //     recycling wording and loan table left out (F.debtEquityScoped=false).
   {
     const debtSeg=(t.match(/Debt Management(?:\s+Advice)?[\s\S]{0,800}/i)||[''])[0];
+    // Wider debt segment (to the next section heading) used for keyword-module matching, so short
+    // keyword instructions anywhere in the debt section are captured.
+    const debtSeg2=(t.match(/Debt Management(?:\s+Advice)?([\s\S]*?)(?:\n\s*(?:Investment|Superannuation|Super\b|Insurance|Cashflow|Estate|Advice Fees|Product Recommend|Scope Out|Risk Profile)\b|$)/i)||[,''])[1] || debtSeg;
     const debtMentioned=/Debt Management(?:\s+Advice)?/i.test(t);
+    // v192: recognise the templated debt-strategy modules from the adviser's keyword phrases.
+    const _mods=window.v192MatchDebtModules(debtSeg2);
     const equityScoped=/\bequity\b|term loan|debt recycl|refinanc|restructur|draw on|investment loan|good debt|bad debt|gearing|borrow to invest/i.test(debtSeg)
       || /debt recycl|equity[^.\n]{0,30}invest|refinanc[^.\n]{0,30}invest/i.test(t);
     const homeLoanPresent=/home loan|mortgage|owner[- ]?occupied|principal place of residence/i.test(t) || !!(F.homeLoanBalance||F.homeLoan);
     const offsetDirected=/offset/i.test(t) && /surplus|direct|towards|into|redirect/i.test(t);
-    const needDebt = equityScoped || (homeLoanPresent && (offsetDirected || debtMentioned));
+    const needDebt = equityScoped || _mods.length>0 || (homeLoanPresent && (offsetDirected || debtMentioned));
     if(needDebt){
       F.debtEquityScoped = equityScoped;
       act('debt');
+      // Store the matched modules and build the Advice "Debt Management" recommendation from them (the
+      // ip_deposit module is gated by v192ActiveDebtModules so it drops out when no IP purchase is scoped).
+      if(_mods.length){
+        F.debtModules=_mods.slice();
+        // An IP-purchase keyword in the debt section scopes the deposit/equity-for-purchase wording in;
+        // its absence leaves the wording out (the inverse case the adviser asked for).
+        if(_mods.indexOf('ip_deposit')>=0 || /investment propert[^.\n]*purchas/i.test(debtSeg2)) F.debtIPpurchaseScoped=true;
+        try{ const recLines=window.v192ActiveDebtModules().map(m=>m.strat).filter(Boolean);
+          if(recLines.length && B.debt && B.debt.content) B.debt.content.recommendation=recLines.join('\n');
+        }catch(_){}
+        applied.push('Debt modules: '+_mods.join(', '));
+      }
       // Debt recycling via a Term Loan (e.g. invest from term loan) → add the term-loan facility row to the
       // loan-structure table so it isn't limited to the home-refinance / investment-property rows.
       if(/term loan/i.test(debtSeg)){
