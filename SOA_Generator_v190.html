@@ -3605,6 +3605,10 @@ function v96FillInsurance(){
     // template variants/placeholders once supporting docs are in. Skip if the user has already
     // customised it (i.e. no template markers remain).
     try{
+      // Ensure the insurance strategy block exists (mirrors the B['ins_prod'] guard above) so
+      // the Recommendation/Why wording is always built from imported data, even if the block
+      // hasn't been seeded yet (e.g. supporting docs imported before the section is rendered).
+      if(!B['insurance']) B['insurance']={active:false,content:{}};
       if(B['insurance']){
         if(!B['insurance'].content) B['insurance'].content={};
         const cur=String(B['insurance'].content.recommendation||'');
@@ -3650,6 +3654,27 @@ window.v98FillReplacementFees=v98FillReplacementFees;
 function parseCommissionReport(text){
   const t=String(text||'').replace(/\r/g,'');
   const res={upfront:'',ongoing:'',ref:'',adviser:'',year1Prem:'',year1Comm:'',year2Comm:'',estimated:false};
+  // NEOS "Plan Projection" — the total-premium benefit-projection table carries the actual
+  // commission dollars per year as "<yr> <ANB> $annualised $cumulative $commission". The rows
+  // start with a bare year number (not "Year 1"), so read them positionally from the table
+  // header and use these real figures in preference to any %-derived estimate below.
+  {
+    const hi=t.search(/Annualised Premium\s+Cumulative Premium\s+Commission/i);
+    if(hi>=0){
+      const seg=t.slice(hi);
+      const rowRe=/(?:^|\s)(\d{1,2})\s+\d{1,3}\s+\$([\d,]+\.\d{2})\s+\$[\d,]+\.\d{2}\s+\$([\d,]+\.\d{2})/g;
+      let r, p1=0,c1=0,p2=0,c2=0;
+      while((r=rowRe.exec(seg))){ const yr=+r[1], prem=parseFloat(r[2].replace(/,/g,'')), comm=parseFloat(r[3].replace(/,/g,''));
+        if(yr===1){ p1=prem; c1=comm; } else if(yr===2){ p2=prem; c2=comm; }
+        if(c1&&c2) break; }
+      if(c1){
+        res.year1Prem=String(p1); res.year1Comm=c1.toFixed(2); if(c2) res.year2Comm=c2.toFixed(2);
+        if(p1>0) res.upfront=String(Math.round(c1/p1*1000)/10);
+        if(p2>0&&c2) res.ongoing=String(Math.round(c2/p2*1000)/10);
+        res.estimated=false;
+      }
+    }
+  }
   // Syndicate line: "Upfront 66.0%/22.0%"
   const synd=t.match(/Upfront\s*([\d.]+)\s*%\s*\/\s*([\d.]+)\s*%/i); if(synd){res.upfront=synd[1];res.ongoing=synd[2];}
   // Fallbacks for quotes that show commission differently
@@ -3825,6 +3850,10 @@ function v145ClassifyText(text){
   if(/care genuine edge|genuine edge|care essentials|care philosophy|care (?:core|active|enhanced|reserves)|care portfolio/i.test(t)) return 'care';
   if(/risk researcher|compare differences|core score|supplementary score/i.test(t)) return 'rr';
   if(/militarysuper|account rundown|member benefit|ancillary benefit|data collection|fund name[:\s]/i.test(t) && !/commission|sum insured|risk researcher/i.test(t)) return 'datacol';
+  // A NEOS "Plan Projection" carries the commission schedule in a projection table (a
+  // "Commission" column), not cover details — route it as a commission report so the
+  // disclosure fills, even though it mentions the insurer + premium (which reads as a quote).
+  if(/\bcommission\b/i.test(t) && /(plan projection|benefit projections|cumulative premium)/i.test(t) && !/your cover details/i.test(t)) return 'commission';
   if(isQuote) return 'quote';
   if(isCommission) return 'commission';
   return 'unknown';
