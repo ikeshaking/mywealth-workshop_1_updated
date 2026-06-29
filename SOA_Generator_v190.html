@@ -3410,6 +3410,10 @@ function importProjectorJSON(raw){
   try{ const _cs=String(F.currentSituation||'');
     if(!_cs.trim() || /\[(?:job title|employer name|super fund(?: name)?)\]|\$X{2,}|approximately \$XXX/i.test(_cs)){
       F.currentSituation=buildCurrentSituationText(); } }catch(_){}
+  // Compute the Term Loan and build the templated Advice debt wording (Recommendation / Why / Risks /
+  // Alternatives) so it appears for a JSON-only import too, not just when an advice request is layered on.
+  try{ if(typeof window.v193ApplyTermLoan==='function') window.v193ApplyTermLoan(); }catch(_){}
+  try{ if(typeof window.v194BuildDebtWording==='function') window.v194BuildDebtWording(); }catch(_){}
   log.push(`Goals ${F.goals.length}, Insurance ${F.insurance.length}, Loans ${F.loans.length}, Super ${F.superAccounts.length}`);
   return log;
 }
@@ -5329,8 +5333,16 @@ window.v194IsGearingScoped = function(){
 };
 window.v194BuildDebtWording = function(){
   try{
-    if(typeof F==='undefined' || !Array.isArray(F.debtModules) || !F.debtModules.length) return;
     if(typeof B==='undefined' || !B.debt || !B.debt.content) return;
+    if(typeof blockActive==='function' && !blockActive('debt')) return;   // only when the debt block is scoped in
+    // Default to the baseline strategies implied by the plan when no advice-request keyword module was
+    // recognised, so the templated debt wording still appears: an offset is the standard debt-management
+    // action; add the gearing modules when a gearing strategy (debt recycling / term loan) is scoped.
+    if(!(Array.isArray(F.debtModules) && F.debtModules.length)){
+      const sel=['offset'];
+      if(F.debtEquityScoped===true || (Array.isArray(F.loans)&&F.loans.some(l=>l&&/term loan|instalment gearing/i.test(String(l.purpose||''))))) sel.push('equity_release','term_loan');
+      F.debtModules=sel;
+    }
     const act=window.v192ActiveDebtModules();
     const gearing=window.v194IsGearingScoped();
     // No gearing/restructure scoped → no loan-limit table or *Note in the debt section: drop the
@@ -5369,17 +5381,26 @@ window.v194BuildDebtWording = function(){
     why.push("Interest on investment debt provides ongoing tax deductions, reducing the amount of interest you pay.");
     if(gearing) why.push("Debt recycling helps to establish an investment portfolio sooner and allows a portfolio to realise long term growth.");
     B.debt.content.why=why.join('\n');
-    // ── Risks: module risks + standard gearing risks (only when gearing) ──
+    // ── Risks: module risks + the standard always-on risks + gearing risks (only when gearing) ──
     let risks=act.reduce((a,m)=>a.concat(m.risk||[]),[]);
+    risks=risks.concat([
+      "There may be transaction costs involved in establishing the strategy;",
+      "If the loan interest rate is variable, an increase in interest rates will result in an increase in interest repayments, which may place some strain on your cash flow;"
+    ]);
     if(gearing) risks=risks.concat([
       "As you are gearing into investments, if those investments fall in value you might receive extra tax deductions over time, but you might actually lose funds;",
       "Given the high risk nature of a gearing strategy, I recommend that you review the suitability of your leveraged portfolio on at least an annual basis;",
       "A geared investment requires a long term investment horizon. Investment returns can be volatile, and in order to withstand short term fluctuations, I recommend a minimum 5 year investment time horizon;"
     ]);
     risks=uniq(risks); if(risks.length) B.debt.content.risks=risks.join('\n');
-    // ── Alternatives: module alternatives ──
-    const alts=uniq(act.reduce((a,m)=>a.concat(m.alt||[]),[]));
-    if(alts.length) B.debt.content.alternatives=alts.join('\n');
+    // ── Alternatives: module alternatives + the standard always-on alternatives ──
+    const _hlr=(function(){ const n=parseFloat(String(F.homeLoanRate||(F.rates&&F.rates.homeLoan)||'').replace(/[^0-9.]/g,'')); return isFinite(n)?(n.toFixed(2)+'%'):'X.XX%'; })();
+    let alts=act.reduce((a,m)=>a.concat(m.alt||[]),[]);
+    alts=alts.concat([
+      "Direct your surplus cashflow to a high interest savings account or a term deposit account. I discounted this strategy as you will yield a high effective after tax return by directing your surplus to your offset account (estimated to be approximately "+_hlr+" based on your current home loan interest rate). This also allows you to reduce your bad debt at a faster rate.",
+      "We considered making additional home loan repayments instead of utilising your existing offset account, however we discounted this strategy as your offset account will provide you with flexible access to your funds, should you need to draw upon these at any point."
+    ]);
+    alts=uniq(alts); if(alts.length) B.debt.content.alternatives=alts.join('\n');
   }catch(_){}
 };
 
