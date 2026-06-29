@@ -2765,7 +2765,7 @@ function importProjectorJSON(raw){
   const _PRESERVE=['careRecSuper','careAccounts','wsHoldings','wsFunds','wsProvOrder','insurance','insCompare','recInsurer','superAccounts','_src'];
   const _stash={}; if(!_differentClient){ try{ _PRESERVE.forEach(function(k){ if(F[k]!==undefined && F[k]!==null) _stash[k]=F[k]; }); }catch(_){} }
   const _Bprev = _hasPrior ? B : null;
-  const _Fkeep = ['goals','scopeOut','scopeOutText','scopeInText','customScopeIn','customScopeOut','limitedAdvice','refByIncorporation','refByIncDate','currentSituation','summaryStrategies','summaryProducts','summaryOutcomes','summaryServices','loans','allocCurrent','allocTarget','portfolio','debtModules','debtIPpurchaseScoped'];
+  const _Fkeep = ['goals','scopeOut','scopeOutText','scopeInText','customScopeIn','customScopeOut','limitedAdvice','refByIncorporation','refByIncDate','currentSituation','summaryStrategies','summaryProducts','summaryOutcomes','summaryServices','loans','allocCurrent','allocTarget','portfolio','debtModules','debtIPpurchaseScoped','debtFigures'];
   const _Ffill = ['clientFirst','clientLast','clientPreferred','partnerFirst','partnerLast','partnerPreferred','clientType','adviserName','adviserEmail','adviserPhone','secondaryAdviserOn','secondaryAdviserName','secondaryAdviserEmail','insSpecialistOn','insSpecialistName','insSpecialistEmail'];
   const _Fprev = {}; if(_hasPrior){ _Fkeep.concat(_Ffill).forEach(function(k){ _Fprev[k]=F[k]; }); }
   resetState();
@@ -5186,10 +5186,10 @@ window.DEBT_MODULES = [
   { id:'offset',        kw:/\boffset\b/i,
     strat:"We recommend you establish/utilise an offset account against your home loan.", outcome:"" },
   { id:'paydown',       kw:/pay[\s-]?down|pay off (?:the |your )?(?:home ?loan|mortgage)|reduce (?:the |your )?(?:home ?loan|mortgage)|clear (?:the |your )?(?:home ?loan|mortgage)|sale proceeds/i,
-    strat:"We recommend using surplus cash or sale proceeds to reduce your home loan.",
+    strat:"We recommend using {amt} from your existing cash or sale proceeds to reduce your home loan.",
     outcome:"Paying down your home loan will release available equity for investment opportunities while reducing your minimum loan repayments, improving your ongoing cashflow." },
   { id:'buffer',        kw:/emergency (?:cash )?buffer|cash buffer|buffer in (?:the |your )?offset/i,
-    strat:"We recommend retaining funds in your offset account as an emergency cash buffer.",
+    strat:"We recommend retaining {amt} in your offset account as an emergency cash buffer.",
     outcome:"Retaining cash in your home loan offset account provides a readily accessible emergency reserve while continuing to reduce the interest payable on your home loan." },
   { id:'carloan',       kw:/consolidat[^.\n]*car loan|car loan[^.\n]*(?:in)?to[^.\n]*home ?loan|roll[^.\n]*car loan/i,
     strat:"We recommend consolidating your existing car loan into your home loan.",
@@ -5217,6 +5217,29 @@ window.v192IPpurchaseScoped = function(extraText){
   }catch(_){}
   return false;
 };
+// Render a module's Summary — Strategies line, filling any {amt} token from the dollar figure the
+// adviser stated next to that keyword (F.debtFigures[id]); falls back to the firm's "$XX" placeholder
+// when no amount was supplied, so the line still reads correctly for the paraplanner to complete.
+window.v192StratLine = function(m){
+  let s=String((m&&m.strat)||'');
+  if(/\{amt\}/.test(s)){
+    let fig=''; try{ fig=(typeof F!=='undefined'&&F&&F.debtFigures&&F.debtFigures[m.id])||''; }catch(_){}
+    const n=Number(String(fig).replace(/[^0-9.]/g,''));
+    s=s.replace(/\{amt\}/g, (fig && isFinite(n) && n>0) ? ('$'+n.toLocaleString('en-AU',{maximumFractionDigits:0})) : '$XX');
+  }
+  return s;
+};
+// Pull the dollar figure the adviser wrote alongside a debt keyword (e.g. "retain $20,000 … buffer",
+// "use $50,000 … to reduce your home loan"), scanning only the line(s) that match the module keyword
+// so the buffer amount and the pay-down amount never cross-contaminate.
+window.v192ExtractDebtFigures = function(text){
+  const out={}; const lines=String(text||'').split(/\n+/);
+  window.DEBT_MODULES.forEach(m=>{ if(!/\{amt\}/.test(m.strat||'')) return;
+    const ln=lines.find(l=>m.kw.test(l) && /\$\s*[\d,]+/.test(l));
+    if(ln){ const mm=ln.match(/\$\s*([\d,]+(?:\.\d+)?)/); if(mm) out[m.id]=mm[1].replace(/,/g,''); }
+  });
+  return out;
+};
 // Match the debt modules present in a block of advice-request text, in canonical order, applying the
 // IP-purchase gate. Returns an array of module ids.
 window.v192MatchDebtModules = function(text){
@@ -5241,7 +5264,7 @@ function collectSummarySuggestions(){
     // investment-property-purchase module is dropped automatically when that purchase isn't scoped in.
     const _dm=window.v192ActiveDebtModules();
     if(_dm.length){
-      _dm.forEach(m=>{ if(m.strat) sug.push(m.strat); });
+      _dm.forEach(m=>{ if(m.strat) sug.push(window.v192StratLine(m)); });
     } else if(F.debtEquityScoped!==false){
       const _hasInvProp = !!(F.invPropValue||F.invPropDebt);
       const _hasHome = !!(F.homeValue||F.homeDebt);
@@ -6129,13 +6152,15 @@ function v143ApplyAdviceRequest(txt){
       // ip_deposit module is gated by v192ActiveDebtModules so it drops out when no IP purchase is scoped).
       if(_mods.length){
         F.debtModules=_mods.slice();
+        // Pull the dollar figures the adviser stated next to the buffer / pay-down keywords.
+        F.debtFigures=window.v192ExtractDebtFigures(debtSeg2);
         // An IP-purchase keyword in the debt section scopes the deposit/equity-for-purchase wording in;
         // its absence leaves the wording out (the inverse case the adviser asked for).
         if(_mods.indexOf('ip_deposit')>=0 || /investment propert[^.\n]*purchas/i.test(debtSeg2)) F.debtIPpurchaseScoped=true;
-        try{ const recLines=window.v192ActiveDebtModules().map(m=>m.strat).filter(Boolean);
+        try{ const recLines=window.v192ActiveDebtModules().map(m=>window.v192StratLine(m)).filter(Boolean);
           if(recLines.length && B.debt && B.debt.content) B.debt.content.recommendation=recLines.join('\n');
         }catch(_){}
-        applied.push('Debt modules: '+_mods.join(', '));
+        applied.push('Debt modules: '+_mods.join(', ')+(Object.keys(F.debtFigures||{}).length?(' ($: '+Object.keys(F.debtFigures).join(',')+')'):''));
       }
       // Debt recycling via a Term Loan (e.g. invest from term loan) → add the term-loan facility row to the
       // loan-structure table so it isn't limited to the home-refinance / investment-property rows.
@@ -6163,9 +6188,14 @@ function v143ApplyAdviceRequest(txt){
         const _remW = (F.remainingSurplusWeekly!=null&&F.remainingSurplusWeekly!=='') ? (Number(String(F.remainingSurplusWeekly).replace(/[^0-9.]/g,''))||0)
                     : Math.max(0,(Number(String(F.surplusWeekly||'').replace(/[^0-9.]/g,''))||0)-(Number(String(F.mcmaWeekly||'').replace(/[^0-9.]/g,''))||0));
         const _remWk=_remW?_m(_remW):'$XX', _remMo=_remW?_m(Math.round(_remW*52/12)):'$XX', _taxPa=F.taxRefundAnnual?_m(F.taxRefundAnnual):'$XX';
-        B.debt.content.recommendation = "We recommend you utilise an offset account against your home mortgage.\n"
-          + "We recommend your remaining surplus income of "+_remWk+" per week ("+_remMo+" per month) be directed towards your existing home loan offset account.\n"
+        const _surplusTax = "We recommend your remaining surplus income of "+_remWk+" per week ("+_remMo+" per month) be directed towards your existing home loan offset account.\n"
           + "We recommend you direct your tax savings to your existing home loan offset account. This is estimated to be "+_taxPa+" per annum.";
+        if(_mods.length){
+          // Keep the keyword-module recommendation; add the surplus/tax direction lines when an offset is in play.
+          if(_mods.indexOf('offset')>=0 && B.debt.content.recommendation) B.debt.content.recommendation = B.debt.content.recommendation + "\n" + _surplusTax;
+        } else {
+          B.debt.content.recommendation = "We recommend you utilise an offset account against your home mortgage.\n" + _surplusTax;
+        }
         const _lf=(F.outcomes&&F.outcomes.loanFrom)||'XX', _lt=(F.outcomes&&F.outcomes.loanTo)||'XX';
         const _isav=(F.outcomes&&F.outcomes.interestSaving)?('$'+Number(F.outcomes.interestSaving).toLocaleString('en-AU',{maximumFractionDigits:0})):'$XXX';
         B.debt.content.why = "In Line with your goals:\n"
