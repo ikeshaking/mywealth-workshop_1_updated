@@ -1185,6 +1185,9 @@ v180ll — Debt Recycling / "Debt Management Strategy" now fully reflects the De
   content: "↕"; font-size: 9px; color: var(--blue); margin-left: 4px;
 }
 
+/* v191: adviser-decision phrase in a goal (choose shares/property, keep/remove existing-cover review) */
+.hl-decide { background:#fff27a; border-radius:2px; padding:0 1px; box-decoration-break:clone; -webkit-box-decoration-break:clone; }
+
 /* Preview anchor highlight when scrolled-to */
 .preview-doc h1[data-block-id].v11-highlight {
   background: var(--blue-light);
@@ -2350,6 +2353,27 @@ function buildCurrentSituationText(){
   return [para1full, para2, para3, closing].filter(s=>s&&s.trim()).join('\n\n');
 }
 window.buildCurrentSituationText=buildCurrentSituationText;
+// v191: split a goal/objective string into segments, marking the adviser-DECISION phrases that must
+// render with a yellow highlight so the paraplanner consciously chooses rather than accepting a
+// default: the "shares and/or an investment property" choice, and the "review your existing cover"
+// keep/remove decision. Returns [{t, hl}] — used by both the live preview and the Word export.
+function v191GoalDecisionSegments(text){
+  text=String(text==null?'':text);
+  const ranges=[];
+  const add=(re)=>{ const r=new RegExp(re.source,'gi'); let m;
+    while((m=r.exec(text))){ const g=m[1]; if(g==null){ if(r.lastIndex===m.index) r.lastIndex++; continue; }
+      const s=m.index+m[0].indexOf(g); ranges.push([s,s+g.length]); if(r.lastIndex===m.index) r.lastIndex++; } };
+  add(/directed towards\s+(shares(?:\s+and(?:\/or)?\s+an\s+investment\s+property)?|an\s+investment\s+property)/);
+  add(/(review your existing cover)/);
+  if(!ranges.length) return [{t:text,hl:false}];
+  ranges.sort((a,b)=>a[0]-b[0]);
+  const merged=[]; ranges.forEach(r=>{ const last=merged[merged.length-1]; if(last&&r[0]<=last[1]) last[1]=Math.max(last[1],r[1]); else merged.push(r.slice()); });
+  const segs=[]; let pos=0;
+  merged.forEach(([s,e])=>{ if(s>pos) segs.push({t:text.slice(pos,s),hl:false}); segs.push({t:text.slice(s,e),hl:true}); pos=e; });
+  if(pos<text.length) segs.push({t:text.slice(pos),hl:false});
+  return segs;
+}
+window.v191GoalDecisionSegments=v191GoalDecisionSegments;
 // Keep the Annexure 1 "Employer" cell in step with the employer written in the Current
 // Situation narrative: parse "working as a <role> at|for <Employer> where/earning …" for each
 // person and push it into F.clientEmployer / F.partnerEmployer (what the annexure reads).
@@ -6498,7 +6522,9 @@ function previewTable(def){
 }
 function previewSpecial(def){
   switch(def.id){
-    case "goals": { const g=F.goals.filter(x=>x.text.trim() && !(F.retirementSOA && window.v97IsBudgetGoal(x.text))); return g.length?`<ul>${g.map(x=>`<li>${e(fill(x.text))}${Array.isArray(x.notes)&&x.notes.filter(n=>n&&n.trim()).length?`<ul style="margin:3px 0">${x.notes.filter(n=>n&&n.trim()).map(n=>`<li>${e(fill(n))}</li>`).join("")}</ul>`:""}</li>`).join("")}</ul>`:`<p class="muted">No goals.</p>`; }
+    case "goals": { const g=F.goals.filter(x=>x.text.trim() && !(F.retirementSOA && window.v97IsBudgetGoal(x.text)));
+      const ghl=t=>v191GoalDecisionSegments(fill(t)).map(s=>s.hl?(`<span class="hl-decide">${e(s.t)}</span>`):e(s.t)).join("");
+      return g.length?`<ul>${g.map(x=>`<li>${ghl(x.text)}${Array.isArray(x.notes)&&x.notes.filter(n=>n&&n.trim()).length?`<ul style="margin:3px 0">${x.notes.filter(n=>n&&n.trim()).map(n=>`<li>${e(fill(n))}</li>`).join("")}</ul>`:""}</li>`).join("")}</ul>`:`<p class="muted">No goals.</p>`; }
     case "scope": {
       const act = BLOCK_DEFS.filter(d=>d.type==="strategy" && blockActive(d.id));
       let h = `<p>We have agreed that we will advise you about:</p><ul>${act.map(a=>`<li>${e(scopeInTextOf(a))}</li>`).join("")}${(F.customScopeIn||[]).filter(t=>t.trim()).map(t=>`<li>${e(t)}</li>`).join("")||'<li class="muted">none</li>'}</ul>
@@ -7068,8 +7094,12 @@ function renderSpecialDocx(def, ch, K){
       ch.push(P("From our discussions with you, we understand that your financial goals and objectives are as follows:"));
       const g = F.goals.filter(x=>x.text.trim());
       const goalSubBul = (t)=> new Paragraph({ numbering:{reference:"bullets", level:1}, spacing:{after:30, line:276, lineRule:"auto"}, children:[new TextRun({text:String(t), font:"Nunito", size:20, color:"1a1a1a"})] });
+      // v191: render adviser-decision phrases (shares/property choice; keep/remove existing-cover review)
+      // with a yellow highlight so they stand out in the Word document for the paraplanner to action.
+      const BulHL = (t)=> new Paragraph({ numbering:{reference:"bullets", level:0}, spacing:{after:90, line:276, lineRule:"auto"},
+        children: v191GoalDecisionSegments(String(t)).map(s=> new TextRun(Object.assign({text:s.t, font:"Nunito", size:20, color:"1a1a1a"}, s.hl?{highlight:"yellow"}:{}))) });
       if(g.length) g.forEach(x=>{
-        ch.push(Bul(fill(x.text)));
+        ch.push(BulHL(fill(x.text)));
         if(Array.isArray(x.notes)) x.notes.filter(n=>n&&n.trim()).forEach(n=>ch.push(goalSubBul(fill(n))));
       });
       else ch.push(SmallItalic("[Goals to be confirmed]"));
