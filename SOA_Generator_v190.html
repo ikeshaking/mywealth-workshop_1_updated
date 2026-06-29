@@ -6104,12 +6104,50 @@ function v143ApplyAdviceRequest(txt){
     }
     applied.push('Investment: on'+(im?(' \u2014 $'+im+'/mo'):'')+(/Hub24[^\n]*Discover/i.test(t)?' \u2014 Hub24 Discover':'')); }
   // Superannuation
-  if(/Superannuation Advice/i.test(t)){ act('super'); if(B.super)B.super.active=true;
-    if(/Australian Super/i.test(t)){ const close=/Close[\s\S]{0,40}Australian Super/i.test(t);
+  // Trigger on the explicit "Superannuation Advice" heading OR on a super rollover instruction in a
+  // strategy-recommendations table (e.g. "Adam – rollover UniSuper & Military Super to new fund"),
+  // since not every advice request uses the formal heading.
+  const _superMentioned = /Superannuation Advice/i.test(t)
+      || /rollover[^.\n]*(?:new fund|full benefits)/i.test(t)
+      || /\b(?:UniSuper|Military Super|Australian Super|ART Super|MSBS|ADF Super)\b[^.\n]*rollover/i.test(t);
+  if(_superMentioned){ act('super'); if(B.super)B.super.active=true;
+    // ── Per-person rollover instructions ──────────────────────────────────────────────────
+    // "<Name> – rollover <funds> to new fund" / "<Name> – rollover full benefits to new fund".
+    // Map each named person (matched to client/partner by first name) and set ALL of that person's
+    // existing super accounts to a full Rollover into a new fund — which the summary wording renders
+    // as "establish a new super account + transfer 100% + redirect SG to the new fund", and which
+    // naturally excludes the retain-minimum / partial / keep-insurance-active variants.
+    (function(){
+      const _fn1=String(F.clientFirst||'').trim().toLowerCase(), _fn2=String(F.partnerFirst||'').trim().toLowerCase();
+      const _pf1=String(F.clientPreferred||'').trim().toLowerCase(), _pf2=String(F.partnerPreferred||'').trim().toLowerCase();
+      const _who=nm=>{ const n=String(nm||'').trim().toLowerCase(); if(!n) return '';
+        if((_fn2&&n===_fn2)||(_pf2&&n===_pf2)) return 'partner';
+        if((_fn1&&n===_fn1)||(_pf1&&n===_pf1)) return 'client'; return ''; };
+      const lineRe=/(^|\n)\s*([A-Z][a-z]+)\s*[–—-]\s*rollover\b([^\n]*)/g;
+      let m, any=false, anyPartial=false;
+      while((m=lineRe.exec(t))){
+        const who=_who(m[2]); if(!who) continue;
+        const rest=m[3];
+        if(!/new fund|full benefit|to a new|transfer 100|consolidat/i.test(rest)) continue;
+        const partial=/partial|retain[^.\n]*minimum|minimum balance|keep[^.\n]*insurance active/i.test(rest);
+        if(partial) anyPartial=true;
+        (F.superAccounts||[]).forEach(a=>{ if(a && (a.person||'client')===who && !/close/i.test(String(a.action||''))){ a.action=partial?'Partial Rollover':'Rollover'; } });
+        any=true;
+      }
+      if(any){
+        F._superPerPersonParsed=true;
+        F.superRolloverType = anyPartial ? 'partial' : 'full';
+        // Full rollover to a new fund ⇒ employer SG is redirected to the new fund (unless the request
+        // explicitly says to keep contributions at the existing fund).
+        if(!anyPartial && !/continue to direct your employer contributions to your existing/i.test(t)) F.redirectSG=true;
+        applied.push('Super: per-person rollover to new fund ('+(anyPartial?'partial':'full')+') parsed');
+      }
+    })();
+    if(!F._superPerPersonParsed && /Australian Super/i.test(t)){ const close=/Close[\s\S]{0,40}Australian Super/i.test(t);
       v141UpsertSuperAccount({fund:'Australian Super', person:'client', action:close?'Close':'Rollover', src:'Advice Request', silent:true}); applied.push('Super: Australian Super \u2014 '+(close?'Close & rollover':'Rollover')); }
-    if(/Military Super/i.test(t)){ v141UpsertSuperAccount({fund:'Military Super (Member and Ancillary Benefit portion)', person:'client', action:'Rollover', src:'Advice Request', silent:true}); applied.push('Super: Military Super \u2014 Rollover (Member & Ancillary)'); }
+    if(!F._superPerPersonParsed && /Military Super/i.test(t)){ v141UpsertSuperAccount({fund:'Military Super (Member and Ancillary Benefit portion)', person:'client', action:'Rollover', src:'Advice Request', silent:true}); applied.push('Super: Military Super \u2014 Rollover (Member & Ancillary)'); }
     // ADF Super (and any named "<X> Super fund"): retain-minimum + partial rollover is common here.
-    { const adf=t.match(/\b(ADF Super|[A-Z][A-Za-z]+ Super)\b/); const fundNm=adf?adf[1].replace(/\s+fund$/i,'').trim():''; 
+    if(!F._superPerPersonParsed){ const adf=t.match(/\b(ADF Super|[A-Z][A-Za-z]+ Super)\b/); const fundNm=adf?adf[1].replace(/\s+fund$/i,'').trim():'';
       const retainM=t.match(/retain\s+(?:a\s+|the\s+)?minimum[^$\n]*\$\s*([\d,]+)/i) || t.match(/minimum (?:required )?balance[^$\n]*\$\s*([\d,]+)/i) || t.match(/retain[^$\n]{0,30}\$\s*([\d,]+)/i);
       const retainAmt=retainM?retainM[1].replace(/,/g,''):'';
       const partial=/partial(?:ly)? rollover|retain\s+(?:a\s+|the\s+)?minimum|partial benefits|minimum required balance/i.test(t);
