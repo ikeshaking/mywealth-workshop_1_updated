@@ -55,7 +55,9 @@ const PLATSUPER=['Hub24 Choice','Hub24 Core','Hub24 Discover','Netwealth','BT Pa
 const PRODSUPER=['CARE Essentials – as per doc','CARE Full Care – as per doc','CARE with ESG','Realm','Vanguard Diversified ETFs – as per WealthSolver','Vanguard Index funds – as per WealthSolver'];
 const PLATBOND=['Generation Life'];const PRODBOND=['Vanguard portfolio','Dimensional World Equity 80% + Tax Effective Australian Share Fund 20%'];
 const INSURERS=['Acenda','ClearView ClearChoice','AIA Priority Protect','TAL Accelerated Protection','NEOS Protection','Zurich Protection Plan','OnePath Protection Plan','MetLife Protection','PPS Mutual Protection','Acenda Insurance','Encompass'];
-const DLISTS={PLATSUPER,PRODSUPER,PLATBOND,PRODBOND,INSURERS};
+const PRODFULL=['Hub24 Core CARE Essentials','Hub24 Choice Full CARE','Hub24 CARE Essentials – as per doc','Hub24 CARE with ESG','Hub24 Vanguard','CFS Edge Vanguard','CFS Edge CARE Essentials','Netwealth CARE Full','Netwealth Vanguard Diversified','BT Panorama CARE Essentials','Realm'];
+const PRODBONDFULL=['Generation Life Vanguard portfolio','Generation Life Dimensional World Equity 80% + Tax Effective Australian Share Fund 20%'];
+const DLISTS={PLATSUPER,PRODSUPER,PLATBOND,PRODBOND,INSURERS,PRODFULL,PRODBONDFULL};
 function datalistsHTML(){return Object.keys(DLISTS).map(n=>`<datalist id="${n}">`+DLISTS[n].map(o=>`<option value="${o.replace(/"/g,'&quot;')}">`).join('')+`</datalist>`).join('')}
 function fHL(id,l,list){return `<div class="fld"><label>${l} <small class="hint">(pick or free-type)</small></label><input list="${list}" data-f="${id}"></div>`}
 const SCOPE_PRESET=['Existing Shares','Existing Investment Property','Cryptocurrency','International Assets','Military Super (Defined Benefit portion)'];
@@ -169,46 +171,31 @@ function renderFree(ai){let h='';(FREE[ai]||[]).forEach((f,i)=>{h+=`<div class="
  document.querySelectorAll('[data-fr]').forEach(inp=>inp.addEventListener('input',e=>{const[a,i,k]=e.target.dataset.fr.split('.');FREE[a][i][k]=e.target.value;render()}));
  render();
 }
-function addProd(ai){PROD[ai]=PROD[ai]||[];PROD[ai].push({owner:'',acctno:'Account 1',acct:'',plat:'',appr:'',bal:''});renderProd(ai)}
+function addProd(ai){PROD[ai]=PROD[ai]||[];PROD[ai].push({owner:'',acct:'Accumulation',product:''});renderProd(ai)}
 function renderProd(ai){let h='';(PROD[ai]||[]).forEach((p,i)=>{h+=`<div class="repeat"><button class="del" onclick="PROD[${ai}].splice(${i},1);renderProd(${ai})">remove</button><div class="row">`+
-  `<div class="fld"><label>Owner</label><select data-pd="${ai}.${i}.owner">`+owners().map(o=>`<option ${p.owner==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
-  `<div class="fld"><label>Account #</label><select data-pd="${ai}.${i}.acctno">`+['Account 1','Account 2','Account 3'].map(o=>`<option ${p.acctno==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
-  `<div class="fld"><label>Account type</label><select data-pd="${ai}.${i}.acct">`+['Accumulation','Account-Based Pension','TTR Pension','SMSF Accumulation','SMSF Pension'].map(o=>`<option ${p.acct==o?'selected':''}>${o}</option>`).join('')+`</select></div></div><div class="row">`+
-  `<div class="fld"><label>Platform</label><input list="PLATSUPER" data-pd="${ai}.${i}.plat" value="${(p.plat||'').replace(/"/g,'&quot;')}"></div>`+
-  `<div class="fld"><label>Product / approach</label><input list="PRODSUPER" data-pd="${ai}.${i}.appr" value="${(p.appr||'').replace(/"/g,'&quot;')}"></div>`+
-  `<div class="fld"><label>Balance</label><input data-pd="${ai}.${i}.bal" value="${p.bal||''}" placeholder="$"></div></div></div>`});
+  `<div class="fld" style="flex:0 0 120px"><label>Owner</label><select data-pd="${ai}.${i}.owner">`+owners().map(o=>`<option ${p.owner==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld" style="flex:0 0 150px"><label>Account</label><select data-pd="${ai}.${i}.acct">`+['Accumulation','Pension','TTR Pension','SMSF Accumulation','SMSF Pension'].map(o=>`<option ${p.acct==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld"><label>Product</label><input list="PRODFULL" data-pd="${ai}.${i}.product" value="${(p.product||'').replace(/"/g,'&quot;')}" placeholder="e.g. Hub24 Core CARE Essentials"></div></div></div>`});
  document.getElementById('prodList_'+ai).innerHTML=h;
- document.querySelectorAll('[data-pd]').forEach(inp=>inp.addEventListener('input',e=>{const[a,i,k]=e.target.dataset.pd.split('.');PROD[a][i][k]=e.target.value;render()}));
- render();
-}
-function addInsProd(ai){INSPROD[ai]=INSPROD[ai]||[];INSPROD[ai].push({owner:'',cover:'Life',action:'Apply (new cover)',insurer:'',amt:''});renderInsProd(ai)}
+ document.querySelectorAll('[data-pd]').forEach(inp=>inp.addEventListener('input',e=>{const[a,i,k]=e.target.dataset.pd.split('.');PROD[a][i][k]=e.target.value;render()}));render()}
+function addInsProd(ai){INSPROD[ai]=INSPROD[ai]||[];INSPROD[ai].push({owner:'',action:'Apply (new cover)',insurer:''});renderInsProd(ai)}
 function renderInsProd(ai){let h='';(INSPROD[ai]||[]).forEach((p,i)=>{h+=`<div class="repeat"><button class="del" onclick="INSPROD[${ai}].splice(${i},1);renderInsProd(${ai})">remove</button><div class="row">`+
-  `<div class="fld"><label>Owner</label><select data-ip="${ai}.${i}.owner">`+owners().map(o=>`<option ${p.owner==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
-  `<div class="fld"><label>Cover</label><select data-ip="${ai}.${i}.cover">`+['Life','TPD','Trauma','Income Protection','Life & TPD (linked)','Package'].map(o=>`<option ${p.cover==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
-  `<div class="fld"><label>Action</label><select data-ip="${ai}.${i}.action">`+['Apply (new cover)','Retain','Alter','Transfer (via takeover)','Cancel'].map(o=>`<option ${p.action==o?'selected':''}>${o}</option>`).join('')+`</select></div></div><div class="row">`+
-  `<div class="fld"><label>Insurer / product</label><input list="INSURERS" data-ip="${ai}.${i}.insurer" value="${(p.insurer||'').replace(/"/g,'&quot;')}"></div>`+
-  `<div class="fld"><label>Sum insured / amount</label><input data-ip="${ai}.${i}.amt" value="${(p.amt||'').replace(/"/g,'&quot;')}" placeholder="$"></div></div></div>`});
+  `<div class="fld" style="flex:0 0 120px"><label>Owner</label><select data-ip="${ai}.${i}.owner">`+owners().map(o=>`<option ${p.owner==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld" style="flex:0 0 175px"><label>Action</label><select data-ip="${ai}.${i}.action">`+['Apply (new cover)','Top up','Retain','Alter','Transfer (via takeover)','Cancel'].map(o=>`<option ${p.action==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld"><label>Insurer / product</label><input list="INSURERS" data-ip="${ai}.${i}.insurer" value="${(p.insurer||'').replace(/"/g,'&quot;')}" placeholder="e.g. TAL"></div></div></div>`});
  document.getElementById('insList_'+ai).innerHTML=h;
  document.querySelectorAll('[data-ip]').forEach(inp=>inp.addEventListener('input',e=>{const[a,i,k]=e.target.dataset.ip.split('.');INSPROD[a][i][k]=e.target.value;render()}));render()}
-function addBondProd(ai){BONDPROD[ai]=BONDPROD[ai]||[];BONDPROD[ai].push({owner:'',forwhom:'',plat:'Generation Life',option:'',initial:'',ongoing:''});renderBondProd(ai)}
+function addBondProd(ai){BONDPROD[ai]=BONDPROD[ai]||[];BONDPROD[ai].push({owner:'',forwhom:'',product:'Generation Life '});renderBondProd(ai)}
 function renderBondProd(ai){let h='';(BONDPROD[ai]||[]).forEach((p,i)=>{h+=`<div class="repeat"><button class="del" onclick="BONDPROD[${ai}].splice(${i},1);renderBondProd(${ai})">remove</button><div class="row">`+
-  `<div class="fld"><label>Owner</label><select data-bp="${ai}.${i}.owner">`+owners().map(o=>`<option ${p.owner==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
-  `<div class="fld"><label>For (beneficiary / child)</label><input data-bp="${ai}.${i}.forwhom" value="${(p.forwhom||'').replace(/"/g,'&quot;')}" placeholder="e.g. child’s name"></div></div><div class="row">`+
-  `<div class="fld"><label>Platform</label><input list="PLATBOND" data-bp="${ai}.${i}.plat" value="${(p.plat||'').replace(/"/g,'&quot;')}"></div>`+
-  `<div class="fld"><label>Investment option</label><input list="PRODBOND" data-bp="${ai}.${i}.option" value="${(p.option||'').replace(/"/g,'&quot;')}"></div></div><div class="row">`+
-  `<div class="fld"><label>Initial $</label><input data-bp="${ai}.${i}.initial" value="${(p.initial||'').replace(/"/g,'&quot;')}" placeholder="$"></div>`+
-  `<div class="fld"><label>Ongoing $ pm</label><input data-bp="${ai}.${i}.ongoing" value="${(p.ongoing||'').replace(/"/g,'&quot;')}" placeholder="$ pm"></div></div></div>`});
+  `<div class="fld" style="flex:0 0 120px"><label>Owner</label><select data-bp="${ai}.${i}.owner">`+owners().map(o=>`<option ${p.owner==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld" style="flex:0 0 150px"><label>For (child/beneficiary)</label><input data-bp="${ai}.${i}.forwhom" value="${(p.forwhom||'').replace(/"/g,'&quot;')}" placeholder="e.g. Juliette"></div>`+
+  `<div class="fld"><label>Product</label><input list="PRODBONDFULL" data-bp="${ai}.${i}.product" value="${(p.product||'').replace(/"/g,'&quot;')}" placeholder="Generation Life Vanguard portfolio"></div></div></div>`});
  document.getElementById('bondList_'+ai).innerHTML=h;
  document.querySelectorAll('[data-bp]').forEach(inp=>inp.addEventListener('input',e=>{const[a,i,k]=e.target.dataset.bp.split('.');BONDPROD[a][i][k]=e.target.value;render()}));render()}
-function addInvProd(ai){INVPROD[ai]=INVPROD[ai]||[];INVPROD[ai].push({owner:'',action:'Recommended (establish)',plat:'',option:'',funded:'',initial:'',ongoing:''});renderInvProd(ai)}
+function addInvProd(ai){INVPROD[ai]=INVPROD[ai]||[];INVPROD[ai].push({owner:'',product:''});renderInvProd(ai)}
 function renderInvProd(ai){let h='';(INVPROD[ai]||[]).forEach((p,i)=>{h+=`<div class="repeat"><button class="del" onclick="INVPROD[${ai}].splice(${i},1);renderInvProd(${ai})">remove</button><div class="row">`+
-  `<div class="fld"><label>Owner</label><select data-vp="${ai}.${i}.owner">`+owners().map(o=>`<option ${p.owner==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
-  `<div class="fld"><label>Action</label><select data-vp="${ai}.${i}.action">`+['Recommended (establish)','Retain','Sell','In-specie transfer'].map(o=>`<option ${p.action==o?'selected':''}>${o}</option>`).join('')+`</select></div></div><div class="row">`+
-  `<div class="fld"><label>Platform</label><input list="PLATSUPER" data-vp="${ai}.${i}.plat" value="${(p.plat||'').replace(/"/g,'&quot;')}"></div>`+
-  `<div class="fld"><label>Product / option</label><input list="PRODSUPER" data-vp="${ai}.${i}.option" value="${(p.option||'').replace(/"/g,'&quot;')}"></div></div><div class="row">`+
-  `<div class="fld"><label>Funded from</label><select data-vp="${ai}.${i}.funded"><option value=""></option>`+['Cash','Term loan','Sale proceeds','In-specie transfer','Cash + Term loan','Cash + Sale proceeds'].map(o=>`<option ${p.funded==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
-  `<div class="fld"><label>Initial $</label><input data-vp="${ai}.${i}.initial" value="${(p.initial||'').replace(/"/g,'&quot;')}" placeholder="$"></div>`+
-  `<div class="fld"><label>Ongoing $ pm</label><input data-vp="${ai}.${i}.ongoing" value="${(p.ongoing||'').replace(/"/g,'&quot;')}" placeholder="$ pm"></div></div></div>`});
+  `<div class="fld" style="flex:0 0 130px"><label>Owner</label><select data-vp="${ai}.${i}.owner">`+owners().map(o=>`<option ${p.owner==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld"><label>Product</label><input list="PRODFULL" data-vp="${ai}.${i}.product" value="${(p.product||'').replace(/"/g,'&quot;')}" placeholder="e.g. Hub24 Core CARE Essentials"></div></div></div>`});
  document.getElementById('invList_'+ai).innerHTML=h;
  document.querySelectorAll('[data-vp]').forEach(inp=>inp.addEventListener('input',e=>{const[a,i,k]=e.target.dataset.vp.split('.');INVPROD[a][i][k]=e.target.value;render()}));render()}
 function addContrib(){CONTRIB.push({type:'',who:'',fy:'',acct:'',amt:''});renderContrib()}
@@ -282,10 +269,10 @@ function asText(o){let L=[];
      if(parts.length){L.push('  Ongoing plan costs to MCMA:');parts.forEach(p=>L.push('    • '+p))}
      if(o.cashflow.length){L.push('  Costs paid from');o.cashflow.forEach(c=>L.push(`    • ${c.src||''}${c.owner&&c.owner!='Personal'?' ('+c.owner+')':''} - ${c.amt||''}${c.note?' ['+c.note+']':''}`))}
      const cp=o.cashPos,cpl=[];if(cp.before)cpl.push('before $'+cp.before);if(cp.after)cpl.push('after $'+cp.after);if(cp.leave)cpl.push('sick/AL '+cp.leave+' days');if(cpl.length)L.push('  Cash position: '+cpl.join(', '));if(cp.note)L.push('  Note: '+cp.note)}
-   if(o.superProducts[area]&&o.superProducts[area].length){L.push('  Product Recommendations');o.superProducts[area].forEach(p=>L.push(`    • ${p.owner||''} ${p.acctno||''} ${p.acct||''}: ${p.plat||''} ${p.appr||''}${p.bal?' ('+p.bal+')':''}`))}
-   else if(o.insProducts[area]&&o.insProducts[area].length){L.push('  Product Recommendations');o.insProducts[area].forEach(p=>L.push(`    • [${p.action}] ${p.owner||''} ${p.cover}${p.insurer?': '+p.insurer:''}${p.amt?' ('+p.amt+')':''}`))}
-   else if(o.bondProducts[area]&&o.bondProducts[area].length){L.push('  Product Recommendations');o.bondProducts[area].forEach(p=>L.push(`    • ${p.owner||''}${p.forwhom?' (for '+p.forwhom+')':''}: ${p.plat||''}${p.option?' — '+p.option:''}${p.initial?' [initial '+p.initial+(p.ongoing?', ongoing '+p.ongoing:'')+']':(p.ongoing?' [ongoing '+p.ongoing+']':'')}`))}
-   else if(o.invProducts[area]&&o.invProducts[area].length){L.push('  Product Recommendations');o.invProducts[area].forEach(p=>L.push(`    • [${p.action}] ${p.owner||''}: ${p.plat||''}${p.option?' — '+p.option:''}${p.funded?' (funded from '+p.funded+')':''}${p.initial?' [initial '+p.initial+(p.ongoing?', ongoing '+p.ongoing:'')+']':(p.ongoing?' [ongoing '+p.ongoing+']':'')}`))}
+   if(o.superProducts[area]&&o.superProducts[area].length){L.push('  Product Recommendations');o.superProducts[area].forEach(p=>L.push(`    • ${p.owner||''}${p.acct?' '+p.acct:''}: ${p.product||''}`))}
+   else if(o.insProducts[area]&&o.insProducts[area].length){L.push('  Product Recommendations');o.insProducts[area].forEach(p=>L.push(`    • ${p.owner&&p.owner!='Personal'?p.owner+' — ':''}${p.action} ${p.insurer||''}`))}
+   else if(o.bondProducts[area]&&o.bondProducts[area].length){L.push('  Product Recommendations');o.bondProducts[area].forEach(p=>L.push(`    • ${p.owner||''}${p.forwhom?' (for '+p.forwhom+')':''}: ${p.product||''}`))}
+   else if(o.invProducts[area]&&o.invProducts[area].length){L.push('  Product Recommendations');o.invProducts[area].forEach(p=>L.push(`    • ${p.owner||''}: ${p.product||''}`))}
    else if(o.products[area]){L.push('  Product Recommendations');L.push('    '+o.products[area])}
    if(o.paraplanning[area]){L.push('  Paraplanning note:');L.push('    '+o.paraplanning[area])}
  });
