@@ -106,7 +106,7 @@
    "note": "Standard offset/surplus/tax wording is always-on when debt is scoped; the rest are tailored modules triggered by keywords. Gearing wording (term loan / equity release) only appears when a gearing strategy is scoped.",
    "scenarios": [
     {
-     "name": "Establish / utilise an offset account",
+     "name": "Establish or utilise an offset account",
      "triggers": [
       "offset account",
       "utilise offset",
@@ -115,7 +115,7 @@
      "type": "Tailored",
      "gate": "—",
      "figures": "—",
-     "strat": "We recommend you establish/utilise an offset account against your home loan.",
+     "strat": "We recommend you [establish / utilise] an offset account against your home loan and hold your cash and surplus within it.",
      "outcome": "Directing your surplus income towards your existing home loan offset will save you an estimated $XX in interest costs and reduce the repayment period on your loan from XX to XX years.",
      "why": [
       "An offset account will allow you to reduce your current interest payments but still provide you the flexibility to withdraw these funds for your liquidity needs.",
@@ -130,7 +130,11 @@
       "We considered making additional home loan repayments instead of utilising your existing offset account, however we discounted this strategy as your offset account will provide you with flexible access to your funds, should you need to draw upon these at any point."
      ],
      "draft": false,
-     "appliesTo": "accumulator"
+     "appliesTo": "accumulator",
+     "pick": [
+      "Establish",
+      "Utilise"
+     ]
     },
     {
      "name": "Direct surplus income AND tax savings to offset (two separate amounts, always-on)",
@@ -390,7 +394,7 @@
      "appliesTo": "accumulator"
     },
     {
-     "name": "Switch home loan from principal & interest to interest only",
+     "name": "Switch investment property loan(s) from principal & interest to interest only",
      "triggers": [
       "switch home loan to interest only",
       "home loan interest only",
@@ -399,7 +403,7 @@
      "type": "Tailored",
      "gate": "—",
      "figures": "—",
-     "strat": "We recommend you refinance your home loan from principal and interest to interest only repayments.",
+     "strat": "We recommend you switch your investment property loan(s) from principal & interest to interest only to improve cashflow and maintain tax-deductible debt.",
      "outcome": "Switching to interest-only repayments improves your short-term cash flow, freeing surplus to direct towards your investment strategy or offset.",
      "why": [
       "Improves short-term cashflow, freeing surplus for other wealth-creation opportunities or to hold in offset."
@@ -430,6 +434,33 @@
      "appliesTo": "both",
      "draft": false,
      "custom": true
+    },
+    {
+     "name": "Sell current home and purchase a new home (PPR — set aside funds)",
+     "triggers": [
+      "sell home and upgrade",
+      "upgrade home",
+      "sell and buy new home",
+      "new home",
+      "made an offer",
+      "equity loan for deposit",
+      "home upgrade",
+      "sell current home and upgrade"
+     ],
+     "type": "Tailored",
+     "gate": "—",
+     "figures": "{saleProceeds},{newValue}",
+     "strat": "You intend to sell your current home. As this is your principal residence we do not provide advice on it; we recommend you set aside $___ to fund the purchase of your new home.",
+     "outcome": "Your move to the new home is funded with an equity-drawdown deposit now, then tidied up with the sale proceeds, and your debt and cashflow are restructured around the upgraded home.",
+     "why": [
+      "Setting aside the required funds ensures the purchase of your next home is covered from sale proceeds and available cash."
+     ],
+     "risks": [
+      "Sale price and timing are uncertain; transaction costs (agent, legal, stamp duty) apply."
+     ],
+     "alts": [],
+     "draft": false,
+     "appliesTo": "accumulator"
     }
    ]
   },
@@ -516,33 +547,6 @@
      ],
      "draft": true,
      "appliesTo": "both"
-    },
-    {
-     "name": "Sell current home and purchase a new home (PPR — set aside funds)",
-     "triggers": [
-      "sell home and upgrade",
-      "upgrade home",
-      "sell and buy new home",
-      "new home",
-      "made an offer",
-      "equity loan for deposit",
-      "home upgrade",
-      "sell current home and upgrade"
-     ],
-     "type": "Tailored",
-     "gate": "—",
-     "figures": "{saleProceeds},{newValue}",
-     "strat": "You intend to sell your current home. As this is your principal residence we do not provide advice on it; we recommend you set aside $___ to fund the purchase of your new home.",
-     "outcome": "Your move to the new home is funded with an equity-drawdown deposit now, then tidied up with the sale proceeds, and your debt and cashflow are restructured around the upgraded home.",
-     "why": [
-      "Setting aside the required funds ensures the purchase of your next home is covered from sale proceeds and available cash."
-     ],
-     "risks": [
-      "Sale price and timing are uncertain; transaction costs (agent, legal, stamp duty) apply."
-     ],
-     "alts": [],
-     "draft": false,
-     "appliesTo": "accumulator"
     },
     {
      "name": "Convert current home into an investment property",
@@ -3031,6 +3035,26 @@
      "appliesTo": "both",
      "draft": false,
      "custom": false
+    },
+    {
+     "name": "Retain an emergency cash buffer",
+     "triggers": [
+      "emergency buffer",
+      "cash buffer",
+      "emergency fund"
+     ],
+     "type": "Always-on (cashflow scoped)",
+     "gate": "",
+     "figures": "$ amount",
+     "strat": "We recommend you retain an emergency cash buffer of $___ within your offset/savings for unexpected expenses.",
+     "outcome": "You hold a readily-accessible buffer for unexpected costs, reducing the need to draw on investments or credit.",
+     "why": [
+      "A cash buffer provides liquidity and peace of mind for unexpected expenses."
+     ],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false
     }
    ]
   },
