@@ -665,11 +665,13 @@
    "note": "Investment bond strategies + product, separate from the investment plan.",
    "scenarios": [
     {
-     "name": "Investment bond",
+     "name": "Establish an investment bond",
      "triggers": [
       "investment bond",
       "insurance bond",
-      "education bond"
+      "education bond",
+      "establish investment bond",
+      "new investment bond"
      ],
      "type": "Tailored",
      "gate": "Investment bond scoped (commonly for children's education / high-income earners)",
@@ -694,6 +696,61 @@
      ],
      "draft": false,
      "appliesTo": "both"
+    },
+    {
+     "name": "Retain existing investment bond",
+     "triggers": [
+      "retain investment bond",
+      "keep existing bond"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend you retain your existing investment bond.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false
+    },
+    {
+     "name": "Sell down existing investment bond",
+     "triggers": [
+      "sell investment bond",
+      "selldown bond",
+      "withdraw from bond"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "$ amount",
+     "strat": "We recommend you sell down (withdraw from) your existing investment bond.",
+     "outcome": "",
+     "why": [],
+     "risks": [
+      "Withdrawing within the 10-year period may have tax implications (30% offset); the 125% rule may apply."
+     ],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false
+    },
+    {
+     "name": "CGT implications — investment bond (free text)",
+     "triggers": [
+      "bond cgt",
+      "investment bond tax"
+     ],
+     "type": "Custom (free text)",
+     "gate": "",
+     "figures": "—",
+     "strat": "[Free-type the CGT / tax implications of the bond — 10-year rule, 125% rule, 30% offset on early withdrawal.]",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": true
     }
    ]
   },
@@ -779,7 +836,7 @@
      "appliesTo": "both"
     },
     {
-     "name": "Sell down an existing investment / asset",
+     "name": "Sell down existing investment / asset",
      "triggers": [
       "sell down investment",
       "sell existing investment account",
@@ -969,7 +1026,7 @@
      "custom": false
     },
     {
-     "name": "Rebalance existing holdings into the recommended portfolio (e.g. into CARE)",
+     "name": "Rebalance existing holdings into the recommended portfolio",
      "triggers": [
       "rebalance into care",
       "rebalance existing holdings",
@@ -978,7 +1035,7 @@
      "type": "Tailored",
      "gate": "",
      "figures": "—",
-     "strat": "We recommend you rebalance your existing holdings into the recommended portfolio (e.g. the CARE philosophy) in line with your risk profile.",
+     "strat": "We recommend you rebalance your existing holdings into the recommended portfolio in line with your risk profile.",
      "outcome": "",
      "why": [
       "Aligns your existing assets to the recommended strategy and risk profile."
@@ -986,24 +1043,6 @@
      "risks": [
       "Selling existing holdings to rebalance may crystallise CGT and incur transaction costs."
      ],
-     "alts": [],
-     "appliesTo": "both",
-     "draft": false,
-     "custom": false
-    },
-    {
-     "name": "Vanguard Diversified ETFs (instead of CARE / single Vanguard funds)",
-     "triggers": [
-      "vanguard diversified",
-      "diversified etf"
-     ],
-     "type": "Tailored",
-     "gate": "",
-     "figures": "—",
-     "strat": "We recommend a Vanguard Diversified ETF portfolio rather than the CARE managed portfolios, in line with your risk profile.",
-     "outcome": "",
-     "why": [],
-     "risks": [],
      "alts": [],
      "appliesTo": "both",
      "draft": false,
