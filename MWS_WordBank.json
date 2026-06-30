@@ -1060,7 +1060,7 @@
    ]
   },
   {
-   "name": "5 · Superannuation",
+   "name": "5 · Personal Superannuation",
    "note": "Rollover variants, defined benefit and SMSF wording are verbatim from your SOAs. Military super and pension/TTR variants are drafts.",
    "scenarios": [
     {
@@ -1700,7 +1700,7 @@
    ]
   },
   {
-   "name": "6 · Super Contributions",
+   "name": "6 · Superannuation Contributions",
    "note": "Salary sacrifice / carry‑forward wording is verbatim. The remaining contribution types are drafts for your review.",
    "scenarios": [
     {
@@ -2149,7 +2149,7 @@
    ]
   },
   {
-   "name": "7 · Insurance / Personal Protection",
+   "name": "7 · Personal Protection",
    "note": "New, top‑up, replace/takeover and retain wording is verbatim from your SOAs (Linked/Own‑Occupation, inside‑super vs personal, 90‑day wait, etc.).",
    "scenarios": [
     {
@@ -2898,7 +2898,7 @@
    ]
   },
   {
-   "name": "8 · Cashflow & Budgeting",
+   "name": "8 · Cashflow Management & Budgeting",
    "note": "MCMA and surplus‑direction wording is verbatim from your SOAs.",
    "scenarios": [
     {
@@ -3167,7 +3167,7 @@
    ]
   },
   {
-   "name": "10 · Administration",
+   "name": "10 · Administration Recommendations",
    "note": "",
    "scenarios": [
     {
@@ -3298,6 +3298,257 @@
      "alts": [],
      "draft": false,
      "appliesTo": "both"
+    }
+   ]
+  },
+  {
+   "name": "CARE · Investment Philosophy justification",
+   "note": "Tickable reasons CARE is recommended (per client/entity, super and/or investment). Feeds Summary-Outcomes, Super & Investment strategy/product wording, Alternatives comparison and Replacement Implications — to justify best interests regardless of fee.",
+   "scenarios": [
+    {
+     "name": "Active, professional day-to-day management (dynamic asset allocation)",
+     "triggers": [
+      "care active management",
+      "actively managed",
+      "professional management"
+     ],
+     "type": "CARE justification (tailored)",
+     "gate": "CARE recommended for super and/or investment",
+     "figures": "—",
+     "strat": "",
+     "outcome": "Your portfolio is actively managed day-to-day with the asset allocation adjusted as markets and your circumstances change, pursuing greater risk-adjusted returns and wealth preservation aligned to your [risk profile] profile and goals.",
+     "why": [
+      "The CARE philosophy provides professional, active management of your portfolio rather than a set-and-forget approach. This is appropriate for you, [Name], because [you have indicated you prefer your investments outsourced and professionally managed / your goal of {goal} requires your portfolio to adapt over time].",
+      "Active management allows the portfolio to respond to changing markets and to your changing needs, which a static investment cannot."
+     ],
+     "risks": [],
+     "alts": [
+      "We considered a single diversified index fund; we discounted it as it does not provide the active management and separate components required to manage volatility and your personalised liquidity needs.",
+      "We considered you holding direct shares through a broker; we discounted this as you would not achieve the depth of diversification or the level of professional active management available through the managed account service."
+     ],
+     "replace": [
+      "While the recommended portfolio costs more than [your current arrangement / a basic index option], we believe the professional active management and the additional value it provides is in your best interests and justifies the higher cost given your objectives and your preference for a managed solution."
+     ],
+     "appliesTo": "both",
+     "draft": false,
+     "careReason": true
+    },
+    {
+     "name": "Reserves component — liquidity to avoid forced selling in downturns",
+     "triggers": [
+      "care reserves",
+      "reserves component",
+      "avoid forced selling",
+      "sequencing risk"
+     ],
+     "type": "CARE justification (tailored)",
+     "gate": "CARE recommended for super and/or investment",
+     "figures": "—",
+     "strat": "",
+     "outcome": "You hold a dedicated Reserves buffer that is continually topped up from portfolio income, so income and rebalancing can be funded without selling growth assets at the wrong time during a market downturn.",
+     "why": [
+      "A key benefit of the CARE approach is the separation of your investments into Core, Active, Reserves and Enhanced components, allowing the Reserves component to be continually topped up with income from the others.",
+      "This matters for you because [you are drawing an income / you are approaching retirement / you want to maintain your lifestyle and income through retirement] — it means you should not have to sell growth assets through necessity or at depressed prices during a downturn."
+     ],
+     "risks": [],
+     "alts": [
+      "A traditional diversified portfolio was discounted as it does not provide the separate Reserves component to smooth volatility at market extremes and provide for your personalised liquidity requirements."
+     ],
+     "replace": [
+      "The Reserves structure directly protects your retirement income from sequencing risk; we consider this protection to be in your best interests notwithstanding the higher cost relative to [your current fund / a basic option]."
+     ],
+     "appliesTo": "both",
+     "draft": false,
+     "careReason": true
+    },
+    {
+     "name": "Diversification & risk-adjusted returns (Core / Active / Enhanced)",
+     "triggers": [
+      "care diversification",
+      "core active enhanced",
+      "risk adjusted return"
+     ],
+     "type": "CARE justification (tailored)",
+     "gate": "CARE recommended for super and/or investment",
+     "figures": "—",
+     "strat": "",
+     "outcome": "Your capital is diversified across the Core, Active and Enhanced components to pursue stronger risk-adjusted returns for your [risk profile] profile.",
+     "why": [
+      "The CARE components provide diversification across management styles and asset classes, targeting better risk-adjusted returns than a single-fund approach.",
+      "This is aligned to your [risk profile] risk profile and your goal of {goal}."
+     ],
+     "risks": [],
+     "alts": [
+      "A single balanced fund was considered and discounted as it provides less diversification across management styles and less ability to tailor the portfolio to your profile."
+     ],
+     "replace": [
+      "The improved diversification supports the recommendation despite a higher fee than [your current arrangement]."
+     ],
+     "appliesTo": "both",
+     "draft": false,
+     "careReason": true
+    },
+    {
+     "name": "Behavioural discipline — removing emotion from investing",
+     "triggers": [
+      "care behavioural",
+      "remove emotion",
+      "discipline at market extremes"
+     ],
+     "type": "CARE justification (tailored)",
+     "gate": "CARE recommended for super and/or investment",
+     "figures": "—",
+     "strat": "",
+     "outcome": "A disciplined, managed process keeps your portfolio invested appropriately through market cycles, reducing the risk of poorly-timed decisions.",
+     "why": [
+      "The managed structure removes the need for you to make emotional buy/sell decisions at market extremes, which is one of the largest detractors from long-term returns.",
+      "This supports your goal of {goal} by keeping your strategy on track."
+     ],
+     "risks": [],
+     "alts": [
+      "A self-directed approach was discounted given the behavioural risk of selling at market lows and the time and expertise required to manage the portfolio yourself."
+     ],
+     "replace": [
+      "The discipline the managed account provides is, in our view, worth the additional cost over [a self-managed / lower-cost option]."
+     ],
+     "appliesTo": "both",
+     "draft": false,
+     "careReason": true
+    },
+    {
+     "name": "Tax efficiency — franking credits & CGT management within the managed account",
+     "triggers": [
+      "care tax efficiency",
+      "franking credits",
+      "cgt management"
+     ],
+     "type": "CARE justification (tailored)",
+     "gate": "CARE recommended for super and/or investment",
+     "figures": "—",
+     "strat": "",
+     "outcome": "Your account receives the direct benefit of franking credits and active capital-gains management, improving your after-tax return and helping to offset fees.",
+     "why": [
+      "Through the recommended platform you receive the direct benefit of any franking credits associated with your account (estimated approx. $[amount] p.a.), which reduces your tax and increases your effective return.",
+      "Capital gains are actively managed within the portfolio, improving tax outcomes compared with [your existing fund, where you may only receive a partial or no benefit of franking credits]."
+     ],
+     "risks": [],
+     "alts": [
+      "[Your existing fund] was considered for retention; we discounted it as you may only receive a partial or no franking-credit benefit, making it less tax-effective for you."
+     ],
+     "replace": [
+      "The after-tax benefit (franking credits + CGT management) partially offsets the fee differential and supports the recommendation as being in your best interests."
+     ],
+     "appliesTo": "both",
+     "draft": false,
+     "careReason": true
+    },
+    {
+     "name": "Direct ownership & transparency (franking direct to you; full visibility via the My Wealth Portal)",
+     "triggers": [
+      "care transparency",
+      "direct ownership",
+      "portal visibility"
+     ],
+     "type": "CARE justification (tailored)",
+     "gate": "CARE recommended for super and/or investment",
+     "figures": "—",
+     "strat": "",
+     "outcome": "You have direct ownership of your underlying holdings with full transparency and reporting through the My Wealth Portal.",
+     "why": [
+      "The managed account gives you direct beneficial ownership of the underlying assets and full visibility of holdings, transactions and performance through the My Wealth Portal.",
+      "This transparency supports your goal of being financially well organised with a clear plan."
+     ],
+     "risks": [],
+     "alts": [
+      "A pooled fund-of-funds structure was considered; we discounted it as it provides less transparency and you would not receive franking credits as directly."
+     ],
+     "replace": [
+      "The transparency and direct ownership benefits support the recommendation relative to a cheaper but less transparent structure."
+     ],
+     "appliesTo": "both",
+     "draft": false,
+     "careReason": true
+    },
+    {
+     "name": "Tailored to your risk profile and goals",
+     "triggers": [
+      "care tailored",
+      "aligned to goals",
+      "tailored to risk profile"
+     ],
+     "type": "CARE justification (tailored)",
+     "gate": "CARE recommended for super and/or investment",
+     "figures": "—",
+     "strat": "",
+     "outcome": "Your portfolio is constructed and managed specifically for your [risk profile] risk profile and your stated goals.",
+     "why": [
+      "The recommended portfolio is tailored to your [risk profile] risk profile and your objective of {goal}, rather than a generic allocation.",
+      "It will be reviewed at each ongoing review to ensure it remains appropriate as your circumstances change."
+     ],
+     "risks": [],
+     "alts": [
+      "An off-the-shelf option not tailored to your profile was discounted as it would not align as closely to your goals and risk tolerance."
+     ],
+     "replace": [
+      "Because the portfolio is tailored to your needs, we consider it appropriate and in your best interests despite the cost."
+     ],
+     "appliesTo": "both",
+     "draft": false,
+     "careReason": true
+    },
+    {
+     "name": "Value of ongoing professional management & advice (fee-for-value)",
+     "triggers": [
+      "care ongoing advice",
+      "fee for value",
+      "ongoing management value"
+     ],
+     "type": "CARE justification (tailored)",
+     "gate": "CARE recommended for super and/or investment",
+     "figures": "—",
+     "strat": "",
+     "outcome": "The fee includes ongoing professional management, regular review and access to advice, which together are designed to deliver value beyond the cost.",
+     "why": [
+      "The recommended fee covers ongoing active management, regular review and access to ongoing advice and education when you have queries.",
+      "We have weighed this value against the cost and consider it appropriate for your circumstances and goals."
+     ],
+     "risks": [],
+     "alts": [
+      "A lower-cost, advice-light option was considered; we discounted it as it would not provide the ongoing management and advice you have told us you value."
+     ],
+     "replace": [
+      "Although the recommended arrangement costs more than [your current situation], the ongoing management and advice it provides is, in our assessment, in your best interests and represents value for the fee."
+     ],
+     "appliesTo": "both",
+     "draft": false,
+     "careReason": true
+    },
+    {
+     "name": "Best-interests statement where fees are higher than the current arrangement",
+     "triggers": [
+      "care best interest",
+      "higher fee justified",
+      "fees are higher but"
+     ],
+     "type": "CARE justification (tailored)",
+     "gate": "CARE recommended for super and/or investment",
+     "figures": "—",
+     "strat": "",
+     "outcome": "Although the recommended approach may cost more than your current arrangement, we have determined that it is in your best interests because it better meets your goals and needs for the reasons set out above.",
+     "why": [
+      "We have compared the recommended CARE approach against your current arrangement and lower-cost alternatives.",
+      "Where the recommended approach costs more, we have determined it is in your best interests because the additional benefits — [active management, the Reserves liquidity buffer, tax efficiency, tailoring to your goals and ongoing advice] — better meet your objectives of {goal}."
+     ],
+     "risks": [],
+     "alts": [
+      "Retaining your current arrangement / selecting the cheapest option was discounted because it does not provide the benefits above that are important to achieving your goals."
+     ],
+     "replace": [
+      "This best-interests rationale should be reflected in the Replacement Implications and Alternatives sections: the benefits of the recommended approach outweigh the higher cost and any exit costs of moving from [current product]."
+     ],
+     "appliesTo": "both",
+     "draft": false,
+     "careReason": true
     }
    ]
   }
