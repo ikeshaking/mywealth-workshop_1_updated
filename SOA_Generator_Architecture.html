@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SOA Generator — Architecture & Logic Map</title>
+<style>
+  :root{
+    --navy:#0C2E3F; --blue:#1F6FEB; --blue2:#5EA6FF; --teal:#E5F4F6; --tealb:#B5CBD8;
+    --ink:#13212b; --mut:#5b6b76; --line:#dbe6ec; --bg:#f3f7f9; --card:#fff;
+    --ok:#1f9d55; --okbg:#e7f6ee; --warn:#b8860b; --warnbg:#fbf3df; --bad:#c0392b; --badbg:#fbe8e6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Nunito,Roboto,Helvetica,Arial,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.5;font-size:15px}
+  a{color:var(--blue);text-decoration:none}
+  code{background:#eef3f6;border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:12.5px;
+       font-family:"SF Mono",Menlo,Consolas,monospace}
+  header{background:linear-gradient(135deg,#0C2E3F,#15405a);color:#fff;padding:30px 26px 24px}
+  header h1{margin:0 0 6px;font-size:26px;letter-spacing:.2px}
+  header p{margin:0;color:#bcd6e3;max-width:880px}
+  nav{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--line);
+      display:flex;flex-wrap:wrap;gap:2px;padding:8px 14px;box-shadow:0 1px 6px rgba(0,0,0,.05)}
+  nav button{border:0;background:transparent;color:var(--mut);font-weight:600;font-size:13px;
+      padding:8px 12px;border-radius:7px;cursor:pointer}
+  nav button:hover{background:var(--teal)}
+  nav button.active{background:var(--navy);color:#fff}
+  main{max-width:1080px;margin:0 auto;padding:22px 18px 80px}
+  section.tab{display:none;animation:fade .25s ease}
+  section.tab.show{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  h2{font-size:20px;margin:6px 0 14px;color:var(--navy)}
+  h3{font-size:15.5px;margin:18px 0 8px;color:var(--navy)}
+  .lead{color:var(--mut);max-width:820px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0;
+        box-shadow:0 1px 3px rgba(13,33,45,.04)}
+  .grid{display:grid;gap:12px}
+  @media(min-width:760px){.grid.two{grid-template-columns:1fr 1fr}}
+  .badge{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.3px;padding:2px 8px;border-radius:20px;
+         text-transform:uppercase;vertical-align:middle}
+  .b-ok{background:var(--okbg);color:var(--ok)} .b-warn{background:var(--warnbg);color:var(--warn)}
+  .b-bad{background:var(--badbg);color:var(--bad)} .b-info{background:#e8f0fe;color:var(--blue)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin:4px 0 16px;font-size:13px;color:var(--mut)}
+  /* flow diagram */
+  .flow{display:flex;flex-direction:column;gap:14px}
+  .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:stretch}
+  .node{flex:1;min-width:150px;max-width:260px;background:#fff;border:2px solid var(--tealb);border-radius:10px;
+        padding:11px 12px;cursor:pointer;transition:.15s;text-align:center}
+  .node:hover{border-color:var(--blue);box-shadow:0 4px 14px rgba(31,111,235,.15);transform:translateY(-2px)}
+  .node .t{font-weight:800;font-size:13.5px;color:var(--navy)}
+  .node .s{font-size:11.5px;color:var(--mut);margin-top:2px}
+  .node.inp{border-color:#9bd0a8;background:#f1faf4}
+  .node.eng{border-color:#9bc0ec;background:#f1f6fd}
+  .node.out{border-color:#e6c98a;background:#fdf8ee}
+  .arrow{align-self:center;color:var(--tealb);font-size:22px;font-weight:800}
+  .vsep{text-align:center;color:var(--tealb);font-size:20px;line-height:1}
+  .detail{margin-top:10px;border-left:3px solid var(--blue);background:#f7fafd;border-radius:0 8px 8px 0;
+          padding:10px 14px;font-size:13.5px;display:none}
+  .detail.show{display:block}
+  .detail b{color:var(--navy)}
+  /* subsystem cards */
+  .filterbar{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
+  .filterbar button{border:1px solid var(--line);background:#fff;border-radius:20px;padding:5px 12px;font-size:12.5px;
+        font-weight:700;cursor:pointer;color:var(--mut)}
+  .filterbar button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .sub{border:1px solid var(--line);border-radius:11px;margin:10px 0;background:#fff;overflow:hidden}
+  .sub summary{cursor:pointer;padding:13px 16px;display:flex;align-items:center;gap:10px;font-weight:700;
+        list-style:none}
+  .sub summary::-webkit-details-marker{display:none}
+  .sub summary .chev{margin-left:auto;color:var(--mut);transition:.2s}
+  .sub[open] summary .chev{transform:rotate(90deg)}
+  .sub .body{padding:0 16px 15px;font-size:13.5px}
+  .sub .body .k{color:var(--mut);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.3px;margin:10px 0 3px}
+  .pill{display:inline-block;background:#eef3f6;border:1px solid var(--line);border-radius:6px;padding:1px 7px;
+        font-size:11.5px;margin:2px 3px 0 0;font-family:monospace}
+  ul.tight{margin:4px 0;padding-left:20px}ul.tight li{margin:3px 0}
+  /* simulator */
+  .sim textarea{width:100%;min-height:84px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+        font-size:13.5px;font-family:inherit;resize:vertical}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+  .chip{font-size:12px;border:1px solid var(--tealb);background:#fff;border-radius:16px;padding:3px 10px;cursor:pointer;color:var(--mut)}
+  .chip:hover{background:var(--teal)}
+  .modrow{border:1px solid var(--line);border-radius:9px;padding:9px 12px;margin:7px 0;background:#fff}
+  .modrow.hit{border-color:var(--ok);background:var(--okbg)}
+  .modrow.gated{border-color:var(--warn);background:var(--warnbg)}
+  .modrow .mh{font-weight:800;font-size:13px;color:var(--navy)}
+  .modrow .mw{font-size:12.5px;color:var(--mut);margin-top:3px}
+  .modrow .out{font-size:12.5px;margin-top:5px;display:none}
+  .modrow.hit .out,.modrow.gated .out{display:block}
+  /* checklist */
+  .chk{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed var(--line)}
+  .chk input{margin-top:3px;width:16px;height:16px;flex:none}
+  .chk label{font-size:13.5px}
+  .phase{margin:14px 0}
+  .phase h3{display:flex;align-items:center;gap:8px}
+  .prog{height:7px;background:#e8eef2;border-radius:6px;overflow:hidden;margin:6px 0 4px;max-width:380px}
+  .prog>i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--blue2));width:0}
+  table{border-collapse:collapse;width:100%;font-size:13px;margin:8px 0}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{background:var(--teal);color:var(--navy)}
+  .matx td:first-child{font-weight:700;white-space:nowrap}
+  .note{width:100%;min-height:60px;border:1px dashed var(--tealb);border-radius:8px;padding:9px;font-family:inherit;font-size:13px;background:#fffdf7}
+  .btn{background:var(--navy);color:#fff;border:0;border-radius:8px;padding:9px 16px;font-weight:700;cursor:pointer;font-size:13.5px}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+  .muted{color:var(--mut)}
+  .kicker{font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--blue)}
+  footer{max-width:1080px;margin:0 auto;padding:0 18px 60px;color:var(--mut);font-size:12.5px}
+</style>
+</head>
+<body>
+<header>
+  <div class="kicker" style="color:#7fb6d6">My Wealth Solutions · Interactive build map</div>
+  <h1>SOA Generator — Architecture & Logic Map</h1>
+  <p>An interactive walkthrough of how the Statement of Advice builder works, what's solid vs. missing,
+     and the plan to make it accurate for single, couple, and entity clients. Built for an outside reviewer
+     to <b>understand the thought process, test the logic, and leave commentary</b>. Everything you tick or
+     type is saved in your browser; use <b>Export notes</b> at the bottom to send feedback back.</p>
+</header>
+
+<nav id="nav"></nav>
+
+<main>
+  <!-- OVERVIEW -->
+  <section class="tab show" id="overview">
+    <h2>1 · The big picture</h2>
+    <p class="lead">The tool turns a stack of dropped documents into a compliant Statement of Advice.
+       The whole design rests on one idea: <b>a single strategy engine driven by a maintainable word bank</b>,
+       where advice‑request keywords decide which tailored wording appears alongside the standard templated wording.</p>
+
+    <div class="grid two">
+      <div class="card">
+        <span class="kicker">Inputs</span>
+        <h3 style="margin-top:4px">What you drop in</h3>
+        <ul class="tight">
+          <li><b>Fact‑find / Projector JSON</b> — client data + projected figures.</li>
+          <li><b>Advice request (blueprint)</b> — the strategy & product recommendations, in keywords.</li>
+          <li><b>Supporting docs</b> — CARE doc, WealthSolver, Risk Researcher, insurer quotes (recommended /
+              alternative / commission).</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="kicker">Output</span>
+        <h3 style="margin-top:4px">What comes out</h3>
+        <ul class="tight">
+          <li>A live <b>preview</b> and a <b>Word (.docx)</b> SOA.</li>
+          <li>Summary‑Strategies, Summary‑Outcomes, per‑strategy Advice sections, product & replacement
+              tables, fees, disclosures, annexures.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="border-left:4px solid var(--blue)">
+      <span class="kicker">The two architectural moves</span>
+      <h3 style="margin-top:4px">1 · Generalise the debt‑module engine</h3>
+      <p class="muted" style="margin:4px 0">Debt already works this way: a keyword in the advice request
+        triggers a <b>module</b> that syncs three places at once (Summary‑Strategies + Summary‑Outcomes +
+        the Advice section). Every other strategy area (property, investment, super, insurance, cashflow)
+        gets the same treatment. See the <a href="#" data-go="engine">Module engine</a> tab to test it live.</p>
+      <h3>2 · Externalise the word bank</h3>
+      <p class="muted" style="margin:4px 0">Move tailored wording out of the code into an editable
+        <b>word‑bank</b> file so paraplanners maintain it, it's versionable, and it drives both preview and Word.</p>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE -->
+  <section class="tab" id="flow">
+    <h2>2 · Data flow — click any box</h2>
+    <p class="lead">How a dropped file becomes SOA wording. Click a node to see what it does and the
+       functions involved.</p>
+    <div class="flow">
+      <div class="row">
+        <div class="node inp" data-d="d-json"><div class="t">Fact‑find / Projector JSON</div><div class="s">client data + figures</div></div>
+        <div class="node inp" data-d="d-ar"><div class="t">Advice Request</div><div class="s">strategy blueprint (keywords)</div></div>
+        <div class="node inp" data-d="d-supp"><div class="t">Supporting docs</div><div class="s">CARE · WealthSolver · RR · quotes</div></div>
+      </div>
+      <div class="vsep">▼</div>
+      <div class="row"><div class="node eng" data-d="d-class" style="max-width:340px"><div class="t">Smart‑drop classifier</div><div class="s">v145ClassifyText → routes each file</div></div></div>
+      <div class="vsep">▼</div>
+      <div class="row"><div class="node eng" data-d="d-import" style="max-width:420px"><div class="t">Importers</div><div class="s">JSON · advice request · CARE · WealthSolver · RR · quotes · commission</div></div></div>
+      <div class="vsep">▼</div>
+      <div class="row"><div class="node eng" data-d="d-state" style="max-width:420px"><div class="t">State model <code>F</code> + blocks <code>B</code></div><div class="s">single source of truth</div></div></div>
+      <div class="vsep">▼</div>
+      <div class="row"><div class="node eng" data-d="d-engine" style="max-width:480px"><div class="t">Strategy engine + word bank</div><div class="s">modules → recommendation / why / risks / alternatives, figures, gating</div></div></div>
+      <div class="vsep">▼</div>
+      <div class="row">
+        <div class="node out" data-d="d-prev"><div class="t">Live preview</div><div class="s">HTML</div></div>
+        <div class="node out" data-d="d-word"><div class="t">Word export</div><div class="s">.docx via docx.js</div></div>
+      </div>
+    </div>
+
+    <div class="detail" id="d-json"><b>Fact‑find / Projector JSON.</b> <code>importProjectorJSON()</code> reads
+      <code>disc_*</code> (people, assets, super, home/loan), <code>calc_*</code>/<code>wc_*</code> (projections),
+      <code>fn_*</code> (fees), and builds <code>F.superAccounts</code>, current situation, goals, allocations.
+      Client type from <code>disc_client_type</code>.</div>
+    <div class="detail" id="d-ar"><b>Advice Request.</b> <code>v143ApplyAdviceRequest()</code> recognises which
+      strategies are scoped in (section headings + keywords), activates the matching blocks, sets the risk
+      profile, fees, platform, and triggers the keyword modules (currently debt only).</div>
+    <div class="detail" id="d-supp"><b>Supporting docs.</b> CARE doc → recommended investment option + fees;
+      WealthSolver → comparative platform costs; Risk Researcher → insurance comparison; ClearView/NEOS/insurer
+      quotes → cover + premiums; commission report → disclosure %.</div>
+    <div class="detail" id="d-class"><b>Smart‑drop classifier.</b> <code>v145ClassifyText()</code> reads the file
+      text and routes it: <code>json · advicereq · care · wealthsolver · rr · clearview · neos · quote ·
+      commission</code>. Each goes to its importer.</div>
+    <div class="detail" id="d-import"><b>Importers.</b> Each writes into the shared state: e.g.
+      <code>v48ImportCareDoc</code>, <code>v54ImportWealthSolver</code>, <code>parseAndApplyRR</code>,
+      <code>v141ImportClearView</code>/<code>v141ImportNeos</code>, <code>parseAndApplyCommission</code>.</div>
+    <div class="detail" id="d-state"><b>State model.</b> <code>F</code> holds all data (people, accounts,
+      figures, flags); <code>B</code> holds each block's editable content (recommendation / why / risks /
+      alternatives). Everything renders from here, so imports in any order converge.</div>
+    <div class="detail" id="d-engine"><b>Strategy engine + word bank.</b> Today: <code>DEBT_MODULES</code> +
+      <code>v192MatchDebtModules</code> → <code>v194BuildDebtWording</code>. Plan: a generic <code>v200</code>
+      engine + an external word bank so every area works the same way. Handles figure injection
+      (<code>{amt}</code>, loan limits) and scope gating (gearing on/off).</div>
+    <div class="detail" id="d-prev"><b>Live preview.</b> <code>previewStrat()</code> + section renderers build
+      HTML that mirrors the Word layout.</div>
+    <div class="detail" id="d-word"><b>Word export.</b> <code>generateSOA()</code> builds the .docx with docx.js;
+      <code>seg()</code> renders each strategy section's recommendation / why / risks / alternatives.</div>
+  </section>
+
+  <!-- SUBSYSTEMS -->
+  <section class="tab" id="subsystems">
+    <h2>3 · Subsystems — current state</h2>
+    <div class="legend">
+      <span><span class="badge b-ok">solid</span> works</span>
+      <span><span class="badge b-warn">partial</span> works but needs hardening</span>
+      <span><span class="badge b-bad">gap</span> missing or broken</span>
+      <span class="muted">· click a card to expand</span>
+    </div>
+    <div class="filterbar" id="filter">
+      <button class="on" data-f="all">All</button>
+      <button data-f="ok">Solid</button>
+      <button data-f="warn">Partial</button>
+      <button data-f="bad">Gaps</button>
+    </div>
+    <div id="subs"></div>
+  </section>
+
+  <!-- ENGINE / SIMULATOR -->
+  <section class="tab" id="engine">
+    <h2>4 · The module engine — test it live</h2>
+    <p class="lead">This is the heart of the tool. A <b>module</b> is keyword‑triggered tailored wording.
+       Type advice‑request‑style text below (or click an example) and watch which modules fire — using the
+       tool's <b>actual</b> debt regexes. This is how a reviewer can verify the trigger logic without reading code.</p>
+
+    <div class="card sim">
+      <div class="chips" id="chips"></div>
+      <textarea id="simIn" placeholder="e.g. Consolidate car loan into home loan. Retain $20,000 in offset as an emergency buffer. Refinance to draw on equity and establish a term loan for investment.">Consolidate car loan into home loan. Retain $20,000 in the offset as an emergency cash buffer. Use $50,000 from sale proceeds to reduce the home loan.</textarea>
+      <div style="margin:8px 0;font-size:12.5px" class="muted">Gearing detected: <b id="gearFlag">—</b>
+        &nbsp;·&nbsp; modules fired: <b id="hitCount">0</b></div>
+      <div id="simOut"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">Module schema (what the word bank stores)</h3>
+      <pre style="background:#0c2e3f;color:#d6e9f3;border-radius:9px;padding:13px 15px;overflow:auto;font-size:12.5px;margin:0"><code style="background:none;border:0;color:inherit">{
+  id, area,                    // 'debt' | 'property' | 'invest' | 'super' | 'insurance' | …
+  triggers: [/regex/, …],      // advice-request keywords / synonyms
+  gate,                        // scope condition (e.g. gearing only if gearing scoped)
+  strat, outcome,              // Summary-Strategies + Summary-Outcomes lines
+  why[], risk[], alt[],        // Advice-section bullets (auto-selected)
+  figures: [{token,extract}],  // {amt}, {limit}, {feeDiff} pulled from request / JSON
+  needs: ['table:loanLimit'],  // tables / calcs this module requires
+  variantOf                    // product/platform variant (Vanguard vs CARE, etc.)
+}</code></pre>
+      <p class="muted" style="margin:10px 0 0">The same shape covers <b>every</b> scenario you named —
+        inspecie transfer, sell‑to‑buy, upgrade home, convert home → investment property,
+        inheritance → pay down loan — they're just more rows in the word bank.</p>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">Three‑way sync + gating (already proven for debt)</h3>
+      <div class="grid two">
+        <div><span class="badge b-info">sync</span>
+          <ul class="tight"><li>module <code>strat</code> → Summary‑Strategies</li>
+          <li>module <code>outcome</code> → Summary‑Outcomes</li>
+          <li>module <code>why/risk/alt</code> → Advice section</li></ul></div>
+        <div><span class="badge b-info">gate</span>
+          <ul class="tight"><li>gearing wording only if a gearing strategy is scoped</li>
+          <li>IP‑deposit wording only if an equity‑funded purchase is scoped</li>
+          <li>standard "always‑on" wording is appended regardless</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROADMAP -->
+  <section class="tab" id="roadmap">
+    <h2>5 · Roadmap — tick as we go</h2>
+    <p class="lead">Six phases. Phase 0 builds the engine + word‑bank foundation; everything after is
+       largely <b>data</b> (modules) plus verification. Your ticks persist in this browser.</p>
+    <div id="phases"></div>
+  </section>
+
+  <!-- VERIFY -->
+  <section class="tab" id="verify">
+    <h2>6 · Verification matrix</h2>
+    <p class="lead">The tool must be correct across <b>client shapes × strategy combinations × supporting
+       docs</b>. Use this matrix to drive testing. Tick what you've verified.</p>
+    <div class="card" style="padding:10px 12px">
+      <table class="matx">
+        <tr><th>Client shape</th><th>Status today</th><th>Must verify</th></tr>
+        <tr><td>Single (individual)</td><td><span class="badge b-ok">solid</span></td><td>pronouns "I/my", single signature, all strategy sections</td></tr>
+        <tr><td>Couple (joint)</td><td><span class="badge b-ok">solid</span></td><td>"we/our", both names, per‑person super/insurance, both signatures</td></tr>
+        <tr><td>Single + company</td><td><span class="badge b-warn">partial</span></td><td>ABN/ACN, directors, "held via company" ownership, entity pronoun</td></tr>
+        <tr><td>Entity only (SMSF/Trust/Co)</td><td><span class="badge b-warn">partial</span></td><td>entity name + trustees on cover, entity tax treatment, owner columns</td></tr>
+        <tr><td>Couple + SMSF</td><td><span class="badge b-bad">gap</span></td><td>couple AND entity together; member accounts; personal vs SMSF assets</td></tr>
+        <tr><td>Any combination</td><td><span class="badge b-bad">gap</span></td><td>multiple entities + persons; ownership layer on every row</td></tr>
+      </table>
+    </div>
+    <h3>Per‑SOA acceptance checks (every export)</h3>
+    <div class="card" id="acc"></div>
+  </section>
+
+  <!-- NEEDS / COMMENTARY -->
+  <section class="tab" id="feedback">
+    <h2>7 · What's needed & your commentary</h2>
+    <div class="card" style="border-left:4px solid var(--blue)">
+      <h3 style="margin-top:0">What I need from MWS to proceed</h3>
+      <ul class="tight">
+        <li><b>Example MWS SOAs</b> (2–3): a couple with a broad strategy set, an entity/SMSF, and one
+            using Vanguard (to nail Vanguard‑vs‑CARE and Vanguard‑Diversified‑vs‑Vanguard).</li>
+        <li><b>The word bank</b> — tailored wording per scenario (recommendation / why‑outcome / risks /
+            alternatives). The single highest‑leverage input.</li>
+        <li><b>Advice‑request keyword conventions</b> + a few sample advice requests across strategies.</li>
+      </ul>
+    </div>
+    <h3>Reviewer commentary</h3>
+    <p class="muted">Leave notes per area. Saved in your browser; click <b>Export notes</b> to download them.</p>
+    <div id="notes"></div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" id="exportBtn">⬇ Export notes (Markdown)</button>
+      <button class="btn ghost" id="resetBtn">Reset all ticks & notes</button>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Generated as a companion to <code>SOA_Generator_v190.html</code>. Status reflects a code review of the
+  current build. This map is self‑contained and offline — share the file freely.
+</footer>
+
+<script>
+/* ---------- nav ---------- */
+const TABS=[["overview","Overview"],["flow","Architecture"],["subsystems","Subsystems"],
+  ["engine","Module engine"],["roadmap","Roadmap"],["verify","Verification"],["feedback","Needs & feedback"]];
+const nav=document.getElementById('nav');
+TABS.forEach(([id,label],i)=>{const b=document.createElement('button');b.textContent=label;b.dataset.id=id;
+  if(i===0)b.classList.add('active');b.onclick=()=>show(id);nav.appendChild(b);});
+function show(id){document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('show',s.id===id));
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.id===id));
+  window.scrollTo({top:0,behavior:'smooth'});}
+document.querySelectorAll('[data-go]').forEach(a=>a.onclick=e=>{e.preventDefault();show(a.dataset.go);});
+
+/* ---------- flow node details ---------- */
+document.querySelectorAll('.node').forEach(n=>n.onclick=()=>{
+  const d=document.getElementById(n.dataset.d);const open=d.classList.contains('show');
+  document.querySelectorAll('.detail').forEach(x=>x.classList.remove('show'));
+  if(!open)d.classList.add('show');});
+
+/* ---------- subsystems data ---------- */
+const SUBS=[
+ {id:'entity',t:'Entity & ownership model',s:'bad',sum:'Single & couple solid; entities partial; couple+entity broken.',
+  what:'Models client type as one of individual / joint / entity (mutually exclusive). Pronouns & names via hasPartner(), entityType(), fullName(), bothPref().',
+  fns:['hasPartner()','entityType()','fullName()','bothPref()','pref()'],
+  gaps:['Couple + SMSF impossible — clientType can\'t be joint AND entity; flipping loses partner names/rows.',
+        'No ownership layer on assets/super/insurance (personal vs via SMSF/company/trust).',
+        'No ABN/ACN, trustees/directors in core state (only a v15 patch, not persisted).',
+        'Insurance/super owner enums lack entity options.']},
+ {id:'blocks',t:'Strategy blocks & templated wording',s:'ok',sum:'10 strategy areas, each with standard wording in STRAT_LIB.',
+  what:'BLOCK_DEFS defines debt, property, investbond, investplan, super, supercontrib, insurance, cashflow, admin, estate. STRAT_LIB holds recommendation/why/risks/alternatives per area.',
+  fns:['BLOCK_DEFS','STRAT_LIB','PROSE_LIB'],
+  gaps:['Wording is hardcoded in the HTML (not an editable word bank).']},
+ {id:'debtmod',t:'Debt module engine (the pattern)',s:'ok',sum:'Keyword-triggered tailored wording, 3-way synced, gearing on/off.',
+  what:'DEBT_MODULES + v192MatchDebtModules → v194BuildDebtWording. Each module syncs Summary-Strategies, Summary-Outcomes and the Advice section; fills {amt}; gates gearing wording.',
+  fns:['DEBT_MODULES','v192MatchDebtModules','v192StratLine','v194BuildDebtWording','v194IsGearingScoped'],
+  gaps:['Only debt has it — must be generalised to property / invest / super / insurance / cashflow.']},
+ {id:'engine',t:'Generalised strategy engine',s:'bad',sum:'Does not exist yet — the key Phase 0 build.',
+  what:'A single v200 engine that runs the module pattern for ANY area, loading modules from an external word bank.',
+  fns:['(to build) v200MatchModules','v200BuildAreaWording','word-bank loader'],
+  gaps:['Needs the module schema + word-bank format finalised.','Debt must migrate onto it with a parity test.']},
+ {id:'imports',t:'Import pipeline',s:'ok',sum:'JSON, advice request, CARE, WealthSolver, RR, quotes, commission.',
+  what:'Smart-drop classifier routes each dropped file to its importer; all write into F/B.',
+  fns:['v145ClassifyText','importProjectorJSON','v143ApplyAdviceRequest','v48ImportCareDoc','v54ImportWealthSolver','parseAndApplyRR','v141ImportClearView','v141ImportNeos','parseAndApplyCommission'],
+  gaps:['Robustness to format changes; conflict detection between advice request and JSON.']},
+ {id:'risk',t:'Risk profile recognition',s:'ok',sum:'From advice request (incl. bumps, super vs invest split) and CARE.',
+  what:'Parses "Notes to Risk Profile", canonicalises via _RPMAP, detects "X bumped to Y", separates super vs investment.',
+  fns:['_RPMAP','_firstRP','_bump','targetRiskProfile','riskProfileBumped'],
+  gaps:['Verify CARE / Risk Researcher agreement vs advice request; flag conflicts.']},
+ {id:'platform',t:'Platform & product delineation',s:'warn',sum:'Hub24/Netwealth/CFS + CARE-vs-Vanguard via heuristics.',
+  what:'recPlatform detection; v185InvestIsVanguard distinguishes Vanguard/index from CARE; CARE tiers detected from doc.',
+  fns:['recPlatform','v185InvestIsVanguard','careAccounts','v55CareifyName'],
+  gaps:['"Vanguard Diversified" vs a specific Vanguard fund needs a real product taxonomy.',
+        'Product-name parsing depends on doc formatting.']},
+ {id:'fees',t:'Fees & remuneration',s:'warn',sum:'Advice + ongoing tables, tax-adjusted; but no fee differential.',
+  what:'Reads fn_* / super_m1_*_fee / advice request; renders advice & ongoing remuneration tables with 15%-in-super and MTR-in-cashflow tax adjustments.',
+  fns:['fillRemunerationTables','buildAdviceTable','buildOngoingTable'],
+  gaps:['MISSING: increase/decrease in admin+management fees between recommended and current super/investment.']},
+ {id:'repl',t:'Replacement implications tables',s:'warn',sum:'Structures exist (invest/super/insurance); auto-fill from CARE + WealthSolver.',
+  what:'repl_invest / repl_super / repl_ins templates with fee, feature and benefit rows; filled from CARE (fillReplacementFromCare) and WealthSolver.',
+  fns:['repl_invest','repl_super','repl_ins','fillReplacementFromCare','v98FillReplacementFees'],
+  gaps:['Verify CGT / exit costs / lost benefits / like-for-like notes fill accurately.',
+        'Partner / entity columns; null-safety on CARE fee objects.']},
+ {id:'disc',t:'Disclosures & commissions',s:'ok',sum:'Boilerplate + insurance commission disclosure from quotes.',
+  what:'PROSE_LIB holds associations / referrals / shareholdings / non-monetary / authority / PDS / APL. Commission % parsed from quotes into rem_ins.',
+  fns:['PROSE_LIB','rem_ins','parseCommissionReport','v147ApplyCommissionFromText'],
+  gaps:['Commission parse depends on quote text patterns; add fallbacks.']},
+ {id:'tables',t:'Auto tables & calcs',s:'warn',sum:'Loan limit, product, projection, allocation tables.',
+  what:'v193ApplyTermLoan computes the term-loan limit/repayment + note; product/projection/allocation tables auto-populate; figure injection fills $XXX placeholders.',
+  fns:['v193ApplyTermLoan','injectFiguresIntoStrategies','buildProductRows'],
+  gaps:['Extend loan-limit logic to refinance/equity rows.','Verify preview ↔ Word parity for all tables.']},
+ {id:'verify',t:'Verification & compliance',s:'bad',sum:'No systematic test matrix or placeholder-leak guard.',
+  what:'Today: ad-hoc headless-browser checks + an import-gap checklist (v190ImportGaps).',
+  fns:['v190ImportGaps','(to build) test matrix','(to build) placeholder-leak guard'],
+  gaps:['No per-client-shape fixtures.','No "every active strategy is complete" check.','No placeholder-leak guard before export.']}
+];
+const subsEl=document.getElementById('subs');
+const BADGE={ok:['b-ok','solid'],warn:['b-warn','partial'],bad:['b-bad','gap']};
+SUBS.forEach(x=>{const d=document.createElement('details');d.className='sub';d.dataset.s=x.s;
+  const[bc,bt]=BADGE[x.s];
+  d.innerHTML=`<summary><span class="badge ${bc}">${bt}</span> ${x.t}
+     <span class="muted" style="font-weight:500;font-size:12.5px"> — ${x.sum}</span><span class="chev">▶</span></summary>
+     <div class="body">
+       <div class="k">What it does</div><div>${x.what}</div>
+       <div class="k">Key functions</div><div>${x.fns.map(f=>`<span class="pill">${f}</span>`).join('')}</div>
+       <div class="k">Gaps / to verify</div><ul class="tight">${x.gaps.map(g=>`<li>${g}</li>`).join('')}</ul>
+     </div>`;
+  subsEl.appendChild(d);});
+document.querySelectorAll('#filter button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#filter button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  const f=b.dataset.f;document.querySelectorAll('.sub').forEach(s=>s.style.display=(f==='all'||s.dataset.s===f)?'':'none');});
+
+/* ---------- live module simulator (real debt regexes) ---------- */
+const MODULES=[
+ {id:'offset',kw:/\boffset\b/i,strat:'Establish/utilise an offset account against your home loan.'},
+ {id:'paydown',kw:/pay[\s-]?down|pay off (?:the |your )?(?:home ?loan|mortgage)|reduce (?:the |your )?(?:home ?loan|mortgage)|clear (?:the |your )?(?:home ?loan|mortgage)|sale proceeds/i,strat:'Use {amt} from cash / sale proceeds to reduce the home loan.'},
+ {id:'buffer',kw:/emergency (?:cash )?buffer|cash buffer|buffer in (?:the |your )?offset/i,strat:'Retain {amt} in the offset as an emergency cash buffer.'},
+ {id:'carloan',kw:/consolidat[^.\n]*car loan|car loan[^.\n]*(?:in)?to[^.\n]*home ?loan|roll[^.\n]*car loan/i,strat:'Consolidate the existing car loan into the home loan.'},
+ {id:'ip_io',kw:/investment propert[^.\n]*interest only|interest only[^.\n]*investment propert|(?:principal and interest|p ?and ?i|p&i)[^.\n]*interest only[^.\n]*propert/i,strat:'Refinance the investment property loan from P&I to interest-only.'},
+ {id:'equity_release',kw:/draw[\s-]?(?:on|down)?[^.\n]*equity|release[^.\n]*equity|equity release|refinanc[^.\n]*equity/i,strat:'Refinance to draw on available equity.',gearing:true},
+ {id:'ip_deposit',kw:/investment propert[^.\n]*purchas|purchas[^.\n]*investment propert|20\s?%? deposit|deposit[^.\n]*investment propert/i,strat:'Use equity to fund the 20% deposit for an IP purchase.',gearing:true,needsIP:true},
+ {id:'term_loan',kw:/term loan|debt recycl|instal?ment gearing|borrow to invest/i,strat:'Establish a Term Loan for investment purposes.',gearing:true}
+];
+const EXAMPLES=[
+ 'Consolidate car loan into home loan.',
+ 'Retain $20,000 in the offset as an emergency buffer.',
+ 'Use $50,000 from sale proceeds to reduce the home loan.',
+ 'Refinance to draw on equity and establish a term loan for investment.',
+ 'Use equity to fund the 20% deposit for an investment property purchase.',
+ 'Refinance the investment property loan to interest only.'
+];
+const chipsEl=document.getElementById('chips');
+EXAMPLES.forEach(x=>{const c=document.createElement('span');c.className='chip';c.textContent=x;
+  c.onclick=()=>{document.getElementById('simIn').value=x;runSim();};chipsEl.appendChild(c);});
+function runSim(){
+  const t=document.getElementById('simIn').value;
+  const ipScoped=/investment propert[^.\n]*purchas/i.test(t);
+  let hits=0,gearing=false;
+  const out=document.getElementById('simOut');out.innerHTML='';
+  MODULES.forEach(m=>{
+    const match=m.kw.test(t);
+    const gated=match&&m.needsIP&&!ipScoped;
+    if(match&&!gated){hits++;if(m.gearing)gearing=true;}
+    const row=document.createElement('div');
+    row.className='modrow'+(match?(gated?' gated':' hit'):'');
+    const amt=(/\$\s*[\d,]+/.exec(t)||[])[0];
+    let strat=m.strat.replace('{amt}',(match&&amt)?amt:'$XX');
+    row.innerHTML=`<div class="mh">${m.id} ${m.gearing?'<span class="badge b-info" style="font-size:9px">gearing</span>':''}
+        ${match?(gated?'<span class="badge b-warn" style="font-size:9px">gated off — no IP purchase scoped</span>':'<span class="badge b-ok" style="font-size:9px">fired</span>'):''}</div>
+      <div class="mw"><code>${m.kw.source.slice(0,72)}${m.kw.source.length>72?'…':''}</code></div>
+      <div class="out">→ Summary‑Strategies: <b>${strat}</b></div>`;
+    out.appendChild(row);
+  });
+  document.getElementById('hitCount').textContent=hits;
+  document.getElementById('gearFlag').textContent=gearing?'YES — gearing wording included':'no — gearing wording removed';
+}
+document.getElementById('simIn').addEventListener('input',runSim);
+
+/* ---------- roadmap ---------- */
+const PHASES=[
+ {t:'Phase 0 · Engine + word‑bank foundation',items:[
+   'Define module schema + word‑bank format','Build v200 engine (match / active / buildAreaWording)',
+   'Migrate debt onto the engine — parity test','Load word bank from an editable source']},
+ {t:'Phase 1 · Entity / ownership model',items:[
+   'Add ownership layer (owner per asset/super/insurance/loan)','Support multiple entities (couple + SMSF + company)',
+   'Make clientType orthogonal: persons + entities[]','Add ABN/ACN + trustees/directors to core state + UI',
+   'Verify single / couple / entity / couple+SMSF / single+company']},
+ {t:'Phase 2 · Strategy coverage (author modules)',items:[
+   'Property: existing/proposed, sell‑to‑buy, upgrade, convert→IP, inspecie, downsizer',
+   'Investment: regular, debt recycling, lump sum, inheritance→invest/paydown',
+   'Super: rollover variants, consolidation, inspecie, pension/TTR, SMSF setup',
+   'Super contributions: CC/SS/NCC/carry‑forward/bring‑forward/spouse/downsizer/splitting',
+   'Insurance: new/increase/replace/takeover/in‑super vs personal/cancel',
+   'Cashflow & budgeting; Estate planning']},
+ {t:'Phase 3 · Calculations & tables',items:[
+   'Fee differential: recommended vs current admin+management (MISSING)',
+   'Loan limits for refinance/equity rows','Replacement implications: CGT/exit costs/lost benefits/like‑for‑like',
+   'Auto‑populate all tables; verify preview ↔ Word parity']},
+ {t:'Phase 4 · Platform / product delineation',items:[
+   'Product taxonomy: platform × approach × specific fund',
+   'Drive product tables + wording variants (Vanguard vs CARE; Vanguard Diversified vs Vanguard)']},
+ {t:'Phase 5 · Verification harness & compliance',items:[
+   'Test matrix: client shapes × strategy combos × docs','Placeholder‑leak guard before export',
+   'Completeness check per active strategy','Conflict detection (advice request vs JSON)',
+   'Unmatched‑instruction flag']}
+];
+const phasesEl=document.getElementById('phases');
+PHASES.forEach((p,pi)=>{const d=document.createElement('div');d.className='phase';
+  d.innerHTML=`<h3>${p.t}</h3><div class="prog"><i id="prog${pi}"></i></div>`;
+  p.items.forEach((it,ii)=>{const key='ph'+pi+'_'+ii;
+    const row=document.createElement('div');row.className='chk';
+    row.innerHTML=`<input type="checkbox" id="${key}"><label for="${key}">${it}</label>`;
+    d.appendChild(row);});
+  phasesEl.appendChild(d);});
+
+/* ---------- acceptance checks ---------- */
+const ACC=['No $XXX / [bracket] / XX placeholders survive to export',
+ 'Every active strategy has recommendation + why + risks + alternatives',
+ 'Pronouns & names correct for the client shape','Fees read correctly + after‑tax shown',
+ 'Fee differential (recommended vs current) shown','Replacement tables filled (invest/super/insurance)',
+ 'Product tables match recommended platform & approach','Risk profile matches advice request (no conflict)',
+ 'Loan‑limit table + note auto‑calculated','Preview matches Word export'];
+const accEl=document.getElementById('acc');
+ACC.forEach((a,i)=>{const key='acc_'+i;const row=document.createElement('div');row.className='chk';
+  row.innerHTML=`<input type="checkbox" id="${key}"><label for="${key}">${a}</label>`;accEl.appendChild(row);});
+
+/* ---------- commentary notes ---------- */
+const NOTE_AREAS=['Entity / ownership','Module engine & word bank','Strategy coverage','Fees & replacement tables',
+ 'Platform / product','Verification & compliance','General'];
+const notesEl=document.getElementById('notes');
+NOTE_AREAS.forEach((n,i)=>{const wrap=document.createElement('div');wrap.style.margin='10px 0';
+  wrap.innerHTML=`<div style="font-weight:700;color:var(--navy);font-size:13.5px;margin-bottom:4px">${n}</div>
+    <textarea class="note" data-note="${i}" data-name="${n}" placeholder="Your comments…"></textarea>`;
+  notesEl.appendChild(wrap);});
+
+/* ---------- persistence ---------- */
+const KEY='soaArchMap_v1';
+function loadState(){let s={};try{s=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  document.querySelectorAll('input[type=checkbox]').forEach(c=>{if(s[c.id])c.checked=true;});
+  document.querySelectorAll('textarea[data-note]').forEach(t=>{const k='note_'+t.dataset.note;if(s[k])t.value=s[k];});
+  updateProgress();}
+function saveState(){const s={};
+  document.querySelectorAll('input[type=checkbox]').forEach(c=>{if(c.checked)s[c.id]=1;});
+  document.querySelectorAll('textarea[data-note]').forEach(t=>{if(t.value.trim())s['note_'+t.dataset.note]=t.value;});
+  localStorage.setItem(KEY,JSON.stringify(s));}
+function updateProgress(){PHASES.forEach((p,pi)=>{let done=0;p.items.forEach((_,ii)=>{if(document.getElementById('ph'+pi+'_'+ii).checked)done++;});
+  document.getElementById('prog'+pi).style.width=Math.round(done/p.items.length*100)+'%';});}
+document.addEventListener('change',e=>{if(e.target.matches('input[type=checkbox]')){saveState();updateProgress();}});
+document.addEventListener('input',e=>{if(e.target.matches('textarea[data-note]'))saveState();});
+
+document.getElementById('exportBtn').onclick=()=>{
+  let md='# SOA Generator — reviewer notes\n\n';
+  md+='## Roadmap progress\n';
+  PHASES.forEach((p,pi)=>{md+=`\n### ${p.t}\n`;p.items.forEach((it,ii)=>{
+    md+=`- [${document.getElementById('ph'+pi+'_'+ii).checked?'x':' '}] ${it}\n`;});});
+  md+='\n## Acceptance checks\n';
+  ACC.forEach((a,i)=>{md+=`- [${document.getElementById('acc_'+i).checked?'x':' '}] ${a}\n`;});
+  md+='\n## Commentary\n';
+  document.querySelectorAll('textarea[data-note]').forEach(t=>{if(t.value.trim())md+=`\n### ${t.dataset.name}\n${t.value.trim()}\n`;});
+  const blob=new Blob([md],{type:'text/markdown'});const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='soa-architecture-review-notes.md';a.click();};
+document.getElementById('resetBtn').onclick=()=>{if(confirm('Clear all ticks and notes on this device?')){
+  localStorage.removeItem(KEY);location.reload();}};
+
+runSim();loadState();
+</script>
+</body>
+</html>
