@@ -6146,7 +6146,20 @@ window.v141ImportDataCollection=v141ImportDataCollection;
 // ── v143: Advice Request "blueprint" importer ──
 async function v143ImportAdviceRequest(file){
   if(!file) return;
-  try{ const txt=await extractAnyText(file); v143ApplyAdviceRequest(txt); }
+  try{
+    // If this Word/HTML advice request carries the builder's embedded structured JSON, run the
+    // v200 engine off it (identical to dropping the .json) instead of the older keyword parser —
+    // which over-triggers on prose and can't read the fee table or product rows.
+    let raw=''; try{ raw=await file.text(); }catch(_){ }
+    const m=raw && raw.match(/<!--MWS_AR_JSON_B64:([A-Za-z0-9+/=]+)-->/);
+    if(m){
+      let obj=null; try{ obj=JSON.parse(decodeURIComponent(escape(atob(m[1])))); }catch(_){ }
+      if(obj && typeof v200IsAdviceReq==='function' && v200IsAdviceReq(obj) && typeof v200ApplyAdviceRequest==='function'){
+        v200ApplyAdviceRequest(obj); return;
+      }
+    }
+    const txt=await extractAnyText(file); v143ApplyAdviceRequest(txt);
+  }
   catch(e){ alert('Could not read that advice request: '+e.message); }
 }
 function v143ApplyAdviceRequest(txt){

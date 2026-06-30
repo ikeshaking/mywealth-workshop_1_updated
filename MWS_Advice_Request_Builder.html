@@ -328,7 +328,10 @@ function dlWord(){const o=buildObj();const lines=asText(o).split('\n');
   table.ft td{border:1px solid #c9d4e2;padding:4px 6px}
   table.ft tr.tot td{background:#eef2fb;font-weight:700}
  </style>`;
- const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8">${css}</head><body><div class="wrap">${body}</div></body></html>`;
+ // Embed the full structured advice request (base64 UTF-8) so the SOA generator can run the v200
+ // engine off the Word doc itself — no separate JSON needed. Base64 avoids '-->' / tag breakage.
+ let arTag='';try{arTag='<!--MWS_AR_JSON_B64:'+btoa(unescape(encodeURIComponent(JSON.stringify(o))))+'-->';}catch(e){arTag=''}
+ const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8">${css}</head><body>${arTag}<div class="wrap">${body}</div></body></html>`;
  const b=new Blob(['﻿'+html],{type:'application/msword'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='advice_request.doc';a.click();URL.revokeObjectURL(u)}
 document.querySelectorAll('#soaType button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#soaType button').forEach(x=>x.classList.remove('on'));b.classList.add('on');SOA=b.dataset.t;buildStrats()}));
 build();
