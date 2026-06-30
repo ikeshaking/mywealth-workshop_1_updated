@@ -80,7 +80,7 @@ function build(){
  DATA.forEach((a,ai)=>{
   let inner=`<div class="areaH miniH">Strategy Recommendations</div><div id="strat_${ai}"></div>`;
   inner+=`<div id="freeList_${ai}"></div><button class="addbtn" onclick="addFree(${ai})">+ Add free-text recommendation</button>`;
-  if(a.hasProd){inner+=`<div class="miniH">Product Recommendation(s)</div>`;
+  if(a.hasProd){inner+=`<div class="miniH">Product Recommendation(s) <small class="hint">— the platform / account / insurer & action. (Strategy ticks above drive the SOA wording.)</small></div>`;
     if(a.superMulti)inner+=`<div id="prodList_${ai}"></div><button class="addbtn" onclick="addProd(${ai})">+ Add super product (account)</button>`;
     else if(a.insMulti)inner+=`<div id="insList_${ai}"></div><button class="addbtn" onclick="addInsProd(${ai})">+ Add insurance cover/product</button>`;
       else if(a.bondMulti)inner+=`<div id="bondList_${ai}"></div><button class="addbtn" onclick="addBondProd(${ai})">+ Add investment bond (e.g. one per child)</button>`;
