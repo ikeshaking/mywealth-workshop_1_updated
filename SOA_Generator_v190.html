@@ -14992,11 +14992,113 @@ const V200_AREA_TO_BLOCK = {
  "10 · Administration Recommendations":"admin"};
 function v200IsAdviceReq(o){ return !!(o && Array.isArray(o.strategies) && Array.isArray(o.scopeIn)); }
 function v200Fill(t,s){ let out=String(t||''); if(s&&s.pick) out=out.replace(/\[[^\]]*\]/, s.pick); if(s&&s.amounts&&s.amounts.length){ let i=0; out=out.replace(/\$___|\$XXX|\[\$?amount\]/gi,()=> s.amounts[i++]||'$___'); } return out; }
+// Pull the target profile out of a builder "bumped to X" string.
+function v200BumpTo(b){ const m=String(b||'').match(/bumped to\s+(.+)/i); return m?m[1].trim():''; }
+// Risk profile: map the advice-request per-party risk matrix onto the generator's F fields
+// so the Risk Profile section (v31RiskProfileParas) renders the right profile + bump wording.
+function v200ApplyRisk(ar){
+  if(typeof F!=='object' || !ar || !ar.risk) return;
+  const names=Object.keys(ar.risk); if(!names.length) return;
+  const c=ar.risk[names[0]]||{};
+  if(c.super) F.rpClientSuper=c.super;
+  if(c.inv)   F.rpClientInvest=c.inv;
+  const cBase=c.super||c.inv||'';
+  if(cBase){ F.clientRiskProfile=cBase; if(!F.targetRiskProfile) F.targetRiskProfile=cBase; }
+  const cTo=v200BumpTo(c.superBump)||v200BumpTo(c.invBump);
+  if(cTo){ F.riskProfileBumped=true; F.riskProfileBumpFrom=cBase||cTo; F.riskProfileBumpTo=cTo; F.targetRiskProfile=cTo; }
+  if(/couple/i.test(ar.ctype||'') && names.length>1){
+    const p=ar.risk[names[1]]||{};
+    if(p.super) F.rpPartnerSuper=p.super;
+    if(p.inv)   F.rpPartnerInvest=p.inv;
+    const pBase=p.super||p.inv||'';
+    if(pBase) F.partnerRiskProfile=pBase;
+  }
+  if(ar.riskExisting && /remain|appropriate|review|exist/i.test(ar.riskExisting)) F.riskProfileRemainsAppropriate=true;
+}
+// Fees: re-derive each cell's dollar value (flat + %·balance, monthly→annual) and aggregate the
+// advice-request fee matrix into the four remuneration buckets the SOA fee calculator reads.
+function v200CellDollar(v,bal){
+  const s=String(v||''); const pm=s.match(/(\d+(?:\.\d+)?)\s*%/); const pct=pm?parseFloat(pm[1]):0;
+  let rest=s.replace(/(\d+(?:\.\d+)?)\s*%/,''); const mon=/p\.?m\.?|per month|month|pm/i.test(rest);
+  const dm=rest.match(/\$?\s*([\d,]+(?:\.\d+)?)/); let flat=0;
+  if(dm&&dm[1]){ flat=parseFloat(dm[1].replace(/,/g,''))||0; if(mon) flat*=12; }
+  const b=parseFloat(String(bal||'').replace(/[^0-9.]/g,''))||0;
+  return flat + (pct? pct/100*b : 0);
+}
+function v200ApplyFees(ar){
+  if(typeof F!=='object' || !ar || !ar.fee || !Array.isArray(ar.fee.rows)) return;
+  let us=0,uc=0,os=0,oc=0;
+  ar.fee.rows.forEach(r=>{ const c=r.cells||{}; const sb=r.superBal, ib=r.invBal;
+    us+=v200CellDollar(c.us,sb); uc+=v200CellDollar(c.uc,ib);
+    os+=v200CellDollar(c.os,sb); oc+=v200CellDollar(c.oc,ib); });
+  const rnd=n=>String(Math.round(n));
+  if(us>0 && !F.upfrontFeeSuper) F.upfrontFeeSuper=rnd(us);
+  if(uc>0 && !F.upfrontFeeMcma)  F.upfrontFeeMcma=rnd(uc);
+  if(os>0 && !F.ongoingFeeSuper) F.ongoingFeeSuper=rnd(os);
+  if(oc>0 && !F.ongoingFeeMcma)  F.ongoingFeeMcma=rnd(oc);
+  if(ar.fee.commitment && !F.commitmentFee) F.commitmentFee=String(ar.fee.commitment);
+}
+// Map a product string to the platform label the generator recognises elsewhere.
+function v200Platform(s){ const p=String(s||'');
+  if(/hub\s*24/i.test(p)){ const m=p.match(/\b(choice|core|discover)\b/i); return 'Hub24'+(m?' '+m[1][0].toUpperCase()+m[1].slice(1).toLowerCase():''); }
+  if(/netwealth/i.test(p)) return 'Netwealth';
+  if(/bt\s*panorama|panorama/i.test(p)) return 'BT Panorama';
+  if(/cfs|colonial|first\s*state|edge/i.test(p)) return 'CFS Edge';
+  return p.trim();
+}
+// Ensure a product block has its template rows, then stamp the platform name without wiping
+// the allocation rows (WealthSolver/supporting docs still fill the exact figures later).
+function v200ProdRows(bid){
+  if(typeof B==='undefined') return null;
+  if(!B[bid]) B[bid]={active:false,content:{}};
+  if(!B[bid].content) B[bid].content={};
+  if(!Array.isArray(B[bid].content.rows)){
+    let seeded=false;
+    try{ const def=blockDefById(bid); if(def && typeof ensureProductState==='function'){ ensureProductState(def); seeded=Array.isArray(B[bid].content.rows); } }catch(_){ }
+    if(!seeded){ try{ const def=blockDefById(bid); const t=(typeof PRODUCT_TEMPLATES!=='undefined')?PRODUCT_TEMPLATES[def&&def.productType]:null; if(t&&t.defaultRows) B[bid].content.rows=t.defaultRows.map(r=>r.slice()); }catch(_){ } }
+  }
+  return B[bid].content.rows;
+}
+function v200StampPlatform(bid,plat){
+  const rows=v200ProdRows(bid);
+  if(rows && plat){ const r=rows.find(x=>/platform name/i.test(String((x||[])[0]||''))); if(r && r.length>1) r[1]=plat; }
+  if(typeof setBlockActive==='function') setBlockActive(bid,true); else if(typeof B!=='undefined' && B[bid]) B[bid].active=true;
+}
+// Products: set the recommended platform/insurer (these drive platform-aware wording across the
+// SOA) and activate the matching product blocks so they render in the auto-built document.
+function v200ApplyProducts(ar){
+  if(typeof F!=='object' || !ar) return;
+  const flat=o=>{ const out=[]; Object.keys(o||{}).forEach(a=>{ (o[a]||[]).forEach(p=>{ if(p) out.push(p); }); }); return out; };
+  // Superannuation products → recPlatform + super_prod
+  const sp=flat(ar.superProducts).filter(p=>p.product);
+  if(sp.length){ const plat=v200Platform(sp[0].product);
+    if(!F.recPlatform || /^hub\s*24$/i.test(String(F.recPlatform).trim())) F.recPlatform=plat;
+    v200StampPlatform('super_prod',plat); }
+  // Investment-plan products → recPlatform (if not already from super) + investplan_prod
+  const vp=flat(ar.invProducts).filter(p=>p.product);
+  if(vp.length){ const plat=v200Platform(vp[0].product);
+    if(!F.recPlatform) F.recPlatform=plat;
+    v200StampPlatform('investplan_prod',plat); }
+  // Investment-bond products → investbond_prod
+  const bp=flat(ar.bondProducts).filter(p=>p.product);
+  if(bp.length){ v200StampPlatform('investbond_prod', v200Platform(bp[0].product)); }
+  // Insurance products → recInsurer (drives insurance wording) + activate ins_prod
+  const ip=flat(ar.insProducts).filter(p=>p.insurer||p.action);
+  if(ip.length){
+    const rec=ip.find(p=>/apply|top\s*up|new/i.test(p.action||'')) || ip.find(p=>/retain/i.test(p.action||'')) || ip[0];
+    if(rec && rec.insurer && !F.recInsurer) F.recInsurer=rec.insurer;
+    if(typeof B!=='undefined'){ if(!B.ins_prod) B.ins_prod={active:false,content:{}};
+      if(typeof setBlockActive==='function') setBlockActive('ins_prod',true); else B.ins_prod.active=true; }
+    try{ if(typeof v96FillInsurance==='function') v96FillInsurance(); }catch(_){ }
+  }
+}
 function v200ApplyAdviceRequest(ar){
   const log=[];
   try{
     if(ar.clients && typeof F==='object'){ F.fullName=F.fullName||ar.clients; if(/&| and /i.test(ar.clients)) F.clientType=F.clientType||'joint'; }
     if(ar.adviser && typeof F==='object'){ F.adviser=F.adviser||ar.adviser; }
+    if(ar.status && typeof F==='object' && F.isExistingClient==null){ F.isExistingClient=/exist/i.test(ar.status); }
+    if(/couple/i.test(ar.ctype||'') && typeof F==='object'){ F.clientType=F.clientType||'joint'; }
     const byBlock={};
     (ar.strategies||[]).forEach(s=>{ const bid=V200_AREA_TO_BLOCK[s.area]; if(!bid) return; (byBlock[bid]=byBlock[bid]||[]).push(s); });
     Object.keys(byBlock).forEach(bid=>{
@@ -15020,6 +15122,9 @@ function v200ApplyAdviceRequest(ar){
       log.push(bid);
     });
     (ar.scopeIn||[]).forEach(area=>{ const bid=V200_AREA_TO_BLOCK[area]; if(bid && typeof B!=='undefined' && B[bid] && !B[bid].active){ if(typeof setBlockActive==='function') setBlockActive(bid,true); else B[bid].active=true; } });
+    try{ v200ApplyRisk(ar); }catch(e){ try{console.error('v200 risk',e);}catch(_){ } }
+    try{ v200ApplyFees(ar); }catch(e){ try{console.error('v200 fees',e);}catch(_){ } }
+    try{ v200ApplyProducts(ar); }catch(e){ try{console.error('v200 products',e);}catch(_){ } }
     try{ if(typeof render==='function') render(); }catch(_){}
   }catch(err){ try{console.error('v200 error',err);}catch(_){ } }
   return log;
