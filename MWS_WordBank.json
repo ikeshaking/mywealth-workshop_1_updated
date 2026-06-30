@@ -133,7 +133,7 @@
      "appliesTo": "accumulator"
     },
     {
-     "name": "Direct surplus income + tax savings to offset (always-on)",
+     "name": "Direct surplus income AND tax savings to offset (two separate amounts, always-on)",
      "triggers": [
       "direct surplus to offset",
       "surplus to offset",
@@ -141,7 +141,7 @@
      ],
      "type": "Always-on (when debt scoped)",
      "gate": "—",
-     "figures": "{surplusWk},{taxPa}",
+     "figures": "surplus income $___ + tax savings $___ (two separate amounts)",
      "strat": "We recommend you direct all surplus income remaining after the recommendations made throughout this plan towards your existing home loan offset account. This is estimated to be $XXX per week.\nWe recommend you direct all tax refunds towards your existing home loan offset account. This is estimated to be $XXX per annum.",
      "outcome": "Directing your surplus income towards your existing home loan offset will save you an estimated $XX in interest costs and reduce the repayment period on your loan from XX to XX years. On repayment of your home loan, redirecting your mortgage repayments to be invested will generate additional wealth estimated at $XXX over the remaining XX years of your plan.",
      "why": [
@@ -413,6 +413,42 @@
      ],
      "draft": true,
      "appliesTo": "accumulator"
+    },
+    {
+     "name": "Rent part of your home — direct the rental income to the home loan offset",
+     "triggers": [
+      "rent part of home",
+      "rent out a room",
+      "partial rental of home"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "You plan to rent part of your home; we recommend you direct that rental income towards your home loan offset account.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Custom debt management strategy (free text)",
+     "triggers": [
+      "custom debt"
+     ],
+     "type": "Custom (free text)",
+     "gate": "",
+     "figures": "—",
+     "strat": "[Free-type the debt recommendation; it pulls through verbatim.]",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": true
     }
    ]
   },
@@ -501,7 +537,7 @@
      "appliesTo": "both"
     },
     {
-     "name": "Sell current home and upgrade",
+     "name": "Sell current home and purchase a new home (PPR — set aside funds)",
      "triggers": [
       "sell home and upgrade",
       "upgrade home",
@@ -509,24 +545,21 @@
       "new home",
       "made an offer",
       "equity loan for deposit",
-      "home upgrade"
+      "home upgrade",
+      "sell current home and upgrade"
      ],
      "type": "Tailored",
      "gate": "—",
      "figures": "{saleProceeds},{newValue}",
-     "strat": "You have advised that you have made an offer on a new home and taken out an equity loan against your current home to fund the deposit. We have tailored the plan to reflect this — including using the sale proceeds of your current home, and managing your debt and cashflow after the upgrade.",
+     "strat": "You intend to sell your current home. As this is your principal residence we do not provide advice on it; we recommend you set aside $___ to fund the purchase of your new home.",
      "outcome": "Your move to the new home is funded with an equity-drawdown deposit now, then tidied up with the sale proceeds, and your debt and cashflow are restructured around the upgraded home.",
      "why": [
-      "Drawing equity against your current home funds the deposit on the new home without waiting for the existing property to sell.",
-      "On settlement, the sale proceeds of the current home repay the equity loan and reduce the new home loan."
+      "Setting aside the required funds ensures the purchase of your next home is covered from sale proceeds and available cash."
      ],
      "risks": [
-      "You carry bridging-style exposure (two properties / loans) until the current home sells; a delayed or lower sale price affects the plan.",
-      "Transaction costs (stamp duty, agent, legal) apply on the purchase and sale."
+      "Sale price and timing are uncertain; transaction costs (agent, legal, stamp duty) apply."
      ],
-     "alts": [
-      "Sell first, then buy — avoids dual-loan exposure but risks needing interim accommodation and missing the preferred home."
-     ],
+     "alts": [],
      "draft": false,
      "appliesTo": "accumulator"
     },
@@ -630,103 +663,13 @@
      ],
      "draft": false,
      "appliesTo": "retirement"
-    },
-    {
-     "name": "Purchase a home and rent part of it (partial rental of PPOR)",
-     "triggers": [
-      "rent part of the property",
-      "rent out a room",
-      "partial rental",
-      "rentvest",
-      "rent until you can afford"
-     ],
-     "gate": "First-home / owner-occupier purchase where part of the property will be rented",
-     "strat": "We recommend you purchase the property to live in and rent part of the property to assist with the mortgage, with a plan to do so until you are comfortable to afford the mortgage on your own.",
-     "outcome": "Rental income reduces your effective mortgage cost during the early, cashflow-constrained years.",
-     "why": [
-      "Renting part of your home brings in income to help service the loan while you establish yourselves, with the rented portion's interest and expenses partially deductible."
-     ],
-     "risks": [
-      "Renting part of your main residence means the rented portion loses part of the CGT main-residence exemption — apportionment applies on a future sale; keep records of the period and proportion rented.",
-      "Your lender may restrict renting under an owner-occupier loan; tenancy in an owner-occupied home carries practical risks."
-     ],
-     "alts": [
-      "Buy purely as an owner-occupier (full CGT exemption, no rental income) or buy a separate investment property (clean investor loan) — discounted given your cashflow needs."
-     ],
-     "type": "Tailored",
-     "figures": "—",
-     "draft": false,
-     "appliesTo": "both"
     }
    ]
   },
   {
-   "name": "3 · Investment Plan",
-   "note": "Regular investment / debt recycling wording is verbatim. Investment bond, lump‑sum and inheritance variants are drafts for your review (no investment‑bond example in these five SOAs — please send one).",
+   "name": "3a · Investment Bond",
+   "note": "Investment bond strategies + product, separate from the investment plan.",
    "scenarios": [
-    {
-     "name": "Regular investment from cashflow / Term Loan",
-     "triggers": [
-      "regular investment",
-      "invest monthly",
-      "instalment gearing plan",
-      "invest from cashflow",
-      "invest from term loan"
-     ],
-     "type": "Tailored",
-     "gate": "Investment plan scoped",
-     "figures": "{initial},{monthly}",
-     "strat": "We recommend you invest the following amounts from your [cashflow / Term Loan]:\n• $XXX (Initial)\n• $XXX per month (Ongoing)\n• Elect to reinvest distributions.\nWe recommend that the distributions from your investment be reinvested.",
-     "outcome": "Our projections indicate this strategy may generate additional wealth of $XXX over the term (estimated at XX years).",
-     "why": [
-      "Builds a long-term growth investment outside of the super environment to achieve your goal of building wealth you will have access to prior to reaching superannuation preservation age.",
-      "You will benefit from dollar cost averaging — drip feeding funds into the market over time to smooth out market volatility and reduce your downside risk.",
-      "The CARE portfolio will provide Professional Active Management on a day-to-day basis to provide the potential for greater returns and wealth preservation.",
-      "You can access all or part of your funds if you need to do so.",
-      "Additional Benefits: Investing in an investment fund means you can access a wider range of investments than direct investment, ensuring a diversified portfolio. Reinvesting distributions accelerates growth potential through compounding."
-     ],
-     "risks": [
-      "Note: You will still have to pay tax on any investment profits and declare these in your tax return and pay for it from your cashflow.",
-      "Investment funds involve some investment risk and do not guarantee your returns. The value of your investments might not increase as you would like and their value may even fall at times.",
-      "By investing your cash into an investment fund instead of a bank account you lose capital stability and a known rate of return. You also lose access to the government guarantee on deposits up to $250,000.",
-      "(if geared from a Term Loan, add the full gearing risk list — see Debt: Term Loan / debt recycling)"
-     ],
-     "alts": [
-      "We considered you making salary sacrifice contributions to superannuation rather than investing in the recommended investment fund. I have discounted this strategy as funds in superannuation are not generally accessible unless specific conditions of release are met...",
-      "We considered firstly a traditional diversified portfolio but this will not provide the separate components to smooth out volatility (at market extremes) and provide for your personalised liquidity requirements.",
-      "We also considered a portfolio focused on outperforming and/or market timing, but this will increase the likelihood of you making bad decisions, particularly at extreme market conditions.",
-      "We considered using a broker and buying individual parcels of shares... discounted as investment funds do not provide the same high level of Professional Active Management and depth of diversification."
-     ],
-     "draft": false,
-     "appliesTo": "accumulator"
-    },
-    {
-     "name": "Lump-sum investment",
-     "triggers": [
-      "lump sum investment",
-      "invest lump sum",
-      "invest savings"
-     ],
-     "type": "Tailored",
-     "gate": "Investment plan scoped",
-     "figures": "{lump}",
-     "strat": "We recommend you invest a lump sum of $XXX into a new investment account and invest in line with your risk profile.",
-     "outcome": "Our projections indicate this strategy may generate additional wealth of $XXX over the term.",
-     "why": [
-      "Puts surplus capital to work in a diversified, professionally managed portfolio you can access outside super.",
-      "Reinvesting distributions accelerates growth through compounding."
-     ],
-     "risks": [
-      "Investment funds involve some investment risk and do not guarantee your returns; values may fall.",
-      "By investing instead of holding cash you lose capital stability and the deposit guarantee up to $250,000."
-     ],
-     "alts": [
-      "Hold the funds in cash/term deposit — discounted as it yields a lower long‑term return and does not meet your wealth‑creation goal.",
-      "Contribute to superannuation instead — discounted as super is not accessible until a condition of release is met."
-     ],
-     "draft": true,
-     "appliesTo": "both"
-    },
     {
      "name": "Investment bond",
      "triggers": [
@@ -759,7 +702,60 @@
      "appliesTo": "both"
     },
     {
-     "name": "In-specie transfer of an existing portfolio into the new account",
+     "name": "Investment bond — product (Generation Life / Australian Unity / Centuria)",
+     "triggers": [
+      "genlife",
+      "generation life",
+      "lifebuilder",
+      "investment bond product"
+     ],
+     "type": "Custom (free text)",
+     "gate": "",
+     "figures": "—",
+     "strat": "[Specify the investment bond platform + underlying option, e.g. GenLife Vanguard Growth — as per doc.]",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": true
+    }
+   ]
+  },
+  {
+   "name": "3b · Investment Plan",
+   "note": "Regular investment / debt recycling wording is verbatim. Investment bond, lump‑sum and inheritance variants are drafts for your review (no investment‑bond example in these five SOAs — please send one).",
+   "scenarios": [
+    {
+     "name": "Lump-sum investment",
+     "triggers": [
+      "lump sum investment",
+      "invest lump sum",
+      "invest savings"
+     ],
+     "type": "Tailored",
+     "gate": "Investment plan scoped",
+     "figures": "{lump}",
+     "strat": "We recommend you invest a lump sum of $XXX into a new investment account and invest in line with your risk profile.",
+     "outcome": "Our projections indicate this strategy may generate additional wealth of $XXX over the term.",
+     "why": [
+      "Puts surplus capital to work in a diversified, professionally managed portfolio you can access outside super.",
+      "Reinvesting distributions accelerates growth through compounding."
+     ],
+     "risks": [
+      "Investment funds involve some investment risk and do not guarantee your returns; values may fall.",
+      "By investing instead of holding cash you lose capital stability and the deposit guarantee up to $250,000."
+     ],
+     "alts": [
+      "Hold the funds in cash/term deposit — discounted as it yields a lower long‑term return and does not meet your wealth‑creation goal.",
+      "Contribute to superannuation instead — discounted as super is not accessible until a condition of release is met."
+     ],
+     "draft": true,
+     "appliesTo": "both"
+    },
+    {
+     "name": "In-specie transfer — retain existing holdings in the new platform (no sale)",
      "triggers": [
       "in specie transfer",
       "inspecie",
@@ -769,7 +765,7 @@
      "type": "Tailored",
      "gate": "Existing portfolio present",
      "figures": "{cgt}",
-     "strat": "We recommend transferring your existing [CommSec] share portfolio into the new account in‑specie. The portfolio should then be invested as set out in the table below, with assets that cannot be internally netted sold down as part of the rebalance.",
+     "strat": "We recommend you in-specie transfer your existing portfolio into the new account and retain the holdings (no sale), avoiding CGT and transaction costs.",
      "outcome": "Transferring your holdings in‑specie retains your investments while bringing them under professional management, with internal netting used to reduce transaction costs and CGT.",
      "why": [
       "Retains your existing holdings while bringing them under the recommended professionally managed portfolio.",
@@ -834,7 +830,7 @@
      "appliesTo": "both"
     },
     {
-     "name": "Vanguard / index option (instead of CARE managed portfolios)",
+     "name": "Vanguard index option (instead of CARE managed portfolios)",
      "triggers": [
       "vanguard",
       "index fund",
@@ -942,29 +938,119 @@
      "appliesTo": "retirement"
     },
     {
-     "name": "Redirect mortgage repayments to investing once the home loan is repaid/offset",
+     "name": "Regular investment from cashflow (initial + ongoing)",
      "triggers": [
-      "redirect mortgage repayments",
-      "once home loan repaid",
-      "reinvest repayments",
-      "home loan fully offset"
-     ],
-     "gate": "Home loan on track to be repaid or fully offset within the plan",
-     "figures": "Estimated additional wealth from redirected repayments",
-     "strat": "Once your home loan is repaid (or fully offset), we recommend redirecting the amount you were paying in mortgage repayments into your investment plan.",
-     "outcome": "The cashflow freed up when the mortgage ends is put to work building wealth (e.g. an estimated additional six-figure sum over the remaining plan).",
-     "why": [
-      "Redirecting former mortgage repayments into investments converts a finished liability into ongoing wealth creation without changing your lifestyle spending."
-     ],
-     "risks": [
-      "Investment returns are not guaranteed; the redirected amount is exposed to market movements."
-     ],
-     "alts": [
-      "Spend the freed-up cashflow on lifestyle — discounted as it forgoes the wealth-building opportunity."
+      "regular investment from cashflow",
+      "invest from cashflow"
      ],
      "type": "Tailored",
+     "gate": "",
+     "figures": "initial $___ + ongoing $___ pm",
+     "strat": "We recommend you establish a new investment account and invest from your cashflow — $___ initial and $___ per month ongoing — in line with your risk profile.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "acc",
      "draft": false,
-     "appliesTo": "accumulator"
+     "custom": false
+    },
+    {
+     "name": "Regular investment from a Term Loan (initial + ongoing)",
+     "triggers": [
+      "invest from term loan",
+      "term loan investment"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "initial $___ + ongoing $___ pm",
+     "strat": "We recommend you establish a new investment account and invest from your Term Loan — $___ initial and $___ per month ongoing — in line with your risk profile.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "acc",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Draw an income from the investment (income needs / top up pension / financial freedom)",
+     "triggers": [
+      "draw income from investment",
+      "drawdown investment",
+      "top up pension from investment"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "$___ pa / pm",
+     "strat": "We recommend you draw an income of $___ from your investment account to help meet your income needs / top up your pension / fund your financial-freedom goal.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "ret",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Rebalance existing holdings into the recommended portfolio (e.g. into CARE)",
+     "triggers": [
+      "rebalance into care",
+      "rebalance existing holdings",
+      "switch into recommended portfolio"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend you rebalance your existing holdings into the recommended portfolio (e.g. the CARE philosophy) in line with your risk profile.",
+     "outcome": "",
+     "why": [
+      "Aligns your existing assets to the recommended strategy and risk profile."
+     ],
+     "risks": [
+      "Selling existing holdings to rebalance may crystallise CGT and incur transaction costs."
+     ],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Vanguard Diversified ETFs (instead of CARE / single Vanguard funds)",
+     "triggers": [
+      "vanguard diversified",
+      "diversified etf"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend a Vanguard Diversified ETF portfolio rather than the CARE managed portfolios, in line with your risk profile.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "CGT wording / implications following a sell-down or CGT event (free text)",
+     "triggers": [
+      "cgt",
+      "capital gains",
+      "selldown cgt"
+     ],
+     "type": "Custom (free text)",
+     "gate": "",
+     "figures": "—",
+     "strat": "[Free-type the CGT implications of the sell-down / CGT event — estimated gain, discount, tax, consult accountant.]",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": true
     }
    ]
   },
@@ -1183,7 +1269,7 @@
      "appliesTo": "both"
     },
     {
-     "name": "Establish / manage an SMSF (rebalance + pension transition)",
+     "name": "Establish / set up an SMSF (and manage — rebalance + pension transition)",
      "triggers": [
       "smsf",
       "self managed super fund",
@@ -1542,6 +1628,93 @@
      ],
      "draft": false,
      "appliesTo": "both"
+    },
+    {
+     "name": "Establish new fund + partial rollover, retain minimum for higher SG contributions",
+     "triggers": [
+      "retain minimum for sg",
+      "partial rollover for sg",
+      "retain minimum for higher sg"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend you retain the minimum balance in your existing fund to keep receiving your higher employer SG contributions, and roll the remainder to the new recommended fund.",
+     "outcome": "",
+     "why": [
+      "Some employers pay a higher SG into the existing fund; retaining a minimum balance preserves that benefit while still consolidating the bulk of your super."
+     ],
+     "risks": [
+      "Two accounts mean two sets of fees until the arrangement ends."
+     ],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Commence an Account-Based Pension and draw an income (minimum % or set amount)",
+     "triggers": [
+      "account based pension",
+      "commence abp",
+      "draw pension income",
+      "minimum pension"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "minimum % or $___ pa",
+     "strat": "We recommend you commence an Account-Based Pension and draw [the minimum % / $___ p.a.] to meet your income needs / top up your pension / fund your financial-freedom goal.",
+     "outcome": "",
+     "why": [
+      "Pension-phase earnings are tax-free and the income stream funds your retirement spending."
+     ],
+     "risks": [
+      "Minimum drawdowns are mandatory and apply even in a market downturn."
+     ],
+     "alts": [],
+     "appliesTo": "ret",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "CGT implications on a super changeover (SMSF, or rebalance Vanguard↔CARE) (free text)",
+     "triggers": [
+      "super cgt",
+      "smsf cgt",
+      "rebalance cgt"
+     ],
+     "type": "Custom (free text)",
+     "gate": "",
+     "figures": "—",
+     "strat": "[Free-type the CGT implications of the super changeover — applies for SMSF or a rebalance between Vanguard and CARE; not required for a standard rollover. Consult accountant.]",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": true
+    },
+    {
+     "name": "Phase a lump-sum super investment via money-on-the-move (DCA the rollover)",
+     "triggers": [
+      "money on the move super",
+      "dca rollover",
+      "phase lump sum super"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "For the lump sum entering super, we recommend phasing it into the market via the money-on-the-move framework — bringing forward instalments as markets fall.",
+     "outcome": "",
+     "why": [
+      "Phasing a large rollover smooths your entry price and reduces timing risk."
+     ],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
     }
    ]
   },
@@ -1564,7 +1737,8 @@
      "why": [
       "Save on income tax because your salary contributed into super is taxed at 15% (up to your concessional contributions cap), not your marginal tax rate, regardless of how much you earn.",
       "Boost your super by contributing more now, creating a bigger nest egg for your retirement.",
-      "Suitable if you are under 75 and eligible to contribute, have a marginal tax rate above 15%, and can sacrifice income without a large impact on your lifestyle, with an employer willing to offer the arrangement."
+      "Suitable if you are under 75 and eligible to contribute, have a marginal tax rate above 15%, and can sacrifice income without a large impact on your lifestyle, with an employer willing to offer the arrangement.",
+      "Concessional contributions are taxed at 15% within super (up to your cap), not your marginal tax rate."
      ],
      "risks": [
       "Care should be taken to ensure your employee entitlements are not adversely impacted as a result of salary sacrificing, or that you don't breach your concessional contributions cap. Contributions are preserved until a condition of release is met."
@@ -1914,7 +2088,7 @@
      "appliesTo": "accumulator"
     },
     {
-     "name": "Salary sacrifice future rental increases into super (or to the gearing plan)",
+     "name": "Salary sacrifice future rental increases into super (optional overlay)",
      "triggers": [
       "rent increases salary sacrifice",
       "future rent to super",
@@ -1936,6 +2110,84 @@
      "figures": "—",
      "draft": false,
      "appliesTo": "accumulator"
+    },
+    {
+     "name": "Notice of intent — claim a tax deduction on unclaimed personal contributions",
+     "triggers": [
+      "notice of intent",
+      "claim tax deduction on contributions",
+      "unclaimed contributions"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend you submit a notice of intent to claim a tax deduction on any unclaimed personal contributions made this and the previous financial year.",
+     "outcome": "",
+     "why": [
+      "Claiming the deduction converts after-tax contributions into concessional ones, reducing your taxable income."
+     ],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "acc",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Arrange salary sacrifice with employer (switch post-tax to pre-tax)",
+     "triggers": [
+      "switch to salary sacrifice",
+      "speak to employer",
+      "post tax to pre tax"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend you speak with your employer to switch your current post-tax contributions to pre-tax salary-sacrifice contributions.",
+     "outcome": "",
+     "why": [
+      "Pre-tax (salary-sacrifice) contributions are taxed at 15% rather than your marginal rate."
+     ],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "acc",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Division 293 tax note (high-income earners)",
+     "triggers": [
+      "division 293",
+      "div293"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "Note: as a higher-income earner you may be subject to Division 293 tax — an additional 15% on concessional contributions where your income plus contributions exceeds the threshold.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Division 296 tax note (total super balance over $3m)",
+     "triggers": [
+      "division 296",
+      "div296"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "Note: Division 296 may apply an additional tax on earnings attributable to the portion of your total super balance above $3m.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
     }
    ]
   },
@@ -2580,6 +2832,111 @@
      "figures": "—",
      "draft": false,
      "appliesTo": "retirement"
+    },
+    {
+     "name": "Retain, alter and/or cancel a mix of existing covers (retain X / cancel Y / alter Z)",
+     "triggers": [
+      "retain and alter",
+      "retain cancel alter",
+      "alter existing cover"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend you retain [cover X], cancel [cover Y] and alter [cover Z] across your existing policies as set out below.",
+     "outcome": "",
+     "why": [
+      "Tailors your existing cover to current needs without wholesale replacement."
+     ],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Any-occupation TPD definition",
+     "triggers": [
+      "any occupation tpd",
+      "any-occupation"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend TPD cover on an Any-Occupation definition.",
+     "outcome": "",
+     "why": [
+      "Any-Occupation is more affordable than Own-Occupation; appropriate where own-occupation is not available or not warranted."
+     ],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Non-occupational / homemaker TPD definition",
+     "triggers": [
+      "non occupational tpd",
+      "homemaker tpd",
+      "non-working tpd"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend TPD cover on a Non-Occupational (homemaker) definition, appropriate as you are not currently in the workforce.",
+     "outcome": "",
+     "why": [
+      "Provides TPD protection for a non-working person where occupation-based definitions don't apply."
+     ],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Transfer existing cover to the recommended platform via takeover terms + top up with new cover",
+     "triggers": [
+      "takeover terms",
+      "transfer insurance takeover",
+      "industry insurance to hub24"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend transferring your existing [industry-fund] cover to the recommended platform via takeover terms, and topping up with new recommended cover through the product insurer.",
+     "outcome": "",
+     "why": [
+      "Takeover terms preserve your existing cover (and avoid new exclusions identified at pre-assessment) while the top-up provides the additional cover you need."
+     ],
+     "risks": [
+      "Takeover terms have conditions; the new top-up cover is separately underwritten and may carry exclusions or loadings."
+     ],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Pre-assessment factors (smoker / health / pastimes) affecting terms",
+     "triggers": [
+      "pre-assessment",
+      "preassessment",
+      "smoker",
+      "dangerous pastime"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "Note: based on pre-assessment of your [smoker status / health / pastimes], the recommended insurer offers the best available terms; cover may be subject to loadings or exclusions.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
     }
    ]
   },
@@ -2615,7 +2972,7 @@
      "appliesTo": "both"
     },
     {
-     "name": "Direct surplus income to offset / savings",
+     "name": "Direct surplus income AND tax savings to offset / savings (two separate amounts)",
      "triggers": [
       "direct surplus",
       "surplus to offset",
@@ -2623,7 +2980,7 @@
      ],
      "type": "Always-on (when cashflow scoped)",
      "gate": "—",
-     "figures": "{surplusWk},{taxPa}",
+     "figures": "surplus income $___ + tax savings $___ (separate)",
      "strat": "We recommend your remaining surplus income of $XXX per week ($XXX per month) be directed towards your [existing home loan offset account / savings account].\nWe recommend you direct your tax savings to your existing home loan offset account. This is estimated to be $XXX per annum.",
      "outcome": "Directing your surplus to your offset reduces interest and shortens your loan term while keeping funds accessible.",
      "why": [
@@ -2664,6 +3021,59 @@
      ],
      "draft": false,
      "appliesTo": "retirement"
+    },
+    {
+     "name": "Direct ongoing plan costs to the MCMA — broken down (insurance / investments / advice fee)",
+     "triggers": [
+      "ongoing plan costs to mcma",
+      "mcma costs breakdown"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "total $___ pw, split by component",
+     "strat": "We recommend you direct your ongoing plan costs to the MCMA — $___ per week — comprising insurance $___, investments $___ and advice fee $___.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Set aside $X for ongoing insurance costs (where no other ongoing plan costs)",
+     "triggers": [
+      "set aside for insurance costs"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "$___ pw/pm",
+     "strat": "We recommend you set aside $___ to cover your ongoing insurance costs.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Establish an MCAA (Macquarie Accelerator) cash hub",
+     "triggers": [
+      "mcaa",
+      "macquarie accelerator"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend you establish a Macquarie Accelerator (MCAA) account as your cash hub.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
     }
    ]
   },
