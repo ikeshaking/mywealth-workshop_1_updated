@@ -1,0 +1,201 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MWS Advice Request Builder</title>
+<style>
+:root{--navy:#1f3a5f;--teal:#127a7a;--bg:#f4f6f9;--line:#dce3ec;--grey:#5a6675;}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:#1d2530;font-size:14px}
+header{background:var(--navy);color:#fff;padding:14px 22px;position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header h1{font-size:17px;margin:0;font-weight:700}
+.wrap{display:flex;gap:18px;max-width:1280px;margin:0 auto;padding:18px;align-items:flex-start}
+.form{flex:1 1 60%;min-width:0}
+.side{flex:1 1 38%;position:sticky;top:70px;max-height:calc(100vh - 90px);overflow:auto}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:14px;overflow:hidden}
+.card>h2{margin:0;padding:12px 16px;font-size:14px;background:#eef2f7;color:var(--navy);cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.card>h2 .chev{transition:transform .15s}
+.card.collapsed>h2 .chev{transform:rotate(-90deg)}
+.card .body{padding:14px 16px}
+.card.collapsed .body{display:none}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.fld{flex:1 1 220px;min-width:180px}
+.fld label{display:block;font-weight:600;font-size:12px;color:var(--grey);margin-bottom:3px}
+.fld input,.fld select,.fld textarea{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:inherit}
+.fld textarea{min-height:70px;resize:vertical}
+.strat{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px}
+.strat:hover{background:#f2f8f8}
+.strat input[type=checkbox]{width:17px;height:17px;flex:none;accent-color:var(--teal)}
+.strat .lbl{flex:1}
+.strat .tg{font-size:10px;color:#fff;background:var(--grey);border-radius:4px;padding:1px 6px;margin-left:4px}
+.strat .tg.acc{background:#2d6a4f}.strat .tg.ret{background:#9b2226}
+.strat .fig{width:110px;flex:none}
+.strat .fig input{width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:6px;font-size:12px}
+.areaH{font-size:13px;font-weight:700;color:var(--teal);margin:12px 0 4px;border-bottom:1px solid var(--line);padding-bottom:3px}
+.toggle{display:inline-flex;border:1px solid #fff5;border-radius:8px;overflow:hidden}
+.toggle button{background:transparent;color:#fff;border:0;padding:8px 18px;font-size:14px;font-weight:600;cursor:pointer}
+.toggle button.on{background:#fff;color:var(--navy)}
+.btn{background:var(--teal);color:#fff;border:0;border-radius:7px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;margin:3px}
+.btn.alt{background:var(--navy)}
+.side .card .body{font-size:12px}
+pre{white-space:pre-wrap;word-break:break-word;background:#0f1722;color:#d6e2f0;padding:12px;border-radius:8px;font-size:11.5px;line-height:1.5;max-height:48vh;overflow:auto;margin:0}
+.muted{color:var(--grey);font-size:11px;margin:4px 0 0}
+.count{font-size:11px;color:var(--grey)}
+small.hint{color:var(--grey);font-size:10px}
+</style></head>
+<body>
+<header>
+ <h1>MWS Advice Request Builder</h1>
+ <div class="toggle" id="soaType">
+   <button data-t="accumulator" class="on">Accumulator</button>
+   <button data-t="retirement">Retirement</button>
+ </div>
+ <span class="count" id="soaHint">Showing accumulator + shared strategies</span>
+ <span style="flex:1"></span>
+ <button class="btn alt" onclick="copyOut()">Copy advice request</button>
+ <button class="btn" onclick="dl('txt')">Download .txt</button>
+ <button class="btn" onclick="dl('json')">Download .json</button>
+</header>
+<div class="wrap">
+ <div class="form" id="form"></div>
+ <div class="side">
+   <div class="card"><h2>Live advice request <span class="count" id="picks"></span></h2>
+     <div class="body"><pre id="out"></pre>
+     <p class="muted">This is what the SOA engine will consume. Ticked strategies fire their wording; fields below feed the tables.</p></div>
+   </div>
+ </div>
+</div>
+<script>
+const DATA=[{"area": "0 · Client framing & scope", "scen": [{"name": "New client — Introduction & Current Situation opener", "trig": "new client", "fig": false, "to": "both"}, {"name": "Existing / current client — Introduction & Current Situation opener", "trig": "existing client", "fig": false, "to": "both"}, {"name": "Risk profile — reviewed & remains appropriate (existing client)", "trig": "risk profile remains appropriate", "fig": true, "to": "both"}, {"name": "Scope — reference by incorporation (existing client)", "trig": "incorporates information", "fig": true, "to": "both"}, {"name": "Scope-out — business advice (and other common scope-outs)", "trig": "business advice scoped out", "fig": false, "to": "both"}]}, {"area": "1 · Debt Management", "scen": [{"name": "Establish / utilise an offset account", "trig": "offset account", "fig": false, "to": "accumulator"}, {"name": "Direct surplus income + tax savings to offset (always-on)", "trig": "direct surplus to offset", "fig": true, "to": "accumulator"}, {"name": "Use cash / sale proceeds to reduce the home loan", "trig": "pay down home loan", "fig": true, "to": "accumulator"}, {"name": "Retain an emergency cash buffer in the offset", "trig": "emergency buffer", "fig": true, "to": "accumulator"}, {"name": "Consolidate car loan into home loan", "trig": "consolidate car loan", "fig": false, "to": "both"}, {"name": "Consolidate other debt (personal loan / credit card)", "trig": "consolidate personal loan", "fig": true, "to": "both"}, {"name": "Refinance investment property loan from P&I to interest only", "trig": "investment property interest only", "fig": false, "to": "accumulator"}, {"name": "Refinance to draw on available equity (GEARING)", "trig": "draw on equity", "fig": true, "to": "accumulator"}, {"name": "Use equity to fund the 20% deposit for an investment property purchase (GEARING)", "trig": "investment property purchase", "fig": true, "to": "accumulator"}, {"name": "Establish a Term Loan / debt recycling (GEARING)", "trig": "term loan", "fig": true, "to": "accumulator"}, {"name": "Use inheritance / windfall to pay down the home loan", "trig": "inheritance to pay down", "fig": true, "to": "accumulator"}, {"name": "Switch home loan from principal & interest to interest only", "trig": "switch home loan to interest only", "fig": false, "to": "accumulator"}]}, {"area": "2 · Investment Property", "scen": [{"name": "Purchase an investment property using equity", "trig": "purchase investment property", "fig": true, "to": "accumulator"}, {"name": "Purchase an investment property using cash / savings", "trig": "purchase property using cash", "fig": true, "to": "accumulator"}, {"name": "Sell current property and use proceeds to buy a new property", "trig": "sell property and buy", "fig": true, "to": "both"}, {"name": "Sell current home and upgrade", "trig": "sell home and upgrade", "fig": true, "to": "accumulator"}, {"name": "Convert current home into an investment property", "trig": "convert home to investment property", "fig": false, "to": "both"}, {"name": "Retain an existing investment property", "trig": "retain investment property", "fig": false, "to": "retirement"}, {"name": "Sell an existing investment property", "trig": "sell investment property", "fig": true, "to": "both"}, {"name": "Downsizer (sell home, downsize, contribute proceeds)", "trig": "downsize", "fig": true, "to": "retirement"}, {"name": "Purchase a home and rent part of it (partial rental of PPOR)", "trig": "rent part of the property", "fig": false, "to": "both"}]}, {"area": "3 · Investment Plan", "scen": [{"name": "Regular investment from cashflow / Term Loan", "trig": "regular investment", "fig": true, "to": "accumulator"}, {"name": "Lump-sum investment", "trig": "lump sum investment", "fig": true, "to": "both"}, {"name": "Investment bond", "trig": "investment bond", "fig": true, "to": "both"}, {"name": "In-specie transfer of an existing portfolio into the new account", "trig": "in specie transfer", "fig": true, "to": "both"}, {"name": "Use inheritance / windfall to invest", "trig": "inheritance to invest", "fig": true, "to": "both"}, {"name": "Sell down an existing investment / asset", "trig": "sell down investment", "fig": true, "to": "both"}, {"name": "Vanguard / index option (instead of CARE managed portfolios)", "trig": "vanguard", "fig": false, "to": "both"}, {"name": "Money on the move — tactical dollar-cost averaging acceleration", "trig": "money on the move", "fig": true, "to": "both"}, {"name": "Joint investment account (couple ownership)", "trig": "joint investment account", "fig": false, "to": "both"}, {"name": "Reserves & cash buffer for tactical liquidity (avoid forced selling)", "trig": "reserves", "fig": false, "to": "retirement"}, {"name": "Redirect mortgage repayments to investing once the home loan is repaid/offset", "trig": "redirect mortgage repayments", "fig": true, "to": "accumulator"}]}, {"area": "4 · Superannuation", "scen": [{"name": "Establish new fund + full rollover (close & transfer 100%)", "trig": "rollover full benefits to new fund", "fig": false, "to": "both"}, {"name": "Establish new fund + partial rollover, retain minimum for insurance", "trig": "partial rollover", "fig": true, "to": "both"}, {"name": "Retain existing fund (invest in line with risk profile)", "trig": "retain existing super", "fig": false, "to": "both"}, {"name": "Consolidate multiple super accounts", "trig": "consolidate super", "fig": false, "to": "both"}, {"name": "In-specie transfer of super holdings", "trig": "in specie super transfer", "fig": true, "to": "both"}, {"name": "Retain a defined benefit fund (scope out)", "trig": "retain defined benefit", "fig": false, "to": "both"}, {"name": "Retain military super (member & ancillary + employer/DB portion)", "trig": "military super", "fig": false, "to": "both"}, {"name": "Redirect / continue employer contributions", "trig": "redirect employer contributions", "fig": false, "to": "both"}, {"name": "Establish / manage an SMSF (rebalance + pension transition)", "trig": "smsf", "fig": true, "to": "retirement"}, {"name": "Commence a pension / transition to retirement (TTR)", "trig": "account based pension", "fig": true, "to": "both"}, {"name": "Non-lapsing binding death benefit nomination", "trig": "binding death nomination", "fig": false, "to": "retirement"}, {"name": "Recontribution strategy", "trig": "recontribution", "fig": true, "to": "both"}, {"name": "SMSF wind-up / split on separation (in-specie to personal super)", "trig": "separation", "fig": false, "to": "both"}, {"name": "Disability super benefit — staged lump-sum withdrawals (TPD/disability payout, tax-free uplift)", "trig": "disability super benefit", "fig": true, "to": "both"}, {"name": "Reversionary beneficiary nomination (pension phase)", "trig": "reversionary beneficiary", "fig": false, "to": "retirement"}, {"name": "Seamless accumulation-to-pension transfer (no asset sale; avoid CGT / poor-timing sale)", "trig": "transition to pension", "fig": false, "to": "both"}, {"name": "In-specie transfer of super on separation (SMSF asset split to personal super)", "trig": "separation", "fig": false, "to": "both"}, {"name": "Commence pension before rebalancing to minimise CGT (defer rebalance to pension phase)", "trig": "commence pension before rebalance", "fig": false, "to": "retirement"}, {"name": "Retain an existing SMSF (operate, add account, redirect contributions, reinvest)", "trig": "retain smsf", "fig": false, "to": "both"}, {"name": "SMSF with corporate trustee holding a geared investment property (LRBA cashflow)", "trig": "smsf property", "fig": false, "to": "both"}, {"name": "SMSF wind-up / consolidation to a retail fund (non-separation, cost/suitability driven)", "trig": "close your smsf", "fig": true, "to": "both"}]}, {"area": "5 · Super Contributions", "scen": [{"name": "Salary sacrifice / concessional contributions", "trig": "salary sacrifice", "fig": true, "to": "accumulator"}, {"name": "Carry-forward (catch-up) concessional contributions", "trig": "carry forward", "fig": true, "to": "accumulator"}, {"name": "Non-concessional contribution", "trig": "non-concessional contribution", "fig": true, "to": "both"}, {"name": "Bring-forward non-concessional contribution", "trig": "bring forward", "fig": true, "to": "accumulator"}, {"name": "Spouse contribution", "trig": "spouse contribution", "fig": true, "to": "accumulator"}, {"name": "Government co-contribution", "trig": "co-contribution", "fig": false, "to": "accumulator"}, {"name": "Contribution splitting", "trig": "contribution splitting", "fig": true, "to": "accumulator"}, {"name": "Personal deductible contribution", "trig": "personal deductible contribution", "fig": true, "to": "accumulator"}, {"name": "Work test note (age 67+)", "trig": "work test", "fig": false, "to": "both"}, {"name": "Downsizer contribution", "trig": "downsizer", "fig": true, "to": "retirement"}, {"name": "Contributions reserving strategy (double concessional cap before age 67)", "trig": "contribution reserving", "fig": true, "to": "both"}, {"name": "First Home Super Saver Scheme (FHSSS)", "trig": "first home super saver", "fig": true, "to": "accumulator"}, {"name": "Salary packaging (employer-provided, e.g. health / PBI sector)", "trig": "salary packaging", "fig": true, "to": "both"}, {"name": "Carry-forward concessional contribution to offset CGT on an asset sale", "trig": "carry forward", "fig": true, "to": "accumulator"}, {"name": "Salary sacrifice future rental increases into super (or to the gearing plan)", "trig": "rent increases salary sacrifice", "fig": false, "to": "accumulator"}]}, {"area": "6 · Insurance / Personal Protection", "scen": [{"name": "Take out new cover (Life / TPD / Trauma / IP)", "trig": "new insurance", "fig": true, "to": "both"}, {"name": "Top-up / increase existing cover", "trig": "top-up insurance", "fig": true, "to": "both"}, {"name": "Replace / cancel & take out new cover (with takeover terms)", "trig": "cancel and replace insurance", "fig": true, "to": "both"}, {"name": "Retain existing cover (inside super)", "trig": "retain insurance", "fig": false, "to": "both"}, {"name": "Income Protection — retain existing", "trig": "retain income protection", "fig": false, "to": "both"}, {"name": "Employer-paid / default cover (retain or note)", "trig": "employer paid cover", "fig": false, "to": "both"}, {"name": "Child cover", "trig": "child cover", "fig": true, "to": "both"}, {"name": "Premium structure — stepped vs level / variable age-stepped", "trig": "stepped premium", "fig": false, "to": "both"}, {"name": "Cancel cover no longer required", "trig": "cancel insurance", "fig": false, "to": "both"}, {"name": "Income Protection — increasing/CPI-indexed claim benefit", "trig": "increasing claim", "fig": false, "to": "both"}, {"name": "Trauma cover with reinstatement benefit", "trig": "trauma reinstatement", "fig": false, "to": "both"}, {"name": "Linked cover with buy-back feature", "trig": "buy back", "fig": false, "to": "both"}, {"name": "Future insurability / guaranteed future increases", "trig": "future insurability", "fig": false, "to": "both"}, {"name": "Guaranteed renewable income protection", "trig": "guaranteed renewable", "fig": false, "to": "both"}, {"name": "Own-occupation TPD definition", "trig": "own occupation", "fig": false, "to": "both"}, {"name": "Differentiate TPD definition by life stage (own-occ primary earner / any-occ spouse)", "trig": "differential tpd", "fig": false, "to": "both"}, {"name": "Trauma payout deployment (medical recovery + partner salary replacement)", "trig": "trauma payout", "fig": false, "to": "both"}, {"name": "Retain cover during workforce absence (maternity / parental leave)", "trig": "maternity leave", "fig": false, "to": "both"}, {"name": "Dual-layer cover (retain minimum in super + new personal cover)", "trig": "dual layer", "fig": false, "to": "both"}, {"name": "Cancel cover no longer required (age + debt-free + income-replacement redundant)", "trig": "cancel insurance", "fig": false, "to": "both"}, {"name": "Child cover with guaranteed conversion to adult cover", "trig": "child cover", "fig": false, "to": "both"}, {"name": "Dual income protection — retail top-up over employer/industry cover (offset benefit)", "trig": "two income protection policies", "fig": false, "to": "both"}, {"name": "Occupation pre-assessment / high-risk occupation constraint", "trig": "occupation pre-assessment", "fig": false, "to": "both"}, {"name": "Size TPD sum insured with a super-tax uplift (gross-up if claimed in super)", "trig": "22% uplift", "fig": false, "to": "both"}, {"name": "Income Protection affordability structuring — waiting & benefit period calibrated to cash/leave", "trig": "90 day wait", "fig": false, "to": "retirement"}]}, {"area": "7 · Cashflow & Budgeting", "scen": [{"name": "Establish an MCMA / cash hub", "trig": "MCMA", "fig": true, "to": "both"}, {"name": "Direct surplus income to offset / savings", "trig": "direct surplus", "fig": true, "to": "accumulator"}, {"name": "Budget / spending plan recommendation", "trig": "budget", "fig": false, "to": "retirement"}]}, {"area": "8 · Estate Planning", "scen": [{"name": "Prepare / review your Will", "trig": "will", "fig": false, "to": "both"}, {"name": "Prepare / review Power of Attorney", "trig": "power of attorney", "fig": false, "to": "both"}, {"name": "Non-lapsing binding death benefit nomination (super)", "trig": "binding nomination", "fig": false, "to": "retirement"}, {"name": "Testamentary trust", "trig": "testamentary trust", "fig": false, "to": "both"}, {"name": "Apply for the Centrelink Age Pension (retirement trigger)", "trig": "age pension", "fig": true, "to": "retirement"}]}, {"area": "9 · Administration", "scen": [{"name": "Use the My Wealth Portal", "trig": "my wealth portal", "fig": false, "to": "both"}, {"name": "Establish your investments through the recommended platform", "trig": "platform", "fig": true, "to": "both"}]}, {"area": "10 · Entities (company / trust / SMSF)", "scen": [{"name": "Investment company / bucket company", "trig": "bucket company", "fig": true, "to": "both"}, {"name": "Family / discretionary trust (as advice entity)", "trig": "family trust", "fig": false, "to": "both"}, {"name": "SMSF as advice entity", "trig": "smsf", "fig": false, "to": "both"}]}];
+let SOA='accumulator';
+const F={}; // field state
+
+function el(t,a={},...k){const e=document.createElement(t);for(const x in a){if(x=='html')e.innerHTML=a[x];else e.setAttribute(x,a[x])}k.forEach(c=>e.append(c));return e}
+
+function fieldHTML(id,label,type,opts,hint){
+  let inp;
+  if(type=='select'){inp=`<select data-f="${id}"><option value=""></option>`+opts.map(o=>`<option>${o}</option>`).join('')+`</select>`}
+  else if(type=='area'){inp=`<textarea data-f="${id}"></textarea>`}
+  else inp=`<input data-f="${id}" placeholder="${hint||''}">`;
+  return `<div class="fld"><label>${label}</label>${inp}</div>`;
+}
+function card(title,bodyHTML,open=true){
+  return `<div class="card ${open?'':'collapsed'}"><h2 onclick="this.parentNode.classList.toggle('collapsed')">${title}<span class="chev">▾</span></h2><div class="body">${bodyHTML}</div></div>`;
+}
+
+function build(){
+  let h='';
+  // PART 1
+  h+=card('1 · Clients & Entity',
+    '<div class="row">'+fieldHTML('c1','Client 1 full name','text','','')+fieldHTML('c1d','Client 1 DOB / preferred','text','','')+'</div>'+
+    '<div class="row">'+fieldHTML('c2','Client 2 full name (if couple)','text','','')+fieldHTML('c2d','Client 2 DOB / preferred','text','','')+'</div>'+
+    '<div class="row">'+fieldHTML('ctype','Client type','select',['Single','Couple','Single + entity','Couple + entity'])+
+       fieldHTML('newex','New or existing client','select',['New','Existing'])+'</div>'+
+    '<div class="row">'+fieldHTML('ent','Entity (if any)','select',['—','SMSF (individual trustees)','SMSF (corporate trustee)','Company','Family/discretionary trust','Bucket company'])+
+       fieldHTML('entid','Entity name + ABN/ACN','text','','')+'</div>');
+  // PART 2 scope
+  let scope=DATA.map(a=>`<label class="strat"><input type="checkbox" data-scope="${a.area}" checked> <span class="lbl">${a.area}</span></label>`).join('');
+  h+=card('2 · Scope of Advice  <small class="hint">(unticked = scoped out)</small>', scope);
+  // PART 3 risk/platform
+  h+=card('3 · Risk Profile, Platform & Product',
+    '<div class="row">'+fieldHTML('rp','Investment risk profile','select',['Cash','Defensive','Balanced','Growth','High Growth'])+
+       fieldHTML('rps','Super risk profile (if different)','select',['','Cash','Defensive','Balanced','Growth','High Growth'])+'</div>'+
+    '<div class="row">'+fieldHTML('plat','Recommended platform','select',['Hub24','Netwealth','CFS Edge','BT Panorama','Other'])+
+       fieldHTML('appr','Investment approach','select',['CARE Essentials','CARE Full','CARE Genuine Edge','Vanguard index','Vanguard Diversified','Other'])+'</div>'+
+    '<div class="row">'+fieldHTML('funds','Specific funds / portfolio','text','','e.g. Vanguard Growth 100%')+'</div>');
+  // PART 4 strategies
+  let strat='<p class="muted">Tick to fire wording. <span class="tg acc">ACC</span>/<span class="tg ret">RET</span> tags show where a strategy applies; shared ones are untagged.</p><div id="stratList"></div>';
+  h+=card('4 · Strategy Selection', strat);
+  // PART 5 notes
+  h+=card('5 · Adviser Notes (free text — still keyword-scanned)', '<div class="row">'+fieldHTML('notes','Notes','area','','')+'</div>',false);
+  // PART 6 fees
+  h+=card('6 · Fees & Remuneration',
+    '<div class="row">'+fieldHTML('feeup','Upfront advice fee','text','','$ or %')+fieldHTML('feeong','Ongoing advice fee','text','','$ p.a. or % FUM')+'</div>'+
+    '<div class="row">'+fieldHTML('comm','Insurance commission','text','','upfront% / ongoing% or $Y1/$Y2')+
+       fieldHTML('feefund','Fee funding source','select',['Cashflow','Superannuation','Both'])+'</div>',false);
+  // PART 7 specifics
+  h+=card('7 · Super & Insurance Actions',
+    '<div class="row">'+fieldHTML('superact','Super fund action(s)','select',['Retain','Full rollover','Partial rollover (retain min for insurance)','Consolidate','Establish SMSF','Retain SMSF','Wind up SMSF → retail'])+'</div>'+
+    '<div class="row">'+fieldHTML('superfunds','Existing super funds (fund/balance/DB)','area','','')+'</div>'+
+    '<div class="row">'+fieldHTML('ins','Insurance covers (type/amount/owner/structure/wait/benefit)','area','','')+'</div>'+
+    '<div class="row">'+fieldHTML('loans','Loan/debt figures (balances, limits, term-loan initial+monthly)','area','','')+'</div>',false);
+  document.getElementById('form').innerHTML=h;
+  // wire fields
+  document.querySelectorAll('[data-f]').forEach(i=>i.addEventListener('input',e=>{F[e.target.dataset.f]=e.target.value;render()}));
+  document.querySelectorAll('[data-scope]').forEach(i=>i.addEventListener('change',render));
+  buildStrats();
+}
+
+function buildStrats(){
+  let h='';
+  DATA.forEach((a,ai)=>{
+    const list=a.scen.filter(s=>s.to=='both'||s.to==SOA);
+    if(!list.length) return;
+    h+=`<div class="areaH">${a.area}</div>`;
+    list.forEach((s,si)=>{
+      const id='s_'+ai+'_'+a.scen.indexOf(s);
+      const tag=s.to=='accumulator'?'<span class="tg acc">ACC</span>':s.to=='retirement'?'<span class="tg ret">RET</span>':'';
+      const fig=s.fig?`<span class="fig"><input data-fig="${id}" placeholder="$ amount"></span>`:'';
+      h+=`<label class="strat"><input type="checkbox" data-strat="${id}" data-name="${s.name.replace(/"/g,'&quot;')}" data-area="${a.area}"> <span class="lbl">${s.name}${tag}<br><small class="hint">trigger: ${s.trig}</small></span>${fig}</label>`;
+    });
+  });
+  document.getElementById('stratList').innerHTML=h;
+  document.querySelectorAll('[data-strat]').forEach(i=>i.addEventListener('change',render));
+  document.querySelectorAll('[data-fig]').forEach(i=>i.addEventListener('input',render));
+  render();
+}
+
+function gatherStrats(){
+  const out=[];
+  document.querySelectorAll('[data-strat]:checked').forEach(c=>{
+    const fig=document.querySelector(`[data-fig="${c.dataset.strat}"]`);
+    out.push({area:c.dataset.area,name:c.dataset.name,amount:fig&&fig.value?fig.value:null});
+  });
+  return out;
+}
+function scopeIn(){return [...document.querySelectorAll('[data-scope]:checked')].map(c=>c.dataset.scope)}
+
+function buildObj(){
+  return {soaType:SOA,client:{c1:F.c1,c1dob:F.c1d,c2:F.c2,c2dob:F.c2d,type:F.ctype,status:F.newex,entity:F.ent,entityId:F.entid},
+    scope:scopeIn(),risk:{investment:F.rp,super:F.rps},platform:F.plat,approach:F.appr,funds:F.funds,
+    strategies:gatherStrats(),fees:{upfront:F.feeup,ongoing:F.feeong,commission:F.comm,funding:F.feefund},
+    super:{action:F.superact,funds:F.superfunds},insurance:F.ins,loans:F.loans,notes:F.notes};
+}
+function asText(o){
+  let L=[];
+  L.push(`ADVICE REQUEST — ${o.soaType.toUpperCase()} SOA`);
+  L.push(`Client: ${o.client.c1||'…'}${o.client.c2?' & '+o.client.c2:''}  (${o.client.type||'?'}, ${o.client.status||'?'})`);
+  if(o.client.entity&&o.client.entity!=='—')L.push(`Entity: ${o.client.entity} ${o.client.entityId||''}`);
+  L.push(`Risk profile: ${o.risk.investment||'?'}${o.risk.super?' (super: '+o.risk.super+')':''}`);
+  L.push(`Platform/approach: ${o.platform||'?'} / ${o.approach||'?'}${o.funds?' — '+o.funds:''}`);
+  L.push(`Scope in: ${o.scope.join('; ')||'—'}`);
+  L.push('');L.push('STRATEGIES (trigger wording):');
+  if(!o.strategies.length)L.push('  (none ticked)');
+  let cur='';
+  o.strategies.forEach(s=>{if(s.area!=cur){L.push('  '+s.area);cur=s.area}L.push(`    • ${s.name}${s.amount?'  ['+s.amount+']':''}`)});
+  L.push('');L.push(`Super action: ${o.super.action||'—'}`);
+  if(o.super.funds)L.push(`Existing super: ${o.super.funds}`);
+  if(o.insurance)L.push(`Insurance: ${o.insurance}`);
+  if(o.loans)L.push(`Loans/debt: ${o.loans}`);
+  L.push(`Fees: upfront ${o.fees.upfront||'—'}, ongoing ${o.fees.ongoing||'—'}, commission ${o.fees.commission||'—'}, funded via ${o.fees.funding||'—'}`);
+  if(o.notes)L.push('');if(o.notes)L.push('Notes: '+o.notes);
+  return L.join('\n');
+}
+function render(){
+  const o=buildObj();
+  document.getElementById('out').textContent=asText(o);
+  document.getElementById('picks').textContent=o.strategies.length+' strategies';
+  try{localStorage.setItem('mws_ar',JSON.stringify(o))}catch(e){}
+}
+function copyOut(){navigator.clipboard.writeText(asText(buildObj()));}
+function dl(kind){
+  const o=buildObj();const blob=kind=='json'?JSON.stringify(o,null,2):asText(o);
+  const b=new Blob([blob],{type:'text/'+(kind=='json'?'json':'plain')});
+  const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='advice_request.'+kind;a.click();URL.revokeObjectURL(u);
+}
+document.querySelectorAll('#soaType button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#soaType button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');SOA=b.dataset.t;
+  document.getElementById('soaHint').textContent='Showing '+SOA+' + shared strategies';
+  buildStrats();
+}));
+build();
+</script></body></html>
