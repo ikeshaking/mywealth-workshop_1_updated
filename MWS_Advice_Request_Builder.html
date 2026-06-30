@@ -297,14 +297,23 @@ function dl(k){const c=JSON.stringify(buildObj(),null,2);const b=new Blob([c],{t
 function dlWord(){const o=buildObj();const lines=asText(o).split('\n');
  const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
  const SECT=new Set(['Risk Profile','Scope of Advice','Scope Out']);
- let body='';
- lines.forEach((ln,idx)=>{const t=ln.trim();
+ let body='';let feeDone=false;
+ const fmt=n=>'$'+n.toLocaleString('en-AU',{maximumFractionDigits:2});
+ const feeTable=()=>{const fe=o.fee;let s='';if(fe.commitment||fe.status||fe.cashSource){s+='<p>'+esc('Commitment: '+(fe.commitment||'—')+(fe.status?'  ·  Ongoing: '+fe.status:'')+(fe.cashSource?'  ·  Cashflow fees from: '+fe.cashSource:''))+'</p>';}
+   s+='<table class="ft"><tr><th></th><th>Up·Super</th><th>Up·Cash</th><th>Ong·Super</th><th>Ong·Cash</th><th>Their total p.a.</th></tr>';
+   let col={us:0,uc:0,os:0,oc:0};
+   fe.rows.forEach(r=>{['us','uc','os','oc'].forEach(c=>{const v=parseFee(r.cells[c]);const sb=parseFee(r.superBal).flat,ib=parseFee(r.invBal).flat;col[c]+=v.flat+(v.pct?parseFloat(v.pct)/100*((c=='us'||c=='os')?sb:ib):0)});
+     s+='<tr><td>'+esc(r.name)+'</td>'+['us','uc','os','oc'].map(c=>'<td>'+esc(r.cells[c]||'')+'</td>').join('')+'<td>'+(r.total?fmt(r.total):'')+'</td></tr>';});
+   s+='<tr class="tot"><td>Total</td><td>'+(col.us?fmt(col.us):'')+'</td><td>'+(col.uc?fmt(col.uc):'')+'</td><td>'+(col.os?fmt(col.os):'')+'</td><td>'+(col.oc?fmt(col.oc):'')+'</td><td>'+(fe.grand?fmt(fe.grand):'')+'</td></tr></table>';
+   return s;};
+ lines.forEach((ln,idx)=>{if(feeDone)return;const t=ln.trim();
    if(idx===0){body+=`<h1>${esc(t)}</h1>`;return}
    if(/^Adviser:/.test(t)||/SOA ·/.test(t)||/^Entity:/.test(t)){body+=`<p class="sub">${esc(t)}</p>`;return}
    if(t===''){body+='<div style="height:7px"></div>';return}
    const lead=ln.length-ln.replace(/^\s+/,'').length;
    if(t==='Hi Team,'){body+=`<p>${esc(t)}</p>`;return}
-   if(lead===0 && (/ Advice$/.test(t)||SECT.has(t)||/^Advice Fees/.test(t)||/^CARE Investment Philosophy/.test(t))){body+=`<h2>${esc(t)}</h2>`;return}
+   if(lead===0 && /^Advice Fees/.test(t)){body+=`<h2>Advice Fees</h2>`+feeTable();feeDone=true;return}
+   if(lead===0 && (/ Advice$/.test(t)||SECT.has(t)||/^CARE Investment Philosophy/.test(t))){body+=`<h2>${esc(t)}</h2>`;return}
    if(t.startsWith('•')){body+=`<p class="bul">${esc(t)}</p>`;return}
    if(lead<=2 && (/:$/.test(t)||/^(Strategy Recommendations|Product Recommendations|Contributions|Costs paid from|Ongoing plan costs|Cash position|GRAND TOTAL|Commitment)/.test(t))){body+=`<p class="lbl">${esc(t)}</p>`;return}
    body+=`<p${lead>=4?' class="ind"':''}>${esc(t)}</p>`;});
@@ -314,6 +323,10 @@ function dlWord(){const o=buildObj();const lines=asText(o).split('\n');
   h1{font-family:'Nunito',Georgia,serif;color:#2f6df0;font-size:24pt;font-weight:800;margin:0 0 4px}
   h2{font-family:'Nunito',Georgia,serif;color:#2f6df0;font-size:15pt;font-weight:800;margin:18px 0 5px}
   p{margin:3px 0}.sub{color:#1A1A1A;font-size:11pt}.lbl{font-weight:800;color:#2f6df0;margin-top:8px}.bul{margin-left:20px}.ind{margin-left:14px}
+  table.ft{border-collapse:collapse;width:100%;margin:6px 0;font-size:9.5pt}
+  table.ft th{background:#2f6df0;color:#fff;border:1px solid #2f6df0;padding:4px 6px;text-align:left;font-size:9pt}
+  table.ft td{border:1px solid #c9d4e2;padding:4px 6px}
+  table.ft tr.tot td{background:#eef2fb;font-weight:700}
  </style>`;
  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8">${css}</head><body><div class="wrap">${body}</div></body></html>`;
  const b=new Blob(['﻿'+html],{type:'application/msword'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='advice_request.doc';a.click();URL.revokeObjectURL(u)}
