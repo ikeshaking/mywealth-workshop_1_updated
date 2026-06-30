@@ -415,25 +415,6 @@
      "appliesTo": "accumulator"
     },
     {
-     "name": "Rent part of your home — direct the rental income to the home loan offset",
-     "triggers": [
-      "rent part of home",
-      "rent out a room",
-      "partial rental of home"
-     ],
-     "type": "Tailored",
-     "gate": "",
-     "figures": "—",
-     "strat": "You plan to rent part of your home; we recommend you direct that rental income towards your home loan offset account.",
-     "outcome": "",
-     "why": [],
-     "risks": [],
-     "alts": [],
-     "appliesTo": "both",
-     "draft": false,
-     "custom": false
-    },
-    {
      "name": "Custom debt management strategy (free text)",
      "triggers": [
       "custom debt"
@@ -667,7 +648,7 @@
    ]
   },
   {
-   "name": "3a · Investment Bond",
+   "name": "3 · Investment Bond",
    "note": "Investment bond strategies + product, separate from the investment plan.",
    "scenarios": [
     {
@@ -724,7 +705,7 @@
    ]
   },
   {
-   "name": "3b · Investment Plan",
+   "name": "4 · Investment Plan",
    "note": "Regular investment / debt recycling wording is verbatim. Investment bond, lump‑sum and inheritance variants are drafts for your review (no investment‑bond example in these five SOAs — please send one).",
    "scenarios": [
     {
@@ -1079,7 +1060,7 @@
    ]
   },
   {
-   "name": "4 · Superannuation",
+   "name": "5 · Superannuation",
    "note": "Rollover variants, defined benefit and SMSF wording are verbatim from your SOAs. Military super and pension/TTR variants are drafts.",
    "scenarios": [
     {
@@ -1351,30 +1332,6 @@
      ],
      "draft": false,
      "appliesTo": "both"
-    },
-    {
-     "name": "Non-lapsing binding death benefit nomination",
-     "triggers": [
-      "binding death nomination",
-      "non-lapsing binding nomination",
-      "death benefit nomination"
-     ],
-     "type": "Always-on (super scoped)",
-     "gate": "Fund must offer it",
-     "figures": "—",
-     "strat": "We recommend you choose a non-lapsing binding death nomination within your superannuation funds.",
-     "outcome": "A binding nomination ensures your superannuation death benefit is paid according to your wishes.",
-     "why": [
-      "Death benefit payment option — you can nominate dependents under the non-lapsing binding election, or select an automatic reversionary pension under the pension plan.",
-      "A non-lapsing binding nomination binds the trustee to pay a superannuation death benefit according to the deceased's wishes and remains in force until amended or revoked (subject to the fund's Trust Deed)."
-     ],
-     "risks": [
-      "When you die, the proceeds from your superannuation fund may be subject to tax if they are paid as a lump sum to non-dependants, as defined for tax purposes.",
-      "(delete if the fund is unable to offer a non-lapsing binding nomination)"
-     ],
-     "alts": [],
-     "draft": false,
-     "appliesTo": "retirement"
     },
     {
      "name": "Recontribution strategy",
@@ -1743,7 +1700,7 @@
    ]
   },
   {
-   "name": "5 · Super Contributions",
+   "name": "6 · Super Contributions",
    "note": "Salary sacrifice / carry‑forward wording is verbatim. The remaining contribution types are drafts for your review.",
    "scenarios": [
     {
@@ -2192,7 +2149,7 @@
    ]
   },
   {
-   "name": "6 · Insurance / Personal Protection",
+   "name": "7 · Insurance / Personal Protection",
    "note": "New, top‑up, replace/takeover and retain wording is verbatim from your SOAs (Linked/Own‑Occupation, inside‑super vs personal, 90‑day wait, etc.).",
    "scenarios": [
     {
@@ -2941,7 +2898,7 @@
    ]
   },
   {
-   "name": "7 · Cashflow & Budgeting",
+   "name": "8 · Cashflow & Budgeting",
    "note": "MCMA and surplus‑direction wording is verbatim from your SOAs.",
    "scenarios": [
     {
@@ -3078,7 +3035,7 @@
    ]
   },
   {
-   "name": "8 · Estate Planning",
+   "name": "9 · Estate Planning",
    "note": "Will/POA and binding nomination wording is verbatim. Testamentary trust is a draft.",
    "scenarios": [
     {
@@ -3210,7 +3167,7 @@
    ]
   },
   {
-   "name": "9 · Administration",
+   "name": "10 · Administration",
    "note": "",
    "scenarios": [
     {
@@ -3268,7 +3225,7 @@
    ]
   },
   {
-   "name": "10 · Entities (company / trust / SMSF)",
+   "name": "11 · Entities (company / trust / SMSF)",
    "note": "DRAFT — across 26 sample MWS SOAs, NO company/bucket company or family/discretionary trust ever appears as the advice CLIENT or asset owner; the only non-individual entity is an SMSF with a corporate trustee (e.g. 'KENZIE PTY LTD ATF The Trustee for Clooneyfund'). If MWS writes company/trust-as-client SOAs, please send one; otherwise these rows can be filled from your standard wording.",
    "scenarios": [
     {
