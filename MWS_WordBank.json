@@ -137,29 +137,38 @@
      ]
     },
     {
-     "name": "Direct surplus income AND tax savings to offset (two separate amounts, always-on)",
+     "name": "Direct surplus income to offset",
      "triggers": [
-      "direct surplus to offset",
       "surplus to offset",
-      "tax savings to offset"
+      "direct surplus income"
      ],
-     "type": "Always-on (when debt scoped)",
-     "gate": "—",
-     "figures": "surplus income $___ + tax savings $___ (two separate amounts)",
-     "strat": "We recommend you direct all surplus income remaining after the recommendations made throughout this plan towards your existing home loan offset account. This is estimated to be $XXX per week.\nWe recommend you direct all tax refunds towards your existing home loan offset account. This is estimated to be $XXX per annum.",
-     "outcome": "Directing your surplus income towards your existing home loan offset will save you an estimated $XX in interest costs and reduce the repayment period on your loan from XX to XX years. On repayment of your home loan, redirecting your mortgage repayments to be invested will generate additional wealth estimated at $XXX over the remaining XX years of your plan.",
-     "why": [
-      "(uses the standard offset 'why' bullets above)"
+     "type": "Always-on",
+     "gate": "",
+     "figures": "$ amount",
+     "strat": "We recommend you direct your surplus income of $___ to your home loan offset account.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "accumulator",
+     "draft": false
+    },
+    {
+     "name": "Direct tax savings to offset",
+     "triggers": [
+      "tax savings to offset",
+      "direct tax savings"
      ],
-     "risks": [
-      "There may be transaction costs involved in establishing the strategy;",
-      "If the loan interest rate is variable, an increase in interest rates will result in an increase in interest repayments, which may place some strain on your cash flow;"
-     ],
-     "alts": [
-      "(uses the standard offset alternatives above)"
-     ],
-     "draft": false,
-     "appliesTo": "accumulator"
+     "type": "Always-on",
+     "gate": "",
+     "figures": "$ amount",
+     "strat": "We recommend you direct your tax savings of $___ to your home loan offset account.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "accumulator",
+     "draft": false
     },
     {
      "name": "Use cash / sale proceeds to reduce the home loan",
@@ -685,26 +694,6 @@
      ],
      "draft": false,
      "appliesTo": "both"
-    },
-    {
-     "name": "Investment bond — product (Generation Life / Australian Unity / Centuria)",
-     "triggers": [
-      "genlife",
-      "generation life",
-      "lifebuilder",
-      "investment bond product"
-     ],
-     "type": "Custom (free text)",
-     "gate": "",
-     "figures": "—",
-     "strat": "[Specify the investment bond platform + underlying option, e.g. GenLife Vanguard Growth — as per doc.]",
-     "outcome": "",
-     "why": [],
-     "risks": [],
-     "alts": [],
-     "appliesTo": "both",
-     "draft": false,
-     "custom": true
     }
    ]
   },
@@ -2933,30 +2922,38 @@
      "appliesTo": "both"
     },
     {
-     "name": "Direct surplus income AND tax savings to offset / savings (two separate amounts)",
+     "name": "Direct surplus income to offset / savings",
      "triggers": [
-      "direct surplus",
-      "surplus to offset",
-      "surplus to savings"
+      "surplus to savings",
+      "surplus income to offset"
      ],
-     "type": "Always-on (when cashflow scoped)",
-     "gate": "—",
-     "figures": "surplus income $___ + tax savings $___ (separate)",
-     "strat": "We recommend your remaining surplus income of $XXX per week ($XXX per month) be directed towards your [existing home loan offset account / savings account].\nWe recommend you direct your tax savings to your existing home loan offset account. This is estimated to be $XXX per annum.",
-     "outcome": "Directing your surplus to your offset reduces interest and shortens your loan term while keeping funds accessible.",
-     "why": [
-      "An offset account will allow you to reduce your current interest payments but still provide flexibility to withdraw these funds for your liquidity needs.",
-      "The offset account use will provide estimated interest savings of $XXX over the life of the loan compared to repayment over the regular term."
+     "type": "Always-on",
+     "gate": "",
+     "figures": "$ amount",
+     "strat": "We recommend you direct your surplus income of $___ to your offset / savings account.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "accumulator",
+     "draft": false
+    },
+    {
+     "name": "Direct tax savings to offset / savings",
+     "triggers": [
+      "tax savings to savings",
+      "tax savings to offset"
      ],
-     "risks": [
-      "(no specific risks noted)"
-     ],
-     "alts": [
-      "Direct your surplus cashflow to a high interest savings account or term deposit — discounted as the offset yields a higher effective after-tax return and reduces bad debt faster.",
-      "Make additional home loan repayments instead of using the offset — discounted as the offset provides flexible access to your funds."
-     ],
-     "draft": false,
-     "appliesTo": "accumulator"
+     "type": "Always-on",
+     "gate": "",
+     "figures": "$ amount",
+     "strat": "We recommend you direct your tax savings of $___ to your offset / savings account.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "accumulator",
+     "draft": false
     },
     {
      "name": "Budget / spending plan recommendation",
