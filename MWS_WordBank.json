@@ -679,7 +679,7 @@
      ],
      "type": "Tailored",
      "gate": "Investment bond scoped (commonly for children's education / high-income earners)",
-     "figures": "{initial},{monthly}",
+     "figures": "initial $___ + ongoing $___ pm",
      "strat": "We recommend you establish [a new investment bond / two new investment bonds for each of your children] through the Generation Life – Life Builder Investment Bond platform and invest in line with your risk profile.\nYou will be able to nominate [child/beneficiary] as the beneficiary of this account.\nWe recommend you invest the funds into the following investment options: [e.g. Vanguard Growth Portfolio – 100%].",
      "outcome": "An investment bond provides a tax-effective, long-term structure (earnings taxed within the bond at a maximum of 30%, with no tax payable on withdrawals subject to the 10-year rule), ideal for accumulating for your children's future.",
      "why": [
@@ -886,14 +886,16 @@
      "appliesTo": "both"
     },
     {
-     "name": "Joint investment account (couple ownership)",
+     "name": "Establish a new investment account",
      "triggers": [
       "joint investment account",
       "held jointly",
-      "joint account"
+      "joint account",
+      "new investment account",
+      "establish investment account"
      ],
      "gate": "Couple establishing a non-super investment account together",
-     "strat": "We recommend you establish a new investment account held jointly.",
+     "strat": "We recommend you establish a new investment account and invest in line with your risk profile.",
      "outcome": "A single jointly-held portfolio simplifies administration and estate transfer between you.",
      "why": [
       "Joint ownership simplifies estate transfer (the account passes to the survivor) and supports a unified investment plan for the household."
@@ -1051,6 +1053,28 @@
      "appliesTo": "both",
      "draft": false,
      "custom": true
+    },
+    {
+     "name": "Retain existing investment option and/or platform",
+     "triggers": [
+      "retain existing investment",
+      "retain platform",
+      "keep existing investment option"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend you retain your existing investment option and/or platform and invest in line with your risk profile.",
+     "outcome": "",
+     "why": [
+      "Avoids capital gains and transaction costs of switching where the existing platform/option remains suitable."
+     ],
+     "risks": [
+      "The existing platform may cost more than alternatives; reviewed at each ongoing review."
+     ],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false
     }
    ]
   },
