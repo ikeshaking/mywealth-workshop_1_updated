@@ -15105,6 +15105,54 @@ function v200ApplyProducts(ar){
     try{ if(typeof v96FillInsurance==='function') v96FillInsurance(); }catch(_){ }
   }
 }
+// ── Word-bank token resolution ([Name]/[Spouse]/[Fund]) ───────────────────────
+// Word-bank wording carries [Name]/[Spouse]/[Fund] placeholders. Resolve them against the
+// client/partner first names and the imported super accounts, expanding a "Both" line into one
+// line per person when the line is person-specific (has [Name] or [Fund]) and they differ.
+function v200ClientNames(){
+  const f=(typeof F==='object'&&F)?F:{};
+  const pf=(typeof pref==='function')?pref:function(){return ''};
+  const c=String(f.clientFirst||pf('client')||'you').trim();
+  const p=String(f.partnerFirst||pf('partner')||'').trim();
+  return {c,p};
+}
+function v200FundsFor(personKey){
+  const accts=(typeof F==='object'&&Array.isArray(F.superAccounts))?F.superAccounts:[];
+  const list=accts.filter(a=>a&&a.person===personKey&&a.fund).map(a=>String(a.fund).trim());
+  if(!list.length) return 'your existing super fund';
+  if(list.length===1) return list[0];
+  return list.slice(0,-1).join(', ')+' and '+list[list.length-1];
+}
+function v200OwnerPersons(owner){
+  const {c,p}=v200ClientNames();
+  const o=String(owner||'').trim();
+  if(!o || /^both$/i.test(o) || /&| and /i.test(o)) return p?[{key:'client',name:c},{key:'partner',name:p}]:[{key:'client',name:c}];
+  if(/^joint$/i.test(o)) return [{key:'joint',name:p?(c+' & '+p):c}];
+  if(c && o.toLowerCase()===c.toLowerCase()) return [{key:'client',name:c}];
+  if(p && o.toLowerCase()===p.toLowerCase()) return [{key:'partner',name:p}];
+  return [{key:'client',name:c||o||'you'}];
+}
+function v200HasNameOrFund(t){ return /\[name\]|\[client\]|\[fund\]|\[existing fund\]/i.test(String(t||'')); }
+// Resolve a single audience's tokens. otherName = the spouse relative to this person.
+function v200ResolveOne(text, person, otherName){
+  let t=String(text||'');
+  t=t.replace(/\[name\]|\[client\]/gi, person?person.name:'you');
+  t=t.replace(/\[spouse\]|\[partner\]/gi, otherName||'');
+  const fundKey=(person&&person.key==='partner')?'partner':'client';
+  t=t.replace(/\[fund\]|\[existing fund\]/gi, person?v200FundsFor(fundKey):'your existing super fund');
+  return t.replace(/\s{2,}/g,' ').trim();
+}
+// Returns an array of resolved lines (>1 when a Both/person-specific line expands per person).
+function v200ResolveTokens(text, s, expand){
+  const {c,p}=v200ClientNames();
+  const persons=v200OwnerPersons(s&&s.owner);
+  if(expand!==false && v200HasNameOrFund(text) && persons.length>1){
+    return persons.map(per=> v200ResolveOne(text, per, per.key==='client'?p:c) );
+  }
+  const per=persons[0];
+  const other = per ? (per.key==='client'?p:(per.key==='partner'?c:p)) : p;
+  return [ v200ResolveOne(text, per, other) ];
+}
 function v200ApplyAdviceRequest(ar){
   const log=[];
   try{
@@ -15118,11 +15166,12 @@ function v200ApplyAdviceRequest(ar){
       const recs=[],whys=[],risks=[],alts=[];
       byBlock[bid].forEach(s=>{
         const w=V200_WORD_BANK[s.area+'::'+s.name];
-        if(w){ if(w.strat) recs.push(v200Fill(w.strat,s));
-          (w.why||[]).forEach(x=>{ if(whys.indexOf(x)<0) whys.push(x); });
-          (w.risks||[]).forEach(x=>{ if(risks.indexOf(x)<0) risks.push(x); });
-          (w.alts||[]).forEach(x=>{ if(alts.indexOf(x)<0) alts.push(x); }); }
-        else recs.push(v200Fill(s.text||s.name,s));
+        if(w){ if(w.strat) v200ResolveTokens(v200Fill(w.strat,s),s,true).forEach(l=>{ if(l) recs.push(l); });
+          // why/risks/alternatives are block-level prose — resolve tokens but do NOT expand per person
+          (w.why||[]).forEach(x=>{ const y=v200ResolveTokens(x,s,false)[0]; if(y && whys.indexOf(y)<0) whys.push(y); });
+          (w.risks||[]).forEach(x=>{ const y=v200ResolveTokens(x,s,false)[0]; if(y && risks.indexOf(y)<0) risks.push(y); });
+          (w.alts||[]).forEach(x=>{ const y=v200ResolveTokens(x,s,false)[0]; if(y && alts.indexOf(y)<0) alts.push(y); }); }
+        else v200ResolveTokens(v200Fill(s.text||s.name,s),s,true).forEach(l=>{ if(l) recs.push(l); });
       });
       if(typeof B==='undefined') return;
       if(!B[bid]) B[bid]={active:false,content:{}};
