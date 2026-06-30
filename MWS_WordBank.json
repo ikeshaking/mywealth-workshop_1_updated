@@ -2088,30 +2088,6 @@
      "appliesTo": "accumulator"
     },
     {
-     "name": "Salary sacrifice future rental increases into super (optional overlay)",
-     "triggers": [
-      "rent increases salary sacrifice",
-      "future rent to super",
-      "direct rent increases"
-     ],
-     "gate": "Investment property held; future rent growth expected",
-     "strat": "We recommend you plan to have future rent increases salary sacrificed into superannuation or allocated to your instalment gearing plan. This may be changed to direct rent increases to an additional property or to fund everyday lifestyle, reviewed as your circumstances evolve.",
-     "outcome": "Growth in passive (rental) income is captured into super or the investment plan rather than absorbed into spending.",
-     "why": [
-      "Directing future rent increases into super (concessionally taxed) or the gearing plan compounds the benefit of rising rents rather than letting it leak into lifestyle."
-     ],
-     "risks": [
-      "Future rent may not rise as projected; this requires an annual decision and adds management complexity."
-     ],
-     "alts": [
-      "Direct rent increases entirely to the offset / loan reduction, or to lifestyle — chosen approach reviewed annually."
-     ],
-     "type": "Tailored",
-     "figures": "—",
-     "draft": false,
-     "appliesTo": "accumulator"
-    },
-    {
      "name": "Notice of intent — claim a tax deduction on unclaimed personal contributions",
      "triggers": [
       "notice of intent",
