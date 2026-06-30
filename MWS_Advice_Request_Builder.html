@@ -1,45 +1,46 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MWS Advice Request Builder</title><style>
-:root{--navy:#16263f;--navy2:#1f3149;--navy3:#27405e;--head:#0f1d33;--teal:#2bb3a3;--line:#33486a;--ink:#e9eff8;--muted:#9fb2cd;--gold:#e8c45a;--bub:#26405f}
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--navy);color:var(--ink);font-size:13.5px}
-header{background:var(--head);color:#fff;padding:11px 18px;position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
-header h1{font-size:15px;margin:0;color:#fff}
-.toggle{display:inline-flex;border:1px solid #ffffff33;border-radius:8px;overflow:hidden}
-.toggle button{background:transparent;color:#cfe0f5;border:0;padding:6px 13px;font-weight:600;cursor:pointer}
-.toggle button.on{background:var(--teal);color:#06231f}
-.legend{font-size:10.5px;color:var(--muted)}.legend b.acc{background:#2d6a4f;color:#fff;border-radius:4px;padding:0 5px}.legend b.ret{background:#9b2226;color:#fff;border-radius:4px;padding:0 5px}
-.wrap{display:flex;gap:14px;max-width:1380px;margin:0 auto;padding:14px;align-items:flex-start}
-.form{flex:1 1 56%;min-width:0}.side{flex:1 1 42%;position:sticky;top:60px;max-height:calc(100vh-78px);overflow:auto}
-.card{background:var(--navy2);border:1px solid var(--line);border-radius:10px;margin-bottom:11px;overflow:hidden}
-.card.care>h2{background:#3a3417;color:var(--gold)}
-.card>h2{margin:0;padding:10px 14px;font-size:13px;background:var(--navy3);color:#fff;cursor:pointer;display:flex;justify-content:space-between}
-.card>h2 small.hint{color:#b9c8e0}
-.card.collapsed>h2 .chev{transform:rotate(-90deg)}.card .body{padding:12px 14px}.card.collapsed .body{display:none}
-.row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}.fld{flex:1 1 200px;min-width:140px}
-.fld label{display:block;font-weight:600;font-size:11px;color:var(--muted);margin-bottom:2px}
-.fld input,.fld select,.fld textarea{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;font-family:inherit;background:var(--navy);color:var(--ink)}
-.fld input::placeholder,.opts input::placeholder{color:#6c80a0}
-.fld textarea{min-height:50px;resize:vertical}
-.miniH{font-weight:700;font-size:11px;color:var(--gold);margin:9px 0 3px}
-.strat{display:flex;align-items:flex-start;gap:6px;padding:3px 4px;border-radius:6px;flex-wrap:wrap}.strat:hover{background:#ffffff0a}
-.strat>input[type=checkbox]{width:15px;height:15px;margin-top:2px;flex:none;accent-color:var(--teal)}
-.strat .lbl{flex:1 1 230px;min-width:150px;color:var(--ink)}.strat .lbl small{color:var(--muted);font-size:9.5px}
-.tg{font-size:9px;color:#fff;background:var(--muted);border-radius:4px;padding:0 5px;margin-left:3px}.tg.acc{background:#2d6a4f}.tg.ret{background:#9b2226}
-.opts{display:none;gap:5px;flex:1 1 100%;padding:2px 0 4px 22px}.strat.on .opts{display:flex;flex-wrap:wrap}
-.opts select,.opts input{padding:4px 6px;border:1px solid var(--line);border-radius:5px;font-size:11px;background:var(--navy);color:var(--ink)}.opts .own{width:130px}.opts .sl{width:130px}.opts .ap{width:120px}.opts .pk{width:110px}
-.repeat{border:1px dashed var(--line);border-radius:7px;padding:7px;margin-bottom:6px}
-.riskrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:4px 0;border-bottom:1px solid #ffffff12}.riskrow .who{font-weight:700;font-size:11px;color:#fff;flex:0 0 110px}.riskrow input,.riskrow select{flex:1 1 90px;min-width:80px;padding:4px 6px;border:1px solid var(--line);border-radius:5px;font-size:11px;background:var(--navy);color:var(--ink)}
-.addbtn{background:var(--navy3);color:#cfe0f5;border:1px solid var(--line);border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer;font-weight:600;margin:2px 0}
-.del{background:#5a1f23;color:#ffd7d7;border:0;border-radius:5px;padding:2px 7px;cursor:pointer;font-size:11px;float:right}
-.btn{background:var(--teal);color:#06231f;border:0;border-radius:7px;padding:7px 12px;font-weight:600;cursor:pointer;margin:2px}.btn.alt{background:var(--navy3);color:#fff}
-pre{white-space:pre-wrap;word-break:break-word;background:#0b1626;color:#d6e2f0;padding:11px;border-radius:8px;font-size:11px;line-height:1.5;max-height:70vh;overflow:auto;margin:0;border:1px solid var(--line)}
-.muted{color:var(--muted);font-size:10.5px;margin:3px 0 0}.count{font-size:11px;color:#9fb2cd}small.hint{color:var(--muted);font-size:9.5px;font-weight:400}
-.chips{display:flex;flex-wrap:wrap;gap:5px}.chip{font-size:11px;border:1px solid var(--line);border-radius:14px;padding:3px 10px;cursor:pointer;background:var(--bub);color:#cfe0f5}.chip.on{background:var(--teal);color:#06231f;border-color:var(--teal)}
-.sop{display:flex;align-items:flex-start;gap:7px;padding:4px 6px;border-radius:6px;background:#1c2c1f;margin-bottom:4px;border:1px solid #2c4a30}.sop input{width:15px;height:15px;margin-top:2px;flex:none;accent-color:#3b82f6}.sop .lbl{color:var(--gold);font-size:12px}
-table.rem{width:100%;border-collapse:collapse;font-size:11px}table.rem th,table.rem td{border:1px solid var(--line);padding:4px}table.rem th{background:#3f7cac;color:#fff;font-size:10px}table.rem input,table.rem select{width:100%;border:0;font-size:11px;padding:2px;background:transparent;color:var(--ink)}table.rem tr.tot td{background:var(--navy3);font-weight:700}
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+:root{--bg:#16243a;--panel:#1e3149;--panel2:#243a57;--head:#1a2b45;--blue:#4a86d8;--blue2:#5a9bf0;--line:#2c4366;--ink:#e7eef8;--muted:#93a8c6;--green:#3fbf6f;--gold:#e8c45a}
+*{box-sizing:border-box}body{margin:0;font-family:'Nunito','ABC Arizona Sans',Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+header{background:var(--head);color:#fff;padding:13px 20px;position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:2px solid var(--green)}
+.brand{font-size:18px;font-weight:800;color:#cdd9ea;letter-spacing:.3px}.brand span{font-size:10px;letter-spacing:3px;color:#8aa0bd;font-weight:700}
+.brandsub{font-size:12px;color:#8aa0bd;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.toggle{display:inline-flex;background:#16243a;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.toggle button{background:transparent;color:#b9c8e0;border:0;padding:7px 15px;font-weight:700;cursor:pointer;font-family:inherit}
+.toggle button.on{background:var(--blue);color:#fff}
+.legend{font-size:10.5px;color:var(--muted)}.legend b.acc{background:#2d6a4f;color:#fff;border-radius:5px;padding:1px 6px}.legend b.ret{background:#9b2226;color:#fff;border-radius:5px;padding:1px 6px}
+.wrap{display:flex;gap:16px;max-width:1400px;margin:0 auto;padding:16px;align-items:flex-start}
+.form{flex:1 1 56%;min-width:0}.side{flex:1 1 42%;position:sticky;top:66px;max-height:calc(100vh-86px);overflow:auto}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:13px;margin-bottom:13px;overflow:hidden;box-shadow:0 1px 3px #0003}
+.card>h2{margin:0;padding:13px 17px;font-size:15px;font-weight:800;background:var(--panel2);color:#fff;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.card>h2 small.hint{color:#b9c8e0;font-weight:600}
+.card.collapsed>h2 .chev{transform:rotate(-90deg)}.card .body{padding:15px 17px}.card.collapsed .body{display:none}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}.fld{flex:1 1 200px;min-width:140px}
+.fld label{display:block;font-weight:700;font-size:11.5px;color:var(--muted);margin-bottom:3px}
+.fld input,.fld select,.fld textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;background:#14202f;color:var(--ink)}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--blue)}
+.fld input::placeholder,.opts input::placeholder{color:#65789a}.fld textarea{min-height:54px;resize:vertical}
+.miniH{font-weight:800;font-size:11.5px;color:var(--blue2);margin:11px 0 4px}
+.strat{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;flex-wrap:wrap}.strat:hover{background:#ffffff0a}
+.strat>input[type=checkbox]{width:16px;height:16px;flex:none;accent-color:var(--blue)}
+.strat .lbl{flex:1 1 230px;min-width:150px;color:var(--ink);font-weight:600}
+.tg{font-size:9px;color:#fff;background:var(--muted);border-radius:5px;padding:1px 6px;margin-left:5px}.tg.acc{background:#2d6a4f}.tg.ret{background:#9b2226}
+.opts{display:none;gap:6px;flex:1 1 100%;padding:3px 0 5px 24px}.strat.on .opts{display:flex;flex-wrap:wrap}
+.opts select,.opts input{padding:5px 7px;border:1px solid var(--line);border-radius:7px;font-size:11.5px;background:#14202f;color:var(--ink)}.opts .own{width:140px}.opts .sl{width:140px}.opts .pk{width:115px}
+.repeat{border:1px solid var(--line);border-radius:9px;padding:9px;margin-bottom:8px;background:#1a2b41}
+.riskrow{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:5px 0;border-bottom:1px solid #ffffff10}.riskrow .who{font-weight:800;font-size:12px;color:#fff;flex:0 0 110px}.riskrow input,.riskrow select{flex:1 1 90px;min-width:80px;padding:5px 7px;border:1px solid var(--line);border-radius:7px;font-size:11.5px;background:#14202f;color:var(--ink)}
+.addbtn{background:#16243a;color:var(--blue2);border:1px solid var(--blue);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-weight:700;margin:3px 0;font-family:inherit}
+.del{background:#5a1f23;color:#ffd7d7;border:0;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px;float:right;font-family:inherit}
+.btn{background:var(--blue);color:#fff;border:0;border-radius:9px;padding:8px 15px;font-weight:700;cursor:pointer;margin:2px;font-family:inherit}.btn.alt{background:transparent;border:1px solid var(--line);color:#cdd9ea}
+pre{white-space:pre-wrap;word-break:break-word;background:#101c2e;color:#dbe6f4;padding:13px;border-radius:10px;font-size:11.5px;line-height:1.55;max-height:70vh;overflow:auto;margin:0;border:1px solid var(--line)}
+.muted{color:var(--muted);font-size:11px;margin:3px 0 0}.count{font-size:11px;color:#9fb3d0}small.hint{color:var(--muted);font-size:10px;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{font-size:11.5px;border:1px solid var(--line);border-radius:16px;padding:5px 12px;cursor:pointer;background:#23344e;color:#cdd9ea;font-weight:600}.chip.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.sop{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:#1c2c1f;margin-bottom:5px;border:1px solid #2c4a30}.sop input{width:16px;height:16px;flex:none;accent-color:#3b82f6}.sop .lbl{color:var(--gold);font-size:12.5px;font-weight:600}
+table.fee{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:4px}table.fee th,table.fee td{border:1px solid var(--line);padding:5px 6px}table.fee th{background:var(--panel2);color:#fff;font-size:10.5px;font-weight:800}table.fee td:first-child{font-weight:700;color:#cdd9ea}table.fee input{width:100%;border:0;font-size:11.5px;padding:3px;background:transparent;color:var(--ink);font-family:inherit}table.fee td.rowtot,table.fee tr.tot td{background:#23344e;font-weight:800;color:var(--blue2)}
 .card.scopedout{opacity:.4}.card.scopedout .body{display:none}
 </style></head><body>
-<header><h1>MWS Advice Request Builder</h1>
+<header><div class="brand">MyWealth <span>SOLUTIONS</span></div><div class="brandsub">Advice Request Builder</div>
  <div class="toggle" id="soaType"><button data-t="accumulator" class="on">Accumulator</button><button data-t="retirement">Retirement</button><button data-t="mixed">Mixed (couple)</button></div>
  <span class="legend"><b class="acc">ACC</b> accum-only · <b class="ret">RET</b> ret-only · untagged = both</span><span style="flex:1"></span>
  <button class="btn alt" onclick="copyOut()">Copy</button><button class="btn" onclick="dlWord()">Download Word</button><button class="btn" onclick="dl('json')">.json</button>
@@ -92,14 +93,13 @@ function build(){
   inner+=`<div class="miniH">Paraplanning Notes</div><div class="row">`+fH('para_'+ai,'','area','','')+`</div>`;
   h+=card(`${a.area} <span class="count" style="color:var(--grey)" id="cnt_${ai}"></span>`,inner,ai<2,`areacard_${ai}`);
  });
- h+=careCard();
- h+=card('Fees & Remuneration',remunHTML(),false);
+  h+=card('Fees & Remuneration',feeHTML(),false);
  document.getElementById('form').innerHTML=h+datalistsHTML();
- document.querySelectorAll('[data-f]').forEach(i=>i.addEventListener('input',e=>{F[e.target.dataset.f]=e.target.value;if(['ctype','c1name','c2name'].includes(e.target.dataset.f)){renderRisk();renderOwners();buildStrats();renderCare()}render()}));
+ document.querySelectorAll('[data-f]').forEach(i=>i.addEventListener('input',e=>{F[e.target.dataset.f]=e.target.value;if(['ctype','c1name','c2name'].includes(e.target.dataset.f)){renderRisk();renderOwners();buildStrats();renderFee()}render()}));
  document.querySelectorAll('[data-scope]').forEach(i=>i.addEventListener('change',e=>{document.getElementById('areacard_'+e.target.dataset.scope).classList.toggle('scopedout',!e.target.checked);render()}));
  document.querySelectorAll('[data-so]').forEach(c=>c.addEventListener('click',()=>{const v=c.dataset.so;if(SCOPEOUT.has(v)){SCOPEOUT.delete(v);c.classList.remove('on')}else{SCOPEOUT.add(v);c.classList.add('on')}render()}));
  document.querySelectorAll('[data-sop]').forEach(c=>c.addEventListener('change',()=>{const v=c.dataset.sop;if(c.checked)SCOPEOUT.add(v);else SCOPEOUT.delete(v);render()}));
- addEnt();renderRisk();buildStrats();renderCare();renderRemun();
+ addEnt();renderRisk();buildStrats();renderFee();
 }
 function careCard(){return `<div class="card care"><h2 onclick="this.parentNode.classList.toggle('collapsed')">CARE · Investment Philosophy — why it's recommended (auditor justification)<span class="chev">▾</span></h2><div class="body"><p class="muted">Tick the reasons that apply, assign the client/entity and whether it's for Super, Investment or both. These feed Summary-Outcomes, the Super &amp; Investment strategy/product wording, the Alternatives cost comparison and the Replacement Implications — to justify best interests regardless of fee.</p><div id="careList"></div></div></div>`}
 function renderCare(){let h='';CARE.forEach((c,i)=>{CAREPICK[i]=CAREPICK[i]||{owner:'',applies:'Both'};
@@ -112,25 +112,24 @@ function renderCare(){let h='';CARE.forEach((c,i)=>{CAREPICK[i]=CAREPICK[i]||{ow
  document.querySelectorAll('[data-cap]').forEach(s=>s.addEventListener('input',e=>{CAREPICK[+e.target.dataset.cap].applies=e.target.value;render()}));
  render();
 }
-function remunHTML(){
- let t='<p class="muted">Remuneration rows (matches the SOA fee table). Frequency cell accepts a flat $, a %, or a hybrid <b>$320.00 p.m. + 0.33%</b>. Amount p.a. is the dollar figure used for the total.</p>';
- t+='<div id="remList"></div><button class="addbtn" onclick="addRemun()">+ Add remuneration row</button>';
- t+='<div class="row" style="margin-top:8px">'+fH('feeTaxNote','Tax-deduction note','text','','e.g. You may receive a tax deduction within super of up to $X…')+fH('feeEstNote','Estimate note','text','','e.g. estimate = flat fee plus 0.33% p.a. of total balance, indexed 5% p.a.')+'</div>';
+function feeRows(){let r=(F.ctype=='Couple')?[F.c1name||'Client 1',F.c2name||'Client 2','Joint']:[F.c1name||'Client'];ENT.forEach(e=>{if(e.name)r.push(e.name)});return r}
+function feeVal(k){return F['__fee_'+k]||''}
+function feeKey(r){return r.replace(/[^a-z0-9]/gi,'')}
+function cellDollar(v,bal){const r=parseFee(v);return r.flat+(r.pct?parseFloat(r.pct)/100*bal:0)}
+function feeTableHTML(){
+ let t='<table class="fee" id="feeTbl"><tr><th></th><th>Up·Super</th><th>Up·Cash</th><th>Ong·Super</th><th>Ong·Cash</th><th>Balance (for %)</th><th>Their total p.a.</th></tr>';
+ feeRows().forEach(r=>{const k=feeKey(r);t+=`<tr><td>${r}</td>`+['us','uc','os','oc'].map(c=>`<td><input data-fee="${c}_${k}" value="${(F['__fee_'+c+'_'+k]||'').replace(/"/g,'&quot;')}"></td>`).join('')+`<td><input data-fee="bal_${k}" value="${(F['__fee_bal_'+k]||'').replace(/"/g,'&quot;')}" placeholder="$"></td><td class="rowtot" id="rt_${k}"></td></tr>`});
+ t+='<tr class="tot"><td>Total</td><td id="tt_us"></td><td id="tt_uc"></td><td id="tt_os"></td><td id="tt_oc"></td><td></td><td id="tt_grand"></td></tr></table>';
  return t;
 }
-function addRemun(){REMUN.push({rem:'Ongoing Service Fee',account:'',freq:'',name:'',amount:''});renderRemun()}
-function renderRemun(){let h='<table class="rem"><tr><th>Remuneration</th><th>Account</th><th>Frequency &amp; No. of deductions</th><th>Name</th><th>Amount p.a. (incl. GST)</th><th></th></tr>';
- REMUN.forEach((r,i)=>{h+=`<tr><td><select data-rm="${i}.rem">`+['Commitment Fee','Advice and Implementation Fee','Ongoing Service Fee','Wealth Management Fee','Insurance Commission'].map(o=>`<option ${r.rem==o?'selected':''}>${o}</option>`).join('')+`</select></td>`+
-   `<td><input data-rm="${i}.account" value="${r.account||''}" placeholder="e.g. Hub24 Super (Acc No. TBC)"></td>`+
-   `<td><input data-rm="${i}.freq" value="${r.freq||''}" placeholder="$320.00 p.m. + 0.33%"></td>`+
-   `<td><input data-rm="${i}.name" value="${r.name||''}" placeholder="Client / entity name"></td>`+
-   `<td><input data-rm="${i}.amount" value="${r.amount||''}" placeholder="$"></td>`+
-   `<td><button class="del" style="float:none" onclick="REMUN.splice(${i},1);renderRemun()">×</button></td></tr>`});
- let tot=0;REMUN.forEach(r=>tot+=parseFee(r.amount).flat);
- h+=`<tr class="tot"><td>Total</td><td></td><td></td><td></td><td>$${tot.toLocaleString('en-AU',{maximumFractionDigits:2})}</td><td></td></tr></table>`;
- document.getElementById('remList').innerHTML=h;
- document.querySelectorAll('[data-rm]').forEach(inp=>inp.addEventListener('input',e=>{const[i,k]=e.target.dataset.rm.split('.');REMUN[i][k]=e.target.value;if(k=='amount')renderRemun();else render()}));
- render();
+function renderFee(){const w=document.getElementById('feeTblWrap');if(!w)return;w.innerHTML=feeTableHTML();
+ w.querySelectorAll('[data-fee]').forEach(i=>i.addEventListener('input',e=>{F['__fee_'+e.target.dataset.fee]=e.target.value;render()}));render()}
+function feeHTML(){
+ let t='<div class="row">'+fH('feecommit','Commitment fee (paid prior to SOA appt)','text','','$')+fH('feestatus','Ongoing status','select',['New','No changes','Increase from existing','Decrease from existing'])+fH('feecashsrc','Cashflow fees paid from','select',['MCMA','Bank Account','Investment Fund'])+'</div>';
+ t+='<p class="muted">Each cell: flat <b>$</b>, a <b>%</b>, or <b>$200 pm + 0.33%</b>. Enter the account <b>Balance</b> so any % auto-calculates into the row & total. Monthly ($ pm) figures are annualised.</p>';
+ t+='<div id="feeTblWrap">'+feeTableHTML()+'</div>';
+ t+='<div class="row" style="margin-top:8px">'+fH('feeTaxNote','Tax-deduction note','text','','e.g. tax deduction within super up to $X…')+fH('feeEstNote','Estimate note','text','','e.g. flat fee plus 0.33% p.a. of balance, indexed 5% p.a.')+'</div>';
+ return t;
 }
 function renderRisk(){let h='';parties().forEach(p=>{const k=p.replace(/[^a-z0-9]/gi,'');RISK[k]=RISK[k]||{};
   h+=`<div class="riskrow"><span class="who">${p}</span>`+
@@ -143,12 +142,12 @@ function renderRisk(){let h='';parties().forEach(p=>{const k=p.replace(/[^a-z0-9
  render();
 }
 function addEnt(){ENT.push({type:'',name:'',id:''});renderEnt()}
-function renderEnt(){let h='';ENT.forEach((e,i)=>{h+=`<div class="repeat"><button class="del" onclick="ENT.splice(${i},1);renderEnt();renderRisk();renderOwners();buildStrats();renderCare()">remove</button><div class="row">`+
+function renderEnt(){let h='';ENT.forEach((e,i)=>{h+=`<div class="repeat"><button class="del" onclick="ENT.splice(${i},1);renderEnt();renderRisk();renderOwners();buildStrats();renderFee()">remove</button><div class="row">`+
   `<div class="fld"><label>Type</label><select data-ent="${i}.type"><option value=""></option>`+['SMSF (corporate trustee)','SMSF (individual trustees)','Company','Bucket company','Family/discretionary trust'].map(o=>`<option ${e.type==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
   `<div class="fld"><label>Name</label><input data-ent="${i}.name" value="${e.name||''}"></div>`+
   `<div class="fld"><label>ABN/ACN</label><input data-ent="${i}.id" value="${e.id||''}"></div></div></div>`});
  document.getElementById('entList').innerHTML=h;
- document.querySelectorAll('[data-ent]').forEach(inp=>inp.addEventListener('input',e=>{const[i,k]=e.target.dataset.ent.split('.');ENT[i][k]=e.target.value;if(k=='name'){renderOwners();renderRisk();renderCare()}render()}));
+ document.querySelectorAll('[data-ent]').forEach(inp=>inp.addEventListener('input',e=>{const[i,k]=e.target.dataset.ent.split('.');ENT[i][k]=e.target.value;if(k=='name'){renderOwners();renderRisk();renderFee()}render()}));
  render();
 }
 function renderOwners(){document.querySelectorAll('select.own,[data-pd$=".owner"],[data-ct$=".who"],[data-cf$=".owner"],[data-fr$=".owner"],[data-cown]').forEach(sel=>{const v=sel.value;sel.innerHTML=owners().map(o=>`<option ${o==v?'selected':''}>${o}</option>`).join('')})}
@@ -158,7 +157,7 @@ function buildStrats(){
     const slotInputs=s.slots.map((sl,k)=>`<input class="sl" data-slot="${id}_${k}" placeholder="${sl}">`).join('');
     const pickSel=s.pick?`<select class="pk" data-pick="${id}">`+s.pick.map(o=>`<option>${o}</option>`).join('')+`</select>`:'';
     h+=`<label class="strat"><input type="checkbox" data-strat="${id}" data-name="${s.name.replace(/"/g,'&quot;')}" data-text="${(s.strat||'').replace(/"/g,'&quot;')}" data-custom="${s.custom?1:0}">`+
-       `<span class="lbl">${s.name}${tag}<br><small>${s.strat||(s.custom?'(free text)':'')}</small></span>`+
+       `<span class="lbl">${s.name}${tag}</span>`+
        `<span class="opts"><select class="own" data-own="${id}">`+owners().map(o=>`<option>${o}</option>`).join('')+`</select>${pickSel}${slotInputs}`+
        (s.custom?`<input class="sl" style="flex:1 1 100%" data-free="${id}" placeholder="free-type wording">`:'')+`</span></label>`;});
   const box=document.getElementById('strat_'+ai);if(box)box.innerHTML=h;});
@@ -230,7 +229,8 @@ function buildObj(){const ins=scopeInIdx();
    contributions:(ins.some(i=>DATA[i].isContrib)?CONTRIB.filter(c=>c.type):[]),
    cashflow:(ins.some(i=>DATA[i].isCash)?CFLOW.filter(c=>c.src||c.amt):[]),
    cashCosts:{ins:F.cIns,inv:F.cInv,adv:F.cAdv,oth:F.cOth},cashPos:{before:F.cashbefore,after:F.cashafter,leave:F.leave,note:F.cashnote},
-   paraplanning:paras,remuneration:REMUN.filter(r=>r.account||r.amount||r.name),feeNotes:{tax:F.feeTaxNote,est:F.feeEstNote}}}
+   paraplanning:paras,fee:(()=>{const f={commitment:F.feecommit,status:F.feestatus,cashSource:F.feecashsrc,taxNote:F.feeTaxNote,estNote:F.feeEstNote,rows:[],grand:0};
+     feeRows().forEach(r=>{const k=feeKey(r);const bal=parseFee(feeVal('bal_'+k)).flat;const cells={};let rt=0;['us','uc','os','oc'].forEach(c=>{const v=feeVal(c+'_'+k);cells[c]=v;rt+=cellDollar(v,bal)});f.rows.push({name:r,cells,balance:feeVal('bal_'+k),total:rt});f.grand+=rt});return f})()}}
 function rpLine(lbl,r){let p=[];if(r.super)p.push(`${r.super} for Super${r.superBump?' ('+r.superBump+')':''}`);if(r.inv)p.push(`${r.inv} for Inv${r.invBump?' ('+r.invBump+')':''}`);return p.length?`  ${lbl}: ${p.join('; ')}`:''}
 function asText(o){let L=[];
  L.push(`Advice Request – ${o.clients||'…'}`);L.push(`Adviser: ${o.adviser||'…'}`);
@@ -259,15 +259,21 @@ function asText(o){let L=[];
  });
  if(o.care.length){L.push('');L.push('CARE Investment Philosophy — why recommended (feeds Outcomes / Super & Investment / Alternatives / Replacement Implications)');
    o.care.forEach(c=>L.push(`    • [${c.applies}] ${c.owner?c.owner+': ':''}${c.name}`))}
- L.push('');L.push('Advice Fees — Remuneration');
- if(o.remuneration.length){let tot=0;o.remuneration.forEach(r=>{tot+=parseFee(r.amount).flat;L.push(`  • ${r.rem} | ${r.account||''} | ${r.freq||''} | ${r.name||''} | ${r.amount||''}`)});
-   L.push(`  Total: $${tot.toLocaleString('en-AU',{maximumFractionDigits:2})}`)}
- if(o.feeNotes.tax)L.push('  '+o.feeNotes.tax);
- if(o.feeNotes.est)L.push('  Note: '+o.feeNotes.est);
+ L.push('');L.push('Advice Fees'+(o.fee.status?' — '+o.fee.status:'')+(o.fee.cashSource?' · cashflow fees from '+o.fee.cashSource:''));
+ if(o.fee.commitment)L.push('  Commitment: '+o.fee.commitment);
+ const FL={us:'Up·Super',uc:'Up·Cash',os:'Ong·Super',oc:'Ong·Cash'};
+ o.fee.rows.forEach(r=>{const parts=[];['us','uc','os','oc'].forEach(c=>{if(r.cells[c])parts.push(FL[c]+' '+r.cells[c])});
+   if(parts.length||r.total)L.push(`  ${r.name}: ${parts.join(' | ')}${r.balance?' (bal '+r.balance+')':''}  → their total $${r.total.toLocaleString('en-AU',{maximumFractionDigits:2})}`)});
+ if(o.fee.grand)L.push(`  GRAND TOTAL (p.a.): $${o.fee.grand.toLocaleString('en-AU',{maximumFractionDigits:2})}`);
+ if(o.fee.taxNote)L.push('  '+o.fee.taxNote);
+ if(o.fee.estNote)L.push('  Note: '+o.fee.estNote);
  return L.join('\n')}
 function render(){const o=buildObj();document.getElementById('out').textContent=asText(o);document.getElementById('picks').textContent=o.strategies.length+' strategies'+(o.care.length?' · '+o.care.length+' CARE':'');
  DATA.forEach((a,ai)=>{const n=o.strategies.filter(s=>s.area==a.area).length;const e=document.getElementById('cnt_'+ai);if(e)e.textContent=n?'('+n+')':''});
  const ct=document.getElementById('cTotal');if(ct){const cc=o.cashCosts;let tot=0;['ins','inv','adv','oth'].forEach(k=>{tot+=parseFee(cc[k]).flat});ct.textContent=tot?('Total ongoing plan costs: $'+tot.toLocaleString('en-AU',{maximumFractionDigits:0})+' p.a.'):''}
+ {const col={us:0,uc:0,os:0,oc:0};let grand=0;const fmt=n=>'$'+n.toLocaleString('en-AU',{maximumFractionDigits:0});
+  feeRows().forEach(r=>{const k=feeKey(r);const bal=parseFee(feeVal('bal_'+k)).flat;let rt=0;['us','uc','os','oc'].forEach(c=>{const d=cellDollar(feeVal(c+'_'+k),bal);col[c]+=d;rt+=d});const e=document.getElementById('rt_'+k);if(e)e.textContent=rt?fmt(rt):'';grand+=rt});
+  ['us','uc','os','oc'].forEach(c=>{const e=document.getElementById('tt_'+c);if(e)e.textContent=col[c]?fmt(col[c]):''});const g=document.getElementById('tt_grand');if(g)g.textContent=grand?fmt(grand):''}
  try{localStorage.setItem('mws_ar7',JSON.stringify(o))}catch(e){}}
 function copyOut(){navigator.clipboard.writeText(asText(buildObj()))}
 function dl(k){const c=JSON.stringify(buildObj(),null,2);const b=new Blob([c],{type:'text/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='advice_request.json';a.click();URL.revokeObjectURL(u)}
