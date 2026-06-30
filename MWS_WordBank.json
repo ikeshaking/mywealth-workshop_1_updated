@@ -1706,7 +1706,7 @@
      "type": "Tailored",
      "gate": "Contributions scoped",
      "figures": "{ccAmount},{taxSaving}",
-     "strat": "[Name], we recommend that you [make / retain] salary sacrifice contributions of approximately $XXX p.a. to super.",
+     "strat": "We recommend you [continue / increase / decrease / cease] your salary sacrifice (concessional) contributions of $___.",
      "outcome": "Making concessional contributions builds your retirement savings tax‑effectively and provides net tax savings of approximately $XXX p.a.",
      "why": [
       "Save on income tax because your salary contributed into super is taxed at 15% (up to your concessional contributions cap), not your marginal tax rate, regardless of how much you earn.",
@@ -1721,7 +1721,13 @@
       "Invest the surplus outside super instead — discounted where the tax‑effectiveness of concessional contributions better meets the goal, noting reduced accessibility."
      ],
      "draft": false,
-     "appliesTo": "accumulator"
+     "appliesTo": "accumulator",
+     "pick": [
+      "Continue",
+      "Increase",
+      "Decrease",
+      "Cease"
+     ]
     },
     {
      "name": "Carry-forward (catch-up) concessional contributions",
@@ -2146,6 +2152,23 @@
    "note": "New, top‑up, replace/takeover and retain wording is verbatim from your SOAs (Linked/Own‑Occupation, inside‑super vs personal, 90‑day wait, etc.).",
    "scenarios": [
     {
+     "name": "Levels of cover as per quotes",
+     "triggers": [
+      "levels of cover as per quotes",
+      "cover as per quotes"
+     ],
+     "type": "Always-on (insurance scoped)",
+     "gate": "",
+     "figures": "—",
+     "strat": "Levels of cover as per the attached quotes.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false
+    },
+    {
      "name": "Take out new cover (Life / TPD / Trauma / IP)",
      "triggers": [
       "new insurance",
@@ -2314,7 +2337,7 @@
      "appliesTo": "both"
     },
     {
-     "name": "Child cover",
+     "name": "Apply for child cover",
      "triggers": [
       "child cover",
       "children's insurance",
@@ -2489,29 +2512,6 @@
      "appliesTo": "both"
     },
     {
-     "name": "Guaranteed renewable income protection",
-     "triggers": [
-      "guaranteed renewable",
-      "guaranteed renewability"
-     ],
-     "gate": "New income protection cover recommended",
-     "strat": "Your new income protection policy will be guaranteed renewable. This means the insurer will renew your policy each year without restrictions or changes to the underlying benefits because of changes to your health, occupation or pastimes.",
-     "outcome": "Your cover continues year to year regardless of changes in your health or occupation.",
-     "why": [
-      "Guaranteed renewability protects your cover and its terms even if your health or occupation deteriorates, providing portability and certainty."
-     ],
-     "risks": [
-      "Premiums can still increase (e.g. with age/stepped structure); some occupational changes may affect benefits under specific policy terms."
-     ],
-     "alts": [
-      "Non-guaranteed-renewable cover — lower initial premium but renewal/terms are not guaranteed."
-     ],
-     "type": "Tailored",
-     "figures": "—",
-     "draft": false,
-     "appliesTo": "both"
-    },
-    {
      "name": "Own-occupation TPD definition",
      "triggers": [
       "own occupation",
@@ -2610,14 +2610,14 @@
      "appliesTo": "both"
     },
     {
-     "name": "Dual-layer cover (retain minimum in super + new personal cover)",
+     "name": "Retain existing cover and top up with new cover",
      "triggers": [
       "dual layer",
       "retain in super and apply",
       "layer new cover"
      ],
      "gate": "Transitional period (e.g. workforce re-entry) where flexibility is wanted",
-     "strat": "We recommend retaining a minimal level of cover inside your existing super fund and layering new personal cover on top, so you retain flexibility to unwind the new cover once your income stabilises.",
+     "strat": "We recommend you retain your existing cover and top up with new recommended cover.",
      "outcome": "You keep tax-effective in-super cover while adding flexible personal cover that can be adjusted later.",
      "why": [
       "A small in-super retention is 'sticky' and tax-effective; the additional personal cover maintains optionality during a transitional period."
@@ -2651,30 +2651,6 @@
      ],
      "alts": [
       "Retain partial cover via a partial rollover — discounted as it leaves more than one super account and ongoing premiums for cover you no longer require."
-     ],
-     "type": "Tailored",
-     "figures": "—",
-     "draft": false,
-     "appliesTo": "both"
-    },
-    {
-     "name": "Child cover with guaranteed conversion to adult cover",
-     "triggers": [
-      "child cover",
-      "child insurance",
-      "convert to adult cover"
-     ],
-     "gate": "Dependent children; child cover option taken",
-     "strat": "We recommend child cover, which offers a lump sum if the insured child experiences a defined trauma condition. If the child meets the eligibility criteria, they may convert the Child Cover to an equivalent adult Life Insurance Plan without reapplying or providing medical evidence.",
-     "outcome": "Your child is covered for serious illness now, with a guaranteed path to adult cover regardless of their future health.",
-     "why": [
-      "Child cover provides a lump sum to allow a parent to step back from work during a child's serious illness, and the guaranteed conversion locks in the child's future insurability."
-     ],
-     "risks": [
-      "Conversion terms are set at issue and premiums step to adult rates on conversion."
-     ],
-     "alts": [
-      "No child cover, with the child applying for their own policy as an adult — discounted as future cover would then require medical evidence."
      ],
      "type": "Tailored",
      "figures": "—",
