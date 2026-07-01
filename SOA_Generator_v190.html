@@ -11853,15 +11853,25 @@ function renderSpecialDocx(def, ch, K){
       rows.push(["Complete Portfolio", money(acc.bucketTotal||acc.balance), _feesCell]);
     }
     const _hasInitial = _isInvest ? (_initN>0) : true;
+    // Money-on-the-Move framework tail (shared).
+    const _MOTM_TAIL="\n\nAs per the Money on the Move framework, for every 5% drop in the market we may bring forward 1 month's Dollar Cost Averaging to ensure your funds are invested as efficiently as possible.  The above initial and ongoing DCA investment amounts will also be subject to change based on current market valuations and our Money on the Move framework to ensure your funds are invested as effectively as possible.";
     if(_hasInitial){
-      // [37][38] Money-on-the-Move DCA tail only when the advice request calls for MOTM; otherwise it
-      // is dropped so a plain lump-sum / DCA recommendation doesn't carry the MOTM framework wording.
-      const _motm = !!(F.useMOTM===true || /motm|money on the move/i.test(String(F.investMethod||'')+' '+String(F.narr||'')));
-      const _dcaTail = _motm ? ("\n\nAs per the Money on the Move framework, for every 5% drop in the market we may bring forward 1 month's Dollar Cost Averaging to ensure your funds are invested as efficiently as possible.  The above initial and ongoing DCA investment amounts will also be subject to change based on current market valuations and our Money on the Move framework to ensure your funds are invested as effectively as possible.") : "";
-      const _dcaText = _isInvest
-        ? ("XX% of your funds will be lump sum invested and XX% will be Dollar Cost Averaged over XX months."+_dcaTail)
-        : ("100% of CARE funds will be lump sum invested upon rollover.\nXX% of your funds will be contributions and XX% will be Dollar Cost Averaged over XX months."+_dcaTail);
-      rows.push(["Dollar Cost Average/Lump Sum", _dcaText, ""]);
+      if(_isInvest){
+        // [37][38] MOTM tail only when the advice request calls for it (investment plan).
+        const _motm = !!(F.useMOTM===true || /motm|money on the move/i.test(String(F.investMethod||'')+' '+String(F.narr||'')));
+        rows.push(["Dollar Cost Average/Lump Sum", "XX% of your funds will be lump sum invested and XX% will be Dollar Cost Averaged over XX months."+(_motm?_MOTM_TAIL:""), ""]);
+      } else {
+        // Super: the rollover line is always shown. The "XX% contributions / DCA" line appears ONLY when a
+        // lump-sum contribution (e.g. carry-forward / non-concessional) is being dollar-cost-averaged.
+        // MOTM applies only when the resulting super balance will exceed $250,000 (else plain DCA), unless
+        // the advice request sets the MOTM flag explicitly.
+        const _superBal=Number(acc.bucketTotal||acc.balance||(F.careAccounts&&(F.careAccounts.find(x=>x&&x.type==='super')||{}).bucketTotal)||F.superBalance||0)||0;
+        const _superLumpSum=(F.superLumpSum===true);
+        const _superMotm=_superLumpSum && ((F.superDcaMotm===true) || (F.superDcaMotm==null && _superBal>250000));
+        let _txt="100% of CARE funds will be lump sum invested upon rollover.";
+        if(_superLumpSum) _txt+="\nXX% of your funds will be contributions and XX% will be Dollar Cost Averaged over XX months."+(_superMotm?_MOTM_TAIL:"");
+        rows.push(["Dollar Cost Average/Lump Sum", _txt, ""]);
+      }
     }
     return rows;
   }
@@ -15896,6 +15906,19 @@ function v200ApplyAdviceRequest(ar){
     if(ar.status && typeof F==='object' && F.isExistingClient==null){ F.isExistingClient=/exist/i.test(ar.status); }
     if(/couple/i.test(ar.ctype||'') && typeof F==='object'){ F.clientType=F.clientType||'joint'; }
     try{ const _off=(ar.strategies||[]).find(s=>/offset account/i.test(s.name||'') && s.pick); if(_off && typeof F==='object') F.offsetPick=_off.pick; }catch(_){}
+    // [DCA] Super lump-sum contribution + DCA method. The "XX% contributions / DCA" super line appears
+    // ONLY when the advice request flags a lump-sum contribution being dollar-cost-averaged (carry-forward
+    // / non-concessional top-ups on their own are NOT a lump-sum DCA). MOTM vs plain DCA follows the
+    // explicit flag, else auto-derives from the resulting super balance ($250k threshold) at render time.
+    try{ if(typeof F==='object'){
+      const _dm=String(ar.superDcaMethod||ar.dcaMethod||ar.superDca||'');
+      if(ar.superLumpSum!=null) F.superLumpSum=!!ar.superLumpSum;
+      else if(/lump[\s-]?sum|dca|dollar[\s-]?cost|motm|money on the move/i.test(_dm)) F.superLumpSum=true;
+      if(/none|no dca|^\s*$/i.test(_dm) && ar.superLumpSum==null){ /* leave undefined → line dropped */ }
+      if(/motm|money on the move/i.test(_dm)) F.superDcaMotm=true;
+      else if(/dca|dollar[\s-]?cost/i.test(_dm)) F.superDcaMotm=false;
+      else if(ar.superDcaMotm!=null) F.superDcaMotm=!!ar.superDcaMotm;
+    } }catch(_){}
     try{ const _ins=(ar.strategies||[]).map(s=>s.text||'').join(' '); if(/own[\s-]occupation/i.test(_ins)) F.tpdOwnOcc=true; else if(/any[\s-]occupation/i.test(_ins)) F.tpdOwnOcc=false; }catch(_){}
     // Accumulation vs retirement drives which sections/wording apply (e.g. the accumulation→pension
     // "seamless transfer" line is retirement-only). 'mixed' is left as-is.
