@@ -5917,6 +5917,7 @@ function render(){
   // v200ApplyAdviceRequest, since render can run before v200 finishes populating the content).
   try{ if(typeof v200StripSeamless==='function') v200StripSeamless(); }catch(_){}
   try{ if(typeof v200ResolveOffsetPick==='function') v200ResolveOffsetPick(); }catch(_){}
+  try{ if(typeof v200NormalizeInsuranceCovers==='function') v200NormalizeInsuranceCovers(); }catch(_){}
   const app = document.getElementById("app");
   const ae = document.activeElement, aid = ae && ae.id, sst = ae && ae.selectionStart, sy = window.scrollY;
   // preserve the preview pane's own scroll position (it scrolls independently of the window)
@@ -15306,6 +15307,20 @@ function v200ApplyCashflow(ar){
   if(mc && !F.mcmaWeekly) F.mcmaWeekly=mc;
 }
 if(typeof window!=='undefined') window.v200ApplyCashflow=v200ApplyCashflow;
+// [11][12] Normalise insurance cover names so the Summary, body and table agree: force TPD to the
+// occupation basis the advice request/quote states (F.tpdOwnOcc), and apply the firm's standard
+// Trauma label "(Linked, Plus & Reinstatement)" when a Trauma row has no qualifier.
+function v200NormalizeInsuranceCovers(){
+  if(typeof F!=='object' || !Array.isArray(F.insurance)) return;
+  F.insurance.forEach(r=>{ if(!r) return; const c=String(r.cover||'');
+    if(/^tpd/i.test(c)){
+      if(F.tpdOwnOcc===true) r.cover=/\(/.test(c)? c.replace(/Any-Occupation/i,'Own-Occupation') : 'TPD (Linked & Own-Occupation)';
+      else if(F.tpdOwnOcc===false) r.cover=/\(/.test(c)? c.replace(/Own-Occupation/i,'Any-Occupation') : 'TPD (Linked & Any-Occupation)';
+    }
+    if(/^trauma/i.test(c) && !/\(/.test(c)) r.cover='Trauma (Linked, Plus & Reinstatement)';
+  });
+}
+if(typeof window!=='undefined') window.v200NormalizeInsuranceCovers=v200NormalizeInsuranceCovers;
 function v200StripSeamless(){
   if(typeof F!=='object' || F.retirementSOA || typeof B==='undefined') return;
   const _seam=/\s*(?:[-•]\s*)?Seamless transfer from accumulation to pension \(not required to sell down your assets to transfer into the pension phase\)\.\s*This can prevent unnecessary Capital Gains Tax consequences and\/or sale of assets at a time of unfavourable market conditions\.?/g;
@@ -15321,6 +15336,7 @@ function v200ApplyAdviceRequest(ar){
     if(ar.status && typeof F==='object' && F.isExistingClient==null){ F.isExistingClient=/exist/i.test(ar.status); }
     if(/couple/i.test(ar.ctype||'') && typeof F==='object'){ F.clientType=F.clientType||'joint'; }
     try{ const _off=(ar.strategies||[]).find(s=>/offset account/i.test(s.name||'') && s.pick); if(_off && typeof F==='object') F.offsetPick=_off.pick; }catch(_){}
+    try{ const _ins=(ar.strategies||[]).map(s=>s.text||'').join(' '); if(/own[\s-]occupation/i.test(_ins)) F.tpdOwnOcc=true; else if(/any[\s-]occupation/i.test(_ins)) F.tpdOwnOcc=false; }catch(_){}
     // Accumulation vs retirement drives which sections/wording apply (e.g. the accumulation→pension
     // "seamless transfer" line is retirement-only). 'mixed' is left as-is.
     if(ar.soaType && typeof v97ApplySoaType==='function'){
@@ -15359,6 +15375,7 @@ function v200ApplyAdviceRequest(ar){
     try{ v200ApplyInvestVanguard(); }catch(e){ try{console.error('v200 vanguard',e);}catch(_){ } }
     try{ v200ResolveOffsetPick(); }catch(e){ try{console.error('v200 offsetpick',e);}catch(_){ } }
     try{ v200ApplyCashflow(ar); }catch(e){ try{console.error('v200 cashflow',e);}catch(_){ } }
+    try{ v200NormalizeInsuranceCovers(); }catch(e){ try{console.error('v200 inscovers',e);}catch(_){ } }
     // Budget notes → the surplus-cashflow goal's sub-points (same channel the text parser uses).
     try{ if(ar.notesBudget){
       const bn=String(ar.notesBudget).split(/\r?\n+/).map(l=>l.replace(/^[\s•\-•‣▪\t]+/,'').trim()).filter(Boolean);
