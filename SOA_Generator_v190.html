@@ -5980,6 +5980,17 @@ function render(){
   }
   app.innerHTML = renderTopbar()+body;
   try{ v186HighlightPlaceholders(); }catch(_){}
+  // Live preview: most editor fields update F/B via oninput but don't re-render. Wire a single
+  // debounced listener so any edit refreshes the preview (and its highlights) without a manual
+  // refresh. render() preserves focus/caret, so typing isn't interrupted. Wired once.
+  if(typeof window!=='undefined' && !window.__liveRenderWired){
+    window.__liveRenderWired=true;
+    document.addEventListener('input', function(ev){
+      const t=ev.target; if(t && /^(date|checkbox|radio|file)$/i.test(t.type||'')) return; // those handlers already render
+      clearTimeout(window.__liveRenderT);
+      window.__liveRenderT=setTimeout(function(){ try{ if(typeof render==='function') render(); }catch(_){ } }, 250);
+    });
+  }
   wireDropzone();
   try{wireCareDropzone();}catch(e){}
   try{wireResearchDropzones();}catch(e){}
