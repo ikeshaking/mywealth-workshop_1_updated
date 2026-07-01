@@ -4322,7 +4322,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B10 — reserves phase-gated</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B11 — CARE alt costs + footer split</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -7938,12 +7938,17 @@ function renderSpecialDocx(def, ch, K){
 
   // Render bullets HTML
   function bulletsHTML(text, emptyMsg) {
-    if (typeof text === 'string' && /(^|\n)\t/.test(text)) {
-      const lines = text.split('\n'); let html='<ul>'; let open=false;
-      lines.forEach(ln=>{ if(!ln.replace(/^\t+/,'').trim()) return; const isSub=/^\t/.test(ln); const body=escapeHtmlV11(ln.replace(/^\t+/,'').trim());
-        if(isSub){ if(!open){ html+='<ul>'; open=true; } html+=`<li>${body}</li>`; }
-        else { if(open){ html+='</ul>'; open=false; } html+=`<li>${body}</li>`; } });
-      if(open) html+='</ul>'; html+='</ul>'; return html;
+    if (typeof text === 'string' && /(^|\n)[\t§]/.test(text)) {
+      const lines = text.split('\n'); let html=''; let listOpen=false, subOpen=false;
+      const closeSub=()=>{ if(subOpen){ html+='</ul>'; subOpen=false; } };
+      const closeList=()=>{ closeSub(); if(listOpen){ html+='</ul>'; listOpen=false; } };
+      lines.forEach(ln=>{
+        if(/^\s*§/.test(ln)){ const body=escapeHtmlV11(ln.replace(/^\s*§\s*/,'').trim()); if(!body) return; closeList(); html+=`<p style="margin:6px 0">${body}</p>`; return; }
+        const raw=ln.replace(/^\t+/,'').trim(); if(!raw) return; const isSub=/^\t/.test(ln); const body=escapeHtmlV11(raw);
+        if(!listOpen){ html+='<ul>'; listOpen=true; }
+        if(isSub){ if(!subOpen){ html+='<ul>'; subOpen=true; } html+=`<li>${body}</li>`; }
+        else { closeSub(); html+=`<li>${body}</li>`; } });
+      closeList(); return html;
     }
     const sections = splitBullets(text);
     if (sections.length === 0) {
@@ -8846,8 +8851,12 @@ function renderSpecialDocx(def, ch, K){
       // content row — bullets / sub-heads
       const inner = [];
       const _fcf=(typeof fill==='function')?fill(c[f]):c[f];
-      if(/(^|\n)\t/.test(String(_fcf||''))){
-        String(_fcf).split('\n').forEach(ln=>{ const body=ln.replace(/^\t+/,'').trim(); if(!body) return; inner.push(new Paragraph({numbering:{reference:"bullets",level:/^\t/.test(ln)?1:0}, spacing:{after:40}, children:[new TextRun({text:body, font:"Nunito", size:18, color:"1a1a1a"})]})); });
+      if(/(^|\n)[\t§]/.test(String(_fcf||''))){
+        String(_fcf).split('\n').forEach(ln=>{
+          if(/^\s*§/.test(ln)){ const body=ln.replace(/^\s*§\s*/,'').trim(); if(body) inner.push(new Paragraph({spacing:{before:40,after:80}, children:[new TextRun({text:body, font:"Nunito", size:18, color:"1a1a1a"})]})); return; }
+          const body=ln.replace(/^\t+/,'').trim(); if(!body) return;
+          inner.push(new Paragraph({numbering:{reference:"bullets",level:/^\t/.test(ln)?1:0}, spacing:{after:40}, children:[new TextRun({text:body, font:"Nunito", size:18, color:"1a1a1a"})]}));
+        });
       } else {
       const sections = (typeof v11SplitBullets === 'function') ? v11SplitBullets(_fcf) : [{head:null, bullets:[_fcf]}];
       sections.forEach(sec => {
@@ -8875,6 +8884,11 @@ function renderSpecialDocx(def, ch, K){
     });
     if(cardRows.length){
       children.push(new Table({columnWidths:[totalW], width:{size: totalW, type: WidthType.DXA}, rows: cardRows}));
+    }
+    // Fund-manager fee footnote — a plain paragraph BELOW the card table (no band/border), matching the
+    // firm template's footer. Only present on the CARE super product card (careFundMgrNote).
+    if(c.careFundMgrNote && String(c.careFundMgrNote).trim()){
+      children.push(new Paragraph({spacing:{before:120,after:60}, children:[new TextRun({text:String(c.careFundMgrNote).trim(), font:"Nunito", size:18, color:"1a1a1a"})]}));
     }
 
     return children;
@@ -12011,6 +12025,22 @@ function renderSpecialDocx(def, ch, K){
       const seq=parseCareXml(xml);
       const accounts=extractCare(seq);
       if(!accounts.length){ alert('Could not find CARE account tables in that document.'); return; }
+
+      // [Alt] Capture the alternative-platform Total Fees (Netwealth / BT Panorama) from the CARE doc's
+      // "Alternatives" section so the super Alternative Products list can show their real cost.
+      try{
+        const _flat=String(xml).replace(/<\/w:p>/gi,'\n').replace(/<[^>]+>/g,'')
+          .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#39;|&apos;/g,"'").replace(/&quot;/g,'"');
+        const _altStart=_flat.search(/\bAlternatives\b/i);
+        const _altBlob=_altStart>=0?_flat.slice(_altStart):_flat;
+        const _altFees=(label)=>{ try{
+          const i=_altBlob.search(new RegExp('\\b'+label.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&')+'\\b','i')); if(i<0) return null;
+          const seg=_altBlob.slice(i, i+900);
+          const tm=seg.match(/Total\b\s*((?:\s*\$[\d,]+(?:\.\d+)?){3,4})/i); if(!tm) return null;
+          const nums=tm[1].match(/\$[\d,]+(?:\.\d+)?/g); return (nums&&nums.length)?nums[nums.length-1]:null;
+        }catch(_){ return null; } };
+        F.careAltCosts={ netwealth:_altFees('Netwealth'), bt:_altFees('BT Panorama') };
+      }catch(_){}
 
       // v180: some CARE reports carry per-account recommended fees only in the "Fee Comparison →
       // Chosen → Hub24" table (columns: Admin and Trustee Cost | Investment Cost | Total Fees),
@@ -15707,8 +15737,11 @@ function v200ApplyCareEssSuperBlocks(){
     "An alternative to this is investing using a passive index fund approach instead of an actively managed approach like CARE. We have discounted this strategy as we believe the actively managed asset mix offered through the CARE philosophy provides the optimal way to achieve your long term investment goals while minimising volatility over the short term. By comparison using a mix of passive index funds would not have the ongoing oversight of the CARE Investment committee to ensure investment decisions are made at appropriate times to reduce the impact of emotional decisions negatively impacting performance."
   ].join('\n');
   // [53] CAREphilosophy Portfolio Management Fees — fixed firm wording.
+  // Convention: a line prefixed with "§" renders as a plain paragraph (no bullet); a line prefixed
+  // with a TAB renders as a nested (level-2) sub-bullet. Everything else is a top-level bullet.
   c.careFees = [
-    "Investment managers often charge either an Indirect Cost Ratio (ICR) or Management Expense Ratio (MER) fee to cover the costs associated with managing each portfolio or investment.  DWA Managed Accounts Pty Ltd charges a portfolio administration fee for the management of the CAREphilosophy®. This is detailed above and is included in the Fund Manager’s fee to enable proper comparison of costs outlined and in the Replacement Implications Section. This fee is payable for the following services:",
+    "§Investment managers often charge either an Indirect Cost Ratio (ICR) or Management Expense Ratio (MER) fee to cover the costs associated with managing each portfolio or investment.  DWA Managed Accounts Pty Ltd charges a portfolio administration fee for the management of the CAREphilosophy®. This is detailed above and is included in the Fund Manager’s fee to enable proper comparison of costs outlined and in the Replacement Implications Section.",
+    "§This fee is payable for the following services:",
     "Oversight by the CARE Investment Committee including one non-executive and one executive member, one a senior investment professional and the other a leading academic on behavioural finance.",
     "Top down risk analysis on the portfolios.",
     "Construction of the portfolios including asset allocation and investment manager selection.",
@@ -15716,14 +15749,18 @@ function v200ApplyCareEssSuperBlocks(){
     "Selection and regular review of exchange traded fund providers, managed fund providers and equity mandates",
     "Provision of regular updates to your adviser for inclusion in reporting",
     "The committee meets on a monthly basis to:",
-    "Consider the economic environment and implications to the asset allocation",
-    "Review progress and performance of the portfolios",
-    "Make asset allocation and rebalancing decisions on your behalf",
-    "It is important to note these fees are not paid to your adviser.  The portfolio management fee included in the MER is payable to DWA Managed Accounts Pty Ltd for investment advice for the structure of the CARE Investment Portfolios. See the annexure for details of the CARE Investment portfolios and the attached PDS. The Enhanced Australian Investment Portfolio does not include the cost of the mandate (0.33%) to manage the Australian Equities but it is included in the Fund Manager’s Fees above. More information about these investments is contained in the Annexure."
+    "\tConsider the economic environment and implications to the asset allocation",
+    "\tReview progress and performance of the portfolios",
+    "\tMake asset allocation and rebalancing decisions on your behalf",
+    "§It is important to note these fees are not paid to your adviser.  The portfolio management fee included in the MER is payable to DWA Managed Accounts Pty Ltd for investment advice for the structure of the CARE Investment Portfolios. See the annexure for details of the CARE Investment portfolios and the attached PDS. The Enhanced Australian Investment Portfolio does not include the cost of the mandate (0.33%) to manage the Australian Equities but it is included in the Fund Manager’s Fees above. More information about these investments is contained in the Annexure."
   ].join('\n');
-  // [55] Fund-manager footnote with the correct annexure reference (auto-numbered).
+  // [55] Footer, split to match the firm template:
+  //   • careFootnote (empty-band row) = the "More information … Annexure N" line only;
+  //   • careFundMgrNote (plain paragraph rendered BELOW the table) = the fund-manager fee footnote,
+  //     ending at "… PDS for each product." (no annexure line inside it).
   const _anx=(typeof anxNum==='function'?anxNum('anx_moreinfo'):'')||'';
-  c.careFootnote = "*The fund managers of these investments will charge fees for the cost of the research, brokerage, custodian services, audit fees and government charges that they incur. These fees are recovered from the income produced by the underlying investments, before it is paid to investors. They are reflected in the unit price of the investment. Full details of these fees are contained in the PDS for each product.\nMore information about these investments is contained in Annexure "+(_anx||'8')+".";
+  c.careFootnote = "More information about these investments is contained in Annexure "+(_anx||'5')+".";
+  c.careFundMgrNote = "*The fund managers of these investments will charge fees for the cost of the research, brokerage, custodian services, audit fees and government charges that they incur. These fees are recovered from the income produced by the underlying investments, before it is paid to investors. They are reflected in the unit price of the investment. Full details of these fees are contained in the PDS for each product.";
   try{ v200BuildSuperAltFromWS(); }catch(_){}
   if(typeof setBlockActive==='function') setBlockActive('super_prod',true); else B.super_prod.active=true;
 }
@@ -15757,7 +15794,12 @@ function v200BuildSuperAltFromWS(){
   // Alternatives list: WealthSolver proposals (CFS, existing SW funds) + Netwealth & BT Panorama
   // (always considered for CARE super — alternative platforms carried in the CARE doc).
   const listItems=altPlat.concat(existing);
-  if(isCare){ listItems.push('Netwealth Wealth Accelerator Plus'); listItems.push('BT Panorama'); }
+  if(isCare){
+    // Netwealth & BT Panorama alternative costs auto-populate from the CARE doc's Alternatives section.
+    const _ac=F.careAltCosts||{};
+    listItems.push('Netwealth Wealth Accelerator Plus'+(_ac.netwealth?(' '+_ac.netwealth):''));
+    listItems.push('BT Panorama'+(_ac.bt?(' '+_ac.bt):''));
+  }
   // [41] cost delta (recommended per CARE doc when CARE, else WealthSolver) vs the Current Situation.
   const _num=v=>{ const n=Number(String(v==null?'':v).replace(/[^0-9.]/g,'')); return isFinite(n)?n:null; };
   const M2=n=>'$'+Number(n).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -15772,12 +15814,6 @@ function v200BuildSuperAltFromWS(){
     "We considered the use of traditional Masterfunds like BT, but we cannot achieve the same effectiveness and ongoing management as through the recommended service. Traditional platforms and Masterfunds don’t have the transparency, and tax efficiency that our recommended option provides and don’t allow us to personalise both tax decision and investment decisions to your specific circumstances.",
     "We considered using a broker and buying individual parcels or shares or a broader investment fund style of investment structure. We have discounted this strategy as investment funds do not provide the same high level of regular Professional Active Management and with direct shares you would not be able to achieve the depth of diversification as through the managed account service."
   ];
-  if(recCost!=null && curCost!=null){
-    const delta=recCost-curCost;
-    if(delta>0.5){ disc.push("The recommended fund has higher administration and management costs than your current arrangement — an increase of approximately "+M2(delta)+" per annum ("+M2(recCost)+" recommended vs "+M2(curCost)+" current).");
-      disc.push("We believe this increase is justified by the professional active management, broader investment menu and the CARE philosophy benefits detailed above. [Optional — confirm or delete]"); }
-    else if(delta<-0.5){ disc.push("The recommended fund also reduces your ongoing administration and management costs by approximately "+M2(-delta)+" per annum ("+M2(recCost)+" recommended vs "+M2(curCost)+" current)."); }
-  }
   // Format: main sentence (ends with ":" → renders as a lead paragraph), then the items/reasons as
   // dot points underneath — same newline structure the Alternative Super Investment Options uses.
   B.super_prod.content.alternatives = "I considered the following alternatives to the recommended investment options:\n"
