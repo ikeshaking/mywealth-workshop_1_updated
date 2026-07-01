@@ -4322,7 +4322,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B12 — super DCA/MOTM flag</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B13 — super alt leads + optional DCA</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -8813,7 +8813,9 @@ function renderSpecialDocx(def, ch, K){
           shading:{fill:"5EA6FF", type:ShadingType.CLEAR, color:"auto"},
           children:[new Paragraph({children:[new TextRun({text:_lbl, font:"Nunito", size:18, color:"FFFFFF", bold:true})]})]
         })]}));
-        const _clines = String(RX((r&&r[1])||'')).split(/\n/).filter(l=>l.trim()!=='');
+        // "[Optional] …" lines are editor-only prompts (e.g. the lump-sum DCA line) — omit from the doc
+        // unless the paraplanner activates them by deleting the "[Optional] " prefix.
+        const _clines = String(RX((r&&r[1])||'')).split(/\n/).filter(l=>l.trim()!=='' && !/^\s*\[optional\]/i.test(l));
         rows.push(new TableRow({children:[ new TableCell({
           columnSpan: nCols, width:{size: totalW, type: WidthType.DXA}, borders: BORDER,
           margins:{top:60,bottom:60,left:110,right:110},
@@ -11870,6 +11872,10 @@ function renderSpecialDocx(def, ch, K){
         const _superMotm=_superLumpSum && ((F.superDcaMotm===true) || (F.superDcaMotm==null && _superBal>250000));
         let _txt="100% of CARE funds will be lump sum invested upon rollover.";
         if(_superLumpSum) _txt+="\nXX% of your funds will be contributions and XX% will be Dollar Cost Averaged over XX months."+(_superMotm?_MOTM_TAIL:"");
+        // Keep the contributions/DCA line available for special cases even when not auto-included: add it
+        // as an "[Optional]" line the paraplanner can activate by deleting the "[Optional] " prefix.
+        // Lines beginning "[Optional]" are stripped from the generated Word doc (see the DCA cell render).
+        else _txt+="\n[Optional] XX% of your funds will be contributions and XX% will be Dollar Cost Averaged over XX months.";
         rows.push(["Dollar Cost Average/Lump Sum", _txt, ""]);
       }
     }
@@ -15737,11 +15743,11 @@ function v200ApplyCareEssSuperBlocks(){
   ['why','alternatives','risks','details','comments'].forEach(f=>{ if(typeof c[f]==='string'){ c[f]=c[f].replace(/\n*\*?The fund managers of these investments charge fees[\s\S]*$/i,'').replace(/\n{3,}/g,'\n\n').trim(); } });
   // [52] Alternative Superannuation Investment Options (like-for-like) — risk-profile-aware.
   c.careInvestAlt = [
-    "I considered the following alternatives to the recommended investment options on a like for like basis:",
+    "§I considered the following alternatives to the recommended investment options on a like for like basis:",
     "Full CARE Investment Portfolio",
     "MLC MultiActive "+rw,
     "Passive Index Fund Portfolio",
-    "I have discounted these products for the following reasons:",
+    "§I have discounted these products for the following reasons:",
     "We have discounted this investment option, as the cost to run the full CARE investment portfolio is far more expensive and is suitable for balances over $250,000. As your balance grows we may look at switching at a later date.",
     "Netwealth & BT Panorama can also offer a managed portfolio approach using the MLC MultiActive "+rw+" portfolios. We have discounted this option as the MLC MultiActive "+rw+" portfolios are a less cost effective investment option compared with the CARE portfolios. This is shown in the cost comparison above.",
     "An alternative to this is investing using a passive index fund approach instead of an actively managed approach like CARE. We have discounted this strategy as we believe the actively managed asset mix offered through the CARE philosophy provides the optimal way to achieve your long term investment goals while minimising volatility over the short term. By comparison using a mix of passive index funds would not have the ongoing oversight of the CARE Investment committee to ensure investment decisions are made at appropriate times to reduce the impact of emotional decisions negatively impacting performance."
@@ -15791,8 +15797,8 @@ function v200BuildSuperAltFromWS(){
   order.forEach(k=>{
     if(k==='current' || k===recKey) return;              // skip current + the recommended platform
     const isSW=/^sw\d*$/i.test(k);                        // SW columns = existing funds in line with risk profile
-    if(isSW) existing.push(nameOf(k)+' (existing fund, in line with your risk profile) - '+M(gross[k]));
-    else altPlat.push(nameOf(k)+' - '+M(gross[k]));
+    if(isSW) existing.push(nameOf(k)+' (existing fund, in line with your risk profile) '+M(gross[k]));
+    else altPlat.push(nameOf(k)+' '+M(gross[k]));
   });
   const recName=((ws.recommended&&ws.recommended.name)||'Hub24').replace(/hub\s*24/i,'Hub24');
   const isCare=(F.superApproach==='CARE');
@@ -15800,7 +15806,8 @@ function v200BuildSuperAltFromWS(){
   // Existing-fund names in line with risk profile (SW columns).
   const existNames=[]; order.forEach(k=>{ if(/^sw\d*$/i.test(k)) existNames.push(nameOf(k)); });
   const existLabel=existNames.length?existNames.map(n=>n+' (In Line with Risk Profile)').join(' and '):'your existing fund(s) (In Line with Risk Profile)';
-  const notAvailIn=(existNames.length?existNames:['your existing fund(s)']).concat(altPlat.map(l=>l.split(' - ')[0]).filter(n=>/colonial|cfs|first\s*state|firstwrap/i.test(n))).join(' or ')||'your existing fund(s)';
+  const _stripCost=s=>String(s).replace(/\s*[-–]?\s*\$[\d,]+(?:\.\d+)?\s*$/,'').trim();
+  const notAvailIn=(existNames.length?existNames:['your existing fund(s)']).concat(altPlat.map(l=>_stripCost(l)).filter(n=>/colonial|cfs|first\s*state|firstwrap/i.test(n))).join(' or ')||'your existing fund(s)';
   // Alternatives list: WealthSolver proposals (CFS, existing SW funds) + Netwealth & BT Panorama
   // (always considered for CARE super — alternative platforms carried in the CARE doc).
   const listItems=altPlat.concat(existing);
@@ -15824,11 +15831,11 @@ function v200BuildSuperAltFromWS(){
     "We considered the use of traditional Masterfunds like BT, but we cannot achieve the same effectiveness and ongoing management as through the recommended service. Traditional platforms and Masterfunds don’t have the transparency, and tax efficiency that our recommended option provides and don’t allow us to personalise both tax decision and investment decisions to your specific circumstances.",
     "We considered using a broker and buying individual parcels or shares or a broader investment fund style of investment structure. We have discounted this strategy as investment funds do not provide the same high level of regular Professional Active Management and with direct shares you would not be able to achieve the depth of diversification as through the managed account service."
   ];
-  // Format: main sentence (ends with ":" → renders as a lead paragraph), then the items/reasons as
-  // dot points underneath — same newline structure the Alternative Super Investment Options uses.
-  B.super_prod.content.alternatives = "I considered the following alternatives to the recommended investment options:\n"
+  // Format: the two lead sentences render as PLAIN paragraphs (§ prefix), with the platform list and
+  // the discounted reasons as dot points underneath — matching the firm template screenshot.
+  B.super_prod.content.alternatives = "§I considered the following alternatives to the recommended investment options:\n"
     + listItems.join('\n')
-    + "\nI have discounted these products for the following reasons:\n"
+    + "\n§I have discounted these products for the following reasons:\n"
     + disc.join('\n');
   // Cost comparison is now merged into the discounted reasons above — clear the separate note.
   B.super_prod.content.careCostNote="";
