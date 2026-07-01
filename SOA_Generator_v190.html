@@ -6869,6 +6869,20 @@ function previewStrat(def){
   if(c && !c.annexure){ ['alternatives','altProducts'].forEach(f=>{ if(c.annexure) return; const s=c[f]; if(typeof s!=='string'||!s) return;
     const m=s.match(/Annexure\s+(More information about this strategy is contained in Annexure[^\n]*?)(?:\n|$)/i);
     if(m){ c.annexure=m[1].trim(); c[f]=s.replace(m[0],'').replace(/\n{2,}/g,'\n').trim(); } }); }
+  // Administration Recommendations — product-card layout matching the firm template: a dark
+  // "Set up My Wealth Portal" title band, then Recommendations / Why bands, and a two-column
+  // "Total Admin Service Fees" table (My Wealth Portfolio app | $ NIL). Applies to all SOAs.
+  if(def.id==="admin"){
+    const title=String(c.intro||'| Set up My Wealth Portal |').replace(/^\s*\|?\s*/,'').replace(/\s*\|?\s*$/,'').trim()||'Set up My Wealth Portal';
+    const feesVal=(c.adminFees&&c.adminFees.trim())?c.adminFees:'My Wealth Portfolio app\t$ NIL';
+    const _td=`padding:6px 10px;border:1px solid #B5CBD8;font-size:10px;vertical-align:top`;
+    const feeRows=feesVal.split(/\n/).map(r=>{ const parts=r.split(/\t|\s*\|\s*/).map(x=>x.trim()).filter(x=>x!==''); if(!parts.length) return ''; const lab=parts[0]||''; const val=parts[1]||''; return `<tr><td style="${_td};background:#E5F4F6;font-weight:600">${e(lab)}</td><td style="${_td};background:#fff">${e(val)}</td></tr>`; }).filter(Boolean).join('');
+    return `<div class="strat-card"><div class="sc-label">${e(title)}</div></div>`
+      + block("Recommendations",c.recommendation)
+      + block("Why",c.why)
+      + `<div class="strat-card"><div class="sc-sub">Total Admin Service Fees</div><div class="sc-body" style="padding:0"><table style="border-collapse:collapse;width:100%">${feeRows}</table></div></div>`
+      + (c.risks&&c.risks.trim()?block("Risks & Disadvantages",c.risks):'');
+  }
   return `${introHtml}${loanHtml}
     <div class="strat-card"><div class="sc-label">${e(def.title.replace(' Strategy','').replace(' Recommendations',''))}</div></div>
     ${block("Details",c.details)}${block("Recommendation",c.recommendation)}${block("Why",c.why)}${block("Comments",c.comments)}${block("Total Admin Service Fees",c.adminFees)}${block("Risks & Disadvantages",c.risks)}${block("Alternative Strategies",c.alternatives)}${block("Alternative Products",c.altProducts)}${block("Annexure",c.annexure)}${scHtml}${compHtml}`;
@@ -7107,7 +7121,7 @@ async function generateSOA(){
       new TextRun({text:"This is the full balance of the loan to fund "+(F.debtNote.years||5)+" years worth of the plan, however the corresponding interest repayments presented in the above table are based on the initial investment plus 12 months\u2019 worth of drawdowns (estimated balance: "+money(F.debtNote.drawdown12)+").", font:"Nunito", size:16, color:"555555", italics:true}) ]}) : null;
 
   // strategy card matching the template exactly
-  function strategyTable(title, c){
+  function strategyTable(title, c, blockId){
     const W = 9026;
     const subCell = (label)=> new TableCell({borders, width:{size:W,type:WidthType.DXA},
       margins:{top:50,bottom:50,left:110,right:110}, shading:{fill:SUBLABEL_HEX,type:ShadingType.CLEAR},
@@ -7169,10 +7183,19 @@ async function generateSOA(){
       const m=s.match(/Annexure\s+(More information about this strategy is contained in Annexure[^\n]*?)(?:\n|$)/i);
       if(m){ c.annexure=m[1].trim(); c[f]=s.replace(m[0],'').replace(/\n{2,}/g,'\n').trim(); } }); }
     seg("Details", c.details);
-    seg("Recommendation", c.recommendation);
+    seg(blockId==="admin"?"Recommendations":"Recommendation", c.recommendation);
     seg("Why", c.why);
     seg("Comments", c.comments);
-    seg("Total Admin Service Fees", c.adminFees);
+    // Admin fees render as a two-column band table (My Wealth Portfolio app | $ NIL) to match template.
+    if(blockId==="admin"){
+      const _fees=(c.adminFees&&c.adminFees.trim())?c.adminFees:'My Wealth Portfolio app\t$ NIL';
+      rows.push(new TableRow({children:[subCell("Total Admin Service Fees")]}));
+      _fees.split(/\n/).forEach(r=>{ const parts=r.split(/\t|\s*\|\s*/).map(x=>x.trim()).filter(x=>x!==''); if(!parts.length) return;
+        rows.push(new TableRow({children:[
+          new TableCell({borders, width:{size:Math.round(W*0.45),type:WidthType.DXA}, margins:{top:50,bottom:50,left:110,right:110}, shading:{fill:TEAL_HEX,type:ShadingType.CLEAR}, children:[new Paragraph({children:[new TextRun({text:parts[0]||'', font:"Nunito", size:18, color:"1a1a1a", bold:true})]})]}),
+          new TableCell({borders, width:{size:Math.round(W*0.55),type:WidthType.DXA}, margins:{top:50,bottom:50,left:110,right:110}, children:[new Paragraph({children:[new TextRun({text:parts[1]||'', font:"Nunito", size:18, color:"1a1a1a"})]})]})
+        ]})); });
+    } else seg("Total Admin Service Fees", c.adminFees);
     seg("Risks & Disadvantages", c.risks);
     seg("Alternative Strategies", c.alternatives);
     seg("Alternative Products", c.altProducts);
@@ -7341,7 +7364,10 @@ async function generateSOA(){
         const _dn1=debtNoteP(); if(_dn1) children.push(_dn1);
         children.push(new Paragraph({spacing:{after:120},children:[]}));
       }
-      strategyTable(def.title.replace(' Strategy','').replace(' Recommendations',''), c).forEach(x=>children.push(x));
+      const _stTitle = def.id==="admin"
+        ? (String(c.intro||'| Set up My Wealth Portal |').replace(/^\s*\|?\s*/,'').replace(/\s*\|?\s*$/,'').trim()||'Set up My Wealth Portal')
+        : def.title.replace(' Strategy','').replace(' Recommendations','');
+      strategyTable(_stTitle, c, def.id).forEach(x=>children.push(x));
       // Super contributions merged under the Superannuation section (no separate heading)
       if(def.id==="super" && blockActive("supercontrib") && B.supercontrib && B.supercontrib.content){
         strategyTable("Superannuation Contributions", B.supercontrib.content).forEach(x=>children.push(x));
