@@ -3617,6 +3617,8 @@ function _insSummaryLine(r){
   const type=/tpd/i.test(cov)?'TPD':/trauma|critical/i.test(cov)?'Trauma':/life|death/i.test(cov)?'Life':cov.split(/[(\u2014-]/)[0].trim();
   // strip a leading premium-structure word if it crept into the qualifier
   qual=qual.replace(/^(stepped|level|variable[\w\s-]*?),?\s*/i,'').trim();
+  // Trauma always carries the "(Linked, Plus & Reinstatement)" feature set by default (unless standalone).
+  if(type==='Trauma' && !/standalone/i.test(cov) && !/reinstatement/i.test(qual)) qual='Linked, Plus & Reinstatement';
   return `${type} ${amt}${qual?` (${qual})`:''}`;
 }
 window._insSummaryLine=_insSummaryLine;
@@ -15339,6 +15341,17 @@ function v200InvestEst(ar){
     return s?String(s.est.product):''; }catch(_){ return ''; }
 }
 if(typeof window!=='undefined') window.v200InvestEst=v200InvestEst;
+// [33] Franking-credit estimate for the CARE Essentials "why" — uses a figure captured from the CARE
+// doc if available, otherwise returns '' so the wording keeps the highlighted "$XX" placeholder for
+// the adviser to confirm. (The value renders yellow via the placeholder highlighter either way.)
+function v200CareFrankingCredits(){
+  try{ if(typeof F!=='object') return '';
+    const raw=F.careFrankingCredits||F.frankingCredits||(F.careRecSuper&&F.careRecSuper.franking);
+    const n=Number(String(raw==null?'':raw).replace(/[^0-9.]/g,''));
+    return (isFinite(n)&&n>0)?('$'+Math.round(n).toLocaleString('en-AU')):'';
+  }catch(_){ return ''; }
+}
+if(typeof window!=='undefined') window.v200CareFrankingCredits=v200CareFrankingCredits;
 function v200DetectApproach(ar){
   if(typeof F!=='object' || !ar) return;
   const join=o=>Object.keys(o||{}).map(a=>(o[a]||[]).map(p=>(p&&p.product)||'').join(' ')).join(' ');
@@ -15347,9 +15360,20 @@ function v200DetectApproach(ar){
   // [59] CARE Essentials super "why" — include only when super is CARE per the advice request.
   try{
     if(F.superApproach==='CARE' && typeof B!=='undefined' && B.super && B.super.content){
-      const careWhy="CARE Essentials: providing professional active management on a day-to-day basis for the potential for greater returns and wealth preservation. You do not want a set-and-forget strategy. This increases the probability of achieving the returns you need while minimising the volatility of your investments, and reduces the chance of you making inappropriate decisions, particularly at points of extreme market volatility. Adopting the CARE approach lets you invest into different components — Core, Active and Enhanced — efficiently. Your superannuation will receive franking credits from the Australian Equities portion of your Core & Enhanced portfolio (approx. $XX p.a.). A Core component is invested into a diversified portfolio consistent with your risk profile and goals. An Active component aims to smooth out the volatility of the portfolio, particularly in market extremes. An Enhanced component targets higher return (and risk) focused on single asset classes (Australian and/or International Shares) aiming for higher-than-index long-term returns and consistent tax-advantaged income.";
+      const _frank=(typeof v200CareFrankingCredits==='function'?v200CareFrankingCredits():'')||'$XX';
+      const careWhy=[
+        "Providing professional active management on a day to day basis to provide the potential for greater returns and wealth preservation throughout retirement. You do not want a set and forget strategy.",
+        "Increasing the probability of achieving the returns you need while minimising the volatility of your investments, and",
+        "Reducing the chance of you making bad or inappropriate decisions, particularly at points of extreme market volatility.",
+        "One of the greatest benefits we discussed about adopting the CARE investment approach is the ability to invest into different components – Core, Active, and Enhanced efficiently and easily. Your superannuation will receive franking credits from the Australian Equities portion of your Core & Enhanced portfolio (Approx. "+_frank+" p.a.).",
+        "A Core component of your funds invested into a diversified portfolio, consistent with your risk profile and goals.",
+        "An Active component is invested in a way that aims to smooth out the volatility of the portfolio, particularly in market extremes. It will provide you with exposure to directly held, sector specific growth assets, actively managed to increase your exposure when the manager deems the risk to achieve further returns outweighs the potential returns, in other words, it is not worth taking the risk for those potential (not guaranteed) returns.",
+        "An Enhanced component will target higher return (and risk) focused on single asset classes (Australian Shares and/or International Shares) aiming for higher than index, long-term returns and consistent income with tax advantages in line with your goals and objects."
+      ].join('\n');
       const w=String(B.super.content.why||'');
-      if(w.indexOf('CARE Essentials:')<0) B.super.content.why=(w?w+'\n':'')+careWhy;
+      // remove any prior (incorrect) CARE Essentials paragraph, then append the standard wording once
+      let w2=w.replace(/CARE Essentials: providing professional active management[\s\S]*?tax-advantaged income\.\s*/i,'').trim();
+      if(w2.indexOf('Providing professional active management on a day to day basis')<0) B.super.content.why=(w2?w2+'\n':'')+careWhy;
     }
   }catch(_){}
 }
@@ -15475,6 +15499,31 @@ function v200StandardDebtWording(){
   if(B.debt.content.intro && _rx.test(B.debt.content.intro)) B.debt.content.intro='';
 }
 if(typeof window!=='undefined') window.v200StandardDebtWording=v200StandardDebtWording;
+// Firm-standard superannuation RECOMMENDATION lines that must appear on every super SOA:
+// [25] CARE Philosophy line (CARE super only); [26] non-lapsing binding death nomination + reinvest
+// distributions (accumulation) or reversionary pension + leave distributions in cash (retirement);
+// [27] "super portfolio"→"super portfolios" and "fund"→"funds" when the client has multiple accounts.
+function v200StandardSuperWording(){
+  if(typeof F!=='object' || typeof B==='undefined' || !B.super || !B.super.active || !B.super.content) return;
+  const accts=(Array.isArray(F.superAccounts)?F.superAccounts:[]).filter(a=>a&&(a.fund||a.action));
+  const multi=accts.length>1;
+  const fundWord=multi?'funds':'fund';
+  const portWord=multi?'super portfolios':'super portfolio';
+  let rec=String(B.super.content.recommendation||'');
+  // [27] pluralise any existing "super portfolio" references already in the content.
+  if(multi){ rec=rec.replace(/\bsuper portfolio\b/gi,'super portfolios'); }
+  const adds=[];
+  if(F.superApproach==='CARE' && !/using the CARE Philosophy/i.test(rec)) adds.push("We recommend that you invest in line with your risk profile using the CARE Philosophy.");
+  if(!/non-lapsing binding death nomination/i.test(rec)) adds.push("We recommend you choose a non-lapsing binding death nomination within your superannuation "+fundWord+".");
+  if(F.retirementSOA){
+    if(!/reversionary pension/i.test(rec)) adds.push("We recommend you select an automatic reversionary pension under the pension plan.");
+    if(!/distributions from your super portfolio[s]? be left in cash/i.test(rec)) adds.push("We recommend that distributions from your "+portWord+" be left in cash.");
+  } else {
+    if(!/distributions from your super portfolio[s]? be reinvested/i.test(rec)) adds.push("We recommend that distributions from your "+portWord+" be reinvested.");
+  }
+  if(rec!==String(B.super.content.recommendation||'') || adds.length) B.super.content.recommendation=(rec?rec:'')+(adds.length?((rec?'\n':'')+adds.join('\n')):'');
+}
+if(typeof window!=='undefined') window.v200StandardSuperWording=v200StandardSuperWording;
 // [13] Mirror the advice-request cashflow costs into the MCMA fields the cashflow section reads
 // (same fields the text parser sets), so the MCMA transfer + breakdown auto-populate.
 function v200ApplyCashflow(ar){
@@ -15526,7 +15575,9 @@ function v200NormalizeInsuranceCovers(){
       if(F.tpdOwnOcc===true) r.cover=/\(/.test(c)? c.replace(/Any-Occupation/i,'Own-Occupation') : 'TPD (Linked & Own-Occupation)';
       else if(F.tpdOwnOcc===false) r.cover=/\(/.test(c)? c.replace(/Own-Occupation/i,'Any-Occupation') : 'TPD (Linked & Any-Occupation)';
     }
-    if(/^trauma/i.test(c) && !/\(/.test(c)) r.cover='Trauma (Linked, Plus & Reinstatement)';
+    // Trauma defaults to "(Linked, Plus & Reinstatement)" for every trauma recommendation — override
+    // a bare "Trauma" or a plain "(Linked)"/"(Plus)" qualifier, but keep an explicit Standalone policy.
+    if(/^trauma/i.test(c) && !/standalone/i.test(c)) r.cover='Trauma (Linked, Plus & Reinstatement)';
   });
 }
 if(typeof window!=='undefined') window.v200NormalizeInsuranceCovers=v200NormalizeInsuranceCovers;
@@ -15581,6 +15632,7 @@ function v200ApplyAdviceRequest(ar){
     try{ v200ApplyProducts(ar); }catch(e){ try{console.error('v200 products',e);}catch(_){ } }
     try{ v200StripSeamless(); }catch(e){ try{console.error('v200 seamless',e);}catch(_){ } }
     try{ v200DetectApproach(ar); }catch(e){ try{console.error('v200 approach',e);}catch(_){ } }
+    try{ v200StandardSuperWording(); }catch(e){ try{console.error('v200 stdsuper',e);}catch(_){ } }
     try{ v200ApplyInvestVanguard(); }catch(e){ try{console.error('v200 vanguard',e);}catch(_){ } }
     try{ v200StandardDebtWording(); }catch(e){ try{console.error('v200 stddebt',e);}catch(_){ } }
     try{ v200ResolveOffsetPick(); }catch(e){ try{console.error('v200 offsetpick',e);}catch(_){ } }
