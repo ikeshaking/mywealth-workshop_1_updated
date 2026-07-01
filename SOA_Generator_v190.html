@@ -5483,6 +5483,9 @@ function collectSummarySuggestions(){
         const _byFund={};
         _sa.forEach(a=>{ const k=_canonFund(a.fund);
           if(!_byFund[k] || _rank(a)>_rank(_byFund[k])) _byFund[k]=a; });
+        // [9] Collect the full-rollover ("close & transfer 100%") funds so they merge into a single
+        // line ("close your existing A and B funds and transfer 100% …") rather than one line each.
+        const _closeFunds=[];
         Object.keys(_byFund).forEach(k=>{ const a=_byFund[k]; const f=_fundLabel(a); const act=String(a.action||'').toLowerCase();
           const retain=_retNum(a.retainMin);
           if(retain>0){
@@ -5493,9 +5496,17 @@ function collectSummarySuggestions(){
           } else if(act.indexOf('partial')>=0){
             sug.push(`We recommend you rollover your ${f} and transfer part of this balance to a new fund that has been customised for your needs.`);
           } else {
-            sug.push(`We recommend you close your existing ${f} and transfer 100% of the balance to a new fund that has been customised for your needs.`);
+            _closeFunds.push(f);
           }
         });
+        if(_closeFunds.length===1){
+          sug.push(`We recommend you close your existing ${_closeFunds[0]} and transfer 100% of the balance to a new fund that has been customised for your needs.`);
+        } else if(_closeFunds.length>1){
+          const _strip=s=>String(s).replace(/\s+funds?$/i,'').trim();
+          const _p=_closeFunds.map(_strip);
+          const _merged=_p.slice(0,-1).join(', ')+' and '+_p[_p.length-1]+' funds';
+          sug.push(`We recommend you close your existing ${_merged} and transfer 100% of the balance to a new fund that has been customised for your needs.`);
+        }
       } else {
         sug.push("We recommend you close your existing superannuation and transfer 100% of the balance to a new fund that has been customised for your needs.");
       }
