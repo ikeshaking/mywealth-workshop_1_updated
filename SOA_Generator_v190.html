@@ -2933,6 +2933,9 @@ function importProjectorJSON(raw){
   // Military Super / CSC defined-benefit — only when such a fund is actually held.
   const _milSignal = (Array.isArray(F.superAccounts) && F.superAccounts.some(a=>a && (a.dbPortion || /military|\bcsc\b|\bpss\b|\bcss\b|msbs|dfrdb|defined benefit/i.test(String((a&&a.fund)||"")))));
   if(_milSignal){ F.scopeOut.so_militaryDB=true; try{ window.__militaryDBScopeOut=true; }catch(_){} }
+  // #1 If an advice request was already applied, its scope-out is the source of truth — re-apply it
+  // over the fact-find-derived signals (now that goals exist, so the property-goal rule can run).
+  try{ if(typeof v200ApplyScopeOut==='function' && Array.isArray(F._arScopeOut)) v200ApplyScopeOut(); }catch(_){}
 
   // ---- goals — ONLY from the client's actual fact-find, never fabricated boilerplate ----
   // Two fact-find formats exist: structured goals_table_rows [{goal,amount,timeframe}], and
@@ -15348,6 +15351,25 @@ function v200ApplyCashflow(ar){
   }
 }
 if(typeof window!=='undefined') window.v200ApplyCashflow=v200ApplyCashflow;
+// #1 Scope-out is driven by the advice request: tick ONLY the items it scoped out, plus always add
+// "Specific Residential Property Advice" (so_property) when the client has a property-purchase goal
+// (goals-driven — it isn't listed in the advice request either way). Re-applied after the fact-find
+// import so the advice request always wins regardless of import order.
+function v200ApplyScopeOut(){
+  if(typeof F!=='object' || !Array.isArray(F._arScopeOut)) return;
+  if(!F.scopeOut) F.scopeOut={};
+  const map=[[/existing shares|\bshares\b/i,'so_shares'],[/crypto/i,'so_crypto'],
+    [/military|defined benefit|\bmsbs\b|\badf\b/i,'so_militaryDB'],
+    [/existing investment property|existing property/i,'so_existprop'],
+    [/international/i,'so_intl'],[/business/i,'so_business']];
+  ['so_shares','so_crypto','so_militaryDB','so_existprop','so_intl','so_business'].forEach(k=>{ F.scopeOut[k]=false; });
+  F._arScopeOut.forEach(s=>{ map.forEach(m=>{ if(m[0].test(String(s||''))) F.scopeOut[m[1]]=true; }); });
+  // property-purchase goal → residential property advice always scoped out (goals-driven)
+  const gtxt=(Array.isArray(F.goals)?F.goals.map(g=>String((g&&g.text)||'')).join(' '):'')+' '+String(F.narr||'');
+  const propGoal=/purchase (?:a |the )?(?:new )?(?:home|house|property|block)|buy a (?:home|house|property)|property purchase|new home within|home deposit|purchasing a home/i.test(gtxt);
+  if(propGoal) F.scopeOut.so_property=true;
+}
+if(typeof window!=='undefined') window.v200ApplyScopeOut=v200ApplyScopeOut;
 // [11][12] Normalise insurance cover names so the Summary, body and table agree: force TPD to the
 // occupation basis the advice request/quote states (F.tpdOwnOcc), and apply the firm's standard
 // Trauma label "(Linked, Plus & Reinstatement)" when a Trauma row has no qualifier.
@@ -15417,6 +15439,7 @@ function v200ApplyAdviceRequest(ar){
     try{ v200ResolveOffsetPick(); }catch(e){ try{console.error('v200 offsetpick',e);}catch(_){ } }
     try{ v200ApplyCashflow(ar); }catch(e){ try{console.error('v200 cashflow',e);}catch(_){ } }
     try{ v200NormalizeInsuranceCovers(); }catch(e){ try{console.error('v200 inscovers',e);}catch(_){ } }
+    try{ if(Array.isArray(ar.scopeOut)){ F._arScopeOut=ar.scopeOut.slice(); v200ApplyScopeOut(); } }catch(e){ try{console.error('v200 scopeout',e);}catch(_){ } }
     // Budget notes → the surplus-cashflow goal's sub-points (same channel the text parser uses).
     try{ if(ar.notesBudget){
       const bn=String(ar.notesBudget).split(/\r?\n+/).map(l=>l.replace(/^[\s•\-•‣▪\t]+/,'').trim()).filter(Boolean);
