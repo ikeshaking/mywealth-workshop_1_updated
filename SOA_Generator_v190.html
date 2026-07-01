@@ -3964,8 +3964,8 @@ function v145ResolvePerson(text, filename){
   return p;
 }
 window.v145ResolvePerson=v145ResolvePerson;
-function _v145TypeLabel(t){ return {commission:'Commission report',clearview:'ClearView quote',neos:'NEOS quote',quote:'Insurer quote',rr:'Risk Researcher',datacol:'Data collection',care:'CARE portfolio doc',wealthsolver:'WealthSolver comparison',advicereq:'Advice Request',json:'Projector JSON'}[t]||t; }
-window._v145JointTypes=['care','wealthsolver','advicereq','json'];
+function _v145TypeLabel(t){ return {commission:'Commission report',clearview:'ClearView quote',neos:'NEOS quote',quote:'Insurer quote',rr:'Risk Researcher',datacol:'Data collection',care:'CARE portfolio doc',wealthsolver:'WealthSolver comparison',advicereq:'Advice Request',advicereqjson:'Advice Request (JSON)',json:'factfind JSON'}[t]||t; }
+window._v145JointTypes=['care','wealthsolver','advicereq','advicereqjson','json'];
 async function v145SmartDrop(fileList){
   const files=Array.from(fileList||[]); if(!files.length) return;
   const items=[];
@@ -3981,7 +3981,11 @@ async function v145SmartDrop(fileList){
       items.push({ file:f, name:f.name||'(file)', text, type, person:v145ResolvePerson(text, f.name) });
       continue;
     }
-    if(/\.json$/.test(nm)){ let jt=''; try{ jt=await f.text(); }catch(_){ } items.push({ file:f, name:f.name||'(file)', text:jt, type:'json', person:'' }); continue; }
+    if(/\.json$/.test(nm)){ let jt=''; try{ jt=await f.text(); }catch(_){ }
+      // Distinguish an Advice Request JSON (strategies + scopeIn) from a fact-find/Projector JSON so
+      // the Smart Drop modal labels and routes it correctly (advice fees/products/scope come from it).
+      let jtype='json'; try{ const _o=JSON.parse(jt); if(typeof v200IsAdviceReq==='function' && v200IsAdviceReq(_o)) jtype='advicereqjson'; }catch(_){ }
+      items.push({ file:f, name:f.name||'(file)', text:jt, type:jtype, person:'' }); continue; }
     let text=''; try{ text=await extractAnyText(f); }catch(_){ text=''; }
     items.push({ file:f, name:f.name||'(file)', text, type:v145ClassifyText(text), person:v145ResolvePerson(text, f.name) });
   }
@@ -4009,7 +4013,7 @@ function v145ShowSmartModal(items){
   const hp=(typeof hasPartner==='function')&&hasPartner();
   const c1=(typeof pref==='function')?pref('client'):'Client 1';
   const c2=hp?((typeof pref==='function')?pref('partner'):'Client 2'):'';
-  const typeOpts=sel=>[['commission','Commission report'],['clearview','ClearView quote'],['neos','NEOS quote'],['quote','Insurer quote'],['rr','Risk Researcher'],['care','CARE portfolio doc'],['wealthsolver','WealthSolver comparison'],['advicereq','Advice Request'],['json','Projector JSON'],['skip','Skip this file']]
+  const typeOpts=sel=>[['commission','Commission report'],['clearview','ClearView quote'],['neos','NEOS quote'],['quote','Insurer quote'],['rr','Risk Researcher'],['care','CARE portfolio doc'],['wealthsolver','WealthSolver comparison'],['advicereq','Advice Request'],['advicereqjson','Advice Request (JSON)'],['json','factfind JSON'],['skip','Skip this file']]
     .map(o=>'<option value="'+o[0]+'"'+(sel===o[0]?' selected':'')+'>'+o[1]+'</option>').join('');
   const rows=items.map((it,i)=>
     '<tr data-row="'+i+'" style="border-top:1px solid var(--border-soft)">'+
@@ -4077,6 +4081,11 @@ async function v145ApplySmartMapping(items){
         else if(type==='care'){ if(typeof v48ImportCareDoc==='function') await v48ImportCareDoc(it.file); }
         else if(type==='wealthsolver'){ if(typeof v54ImportWealthSolver==='function') await v54ImportWealthSolver(it.file); }
         else if(type==='advicereq'){ if(typeof v143ImportAdviceRequest==='function') await v143ImportAdviceRequest(it.file); }
+        else if(type==='advicereqjson'){
+          let _arj=null; try{ _arj=JSON.parse(it.text); }catch(_){ }
+          if(_arj && typeof v200ApplyAdviceRequest==='function'){ v200ApplyAdviceRequest(_arj); }
+          else if(typeof applyImportedJSON==='function'){ applyImportedJSON(it.text); }
+        }
         else if(type==='json'){
           let _arj=null; try{ _arj=JSON.parse(it.text); }catch(_){ }
           if(_arj && typeof v200IsAdviceReq==='function' && v200IsAdviceReq(_arj)){ v200ApplyAdviceRequest(_arj); }
