@@ -15220,6 +15220,11 @@ function v200ApplyAdviceRequest(ar){
     try{ v200ApplyRisk(ar); }catch(e){ try{console.error('v200 risk',e);}catch(_){ } }
     try{ v200ApplyFees(ar); }catch(e){ try{console.error('v200 fees',e);}catch(_){ } }
     try{ v200ApplyProducts(ar); }catch(e){ try{console.error('v200 products',e);}catch(_){ } }
+    // Budget notes → the surplus-cashflow goal's sub-points (same channel the text parser uses).
+    try{ if(ar.notesBudget){
+      const bn=String(ar.notesBudget).split(/\r?\n+/).map(l=>l.replace(/^[\s•\-•‣▪\t]+/,'').trim()).filter(Boolean);
+      if(bn.length){ window.__adviceBudgetNotes=bn; if(typeof v145ApplyBudgetNotes==='function') v145ApplyBudgetNotes(); }
+    } }catch(e){ try{console.error('v200 budget notes',e);}catch(_){ } }
     try{ if(typeof render==='function') render(); }catch(_){}
   }catch(err){ try{console.error('v200 error',err);}catch(_){ } }
   return log;
