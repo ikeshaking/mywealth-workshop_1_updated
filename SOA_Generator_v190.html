@@ -15290,6 +15290,22 @@ function v200ResolveOffsetPick(){
   if(typeof B!=='undefined'){ ['debt'].forEach(id=>{ const c=B[id]&&B[id].content; if(!c) return; ['recommendation','why','details'].forEach(f=>{ if(typeof c[f]==='string') c[f]=fix(c[f]); }); }); }
 }
 if(typeof window!=='undefined') window.v200ResolveOffsetPick=v200ResolveOffsetPick;
+// [13] Mirror the advice-request cashflow costs into the MCMA fields the cashflow section reads
+// (same fields the text parser sets), so the MCMA transfer + breakdown auto-populate.
+function v200ApplyCashflow(ar){
+  if(typeof F!=='object' || !ar) return;
+  const num=v=>{ const m=String(v||'').match(/([\d,]+)/); return m?m[1].replace(/,/g,''):''; };
+  const cc=ar.cashCosts||{}; const ins=num(cc.ins), inv=num(cc.inv), adv=num(cc.adv);
+  if(inv){ if(!F.mcmaInvestWeekly) F.mcmaInvestWeekly=inv; if(!F.planWeekly) F.planWeekly=inv; }
+  if(ins && !F.mcmaInsWeekly) F.mcmaInsWeekly=ins;
+  if(adv && !F.mcmaAdviceWeekly) F.mcmaAdviceWeekly=adv;
+  let mc='';
+  const mcStrat=(ar.strategies||[]).find(s=>/MCMA/i.test(s.name||'') && Array.isArray(s.amounts) && s.amounts.length);
+  if(mcStrat) mc=num(mcStrat.amounts[0]);
+  if(!mc){ const sum=(parseInt(ins||0,10)+parseInt(inv||0,10)+parseInt(adv||0,10)); if(sum>0) mc=String(sum); }
+  if(mc && !F.mcmaWeekly) F.mcmaWeekly=mc;
+}
+if(typeof window!=='undefined') window.v200ApplyCashflow=v200ApplyCashflow;
 function v200StripSeamless(){
   if(typeof F!=='object' || F.retirementSOA || typeof B==='undefined') return;
   const _seam=/\s*(?:[-•]\s*)?Seamless transfer from accumulation to pension \(not required to sell down your assets to transfer into the pension phase\)\.\s*This can prevent unnecessary Capital Gains Tax consequences and\/or sale of assets at a time of unfavourable market conditions\.?/g;
@@ -15342,6 +15358,7 @@ function v200ApplyAdviceRequest(ar){
     try{ v200DetectApproach(ar); }catch(e){ try{console.error('v200 approach',e);}catch(_){ } }
     try{ v200ApplyInvestVanguard(); }catch(e){ try{console.error('v200 vanguard',e);}catch(_){ } }
     try{ v200ResolveOffsetPick(); }catch(e){ try{console.error('v200 offsetpick',e);}catch(_){ } }
+    try{ v200ApplyCashflow(ar); }catch(e){ try{console.error('v200 cashflow',e);}catch(_){ } }
     // Budget notes → the surplus-cashflow goal's sub-points (same channel the text parser uses).
     try{ if(ar.notesBudget){
       const bn=String(ar.notesBudget).split(/\r?\n+/).map(l=>l.replace(/^[\s•\-•‣▪\t]+/,'').trim()).filter(Boolean);
