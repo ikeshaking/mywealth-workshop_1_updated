@@ -8234,6 +8234,8 @@ function renderSpecialDocx(def, ch, K){
         ["why","Why"],
         ["risks","Risks & Disadvantages"],
         ["alternatives","Alternative Products"],
+        // [41] Optional recommended-vs-current cost-comparison note (increase/decrease wording).
+        ["careCostNote","Cost Comparison"],
         // [51/52/53/55] Standard CARE (Essentials/Full) sections, auto-populated by
         // v200ApplyCareEssSuperBlocks when super is CARE (risk-profile-aware wording).
         ["careInvestAlt","Alternative Superannuation Investment Options"],
@@ -15626,6 +15628,21 @@ function v200BuildSuperAltFromWS(){
   B.super_prod.content.alternatives = "I considered the following alternatives to the recommended investment options:\n"
     + all.map(l=>'\t'+l).join('\n')
     + "\n\nI have discounted these products for the following reasons:\n" + disc;
+  // [41] Recommended (CARE doc when CARE, else WealthSolver recommended) vs the Current Situation cost.
+  // When the recommendation costs more, add the optional increase wording; when it costs less, note the
+  // saving. The dollar figures render highlighted so the adviser can confirm/keep/delete.
+  try{
+    const _num=v=>{ const n=Number(String(v==null?'':v).replace(/[^0-9.]/g,'')); return isFinite(n)?n:null; };
+    const recCost=(F.superApproach==='CARE'&&F.careRecSuper&&F.careRecSuper.gross!=null)?_num(F.careRecSuper.gross):_num(gross[recKey]);
+    const curCost=_num(gross['current']);
+    const M2=n=>'$'+Number(n).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2});
+    if(recCost!=null && curCost!=null){
+      const delta=recCost-curCost;
+      if(delta>0.5) B.super_prod.content.careCostNote="The recommended fund has higher administration and management costs than your current arrangement — an increase of approximately "+M2(delta)+" per annum ("+M2(recCost)+" recommended vs "+M2(curCost)+" current). We believe this increase is justified by the professional active management, broader investment menu and the CARE philosophy benefits detailed above. [Optional — confirm or delete]";
+      else if(delta<-0.5) B.super_prod.content.careCostNote="The recommended fund also reduces your ongoing administration and management costs by approximately "+M2(-delta)+" per annum ("+M2(recCost)+" recommended vs "+M2(curCost)+" current).";
+      else B.super_prod.content.careCostNote="";
+    }
+  }catch(_){}
 }
 if(typeof window!=='undefined') window.v200BuildSuperAltFromWS=v200BuildSuperAltFromWS;
 // [13] Mirror the advice-request cashflow costs into the MCMA fields the cashflow section reads
