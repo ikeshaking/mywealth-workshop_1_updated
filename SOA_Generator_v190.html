@@ -7028,7 +7028,7 @@ async function generateSOA(){
       const cellChildren = [];
       if(/(^|\n)\t/.test(_raw)){
         _raw.split('\n').forEach(ln=>{ const body=ln.replace(/^\t+/,'').trim(); if(!body) return;
-          cellChildren.push(new Paragraph({numbering:{reference:"bullets",level:/^\t/.test(ln)?1:0}, spacing:{after:40}, children:[new TextRun({text:body, font:"Nunito", size:18, color:"1a1a1a"})]})); });
+          cellChildren.push(new Paragraph({numbering:{reference:"bullets",level:/^\t/.test(ln)?1:0}, alignment:AlignmentType.JUSTIFIED, spacing:{after:40}, children:[new TextRun({text:body, font:"Nunito", size:18, color:"1a1a1a"})]})); });
       } else {
       const sections = (typeof v11SplitBullets === 'function')
         ? v11SplitBullets(_raw)
@@ -7036,7 +7036,7 @@ async function generateSOA(){
       sections.forEach(sec => {
         if (sec.head) {
           cellChildren.push(new Paragraph({
-            spacing:{before:80, after:40},
+            alignment:AlignmentType.JUSTIFIED, spacing:{before:80, after:40},
             children:[new TextRun({text: sec.head, font:"Nunito", size:18, color:"1a1a1a", bold:true})]
           }));
         }
@@ -7047,14 +7047,14 @@ async function generateSOA(){
           // with the label in bold (not a bullet) — matching the firm's insurance "why" layout.
           const _lblM=_bt.match(/^(Note|Life|TPD|Income Protection|Trauma|Child Cover):\s*([\s\S]*)$/i);
           if(_lblM){
-            cellChildren.push(new Paragraph({ spacing:{before:80, after:40}, children:[
+            cellChildren.push(new Paragraph({ alignment:AlignmentType.JUSTIFIED, spacing:{before:80, after:40}, children:[
               new TextRun({text:_lblM[1]+': ', font:"Nunito", size:18, color:"1a1a1a", bold:true}),
               new TextRun({text:_lblM[2], font:"Nunito", size:18, color:"1a1a1a"})
             ]}));
           } else {
             cellChildren.push(new Paragraph({
               numbering:{reference:"bullets", level:0},
-              spacing:{after:40},
+              alignment:AlignmentType.JUSTIFIED, spacing:{after:40},
               children:[new TextRun({text: b, font:"Nunito", size:18, color:"1a1a1a"})]
             }));
           }
