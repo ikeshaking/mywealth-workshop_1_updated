@@ -4068,11 +4068,11 @@ async function v145ApplySmartMapping(items){
         else if(type==='quote'){ parseAndApplyQuote(person, it.text); v147ApplyCommissionFromText(it.text, person); }
         else if(type==='rr'){ parseAndApplyRR(person, it.text); }
         else if(type==='datacol'){
-          // Data-collection import has been retired: assets, liabilities and superannuation now come
-          // exclusively from the Projector JSON (the single source of truth). Skip the file with a note
-          // rather than importing potentially duplicate/mismatched figures.
-          skipped.push('• '+it.name+'  —  data-collection import has been removed; assets, liabilities & super now come from the Projector JSON');
-          continue;
+          // Data-collection drop-in (Excel data collection or PDF/DOCX account rundown). Feeds the
+          // super parsers, which UPSERT/de-dupe super accounts by fund name — so it supplements the
+          // Projector JSON rather than clobbering it, and captures detail the JSON lacks (e.g. the
+          // Military/defined-benefit Member+Ancillary vs Employer split from a rundown PDF).
+          if(typeof v141ImportDataCollection==='function') await v141ImportDataCollection(it.file, person);
         }
         else if(type==='care'){ if(typeof v48ImportCareDoc==='function') await v48ImportCareDoc(it.file); }
         else if(type==='wealthsolver'){ if(typeof v54ImportWealthSolver==='function') await v54ImportWealthSolver(it.file); }
