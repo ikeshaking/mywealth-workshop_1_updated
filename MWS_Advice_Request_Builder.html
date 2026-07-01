@@ -235,7 +235,9 @@ function build(){
       `<div class="miniH">Benefit of insurance <small class="hint">(links the cover back to the client's goals/appropriateness — appears in Summary → Outcomes, the insurance "why" and the replacement implications section)</small></div><div class="row">`+fMulti('insuranceBenefit','Benefit of insurance',INSURANCE_BENEFITS)+`</div>`;
       else if(a.bondMulti)inner+=`<div id="bondList_${ai}"></div><button class="addbtn" onclick="addBondProd(${ai})">+ Add investment bond (e.g. one per child)</button>`;
       else if(a.invMulti)inner+=`<div id="invList_${ai}"></div><button class="addbtn" onclick="addInvProd(${ai})">+ Add investment product</button>`;}
-  if(a.isContrib)inner+=`<div class="miniH">Contributions (multi-stage / per person / per year)</div><div id="contribList"></div><button class="addbtn" onclick="addContrib()">+ Add contribution</button>`;
+  if(a.isContrib)inner+=`<div class="miniH">Contributions (multi-stage / per person / per year)</div><div id="contribList"></div><button class="addbtn" onclick="addContrib()">+ Add contribution</button>`
+    +`<div class="miniH">Lump-sum contribution — Dollar Cost Averaging <small class="hint">(only when a lump-sum contribution is being dollar-cost-averaged into super. Carry-forward / non-concessional top-ups on their own are NOT a lump-sum DCA — leave as "No lump-sum DCA" and the DCA sentence is omitted. MOTM applies when the resulting super balance will exceed $250,000)</small></div><div class="row">`
+    +fH('superDcaMethod','DCA method','select',['No lump-sum DCA','DCA (plain — balance ≤ $250k)','DCA with MOTM (balance > $250k)'])+`</div>`;
   if(a.isCash)inner+=`<div class="miniH">Ongoing plan costs to MCMA — breakdown</div><div class="row">`+fH('cIns','Insurance','text','','$')+fH('cInv','Investments','text','','$')+fH('cAdv','Advice fee','text','','$')+fH('cOth','Other','text','','$')+fH('cCostFreq','Frequency (applies to breakdown)','select',FREQ)+`</div><div class="muted" id="cTotal"></div>`+
     `<div class="miniH">Costs paid from <small class="hint">(MCMA if FTW/PTW/WM · Bank acct if FTW no inv plan · Investment fund if existing paying from fund/WM)</small></div><div id="cflowList"></div><button class="addbtn" onclick="addCflow()">+ Add cost line</button>`+
     `<div class="miniH">Cash position</div><div class="row">`+fH('cashbefore','Existing cash (before)','text','','$')+fH('cashafter','Remaining cash (after)','text','','$')+`</div><div class="row">`+fH('leave','Available sick &/or AL (days)','text','','')+fH('cashnote','Cash note (e.g. existing savings for insurance recommendations)','text','','')+`</div>`+
@@ -436,6 +438,7 @@ function buildObj(){const ins=scopeInIdx();
    risk,riskExisting:F.rpexist,scopeIn:ins.map(i=>DATA[i].area),scopeOut:[...SCOPEOUT],scopeOther:F.scopeoth,
    strategies:gather(),care:careSel(),superProducts:prods,insProducts:insP,bondProducts:bondP,invProducts:invP,products:simpleProd,
    contributions:(ins.some(i=>DATA[i].isContrib)?CONTRIB.filter(c=>c.type):[]),
+   superDcaMethod:F.superDcaMethod||'', superLumpSum:/dca/i.test(F.superDcaMethod||'')&&!/^no\b/i.test(F.superDcaMethod||''), superDcaMotm:/motm/i.test(F.superDcaMethod||''),
    cashflow:(ins.some(i=>DATA[i].isCash)?CFLOW.filter(c=>c.src||c.amt):[]),
    cashCosts:{ins:F.cIns,inv:F.cInv,adv:F.cAdv,oth:F.cOth,freq:F.cCostFreq},cashPos:{before:F.cashbefore,after:F.cashafter,leave:F.leave,note:F.cashnote},savingsBenefit:F.savingsBenefit,insuranceBenefit:F.insuranceBenefit,
    paraplanning:paras,fee:(()=>{const f={commitment:F.feecommit,status:F.feestatus,cashSource:F.feecashsrc,rows:[],grand:0};
@@ -459,6 +462,7 @@ function asText(o){let L=[];
    if(ss){L.push('  Strategy Recommendations');ss.forEach(s=>{const w=s.owner&&s.owner!=='Personal'?s.owner+': ':'';const amt=s.amounts&&s.amounts.length?'  ['+s.amounts.join(', ')+']':'';const pk=s.pick?' → '+s.pick:'';L.push(`    • ${w}${s.text||s.name}${pk}${amt}`);
      if(s.est){const e=s.est;if(e.product)L.push(`      Type: ${e.product}`);if(e.initial)L.push(`      ${e.initial} - Initial${e.initialFreq&&e.initialFreq!=='one-off'?' '+e.initialFreq:''}${e.initialSource?' (From '+e.initialSource+')':''}`);if(e.ongoing)L.push(`      ${e.ongoing} - Ongoing${e.ongoingFreq?' '+e.ongoingFreq:''}${e.ongoingSource?' (From '+e.ongoingSource+')':''}`);}})}
    if(a.isContrib&&o.contributions.length){L.push('  Contributions');o.contributions.forEach(c=>L.push(`    • ${c.who||''} ${c.type}${c.acct?' → '+c.acct:''}${c.fy?' ('+c.fy+')':''}${c.amt?' '+c.amt+(c.freq?' '+c.freq:''):''}`))}
+   if(a.isContrib&&o.superDcaMethod&&!/^no\b/i.test(o.superDcaMethod)){L.push('  Lump-sum DCA: '+o.superDcaMethod)}
    if(a.isCash){const cc=o.cashCosts;const parts=[];if(cc.ins)parts.push('insurance '+cc.ins);if(cc.inv)parts.push('investments '+cc.inv);if(cc.adv)parts.push('advice fee '+cc.adv);if(cc.oth)parts.push('other '+cc.oth);
      if(parts.length){L.push('  Ongoing plan costs to MCMA'+(cc.freq?' ('+cc.freq+')':'')+':');parts.forEach(p=>L.push('    • '+p))}
      if(o.cashflow.length){L.push('  Costs paid from');o.cashflow.forEach(c=>L.push(`    • ${c.src||''}${c.owner&&c.owner!='Personal'?' ('+c.owner+')':''} - ${c.amt||''}${c.freq?' '+c.freq:''}${c.note?' ['+c.note+']':''}`))}

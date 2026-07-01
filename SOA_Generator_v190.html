@@ -4322,7 +4322,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B11 — CARE alt costs + footer split</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B12 — super DCA/MOTM flag</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -15912,12 +15912,12 @@ function v200ApplyAdviceRequest(ar){
     // explicit flag, else auto-derives from the resulting super balance ($250k threshold) at render time.
     try{ if(typeof F==='object'){
       const _dm=String(ar.superDcaMethod||ar.dcaMethod||ar.superDca||'');
+      const _none=/\bno\b|none/i.test(_dm);   // "No lump-sum DCA" → leave flags off
       if(ar.superLumpSum!=null) F.superLumpSum=!!ar.superLumpSum;
-      else if(/lump[\s-]?sum|dca|dollar[\s-]?cost|motm|money on the move/i.test(_dm)) F.superLumpSum=true;
-      if(/none|no dca|^\s*$/i.test(_dm) && ar.superLumpSum==null){ /* leave undefined → line dropped */ }
-      if(/motm|money on the move/i.test(_dm)) F.superDcaMotm=true;
-      else if(/dca|dollar[\s-]?cost/i.test(_dm)) F.superDcaMotm=false;
-      else if(ar.superDcaMotm!=null) F.superDcaMotm=!!ar.superDcaMotm;
+      else if(!_none && /lump[\s-]?sum|dca|dollar[\s-]?cost|motm|money on the move/i.test(_dm)) F.superLumpSum=true;
+      if(ar.superDcaMotm!=null) F.superDcaMotm=!!ar.superDcaMotm;
+      else if(/motm|money on the move/i.test(_dm)) F.superDcaMotm=true;
+      else if(!_none && /dca|dollar[\s-]?cost/i.test(_dm)) F.superDcaMotm=false;
     } }catch(_){}
     try{ const _ins=(ar.strategies||[]).map(s=>s.text||'').join(' '); if(/own[\s-]occupation/i.test(_ins)) F.tpdOwnOcc=true; else if(/any[\s-]occupation/i.test(_ins)) F.tpdOwnOcc=false; }catch(_){}
     // Accumulation vs retirement drives which sections/wording apply (e.g. the accumulation→pension
