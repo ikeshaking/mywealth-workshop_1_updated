@@ -2709,6 +2709,10 @@ function fill(str){
   // Pre-populate the regular-investment "ongoing commitment of $ per week" from the advice request's
   // weekly regular-investment cost to the MCMA (F.mcmaInvestWeekly), e.g. "Investment: $480 per week".
   (function(){ try{ const w=(typeof F!=='undefined'&&F)?(F.mcmaInvestWeekly||F.planWeekly):''; const n=Number(String(w||'').replace(/[^0-9.]/g,'')); if(isFinite(n)&&n>0){ _fo=_fo.replace(/ongoing commitment of \$\s*(?:XX|XXX)?\s*per week/gi, 'ongoing commitment of '+money(n)+' per week'); } }catch(_){ } })();
+  // Surplus-cashflow goal opener: fill "surplus cashflow of $XXX per week" from the real weekly
+  // surplus (F.surplusWeekly / F.budgetWeekly) at RENDER time, so it always populates regardless of
+  // import order or whether the standard-goal stash was seeded. Idempotent — only touches $XXX.
+  (function(){ try{ const F0=(typeof F!=='undefined'&&F)?F:{}; const n=Number(String(F0.surplusWeekly||F0.budgetWeekly||'').replace(/[^0-9.]/g,'')); if(isFinite(n)&&n>0){ _fo=_fo.replace(/(surplus cashflow of\s*)\$X{2,}(\s*per week)/gi, '$1'+money(n)+'$2'); } }catch(_){ } })();
   // Family-trust holding line only applies when the client actually has a trust; otherwise drop the
   // whole line (and never leave the "(If client has existing Trust only)" instruction marker showing).
   (function(){ try{ const F0=(typeof F!=='undefined'&&F)?F:{}; const ht=!!(F0.hasTrust || (Array.isArray(F0.assets)&&F0.assets.some(a=>/trust/i.test(String((a&&(a.owner||a.ownership||a.type||a.name))||'')))) || /trust/i.test(String(F0.entityType||'')));
@@ -6897,7 +6901,7 @@ function previewSpecial(def){
   switch(def.id){
     case "goals": { const g=F.goals.filter(x=>x.text.trim() && !(F.retirementSOA && window.v97IsBudgetGoal(x.text)));
       const ghl=t=>v191GoalDecisionSegments(fill(t)).map(s=>s.hl?(`<span class="hl-decide">${e(s.t)}</span>`):e(s.t)).join("");
-      return g.length?`<ul>${g.map(x=>`<li>${ghl(x.text)}${Array.isArray(x.notes)&&x.notes.filter(n=>n&&n.trim()).length?`<ul style="margin:3px 0">${x.notes.filter(n=>n&&n.trim()).map(n=>`<li>${e(fill(n))}</li>`).join("")}</ul>`:""}</li>`).join("")}</ul>`:`<p class="muted">No goals.</p>`; }
+      return g.length?`<ul>${g.map(x=>`<li>${ghl(x.text)}${Array.isArray(x.notes)&&x.notes.filter(n=>n&&n.trim()).length?`<div style="font-weight:700;margin:4px 0 2px">Notes:</div><ul style="margin:3px 0">${x.notes.filter(n=>n&&n.trim()).map(n=>`<li>${e(fill(n))}</li>`).join("")}</ul>`:""}</li>`).join("")}</ul>`:`<p class="muted">No goals.</p>`; }
     case "scope": {
       const act = BLOCK_DEFS.filter(d=>d.type==="strategy" && blockActive(d.id));
       let h = `<p>We have agreed that we will advise you about:</p><ul>${act.map(a=>`<li>${e(scopeInTextOf(a))}</li>`).join("")}${(F.customScopeIn||[]).filter(t=>t.trim()).map(t=>`<li>${e(t)}</li>`).join("")||'<li class="muted">none</li>'}</ul>
@@ -7473,7 +7477,11 @@ function renderSpecialDocx(def, ch, K){
         children: v191GoalDecisionSegments(String(t)).map(s=> new TextRun({text:s.t, font:"Nunito", size:20, color:"1a1a1a"})) });   // highlight is PREVIEW-only; the downloaded Word doc carries no yellow highlight
       if(g.length) g.forEach(x=>{
         ch.push(BulHL(fill(x.text)));
-        if(Array.isArray(x.notes)) x.notes.filter(n=>n&&n.trim()).forEach(n=>ch.push(goalSubBul(fill(n))));
+        const _gn=Array.isArray(x.notes)?x.notes.filter(n=>n&&n.trim()):[];
+        if(_gn.length){
+          ch.push(new Paragraph({spacing:{before:40,after:20},indent:{left:720},children:[new TextRun({text:"Notes:",font:"Nunito",size:20,bold:true,color:"1a1a1a"})]}));
+          _gn.forEach(n=>ch.push(goalSubBul(fill(n))));
+        }
       });
       else ch.push(SmallItalic("[Goals to be confirmed]"));
       return;
