@@ -2713,6 +2713,15 @@ function fill(str){
   // surplus (F.surplusWeekly / F.budgetWeekly) at RENDER time, so it always populates regardless of
   // import order or whether the standard-goal stash was seeded. Idempotent — only touches $XXX.
   (function(){ try{ const F0=(typeof F!=='undefined'&&F)?F:{}; const n=Number(String(F0.surplusWeekly||F0.budgetWeekly||'').replace(/[^0-9.]/g,'')); if(isFinite(n)&&n>0){ _fo=_fo.replace(/(surplus cashflow of\s*)\$X{2,}(\s*per week)/gi, '$1'+money(n)+'$2'); } }catch(_){ } })();
+  // Auto-correct capitalisation of pulled-through action verbs that land mid-sentence. A picked
+  // strategy word (e.g. the offset "Utilise"/"Establish" pick, or a scenario-name verb) is often
+  // capitalised in the source but should be lower-case when it renders after "you"/"recommend you".
+  // Only touches a known verb set immediately following that lead-in, so proper nouns are untouched.
+  _fo = _fo.replace(/\b(recommend(?:s)?(?:\s+that)?\s+you\s+|you\s+(?:should\s+)?)(Utilise|Utilize|Establish|Consolidate|Redirect|Direct|Maintain|Review|Cancel|Transfer|Close|Take|Continue|Provide|Reduce|Hold|Invest|Retain|Rollover|Roll|Salary|Contribute|Withdraw|Draw|Commence|Purchase|Sell)\b/g, (m,pre,verb)=> pre+verb.charAt(0).toLowerCase()+verb.slice(1));
+  // Benefit-of-saving clause on the cashflow "why" savings sentence (mirrors the Summary → Outcomes
+  // clause). Only fires when the sentence ends directly at "…account." — the summary version already
+  // carries ", which <benefit>." so it won't double up.
+  (function(){ try{ const b=String((typeof F!=='undefined'&&F&&F.savingsBenefit)||'').trim().replace(/^which\s+/i,'').replace(/[.\s]+$/,''); if(b){ _fo=_fo.replace(/(provide savings of[^.]*?per annum towards your existing [a-z ]*?account)\./gi, '$1, which '+b+'.'); } }catch(_){ } })();
   // Family-trust holding line only applies when the client actually has a trust; otherwise drop the
   // whole line (and never leave the "(If client has existing Trust only)" instruction marker showing).
   (function(){ try{ const F0=(typeof F!=='undefined'&&F)?F:{}; const ht=!!(F0.hasTrust || (Array.isArray(F0.assets)&&F0.assets.some(a=>/trust/i.test(String((a&&(a.owner||a.ownership||a.type||a.name))||'')))) || /trust/i.test(String(F0.entityType||'')));
@@ -5427,6 +5436,16 @@ window.v194BuildDebtWording = function(){
       "We considered making additional home loan repayments instead of utilising your existing offset account, however we discounted this strategy as your offset account will provide you with flexible access to your funds, should you need to draw upon these at any point."
     ]);
     alts=uniq(alts); if(alts.length) B.debt.content.alternatives=alts.join('\n');
+    // Details / intro carry the debt-recycling three-step restructure narrative (home equity as
+    // security for a separate investment loan, sub-accounts, "forming a loan limit of $XXX",
+    // re-borrowing to invest, converting non-deductible to deductible debt). When no gearing /
+    // borrowing-to-invest (debt recycling / investment loan / term loan / share loan) is scoped,
+    // strip it so an offset-only debt section never shows debt-recycling wording.
+    if(!gearing){
+      const _rx=/debt recycl|equity[\s\S]{0,40}security|sub[- ]?account|loan limit|restructur|re-?borrow|tax deductible investment debt|non[\s-]*tax deductible|separate investment loan|investment loan|term loan|share loan/i;
+      if(B.debt.content.details && _rx.test(B.debt.content.details)) B.debt.content.details='';
+      if(B.debt.content.intro && _rx.test(B.debt.content.intro)) B.debt.content.intro='';
+    }
   }catch(_){}
 };
 
@@ -5650,7 +5669,7 @@ function collectSummarySuggestions(){
     sug.push("We recommend you utilise the My Wealth Portal to track all your investments and cashflow.");
   }
   try{ F._cashflowSug=sug.slice(_cashSugStart); }catch(_){ F._cashflowSug=[]; }
-  if(blockActive("estate")) sug.push("We recommend you review and update your estate planning, including your Will and powers of attorney, with the assistance of an Estate Planning specialist.");
+  if(blockActive("estate")) sug.push("We recommend you review and, where appropriate, update your Will and Enduring Powers of Attorney with the assistance of an estate planning specialist.");
   const prod=[];
   // v98: per-CARE-account product lines with bucket breakdown
   const _careAccs = Array.isArray(F.careAccounts) ? F.careAccounts : [];
@@ -5729,7 +5748,11 @@ function collectSummarySuggestions(){
     }
     return [];
   })();
-  const _platPhrase = (plat)=>{ let p=String(plat||'').trim();
+  const _platPhrase = (plat, fb)=>{ let p=String(plat||'').trim();
+    // When only a bare "Hub24" (no Choice/Core/Discover tier) is known but a tiered recommended
+    // platform is available (from the advice request), use the tiered name so the SOA states the
+    // actual menu (e.g. "Hub24 Core") instead of the generic "Hub24 Choice (or Core or Discover)".
+    if((!p||/^hub\s*24$/i.test(p)) && fb && /hub\s*24\s*(choice|core|discover)/i.test(String(fb))) p=String(fb).trim();
     if(!p || /^hub\s*24$/i.test(p)) return 'the Hub24 Choice (or Core or Discover) platform';
     return /menu$/i.test(p) ? ('the '+p) : ('the '+p+' platform'); };
   // Robust fallback: pull the per-portfolio allocation lines straight from the rendered product table
@@ -5755,13 +5778,15 @@ function collectSummarySuggestions(){
   // recommended investment allocation flows into Summary → Products even if only the product block is
   // on (mirrors how the super allocation flows through).
   if(blockActive("investplan") || (B.investplan_prod && B.investplan_prod.active)){
-    let _invLines=null, _invPlat=_ncPlat;
+    // The investment platform can differ from super (super=Hub24 Core, investment=Hub24 Discover);
+    // prefer the investment-specific platform from the advice request over the super's recPlatform.
+    let _invLines=null, _invPlat=F.investPlatform||_ncPlat;
     const _ci=_careInvest.map(a=>({a,lines:_bucketLinesForAcc(a)})).find(x=>x.lines.length);
     if(_ci){ _invLines=_ci.lines; _invPlat=_ci.a.platform||'Hub24'; }
     else if(_ncAlloc) _invLines=_ncAlloc;
     else { const pt=_allocFromProdTable('investplan_prod'); if(pt.length) _invLines=pt; }
-    if(_invLines && _invLines.length) prod.push({text:`We recommend you establish your new investment account through ${_platPhrase(_invPlat)} and invest your funds as follows:`, notes:_invLines.slice()});
-    else prod.push(`We recommend you establish your new investment account through ${_platPhrase(_invPlat)} and invest in line with your risk profile.`);
+    if(_invLines && _invLines.length) prod.push({text:`We recommend you establish your new investment account through ${_platPhrase(_invPlat,F.investPlatform||F.recPlatform)} and invest your funds as follows:`, notes:_invLines.slice()});
+    else prod.push(`We recommend you establish your new investment account through ${_platPhrase(_invPlat,F.investPlatform||F.recPlatform)} and invest in line with your risk profile.`);
   }
   // Superannuation account — CARE buckets → non-CARE WealthSolver lines → product-table rows → generic.
   if(blockActive("super")){
@@ -5772,8 +5797,8 @@ function collectSummarySuggestions(){
     else if(_ncAlloc) _superLines=_ncAlloc;
     else { const pt=_allocFromProdTable('super_prod'); if(pt.length) _superLines=pt; }
     const _who=(_superPerson==='partner'&&hasPartner())?pref('partner')+', we':(hasPartner()?pref('client')+', we':'We');
-    if(_superLines && _superLines.length) prod.push({text:`${_who} recommend you establish your new superannuation account through ${_platPhrase(_superPlat)} and invest your funds as follows:`, notes:_superLines.slice()});
-    else prod.push(`${_who} recommend you establish your new superannuation account through ${_platPhrase(_superPlat)} and invest in line with your risk profile.`);
+    if(_superLines && _superLines.length) prod.push({text:`${_who} recommend you establish your new superannuation account through ${_platPhrase(F.recPlatform,_superPlat)} and invest your funds as follows:`, notes:_superLines.slice()});
+    else prod.push(`${_who} recommend you establish your new superannuation account through ${_platPhrase(F.recPlatform,_superPlat)} and invest in line with your risk profile.`);
   }
   // Only mention insurance products when there is actual insurance cover to recommend.
   if(blockActive("insurance") && ((F.insurance&&F.insurance.length) || F.recInsurer)) prod.push("We recommend you apply for your insurance cover through "+recommendedInsurer()+".");
@@ -5812,7 +5837,14 @@ function collectSummarySuggestions(){
     const _pa = money(Math.round(_remW*52 + _taxA));
     const _isOffset = (F.surplusDest==='offset');
     const _dest = _isOffset ? "your existing home loan offset account" : "your existing savings account";
-    out.push(`The ongoing surplus and tax savings will provide savings of approximately ${_pa} per annum towards ${_dest}.`+(_isOffset?` Additionally, an offset account will allow you to reduce your current interest payments but still provide you the flexibility to withdraw these funds for your liquidity needs.`:'')); }
+    // Benefit-of-saving clause: ticked in the advice request (F.savingsBenefit), it links the saving
+    // back to the client's goals / appropriateness of the advice (e.g. "which helps you save for a
+    // home deposit"). Appended with "which " so every list option reads grammatically.
+    const _benefit = String(F.savingsBenefit||'').trim().replace(/^which\s+/i,'').replace(/[.\s]+$/,'');
+    let _saveLine = `The ongoing surplus and tax savings will provide savings of approximately ${_pa} per annum towards ${_dest}`;
+    _saveLine += _benefit ? `, which ${_benefit}.` : `.`;
+    if(_isOffset) _saveLine += ` Additionally, an offset account will allow you to reduce your current interest payments but still provide you the flexibility to withdraw these funds for your liquidity needs.`;
+    out.push(_saveLine); }
   if(F.retirementSOA && blockActive("super")){
     out.push("Rolling over your accumulation balance to a pension account means all future earnings within the fund will be tax free.");
     out.push("Drawing an income stream will provide you with the funds required to maintain your lifestyle in line with your retirement goals.");
@@ -11983,8 +12015,13 @@ function renderSpecialDocx(def, ch, K){
           }
           // store the per-account allocation for Annexure 2
           const allocList = acc.alloc.map(a=>({asset:a.asset, weight:String(a.weight).replace(/%/g,''), bench:String(a.bench).replace(/%/g,''), variance:String(a.varW)}));
-          if(isSuper){ F.careSuperAlloc=allocList; F.careSuperRisk=acc.riskProfile; if(acc.riskProfile) F.rpClientSuper=acc.riskProfile; }
-          if(isInvest){ F.careInvestAlloc=allocList; F.careInvestRisk=acc.riskProfile; if(acc.riskProfile) F.rpClientInvest=acc.riskProfile; }
+          // The CARE doc's benchmark profile reflects the RECOMMENDED (post-bump) allocation, not the
+          // client's questionnaire base profile. Keep it in careSuperRisk/careInvestRisk for the
+          // allocation display, but do NOT overwrite rpClientSuper/rpClientInvest when the advice
+          // request already set the risk profile — otherwise a super-only CARE doc creates a false
+          // super≠invest mismatch and drops the "Growth bumped to High Growth" narrative.
+          if(isSuper){ F.careSuperAlloc=allocList; F.careSuperRisk=acc.riskProfile; if(acc.riskProfile && !F._rpFromAdviceReq) F.rpClientSuper=acc.riskProfile; }
+          if(isInvest){ F.careInvestAlloc=allocList; F.careInvestRisk=acc.riskProfile; if(acc.riskProfile && !F._rpFromAdviceReq) F.rpClientInvest=acc.riskProfile; }
           // v98: also store the full account (buckets, platform, menu, risk) so the Summary section can produce per-product breakdowns
           F.careAccounts = F.careAccounts || [];
           F.careAccounts.push({type:isSuper?'super':(isInvest?'invest':String(acc.type||'').toLowerCase()), platform:acc.platform||'Hub24', menu:acc.menu||'choice', riskProfile:acc.riskProfile||'', buckets:(acc.buckets||[]).map(b=>({name:b.name,amt:Number(b.amt)||0,pct:b.pct||''})), breakdown:(acc.breakdown||[]).map(p=>({name:p.name,amt:Number(p.amt)||0,icrPct:p.icrPct||p.icr||''})), bucketTotal:Number(acc.bucketTotal||acc.balance||0), name:acc.name||'', person:'client'});
@@ -15127,6 +15164,9 @@ function v200ApplyRisk(ar){
   const c=ar.risk[names[0]]||{};
   if(c.super) F.rpClientSuper=c.super;
   if(c.inv)   F.rpClientInvest=c.inv;
+  // Mark that the risk profile came from the advice request (source of truth) so later supporting-doc
+  // imports (e.g. a CARE doc benchmark) don't overwrite the client's base questionnaire profile.
+  if(c.super||c.inv) F._rpFromAdviceReq=true;
   const cBase=c.super||c.inv||'';
   if(cBase){ F.clientRiskProfile=cBase; if(!F.targetRiskProfile) F.targetRiskProfile=cBase; }
   const cTo=v200BumpTo(c.superBump)||v200BumpTo(c.invBump);
@@ -15199,9 +15239,12 @@ function v200ApplyProducts(ar){
   if(sp.length){ const plat=v200Platform(sp[0].product);
     if(!F.recPlatform || /^hub\s*24$/i.test(String(F.recPlatform).trim())) F.recPlatform=plat;
     v200StampPlatform('super_prod',plat); }
-  // Investment-plan products → recPlatform (if not already from super) + investplan_prod
+  // Investment-plan products → recPlatform (if not already from super) + investplan_prod.
+  // Fall back to the Investment-Plan strategy's est.product when ar.invProducts is empty (the builder
+  // usually records the investment platform/menu there, e.g. "Hub24 Discover - Vanguard Diversified").
   const vp=flat(ar.invProducts).filter(p=>p.product);
-  if(vp.length){ const plat=v200Platform(vp[0].product);
+  const vProd = vp.length ? vp[0].product : v200InvestEst(ar);
+  if(vProd){ const plat=v200Platform(vProd);
     if(!F.recPlatform) F.recPlatform=plat;
     F.investPlatform=plat;   // investment platform can differ from super (e.g. super=Hub24 Core, investment=Hub24 Discover)
     v200StampPlatform('investplan_prod',plat); }
@@ -15272,11 +15315,19 @@ function v200ResolveTokens(text, s, expand){
 // document (WealthSolver / CARE doc) implies a different approach, flag it (v190ImportGaps) so the
 // adviser can manually confirm — we never silently override the advice request.
 function v200ApproachOf(txt){ const t=String(txt||''); if(/vanguard/i.test(t)) return 'Vanguard'; if(/\bcare\b/i.test(t)) return 'CARE'; return ''; }
+// The investment platform/menu/product often lives on the Investment-Plan STRATEGY's est.product
+// (e.g. "Hub24 Discover - Vanguard Diversified") rather than in ar.invProducts (which the builder
+// frequently leaves empty). Return that est.product string so the approach + platform can be read.
+function v200InvestEst(ar){
+  try{ const s=(ar&&Array.isArray(ar.strategies)?ar.strategies:[]).find(x=>x&&/investment plan/i.test(String(x.area||''))&&x.est&&x.est.product);
+    return s?String(s.est.product):''; }catch(_){ return ''; }
+}
+if(typeof window!=='undefined') window.v200InvestEst=v200InvestEst;
 function v200DetectApproach(ar){
   if(typeof F!=='object' || !ar) return;
   const join=o=>Object.keys(o||{}).map(a=>(o[a]||[]).map(p=>(p&&p.product)||'').join(' ')).join(' ');
   F.superApproach = F.superApproach || v200ApproachOf(join(ar.superProducts));
-  F.investApproach = F.investApproach || v200ApproachOf(join(ar.invProducts));
+  F.investApproach = F.investApproach || v200ApproachOf(join(ar.invProducts)+' '+v200InvestEst(ar));
   // [59] CARE Essentials super "why" — include only when super is CARE per the advice request.
   try{
     if(F.superApproach==='CARE' && typeof B!=='undefined' && B.super && B.super.content){
@@ -15320,7 +15371,19 @@ function v200ApplyInvestVanguard(){
     + 'I have discounted these products for the following reasons: While the recommended '+model+' has higher ongoing management fees than the iShares Enhanced Strategic Aggressive Fund, the iShares manager has yet to demonstrate an ability to consistently add value. The iShares fund would expose your portfolio to fund-manager risk whereas the '+model+' does not. The iShares fund has a limited choice of underlying assets which provide less diversification than the recommended Vanguard fund; further, the target asset allocations for the comparable iShares funds are more defensive than the recommended Vanguard fund, so your investments would be less aligned with your risk profile.';
   // Stamp the platform + recommended model into the product table (WealthSolver fills exact $ figures).
   try{ if(Array.isArray(c.rows)){
+    // A Vanguard investment doesn't use the CARE Core/Active/Enhanced/Reserves buckets — drop those
+    // template rows so they can't leak into the investment table or Summary → Products allocation.
+    c.rows=c.rows.filter(r=>!(Array.isArray(r)&&/^care\s+(core|active|enhanced|reserves)/i.test(String(r[0]||''))));
     const pr=c.rows.find(r=>/platform name/i.test(String((r||[])[0]||''))); if(pr&&pr.length>1) pr[1]=plat;
+    // Seed the model-portfolio allocation at 100% so Summary → Products shows the menu even before a
+    // WealthSolver import fills the exact split (the model itself holds the def/growth split internally).
+    // Only add if there isn't already a real (non-placeholder) allocation line for a fund/model.
+    const hasAlloc=c.rows.some(r=>Array.isArray(r)&&/vanguard|model portfolio|index|diversified/i.test(String(r[0]||''))&&/\d/.test(String(r[1]||'')));
+    if(!hasAlloc){
+      const modelRow=c.rows.find(r=>Array.isArray(r)&&/vanguard|model portfolio|index|diversified/i.test(String(r[0]||'')));
+      if(modelRow&&modelRow.length>1){ modelRow[0]=model; modelRow[1]='100%'; }
+      else { const platIdx=c.rows.findIndex(r=>/platform name/i.test(String((r||[])[0]||''))); const row=[model,'100%']; if(platIdx>=0) c.rows.splice(platIdx+1,0,row); else c.rows.push(row); }
+    }
   } }catch(_){}
   if(typeof setBlockActive==='function') setBlockActive('investplan_prod',true); else B.investplan_prod.active=true;
   // Remove any lingering CARE wording from the investment strategy block for a Vanguard SOA.
@@ -15446,6 +15509,11 @@ function v200ApplyAdviceRequest(ar){
     try{ v200ApplyInvestVanguard(); }catch(e){ try{console.error('v200 vanguard',e);}catch(_){ } }
     try{ v200ResolveOffsetPick(); }catch(e){ try{console.error('v200 offsetpick',e);}catch(_){ } }
     try{ v200ApplyCashflow(ar); }catch(e){ try{console.error('v200 cashflow',e);}catch(_){ } }
+    try{ if(ar.savingsBenefit){ F.savingsBenefit=String(ar.savingsBenefit);
+      // Drop any stale savings-outcome built before the benefit was known (e.g. during the factfind
+      // import) so the summary rebuild picks up the fresh "…which <benefit>" sentence.
+      if(Array.isArray(F.summaryOutcomes)) F.summaryOutcomes=F.summaryOutcomes.filter(o=>!/ongoing surplus and tax savings will provide savings/i.test(String((o&&o.text)||o||'')));
+    } }catch(_){ }
     try{ v200NormalizeInsuranceCovers(); }catch(e){ try{console.error('v200 inscovers',e);}catch(_){ } }
     try{ if(Array.isArray(ar.scopeOut)){ F._arScopeOut=ar.scopeOut.slice(); v200ApplyScopeOut(); } }catch(e){ try{console.error('v200 scopeout',e);}catch(_){ } }
     // Budget notes → the surplus-cashflow goal's sub-points (same channel the text parser uses).
