@@ -15198,6 +15198,25 @@ function v200ResolveTokens(text, s, expand){
 }
 // [55] Seamless accumulation→pension benefit is retirement-only. On an accumulation SOA
 // (F.retirementSOA false) remove it from the super/investment wording.
+// CARE vs Vanguard approach is decided by the ADVICE REQUEST (product/menu name). If a supporting
+// document (WealthSolver / CARE doc) implies a different approach, flag it (v190ImportGaps) so the
+// adviser can manually confirm — we never silently override the advice request.
+function v200ApproachOf(txt){ const t=String(txt||''); if(/vanguard/i.test(t)) return 'Vanguard'; if(/\bcare\b/i.test(t)) return 'CARE'; return ''; }
+function v200DetectApproach(ar){
+  if(typeof F!=='object' || !ar) return;
+  const join=o=>Object.keys(o||{}).map(a=>(o[a]||[]).map(p=>(p&&p.product)||'').join(' ')).join(' ');
+  F.superApproach = F.superApproach || v200ApproachOf(join(ar.superProducts));
+  F.investApproach = F.investApproach || v200ApproachOf(join(ar.invProducts));
+  // [59] CARE Essentials super "why" — include only when super is CARE per the advice request.
+  try{
+    if(F.superApproach==='CARE' && typeof B!=='undefined' && B.super && B.super.content){
+      const careWhy="CARE Essentials: providing professional active management on a day-to-day basis for the potential for greater returns and wealth preservation. You do not want a set-and-forget strategy. This increases the probability of achieving the returns you need while minimising the volatility of your investments, and reduces the chance of you making inappropriate decisions, particularly at points of extreme market volatility. Adopting the CARE approach lets you invest into different components — Core, Active and Enhanced — efficiently. Your superannuation will receive franking credits from the Australian Equities portion of your Core & Enhanced portfolio (approx. $XX p.a.). A Core component is invested into a diversified portfolio consistent with your risk profile and goals. An Active component aims to smooth out the volatility of the portfolio, particularly in market extremes. An Enhanced component targets higher return (and risk) focused on single asset classes (Australian and/or International Shares) aiming for higher-than-index long-term returns and consistent tax-advantaged income.";
+      const w=String(B.super.content.why||'');
+      if(w.indexOf('CARE Essentials:')<0) B.super.content.why=(w?w+'\n':'')+careWhy;
+    }
+  }catch(_){}
+}
+if(typeof window!=='undefined') window.v200DetectApproach=v200DetectApproach;
 function v200StripSeamless(){
   if(typeof F!=='object' || F.retirementSOA || typeof B==='undefined') return;
   const _seam=/\s*(?:[-•]\s*)?Seamless transfer from accumulation to pension \(not required to sell down your assets to transfer into the pension phase\)\.\s*This can prevent unnecessary Capital Gains Tax consequences and\/or sale of assets at a time of unfavourable market conditions\.?/g;
@@ -15246,6 +15265,7 @@ function v200ApplyAdviceRequest(ar){
     try{ v200ApplyFees(ar); }catch(e){ try{console.error('v200 fees',e);}catch(_){ } }
     try{ v200ApplyProducts(ar); }catch(e){ try{console.error('v200 products',e);}catch(_){ } }
     try{ v200StripSeamless(); }catch(e){ try{console.error('v200 seamless',e);}catch(_){ } }
+    try{ v200DetectApproach(ar); }catch(e){ try{console.error('v200 approach',e);}catch(_){ } }
     // Budget notes → the surplus-cashflow goal's sub-points (same channel the text parser uses).
     try{ if(ar.notesBudget){
       const bn=String(ar.notesBudget).split(/\r?\n+/).map(l=>l.replace(/^[\s•\-•‣▪\t]+/,'').trim()).filter(Boolean);
