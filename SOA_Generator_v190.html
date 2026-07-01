@@ -12457,9 +12457,17 @@ function renderSpecialDocx(def, ch, K){
     let _section = (ctx==='super'||ctx==='invest') ? ctx : '';
     if(!_section){
       if(/investment account will receive franking|your investment account|investment (?:plan|fund) investment options/i.test(out)) _section='invest';
-      else if(/superannuation will receive franking|super fund & investment strategy|your hub ?24 super|new superannuation account/i.test(out)) _section='super';
+      else if(/superannuation will receive franking|super fund & investment strategy|your hub ?24 super|new superannuation account|new superannuation fund|superannuation fund to ensure|non-lapsing binding death nomination|distributions from your super portfolio|using the CARE Philosophy|CARE Essentials [A-Z]/i.test(out)) _section='super';
     }
-    const _approach = _resolve(_section==='invest' ? F.investApproach : (_section==='super' ? F.superApproach : (F.investApproach||F.superApproach)));
+    // Mixed SOA (super and investment use different approaches, e.g. super=CARE + investment=Vanguard):
+    // if we can't tell which section a line belongs to, DON'T suppress — otherwise a CARE super line
+    // (e.g. "using the CARE Philosophy", "CARE Essentials High Growth - $XXX") gets wrongly deleted
+    // because it defaults to the investment (Vanguard) approach.
+    let _approach;
+    if(_section==='invest') _approach=_resolve(F.investApproach);
+    else if(_section==='super') _approach=_resolve(F.superApproach);
+    else if(String(F.superApproach||'').toLowerCase()!==String(F.investApproach||'').toLowerCase() && (F.superApproach||F.investApproach)) _approach='';   // mixed + unknown section → skip suppression
+    else _approach=_resolve(F.investApproach||F.superApproach);
 
     const careMarker=/\s*\((?:CARE[^)]*|(?:Keep for )?Essentials only)\)/ig;
     const careMarkerTest=/\((?:CARE[^)]*|(?:Keep for )?Essentials only)\)/i;
