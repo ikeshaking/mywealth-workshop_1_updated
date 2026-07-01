@@ -2730,6 +2730,8 @@ function fill(str){
   // capitalised in the source but should be lower-case when it renders after "you"/"recommend you".
   // Only touches a known verb set immediately following that lead-in, so proper nouns are untouched.
   _fo = _fo.replace(/\b(recommend(?:s)?(?:\s+that)?\s+you\s+|you\s+(?:should\s+)?)(Utilise|Utilize|Establish|Consolidate|Redirect|Direct|Maintain|Review|Cancel|Transfer|Close|Take|Continue|Provide|Reduce|Hold|Invest|Retain|Rollover|Roll|Salary|Contribute|Withdraw|Draw|Commence|Purchase|Sell)\b/g, (m,pre,verb)=> pre+verb.charAt(0).toLowerCase()+verb.slice(1));
+  // "Hub 24" (with a space) → "Hub24" everywhere it renders.
+  _fo = _fo.replace(/\bHub 24\b/g, 'Hub24');
   // Benefit-of-saving clause on the cashflow "why" savings sentence (mirrors the Summary → Outcomes
   // clause). Only fires when the sentence ends directly at "…account." — the summary version already
   // carries ", which <benefit>." so it won't double up.
@@ -4320,7 +4322,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B8 — CAREfees verbatim</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B9 — franking auto + super alts</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -6004,6 +6006,8 @@ function render(){
   try{ if(typeof v200NormalizeInsuranceCovers==='function') v200NormalizeInsuranceCovers(); }catch(_){}
   // [C17] Render-time net: strip the fund-manager footnote from the investment product card (it's
   // seeded from the product-card defaults after v200 runs). Kept on the super card via careFootnote.
+  // A Vanguard investment never carries the CARE "reduced Reserves allocation" paragraph — strip it.
+  try{ if(F.investApproach==='Vanguard'){ ['investplan_prod','investplan'].forEach(bid=>{ const blk=B[bid]; if(!blk||!blk.content) return; ['risks','why','alternatives','details'].forEach(f=>{ if(typeof blk.content[f]==='string' && /reduced Reserves allocation/i.test(blk.content[f])){ blk.content[f]=blk.content[f].replace(/[^\n]*reduced Reserves allocation[\s\S]*?short term\.\s*/i,'').replace(/\n{3,}/g,'\n\n').trim(); } }); }); } }catch(_){}
   try{ ['investplan_prod','investplan','super_prod','super'].forEach(bid=>{ const blk=B[bid]; if(!blk||!blk.content) return; const c=blk.content;
     ['risks','why','alternatives','details','comments'].forEach(f=>{ if(typeof c[f]==='string' && /\*?The fund managers of these investments charge fees/i.test(c[f])){
       // Remove the "*The fund managers … charge fees …" footnote (present tense) — it belongs in its
@@ -7155,7 +7159,7 @@ async function generateSOA(){
       sections.forEach(sec => {
         if (sec.head) {
           cellChildren.push(new Paragraph({
-            alignment:AlignmentType.JUSTIFIED, spacing:{before:80, after:40},
+            alignment:AlignmentType.JUSTIFIED, spacing:{before:220, after:40},
             children:[new TextRun({text: sec.head, font:"Nunito", size:18, color:"1a1a1a", bold:true})]
           }));
         }
@@ -12392,6 +12396,13 @@ function renderSpecialDocx(def, ch, K){
     // Any leftover single "(Approx. $XXX p.a. – Client 1)" without a pair
     out = out.replace(/\(Approx\.?\s*\$[X\d,]*\s*p\.a\.?\s*[–-]\s*Client\s*1\)/gi, `(approximately ${M2(amt)} p.a.${single()?'':' – '+c1Name})`);
 
+    // Pattern D: plain "(Approx. $XX p.a.)" — the CARE Essentials franking sentence. Fill from the
+    // auto-calculated super franking figure (available once the CARE doc allocation is imported).
+    out = out.replace(/\(Approx\.?\s*\$X+\s*p\.a\.?\)/gi, function(){
+      const a=amt||frankingSuper();
+      return a?`(Approx. $${Math.round(a).toLocaleString('en-AU')} p.a.)`:`(Approx. $XX p.a.)`;
+    });
+
     // ── single-client cleanup ──
     if(single()){
       // remove dangling "(Approx. ... Client 2)" leftovers
@@ -12436,7 +12447,7 @@ function renderSpecialDocx(def, ch, K){
         if(Array.isArray(F.superAccounts)) F.superAccounts.forEach(a=>a&&a.platform&&pools.push(a.platform));
         if(F.recPlatform) pools.push(F.recPlatform);
         const hay=pools.join(' ').toLowerCase();
-        if(/hub\s*24|hub24/.test(hay)) return 'Hub 24';
+        if(/hub\s*24|hub24/.test(hay)) return 'Hub24';
         if(/panorama|bt /.test(hay)) return 'BT Panorama';
         if(/netwealth/.test(hay)) return 'Netwealth Super Accelerator';
         if(/colonial|cfs|first state/.test(hay)) return 'Colonial First State Edge';
@@ -15409,8 +15420,14 @@ if(typeof window!=='undefined') window.v200InvestEst=v200InvestEst;
 // the adviser to confirm. (The value renders yellow via the placeholder highlighter either way.)
 function v200CareFrankingCredits(){
   try{ if(typeof F!=='object') return '';
+    // 1) Explicit figure captured from the CARE doc / an adviser override.
     const raw=F.careFrankingCredits||F.frankingCredits||(F.careRecSuper&&F.careRecSuper.franking);
-    const n=Number(String(raw==null?'':raw).replace(/[^0-9.]/g,''));
+    let n=Number(String(raw==null?'':raw).replace(/[^0-9.]/g,''));
+    // 2) Otherwise auto-calculate from the CARE Australian Equities allocation (dividend × franking% ×
+    //    gross-up), reusing the same engine the Franking-credits panel uses.
+    if(!(isFinite(n)&&n>0) && typeof window!=='undefined' && typeof window.v49FrankingForAccount==='function'){
+      try{ const r=window.v49FrankingForAccount('super'); if(r&&isFinite(r.credit)&&r.credit>0) n=r.credit; }catch(_){}
+    }
     return (isFinite(n)&&n>0)?('$'+Math.round(n).toLocaleString('en-AU')):'';
   }catch(_){ return ''; }
 }
@@ -15437,7 +15454,7 @@ function v200DetectApproach(ar){
       const w=String(B.super.content.why||'');
       // remove any prior (incorrect) CARE Essentials paragraph, then append the standard wording once
       let w2=w.replace(/CARE Essentials: providing professional active management[\s\S]*?tax-advantaged income\.\s*/i,'').trim();
-      if(w2.indexOf('Providing professional active management on a day to day basis')<0) B.super.content.why=(w2?w2+'\n':'')+careWhy;
+      if(w2.indexOf('Providing professional active management on a day to day basis')<0) B.super.content.why=(w2?w2+'\n\n':'')+careWhy;
     }
   }catch(_){}
 }
@@ -15492,6 +15509,10 @@ function v200ApplyInvestVanguard(){
   // [C17] Remove the "*The fund managers of these investments charge fees…" footnote from the
   // investment product card (it belongs in its own footnote/annexure section, not the product card).
   try{ ['risks','why','alternatives','details','comments'].forEach(f=>{ if(typeof c[f]==='string'){ c[f]=c[f].replace(/\*?The fund managers of these investments (?:charge|will charge) fees[\s\S]*?(?:PDS for each product\.?|Product Disclosure Statement(?: for each product)?\.?)(?:\s*More information about these investments is contained in Annexure[^\n]*)?/i,'').replace(/\n{3,}/g,'\n\n').trim(); } }); }catch(_){}
+  // A Vanguard investment carries no CARE Reserves allocation, so the "reduced Reserves allocation"
+  // paragraph (CARE Pension-phase wording) must not appear on the investment card — strip it wherever
+  // it was seeded from the block defaults (usually the risks field).
+  try{ ['risks','why','alternatives','details','comments','recommendation'].forEach(f=>{ if(typeof c[f]==='string' && /reduced Reserves allocation/i.test(c[f])){ c[f]=c[f].replace(/[^\n]*reduced Reserves allocation[\s\S]*?short term\.\s*(?:\(CARE Pension phase only\)\s*)?/i,'').replace(/\n{3,}/g,'\n\n').trim(); } }); }catch(_){}
   if(typeof setBlockActive==='function') setBlockActive('investplan_prod',true); else B.investplan_prod.active=true;
   // Remove any lingering CARE wording from the investment strategy block for a Vanguard SOA.
   try{ const s=B.investplan&&B.investplan.content; if(s){ ['recommendation','why','alternatives'].forEach(f=>{ if(typeof s[f]==='string') s[f]=s[f].replace(/\s*utilising the CARE (investment )?philosophy/ig,'').replace(/\bCARE Essentials\b/g,'the recommended portfolio'); }); } }catch(_){}
@@ -15642,9 +15663,19 @@ function v200ApplyCareEssSuperBlocks(){
   const isEssentials = /essential/i.test(String((Array.isArray(F.careAccounts)&&F.careAccounts.find(a=>a&&a.type==='super')||{}).menu||F.superMenu||'essentials'));
   // [42] "We have selected these investments because:" as a sentence, not a bullet.
   ['why','alternatives'].forEach(f=>{ if(typeof c[f]==='string'){ c[f]=c[f].replace(/^[\s•\-•]*We have selected these investments because:?/im,'We have selected these investments because:'); } });
-  // [43] Reserves paragraph only applies to Full CARE (has a Reserves portfolio). Drop for Essentials.
-  if(isEssentials && typeof c.why==='string'){
-    c.why=c.why.replace(/\n?[^\n]*reduced Reserves allocation[\s\S]*?(?=\n[A-Z]|\n\*|$)/i,'').replace(/\n{3,}/g,'\n\n');
+  // [43] The reduced-Reserves paragraph only applies when the CARE doc has a genuine Reserves
+  // portfolio with its own ICR (Full CARE for pre-retirees/retirees who draw an income). Remove it for
+  // CARE Essentials, non-CARE, and Full CARE without a Reserves portfolio.
+  const _hasReserves = (function(){ try{
+    const acc=Array.isArray(F.careAccounts)&&F.careAccounts.find(a=>a&&a.type==='super'); if(!acc) return false;
+    const buckets=(acc.buckets||[]).concat(acc.breakdown||[]);
+    // a real Reserves portfolio (not the "Reserves & Cash" minimum / Working Cash) with a non-zero ICR
+    return buckets.some(b=>b&&/reserves?/i.test(String(b.name||''))&&!/cash/i.test(String(b.name||''))&&Number(String(b.icrPct||b.pct||'').replace(/[^0-9.]/g,''))>0);
+  }catch(_){ return false; } })();
+  if(!_hasReserves){
+    ['why','alternatives','risks','details','recommendation'].forEach(f=>{ if(typeof c[f]==='string' && /reduced Reserves allocation/i.test(c[f])){ c[f]=c[f].replace(/[^\n]*reduced Reserves allocation[\s\S]*?short term\.\s*/i,'').replace(/\n{3,}/g,'\n\n').trim(); } });
+    // Also strip it from the super strategy block if it leaked there.
+    try{ const sc=B.super&&B.super.content; if(sc){ ['why','details'].forEach(f=>{ if(typeof sc[f]==='string' && /reduced Reserves allocation/i.test(sc[f])){ sc[f]=sc[f].replace(/[^\n]*reduced Reserves allocation[\s\S]*?short term\.\s*/i,'').replace(/\n{3,}/g,'\n\n').trim(); } }); } }catch(_){}
   }
   // [44] Remove the mis-placed fund-manager footnote from Why/Alternatives (it belongs in its own
   // footnote section, added below as careFootnote).
@@ -15701,31 +15732,45 @@ function v200BuildSuperAltFromWS(){
     if(isSW) existing.push(nameOf(k)+' (existing fund, in line with your risk profile) - '+M(gross[k]));
     else altPlat.push(nameOf(k)+' - '+M(gross[k]));
   });
-  const all=altPlat.concat(existing);
-  if(!all.length) return;
-  const recName=(ws.recommended&&ws.recommended.name)||'the recommended platform';
-  const platNames=[recName].concat(altPlat.map(l=>l.split(' - ')[0]));
-  const disc = platNames.length>1
-    ? ("We completed a price comparison between "+platNames.slice(0,-1).join(', ')+" and "+platNames[platNames.length-1]+". "+recName+" was the most cost-effective platform to manage your superannuation.")
-    : (recName+" was the most cost-effective platform to manage your superannuation.");
+  const recName=((ws.recommended&&ws.recommended.name)||'Hub24').replace(/hub\s*24/i,'Hub24');
+  const isCare=(F.superApproach==='CARE');
+  const isEss=/essential/i.test(String((Array.isArray(F.careAccounts)&&F.careAccounts.find(a=>a&&a.type==='super')||{}).menu||'essentials'));
+  // Existing-fund names in line with risk profile (SW columns).
+  const existNames=[]; order.forEach(k=>{ if(/^sw\d*$/i.test(k)) existNames.push(nameOf(k)); });
+  const existLabel=existNames.length?existNames.map(n=>n+' (In Line with Risk Profile)').join(' and '):'your existing fund(s) (In Line with Risk Profile)';
+  const notAvailIn=(existNames.length?existNames:['your existing fund(s)']).concat(altPlat.map(l=>l.split(' - ')[0]).filter(n=>/colonial|cfs|first\s*state|firstwrap/i.test(n))).join(' or ')||'your existing fund(s)';
+  // Alternatives list: WealthSolver proposals (CFS, existing SW funds) + Netwealth & BT Panorama
+  // (always considered for CARE super — alternative platforms carried in the CARE doc).
+  const listItems=altPlat.concat(existing);
+  if(isCare){ listItems.push('Netwealth Wealth Accelerator Plus'); listItems.push('BT Panorama'); }
+  // [41] cost delta (recommended per CARE doc when CARE, else WealthSolver) vs the Current Situation.
+  const _num=v=>{ const n=Number(String(v==null?'':v).replace(/[^0-9.]/g,'')); return isFinite(n)?n:null; };
+  const M2=n=>'$'+Number(n).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const recCost=(isCare&&F.careRecSuper&&F.careRecSuper.gross!=null)?_num(F.careRecSuper.gross):_num(gross[recKey]);
+  const curCost=_num(gross['current']);
+  // Discounted-reasons — firm-standard CARE super wording, always includes Netwealth & BT Panorama.
+  const disc=[
+    "We completed a price comparison between BT Panorama, "+recName+", "+existLabel+" and Netwealth Wealth Accelerator Plus. "+recName+" was the most cost-effective platform to manage your investment.",
+    "The managed discretionary account and CARE portfolios are not available in "+notAvailIn+".",
+    "The CARE "+(isEss?'Essentials ':'')+"investment option is only available in the "+recName+" platform.",
+    "The only comparable product on the market that offers the CARE portfolio investment strategy is Netwealth and BT Panorama. Although this product has similar offerings based on our research "+recName+" associated fees are working out cheaper than that of Netwealth and BT Panorama.",
+    "We considered the use of traditional Masterfunds like BT, but we cannot achieve the same effectiveness and ongoing management as through the recommended service. Traditional platforms and Masterfunds don’t have the transparency, and tax efficiency that our recommended option provides and don’t allow us to personalise both tax decision and investment decisions to your specific circumstances.",
+    "We considered using a broker and buying individual parcels or shares or a broader investment fund style of investment structure. We have discounted this strategy as investment funds do not provide the same high level of regular Professional Active Management and with direct shares you would not be able to achieve the depth of diversification as through the managed account service."
+  ];
+  if(recCost!=null && curCost!=null){
+    const delta=recCost-curCost;
+    if(delta>0.5){ disc.push("The recommended fund has higher administration and management costs than your current arrangement — an increase of approximately "+M2(delta)+" per annum ("+M2(recCost)+" recommended vs "+M2(curCost)+" current).");
+      disc.push("We believe this increase is justified by the professional active management, broader investment menu and the CARE philosophy benefits detailed above. [Optional — confirm or delete]"); }
+    else if(delta<-0.5){ disc.push("The recommended fund also reduces your ongoing administration and management costs by approximately "+M2(-delta)+" per annum ("+M2(recCost)+" recommended vs "+M2(curCost)+" current)."); }
+  }
+  // Format: main sentence (ends with ":" → renders as a lead paragraph), then the items/reasons as
+  // dot points underneath — same newline structure the Alternative Super Investment Options uses.
   B.super_prod.content.alternatives = "I considered the following alternatives to the recommended investment options:\n"
-    + all.map(l=>'\t'+l).join('\n')
-    + "\n\nI have discounted these products for the following reasons:\n" + disc;
-  // [41] Recommended (CARE doc when CARE, else WealthSolver recommended) vs the Current Situation cost.
-  // When the recommendation costs more, add the optional increase wording; when it costs less, note the
-  // saving. The dollar figures render highlighted so the adviser can confirm/keep/delete.
-  try{
-    const _num=v=>{ const n=Number(String(v==null?'':v).replace(/[^0-9.]/g,'')); return isFinite(n)?n:null; };
-    const recCost=(F.superApproach==='CARE'&&F.careRecSuper&&F.careRecSuper.gross!=null)?_num(F.careRecSuper.gross):_num(gross[recKey]);
-    const curCost=_num(gross['current']);
-    const M2=n=>'$'+Number(n).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2});
-    if(recCost!=null && curCost!=null){
-      const delta=recCost-curCost;
-      if(delta>0.5) B.super_prod.content.careCostNote="The recommended fund has higher administration and management costs than your current arrangement — an increase of approximately "+M2(delta)+" per annum ("+M2(recCost)+" recommended vs "+M2(curCost)+" current). We believe this increase is justified by the professional active management, broader investment menu and the CARE philosophy benefits detailed above. [Optional — confirm or delete]";
-      else if(delta<-0.5) B.super_prod.content.careCostNote="The recommended fund also reduces your ongoing administration and management costs by approximately "+M2(-delta)+" per annum ("+M2(recCost)+" recommended vs "+M2(curCost)+" current).";
-      else B.super_prod.content.careCostNote="";
-    }
-  }catch(_){}
+    + listItems.join('\n')
+    + "\nI have discounted these products for the following reasons:\n"
+    + disc.join('\n');
+  // Cost comparison is now merged into the discounted reasons above — clear the separate note.
+  B.super_prod.content.careCostNote="";
 }
 if(typeof window!=='undefined') window.v200BuildSuperAltFromWS=v200BuildSuperAltFromWS;
 // [13] Mirror the advice-request cashflow costs into the MCMA fields the cashflow section reads
