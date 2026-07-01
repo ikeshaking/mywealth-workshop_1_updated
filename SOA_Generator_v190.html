@@ -2733,7 +2733,7 @@ function fill(str){
   // Benefit-of-saving clause on the cashflow "why" savings sentence (mirrors the Summary → Outcomes
   // clause). Only fires when the sentence ends directly at "…account." — the summary version already
   // carries ", which <benefit>." so it won't double up.
-  (function(){ try{ const F0=(typeof F!=='undefined'&&F)?F:{}; const arr=Array.isArray(F0.savingsBenefit)?F0.savingsBenefit:(F0.savingsBenefit?[F0.savingsBenefit]:[]); const b=arr.map(x=>String(x).trim().replace(/^which\s+/i,'').replace(/[.\s]+$/,'')).filter(Boolean).join(' and '); if(b){ _fo=_fo.replace(/(provide savings of[^.]*?per annum towards your existing [a-z ]*?account)\./gi, function(m,p1){ return p1+', which '+b+'.'; }); } }catch(_){ } })();
+  (function(){ try{ const F0=(typeof F!=='undefined'&&F)?F:{}; const arr=Array.isArray(F0.savingsBenefit)?F0.savingsBenefit:(F0.savingsBenefit?[F0.savingsBenefit]:[]); const b=arr.map(x=>(typeof v200SavingsWording==='function'?v200SavingsWording(x):x)).map(x=>String(x).trim().replace(/^which\s+/i,'').replace(/[.\s]+$/,'')).filter(Boolean).join(' and '); if(b){ _fo=_fo.replace(/(provide savings of[^.]*?per annum towards your existing [a-z ]*?account)\./gi, function(m,p1){ return p1+', which '+b+'.'; }); } }catch(_){ } })();
   // Family-trust holding line only applies when the client actually has a trust; otherwise drop the
   // whole line (and never leave the "(If client has existing Trust only)" instruction marker showing).
   (function(){ try{ const F0=(typeof F!=='undefined'&&F)?F:{}; const ht=!!(F0.hasTrust || (Array.isArray(F0.assets)&&F0.assets.some(a=>/trust/i.test(String((a&&(a.owner||a.ownership||a.type||a.name))||'')))) || /trust/i.test(String(F0.entityType||'')));
@@ -5856,7 +5856,7 @@ function collectSummarySuggestions(){
     // back to the client's goals / appropriateness of the advice (e.g. "which helps you save for a
     // home deposit"). Appended with "which " so every list option reads grammatically.
     const _sbArr = Array.isArray(F.savingsBenefit)?F.savingsBenefit:(F.savingsBenefit?[F.savingsBenefit]:[]);
-    const _benefit = _sbArr.map(b=>String(b).trim().replace(/^which\s+/i,'').replace(/[.\s]+$/,'')).filter(Boolean).join(' and ');
+    const _benefit = _sbArr.map(b=>(typeof v200SavingsWording==='function'?v200SavingsWording(b):b)).map(b=>String(b).trim().replace(/^which\s+/i,'').replace(/[.\s]+$/,'')).filter(Boolean).join(' and ');
     let _saveLine = `The ongoing surplus and tax savings will provide savings of approximately ${_pa} per annum towards ${_dest}`;
     _saveLine += _benefit ? `, which ${_benefit}.` : `.`;
     if(_isOffset) _saveLine += ` Additionally, an offset account will allow you to reduce your current interest payments but still provide you the flexibility to withdraw these funds for your liquidity needs.`;
@@ -15490,10 +15490,36 @@ if(typeof window!=='undefined') window.v200ResolveOffsetPick=v200ResolveOffsetPi
 // Benefit-of-insurance (ticked in the advice request) → the insurance strategy "why" and the
 // insurance replacement-implications note, linking the recommended cover back to the client's goals
 // / appropriateness. The Summary → Outcomes line is added separately in collectSummarySuggestions.
+// Concise builder triggers → full SOA wording. Falls back to the raw value so older advice requests
+// that stored the full sentence still work.
+var V200_SAVINGS_WORDING={
+  'Emergency cash buffer':'builds an emergency cash buffer in line with your goals',
+  'Home deposit':'helps you save for a home deposit',
+  'Wedding / car / travel':'helps fund your wedding, new car or travel',
+  'Planned renovations':'provides funds for planned renovations',
+  'Liquidity & lower interest':'maintains liquidity while reducing interest costs',
+  'Financial flexibility':'increases financial flexibility for unexpected expenses',
+  'Future investment opportunities':'provides funds for future investment opportunities'
+};
+var V200_INSURANCE_WORDING={
+  'Favourable pre-assessment':'Favourable pre-assessment outcomes enabled you to obtain cover on standard terms or with acceptable loadings/exclusions',
+  'Consolidation simplifies management':'Consolidating your cover with one insurer simplifies policy management and the claims process',
+  'Retains valuable existing benefits':'Retaining selected existing policies preserves valuable benefits that are no longer available',
+  'Cancels unnecessary / duplicate cover':'Cancelling unnecessary or duplicated cover reduces unnecessary premium costs',
+  'Greater certainty & security':'The recommended cover provides greater certainty and financial security as your family and financial commitments grow',
+  'Ownership aligned to tax & estate':'Policy ownership has been structured to align with your tax, estate planning and beneficiary objectives',
+  'Waiting period balances affordability':'The waiting period has been selected to balance affordability with your available cash reserves and leave entitlements',
+  'Insurer suits occupation & claims':'The recommended insurer better aligns with your occupation and claims requirements',
+  'Favourable occupational rating':'Your occupation qualifies for a more favourable occupational rating, resulting in lower premiums',
+  'Secures insurability now':'Securing cover now reduces the risk of future health changes affecting your insurability'
+};
+function v200SavingsWording(t){ t=String(t||'').trim(); return V200_SAVINGS_WORDING[t]||t; }
+function v200InsuranceWording(t){ t=String(t||'').trim().replace(/[.\s]+$/,''); return V200_INSURANCE_WORDING[t]||t; }
+if(typeof window!=='undefined'){ window.v200SavingsWording=v200SavingsWording; window.v200InsuranceWording=v200InsuranceWording; }
 function v200InsBenefitList(){
   const v=(typeof F==='object'&&F)?F.insuranceBenefit:null;
   const arr=Array.isArray(v)?v:(v?[v]:[]);
-  return arr.map(x=>String(x).trim().replace(/[.\s]+$/,'')).filter(Boolean);
+  return arr.map(x=>v200InsuranceWording(x)).filter(Boolean);
 }
 if(typeof window!=='undefined') window.v200InsBenefitList=v200InsBenefitList;
 function v200ApplyInsuranceBenefit(){
