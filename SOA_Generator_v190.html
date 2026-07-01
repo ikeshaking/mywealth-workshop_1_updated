@@ -4130,6 +4130,14 @@ function v190ImportGaps(){
   // Advice fees: flag only if nothing came through at all
   if([F2.commitmentFee,F2.upfrontFeeSuper,F2.upfrontFeeMcma,F2.ongoingFeeSuper,F2.ongoingFeeMcma].every(blank))
     out.push('Advice fees not captured — Remuneration table will need manual entry');
+  // CARE vs Vanguard conflict — the advice request decides the approach; flag if a supporting doc
+  // (WealthSolver / CARE doc) implies a different one so the adviser can confirm/override.
+  try{
+    if(F2._wsInvestApproach && F2.investApproach && F2._wsInvestApproach!==F2.investApproach)
+      out.push('Investment approach conflict — advice request = '+F2.investApproach+', WealthSolver = '+F2._wsInvestApproach+'; confirm which applies');
+    if((F2.careRecInvest||F2.careRecSuper) && (F2.investApproach==='Vanguard'||F2.superApproach==='Vanguard'))
+      out.push('Approach conflict — advice request specifies Vanguard but a CARE doc is loaded; confirm which applies');
+  }catch(_){}
   // Retirement projections not imported
   try{ const p=F2.proj||{}; if(blank(p.superBefore)&&blank(p.superAfter)&&blank(p.projectedWealth)&&!(Array.isArray(p.chart)&&p.chart.length))
     out.push('Retirement projections not imported — Projections annexure will be blank'); }catch(_){}
@@ -13367,6 +13375,9 @@ window.v50AllocGroups = function(){
       const _isHub=/hub\s*24/i.test(provName)||/hub\s*24/i.test(String(F.recPlatform||''))||recKey==='hub24';
       const _platDisplay=_isHub ? ('Hub24'+(_menu?' '+_menu:'')) : provName;
       const rows=[['Platform Name', _platDisplay, '']];
+      // Record the approach WealthSolver actually shows (holding names), for the advice-request-vs-doc
+      // CARE/Vanguard conflict flag in v190ImportGaps.
+      try{ const _hn=holds.map(h=>String((h&&h.name)||'')).join(' '); F._wsInvestApproach=/vanguard/i.test(_hn)?'Vanguard':(/\bcare\b/i.test(_hn)?'CARE':(F._wsInvestApproach||'')); }catch(_){}
       holds.forEach(h=>{ const nm=_cleanNm(h.name); const isCash=/^cash|cash holding|liquid assets/i.test(nm);
         rows.push([isCash?'Cash':nm, (h.pct&&/%/.test(String(h.pct)))?_pctNorm(h.pct):(h.amt!=null?M(h.amt):''), isCash?'':pct3(fees.invPct)]); });
       if(fees.invPct) rows.push(['Investment Fees and Costs', '—', pct3(fees.invPct)]);
