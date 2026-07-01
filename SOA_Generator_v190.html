@@ -15059,6 +15059,16 @@ const V200_AREA_TO_BLOCK = {
  "7 · Personal Protection":"insurance","8 · Cashflow Management & Budgeting":"cashflow","9 · Estate Planning":"estate",
  "10 · Administration Recommendations":"admin"};
 function v200IsAdviceReq(o){ return !!(o && Array.isArray(o.strategies) && Array.isArray(o.scopeIn)); }
+// [24] Turn a builder free-type like "investment from cashflow $300 per month (Ongoing)" into proper
+// SOA wording so it doesn't render as a raw note.
+function v200NormalizeFreeType(t){
+  let s=String(t||'');
+  let m=s.match(/investment from cashflow\s*\$?([\d,]+)\s*per month/i);
+  if(m) return 'We recommend you invest $'+m[1]+' per month from your cashflow into your investment account, in line with your risk profile.';
+  m=s.match(/(?:invest|investment)\s*\$?([\d,]+)\s*(?:initial|upfront)/i);
+  if(m) return 'We recommend you invest $'+m[1]+' as an initial lump sum into your investment account, in line with your risk profile.';
+  return s;
+}
 function v200Fill(t,s){ let out=String(t||''); if(s&&s.pick) out=out.replace(/\[[^\]]*\]/, s.pick); if(s&&s.amounts&&s.amounts.length){ let i=0; out=out.replace(/\$___|\$XXX|\[\$?amount\]/gi,()=> s.amounts[i++]||'$___'); } return out; }
 // Pull the target profile out of a builder "bumped to X" string.
 function v200BumpTo(b){ const m=String(b||'').match(/bumped to\s+(.+)/i); return m?m[1].trim():''; }
@@ -15312,7 +15322,7 @@ function v200ApplyAdviceRequest(ar){
           (w.why||[]).forEach(x=>{ const y=v200ResolveTokens(x,s,false)[0]; if(y && whys.indexOf(y)<0) whys.push(y); });
           (w.risks||[]).forEach(x=>{ const y=v200ResolveTokens(x,s,false)[0]; if(y && risks.indexOf(y)<0) risks.push(y); });
           (w.alts||[]).forEach(x=>{ const y=v200ResolveTokens(x,s,false)[0]; if(y && alts.indexOf(y)<0) alts.push(y); }); }
-        else v200ResolveTokens(v200Fill(s.text||s.name,s),s,true).forEach(l=>{ if(l) recs.push(l); });
+        else v200ResolveTokens(v200Fill(v200NormalizeFreeType(s.text||s.name),s),s,true).forEach(l=>{ if(l) recs.push(l); });
       });
       if(typeof B==='undefined') return;
       if(!B[bid]) B[bid]={active:false,content:{}};
