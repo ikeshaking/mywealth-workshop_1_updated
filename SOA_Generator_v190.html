@@ -15145,6 +15145,7 @@ function v200ApplyProducts(ar){
   const vp=flat(ar.invProducts).filter(p=>p.product);
   if(vp.length){ const plat=v200Platform(vp[0].product);
     if(!F.recPlatform) F.recPlatform=plat;
+    F.investPlatform=plat;   // investment platform can differ from super (e.g. super=Hub24 Core, investment=Hub24 Discover)
     v200StampPlatform('investplan_prod',plat); }
   // Investment-bond products → investbond_prod
   const bp=flat(ar.bondProducts).filter(p=>p.product);
@@ -15228,6 +15229,46 @@ function v200DetectApproach(ar){
   }catch(_){}
 }
 if(typeof window!=='undefined') window.v200DetectApproach=v200DetectApproach;
+// [36/38/42/44] Investment Plan wording for a Vanguard-Diversified SOA. Only runs when the advice
+// request's investment approach is Vanguard — swaps the CARE product-card wording for the firm's
+// Vanguard wording, with the model name and defensive/growth split matched to the risk profile.
+function v200VanguardSplit(rp){
+  const m={ 'high growth':[10,90], 'growth':[30,70], 'balanced':[50,50], 'moderately defensive':[70,30], 'conservative':[85,15] };
+  return m[String(rp||'').trim().toLowerCase()] || [10,90];
+}
+function v200ApplyInvestVanguard(){
+  if(typeof F!=='object' || F.investApproach!=='Vanguard' || typeof B==='undefined') return;
+  const rp = F.targetRiskProfile || F.riskProfileBumpTo || F.clientRiskProfile || F.rpClientInvest || 'High Growth';
+  const model = 'Vanguard Diversified '+rp+' Model Portfolio';
+  const plat = (function(){ const p=String(F.investPlatform||F.recPlatform||''); if(/hub\s*24/i.test(p)) return 'Hub24'+(/discover/i.test(p)?' Discover':(/core/i.test(p)?' Core':(/choice/i.test(p)?' Choice':''))); return p||'Hub24'; })();
+  const sp=v200VanguardSplit(rp), def=sp[0], grow=sp[1];
+  const bias = (/(high growth|growth)/i.test(rp)) ? 'The portfolio is biased towards growth assets and is designed for investors seeking long-term capital growth.' :
+               (/balanced/i.test(rp)) ? 'The portfolio holds a balanced mix of growth and defensive assets.' :
+               'The portfolio is weighted towards defensive assets to reduce volatility.';
+  if(!B.investplan_prod) B.investplan_prod={active:false,content:{}};
+  if(!B.investplan_prod.content) B.investplan_prod.content={};
+  const c=B.investplan_prod.content;
+  c.recommendation = 'We recommend you establish a new '+plat+' account.\n'
+    + 'We recommend these funds be invested in accordance with your Risk Profile.\n'
+    + 'We recommend that you invest the funds into the '+model+'.\n'
+    + 'We recommend that the distributions from your investment be reinvested.';
+  c.why = 'The recommended Portfolio aims to track the performance of particular market indices. Index funds are a passive approach to investing and are a cost-effective way to gain exposure to the investment market. They also provide broad diversification to your portfolio, reducing your overall risk.\n'
+    + 'The '+model+' provides low-cost access to a range of sector funds, offering broad diversification across multiple asset classes. '+bias+' The portfolio’s long-term asset allocation target is '+def+'% defensive assets and '+grow+'% growth assets. The portfolio manager does not target a particular strategic asset allocation; the long-term asset allocation represents the manager’s indicative expected long-term average asset position.\n'
+    + 'The '+model+' seeks to track the weighted average return of the various indices of the underlying funds in which it invests, in proportion to the Strategic Asset Allocation, before taking into account fees, expenses and tax.\n'
+    + 'Vanguard funds reduce the tracking error risk of a portfolio by holding most of the index securities very close to their index weights, providing truly diversified market exposure at a lower investment cost than a managed fund.\n'
+    + 'The fund’s management approach minimises portfolio turnover so investors can take advantage of available capital gains tax concessions.';
+  c.alternatives = 'I have discounted these products for the following reasons: We completed a price comparison between CFS Edge, BT Panorama, Hub24 and Netwealth Wealth Accelerator Plus. Hub24 was the most cost-effective platform to manage your investment.\n'
+    + 'Investment Fund Investment Options: I considered the following alternatives to the recommended investment options on a like-for-like basis: iShares Enhanced Strategic Aggressive Fund.\n'
+    + 'I have discounted these products for the following reasons: While the recommended '+model+' has higher ongoing management fees than the iShares Enhanced Strategic Aggressive Fund, the iShares manager has yet to demonstrate an ability to consistently add value. The iShares fund would expose your portfolio to fund-manager risk whereas the '+model+' does not. The iShares fund has a limited choice of underlying assets which provide less diversification than the recommended Vanguard fund; further, the target asset allocations for the comparable iShares funds are more defensive than the recommended Vanguard fund, so your investments would be less aligned with your risk profile.';
+  // Stamp the platform + recommended model into the product table (WealthSolver fills exact $ figures).
+  try{ if(Array.isArray(c.rows)){
+    const pr=c.rows.find(r=>/platform name/i.test(String((r||[])[0]||''))); if(pr&&pr.length>1) pr[1]=plat;
+  } }catch(_){}
+  if(typeof setBlockActive==='function') setBlockActive('investplan_prod',true); else B.investplan_prod.active=true;
+  // Remove any lingering CARE wording from the investment strategy block for a Vanguard SOA.
+  try{ const s=B.investplan&&B.investplan.content; if(s){ ['recommendation','why','alternatives'].forEach(f=>{ if(typeof s[f]==='string') s[f]=s[f].replace(/\s*utilising the CARE (investment )?philosophy/ig,'').replace(/\bCARE Essentials\b/g,'the recommended portfolio'); }); } }catch(_){}
+}
+if(typeof window!=='undefined') window.v200ApplyInvestVanguard=v200ApplyInvestVanguard;
 function v200StripSeamless(){
   if(typeof F!=='object' || F.retirementSOA || typeof B==='undefined') return;
   const _seam=/\s*(?:[-•]\s*)?Seamless transfer from accumulation to pension \(not required to sell down your assets to transfer into the pension phase\)\.\s*This can prevent unnecessary Capital Gains Tax consequences and\/or sale of assets at a time of unfavourable market conditions\.?/g;
@@ -15277,6 +15318,7 @@ function v200ApplyAdviceRequest(ar){
     try{ v200ApplyProducts(ar); }catch(e){ try{console.error('v200 products',e);}catch(_){ } }
     try{ v200StripSeamless(); }catch(e){ try{console.error('v200 seamless',e);}catch(_){ } }
     try{ v200DetectApproach(ar); }catch(e){ try{console.error('v200 approach',e);}catch(_){ } }
+    try{ v200ApplyInvestVanguard(); }catch(e){ try{console.error('v200 vanguard',e);}catch(_){ } }
     // Budget notes → the surplus-cashflow goal's sub-points (same channel the text parser uses).
     try{ if(ar.notesBudget){
       const bn=String(ar.notesBudget).split(/\r?\n+/).map(l=>l.replace(/^[\s•\-•‣▪\t]+/,'').trim()).filter(Boolean);
