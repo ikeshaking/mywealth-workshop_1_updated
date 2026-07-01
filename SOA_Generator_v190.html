@@ -5848,10 +5848,23 @@ function v186HighlightPlaceholders(){
   // Highlight across EVERY preview pane (side-by-side, mini, fullscreen) and the WHOLE document —
   // not just the first pane / current view.
   const roots=document.querySelectorAll('.preview-doc'); if(!roots.length) return;
-  // Order matters: placeholder $X…/X.XX% before the numeric $amount/percent so "$XXX" flags as a
-  // placeholder, "$26,566" as a data value. Matches:
-  //   $XX+ placeholder | X.XX% placeholder | $ amount | percent | standalone XX+ | [bracketed] | <token>
-  const RX=/(\$X{2,}|X\.X{1,2}%?|\$\d[\d,]*(?:\.\d+)?|\d+(?:\.\d+)?%|\bX{2,}\b|\[[^\]\n]{1,80}\]|<[a-zA-Z][^>\n]{0,40}>|\breinvested\b|\bsalary sacrifice\b|\bestablish\/utilise\b)/gi;
+  // Base patterns: placeholder $X…/X.XX% before the numeric $amount/percent so "$XXX" flags as a
+  // placeholder, "$26,566" as a data value. Then dates, adviser-decision keywords, and every
+  // ACTUAL auto-populated value pulled from F (client/partner names, fund names, adviser, platform,
+  // insurer, occupation/employer, dates) — so nearly every data-fed line is flagged for checking.
+  const _base='\\$X{2,}|X\\.X{1,2}%?|\\$\\d[\\d,]*(?:\\.\\d+)?|\\d+(?:\\.\\d+)?%|\\bX{2,}\\b|\\[[^\\]\\n]{1,80}\\]|<[a-zA-Z][^>\\n]{0,40}>|\\b\\d{1,2}\\/\\d{1,2}\\/\\d{2,4}\\b|\\breinvested\\b|\\bsalary sacrifice\\b|\\bestablish\\/utilise\\b';
+  const _known=(function(){
+    try{
+      const F0=(typeof F==='object'&&F)?F:{}; const set=new Set();
+      const add=v=>{ const s=String(v==null?'':v).trim(); if(s.length>=3 && !/^\d+$/.test(s)) set.add(s); };
+      String(F0.fullName||F0.clients||'').split(/\s*[&,]\s*|\s+and\s+/i).forEach(part=>part.trim().split(/\s+/).forEach(add));
+      [F0.clientFirst,F0.partnerFirst,F0.clientLast,F0.adviserName,F0.adviser,F0.recPlatform,F0.recInsurer,
+       F0.investPlatform,F0.clientOccupation,F0.clientEmployer,F0.targetRiskProfile,F0.clientRiskProfile].forEach(add);
+      (Array.isArray(F0.superAccounts)?F0.superAccounts:[]).forEach(a=>{ if(a&&a.fund) add(a.fund); });
+      return [...set].map(s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).filter(Boolean);
+    }catch(_){ return []; }
+  })();
+  const RX=new RegExp('('+_base+(_known.length?'|'+_known.join('|'):'')+')','gi');
   roots.forEach(root=>{
     const walker=document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
       acceptNode:(n)=>{ const p=n.parentNode; if(!p) return NodeFilter.FILTER_REJECT;
