@@ -15316,6 +15316,12 @@ function v200ApplyCashflow(ar){
   if(mcStrat) mc=num(mcStrat.amounts[0]);
   if(!mc){ const sum=(parseInt(ins||0,10)+parseInt(inv||0,10)+parseInt(adv||0,10)); if(sum>0) mc=String(sum); }
   if(mc && !F.mcmaWeekly) F.mcmaWeekly=mc;
+  // [14] Tax-savings amount → F.taxRefundAnnual so the Summary emits the "direct your tax savings …
+  // $X per annum" line (the amount comes from the advice-request tax-savings strategy).
+  if(!F.taxRefundAnnual){
+    const tax=(ar.strategies||[]).find(s=>/tax savings/i.test(s.name||'') && Array.isArray(s.amounts) && s.amounts.length);
+    if(tax){ const m=String(tax.amounts[0]).match(/([\d,]+)/); if(m) F.taxRefundAnnual=m[1].replace(/,/g,''); }
+  }
 }
 if(typeof window!=='undefined') window.v200ApplyCashflow=v200ApplyCashflow;
 // [11][12] Normalise insurance cover names so the Summary, body and table agree: force TPD to the
