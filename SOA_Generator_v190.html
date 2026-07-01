@@ -5821,14 +5821,16 @@ function applySplit(){
   if(sl) sl.value = Math.round(splitRatio*100);
 }
 
-// v186: highlight unresolved placeholders / auto-filled values in the PREVIEW only, so the user can
-// eyeball them for accuracy. Walks text nodes (never HTML tags) under .preview-doc and wraps matches
-// in <span class="ph-flag">. Screen-only via CSS; the Word export is generated separately and is not
-// touched, and print/PDF neutralises the colour.
+// v186: highlight data-fed / auto-filled values AND unresolved placeholders in the PREVIEW only, so
+// the paraplanner has a visual checklist of every figure to verify for accuracy. Walks text nodes
+// (never HTML tags) under .preview-doc and wraps matches in <span class="ph-flag">. Screen-only via
+// CSS; the Word export carries NO highlight, and print/PDF neutralises the colour.
 function v186HighlightPlaceholders(){
   const root=document.querySelector('.preview-doc'); if(!root) return;
-  // $XX / $XXX… | X.XX% | standalone XX+ | [bracketed] | <token>
-  const RX=/(\$X{2,}|X\.X{1,2}%?|\bX{2,}\b|\[[^\]\n]{1,80}\]|<[a-zA-Z][^>\n]{0,40}>)/g;
+  // Order matters: placeholder $X…/X.XX% before the numeric $amount/percent so "$XXX" flags as a
+  // placeholder, "$26,566" as a data value. Matches:
+  //   $XX+ placeholder | X.XX% placeholder | $ amount | percent | standalone XX+ | [bracketed] | <token>
+  const RX=/(\$X{2,}|X\.X{1,2}%?|\$\d[\d,]*(?:\.\d+)?|\d+(?:\.\d+)?%|\bX{2,}\b|\[[^\]\n]{1,80}\]|<[a-zA-Z][^>\n]{0,40}>)/g;
   const walker=document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
     acceptNode:(n)=>{ const p=n.parentNode; if(!p) return NodeFilter.FILTER_REJECT;
       const tag=p.nodeName; if(tag==='SCRIPT'||tag==='STYLE') return NodeFilter.FILTER_REJECT;
@@ -7410,7 +7412,7 @@ function renderSpecialDocx(def, ch, K){
       // v191: render adviser-decision phrases (shares/property choice; keep/remove existing-cover review)
       // with a yellow highlight so they stand out in the Word document for the paraplanner to action.
       const BulHL = (t)=> new Paragraph({ numbering:{reference:"bullets", level:0}, spacing:{after:90, line:276, lineRule:"auto"},
-        children: v191GoalDecisionSegments(String(t)).map(s=> new TextRun(Object.assign({text:s.t, font:"Nunito", size:20, color:"1a1a1a"}, s.hl?{highlight:"yellow"}:{}))) });
+        children: v191GoalDecisionSegments(String(t)).map(s=> new TextRun({text:s.t, font:"Nunito", size:20, color:"1a1a1a"})) });   // highlight is PREVIEW-only; the downloaded Word doc carries no yellow highlight
       if(g.length) g.forEach(x=>{
         ch.push(BulHL(fill(x.text)));
         if(Array.isArray(x.notes)) x.notes.filter(n=>n&&n.trim()).forEach(n=>ch.push(goalSubBul(fill(n))));
