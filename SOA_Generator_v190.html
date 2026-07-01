@@ -5916,6 +5916,7 @@ function render(){
   // render-time net for manually-built SOAs (advice-request SOAs are stripped deterministically in
   // v200ApplyAdviceRequest, since render can run before v200 finishes populating the content).
   try{ if(typeof v200StripSeamless==='function') v200StripSeamless(); }catch(_){}
+  try{ if(typeof v200ResolveOffsetPick==='function') v200ResolveOffsetPick(); }catch(_){}
   const app = document.getElementById("app");
   const ae = document.activeElement, aid = ae && ae.id, sst = ae && ae.selectionStart, sy = window.scrollY;
   // preserve the preview pane's own scroll position (it scrolls independently of the window)
@@ -15269,6 +15270,16 @@ function v200ApplyInvestVanguard(){
   try{ const s=B.investplan&&B.investplan.content; if(s){ ['recommendation','why','alternatives'].forEach(f=>{ if(typeof s[f]==='string') s[f]=s[f].replace(/\s*utilising the CARE (investment )?philosophy/ig,'').replace(/\bCARE Essentials\b/g,'the recommended portfolio'); }); } }catch(_){}
 }
 if(typeof window!=='undefined') window.v200ApplyInvestVanguard=v200ApplyInvestVanguard;
+// [8] Resolve the offset "establish/utilise" placeholder to the advice-request pick everywhere it
+// renders (Summary — Strategies + Debt body), so the summary matches the chosen action.
+function v200ResolveOffsetPick(){
+  if(typeof F!=='object' || !F.offsetPick) return;
+  const pick=String(F.offsetPick).trim();
+  const fix=t=> String(t||'').replace(/establish\/utilise an offset account/gi, pick+' an offset account');
+  if(Array.isArray(F.summaryStrategies)) F.summaryStrategies.forEach(s=>{ if(s&&typeof s.text==='string') s.text=fix(s.text); });
+  if(typeof B!=='undefined'){ ['debt'].forEach(id=>{ const c=B[id]&&B[id].content; if(!c) return; ['recommendation','why','details'].forEach(f=>{ if(typeof c[f]==='string') c[f]=fix(c[f]); }); }); }
+}
+if(typeof window!=='undefined') window.v200ResolveOffsetPick=v200ResolveOffsetPick;
 function v200StripSeamless(){
   if(typeof F!=='object' || F.retirementSOA || typeof B==='undefined') return;
   const _seam=/\s*(?:[-•]\s*)?Seamless transfer from accumulation to pension \(not required to sell down your assets to transfer into the pension phase\)\.\s*This can prevent unnecessary Capital Gains Tax consequences and\/or sale of assets at a time of unfavourable market conditions\.?/g;
@@ -15283,6 +15294,7 @@ function v200ApplyAdviceRequest(ar){
     if(ar.adviser && typeof F==='object'){ F.adviser=F.adviser||ar.adviser; }
     if(ar.status && typeof F==='object' && F.isExistingClient==null){ F.isExistingClient=/exist/i.test(ar.status); }
     if(/couple/i.test(ar.ctype||'') && typeof F==='object'){ F.clientType=F.clientType||'joint'; }
+    try{ const _off=(ar.strategies||[]).find(s=>/offset account/i.test(s.name||'') && s.pick); if(_off && typeof F==='object') F.offsetPick=_off.pick; }catch(_){}
     // Accumulation vs retirement drives which sections/wording apply (e.g. the accumulation→pension
     // "seamless transfer" line is retirement-only). 'mixed' is left as-is.
     if(ar.soaType && typeof v97ApplySoaType==='function'){
@@ -15319,6 +15331,7 @@ function v200ApplyAdviceRequest(ar){
     try{ v200StripSeamless(); }catch(e){ try{console.error('v200 seamless',e);}catch(_){ } }
     try{ v200DetectApproach(ar); }catch(e){ try{console.error('v200 approach',e);}catch(_){ } }
     try{ v200ApplyInvestVanguard(); }catch(e){ try{console.error('v200 vanguard',e);}catch(_){ } }
+    try{ v200ResolveOffsetPick(); }catch(e){ try{console.error('v200 offsetpick',e);}catch(_){ } }
     // Budget notes → the surplus-cashflow goal's sub-points (same channel the text parser uses).
     try{ if(ar.notesBudget){
       const bn=String(ar.notesBudget).split(/\r?\n+/).map(l=>l.replace(/^[\s•\-•‣▪\t]+/,'').trim()).filter(Boolean);
