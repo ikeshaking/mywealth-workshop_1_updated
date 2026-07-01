@@ -5853,7 +5853,12 @@ function collectSummarySuggestions(){
     out.push("The CARE Investment philosophy provides a structured approach to portfolio construction, combining growth-oriented investments with a dedicated Reserves allocation.");
     out.push("The inclusion of the Reserves Portfolio provides a source of liquidity to fund pension payments and short-term income needs, reducing the need to draw on growth assets during periods of market volatility and helping to preserve capital.");
   }
-  if(blockActive("insurance") && ((F.insurance&&F.insurance.length) || F.recInsurer)) out.push("You will have affordable cover that meets your needs and protects your family and lifestyle.");
+  if(blockActive("insurance") && ((F.insurance&&F.insurance.length) || F.recInsurer)){
+    out.push("You will have affordable cover that meets your needs and protects your family and lifestyle.");
+    // Benefit-of-insurance outcome (ticked in the advice request): links the recommended cover back to
+    // the client's goals / appropriateness of the advice.
+    const _ib=String(F.insuranceBenefit||'').trim().replace(/[.\s]+$/,''); if(_ib) out.push(_ib+".");
+  }
   const svc=[];
   if(F.services && F.services.length){ F.services.forEach(s=>svc.push(s)); }
   else { svc.push("We recommend a review of your portfolio at least on an annual basis."); svc.push("More information about our ongoing services is contained in the section entitled Our Services."); }
@@ -15400,6 +15405,18 @@ function v200ResolveOffsetPick(){
   if(typeof B!=='undefined'){ ['debt'].forEach(id=>{ const c=B[id]&&B[id].content; if(!c) return; ['recommendation','why','details'].forEach(f=>{ if(typeof c[f]==='string') c[f]=fix(c[f]); }); }); }
 }
 if(typeof window!=='undefined') window.v200ResolveOffsetPick=v200ResolveOffsetPick;
+// Benefit-of-insurance (ticked in the advice request) → the insurance strategy "why" and the
+// insurance replacement-implications note, linking the recommended cover back to the client's goals
+// / appropriateness. The Summary → Outcomes line is added separately in collectSummarySuggestions.
+function v200ApplyInsuranceBenefit(){
+  if(typeof F!=='object' || !F.insuranceBenefit || typeof B==='undefined') return;
+  const b=String(F.insuranceBenefit).trim().replace(/[.\s]+$/,''); if(!b) return;
+  try{ if(!B.insurance) B.insurance={active:false,content:{}}; if(!B.insurance.content) B.insurance.content={};
+    const w=String(B.insurance.content.why||''); if(w.indexOf(b)<0) B.insurance.content.why=(w?w+'\n':'')+b+'.'; }catch(_){}
+  try{ if(!B.repl_ins) B.repl_ins={active:false,content:{}}; if(!B.repl_ins.content) B.repl_ins.content={};
+    const n=String(B.repl_ins.content.note||''); if(n.indexOf(b)<0) B.repl_ins.content.note=(n?n+'\n':'')+b+'.'; }catch(_){}
+}
+if(typeof window!=='undefined') window.v200ApplyInsuranceBenefit=v200ApplyInsuranceBenefit;
 // [13] Mirror the advice-request cashflow costs into the MCMA fields the cashflow section reads
 // (same fields the text parser sets), so the MCMA transfer + breakdown auto-populate.
 function v200ApplyCashflow(ar){
@@ -15514,6 +15531,7 @@ function v200ApplyAdviceRequest(ar){
       // import) so the summary rebuild picks up the fresh "…which <benefit>" sentence.
       if(Array.isArray(F.summaryOutcomes)) F.summaryOutcomes=F.summaryOutcomes.filter(o=>!/ongoing surplus and tax savings will provide savings/i.test(String((o&&o.text)||o||'')));
     } }catch(_){ }
+    try{ if(ar.insuranceBenefit){ F.insuranceBenefit=String(ar.insuranceBenefit); if(typeof v200ApplyInsuranceBenefit==='function') v200ApplyInsuranceBenefit(); } }catch(_){ }
     try{ v200NormalizeInsuranceCovers(); }catch(e){ try{console.error('v200 inscovers',e);}catch(_){ } }
     try{ if(Array.isArray(ar.scopeOut)){ F._arScopeOut=ar.scopeOut.slice(); v200ApplyScopeOut(); } }catch(e){ try{console.error('v200 scopeout',e);}catch(_){ } }
     // Budget notes → the surplus-cashflow goal's sub-points (same channel the text parser uses).
