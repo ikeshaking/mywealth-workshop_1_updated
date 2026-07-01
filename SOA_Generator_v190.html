@@ -2708,7 +2708,17 @@ function fill(str){
   _fo = _fo.replace(/\n\t*\$XXX\s*\(Initial\)[^\n]*/gi, '');
   // Pre-populate the regular-investment "ongoing commitment of $ per week" from the advice request's
   // weekly regular-investment cost to the MCMA (F.mcmaInvestWeekly), e.g. "Investment: $480 per week".
-  (function(){ try{ const w=(typeof F!=='undefined'&&F)?(F.mcmaInvestWeekly||F.planWeekly):''; const n=Number(String(w||'').replace(/[^0-9.]/g,'')); if(isFinite(n)&&n>0){ _fo=_fo.replace(/ongoing commitment of \$\s*(?:XX|XXX)?\s*per week/gi, 'ongoing commitment of '+money(n)+' per week'); } }catch(_){ } })();
+  // The regular-investment ongoing commitment is the INVESTMENT weekly cost (F.mcmaInvestWeekly, e.g.
+  // $76) — not the insurance cost — shown as "$76 per week ($329 per month)".
+  (function(){ try{ const w=(typeof F!=='undefined'&&F)?(F.mcmaInvestWeekly||F.planWeekly):''; const n=Number(String(w||'').replace(/[^0-9.]/g,'')); if(isFinite(n)&&n>0){ _fo=_fo.replace(/ongoing commitment of \$\s*(?:XX|XXX)?\s*per week(\s*\(\$?\s*(?:XX|XXX)?\s*per month\))?/gi, 'ongoing commitment of '+money(n)+' per week ('+money(Math.round(n*52/12))+' per month)'); } }catch(_){ } })();
+  // [22] Investment alternatives: the salary-sacrifice-to-super alternative reads "salary sacrifice /
+  // non concessional contributions" (highlighted for adviser check by the placeholder highlighter).
+  _fo = _fo.replace(/salary sacrifice contributions to superannuation/gi, 'salary sacrifice / non concessional contributions to superannuation');
+  // [19] Investment-plan "additional wealth of $XX over the term (estimated at XX years)" fills from
+  // the projector investment wealth + the plan term (advice-request / projector confirmed).
+  (function(){ try{ const F0=(typeof F!=='undefined'&&F)?F:{}; const O=F0.outcomes||{}; const w=Number(O.investWealth||0);
+    const yrs=String(F0.freedomYears||(F0.proj&&F0.proj.targetYears)||O.loanTo||'').replace(/[^0-9]/g,'');
+    if(w>0){ _fo=_fo.replace(/(additional wealth of )\$X{2,}(\s*over the term\s*\(estimated at\s*)(?:X{2,}|\d+)(\s*years\))/gi, function(m,p1,p2,p3){ return p1+money(w)+p2+(yrs||'XX')+p3; }); } }catch(_){ } })();
   // Surplus-cashflow goal opener: fill "surplus cashflow of $XXX per week" from the real weekly
   // surplus (F.surplusWeekly / F.budgetWeekly) at RENDER time, so it always populates regardless of
   // import order or whether the standard-goal stash was seeded. Idempotent — only touches $XXX.
@@ -2721,7 +2731,7 @@ function fill(str){
   // Benefit-of-saving clause on the cashflow "why" savings sentence (mirrors the Summary → Outcomes
   // clause). Only fires when the sentence ends directly at "…account." — the summary version already
   // carries ", which <benefit>." so it won't double up.
-  (function(){ try{ const b=String((typeof F!=='undefined'&&F&&F.savingsBenefit)||'').trim().replace(/^which\s+/i,'').replace(/[.\s]+$/,''); if(b){ _fo=_fo.replace(/(provide savings of[^.]*?per annum towards your existing [a-z ]*?account)\./gi, '$1, which '+b+'.'); } }catch(_){ } })();
+  (function(){ try{ const F0=(typeof F!=='undefined'&&F)?F:{}; const arr=Array.isArray(F0.savingsBenefit)?F0.savingsBenefit:(F0.savingsBenefit?[F0.savingsBenefit]:[]); const b=arr.map(x=>String(x).trim().replace(/^which\s+/i,'').replace(/[.\s]+$/,'')).filter(Boolean).join(' and '); if(b){ _fo=_fo.replace(/(provide savings of[^.]*?per annum towards your existing [a-z ]*?account)\./gi, function(m,p1){ return p1+', which '+b+'.'; }); } }catch(_){ } })();
   // Family-trust holding line only applies when the client actually has a trust; otherwise drop the
   // whole line (and never leave the "(If client has existing Trust only)" instruction marker showing).
   (function(){ try{ const F0=(typeof F!=='undefined'&&F)?F:{}; const ht=!!(F0.hasTrust || (Array.isArray(F0.assets)&&F0.assets.some(a=>/trust/i.test(String((a&&(a.owner||a.ownership||a.type||a.name))||'')))) || /trust/i.test(String(F0.entityType||'')));
@@ -5840,7 +5850,8 @@ function collectSummarySuggestions(){
     // Benefit-of-saving clause: ticked in the advice request (F.savingsBenefit), it links the saving
     // back to the client's goals / appropriateness of the advice (e.g. "which helps you save for a
     // home deposit"). Appended with "which " so every list option reads grammatically.
-    const _benefit = String(F.savingsBenefit||'').trim().replace(/^which\s+/i,'').replace(/[.\s]+$/,'');
+    const _sbArr = Array.isArray(F.savingsBenefit)?F.savingsBenefit:(F.savingsBenefit?[F.savingsBenefit]:[]);
+    const _benefit = _sbArr.map(b=>String(b).trim().replace(/^which\s+/i,'').replace(/[.\s]+$/,'')).filter(Boolean).join(' and ');
     let _saveLine = `The ongoing surplus and tax savings will provide savings of approximately ${_pa} per annum towards ${_dest}`;
     _saveLine += _benefit ? `, which ${_benefit}.` : `.`;
     if(_isOffset) _saveLine += ` Additionally, an offset account will allow you to reduce your current interest payments but still provide you the flexibility to withdraw these funds for your liquidity needs.`;
@@ -5855,9 +5866,9 @@ function collectSummarySuggestions(){
   }
   if(blockActive("insurance") && ((F.insurance&&F.insurance.length) || F.recInsurer)){
     out.push("You will have affordable cover that meets your needs and protects your family and lifestyle.");
-    // Benefit-of-insurance outcome (ticked in the advice request): links the recommended cover back to
-    // the client's goals / appropriateness of the advice.
-    const _ib=String(F.insuranceBenefit||'').trim().replace(/[.\s]+$/,''); if(_ib) out.push(_ib+".");
+    // Benefit-of-insurance outcome(s) (ticked in the advice request): link the recommended cover back
+    // to the client's goals / appropriateness of the advice — one outcome line per selected benefit.
+    (typeof v200InsBenefitList==='function'?v200InsBenefitList():[]).forEach(b=>out.push(b+"."));
   }
   const svc=[];
   if(F.services && F.services.length){ F.services.forEach(s=>svc.push(s)); }
@@ -5896,7 +5907,7 @@ function v186HighlightPlaceholders(){
   // placeholder, "$26,566" as a data value. Then dates, adviser-decision keywords, and every
   // ACTUAL auto-populated value pulled from F (client/partner names, fund names, adviser, platform,
   // insurer, occupation/employer, dates) — so nearly every data-fed line is flagged for checking.
-  const _base='\\$X{2,}|X\\.X{1,2}%?|\\$\\d[\\d,]*(?:\\.\\d+)?|\\d+(?:\\.\\d+)?%|\\bX{2,}\\b|\\[[^\\]\\n]{1,80}\\]|<[a-zA-Z][^>\\n]{0,40}>|\\b\\d{1,2}\\/\\d{1,2}\\/\\d{2,4}\\b|\\breinvested\\b|\\bsalary sacrifice\\b|\\bestablish\\/utilise\\b';
+  const _base='\\$X{2,}|X\\.X{1,2}%?|\\$\\d[\\d,]*(?:\\.\\d+)?|\\d+(?:\\.\\d+)?%|\\bX{2,}\\b|\\[[^\\]\\n]{1,80}\\]|<[a-zA-Z][^>\\n]{0,40}>|\\b\\d{1,2}\\/\\d{1,2}\\/\\d{2,4}\\b|\\breinvested\\b|\\bsalary sacrifice(?:\\s*\\/\\s*non concessional contributions)?\\b|\\bnon concessional contributions\\b|\\bestablish\\/utilise\\b';
   const _known=(function(){
     try{
       const F0=(typeof F==='object'&&F)?F:{}; const set=new Set();
@@ -15408,15 +15419,62 @@ if(typeof window!=='undefined') window.v200ResolveOffsetPick=v200ResolveOffsetPi
 // Benefit-of-insurance (ticked in the advice request) → the insurance strategy "why" and the
 // insurance replacement-implications note, linking the recommended cover back to the client's goals
 // / appropriateness. The Summary → Outcomes line is added separately in collectSummarySuggestions.
+function v200InsBenefitList(){
+  const v=(typeof F==='object'&&F)?F.insuranceBenefit:null;
+  const arr=Array.isArray(v)?v:(v?[v]:[]);
+  return arr.map(x=>String(x).trim().replace(/[.\s]+$/,'')).filter(Boolean);
+}
+if(typeof window!=='undefined') window.v200InsBenefitList=v200InsBenefitList;
 function v200ApplyInsuranceBenefit(){
-  if(typeof F!=='object' || !F.insuranceBenefit || typeof B==='undefined') return;
-  const b=String(F.insuranceBenefit).trim().replace(/[.\s]+$/,''); if(!b) return;
+  if(typeof F!=='object' || typeof B==='undefined') return;
+  const list=v200InsBenefitList(); if(!list.length) return;
   try{ if(!B.insurance) B.insurance={active:false,content:{}}; if(!B.insurance.content) B.insurance.content={};
-    const w=String(B.insurance.content.why||''); if(w.indexOf(b)<0) B.insurance.content.why=(w?w+'\n':'')+b+'.'; }catch(_){}
+    let w=String(B.insurance.content.why||''); list.forEach(b=>{ if(w.indexOf(b)<0) w=(w?w+'\n':'')+b+'.'; }); B.insurance.content.why=w; }catch(_){}
   try{ if(!B.repl_ins) B.repl_ins={active:false,content:{}}; if(!B.repl_ins.content) B.repl_ins.content={};
-    const n=String(B.repl_ins.content.note||''); if(n.indexOf(b)<0) B.repl_ins.content.note=(n?n+'\n':'')+b+'.'; }catch(_){}
+    let n=String(B.repl_ins.content.note||''); list.forEach(b=>{ if(n.indexOf(b)<0) n=(n?n+'\n':'')+b+'.'; }); B.repl_ins.content.note=n; }catch(_){}
 }
 if(typeof window!=='undefined') window.v200ApplyInsuranceBenefit=v200ApplyInsuranceBenefit;
+// Firm-standard NON-GEARING debt-management Why / Risks / Alternatives (per the adviser's comments:
+// the "Allows for your home loan to be repaid…" and "On repayment of your home loan…" lines must
+// appear in every debt section; the offset-effectiveness + lower-returns + transaction-cost + variable
+// -rate risks are standard; the effective-return % pulls from the home-loan rate). Only runs when no
+// gearing / borrowing-to-invest is scoped — a gearing SOA keeps its gearing-specific wording. The
+// recommendation is left as built from the advice request (it carries the stated surplus/tax amounts).
+function v200StandardDebtWording(){
+  if(typeof F!=='object' || typeof B==='undefined' || !B.debt || !B.debt.active || !B.debt.content) return;
+  if((typeof v194IsGearingScoped==='function') && v194IsGearingScoped()) return;
+  const _n=v=>{ const x=Number(String(v==null?'':v).replace(/[^0-9.]/g,'')); return isFinite(x)?x:0; };
+  const M=v=>{ const n=_n(v); return n?('$'+n.toLocaleString('en-AU',{maximumFractionDigits:0})):''; };
+  const O=(typeof F.outcomes==='object'&&F.outcomes)?F.outcomes:{};
+  const _lf=O.loanFrom||'XX', _lt=O.loanTo||'XX';
+  const _isav=O.interestSaving?M(O.interestSaving):'$XXX';
+  const _aw=O.postLoanInvestWealth?M(O.postLoanInvestWealth):'$XXX';
+  const _hlr=(function(){ const n=parseFloat(String(F.homeLoanRate||(F.rates&&F.rates.homeLoan)||'').replace(/[^0-9.]/g,'')); return isFinite(n)?(n.toFixed(2)+'%'):'X.XX%'; })();
+  B.debt.content.why=[
+    "In Line with your goals:",
+    "Allows for your home loan to be repaid in approximately "+_lt+" years instead of "+_lf+" years.",
+    "An offset account will allow you to reduce your current interest payments but still provide you the flexibility to withdraw these funds for your liquidity needs.",
+    "The offset account use will provide estimated interest savings of "+_isav+" over the life of the loan compared to repayment over the regular term.",
+    "On repayment of your home loan, redirecting your mortgage repayments to be invested will generate additional wealth estimated at "+_aw+" over the last year of your plan.",
+    "Additional Benefits:",
+    "Interest on investment debt provides ongoing tax deductions, reducing the amount of interest you pay."
+  ].join('\n');
+  B.debt.content.risks=[
+    "The effectiveness of an offset account depends on maintaining a sufficient cash balance. Withdrawing funds from the offset will increase the interest payable on your loan.",
+    "Holding funds in an offset account may result in lower investment returns than investing those funds in growth assets over the long term.",
+    "There may be transaction costs involved in establishing the strategy;",
+    "If the loan interest rate is variable, an increase in interest rates will result in an increase in interest repayments, which may place some strain on your cash flow;"
+  ].join('\n');
+  B.debt.content.alternatives=[
+    "Direct your surplus cashflow to a high interest savings account or a term deposit account. I discounted this strategy as you will yield a high effective after tax return by directing your surplus to your offset account (estimated to be approximately "+_hlr+" based on your current home loan interest rate). This also allows you to reduce your bad debt at a faster rate.",
+    "We considered making additional home loan repayments instead of utilising your existing offset account, however we discounted this strategy as your offset account will provide you with flexible access to your funds, should you need to draw upon these at any point."
+  ].join('\n');
+  // Strip any leftover debt-recycling narrative from details/intro on a non-gearing SOA.
+  const _rx=/debt recycl|equity[\s\S]{0,40}security|sub[- ]?account|loan limit|restructur|re-?borrow|tax deductible investment debt|non[\s-]*tax deductible|separate investment loan/i;
+  if(B.debt.content.details && _rx.test(B.debt.content.details)) B.debt.content.details='';
+  if(B.debt.content.intro && _rx.test(B.debt.content.intro)) B.debt.content.intro='';
+}
+if(typeof window!=='undefined') window.v200StandardDebtWording=v200StandardDebtWording;
 // [13] Mirror the advice-request cashflow costs into the MCMA fields the cashflow section reads
 // (same fields the text parser sets), so the MCMA transfer + breakdown auto-populate.
 function v200ApplyCashflow(ar){
@@ -15524,14 +15582,15 @@ function v200ApplyAdviceRequest(ar){
     try{ v200StripSeamless(); }catch(e){ try{console.error('v200 seamless',e);}catch(_){ } }
     try{ v200DetectApproach(ar); }catch(e){ try{console.error('v200 approach',e);}catch(_){ } }
     try{ v200ApplyInvestVanguard(); }catch(e){ try{console.error('v200 vanguard',e);}catch(_){ } }
+    try{ v200StandardDebtWording(); }catch(e){ try{console.error('v200 stddebt',e);}catch(_){ } }
     try{ v200ResolveOffsetPick(); }catch(e){ try{console.error('v200 offsetpick',e);}catch(_){ } }
     try{ v200ApplyCashflow(ar); }catch(e){ try{console.error('v200 cashflow',e);}catch(_){ } }
-    try{ if(ar.savingsBenefit){ F.savingsBenefit=String(ar.savingsBenefit);
+    try{ if(ar.savingsBenefit && (!Array.isArray(ar.savingsBenefit)||ar.savingsBenefit.length)){ F.savingsBenefit=ar.savingsBenefit;
       // Drop any stale savings-outcome built before the benefit was known (e.g. during the factfind
       // import) so the summary rebuild picks up the fresh "…which <benefit>" sentence.
       if(Array.isArray(F.summaryOutcomes)) F.summaryOutcomes=F.summaryOutcomes.filter(o=>!/ongoing surplus and tax savings will provide savings/i.test(String((o&&o.text)||o||'')));
     } }catch(_){ }
-    try{ if(ar.insuranceBenefit){ F.insuranceBenefit=String(ar.insuranceBenefit); if(typeof v200ApplyInsuranceBenefit==='function') v200ApplyInsuranceBenefit(); } }catch(_){ }
+    try{ if(ar.insuranceBenefit && (!Array.isArray(ar.insuranceBenefit)||ar.insuranceBenefit.length)){ F.insuranceBenefit=ar.insuranceBenefit; if(typeof v200ApplyInsuranceBenefit==='function') v200ApplyInsuranceBenefit(); } }catch(_){ }
     try{ v200NormalizeInsuranceCovers(); }catch(e){ try{console.error('v200 inscovers',e);}catch(_){ } }
     try{ if(Array.isArray(ar.scopeOut)){ F._arScopeOut=ar.scopeOut.slice(); v200ApplyScopeOut(); } }catch(e){ try{console.error('v200 scopeout',e);}catch(_){ } }
     // Budget notes → the surplus-cashflow goal's sub-points (same channel the text parser uses).
