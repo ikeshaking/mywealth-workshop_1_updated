@@ -13579,6 +13579,7 @@ window.v50AllocGroups = function(){
       }
 
       try{ if(typeof v47SnapshotBlocks==='function') v47SnapshotBlocks(); }catch(_){}
+      try{ if(typeof v200BuildSuperAltFromWS==='function') v200BuildSuperAltFromWS(); }catch(_){}
       try{ render(); }catch(_){}
       const r=uniq[0]&&uniq[0].recommended, c=uniq[0]&&uniq[0].current;
       const delta=(r&&c&&r.gross!=null&&c.gross!=null)?(r.gross-c.gross):null;
@@ -15592,9 +15593,41 @@ function v200ApplyCareEssSuperBlocks(){
   // [55] Fund-manager footnote with the correct annexure reference (auto-numbered).
   const _anx=(typeof anxNum==='function'?anxNum('anx_moreinfo'):'')||'';
   c.careFootnote = "*The fund managers of these investments will charge fees for the cost of the research, brokerage, custodian services, audit fees and government charges that they incur. These fees are recovered from the income produced by the underlying investments, before it is paid to investors. They are reflected in the unit price of the investment. Full details of these fees are contained in the PDS for each product.\nMore information about these investments is contained in Annexure "+(_anx||'8')+".";
+  try{ v200BuildSuperAltFromWS(); }catch(_){}
   if(typeof setBlockActive==='function') setBlockActive('super_prod',true); else B.super_prod.active=true;
 }
 if(typeof window!=='undefined') window.v200ApplyCareEssSuperBlocks=v200ApplyCareEssSuperBlocks;
+// [45/46/47/49/50] Rebuild the super product "Alternative Products" (platform comparison) from the
+// WealthSolver proposals so only platforms actually compared appear, and the existing fund(s) in line
+// with risk profile (the SW columns) pull through with their real names + costs. Nothing is left blank.
+function v200BuildSuperAltFromWS(){
+  if(typeof F!=='object' || typeof B==='undefined') return;
+  const ws=(F.wealthSolver&&F.wealthSolver.sets&&F.wealthSolver.sets[0]); if(!ws) return;
+  const order=Array.isArray(F.wsProvOrder)?F.wsProvOrder:[];
+  const gross=F.wsProviderGross||{}; const funds=F.wsFunds||{};
+  const recKey=(ws.recommended&&ws.recommended.key)||'hub24';
+  if(!order.length) return;
+  const M=v=>(v!=null&&!isNaN(v))?('$'+Number(v).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2})):'$XXX';
+  const nameOf=k=>{ const f=(funds[k]||[]).filter(Boolean); return f.length?f.join(' & '):k; };
+  const altPlat=[], existing=[];
+  order.forEach(k=>{
+    if(k==='current' || k===recKey) return;              // skip current + the recommended platform
+    const isSW=/^sw\d*$/i.test(k);                        // SW columns = existing funds in line with risk profile
+    if(isSW) existing.push(nameOf(k)+' (existing fund, in line with your risk profile) - '+M(gross[k]));
+    else altPlat.push(nameOf(k)+' - '+M(gross[k]));
+  });
+  const all=altPlat.concat(existing);
+  if(!all.length) return;
+  const recName=(ws.recommended&&ws.recommended.name)||'the recommended platform';
+  const platNames=[recName].concat(altPlat.map(l=>l.split(' - ')[0]));
+  const disc = platNames.length>1
+    ? ("We completed a price comparison between "+platNames.slice(0,-1).join(', ')+" and "+platNames[platNames.length-1]+". "+recName+" was the most cost-effective platform to manage your superannuation.")
+    : (recName+" was the most cost-effective platform to manage your superannuation.");
+  B.super_prod.content.alternatives = "I considered the following alternatives to the recommended investment options:\n"
+    + all.map(l=>'\t'+l).join('\n')
+    + "\n\nI have discounted these products for the following reasons:\n" + disc;
+}
+if(typeof window!=='undefined') window.v200BuildSuperAltFromWS=v200BuildSuperAltFromWS;
 // [13] Mirror the advice-request cashflow costs into the MCMA fields the cashflow section reads
 // (same fields the text parser sets), so the MCMA transfer + breakdown auto-populate.
 function v200ApplyCashflow(ar){
