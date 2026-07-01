@@ -6002,6 +6002,14 @@ function render(){
   try{ if(typeof v200StripSeamless==='function') v200StripSeamless(); }catch(_){}
   try{ if(typeof v200ResolveOffsetPick==='function') v200ResolveOffsetPick(); }catch(_){}
   try{ if(typeof v200NormalizeInsuranceCovers==='function') v200NormalizeInsuranceCovers(); }catch(_){}
+  // [C17] Render-time net: strip the fund-manager footnote from the investment product card (it's
+  // seeded from the product-card defaults after v200 runs). Kept on the super card via careFootnote.
+  try{ ['investplan_prod','investplan','super_prod','super'].forEach(bid=>{ const blk=B[bid]; if(!blk||!blk.content) return; const c=blk.content;
+    ['risks','why','alternatives','details','comments'].forEach(f=>{ if(typeof c[f]==='string' && /\*?The fund managers of these investments charge fees/i.test(c[f])){
+      // Remove the "*The fund managers … charge fees …" footnote (present tense) — it belongs in its
+      // own footnote/annexure, not the product/strategy card. The super card keeps the [55] version in
+      // its separate careFootnote field ("… will charge fees …"), which is untouched.
+      c[f]=c[f].replace(/\n*\*?The fund managers of these investments charge fees[\s\S]*$/i,'').replace(/\n{3,}/g,'\n\n').trim(); } }); }); }catch(_){}
   const app = document.getElementById("app");
   const ae = document.activeElement, aid = ae && ae.id, sst = ae && ae.selectionStart, sy = window.scrollY;
   // preserve the preview pane's own scroll position (it scrolls independently of the window)
@@ -15417,6 +15425,7 @@ function v200DetectApproach(ar){
     if(F.superApproach==='CARE' && typeof B!=='undefined' && B.super && B.super.content){
       const _frank=(typeof v200CareFrankingCredits==='function'?v200CareFrankingCredits():'')||'$XX';
       const careWhy=[
+        "CARE Essentials:",
         "Providing professional active management on a day to day basis to provide the potential for greater returns and wealth preservation throughout retirement. You do not want a set and forget strategy.",
         "Increasing the probability of achieving the returns you need while minimising the volatility of your investments, and",
         "Reducing the chance of you making bad or inappropriate decisions, particularly at points of extreme market volatility.",
@@ -15480,6 +15489,9 @@ function v200ApplyInvestVanguard(){
       else { const platIdx=c.rows.findIndex(r=>/platform name/i.test(String((r||[])[0]||''))); const row=[model,'100%']; if(platIdx>=0) c.rows.splice(platIdx+1,0,row); else c.rows.push(row); }
     }
   } }catch(_){}
+  // [C17] Remove the "*The fund managers of these investments charge fees…" footnote from the
+  // investment product card (it belongs in its own footnote/annexure section, not the product card).
+  try{ ['risks','why','alternatives','details','comments'].forEach(f=>{ if(typeof c[f]==='string'){ c[f]=c[f].replace(/\*?The fund managers of these investments (?:charge|will charge) fees[\s\S]*?(?:PDS for each product\.?|Product Disclosure Statement(?: for each product)?\.?)(?:\s*More information about these investments is contained in Annexure[^\n]*)?/i,'').replace(/\n{3,}/g,'\n\n').trim(); } }); }catch(_){}
   if(typeof setBlockActive==='function') setBlockActive('investplan_prod',true); else B.investplan_prod.active=true;
   // Remove any lingering CARE wording from the investment strategy block for a Vanguard SOA.
   try{ const s=B.investplan&&B.investplan.content; if(s){ ['recommendation','why','alternatives'].forEach(f=>{ if(typeof s[f]==='string') s[f]=s[f].replace(/\s*utilising the CARE (investment )?philosophy/ig,'').replace(/\bCARE Essentials\b/g,'the recommended portfolio'); }); } }catch(_){}
@@ -15636,7 +15648,7 @@ function v200ApplyCareEssSuperBlocks(){
   }
   // [44] Remove the mis-placed fund-manager footnote from Why/Alternatives (it belongs in its own
   // footnote section, added below as careFootnote).
-  ['why','alternatives'].forEach(f=>{ if(typeof c[f]==='string'){ c[f]=c[f].replace(/\*The fund managers of these investments (?:charge|will charge) fees[\s\S]*?(?:Product Disclosure[^\n]*|PDS for each product\.?)(?:\s*More information about these investments is contained in Annexure[^\n]*)?/i,'').trim(); } });
+  ['why','alternatives','risks','details','comments'].forEach(f=>{ if(typeof c[f]==='string'){ c[f]=c[f].replace(/\n*\*?The fund managers of these investments charge fees[\s\S]*$/i,'').replace(/\n{3,}/g,'\n\n').trim(); } });
   // [52] Alternative Superannuation Investment Options (like-for-like) — risk-profile-aware.
   c.careInvestAlt = [
     "I considered the following alternatives to the recommended investment options on a like for like basis:",
