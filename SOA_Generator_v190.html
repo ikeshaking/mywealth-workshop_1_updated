@@ -5904,6 +5904,10 @@ function render(){
       }
     }
   }catch(_){}
+  // [55] Seamless accumulation→pension line is retirement-only; strip on accumulation SOAs. This is a
+  // render-time net for manually-built SOAs (advice-request SOAs are stripped deterministically in
+  // v200ApplyAdviceRequest, since render can run before v200 finishes populating the content).
+  try{ if(typeof v200StripSeamless==='function') v200StripSeamless(); }catch(_){}
   const app = document.getElementById("app");
   const ae = document.activeElement, aid = ae && ae.id, sst = ae && ae.selectionStart, sy = window.scrollY;
   // preserve the preview pane's own scroll position (it scrolls independently of the window)
@@ -15192,6 +15196,15 @@ function v200ResolveTokens(text, s, expand){
   const other = per ? (per.key==='client'?p:(per.key==='partner'?c:p)) : p;
   return [ v200ResolveOne(text, per, other) ];
 }
+// [55] Seamless accumulation→pension benefit is retirement-only. On an accumulation SOA
+// (F.retirementSOA false) remove it from the super/investment wording.
+function v200StripSeamless(){
+  if(typeof F!=='object' || F.retirementSOA || typeof B==='undefined') return;
+  const _seam=/\s*(?:[-•]\s*)?Seamless transfer from accumulation to pension \(not required to sell down your assets to transfer into the pension phase\)\.\s*This can prevent unnecessary Capital Gains Tax consequences and\/or sale of assets at a time of unfavourable market conditions\.?/g;
+  ['super','investplan','super_prod','investplan_prod'].forEach(id=>{ const c=B[id]&&B[id].content; if(!c) return;
+    ['why','recommendation','details'].forEach(f=>{ if(typeof c[f]==='string' && c[f].indexOf('Seamless transfer from accumulation to pension')>=0){ c[f]=c[f].replace(_seam,'').replace(/\n{2,}/g,'\n').replace(/[ \t]{2,}/g,' ').trim(); } }); });
+}
+if(typeof window!=='undefined') window.v200StripSeamless=v200StripSeamless;
 function v200ApplyAdviceRequest(ar){
   const log=[];
   try{
@@ -15199,6 +15212,12 @@ function v200ApplyAdviceRequest(ar){
     if(ar.adviser && typeof F==='object'){ F.adviser=F.adviser||ar.adviser; }
     if(ar.status && typeof F==='object' && F.isExistingClient==null){ F.isExistingClient=/exist/i.test(ar.status); }
     if(/couple/i.test(ar.ctype||'') && typeof F==='object'){ F.clientType=F.clientType||'joint'; }
+    // Accumulation vs retirement drives which sections/wording apply (e.g. the accumulation→pension
+    // "seamless transfer" line is retirement-only). 'mixed' is left as-is.
+    if(ar.soaType && typeof v97ApplySoaType==='function'){
+      if(/retire/i.test(ar.soaType)) v97ApplySoaType('retirement',{force:true});
+      else if(/accum/i.test(ar.soaType)) v97ApplySoaType('accumulation',{force:true});
+    }
     const byBlock={};
     (ar.strategies||[]).forEach(s=>{ const bid=V200_AREA_TO_BLOCK[s.area]; if(!bid) return; (byBlock[bid]=byBlock[bid]||[]).push(s); });
     Object.keys(byBlock).forEach(bid=>{
@@ -15226,6 +15245,7 @@ function v200ApplyAdviceRequest(ar){
     try{ v200ApplyRisk(ar); }catch(e){ try{console.error('v200 risk',e);}catch(_){ } }
     try{ v200ApplyFees(ar); }catch(e){ try{console.error('v200 fees',e);}catch(_){ } }
     try{ v200ApplyProducts(ar); }catch(e){ try{console.error('v200 products',e);}catch(_){ } }
+    try{ v200StripSeamless(); }catch(e){ try{console.error('v200 seamless',e);}catch(_){ } }
     // Budget notes → the surplus-cashflow goal's sub-points (same channel the text parser uses).
     try{ if(ar.notesBudget){
       const bn=String(ar.notesBudget).split(/\r?\n+/).map(l=>l.replace(/^[\s•\-•‣▪\t]+/,'').trim()).filter(Boolean);
