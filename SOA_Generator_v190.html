@@ -4487,7 +4487,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B37 — header font ABC Arizona, super-alt order, § plain line, ins product-card tweaks</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B38 — OnePath OneCare deep quote parser feeds insurance products table</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -6913,6 +6913,7 @@ async function handleAnyQuote(file, person){
   try{
     const txt=await extractAnyText(file);
     if(/clearview|clearchoice/i.test(txt) && typeof v141ImportClearView==='function'){ await v141ImportClearView(file, person); }
+    else if(/one\s*care|onepath/i.test(txt) && typeof window.v141ImportOnePath==='function'){ await window.v141ImportOnePath(file, person); }
     else { parseAndApplyQuote(person, txt); }
     // also pull any commission embedded in the quote so the disclosure fills in one drop
     try{ if(v147ApplyCommissionFromText(txt, person)) render(); }catch(_){}
@@ -14588,6 +14589,39 @@ window.v50AllocGroups = function(){
 
   window.v140FillInsRows=function(){
     const c=(B['ins_prod']&&B['ins_prod'].content); if(!c) return;
+    // ── OnePath OneCare quote source → ROA-style rows: flexi-linked Life+TPD (super) share one premium
+    //    with the personal-cashflow companion shown as a "$X from super and $Y from personal cashflow"
+    //    note (after-tax = 15% rebate on the super portion). IP is personally paid (after-tax at the
+    //    person's marginal rate) and carries its Super Contribution Option; Trauma is self-owned. The
+    //    super-funded Life+TPD sits under an "OnePath OneCare" band; IP + Trauma under "OnePath", IP
+    //    BEFORE Trauma. ──
+    const ocAny = F.onecare && (F.onecare.client || F.onecare.partner);
+    if(ocAny){
+      const W = v => { v=String(v==null?'':v).replace(/[^0-9.]/g,''); return v?('$'+Math.round(Number(v)).toLocaleString('en-AU')):''; };
+      const mtrOf = person => { const r=(person==='partner')?F.partnerMTR:F.clientMTR; const n=Number(String(r==null?'':r).replace(/[^0-9.]/g,'')); return isFinite(n)&&n>0?n:32; };
+      const out=[];
+      ['client','partner'].forEach(person=>{
+        const q=F.onecare&&F.onecare[person]; const fn=_firstNameOf(person);
+        if(!(q && q.covers)) return;
+        const cv=q.covers;
+        if(cv.life || cv.tpd){
+          const superMo=(cv.life?Number(cv.life.monthly)||0:0)+(cv.tpd?Number(cv.tpd.monthly)||0:0);
+          const persMo=(cv.split?Number(cv.split.monthly)||0:0);
+          const before=superMo+persMo, after=superMo*0.85+persMo;
+          const note='('+W(superMo)+' from super and '+W(persMo)+' from personal cashflow)';
+          const pB=W(before)+' pm (before tax)', pA=W(after)+' pm (after tax)';
+          if(cv.life){ const o=mkInsRow(); Object.assign(o,{provider:'OnePath OneCare',coverType:'Life (Linked)',lifeInsured:fn,owner:'Flexi-Linked Super',status:'Recommend',benefitAmount:_dollarWhole(cv.life.sum),premiumStructure:cv.life.structure||'Variable Age-Stepped',monthlyPremium:pB,premiumNote:note,monthlyPremiumAfterTax:pA,sharedPremiumWithPrev:false}); out.push(o); }
+          if(cv.tpd){ const o=mkInsRow(); Object.assign(o,{provider:'OnePath OneCare',coverType:'TPD (Linked & Own-Occupation)',lifeInsured:fn,owner:'Flexi-Linked Super',status:'Recommend',benefitAmount:_dollarWhole(cv.tpd.sum),premiumStructure:cv.tpd.structure||'Variable Age-Stepped',monthlyPremium:pB,premiumNote:note,monthlyPremiumAfterTax:pA,sharedPremiumWithPrev:true}); out.push(o); }
+        }
+        if(cv.ip){
+          const before=Number(cv.ip.monthly)||0, mtr=mtrOf(person), after=before*(1-mtr/100);
+          const benefit=_dollarWhole(cv.ip.sum)+' pm'+(cv.ip.scOption?(' plus '+_dollarWhole(cv.ip.scOption)+' pm Super Contribution Option'):'');
+          const o=mkInsRow(); Object.assign(o,{provider:'OnePath',coverType:'Income Protection (Indemnity)',lifeInsured:fn,owner:fn,status:'Recommend',benefitAmount:benefit,premiumStructure:cv.ip.structure||'Variable Age-Stepped',monthlyPremium:W(before)+' pm (before tax)',premiumNote:'',monthlyPremiumAfterTax:W(after)+' pm (after tax)',waitingPeriod:cv.ip.waiting||'',benefitPeriod:cv.ip.benefitPd||''}); out.push(o);
+        }
+        if(cv.trauma){ const o=mkInsRow(); Object.assign(o,{provider:'OnePath',coverType:'Trauma (Linked, Plus & Reinstatement)',lifeInsured:fn,owner:fn,status:'Recommend',benefitAmount:_dollarWhole(cv.trauma.sum),premiumStructure:cv.trauma.structure||'Variable Age-Stepped',monthlyPremium:W(cv.trauma.monthly)+' pm',premiumNote:'',monthlyPremiumAfterTax:''}); out.push(o); }
+      });
+      if(out.length){ c.insRows=out; if(!c.insTotals) c.insTotals={super:'',cashflow:''}; return; }
+    }
     // ── NEOS quote source (recommended product) → ROA-style rows: linked Life+TPD share one premium
     //    (super = Life+Attached TPD funded from super; personal cashflow = the ordinary Split-TPD
     //    companion), after-tax = 15% rebate on the super portion only; IP is personally paid so its
@@ -15545,6 +15579,48 @@ window.v50AllocGroups = function(){
   }
   window.parseNeosQuote=parseNeosQuote;
 
+  // OnePath OneCare quote → per-cover sums + monthly premiums with the SuperLink funding split.
+  // OneCare quotes carry three "Sum insured" breakdown tables: Policy 1 (Super, ANNUAL premiums:
+  // Life + TPD Own), Policy 2 (Non-Super, MONTHLY premiums: Death + TPD companion + Trauma) and the
+  // Income Protection table (Income Benefit + Super Contributions, MONTHLY). We convert Policy 1 to
+  // monthly and keep Policy 2/IP monthly, so the product table shows the "$X from super / $Y from
+  // personal cashflow" split, before/after-tax (15% rebate on the super portion) and the IP Super
+  // Contribution Option — matching the firm layout.
+  function parseOnePathQuote(text){
+    const t=String(text||'').replace(/\r/g,' ');
+    if(!/one\s*care|onepath/i.test(t)) { /* still allow: caller decides */ }
+    const num=s=>{ const n=parseFloat(String(s==null?'':s).replace(/[$,\s]/g,'')); return isFinite(n)?n:0; };
+    const parts=t.split(/Sum insured/i);
+    const p1=parts[1]||'', p2=parts[2]||'';
+    // Policy 1 (super, ANNUAL): Life + TPD Own rows
+    const lifeA=num((p1.match(/\bLife\b\s*\$([\d,]+\.\d{2})/)||[])[1]);
+    let tpdA=0; { const re=/\+\s*TPD Own[^$]*\$([\d,]+\.\d{2})/g; let m; while((m=re.exec(p1))) tpdA+=num(m[1]); }
+    // Policy 2 (personal, MONTHLY): Death + TPD companion (= the Life+TPD personal split), Trauma
+    const deathM=num((p2.match(/\bDeath\b\s*\$([\d,]+\.\d{2})/)||[])[1]);
+    let tpdM=0; { const re=/\+\s*TPD Own[^$]*\$([\d,]+\.\d{2})/g; let m; while((m=re.exec(p2))) tpdM+=num(m[1]); }
+    const traumaM=num((p2.match(/\+\s*Trauma[^$]*\$([\d,]+\.\d{2})/)||[])[1]);
+    // IP table (monthly): Income Benefit total + Super Contributions total
+    const ipBase=num((t.match(/OXIS\s+TO?\d*\s+\$[\d.]+\s+\$([\d.]+)/i)||[])[1]);
+    const scTot =num((t.match(/OXCS\s+TO?\d*\s+\$[\d.]+\s+\$([\d.]+)/i)||[])[1]);
+    // Sums + IP options
+    const lifeSum=num((t.match(/\$([\d,]{7,})\s+O1LZ/)||[])[1]);
+    const traumaSum=num((t.match(/\$([\d,]+)\s+O2L[PA]/i)||[])[1]) || num((t.match(/\$([\d,]+)\s+Trauma/i)||[])[1]);
+    const ipSum=num((t.match(/\$([\d,]+)\s+OXIS/i)||[])[1]);
+    const scAmt=num((t.match(/\$([\d,]+)\s+OXCS/i)||[])[1]);
+    const wait=((t.match(/(\d+)\s*DAY/i)||[])[1]||'90')+' days';
+    const ben='To age '+((t.match(/TO(\d\d)/i)||[])[1]||'65');
+    const struct='Variable age-stepped';
+    const superLifeM=lifeA/12, superTpdM=tpdA/12;   // super Life+TPD (monthly)
+    const covers={};
+    if(lifeSum||lifeA) covers.life={sum:lifeSum||0, monthly:superLifeM, structure:struct};
+    if(tpdA)           covers.tpd ={sum:lifeSum||0, monthly:superTpdM, structure:struct};
+    if(deathM||tpdM)   covers.split={monthly:(deathM+tpdM)};   // personal cashflow companion for Life+TPD
+    if(ipBase||ipSum)  covers.ip  ={sum:ipSum, monthly:(ipBase+scTot), scOption:scAmt||'', waiting:wait, benefitPd:ben, structure:struct};
+    if(traumaM||traumaSum) covers.trauma={sum:traumaSum, monthly:traumaM, structure:struct};
+    return {insurer:'OnePath', covers:covers, annual:(lifeA+tpdA)+ (deathM+tpdM+traumaM+ipBase+scTot)*12};
+  }
+  window.parseOnePathQuote=parseOnePathQuote;
+
   // v190b — mirror parsed NEOS covers into F.insurance so the Recommendation / "Why"
   // WORDING builders (buildInsuranceRecText / buildInsuranceWhyText, which read
   // F.insurance — NOT F.neos) fill with the client's real figures, exactly as a
@@ -15611,6 +15687,38 @@ window.v50AllocGroups = function(){
         [line('life','Life'),line('tpd','Attached TPD'),line('split','Split TPD'),line('ip','Income Support'),line('trauma','Trauma')].filter(Boolean).join('\n')+
         '\n\nThe product table now shows the linked super/personal split and after-tax premiums (IP grossed down at the marginal rate).');
     }catch(e){ console.error('NEOS import',e); alert('Could not read the NEOS quote: '+e.message); }
+  };
+
+  // OnePath OneCare quote importer — mirrors v141ImportNeos. Populates F.onecare[person] (consumed by
+  // the OneCare branch of v140FillInsRows) and stamps OnePath as the recommended insurer.
+  window.v141ImportOnePath = async function(file, person){
+    person=(person==='partner')?'partner':'client';
+    if(!file) return;
+    try{
+      const txt=await _readText(file);
+      const q=(typeof parseOnePathQuote==='function')?parseOnePathQuote(txt):null;
+      if(!q || !q.covers || !Object.keys(q.covers).length){
+        alert('Could not read any cover lines from that OnePath OneCare quote.\n\nIf it is a scanned (image-only) PDF, the figures can’t be extracted automatically — export a text-based PDF and try again.');
+        return;
+      }
+      if(!F.onecare) F.onecare={};
+      F.onecare[person]=q;
+      F.recInsurer='OnePath';
+      if(!F.insCompare) F.insCompare=[];
+      let cmp=null; for(let i=0;i<F.insCompare.length;i++){ if(F.insCompare[i].insurer==='OnePath'){ cmp=F.insCompare[i]; break; } }
+      if(!cmp){ cmp={insurer:'OnePath',product:'OneCare',premium:(q.annual?String(Math.round(q.annual*100)/100):''),core:'',supp:'',source:'quote'}; F.insCompare.push(cmp); }
+      else if(q.annual){ cmp.premium=String(Math.round(q.annual*100)/100); cmp.source='quote'; }
+      // stamp the insurer onto this person's cover rows so the strategy wording reads "OnePath"
+      (F.insurance||[]).filter(r=>r&&(r.person||'client')===person).forEach(r=>{ r.insurer='OnePath'; });
+      try{ if(typeof v96FillInsurance==='function') v96FillInsurance(); else if(typeof window.v140FillInsRows==='function') window.v140FillInsRows(); }catch(_){}
+      try{ if(typeof v47SnapshotBlocks==='function') v47SnapshotBlocks(); }catch(_){}
+      try{ render(); }catch(_){}
+      const cv=q.covers, M=v=>'$'+(Math.round(Number(v)||0)).toLocaleString('en-AU');
+      const line=(k,lbl)=>cv[k]?('• '+lbl+': '+M(cv[k].monthly)+'/mo'):'';
+      alert('OnePath OneCare quote imported for '+(person==='partner'?'Client 2':'Client 1')+'.\n\n'+
+        [line('life','Life (super)'),line('tpd','TPD (super)'),line('split','Life/TPD personal split'),line('ip','Income Protection'),line('trauma','Trauma')].filter(Boolean).join('\n')+
+        '\n\nThe product table now shows the OneCare super/personal split, after-tax premiums and the IP Super Contribution Option.');
+    }catch(e){ console.error('OnePath import',e); alert('Could not read the OnePath quote: '+e.message); }
   };
 })();
 
