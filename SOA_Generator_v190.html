@@ -4515,7 +4515,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B45 — cash-rate assumption pulled from factfind (robust field mapping); projection prose + RR alt-insurers verified</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B46 — super replacement table: navy/light-blue section bands, justified body, tiered Recommended-Fund menu (Hub24 Core), Lost/Gained benefits structure</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -9304,7 +9304,8 @@ function renderSpecialDocx(def, ch, K){
         if (content === '' && isBul) { return; }
         paras.push(new Paragraph({
           spacing: {before:30, after:30},
-          alignment: AlignmentType.LEFT,
+          // [#2] Justify body cells so the wrapped bullets/paragraphs fit the page (headers/bands are short).
+          alignment: (opts.header||opts.whiteText) ? AlignmentType.LEFT : AlignmentType.JUSTIFIED,
           bullet: isBul ? {level: subBul?1:0} : undefined,
           children: [new TextRun({
             text: content,
@@ -9348,7 +9349,14 @@ function renderSpecialDocx(def, ch, K){
       const lbl0 = String((r&&r[0])||'').trim();
       if (r.length === 1){
         if (isBand2(r[0]) && !/^\*/.test(lbl0)){
-          rows.push(new TableRow({ children:[ makeCell(RX2(r[0]), {shade:BAND, bold:true, colSpan:nCols, w: totalW}) ] }));
+          // [#2] Section bands: "Implications of Replacement" = navy (white ABC Arizona); the other section
+          // labels (Reason for Replacement / Fund Manager Fees / Changes in benefits / Taxation / Estate
+          // Planning) = light-blue (white Nunito). Everything else keeps the pale band.
+          const _navyBand=/^implications of replacement$/i.test(lbl0);
+          const _blueBand=/^(reason for replacement|fund manager fees|changes in benefits|taxation|estate planning)$/i.test(lbl0);
+          if(_navyBand) rows.push(new TableRow({ children:[ makeCell(RX2(r[0]), {shade:NAVY, header:true, colSpan:nCols, w: totalW}) ] }));
+          else if(_blueBand) rows.push(new TableRow({ children:[ makeCell(RX2(r[0]), {shade:"5EA6FF", whiteText:true, bold:true, colSpan:nCols, w: totalW}) ] }));
+          else rows.push(new TableRow({ children:[ makeCell(RX2(r[0]), {shade:BAND, bold:true, colSpan:nCols, w: totalW}) ] }));
         } else {
           // full-width content row (e.g. "*Total Cost After Tax …") → plain, bold; note follows it
           rows.push(new TableRow({ children:[ makeCell(RX2(r[0]), {bold:true, colSpan:nCols, w: totalW}) ] }));
@@ -9358,7 +9366,12 @@ function renderSpecialDocx(def, ch, K){
       }
       // Fund-name sub-header (first content row, empty label) → navy like the header row
       if (ri===0 && lbl0===''){
-        rows.push(new TableRow({ children: r.map(cell => makeCell(RX2(cell), {shade:NAVY, header:true})) }));
+        // [#2/#4] Tier the recommended-fund label: a bare "Hub24" becomes the recommended menu
+        // (e.g. "Hub24 Core" from the CARE doc / "Hub24 Discover" from WealthSolver) via F.recPlatform.
+        const _tierRec=(v)=>{ let s=String(v==null?'':v).trim(); const rp=String((typeof F==='object'&&F.recPlatform)||'').trim();
+          if(rp && /hub\s*24/i.test(s) && /hub\s*24\s*(core|choice|discover)/i.test(rp) && !/core|choice|discover/i.test(s)) return rp;
+          return s; };
+        rows.push(new TableRow({ children: r.map((cell,ci) => makeCell(ci===r.length-1?_tierRec(RX2(cell)):RX2(cell), {shade:NAVY, header:true})) }));
         return;
       }
       // Investment Option → whole row royal blue, white text (label bold)
@@ -9373,10 +9386,23 @@ function renderSpecialDocx(def, ch, K){
       const filled = contentCols.filter(x=>String(x||'').trim()!=='').length;
       if (filled === 1 && String(contentCols[0]||'').trim()!=='' && contentCols.slice(1).every(x=>String(x||'').trim()==='')){
         const sect = isSectionRow(lbl0);
+        if(sect){
+          // [#2] Section rows render as a FULL-WIDTH band header (navy for "Implications", light-blue for
+          // the others) + a full-width content row below, matching the firm template. Bold the
+          // "Lost benefits:/Gained benefits:/Maintained:" sub-heads within the content.
+          const _navy=/^implications of replacement$/i.test(lbl0);
+          rows.push(new TableRow({ children:[ makeCell(RX2(r[0]), _navy?{shade:NAVY,header:true,colSpan:nCols,w:totalW}:{shade:"5EA6FF",whiteText:true,bold:true,colSpan:nCols,w:totalW}) ] }));
+          let _body=String(RX2(r[1])||'');
+          _body=_body.replace(/\s*-\s+/g,'\n- ')                                        // each " - " → its own bullet line
+                     .replace(/\s*(Lost benefits:|Gained benefits:|Maintained:)\s*/g,'\n$1\n')  // sub-heads on their own line
+                     .replace(/\n{2,}/g,'\n').replace(/^\n+/,'').trim();
+          if(_body) rows.push(new TableRow({ children:[ makeCell(_body, {colSpan:nCols, w:totalW}) ] }));
+          return;
+        }
         rows.push(new TableRow({
           children: [
-            makeCell(RX2(r[0]), sect ? {bold:true} : {shade:"0E6BE0", header:true, bold:true}),
-            makeCell(RX2(r[1]), sect ? {colSpan:nCols-1, w: colW*(nCols-1)} : {shade:TEAL, colSpan:nCols-1, w: colW*(nCols-1)})
+            makeCell(RX2(r[0]), {shade:"0E6BE0", header:true, bold:true}),
+            makeCell(RX2(r[1]), {shade:TEAL, colSpan:nCols-1, w: colW*(nCols-1)})
           ]
         }));
         return;
