@@ -4392,7 +4392,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B32 — strategy card banner 16pt (sub-heading stays 9.5pt) + insurance risks/insurer fixes</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B33 — light-blue section headings 16pt, navy card banner 9.5pt</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -7253,7 +7253,7 @@ async function generateSOA(){
       children:[new Paragraph({children:[new TextRun({text:label, font:"Nunito", size:19, color:"FFFFFF", bold:true})]})]}, _span));
     const rows = [ new TableRow({children:[ new TableCell(Object.assign({borders, width:{size:W,type:WidthType.DXA},
       margins:{top:50,bottom:50,left:110,right:110}, shading:{fill:NAVY_HEX,type:ShadingType.CLEAR},
-      children:[new Paragraph({children:[new TextRun({text:title, font:(window.BRAND&&window.BRAND.headingFont)||"ABC Arizona Flare", size:32, color:"FFFFFF", bold:true})]})] }, _span))] }) ];
+      children:[new Paragraph({children:[new TextRun({text:title, font:(window.BRAND&&window.BRAND.headingFont)||"ABC Arizona Flare", size:19, color:"FFFFFF", bold:true})]})] }, _span))] }) ];
     const seg = (label,txt)=>{
       if(!txt||!txt.trim()) return;
       rows.push(new TableRow({children:[subCell(label)]}));
@@ -7476,12 +7476,12 @@ async function generateSOA(){
       return;
     }
     if(def.type==="prose"){
-      if(def.id!=="rem_intro"){ children.push(def.group==="Front" ? H1(dispTitle(def)) : H2(exportTitle(dispTitle(def)), false, def.group==="Advice"?19:undefined)); }
+      if(def.id!=="rem_intro"){ children.push(def.group==="Front" ? H1(dispTitle(def)) : H2(exportTitle(dispTitle(def)), false, undefined)); }
       (window.v23ProseToBlocks ? v23ProseToBlocks(B[def.id].content.text||"", {H1,H2,P,Bul,SmallItalic,multiP,docx:D}) : multiP(B[def.id].content.text||"")).forEach(p=>children.push(p));
       return;
     }
     if(def.type==="strategy"){
-      children.push(H2(dispTitle(def), (def.id!=="debt") && !_firstAdvHeading, 19));
+      children.push(H2(dispTitle(def), (def.id!=="debt") && !_firstAdvHeading, 32));
       const c = B[def.id].content;
       if(c.intro && c.intro.trim()) introP(c.intro).forEach(p=>children.push(p));
       if(def.id==="debt" && F.loans && F.loans.length && F.debtEquityScoped!==false){
@@ -8969,7 +8969,7 @@ function renderSpecialDocx(def, ch, K){
     });
 
     const children = [];
-    children.push(H2(t.heading, true, 19));
+    children.push(H2(t.heading, true, 32));
     children.push(new Table({
       columnWidths: widths,
       width: {size: totalW, type: WidthType.DXA},
@@ -14278,7 +14278,7 @@ window.v50AllocGroups = function(){
     });
 
     const children=[];
-    children.push(H2(t.heading, true, 19));
+    children.push(H2(t.heading, true, 32));
     children.push(new Table({columnWidths:colW,width:{size:totalW,type:WidthType.DXA},rows:drows}));
 
     const tot=c.insTotals||{};
