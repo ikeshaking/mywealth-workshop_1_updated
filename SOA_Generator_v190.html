@@ -3131,6 +3131,10 @@ function importProjectorJSON(raw){
   // Goals were built before these projector figures were read — re-fill the freedom goal now (idempotent).
   try{ if(Array.isArray(F.goals)) F.goals.forEach(g=>{ if(g && /sufficient nest egg assets/i.test(g.text||'') && typeof window.v180FillFreedomGoal==='function') g.text=window.v180FillFreedomGoal(g.text); }); }catch(_){}
   F.wcExistingSuper=jget(raw,"wc_existingSuper")||"";
+  F.wcOutstandingDebt=jget(raw,"wc_outstandingDebt")||"";      // outstanding loan at the projection horizon
+  F.wcTargetYears=jget(raw,"wc_targetYears")||"";               // projection term (years) for the target header
+  F.clientDOB=jget(raw,"disc_dob1")||jget(raw,"client_dob1")||"";   // for the "age at financial-freedom" super-access line
+  F.partnerDOB=jget(raw,"disc_dob2")||jget(raw,"client_dob2")||"";
   F.wcWeeklyAT=jget(raw,"wc_weeklyATCreated")||""; F.wcWeeklyBT=jget(raw,"wc_weeklyBTCreated")||"";
   F.rates={ propGrowth:jget(raw,"prop_growthRate"), shareGrowth:jget(raw,"wc_shareGrowth")||jget(raw,"shares_capGrowth"),
             homeLoan:jget(raw,"wc_homeLoanRate")||jget(raw,"loans_rate_curr"), invPropRate:jget(raw,"prop_interestRate"),
@@ -4515,7 +4519,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B47 — super replacement table: per-fund existing-fund columns (one current + one in-line-with-risk-profile column per existing super fund), combined current fee spans the per-fund current columns</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B48 — per-fund super replacement columns; Projected Outcomes (Pathway to Wealth) auto-populated from JSON with firm layout + auto row add/remove; insurer comparison premiums to the cent; super-access age, financial-freedom goal & Pathway target auto-filled; removed *Total Cost After Tax row</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -8688,7 +8692,6 @@ function renderSpecialDocx(def, ch, K){
         ["Investment management fee", "$ (%)", "$ (%)", "$ (%)"],
         ["Indirect Cost Ratio", "$ (%)", "$ (%)", "$ (%)"],
         ["Total based on current portfolio", "$ (%)", "$ (%)", "*$ (%)"],
-        ["*Total Cost After Tax: $ (%)"],
         ["Implications of Replacement"],
         ["Changes in benefits", "Lost benefits:\n- Existing insurances with your current fund will be cancelled upon full rollover.\n- You may incur a duplication of costs during the changeover.\n- There may be a change in the degree of risk and returns obtained for that level of risk.\n- There may be a change in the degree of risk regarding the investment options chosen under the new superannuation fund.\nGained benefits:\n- Investment strategy will be aligned with your risk profile, and you will have access to a wide range of wholesale funds.\n- The recommended Hub24 Super allows the CARE Portfolio Strategy to be operated with greater efficiency and increase the likelihood of achieving the strategies long term objective of preserving wealth whilst generating strong performance.\n- The portfolio is rebalanced as required to maintain the agreed asset allocation and risk profile.\n- As you continue making additional superannuation contributions, those contributions will be invested within a professionally managed portfolio that remains aligned with your agreed risk profile and long-term objectives.\n- Exposure to a broad range of asset classes, sectors and investment managers helps reduce concentration risk.\n- Investment changes can be made across the portfolio when market conditions or investment opportunities change, without requiring you to make individual investment decisions.\n- The investment strategy is reviewed as part of your ongoing advice relationship to ensure it remains appropriate as your circumstances change.\n- A non-lapsing nomination will be applied to your account which was otherwise unavailable in your existing fund.\n- You will maintain access to our ongoing advice as you are eligible to fund our ongoing fee from the superannuation environment as requested.", "", ""],
         ["Taxation", "Capital gains tax may apply on rollover. Assets held for greater than 12 months will be eligible for a 1/3 discount on assessable capital gains.", "", ""],
@@ -9362,6 +9365,9 @@ function renderSpecialDocx(def, ch, K){
     };
     (c.rows||[]).forEach((r, ri) => {
       const lbl0 = String((r&&r[0])||'').trim();
+      // [#45] The "*Total Cost After Tax" summary row is not shown in the super replacement table — drop it
+      // (still emit the table note in its place).
+      if (r.length===1 && /total cost after tax/i.test(lbl0)){ pushNoteRow(); return; }
       if (r.length === 1){
         if (isBand2(r[0]) && !/^\*/.test(lbl0)){
           // [#2] Section bands: "Implications of Replacement" = navy (white ABC Arizona); the other section
@@ -9672,6 +9678,19 @@ function renderSpecialDocx(def, ch, K){
     // Strip template pipe-table header artifacts like "| Insurance |"
     s = s.replace(/^\s*\|[^|\n]*\|\s*$/gm, '').replace(/^\s*\n/, '');
 
+    // "Pathway to Wealth - Target in XXX $XXXm" → fill the target year (current year + projection term)
+    // and the projected net wealth in $m from the projector JSON.
+    if (/Pathway to Wealth\s*-\s*Target in/i.test(s)) {
+      try{
+        const yrs=parseInt(String((F&&F.wcTargetYears)||'').replace(/[^0-9]/g,''),10);
+        let yrTxt='XXX';
+        if(isFinite(yrs) && yrs>0){ let base; try{ base=new Date().getFullYear(); }catch(_){ base=null; } yrTxt = base? String(base+yrs) : (yrs+' years'); }
+        const O=(F&&F.outcomes)||{}; const pn=Number(String(O.projectedNet||(F&&F.nestEggTarget)||'').replace(/[$,]/g,''));
+        const mTxt = (isFinite(pn)&&pn>0) ? ('$'+(Math.round(pn/1e5)/10)+'m') : '$XXXm';
+        s = s.replace(/(Pathway to Wealth\s*-\s*Target in\s*)XXX(\s*)\$XXXm/i, (m,p1,p2)=> p1+yrTxt+p2+mTxt);
+      }catch(_){}
+    }
+
     // --- C80: Couples-only acknowledgement ---
     const _isCouple = (typeof hasPartner==='function' && hasPartner());
     if (/\(Couples Only\)/i.test(s)) {
@@ -9822,6 +9841,13 @@ function renderSpecialDocx(def, ch, K){
       var step=String((r&&r[0])||'').trim().toLowerCase();
       var strat=String((r&&r[1])||'').trim().toLowerCase();
       if(step.indexOf('__band__')===0) return true;
+      // Auto-remove a strategy step whose "Additional Wealth Created" is still an unfilled placeholder
+      // (e.g. Super Non Concessional / Loan Excess to Investing when the factfind carries no figure) —
+      // the row only stays once the projector JSON supplies a real value.
+      if(/^(property|super|loan|shares|protection)$/.test(step)){
+        var wc=String((r&&r[2])||'').trim();
+        if(wc==='' || /^-?\$?\s*x+$/i.test(wc)) return false;
+      }
       var on=function(id){ return (typeof blockActive==='function') ? !!blockActive(id) : true; };
       if(/^property$/.test(step)) return on('property')||on('investbond');
       if(/^protection$/.test(step)) return on('insurance');
@@ -9935,12 +9961,41 @@ function renderSpecialDocx(def, ch, K){
     function mc(text,o){o=o||{};return new TableCell({width:{size:o.w||colW,type:WidthType.DXA},columnSpan:o.span||1,shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,borders:BORDER,margins:{top:50,bottom:50,left:110,right:110},children:[new Paragraph({spacing:{before:20,after:20},children:[new TextRun({text:String(text==null?'':text),font:(o.header&&String(o.shade||'').toUpperCase()==='0C2E3F')?window.BRAND.headingFont:"Nunito",size:19,color:o.header?"FFFFFF":"1a1a1a",bold:!!(o.header||o.bold)})]})]});}
     const _colsX=(c&&c.colHeader)||t.columns;
     const rows=[new TableRow({children:_colsX.map(col=>mc(RX(col),{shade:NY,header:true}))})];
+    const isOut = def.dtType==='outcomes';
+    const OUT_LIGHT='5EA6FF', OUT_DARK='2F6FE0';   // Wealth-Created (light blue) / Projected-Net-Wealth (dark blue)
+    // Pathway-to-Wealth (Projected Outcomes) firm layout: a coloured totals band ("Wealth Created" light
+    // blue, "Projected Net Wealth" dark blue) with per-column values, plain white adjustment rows
+    // (Less/Plus) and light-teal strategy step rows — the label spans Step+Strategy when there is no
+    // strategy value.  Every other datatable keeps the generic blue-label / teal-cell styling.
+    const outStyle=(lbl)=>{
+      if(/^Wealth Created/i.test(lbl)) return {shade:OUT_LIGHT,header:true,bold:true};
+      if(/^Projected Net Wealth/i.test(lbl)) return {shade:OUT_DARK,header:true,bold:true};
+      if(/^(Less Outstanding Loan|Less Financial Advice Fees|Plus Existing Super)/i.test(lbl)) return {plain:true};
+      if(/^(Property|Super|Loan|Shares|Protection)$/i.test(lbl)) return {step:true};
+      return null;
+    };
     v150VisibleRows(def, c.rows).forEach((r,ri)=>{
       if(String(r[0]).startsWith("__BAND__")){
         rows.push(new TableRow({children:[mc(RX(String(r[0]).replace("__BAND__","")),{shade:BAND,header:true,span:n})]}));
-      } else {
-        rows.push(new TableRow({children:r.slice(0,n).map((cell,ci)=>ci===0?mc(RX(cell),{shade:LEFT,header:true,bold:true}):mc(RX(cell),{shade:TL}))}));
+        return;
       }
+      const lbl=String(r[0]||'').trim();
+      const st = isOut ? outStyle(lbl) : null;
+      if(st){
+        const cellO = st.plain ? {} : (st.step ? {shade:TL} : {shade:st.shade,header:st.header,bold:st.bold});
+        const spanLabel = String(r[1]||'').trim()==='';
+        const dash=(v)=>{ const s=String(v==null?'':v).trim(); return s===''?'-':s; };
+        const kids=[];
+        if(spanLabel){
+          kids.push(mc(RX(r[0]),Object.assign({},cellO,{span:2,w:colW*2,bold:true})));
+          for(let ci=2; ci<n; ci++) kids.push(mc(RX(dash(r[ci])),cellO));
+        } else {
+          for(let ci=0; ci<n; ci++) kids.push(mc(RX(r[ci]),Object.assign({},cellO,ci===0?{bold:true}:{})));
+        }
+        rows.push(new TableRow({children:kids}));
+        return;
+      }
+      rows.push(new TableRow({children:r.slice(0,n).map((cell,ci)=>ci===0?mc(RX(cell),{shade:LEFT,header:true,bold:true}):mc(RX(cell),{shade:TL}))}));
     });
     const _tbl=new Table({columnWidths:widths,width:{size:totalW,type:WidthType.DXA},rows});
     const _out=[H2(t.heading, def.dtType==='reaching')];
@@ -9957,8 +10012,28 @@ function renderSpecialDocx(def, ch, K){
       try{ const _bd=(typeof BLOCK_DEFS!=='undefined')?BLOCK_DEFS:(window.BLOCK_DEFS||null);
         if(_bd){ const _anx=_bd.filter(x=>x.group==='Annexures' && (typeof B==='undefined'||!B[x.id]||B[x.id].active!==false)); const _i=_anx.findIndex(x=>x.id==='anx_spreadsheets'); if(_i>=0) _anxNum=_i+1; } }catch(_){}
       _prose=_prose.replace(/Annexure\s+XX/gi,'Annexure '+_anxNum);
-      // Resolve the couple-name token and the "will/will not" adviser choice → clean "will reach".
-      _prose=_prose.replace(/<:=\s*getBothNames\(\$client\)\s*:>/gi, String((typeof F==='object'&&(F.fullName||F.clientFirst))||'').trim())
+      // [#38] Resolve the couple-name token to FIRST name(s) only (single → "Damien"; joint → "Damien and
+      // Sarah") — never the surname.
+      const _firstNames=(function(){ try{ if(typeof bothNames==='function'){ const b=String(bothNames()||'').trim(); if(b) return b; } }catch(_){} const cf=String((F&&F.clientFirst)||'').split(/\s+/)[0]||''; const pf=String((F&&F.partnerFirst)||'').split(/\s+/)[0]||''; return (pf?(cf+' and '+pf):cf); })();
+      // [#39] "access your super at age XXX & XXX" — auto-calc each person's age at the financial-freedom
+      // timeframe (current age + projection term) and collapse to a single age for a single client.
+      const _accessAges=(function(){ try{
+        const yrs=parseInt(String((F&&F.wcTargetYears)||'').replace(/[^0-9]/g,''),10)||0;
+        let now; try{ now=new Date().getFullYear(); }catch(_){ now=null; }
+        const ageAt=(dob)=>{ const m=String(dob||'').match(/(\d{4})/); if(!m||!now) return null; const by=parseInt(m[1],10); if(!isFinite(by)) return null; return (now-by)+yrs; };
+        const a1=ageAt(F&&F.clientDOB), a2=ageAt(F&&F.partnerDOB);
+        const parts=[a1,a2].filter(v=>v!=null && isFinite(v));
+        return parts.length?parts.join(' & '):null;
+      }catch(_){ return null; } })();
+      if(_accessAges){ _prose=_prose.replace(/at age\s*XXX(\s*&\s*XXX)?/i, 'at age '+_accessAges); }
+      // [#35] Financial-freedom goal ($ p.a.) + term (years) from the factfind, mirroring the Goals section.
+      (function(){ try{
+        const piN=Number(String((F&&(F.passiveIncome||F.freedomIncome))||'').replace(/[$,]/g,''));
+        if(isFinite(piN)&&piN>0){ const pi='$'+Math.round(piN).toLocaleString('en-AU'); _prose=_prose.replace(/financial freedom goal of \$XXX/gi,'financial freedom goal of '+pi); }
+        const fy=parseInt(String((F&&(F.freedomYears||F.wcTargetYears))||'').replace(/[^0-9]/g,''),10);
+        if(isFinite(fy)&&fy>0){ _prose=_prose.replace(/within XXX years/gi,'within '+fy+' years').replace(/in XXX years(’|')? time/gi,'in '+fy+' years’ time'); }
+      }catch(_){} })();
+      _prose=_prose.replace(/<:=\s*getBothNames\(\$client\)\s*:>/gi, _firstNames)
                    .replace(/will\s*\/\s*will not reach your goals within your desired timeframe\.[\s\S]*?wealth creation opportunities\./i,'will reach your goals within your desired timeframe.')
                    .replace(/<:[^>]*?:>/g,'');
       _prose=RX(_prose);
@@ -9970,7 +10045,11 @@ function renderSpecialDocx(def, ch, K){
       let _placed=false;
       _segs.forEach(sg=>{ if(sg.t==='tbl'){ if(!_placed){ _out.push(_tbl); _placed=true; } return; }
         String(sg.x).split(/\n\s*\n/).forEach(par=>{ let f=String(par).replace(/^[\t ]+/gm,'').replace(/^\*\s*\*\s*$/,'').trim(); if(!f) return;
-          const bm=f.match(/^[-•]\s+(.*)$/s); if(bm){ _out.push(Bul(bm[1].trim())); } else { _out.push(P(f)); } }); });
+          const bm=f.match(/^[-•]\s+(.*)$/s);
+          if(bm){ _out.push(Bul(bm[1].trim())); }
+          // [#37] The "Pathway to Wealth - Target in …" heading is rendered bold.
+          else if(/^Pathway to Wealth\s*-\s*Target in/i.test(f)){ _out.push(new Paragraph({spacing:{before:120,after:60},children:[new TextRun({text:f,font:"Nunito",size:19,bold:true,color:"1a1a1a"})]})); }
+          else { _out.push(P(f)); } }); });
       if(!_placed) _out.push(_tbl);
     }catch(_){ _out.push(_tbl); } })();
     const _ni=(c.noteItems||[]).filter(it=>String(it.text||'').trim()||(it.notes||[]).some(s=>String(s||'').trim()));
@@ -11357,7 +11436,8 @@ function renderSpecialDocx(def, ch, K){
           }
           if(wkBT){ row[3]=Wk(wkBT); row[4]=Wk(Math.round(wkBT*0.7)); } // advice fees are tax-deductible (~30% shield)
         }
-        else if(/Plus Existing Super/i.test(a) && F.wcExistingSuper){ row[1]=M(F.wcExistingSuper); }
+        else if(/Plus Existing Super/i.test(a) && F.wcExistingSuper){ row[2]=M(F.wcExistingSuper); }
+        else if(/Less Outstanding Loan/i.test(a) && F.wcOutstandingDebt!==''){ const ld=numOf(F.wcOutstandingDebt); row[2]=(ld>0?'-':'')+M(ld); }
       });
       // ── auto-calc Wealth Created — sum Additional Wealth (col2), Weekly BT (col3), Weekly AT (col4) ──
       let sumWealth=0, wkBT=0, wkAT=0;
@@ -11377,7 +11457,8 @@ function renderSpecialDocx(def, ch, K){
       const existSuper=F.wcExistingSuper?numOf(F.wcExistingSuper):numOf((orows.find(r=>/Plus Existing Super/i.test(String(r[0])))||[])[2]);
       const projNet = wc - Math.abs(lessLoan) + existSuper;
       let pnw=orows.find(r=>/Projected Net (Worth|Wealth)/i.test(String(r[0]).replace('__BAND__','')));
-      if(!pnw){ pnw=["Projected Net Worth","","","",""]; orows.push(pnw); }
+      if(!pnw){ pnw=["Projected Net Wealth*","","","",""]; orows.push(pnw); }
+      else { pnw[0]=String(pnw[0]).replace(/Projected Net Worth/i,'Projected Net Wealth').replace(/(Projected Net Wealth)(?!\*)/i,'$1*'); }
       if(projNet) pnw[2]=M(projNet);
       // Prefer the projector's persisted bottom-line figures (authoritative) over the row-sum, and
       // carry its weekly net-wealth totals into the Projected Net Wealth row.
@@ -14631,7 +14712,9 @@ window.v50AllocGroups = function(){
         const rec=String((typeof recommendedInsurer==='function'?recommendedInsurer():F.recInsurer)||'').trim();
         if(!rec || rec==='the recommended provider') return null;
         const nm=_firstNameOf('client');
-        const M=n=>{ const v=Number(String(n==null?'':n).replace(/[^0-9.]/g,'')); return (isFinite(v)&&v>0)?('$'+Math.round(v).toLocaleString('en-AU')):'$XXX'; };
+        // [#15-#20] Show the full premium to the cent (matches the OnePath / Risk Researcher quotes,
+        // e.g. $2,127.02 / $2,390.58 / $2,374.97) rather than rounding to whole dollars.
+        const M=n=>{ const v=Number(String(n==null?'':n).replace(/[^0-9.]/g,'')); return (isFinite(v)&&v!==0)?('$'+v.toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2})):'$XXX'; };
         const covOrder=['life','tpd','ip','trauma'], covName={life:'Life',tpd:'TPD',ip:'Income Protection',trauma:'Trauma'};
         const key=r=>(typeof _insCoverKey==='function')?_insCoverKey(r.cover):'';
         const present=covOrder.filter(k=>(F.insurance||[]).some(r=>r&&key(r)===k));
