@@ -1967,7 +1967,7 @@ function buildInsuranceWhyText(){
   persons.forEach(p=>{
     const pr=rows.filter(r=>(r.person||'client')===p);
     const who=joint?nm(p):'';
-    out.push((who?who+", your":'Your')+" recommended levels of cover are based on your needs.");
+    out.push("§"+(who?who+", your":'Your')+" recommended levels of cover are based on your needs.");
     if((F.insTakeover===true || (hasTakeover && F.insTakeover!==false))){
       out.push("Note: "+(who||nm('client'))+", you will be able to maintain your existing level of insurance cover, as Hub24 can match the amounts and terms of your "+fund+" insurance cover. Retaining this default cover ensures you maintain protection without exclusions, and as it is held under automatic acceptance terms no medical evidence is required, reducing the risk of declined applications or new exclusions in the future.");
     }
@@ -4322,7 +4322,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B16 — super why cost + alt dedup</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B17 — insurance why spacing</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -7165,12 +7165,14 @@ async function generateSOA(){
         }
         (sec.bullets||[]).forEach(b => {
           const _bt=String(b||'').trim();
+          // "§" = plain lead paragraph (no bullet); "§**…**" = bold plain paragraph.
+          if(/^§/.test(_bt)){ let body=_bt.replace(/^§\s*/,''); let _bold=false; const _bm=body.match(/^\*\*([\s\S]*)\*\*$/); if(_bm){ body=_bm[1].trim(); _bold=true; } if(body) cellChildren.push(new Paragraph({ alignment:AlignmentType.JUSTIFIED, spacing:{before:120, after:60}, children:[new TextRun({text:body, font:"Nunito", size:18, color:"1a1a1a", bold:_bold})]})); return; }
           // v182: a "Note:" line, or an insurance per-cover label line ("Life:", "TPD:",
           // "Income Protection:", "Trauma:", "Child Cover:"), renders as a standalone paragraph
           // with the label in bold (not a bullet) — matching the firm's insurance "why" layout.
           const _lblM=_bt.match(/^(Note|Life|TPD|Income Protection|Trauma|Child Cover):\s*([\s\S]*)$/i);
           if(_lblM){
-            cellChildren.push(new Paragraph({ alignment:AlignmentType.JUSTIFIED, spacing:{before:80, after:40}, children:[
+            cellChildren.push(new Paragraph({ alignment:AlignmentType.JUSTIFIED, spacing:{before:160, after:40}, children:[
               new TextRun({text:_lblM[1]+': ', font:"Nunito", size:18, color:"1a1a1a", bold:true}),
               new TextRun({text:_lblM[2], font:"Nunito", size:18, color:"1a1a1a"})
             ]}));
