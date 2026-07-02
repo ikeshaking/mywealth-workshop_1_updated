@@ -4131,6 +4131,10 @@ function v145ClassifyText(text){
   if(/scenario compare proposals|compare proposals|gross ongoing costs|wealthsolver/i.test(t)) return 'wealthsolver';
   if(/care genuine edge|genuine edge|care essentials|care philosophy|care (?:core|active|enhanced|reserves)|care portfolio/i.test(t)) return 'care';
   if(/risk researcher|compare differences|core score|supplementary score/i.test(t)) return 'rr';
+  // Industry-super existing-cover calculator quote (TAL-powered — AustralianSuper, QSuper, HESTA,
+  // Hostplus, Cbus, Rest, Aware, UniSuper, etc.). Detected by the calculator's "Total cost summary" /
+  // "Estimated weekly cost" layout + Death/TPD/IP cover lines — used for the "Existing Increased" row.
+  if(/(total cost summary|estimated weekly cost|insurance calculator)/i.test(t) && /death cover/i.test(t) && /(permanent disablement|income protection)/i.test(t)) return 'aussuper';
   if(/militarysuper|account rundown|member benefit|ancillary benefit|data collection|fund name[:\s]/i.test(t) && !/commission|sum insured|risk researcher/i.test(t)) return 'datacol';
   // A NEOS "Plan Projection" carries the commission schedule in a projection table (a
   // "Commission" column), not cover details — route it as a commission report so the
@@ -4192,7 +4196,7 @@ function v145ResolvePerson(text, filename){
   return p;
 }
 window.v145ResolvePerson=v145ResolvePerson;
-function _v145TypeLabel(t){ return {commission:'Commission report',clearview:'ClearView quote',neos:'NEOS quote',quote:'Insurer quote',rr:'Risk Researcher',datacol:'Data collection',care:'CARE portfolio doc',wealthsolver:'WealthSolver comparison',advicereq:'Advice Request',advicereqjson:'Advice Request (JSON)',json:'factfind JSON'}[t]||t; }
+function _v145TypeLabel(t){ return {commission:'Commission report',clearview:'ClearView quote',neos:'NEOS quote',quote:'Insurer quote',rr:'Risk Researcher',aussuper:'AustralianSuper existing quote',datacol:'Data collection',care:'CARE portfolio doc',wealthsolver:'WealthSolver comparison',advicereq:'Advice Request',advicereqjson:'Advice Request (JSON)',json:'factfind JSON'}[t]||t; }
 window._v145JointTypes=['care','wealthsolver','advicereq','advicereqjson','json'];
 async function v145SmartDrop(fileList){
   const files=Array.from(fileList||[]); if(!files.length) return;
@@ -4241,7 +4245,7 @@ function v145ShowSmartModal(items){
   const hp=(typeof hasPartner==='function')&&hasPartner();
   const c1=(typeof pref==='function')?pref('client'):'Client 1';
   const c2=hp?((typeof pref==='function')?pref('partner'):'Client 2'):'';
-  const typeOpts=sel=>[['commission','Commission report'],['clearview','ClearView quote'],['neos','NEOS quote'],['quote','Insurer quote'],['rr','Risk Researcher'],['datacol','Data collection'],['care','CARE portfolio doc'],['wealthsolver','WealthSolver comparison'],['advicereq','Advice Request'],['advicereqjson','Advice Request (JSON)'],['json','factfind JSON'],['skip','Skip this file']]
+  const typeOpts=sel=>[['commission','Commission report'],['clearview','ClearView quote'],['neos','NEOS quote'],['quote','Insurer quote'],['rr','Risk Researcher'],['aussuper','AustralianSuper existing quote'],['datacol','Data collection'],['care','CARE portfolio doc'],['wealthsolver','WealthSolver comparison'],['advicereq','Advice Request'],['advicereqjson','Advice Request (JSON)'],['json','factfind JSON'],['skip','Skip this file']]
     .map(o=>'<option value="'+o[0]+'"'+(sel===o[0]?' selected':'')+'>'+o[1]+'</option>').join('');
   const rows=items.map((it,i)=>
     '<tr data-row="'+i+'" style="border-top:1px solid var(--border-soft)">'+
@@ -4299,6 +4303,7 @@ async function v145ApplySmartMapping(items){
         else if(type==='neos'){ await v141ImportNeos(it.file, person); v147ApplyCommissionFromText(it.text, person); }
         else if(type==='quote'){ parseAndApplyQuote(person, it.text); v147ApplyCommissionFromText(it.text, person); }
         else if(type==='rr'){ parseAndApplyRR(person, it.text); }
+        else if(type==='aussuper'){ parseAustralianSuperExisting(it.text, person); }
         else if(type==='datacol'){
           // Data-collection drop-in (Excel data collection or PDF/DOCX account rundown). Feeds the
           // super parsers, which UPSERT/de-dupe super accounts by fund name — so it supplements the
@@ -4473,6 +4478,31 @@ function parseAndApplyRR(person, txt){
   alert('Read '+r.covers.length+' cover(s) for '+whoName+(r.compare.length?(' and '+r.compare.length+' insurer(s): '+r.compare.map(c=>c.insurer+' $'+c.premium).join(', ')):'')+'.');
 }
 window.parseAndApplyRR=parseAndApplyRR;
+// AustralianSuper (TAL) existing-cover calculator quote → the annual premium for the "Existing Increased"
+// row of the insurer-comparison table. Reads the "Total cost summary" weekly costs (Death / TPD / Income
+// Protection) and annualises them (× 52).
+function parseAustralianSuperExisting(txt, person){
+  const t=String(txt||'').replace(/\s+/g,' ');
+  const wk=(re)=>{ const m=t.match(re); return m?(parseFloat(String(m[1]).replace(/,/g,''))||0):0; };
+  const death=wk(/Death cover\s*\$[\d,]+(?:\.\d+)?\s*\$([\d,]+(?:\.\d+)?)/i);
+  const tpd  =wk(/Permanent Disablement[^$]*\$[\d,]+(?:\.\d+)?\s*\$([\d,]+(?:\.\d+)?)/i);
+  const ip   =wk(/Income Protection cover(?:\s*\(a month\))?\s*\$[\d,]+(?:\.\d+)?\s*\$([\d,]+(?:\.\d+)?)/i);
+  const weekly=death+tpd+ip;
+  if(weekly<=0) return false;
+  F.insExistingPremiumWeekly=Math.round(weekly*100)/100;
+  F.insExistingPremiumAnnual=Math.round(weekly*52*100)/100;   // e.g. $61.23/wk → $3,183.96 p.a.
+  // Identify the industry-super fund from the quote (all TAL-powered calculators share this layout).
+  if(!F.insExistingFund){
+    const map=[[/australian\s*super/i,'Australian Super'],[/qsuper/i,'QSuper'],[/hesta/i,'HESTA'],[/hostplus/i,'Hostplus'],[/\bcbus\b/i,'Cbus'],[/rest\s*super|\brest\b/i,'Rest Super'],[/aware\s*super/i,'Aware Super'],[/unisuper/i,'UniSuper'],[/\bcare\s*super\b/i,'CareSuper'],[/spirit\s*super/i,'Spirit Super']];
+    for(const [re,nm] of map){ if(re.test(t)){ F.insExistingFund=nm; break; } }
+    if(!F.insExistingFund) F.insExistingFund='your existing super fund';
+  }
+  F.insExistingCovers={life:death>0, tpd:tpd>0, ip:ip>0};
+  return true;
+}
+window.parseAustralianSuperExisting=parseAustralianSuperExisting;
+async function handleAusSuperFile(file, person){ if(!file) return; try{ const txt=await extractAnyText(file); if(parseAustralianSuperExisting(txt,person)){ try{if(typeof render==='function')render();}catch(_){} } }catch(e){ alert('Could not read that AustralianSuper quote: '+e.message); } }
+window.handleAusSuperFile=handleAusSuperFile;
 function applyImportedJSON(text){
   const b=document.getElementById("import-banner");
   let raw;
@@ -4523,7 +4553,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B49 — cashflow MCMA card: accountant Warning under Comments, Total Admin Service Fees (Macquarie CMA $NIL), Alternative Strategy + Alternative Products (ANZ/Macquarie); plus B48 per-fund super columns, Pathway to Wealth auto-populate, insurer premiums to the cent, super-access age / freedom-goal auto-fill</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B50 — industry-super existing-cover quote reader (AustralianSuper/QSuper/HESTA/Hostplus/… TAL calculators) feeds the Existing-Increased comparison row; cashflow MCMA card recommendation + outcome now byte-identical to the Summary — Strategies/Outcomes lines; plus B49 cashflow card layout, per-fund super columns, Pathway to Wealth auto-populate, premiums to the cent</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -7463,7 +7493,33 @@ async function generateSOA(){
       new TextRun({text:"This is the full balance of the loan to fund "+(F.debtNote.years||5)+" years worth of the plan, however the corresponding interest repayments presented in the above table are based on the initial investment plus 12 months\u2019 worth of drawdowns (estimated balance: "+money(F.debtNote.drawdown12)+").", font:"Nunito", size:16, color:"555555", italics:true}) ]}) : null;
 
   // strategy card matching the template exactly
+  // [#23/#24/#25] Make the cashflow (MCMA) card byte-identical to the Summary — Strategies / Outcomes lines:
+  // the Recommendation is rebuilt from the contiguous MCMA block in F.summaryStrategies (establish →
+  // transfer + itemised costs → remaining surplus → tax savings), and the Why leads with the exact cashflow
+  // Summary — Outcomes sentence (ongoing surplus + tax savings) before the Additional Benefits.
+  function v211SyncCashflowFromSummary(c){
+    try{
+      if(!c) return;
+      if(!((parseFloat(String(F.mcmaWeekly||'').replace(/[^0-9.]/g,''))||0)>0)) return;   // MCMA variant only
+      const S=(F.summaryStrategies||[]); const norm=x=>String((x&&x.text)||'').trim();
+      const start=S.findIndex(x=>/establish a Macquarie Cash Management Account/i.test(norm(x)));
+      if(start>=0){
+        const cont=t=>/to your MCMA|remaining surplus income|Investment Fund:|Insurance:\s*\$|Advice Fees:|tax savings to your|ongoing plan costs/i.test(t);
+        const lines=[];
+        for(let i=start;i<S.length;i++){ const t=norm(S[i]); if(i>start && !cont(t)) break; if(t) lines.push(t);
+          const notes=(S[i]&&Array.isArray(S[i].notes))?S[i].notes:[]; notes.forEach(n=>{ const nn=String(n||'').trim(); if(nn) lines.push(nn); }); }
+        if(lines.length) c.recommendation=lines.join('\n');
+      }
+      const O=(F.summaryOutcomes||[]).map(x=>String((x&&x.text)||'').trim()).filter(t=>/ongoing surplus and tax savings will provide savings/i.test(t));
+      if(O.length){
+        c.why="In Line with your Goals:\n"+O.join('\n')
+             +"\nAdditional Benefits:\nYou will benefit from a competitive interest rate within the Macquarie Cash Management Account."
+             +"\nThis will assist your Tax Accountant in preparing tax returns and reduce overall compliance costs.";
+      }
+    }catch(_){ }
+  }
   function strategyTable(title, c, blockId){
+    if(blockId==='cashflow'){ v211SyncCashflowFromSummary(c); }
     const W = 9026;
     // The admin card carries a 2-column "Total Admin Service Fees" row (label | $). Declare a 2-column
     // grid so every full-width band/content row spans both columns — otherwise the grid/cell mismatch
@@ -14742,9 +14798,13 @@ window.v50AllocGroups = function(){
         (F.insCompare||[]).forEach(x=>{ if(!x||!x.insurer) return; if(new RegExp(rec.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(x.insurer)) return;
           const altN=Number(String(x.premium||'').replace(/[^0-9.]/g,''))||0; addRow(x.insurer+' (Alternate)', recCovers, altN, (altN&&recN)?M(altN-recN):'$XXX'); });
         const ef=F.insExistingFund||''; if(ef){ const en=String(F.insExistingNotes||'');
-          const ec=covOrder.filter(k=> new RegExp(k==='ip'?'income protection|\\bip\\b':k,'i').test(en));
+          // [#21] Existing-increased cover labels: prefer the parsed AustralianSuper quote's covers, else the notes.
+          const _xc=F.insExistingCovers;
+          const ec=_xc ? ['life','tpd','ip'].filter(k=>_xc[k]) : covOrder.filter(k=> new RegExp(k==='ip'?'income protection|\\bip\\b':k,'i').test(en));
           const existCovers=(ec.length?ec:['life','tpd','ip']).map(k=>covName[k]).join(' / ');
-          addRow(ef+' (Existing Increased)', existCovers, 0, '$XXX'); }
+          // [#21] Existing-increased annual premium from the AustralianSuper (TAL) existing-cover quote.
+          const exN=Number(String(F.insExistingPremiumAnnual||'').replace(/[^0-9.]/g,''))||0;
+          addRow(ef+' (Existing Increased)', existCovers, exN, (exN&&recN)?M(exN-recN):(exN?'-':'$XXX')); }
         return new Table({columnWidths:W3,width:{size:totalW,type:WidthType.DXA},rows:rows});
       }catch(_){ return null; }
     };
