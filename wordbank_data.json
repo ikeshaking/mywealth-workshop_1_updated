@@ -20,7 +20,8 @@
      "risks": [],
      "alts": [],
      "draft": false,
-     "appliesTo": "both"
+     "appliesTo": "both",
+     "realizedBy": "front-matter builders (importProjectorJSON / autoSummary / v31RiskProfileParas) + scope-out chips / refByIncorporation flag — not block-routed"
     },
     {
      "name": "Existing / current client — Introduction & Current Situation opener",
@@ -40,7 +41,8 @@
      "risks": [],
      "alts": [],
      "draft": false,
-     "appliesTo": "both"
+     "appliesTo": "both",
+     "realizedBy": "front-matter builders (importProjectorJSON / autoSummary / v31RiskProfileParas) + scope-out chips / refByIncorporation flag — not block-routed"
     },
     {
      "name": "Risk profile — reviewed & remains appropriate (existing client)",
@@ -59,7 +61,8 @@
      "risks": [],
      "alts": [],
      "draft": false,
-     "appliesTo": "both"
+     "appliesTo": "both",
+     "realizedBy": "front-matter builders (importProjectorJSON / autoSummary / v31RiskProfileParas) + scope-out chips / refByIncorporation flag — not block-routed"
     },
     {
      "name": "Scope — reference by incorporation (existing client)",
@@ -78,7 +81,8 @@
      "risks": [],
      "alts": [],
      "draft": false,
-     "appliesTo": "both"
+     "appliesTo": "both",
+     "realizedBy": "front-matter builders (importProjectorJSON / autoSummary / v31RiskProfileParas) + scope-out chips / refByIncorporation flag — not block-routed"
     },
     {
      "name": "Scope-out — business advice (and other common scope-outs)",
@@ -97,7 +101,8 @@
      "risks": [],
      "alts": [],
      "draft": false,
-     "appliesTo": "both"
+     "appliesTo": "both",
+     "realizedBy": "front-matter builders (importProjectorJSON / autoSummary / v31RiskProfileParas) + scope-out chips / refByIncorporation flag — not block-routed"
     }
    ]
   },
@@ -3317,7 +3322,8 @@
      ],
      "draft": true,
      "note_missing": true,
-     "appliesTo": "both"
+     "appliesTo": "both",
+     "realizedBy": "entities block (v200 → V200_AREA_TO_BLOCK[\"11 · Entities …\"] = \"entities\"); tickable in the advice-request builder"
     },
     {
      "name": "Family / discretionary trust (as advice entity)",
@@ -3342,7 +3348,8 @@
       "Hold investments personally — discounted where the trust's flexibility and protection better suit the family."
      ],
      "draft": true,
-     "appliesTo": "both"
+     "appliesTo": "both",
+     "realizedBy": "entities block (v200 → V200_AREA_TO_BLOCK[\"11 · Entities …\"] = \"entities\"); tickable in the advice-request builder"
     },
     {
      "name": "SMSF as advice entity",
@@ -3361,7 +3368,8 @@
      "risks": [],
      "alts": [],
      "draft": false,
-     "appliesTo": "both"
+     "appliesTo": "both",
+     "realizedBy": "entities block (v200 → V200_AREA_TO_BLOCK[\"11 · Entities …\"] = \"entities\"); tickable in the advice-request builder"
     }
    ]
   },

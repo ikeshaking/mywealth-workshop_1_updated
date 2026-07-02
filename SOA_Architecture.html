@@ -237,11 +237,13 @@
       <div class="area"><div><div class="n">8 · Cashflow Management</div><div class="g">MCMA hub, surplus/tax direction, buffer, budget</div></div><div class="cnt">8</div></div>
       <div class="area"><div><div class="n">9 · Estate Planning</div><div class="g">Will/POA, binding nomination, testamentary trust, Age Pension</div></div><div class="cnt">5</div></div>
       <div class="area"><div><div class="n">10 · Administration</div><div class="g">My Wealth Portal, platform establishment</div></div><div class="cnt">2</div></div>
-      <div class="area"><div><div class="n">11 · Entities (company/trust/SMSF)</div><div class="g">Draft — rare across sampled SOAs</div></div><div class="cnt">3</div></div>
+      <div class="area"><div><div class="n">11 · Entities (company/trust/SMSF)</div><div class="g">Wired (B58) → <code>entities</code> block; bucket company &amp; family trust tickable</div></div><div class="cnt">3</div></div>
       <div class="area"><div><div class="n">CARE · Philosophy justification</div><div class="g">Tickable reasons CARE is recommended (super and/or investment)</div></div><div class="cnt">9</div></div>
     </div>
-    <div class="callout gap">
-      <p><b>Mapping gap — areas 0 &amp; 11.</b> <code>V200_AREA_TO_BLOCK</code> (L16276) routes only areas <b>1–10</b>. The <span class="chip">0 · Client framing</span> and <span class="chip">11 · Entities</span> scenarios have no target block, so on the advice-request JSON path their wording is <b>silently skipped</b> — the 8 scenarios there never render from a tick. They surface today only via the fact-find / free-text paths. <b>Recommended:</b> map area 0 → the opening/scope block and area 11 → a company-trust block (or fold entities into super/investment), so those ticks emit.</p>
+    <div class="callout">
+      <p><b>Mapping gap — areas 0 &amp; 11 — <span style="color:var(--wired)">resolved (B58)</span>.</b> <code>V200_AREA_TO_BLOCK</code> (L16276) previously routed only areas <b>1–10</b>. Now:</p>
+      <p><b>Area 11 · Entities</b> is a first-class advice block: a new <code>entities</code> strategy block (<code>Entity Structuring Strategy</code>) is registered in <code>BLOCK_DEFS</code> + <code>STRAT_LIB</code> and routed via <code>V200_AREA_TO_BLOCK["11 · Entities …"] = "entities"</code>. The builder now exposes the <em>bucket-company</em> and <em>family-trust</em> scenarios as tickable strategies, so an entity tick renders a full card (recommendation / why / risks) end-to-end.</p>
+      <p><b>Area 0 · Client framing</b> is intentionally <em>not</em> block-routed: its wording is already produced — and better — by the front-matter builders (<code>importProjectorJSON</code> / <code>autoSummary</code> / <code>v31RiskProfileParas</code>), the scope-out chips (<code>so_business</code>) and the <code>refByIncorporation</code> flag. Routing it into blocks would duplicate or clobber that fact-find-driven content, so those area-0 rows are documented as reference templates realized by existing machinery.</p>
     </div>
     <p style="font-size:13.5px;color:var(--ink-soft);margin-top:14px">Source: <code>wordbank_data.json</code> (the human-readable master) ⇄ <code>V200_WORD_BANK</code> (the runtime object the generator reads).</p>
   </div>
