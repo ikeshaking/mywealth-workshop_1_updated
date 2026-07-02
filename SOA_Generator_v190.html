@@ -4322,7 +4322,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B20 — insurance product template wording</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B21 — remuneration fees + admin table grid</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -7140,12 +7140,17 @@ async function generateSOA(){
   // strategy card matching the template exactly
   function strategyTable(title, c, blockId){
     const W = 9026;
-    const subCell = (label)=> new TableCell({borders, width:{size:W,type:WidthType.DXA},
+    // The admin card carries a 2-column "Total Admin Service Fees" row (label | $). Declare a 2-column
+    // grid so every full-width band/content row spans both columns — otherwise the grid/cell mismatch
+    // stops the table filling the page. Other strategy cards stay single-column.
+    const NG = (blockId==='admin') ? 2 : 1;
+    const _span = NG>1 ? {columnSpan:NG} : {};
+    const subCell = (label)=> new TableCell(Object.assign({borders, width:{size:W,type:WidthType.DXA},
       margins:{top:50,bottom:50,left:110,right:110}, shading:{fill:SUBLABEL_HEX,type:ShadingType.CLEAR},
-      children:[new Paragraph({children:[new TextRun({text:label, font:"Nunito", size:19, color:"FFFFFF", bold:true})]})]});
-    const rows = [ new TableRow({children:[ new TableCell({borders, width:{size:W,type:WidthType.DXA},
+      children:[new Paragraph({children:[new TextRun({text:label, font:"Nunito", size:19, color:"FFFFFF", bold:true})]})]}, _span));
+    const rows = [ new TableRow({children:[ new TableCell(Object.assign({borders, width:{size:W,type:WidthType.DXA},
       margins:{top:50,bottom:50,left:110,right:110}, shading:{fill:NAVY_HEX,type:ShadingType.CLEAR},
-      children:[new Paragraph({children:[new TextRun({text:title, font:"Nunito", size:20, color:"FFFFFF", bold:true})]})] })] }) ];
+      children:[new Paragraph({children:[new TextRun({text:title, font:"Nunito", size:20, color:"FFFFFF", bold:true})]})] }, _span))] }) ];
     const seg = (label,txt)=>{
       if(!txt||!txt.trim()) return;
       rows.push(new TableRow({children:[subCell(label)]}));
@@ -7191,10 +7196,10 @@ async function generateSOA(){
       if (cellChildren.length === 0) {
         cellChildren.push(new Paragraph({children:[new TextRun({text:'', font:"Nunito", size:18})]}));
       }
-      rows.push(new TableRow({children:[ new TableCell({borders, width:{size:W,type:WidthType.DXA},
+      rows.push(new TableRow({children:[ new TableCell(Object.assign({borders, width:{size:W,type:WidthType.DXA},
         margins:{top:60,bottom:60,left:110,right:110},
         children: cellChildren
-      })]}));
+      }, _span))]}));
     };
     // Lift the "Annexure — More information about this strategy is contained in Annexure X" line out of
     // the Alternatives field into its own banded Annexure row (matches the firm's strategy-table layout).
@@ -7220,7 +7225,8 @@ async function generateSOA(){
     seg("Alternative Products", c.altProducts);
     seg("Annexure", c.annexure);
     if(rows.length===1) return [];
-    return [ new Table({width:{size:W,type:WidthType.DXA}, columnWidths:[W], rows}), new Paragraph({spacing:{after:120},children:[]}) ];
+    const _grid = (NG>1) ? [Math.round(W*0.45), W-Math.round(W*0.45)] : [W];
+    return [ new Table({width:{size:W,type:WidthType.DXA}, columnWidths:_grid, rows}), new Paragraph({spacing:{after:120},children:[]}) ];
   }
 
   // ═══════ BUILD CHILDREN ═══════
@@ -16034,6 +16040,10 @@ function v200ApplyAdviceRequest(ar){
     (ar.scopeIn||[]).forEach(area=>{ const bid=V200_AREA_TO_BLOCK[area]; if(bid && typeof B!=='undefined' && B[bid] && !B[bid].active){ if(typeof setBlockActive==='function') setBlockActive(bid,true); else B[bid].active=true; } });
     try{ v200ApplyRisk(ar); }catch(e){ try{console.error('v200 risk',e);}catch(_){ } }
     try{ v200ApplyFees(ar); }catch(e){ try{console.error('v200 fees',e);}catch(_){ } }
+    // Rebuild the Remuneration fee tables now the advice-request fees are captured — otherwise the
+    // "Our Advice" / "Ongoing Services" tables stay as blank "$" placeholders (the earlier auto-fill
+    // ran on fact-find import, before these fees existed).
+    try{ if(typeof fillRemunerationTables==='function') fillRemunerationTables(); }catch(e){ try{console.error('v200 rem tables',e);}catch(_){ } }
     try{ v200ApplyProducts(ar); }catch(e){ try{console.error('v200 products',e);}catch(_){ } }
     try{ v200StripSeamless(); }catch(e){ try{console.error('v200 seamless',e);}catch(_){ } }
     try{ v200DetectApproach(ar); }catch(e){ try{console.error('v200 approach',e);}catch(_){ } }
