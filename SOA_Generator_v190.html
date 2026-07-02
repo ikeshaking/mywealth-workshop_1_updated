@@ -4515,7 +4515,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B43 — testamentary-trust wording gated on dependants; datatable navy header → ABC Arizona</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B44 — projection section prose (Reaching Your Targets + Projected Outcomes) now renders around the datatable with auto annexure number</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -9901,7 +9901,37 @@ function renderSpecialDocx(def, ch, K){
         rows.push(new TableRow({children:r.slice(0,n).map((cell,ci)=>ci===0?mc(RX(cell),{shade:LEFT,header:true,bold:true}):mc(RX(cell),{shade:TL}))}));
       }
     });
-    const _out=[H2(t.heading, def.dtType==='reaching'), new Table({columnWidths:widths,width:{size:totalW,type:WidthType.DXA},rows})];
+    const _tbl=new Table({columnWidths:widths,width:{size:totalW,type:WidthType.DXA},rows});
+    const _out=[H2(t.heading, def.dtType==='reaching')];
+    // [#1] Render the projection-section prose (PROSE_LIB) around the auto-filled datatable — intro
+    // paragraphs before, closing outcome + super-access wording after — with the template's embedded
+    // markdown table replaced by the live content.rows table, and the annexure number auto-computed.
+    (function(){ try{
+      const _pk = def.id==='reaching' ? 'reaching_targets' : (def.id==='outcomes' ? 'projected_outcomes' : null);
+      let _prose = (_pk && typeof PROSE_LIB!=='undefined' && PROSE_LIB[_pk]) ? String(PROSE_LIB[_pk].text||'') : '';
+      if(!_prose.trim()){ _out.push(_tbl); return; }
+      // Auto annexure number for "Annexure XX – Pathway Projector Spreadsheets" (Pathway Projector
+      // Spreadsheets is the 7th standard annexure; compute from BLOCK_DEFS when reachable, else fall back).
+      let _anxNum=7;
+      try{ const _bd=(typeof BLOCK_DEFS!=='undefined')?BLOCK_DEFS:(window.BLOCK_DEFS||null);
+        if(_bd){ const _anx=_bd.filter(x=>x.group==='Annexures' && (typeof B==='undefined'||!B[x.id]||B[x.id].active!==false)); const _i=_anx.findIndex(x=>x.id==='anx_spreadsheets'); if(_i>=0) _anxNum=_i+1; } }catch(_){}
+      _prose=_prose.replace(/Annexure\s+XX/gi,'Annexure '+_anxNum);
+      // Resolve the couple-name token and the "will/will not" adviser choice → clean "will reach".
+      _prose=_prose.replace(/<:=\s*getBothNames\(\$client\)\s*:>/gi, String((typeof F==='object'&&(F.fullName||F.clientFirst))||'').trim())
+                   .replace(/will\s*\/\s*will not reach your goals within your desired timeframe\.[\s\S]*?wealth creation opportunities\./i,'will reach your goals within your desired timeframe.')
+                   .replace(/<:[^>]*?:>/g,'');
+      _prose=RX(_prose);
+      const _lines=_prose.split('\n'); const _segs=[]; let _buf=[]; let _inT=false;
+      _lines.forEach(l=>{ const isRow=/^\s*\|.*\|\s*$/.test(l);
+        if(isRow){ if(!_inT){ if(_buf.join('\n').trim()) _segs.push({t:'p',x:_buf.join('\n')}); _buf=[]; _inT=true; _segs.push({t:'tbl'}); } }
+        else { _inT=false; _buf.push(l); } });
+      if(_buf.join('\n').trim()) _segs.push({t:'p',x:_buf.join('\n')});
+      let _placed=false;
+      _segs.forEach(sg=>{ if(sg.t==='tbl'){ if(!_placed){ _out.push(_tbl); _placed=true; } return; }
+        String(sg.x).split(/\n\s*\n/).forEach(par=>{ let f=String(par).replace(/^[\t ]+/gm,'').replace(/^\*\s*\*\s*$/,'').trim(); if(!f) return;
+          const bm=f.match(/^[-•]\s+(.*)$/s); if(bm){ _out.push(Bul(bm[1].trim())); } else { _out.push(P(f)); } }); });
+      if(!_placed) _out.push(_tbl);
+    }catch(_){ _out.push(_tbl); } })();
     const _ni=(c.noteItems||[]).filter(it=>String(it.text||'').trim()||(it.notes||[]).some(s=>String(s||'').trim()));
     if(_ni.length){
       const SubBul=(txt)=>new Paragraph({numbering:{reference:"bullets",level:1},spacing:{after:40,line:276,lineRule:"auto"},children:[new TextRun({text:String(txt),font:"Nunito",size:20,color:"1a1a1a"})]});
