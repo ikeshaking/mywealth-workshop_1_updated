@@ -9184,6 +9184,35 @@ function renderSpecialDocx(def, ch, K){
   // helper here that the export can call. Both halves of the patch must
   // line up; if the string patch fails, this JS does nothing.
 
+  // v212 — SECTION-AWARE CARE/Vanguard card-field strip, applied at docx-build time on the fill()-resolved
+  // text. v51PostProcess (inside fill) strips (CARE) markers but is GLOBAL — it can't tell an
+  // investment=CARE / super=Vanguard SOA (e.g. Jana Goelz) apart. Here the block id is known, so the super
+  // card can drop CARE-only content while the CARE investment card keeps it.
+  window.v212StripCardField = function(bid, field, text){
+    try{
+      let s=String(text==null?'':text); if(!s) return s;
+      if(/^investplan/.test(bid)){
+        const initN=Number(String(F.planInitial||F.investInitial||'').replace(/[^0-9.]/g,''))||0;
+        const cc=(typeof window.v137CareCompare==='function')?window.v137CareCompare():{isEss:true};
+        if(initN>=20000) s=s.split('\n').filter(ln=>!/requires an initial minimum investment of \$?\s*20,?000/i.test(ln)).join('\n');   // [#22]
+        if(!cc.isEss)    s=s.split('\n').filter(ln=>!/\(Keep for Essentials\.\s*Delete if Full CARE\)/i.test(ln)).join('\n');           // [#21]
+      }
+      if(/^super/.test(bid)){
+        const careSuperOn=(F.careSuperAlloc&&F.careSuperAlloc.length)||(Array.isArray(F.careAccounts)&&F.careAccounts.some(a=>a&&a.type==='super'));
+        const superVanguard=!careSuperOn && ( /vanguard|index/i.test(String(F.superApproach||''))
+          || (Array.isArray(F.superAccounts)&&F.superAccounts.length>0 && F.superAccounts.every(a=>/^retain/i.test(String(a.action||'')))) );
+        if(superVanguard){   // [#28/#30/#32/#35] a Vanguard/retained super reads as an index strategy
+          s=s.split('\n').filter(ln=>!/\(CARE[^)]*\)/i.test(ln)).join('\n');
+          s=s.replace(/[^\n]*franking credits from the Australian Equities[^\n]*\n?/ig,'')
+             .replace(/[^\n]*GPS CARE Investment Committee[^\n]*\n?/ig,'')
+             .replace(/[^\n]*reduced Reserves allocation[\s\S]*?short term\.[^\n]*\n?/i,'')
+             .replace(/[^\n]*passive index fund approach instead of an actively managed approach like CARE[\s\S]*?performance\.[^\n]*\n?/i,'');
+        }
+      }
+      return s.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+    }catch(_){ return text; }
+  };
+
   // Helper exposed for the docx export
   window.v13BuildProductTable = function(def, helpers){
     const { Table, TableRow, TableCell, Paragraph, TextRun, WidthType, ShadingType, BorderStyle, AlignmentType } = helpers.docx;
@@ -9302,7 +9331,7 @@ function renderSpecialDocx(def, ch, K){
       })]}));
       // content row — bullets / sub-heads
       const inner = [];
-      const _fcf=(typeof fill==='function')?fill(c[f]):c[f];
+      const _fcf=window.v212StripCardField(def.id, f, (typeof fill==='function')?fill(c[f]):c[f]);
       if(/(^|\n)[\t§]/.test(String(_fcf||''))){
         String(_fcf).split('\n').forEach(ln=>{
           if(/^\s*§/.test(ln)){ let body=ln.replace(/^\s*§\s*/,'').trim(); let _bold=false; const _bm=body.match(/^\*\*([\s\S]*)\*\*$/); if(_bm){ body=_bm[1].trim(); _bold=true; } if(body) inner.push(new Paragraph({spacing:{before:160,after:80}, children:apRuns(body,{size:19,bold:_bold})})); return; }
