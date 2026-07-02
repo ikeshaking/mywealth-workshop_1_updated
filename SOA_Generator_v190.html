@@ -1910,14 +1910,18 @@ function buildInsuranceRecText(){
     const pr=rows.filter(r=>(r.person||'client')===p);
     const lead=joint?(nm(p)+", we"):'We';
     const fund=(p==='partner'?F.partnerSuperFund:F.superFund)||'your existing super fund';
+    // Per-person provider: a couple can have different insurers (Jessica → Zurich Active Health Events,
+    // Adam → NEOS). Fall back to the global recommendedInsurer() when a person-specific one isn't set.
+    const _prov=((p==='partner'?(F.recInsurerPartner||F.recInsurer):F.recInsurer)||provider);
+    const _hasProv=_prov && _prov!=='the recommended provider';
     const groups={}; pr.forEach(r=>{ const k=scen(r); (groups[k]||(groups[k]=[])).push(r); });
     ['new','replace','transfer','topup','retain'].forEach(k=>{ const g=groups[k]; if(!g||!g.length) return;
       let leadIn;
       if(k==='transfer') leadIn=lead+" recommend you transfer your existing "+fund+" insurance cover to your new fund and therefore remain insured for the following amounts:";
-      else if(k==='topup') leadIn=lead+" recommend you top up your insurance cover through "+provider+" and therefore be insured for the following amounts:";
+      else if(k==='topup') leadIn=lead+" recommend you top up your insurance cover through "+_prov+" and therefore be insured for the following amounts:";
       else if(k==='retain') leadIn=lead+" recommend you retain your existing insurance cover held through "+fund+" and remain insured for the following amounts:";
-      else if(k==='replace') leadIn=lead+" recommend you cancel your existing insurance"+(hasProv?(" and replace it with new cover through "+provider):" and replace it with new cover")+", and therefore be insured for the following amounts:";
-      else leadIn=lead+(hasProv?(" recommend you take out new insurance cover through "+provider+" and therefore be insured for the following amounts:"):" recommend you take out new insurance cover and therefore be insured for the following amounts:");
+      else if(k==='replace') leadIn=lead+" recommend you cancel your existing insurance"+(_hasProv?(" and replace it with new cover through "+_prov):" and replace it with new cover")+", and therefore be insured for the following amounts:";
+      else leadIn=lead+(_hasProv?(" recommend you take out new insurance cover through "+_prov+" and therefore be insured for the following amounts:"):" recommend you take out new insurance cover and therefore be insured for the following amounts:");
       out.push(leadIn);
       g.forEach(r=>out.push("\t"+fmt(r)));   // \t => sub-dot-point under the lead-in
     });
@@ -3284,7 +3288,11 @@ function importProjectorJSON(raw){
   // the property VALUE) and the current monthly repayment.
   const homeBal=_ln(jget(raw,"loans_mort_prop")||jget(raw,"disc_homeDebt")||jget(raw,"loans_mort_curr"));
   const homeRepay=_ln(jget(raw,"loans_monthly_curr_eff")||jget(raw,"loans_mth_curr_edit"));
-  if(homeBal) loans.push({limit:String(homeBal),type:"Personal",purpose:"Refinance existing home loan",
+  // Refinance loan limit = 80% LVR of the home VALUE (the equity ceiling you can draw to), NOT the
+  // current balance or the raw value. Home value from disc_homeValue (fall back to loans_home_*).
+  const _homeValRef=_ln(jget(raw,"disc_homeValue")||jget(raw,"loans_home_prop")||jget(raw,"loans_home_curr"));
+  const _refiLimit=_homeValRef?Math.round(_homeValRef*0.80):homeBal;
+  if(homeBal) loans.push({limit:String(_refiLimit||homeBal),type:"Personal",purpose:"Refinance existing home loan",
       repayments:(homeRepay?(money(homeRepay)+" per month"):"")+"\nPrincipal & Interest."});
   const pp=jget(raw,"prop_purchasePrice"); if(pp&&B.property.active) loans.push({limit:String(Math.round(Number(pp)*0.8)),type:"Investment \u2013 Interest Only",purpose:"Purchase of investment property",repayments:ratePr?`Interest only at ${ratePr}% p.a.`:""});
   // Term Loan (Instalment Gearing) for a debt-recycling / invest-in-shares strategy. Amount =
@@ -4487,7 +4495,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B39 — insurer comparison table (recommended/alternate/existing) in insurance products</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B40 — Borgh joint SOA: per-client super rollover/product, per-owner insurer, TPD own-occ, gearing debt wording (14 risks + alternatives), 80% loan limit</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -5275,6 +5283,8 @@ function autoSyncSummary(){
     if(/surplus|cash ?flow|tax refund/.test(t)) return 7;
     // Insurance OUTCOME ("affordable cover that meets your needs…") sits after the surplus/tax-savings line.
     if(/affordable (?:additional )?cover|cover that meets your needs|protects your family and lifestyle/.test(t)) return 8;
+    // Triggered insurance-benefit sub-points sort with (immediately after) the affordable-cover line.
+    if(/pre-assessment|loadings\/exclusions|balances affordability|insurability|occupational rating|claims requirement|simplifies (?:policy )?management|preserves valuable|duplicated? cover|certainty and financial security|ownership has been structured/i.test(t)) return 8;
     if(/estate|will\b|power of attorney|beneficiar/.test(t)) return 10;
     if(/portal|administration|portfolio admin/.test(t)) return 9;
     return 5.5;
@@ -5573,6 +5583,9 @@ window.v194BuildDebtWording = function(){
     const _n=v=>{ const x=Number(String(v==null?'':v).replace(/[^0-9.]/g,'')); return isFinite(x)?x:0; };
     const M=v=>{ const n=_n(v); return n?('$'+n.toLocaleString('en-AU',{maximumFractionDigits:0})):''; };
     const uniq=arr=>{ const s=new Set(),o=[]; arr.forEach(x=>{ const k=String(x||'').trim(); if(k&&!s.has(k)){s.add(k);o.push(x);} }); return o; };
+    // [#22] For a GEARING SOA the recommendations read best gearing-first: refinance/equity → Term Loan →
+    // offset → surplus → tax. Order the modules accordingly (offset/paydown fall after the gearing ones).
+    if(gearing){ const _ord={equity_release:0, term_loan:1, ip_deposit:2}; act.sort((a,b)=>((_ord[a.id]!=null?_ord[a.id]:5)-(_ord[b.id]!=null?_ord[b.id]:5))); }
     // ── Recommendation: synced strategy lines + the standard surplus/tax direction (always) ──
     const rec=act.map(m=>window.v192StratLine(m)).filter(Boolean);
     const _remW=(F.remainingSurplusWeekly!=null&&F.remainingSurplusWeekly!=='')?_n(F.remainingSurplusWeekly):Math.max(0,_n(F.surplusWeekly)-_n(F.mcmaWeekly));
@@ -5597,23 +5610,48 @@ window.v194BuildDebtWording = function(){
     why.push("On repayment of your home loan, redirecting your mortgage repayments to be invested will generate additional wealth estimated at "+_aw+" over the last year of your plan.");
     why.push("Additional Benefits:");
     why.push("Interest on investment debt provides ongoing tax deductions, reducing the amount of interest you pay.");
-    if(gearing) why.push("Debt recycling helps to establish an investment portfolio sooner and allows a portfolio to realise long term growth.");
+    if(gearing){
+      why.push("Debt recycling helps to establish an investment portfolio sooner and allows a portfolio to realise long term growth.");
+      // [#14] Loan split into deductible/non-deductible, sitting under the redirect-repayments point.
+      why.push("Your home loan will be split into a deductible (investment) portion and a non-deductible (personal) portion, allowing your repayments to be redirected to pay down the non-deductible portion first.");
+    }
     B.debt.content.why=why.join('\n');
-    // ── Risks: module risks + the standard always-on risks + gearing risks (only when gearing) ──
-    let risks=act.reduce((a,m)=>a.concat(m.risk||[]),[]);
-    risks=risks.concat([
-      "There may be transaction costs involved in establishing the strategy;",
-      "If the loan interest rate is variable, an increase in interest rates will result in an increase in interest repayments, which may place some strain on your cash flow;"
-    ]);
-    if(gearing) risks=risks.concat([
-      "As you are gearing into investments, if those investments fall in value you might receive extra tax deductions over time, but you might actually lose funds;",
-      "Given the high risk nature of a gearing strategy, I recommend that you review the suitability of your leveraged portfolio on at least an annual basis;",
-      "A geared investment requires a long term investment horizon. Investment returns can be volatile, and in order to withstand short term fluctuations, I recommend a minimum 5 year investment time horizon;"
-    ]);
+    // ── Risks: for a GEARING SOA use the firm's full 14-item gearing risk list verbatim [#25/#26];
+    //    otherwise module risks + the standard always-on debt risks. ──
+    let risks;
+    if(gearing){
+      risks=[
+        "Gearing can magnify losses in your investment portfolio as well as gains;",
+        "You remain liable for the principal borrowed, irrespective of the performance of your investment portfolio;",
+        "There is the risk of the lender having recourse to the home used as security, and therefore the risk of losing the home;",
+        "If interest rates increase your interest payments will increase accordingly, requiring additional cash.  Gearing increases the risk attached to a portfolio, as gearing will magnify both gains and losses;",
+        "Gearing is inappropriate for people without satisfactory cash flow/income to meet borrowing costs;",
+        "While gearing enhances your potential for bigger gains, it can also expose you to a greater risk in a falling market;",
+        "There may be transaction costs involved in establishing the strategy;",
+        "Assets purchased with borrowed funds may actually fall in value.  This means that although you might receive extra tax deductions over time, you might actually lose funds;",
+        "The return on the investment (dividends, rent etc.) may decrease or temporarily cease, which may place some strain on your cash flow;",
+        "If the loan interest rate is variable, an increase in interest rates will result in an increase in interest repayments, which may place some strain on your cash flow;",
+        "Due to the high risk nature of a gearing strategy, I recommend that you review the suitability of your leveraged portfolio on at least an annual basis;",
+        "A gearing strategy requires a long term investment horizon.  Investment returns can be volatile, and in order to withstand short term fluctuations, I recommend a minimum 5 year investment time horizon;",
+        "It is important to structure the assets within your investment portfolio such that the potential for growth and income outweighs the cost of borrowing.  This usually implies investment into growth assets such as equities and property.",
+        "Structuring your loan as interest only means you will not be paying down the principal portion of your loan when making repayments."
+      ];
+    }else{
+      risks=act.reduce((a,m)=>a.concat(m.risk||[]),[]);
+      risks=risks.concat([
+        "There may be transaction costs involved in establishing the strategy;",
+        "If the loan interest rate is variable, an increase in interest rates will result in an increase in interest repayments, which may place some strain on your cash flow;"
+      ]);
+    }
     risks=uniq(risks); if(risks.length) B.debt.content.risks=risks.join('\n');
     // ── Alternatives: module alternatives + the standard always-on alternatives ──
     const _hlr=(function(){ const n=parseFloat(String(F.homeLoanRate||(F.rates&&F.rates.homeLoan)||'').replace(/[^0-9.]/g,'')); return isFinite(n)?(n.toFixed(2)+'%'):'X.XX%'; })();
     let alts=act.reduce((a,m)=>a.concat(m.alt||[]),[]);
+    // [#28/#29] Gearing SOA leads with the two lending-restructure alternatives the firm always documents.
+    if(gearing) alts=alts.concat([
+      "Retaining your existing lending product and structure. I have discounted this strategy as your existing lending arrangements do not allow for the clear separation of personal and investment debt. You would also be unable to take advantage of a debt recycling strategy to reduce your “bad” non tax deductible debt within your existing loan account and pay your home off as soon as possible.",
+      "We considered restructuring all of your lending to interest only loans and making additional salary sacrifice / non concessional / further contributions to super for the difference you were paying on your home loan principal. I have discounted this strategy because home ownership is a higher priority for you than growing your superannuation at this time and you wish to take advantage of a debt recycling strategy to reduce your “bad” non tax deductible debt within your existing loan account and pay your home off as soon as possible."
+    ]);
     alts=alts.concat([
       "Direct your surplus cashflow to a high interest savings account or a term deposit account. I discounted this strategy as you will yield a high effective after tax return by directing your surplus to your offset account (estimated to be approximately "+_hlr+" based on your current home loan interest rate). This also allows you to reduce your bad debt at a faster rate.",
       "We considered making additional home loan repayments instead of utilising your existing offset account, however we discounted this strategy as your offset account will provide you with flexible access to your funds, should you need to draw upon these at any point."
@@ -5628,6 +5666,12 @@ window.v194BuildDebtWording = function(){
       const _rx=/debt recycl|equity[\s\S]{0,40}security|sub[- ]?account|loan limit|restructur|re-?borrow|tax deductible investment debt|non[\s-]*tax deductible|separate investment loan|investment loan|term loan|share loan/i;
       if(B.debt.content.details && _rx.test(B.debt.content.details)) B.debt.content.details='';
       if(B.debt.content.intro && _rx.test(B.debt.content.intro)) B.debt.content.intro='';
+    } else if(B.debt.content.intro){
+      // [#23] Drop the "Many people wait until their home loan is repaid…" opening from the debt-recycling
+      // intro (the paraplanner flagged it), keeping the three-step debt-recycling narrative that follows.
+      B.debt.content.intro=String(B.debt.content.intro)
+        .replace(/^\s*Many people wait until their home loan is repaid[^]*?limiting the growth potential of their investments\.\s*/i,'')
+        .replace(/^\s*A strategy that lets you invest now/i,'Debt recycling is a strategy that lets you invest now');
     }
   }catch(_){}
 };
@@ -5688,34 +5732,46 @@ function collectSummarySuggestions(){
         // Prefer the most specific correct treatment: a retain-minimum (ADF-style partial) outranks a
         // plain close/rollover, so a stale "close 100%" never overrides an explicit partial rollover.
         const _rank=a=>{ if(_retNum(a.retainMin)>0) return 4; const x=String(a.action||'').toLowerCase(); return x.indexOf('partial')>=0?3:(x.indexOf('close')>=0?2:1); };
-        const _canonFund=f=>{ let s=String(f||'').toLowerCase(); if(/\badf\b|australian defence force|defence force/.test(s)) return 'adfsuper'; return s.replace(/\(.*?\)/g,'').replace(/[^a-z0-9]/g,''); };
-        const _byFund={};
-        _sa.forEach(a=>{ const k=_canonFund(a.fund);
-          if(!_byFund[k] || _rank(a)>_rank(_byFund[k])) _byFund[k]=a; });
-        // [9] Collect the full-rollover ("close & transfer 100%") funds so they merge into a single
-        // line ("close your existing A and B funds and transfer 100% …") rather than one line each.
-        const _closeFunds=[];
-        Object.keys(_byFund).forEach(k=>{ const a=_byFund[k]; const f=_fundLabel(a); const act=String(a.action||'').toLowerCase();
-          const retain=_retNum(a.retainMin);
-          if(retain>0){
-            // Retain-a-minimum + partial rollover (e.g. ADF Super / funds kept open for insurance or contributions).
-            const _emp = a.keepEmployer===true || /\badf\b|defence force/i.test(f);
-            sug.push(`We recommend you retain the minimum required balance (${money(retain)}) in your existing ${f} (in line with your risk profile)${_emp?' in order to continue receiving your employer contributions':''} and transfer the remaining balance to a new fund that has been customised for your needs.`);
-            sug.push(`We recommend you complete annual partial rollovers to your new fund for amounts in excess of the minimum balance inside your existing ${f} (${money(retain)}).`);
-          } else if(act.indexOf('partial')>=0){
-            sug.push(`We recommend you rollover your ${f} and transfer part of this balance to a new fund that has been customised for your needs.`);
-          } else {
-            _closeFunds.push(f);
+        // Unify fund aliases so the SAME fund written two ways (short "ART Super" nestLabel vs free-text
+        // "Australian Retirement Trust") collapses to one — otherwise it duplicates in the close line.
+        const _canonFund=f=>{ let s=String(f||'').toLowerCase();
+          if(/\badf\b|australian defence force|defence force/.test(s)) return 'adfsuper';
+          if(/\bart\b|australian retirement trust/.test(s)) return 'aret';
+          if(/unisuper/.test(s)) return 'unisuper';
+          if(/military|msbs|dfrdb/.test(s)) return 'militarysuper';
+          return s.replace(/\(.*?\)/g,'').replace(/[^a-z0-9]/g,''); };
+        // [9] The close-and-transfer line is built PER CLIENT (for a couple, Jessica's funds and Adam's
+        // funds are separate sentences, each addressed by name), and full-rollover funds for one person
+        // merge into a single line ("close your existing A and B funds and transfer 100% …").
+        const _joint=(typeof hasPartner==='function' && hasPartner());
+        const _persons=[...new Set(_sa.map(a=>a.person||'client'))].sort((x,y)=>(x==='client'?0:1)-(y==='client'?0:1));
+        _persons.forEach(_pn=>{
+          const _pa=_sa.filter(a=>(a.person||'client')===_pn);
+          const _byFund={};
+          _pa.forEach(a=>{ const k=_canonFund(a.fund); if(!_byFund[k] || _rank(a)>_rank(_byFund[k])) _byFund[k]=a; });
+          const _lead=_joint?(pref(_pn)+', we recommend you'):'We recommend you';
+          const _closeFunds=[];
+          Object.keys(_byFund).forEach(k=>{ const a=_byFund[k]; const f=_fundLabel(a); const act=String(a.action||'').toLowerCase();
+            const retain=_retNum(a.retainMin);
+            if(retain>0){
+              const _emp = a.keepEmployer===true || /\badf\b|defence force/i.test(f);
+              sug.push(`${_lead} retain the minimum required balance (${money(retain)}) in your existing ${f} (in line with your risk profile)${_emp?' in order to continue receiving your employer contributions':''} and transfer the remaining balance to a new fund that has been customised for your needs.`);
+              sug.push(`${_lead} complete annual partial rollovers to your new fund for amounts in excess of the minimum balance inside your existing ${f} (${money(retain)}).`);
+            } else if(act.indexOf('partial')>=0){
+              sug.push(`${_lead} rollover your ${f} and transfer part of this balance to a new fund that has been customised for your needs.`);
+            } else {
+              _closeFunds.push(f);
+            }
+          });
+          if(_closeFunds.length===1){
+            sug.push(`${_lead} close your existing ${_closeFunds[0]} and transfer 100% of the balance to a new fund that has been customised for your needs.`);
+          } else if(_closeFunds.length>1){
+            const _strip=s=>String(s).replace(/\s+funds?$/i,'').trim();
+            const _p=_closeFunds.map(_strip);
+            const _merged=_p.slice(0,-1).join(', ')+' and '+_p[_p.length-1]+' funds';
+            sug.push(`${_lead} close your existing ${_merged} and transfer 100% of the balance to a new fund that has been customised for your needs.`);
           }
         });
-        if(_closeFunds.length===1){
-          sug.push(`We recommend you close your existing ${_closeFunds[0]} and transfer 100% of the balance to a new fund that has been customised for your needs.`);
-        } else if(_closeFunds.length>1){
-          const _strip=s=>String(s).replace(/\s+funds?$/i,'').trim();
-          const _p=_closeFunds.map(_strip);
-          const _merged=_p.slice(0,-1).join(', ')+' and '+_p[_p.length-1]+' funds';
-          sug.push(`We recommend you close your existing ${_merged} and transfer 100% of the balance to a new fund that has been customised for your needs.`);
-        }
       } else {
         sug.push("We recommend you close your existing superannuation and transfer 100% of the balance to a new fund that has been customised for your needs.");
       }
@@ -5973,15 +6029,34 @@ function collectSummarySuggestions(){
   }
   // Superannuation account — CARE buckets → non-CARE WealthSolver lines → product-table rows → generic.
   if(blockActive("super")){
-    let _superLines=null, _superPlat=_ncPlat, _superPerson='client';
-    const _cs=_careSuper.map(a=>({a,lines:_bucketLinesForAcc(a)})).find(x=>x.lines.length);
-    if(_cs){ _superLines=_cs.lines; _superPlat=_cs.a.platform||'Hub24'; _superPerson=_cs.a.person||'client'; }
-    else if(_ncSuperLines.length) _superLines=_ncSuperLines;
-    else if(_ncAlloc) _superLines=_ncAlloc;
-    else { const pt=_allocFromProdTable('super_prod'); if(pt.length) _superLines=pt; }
-    const _who=(_superPerson==='partner'&&hasPartner())?pref('partner')+', we':(hasPartner()?pref('client')+', we':'We');
-    if(_superLines && _superLines.length) prod.push({text:`${_who} recommend you establish your new superannuation account through ${_platPhrase(F.recPlatform,_superPlat)} and invest your funds as follows:`, notes:_superLines.slice()});
-    else prod.push(`${_who} recommend you establish your new superannuation account through ${_platPhrase(F.recPlatform,_superPlat)} and invest in line with your risk profile.`);
+    // [#10] When the advice request records a super product per client (joint SOA), emit ONE
+    // "establish your new superannuation account through <that client's platform>…" line per person,
+    // each with that person's allocation, so every client's super product + allocation appears.
+    const _pp=Array.isArray(F.superProdByPerson)?F.superProdByPerson:[];
+    const _emitSuper=(person, platGuess)=>{
+      let _superLines=null, _superPlat=platGuess||_ncPlat;
+      const _cs=_careSuper.filter(a=>(a.person||'client')===person).map(a=>({a,lines:_bucketLinesForAcc(a)})).find(x=>x.lines.length)
+              || _careSuper.map(a=>({a,lines:_bucketLinesForAcc(a)})).find(x=>x.lines.length);
+      if(_cs && !platGuess){ _superLines=_cs.lines; _superPlat=_cs.a.platform||'Hub24'; }
+      else if(_cs && platGuess && (_cs.a.person||'client')===person){ _superLines=_cs.lines; }
+      if(!_superLines){ if(_ncSuperLines.length) _superLines=_ncSuperLines; else if(_ncAlloc) _superLines=_ncAlloc; else { const pt=_allocFromProdTable('super_prod'); if(pt.length) _superLines=pt; } }
+      const _who=(person==='partner'&&hasPartner())?pref('partner')+', we':(hasPartner()?pref('client')+', we':'We');
+      if(_superLines && _superLines.length) prod.push({text:`${_who} recommend you establish your new superannuation account through ${_platPhrase(_superPlat,_superPlat)} and invest your funds as follows:`, notes:_superLines.slice()});
+      else prod.push(`${_who} recommend you establish your new superannuation account through ${_platPhrase(_superPlat,_superPlat)} and invest in line with your risk profile.`);
+    };
+    if(_pp.length>1){ _pp.forEach(p=>_emitSuper(p.person, p.platform)); }
+    else {
+      let _superLines=null, _superPlat=_ncPlat, _superPerson='client';
+      const _cs=_careSuper.map(a=>({a,lines:_bucketLinesForAcc(a)})).find(x=>x.lines.length);
+      if(_cs){ _superLines=_cs.lines; _superPlat=_cs.a.platform||'Hub24'; _superPerson=_cs.a.person||'client'; }
+      else if(_ncSuperLines.length) _superLines=_ncSuperLines;
+      else if(_ncAlloc) _superLines=_ncAlloc;
+      else { const pt=_allocFromProdTable('super_prod'); if(pt.length) _superLines=pt; }
+      if(_pp.length===1) _superPlat=_pp[0].platform||_superPlat;
+      const _who=(_superPerson==='partner'&&hasPartner())?pref('partner')+', we':(hasPartner()?pref('client')+', we':'We');
+      if(_superLines && _superLines.length) prod.push({text:`${_who} recommend you establish your new superannuation account through ${_platPhrase(F.recPlatform,_superPlat)} and invest your funds as follows:`, notes:_superLines.slice()});
+      else prod.push(`${_who} recommend you establish your new superannuation account through ${_platPhrase(F.recPlatform,_superPlat)} and invest in line with your risk profile.`);
+    }
   }
   // Only mention insurance products when there is actual insurance cover to recommend.
   if(blockActive("insurance") && ((F.insurance&&F.insurance.length) || F.recInsurer)) prod.push("We recommend you apply for your insurance cover through "+recommendedInsurer()+".");
@@ -6041,7 +6116,9 @@ function collectSummarySuggestions(){
     out.push("You will have affordable "+((typeof F!=='undefined'&&F&&F.insTopUpScoped)?"additional ":"")+"cover that meets your needs, with appropriate features and benefits to maintain your family and lifestyle.");  // exact template wording (Santosha exemplar); "additional" only for a top-up of existing cover
     // Benefit-of-insurance outcome(s) (ticked in the advice request): link the recommended cover back
     // to the client's goals / appropriateness of the advice — one outcome line per selected benefit.
-    (typeof v200InsBenefitList==='function'?v200InsBenefitList():[]).forEach(b=>out.push(b+"."));
+    // [#16] The triggered insurance-benefit wording renders as SUB dot points nested under the
+    // "affordable cover that meets your needs" outcome (leading \t → SubBul in the summary renderer).
+    (typeof v200InsBenefitList==='function'?v200InsBenefitList():[]).forEach(b=>out.push("\t"+b+"."));
   }
   const svc=[];
   if(F.services && F.services.length){ F.services.forEach(s=>svc.push(s)); }
@@ -15862,7 +15939,21 @@ function v200ApplyProducts(ar){
   const sp=flat(ar.superProducts).filter(p=>p.product);
   if(sp.length){ const plat=v200Platform(sp[0].product);
     if(!F.recPlatform || /^hub\s*24$/i.test(String(F.recPlatform).trim())) F.recPlatform=plat;
-    v200StampPlatform('super_prod',plat); }
+    v200StampPlatform('super_prod',plat);
+    // [#10] Keep the per-owner super platform so the Products summary can emit a separate
+    // "establish your new superannuation account through …" line per client (e.g. Jessica → Hub24 Core,
+    // Adam → Hub24 Choice) instead of collapsing both to the first product's platform.
+    try{
+      const _pr=(nm)=>{ const s=String(nm||'').trim(); if(!s) return 'client';
+        if(F.partnerFirst && new RegExp('^'+F.partnerFirst.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(s)) return 'partner';
+        if(F.clientFirst && new RegExp('^'+F.clientFirst.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(s)) return 'client';
+        return 'client'; };
+      const _byP={};
+      (flat(ar.superProducts)).forEach(p=>{ if(!p||!p.product) return; const per=_pr(p.owner); if(!_byP[per]) _byP[per]={person:per, platform:v200Platform(p.product), product:p.product}; });
+      const _list=Object.keys(_byP).sort((a,b)=>(a==='client'?0:1)-(b==='client'?0:1)).map(k=>_byP[k]);
+      if(_list.length) F.superProdByPerson=_list;
+    }catch(_){}
+  }
   // Investment-plan products → recPlatform (if not already from super) + investplan_prod.
   // Fall back to the Investment-Plan strategy's est.product when ar.invProducts is empty (the builder
   // usually records the investment platform/menu there, e.g. "Hub24 Discover - Vanguard Diversified").
@@ -15878,14 +15969,20 @@ function v200ApplyProducts(ar){
   // Insurance products → recInsurer (drives insurance wording) + activate ins_prod
   const ip=flat(ar.insProducts).filter(p=>p.insurer||p.action);
   if(ip.length){
-    const rec=ip.find(p=>/apply|top\s*up|new/i.test(p.action||'')) || ip.find(p=>/retain/i.test(p.action||'')) || ip[0];
-    if(rec && rec.insurer && !F.recInsurer){
-      // Normalise the advice-request insurer/product name to the canonical insurer so the SOA wording
-      // reads "…through OnePath." (not "…OnePath Protection Plan") — mirrors the quote/RR insurer maps.
-      const _im=[[/onepath|onecare/i,'OnePath'],[/clearview|clearchoice/i,'ClearView'],[/\bneos\b|nobleoak/i,'NEOS'],[/priority protection|\bAIA\b/i,'AIA'],[/metlife/i,'MetLife'],[/zurich|wealth protector|ezicover/i,'Zurich'],[/accelerated protection|\bTAL\b/i,'TAL'],[/flexible lifetime|\bMLC\b/i,'MLC'],[/protection plans|\bBT\b/i,'BT'],[/resolution life/i,'Resolution Life']];
-      let _nm=String(rec.insurer).trim(); for(let _i=0;_i<_im.length;_i++){ if(_im[_i][0].test(_nm)){ _nm=_im[_i][1]; break; } }
-      F.recInsurer=_nm;
-    }
+    // Keep the full product name the adviser entered (e.g. "Zurich Active Health Events"), only
+    // stripping generic suffixes so "OnePath Protection Plan"→"OnePath" and "NEOS Protection"→"NEOS".
+    const _cleanIns=s=>String(s||'').trim().replace(/\s+(protection plan|protection plans|protection|plan)$/i,'').trim();
+    // Per-owner recommended insurer: for a couple, Jessica and Adam can have DIFFERENT insurers.
+    const _cf=String(F.clientFirst||'').toLowerCase(), _pf=String(F.partnerFirst||'').toLowerCase();
+    const _ownerPerson=o=>{ o=String(o||'').toLowerCase(); if(_pf&&o.indexOf(_pf)>=0) return 'partner'; if(_cf&&o.indexOf(_cf)>=0) return 'client'; return ''; };
+    const _pickFor=who=>{ const es=ip.filter(p=>_ownerPerson(p.owner)===who); const e=es.find(p=>/apply|top\s*up|new/i.test(p.action||''))||es.find(p=>/retain/i.test(p.action||''))||es[0]; return (e&&e.insurer)?_cleanIns(e.insurer):''; };
+    const cIns=_pickFor('client'), pIns=_pickFor('partner');
+    if(cIns && !F.recInsurer) F.recInsurer=cIns;
+    if(pIns && !F.recInsurerPartner) F.recInsurerPartner=pIns;
+    // Fallback (single insurer / owners not matched): first apply/retain entry.
+    if(!F.recInsurer){ const rec=ip.find(p=>/apply|top\s*up|new/i.test(p.action||''))||ip.find(p=>/retain/i.test(p.action||''))||ip[0]; if(rec&&rec.insurer) F.recInsurer=_cleanIns(rec.insurer); }
+    // Stamp each cover row with that person's insurer so per-person wording reads correctly.
+    if(Array.isArray(F.insurance)) F.insurance.forEach(r=>{ if(!r) return; const who=(r.person==='partner')?'partner':'client'; const ins=(who==='partner')?(F.recInsurerPartner||F.recInsurer):F.recInsurer; if(ins) r.insurer=ins; });
     if(typeof B!=='undefined'){ if(!B.ins_prod) B.ins_prod={active:false,content:{}};
       if(typeof setBlockActive==='function') setBlockActive('ins_prod',true); else B.ins_prod.active=true; }
     try{ if(typeof v96FillInsurance==='function') v96FillInsurance(); }catch(_){ }
@@ -16179,7 +16276,19 @@ function v200ApplyInsuranceBenefit(){
   if(typeof F!=='object' || typeof B==='undefined') return;
   const list=v200InsBenefitList(); if(!list.length) return;
   try{ if(!B.insurance) B.insurance={active:false,content:{}}; if(!B.insurance.content) B.insurance.content={};
-    let w=String(B.insurance.content.why||''); list.forEach(b=>{ if(w.indexOf(b)<0) w=(w?w+'\n':'')+b+'.'; }); B.insurance.content.why=w; }catch(_){}
+    // [#16] Present the triggered insurance-benefit points as sub dot points (\t → sub-bullet) directly
+    // under the "You will have affordable cover…" outcome line. Some benefit sentences are identical to the
+    // standard Why bullets emitted by buildInsuranceWhyText, so first strip any existing top-level copies,
+    // then insert ALL benefits as sub-points beneath the affordable-cover line.
+    let lines=String(B.insurance.content.why||'').split('\n');
+    const _norm=s=>String(s||'').replace(/^[\t§\s]+/,'').replace(/[.\s]+$/,'').trim();
+    const benClean=list.map(_norm);
+    lines=lines.filter(l=>benClean.indexOf(_norm(l))<0);   // drop pre-existing top-level copies
+    const _lead="You will have affordable "+((F&&F.insTopUpScoped)?"additional ":"")+"cover that meets your needs, with appropriate features and benefits to maintain your family and lifestyle.";
+    let idx=lines.findIndex(l=>/affordable (?:additional )?cover|cover that meets your needs/i.test(l));
+    if(idx<0){ lines.push(_lead); idx=lines.length-1; }
+    lines.splice(idx+1,0,...list.map(b=>'\t'+String(b).replace(/[.\s]+$/,'')+'.'));
+    B.insurance.content.why=lines.join('\n'); }catch(_){}
   try{ if(!B.repl_ins) B.repl_ins={active:false,content:{}}; if(!B.repl_ins.content) B.repl_ins.content={};
     let n=String(B.repl_ins.content.note||''); list.forEach(b=>{ if(n.indexOf(b)<0) n=(n?n+'\n':'')+b+'.'; }); B.repl_ins.content.note=n; }catch(_){}
 }
@@ -16462,8 +16571,10 @@ function v200NormalizeInsuranceCovers(){
   if(typeof F!=='object' || !Array.isArray(F.insurance)) return;
   F.insurance.forEach(r=>{ if(!r) return; const c=String(r.cover||'');
     if(/^tpd/i.test(c)){
-      if(F.tpdOwnOcc===true) r.cover=/\(/.test(c)? c.replace(/Any-Occupation/i,'Own-Occupation') : 'TPD (Linked & Own-Occupation)';
-      else if(F.tpdOwnOcc===false) r.cover=/\(/.test(c)? c.replace(/Own-Occupation/i,'Any-Occupation') : 'TPD (Linked & Any-Occupation)';
+      // New recommended TPD defaults to Own-Occupation (the firm's standard and what the quotes carry);
+      // only an explicit Any-Occupation instruction (F.tpdOwnOcc===false) forces "Any".
+      if(F.tpdOwnOcc===false) r.cover=/\(/.test(c)? c.replace(/Own-Occupation/i,'Any-Occupation') : 'TPD (Linked & Any-Occupation)';
+      else r.cover=/\(/.test(c)? c.replace(/Any-Occupation/i,'Own-Occupation') : 'TPD (Linked & Own-Occupation)';
     }
     // Trauma defaults to "(Linked, Plus & Reinstatement)" for every trauma recommendation — override
     // a bare "Trauma" or a plain "(Linked)"/"(Plus)" qualifier, but keep an explicit Standalone policy.
@@ -16505,6 +16616,15 @@ function v200ApplyAdviceRequest(ar){
       else if(!_none && /dca|dollar[\s-]?cost/i.test(_dm)) F.superDcaMotm=false;
     } }catch(_){}
     try{ const _ins=(ar.strategies||[]).map(s=>s.text||'').join(' '); if(/own[\s-]occupation/i.test(_ins)) F.tpdOwnOcc=true; else if(/any[\s-]occupation/i.test(_ins)) F.tpdOwnOcc=false; }catch(_){}
+    // [#22-#29] Detect a gearing / debt-recycling strategy from the advice request (structured JSON path) so
+    // v194BuildDebtWording emits the firm's gearing wording — the reordered recommendation/Why, the full
+    // 14-item gearing risks and the 4-item alternatives, plus the loan-limit table. Mirror the text-parser
+    // flag: setting F.debtEquityScoped=true is enough — v194's own module default then adds the gearing
+    // modules (equity_release / term_loan).
+    try{ if(typeof F==='object'){
+      const _dstr=(ar.strategies||[]).filter(s=>/debt management/i.test(s.area||'')).map(s=>String(s.name||'')+' '+String(s.text||'')).join(' ');
+      if(/\bgearing\b|term loan|debt recycl|draw on (?:your )?available equity|refinanc[^.\n]*equit|equity release|borrow to invest|investment loan/i.test(_dstr)) F.debtEquityScoped=true;
+    } }catch(_){}
     // Accumulation vs retirement drives which sections/wording apply (e.g. the accumulation→pension
     // "seamless transfer" line is retirement-only). 'mixed' is left as-is.
     if(ar.soaType && typeof v97ApplySoaType==='function'){
@@ -16549,6 +16669,10 @@ function v200ApplyAdviceRequest(ar){
     try{ v200ApplyCareEssSuperBlocks(); }catch(e){ try{console.error('v200 careblocks',e);}catch(_){ } }
     try{ v200ApplyInvestVanguard(); }catch(e){ try{console.error('v200 vanguard',e);}catch(_){ } }
     try{ v200StandardDebtWording(); }catch(e){ try{console.error('v200 stddebt',e);}catch(_){ } }
+    // [#22-#29] For a GEARING SOA the firm's debt wording (reordered recommendation, reordered Why with the
+    // "Many people wait…" intro removed, full 14-item gearing risks, 4-item gearing alternatives) is
+    // authoritative. Re-run v194 LAST so it overwrites the word-bank debt why/risks/alternatives.
+    try{ if(typeof window.v194IsGearingScoped==='function' && window.v194IsGearingScoped() && typeof window.v194BuildDebtWording==='function') window.v194BuildDebtWording(); }catch(e){ try{console.error('v200 v194 gearing',e);}catch(_){ } }
     try{ v200ResolveOffsetPick(); }catch(e){ try{console.error('v200 offsetpick',e);}catch(_){ } }
     try{ v200ApplyCashflow(ar); }catch(e){ try{console.error('v200 cashflow',e);}catch(_){ } }
     try{ if(ar.savingsBenefit && (!Array.isArray(ar.savingsBenefit)||ar.savingsBenefit.length)){ F.savingsBenefit=ar.savingsBenefit;
