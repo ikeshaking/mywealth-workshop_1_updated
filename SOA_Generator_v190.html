@@ -4322,7 +4322,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B17 — insurance why spacing</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B18 — AR name tokens + fund fix</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -15473,6 +15473,9 @@ function v200ResolveOne(text, person, otherName){
   t=t.replace(/\[spouse\]|\[partner\]/gi, otherName||'');
   const fundKey=(person&&person.key==='partner')?'partner':'client';
   t=t.replace(/\[fund\]|\[existing fund\]/gi, person?v200FundsFor(fundKey):'your existing super fund');
+  // The [Fund] default ("your existing super fund") can double a template that already says
+  // "close your existing [Fund]" → collapse "your existing your existing" back to one.
+  t=t.replace(/your existing\s+your existing/gi,'your existing');
   return t.replace(/\s{2,}/g,' ').trim();
 }
 // Returns an array of resolved lines (>1 when a Both/person-specific line expands per person).
@@ -15968,7 +15971,12 @@ if(typeof window!=='undefined') window.v200StripSeamless=v200StripSeamless;
 function v200ApplyAdviceRequest(ar){
   const log=[];
   try{
-    if(ar.clients && typeof F==='object'){ F.fullName=F.fullName||ar.clients; if(/&| and /i.test(ar.clients)) F.clientType=F.clientType||'joint'; }
+    if(ar.clients && typeof F==='object'){ F.fullName=F.fullName||ar.clients; if(/&| and /i.test(ar.clients)) F.clientType=F.clientType||'joint';
+      // Derive first names for word-bank [Name] tokens when there's no fact-find import to set them —
+      // otherwise [Name] falls back to "the client". "Rob & Mary" → clientFirst=Rob, partnerFirst=Mary.
+      const _nm=String(ar.clients).split(/\s*&\s*|\s+and\s+/i).map(x=>x.trim()).filter(Boolean);
+      if(_nm.length){ if(!F.clientFirst) F.clientFirst=_nm[0].split(/\s+/)[0]; if(_nm[1] && !F.partnerFirst) F.partnerFirst=_nm[1].split(/\s+/)[0]; }
+    }
     if(ar.adviser && typeof F==='object'){ F.adviser=F.adviser||ar.adviser; }
     if(ar.status && typeof F==='object' && F.isExistingClient==null){ F.isExistingClient=/exist/i.test(ar.status); }
     if(/couple/i.test(ar.ctype||'') && typeof F==='object'){ F.clientType=F.clientType||'joint'; }
