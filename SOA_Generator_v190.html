@@ -4394,7 +4394,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B34 — body font 9.5pt + resolve [existing fund]/[Alternate insurers] tokens</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B35 — add CARE Philosophy line to super rec when super is CARE</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -12351,6 +12351,12 @@ function renderSpecialDocx(def, ch, K){
       try{ if(typeof v98FillReplacementFees==='function') v98FillReplacementFees(); }catch(_){}
       try{ if(typeof window.v149FillSuperRepl==='function') window.v149FillSuperRepl(); }catch(_){}
       try{ if(typeof v180BakeDelineation==='function') v180BakeDelineation(); }catch(_){}
+      // A CARE doc carrying a super account means the super IS CARE — the advice request may not have
+      // named a super product (empty superProducts), so infer the approach here (only when it wasn't
+      // already set, e.g. to Vanguard) and rebuild the super recommendation so the standard
+      // "invest ... using the CARE Philosophy" line is added.
+      try{ if(!F.superApproach && accounts.some(a=>/super/i.test(String((a&&a.type)||'')))) F.superApproach='CARE'; }catch(_){}
+      try{ if(typeof v200StandardSuperWording==='function') v200StandardSuperWording(); }catch(_){}
       try{ if(typeof v200ApplyCareEssSuperBlocks==='function') v200ApplyCareEssSuperBlocks(); }catch(_){}
       render();
       alert('CARE doc imported.\nFilled: '+(filled.join(', ')||'none')+'.\nAsset allocations captured for Annexure 2 (super & investment separately).');
