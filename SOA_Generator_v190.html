@@ -4063,7 +4063,7 @@ function v145ShowSmartModal(items){
   const hp=(typeof hasPartner==='function')&&hasPartner();
   const c1=(typeof pref==='function')?pref('client'):'Client 1';
   const c2=hp?((typeof pref==='function')?pref('partner'):'Client 2'):'';
-  const typeOpts=sel=>[['commission','Commission report'],['clearview','ClearView quote'],['neos','NEOS quote'],['quote','Insurer quote'],['rr','Risk Researcher'],['care','CARE portfolio doc'],['wealthsolver','WealthSolver comparison'],['advicereq','Advice Request'],['advicereqjson','Advice Request (JSON)'],['json','factfind JSON'],['skip','Skip this file']]
+  const typeOpts=sel=>[['commission','Commission report'],['clearview','ClearView quote'],['neos','NEOS quote'],['quote','Insurer quote'],['rr','Risk Researcher'],['datacol','Data collection'],['care','CARE portfolio doc'],['wealthsolver','WealthSolver comparison'],['advicereq','Advice Request'],['advicereqjson','Advice Request (JSON)'],['json','factfind JSON'],['skip','Skip this file']]
     .map(o=>'<option value="'+o[0]+'"'+(sel===o[0]?' selected':'')+'>'+o[1]+'</option>').join('');
   const rows=items.map((it,i)=>
     '<tr data-row="'+i+'" style="border-top:1px solid var(--border-soft)">'+
@@ -4340,7 +4340,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B29 — MCMA transfer + breakdown auto-fill</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B30 — highlight all auto-pulled figures + datacol import</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -4895,8 +4895,9 @@ function secImport(){
   <div class="card"><div class="card-head"><h3>⚡ Smart drop — drop everything here</h3><span class="badge">Recommended</span></div><div class="card-body">
     <div class="upload-zone" id="dropzone-smart" style="padding:18px;border:2px dashed var(--blue);background:var(--blue-light)">
       <div style="font-size:26px">📥</div><div class="big">Drop any files here — PDF, Word, Excel or Projector JSON</div>
+      <div class="tiny muted" style="margin-top:4px">Insurance quotes &amp; commissions · CARE portfolio doc · WealthSolver comparison · Advice Request · <strong>Data collection sheets</strong> (Excel/PDF super rundowns) · fact-find JSON</div>
       <label class="btn btn-primary" style="margin-top:10px;display:inline-block;cursor:pointer">Choose files…<input type="file" multiple accept=".json,.pdf,.docx,.doc,.txt,.xlsx,.xlsm" style="display:none" onchange="if(this.files&&this.files.length){v145SmartDrop(this.files);} this.value='';"></label></div>
-    <div class="hint" style="margin-top:8px">Each file is read, identified and matched to the right client — you confirm before anything's applied. Button not opening a dialog? You're in a preview pane — save the .html and open it in a normal browser tab.</div>
+    <div class="hint" style="margin-top:8px">Each file is read, identified and matched to the right client — you confirm the type (incl. <strong>Data collection</strong>) before anything's applied. Button not opening a dialog? You're in a preview pane — save the .html and open it in a normal browser tab.</div>
   </div></div>
   ${(function(){
     const ZN=(id,icon,title,sub,accept,call)=>`<div class="upload-zone" id="${id}" style="padding:12px;margin:0;text-align:left">
@@ -5924,10 +5925,11 @@ function applySplit(){
 // the paraplanner has a visual checklist of every figure to verify for accuracy. Walks text nodes
 // (never HTML tags) under .preview-doc and wraps matches in <span class="ph-flag">. Screen-only via
 // CSS; the Word export carries NO highlight, and print/PDF neutralises the colour.
-function v186HighlightPlaceholders(){
-  // Highlight across EVERY preview pane (side-by-side, mini, fullscreen) and the WHOLE document —
-  // not just the first pane / current view.
-  const roots=document.querySelectorAll('.preview-doc'); if(!roots.length) return;
+// Shared "auto-pull" matcher source — the ONE definition of "a value that was pulled from the
+// advice request / fact-find / supporting docs" (vs fixed template prose). Used by BOTH the preview
+// highlighter (v186HighlightPlaceholders) and the Word-export highlighter (apRuns in generateSOA),
+// so the yellow flagging is identical on screen and in the .docx.
+window.v186AutoPullSource=function(){
   // Base patterns: placeholder $X…/X.XX% before the numeric $amount/percent so "$XXX" flags as a
   // placeholder, "$26,566" as a data value. Then dates, adviser-decision keywords, and every
   // ACTUAL auto-populated value pulled from F (client/partner names, fund names, adviser, platform,
@@ -5944,7 +5946,13 @@ function v186HighlightPlaceholders(){
       return [...set].map(s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).filter(Boolean);
     }catch(_){ return []; }
   })();
-  const RX=new RegExp('('+_base+(_known.length?'|'+_known.join('|'):'')+')','gi');
+  return _base+(_known.length?'|'+_known.join('|'):'');
+};
+function v186HighlightPlaceholders(){
+  // Highlight across EVERY preview pane (side-by-side, mini, fullscreen) and the WHOLE document —
+  // not just the first pane / current view.
+  const roots=document.querySelectorAll('.preview-doc'); if(!roots.length) return;
+  const RX=new RegExp('('+window.v186AutoPullSource()+')','gi');
   roots.forEach(root=>{
     const walker=document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
       acceptNode:(n)=>{ const p=n.parentNode; if(!p) return NodeFilter.FILTER_REJECT;
@@ -5968,6 +5976,29 @@ function v186HighlightPlaceholders(){
     });
   });
 }
+// apRuns — split a wording string into docx TextRuns, YELLOW-highlighting every auto-pulled value
+// (same matcher the preview uses via window.v186AutoPullSource) so the adviser double-checks each
+// figure pulled from the advice request / fact-find / supporting docs. Fixed template constants
+// (government-guarantee $250,000, $6,000 minimum balance, the $250k CARE threshold) are skipped so
+// boilerplate isn't falsely flagged. Top-level so EVERY docx builder (generateSOA, strategyTable,
+// v13BuildProductTable, renderSpecialDocx) can call it; uses window.docx.TextRun. Falls back to one
+// plain run on any error. opts: {font,size,color,bold,italic}.
+window.AP_SKIP=/^\$?250,?000(?:\.00)?$|^\$?6,?000(?:\.00)?$|^\$?20,?000(?:\.00)?$/;
+function apRuns(t,opts){ opts=opts||{};
+  const TextRun=(window.docx&&window.docx.TextRun); if(!TextRun) return [];
+  const base={font:opts.font||"Nunito", size:opts.size||20, color:opts.color||"1a1a1a", bold:!!opts.bold, italics:!!opts.italic};
+  const s=String(t==null?"":t);
+  let src=''; try{ src=(typeof window.v186AutoPullSource==='function')?window.v186AutoPullSource():''; }catch(_){}
+  const decis='directed towards\\s+shares(?:\\s+and(?:\\/or)?\\s+an\\s+investment\\s+property)?|directed towards\\s+an\\s+investment\\s+property|review your existing cover';
+  const full=src?(src+'|'+decis):decis;
+  let parts; try{ parts=s.split(new RegExp('('+full+')','gi')); }catch(_){ return [new TextRun(Object.assign({text:s},base))]; }
+  const runs=[];
+  parts.forEach((seg,i)=>{ if(seg==null||seg==='') return;
+    const hl=(i%2===1) && !window.AP_SKIP.test(seg.trim());
+    runs.push(new TextRun(Object.assign({text:seg}, base, hl?{highlight:"yellow"}:{}))); });
+  return runs.length?runs:[new TextRun(Object.assign({text:s},base))];
+}
+if(typeof window!=='undefined') window.apRuns=apRuns;
 // v201 — render-time safety net: blank any block field that still contains raw template
 // scaffolding (editor instructions / unresolved <…> & […] tokens). These tokens NEVER appear
 // in tailored output, so their presence means the field was never filled — show nothing rather
@@ -6758,6 +6789,7 @@ function wireResearchDropzones(){
   bindOne('dropzone-ws',        f=>{ if(typeof v54ImportWealthSolver==='function') v54ImportWealthSolver(f); });
   bindOne('dropzone-advicereq', f=>{ if(typeof v143ImportAdviceRequest==='function') v143ImportAdviceRequest(f); });
   bindOne('dropzone-factfind',  f=>{ if(typeof importJSONFile==='function') importJSONFile(f); });
+  bindOne('dropzone-datacol',   f=>{ if(typeof v141ImportDataCollection==='function') v141ImportDataCollection(f,'client'); });
   // multi-file smart drop
   bindOne('dropzone-smart',     fs=>{ if(typeof v145SmartDrop==='function') v145SmartDrop(fs); }, true);
 }
@@ -7122,9 +7154,9 @@ async function generateSOA(){
   const H2 = (t, brk) => new Paragraph({ heading:HeadingLevel.HEADING_2, pageBreakBefore:!!brk, spacing:{before:280,after:120},
     children:[new TextRun({text:t, font:window.BRAND.headingFont, size:32, color:window.BRAND.h2Color})] });
   const P = (t,opts={}) => new Paragraph({ spacing:{after:160, line:276, lineRule:"auto"}, alignment:opts.center?AlignmentType.CENTER:(opts.left?AlignmentType.LEFT:AlignmentType.JUSTIFIED),
-    children:[new TextRun({text:String(t==null?"":t), font:"Nunito", size:20, color:"1a1a1a", italics:!!opts.italic, bold:!!opts.bold})] });
+    children:apRuns(String(t==null?"":t),{size:20,italic:!!opts.italic,bold:!!opts.bold}) });
   const Bul = t => new Paragraph({ numbering:{reference:"bullets", level:0}, spacing:{after:90, line:276, lineRule:"auto"},
-    children:[new TextRun({text:String(t), font:"Nunito", size:20, color:"1a1a1a"})] });
+    children:apRuns(String(t),{size:20}) });
   const SmallItalic = t => new Paragraph({ spacing:{after:120},
     children:[new TextRun({text:t, font:"Nunito", size:16, color:"555555", italics:true})] });
   const multiP = (txt)=> String(txt||"").split(/\n\n+/).filter(Boolean).map(par=>P(fill(par)));
@@ -7176,9 +7208,8 @@ async function generateSOA(){
       const cellChildren = [];
       if(/(^|\n)\t/.test(_raw)){
         _raw.split('\n').forEach(ln=>{ const body=ln.replace(/^\t+/,'').trim(); if(!body) return;
-          // [10] Insurance cover-amount lines (Life/TPD/Trauma/IP $…) highlight yellow in the Word doc.
-          const _hlCover=(blockId==='insurance') && /^(Life|TPD|Trauma|IP|Income Protection)\b.*\$/.test(body);
-          cellChildren.push(new Paragraph({numbering:{reference:"bullets",level:/^\t/.test(ln)?1:0}, alignment:AlignmentType.JUSTIFIED, spacing:{after:40}, children:[new TextRun({text:body, font:"Nunito", size:18, color:"1a1a1a", highlight:(_hlCover?"yellow":undefined)})]})); });
+          // Auto-pulled values (cover amounts, $, %, names…) highlight yellow via apRuns.
+          cellChildren.push(new Paragraph({numbering:{reference:"bullets",level:/^\t/.test(ln)?1:0}, alignment:AlignmentType.JUSTIFIED, spacing:{after:40}, children:apRuns(body,{size:18})})); });
       } else {
       const sections = (typeof v11SplitBullets === 'function')
         ? v11SplitBullets(_raw)
@@ -7193,21 +7224,20 @@ async function generateSOA(){
         (sec.bullets||[]).forEach(b => {
           const _bt=String(b||'').trim();
           // "§" = plain lead paragraph (no bullet); "§**…**" = bold plain paragraph.
-          if(/^§/.test(_bt)){ let body=_bt.replace(/^§\s*/,''); let _bold=false; const _bm=body.match(/^\*\*([\s\S]*)\*\*$/); if(_bm){ body=_bm[1].trim(); _bold=true; } if(body) cellChildren.push(new Paragraph({ alignment:AlignmentType.JUSTIFIED, spacing:{before:120, after:60}, children:[new TextRun({text:body, font:"Nunito", size:18, color:"1a1a1a", bold:_bold})]})); return; }
+          if(/^§/.test(_bt)){ let body=_bt.replace(/^§\s*/,''); let _bold=false; const _bm=body.match(/^\*\*([\s\S]*)\*\*$/); if(_bm){ body=_bm[1].trim(); _bold=true; } if(body) cellChildren.push(new Paragraph({ alignment:AlignmentType.JUSTIFIED, spacing:{before:120, after:60}, children:apRuns(body,{size:18,bold:_bold})})); return; }
           // v182: a "Note:" line, or an insurance per-cover label line ("Life:", "TPD:",
           // "Income Protection:", "Trauma:", "Child Cover:"), renders as a standalone paragraph
           // with the label in bold (not a bullet) — matching the firm's insurance "why" layout.
           const _lblM=_bt.match(/^(Note|Life|TPD|Income Protection|Trauma|Child Cover):\s*([\s\S]*)$/i);
           if(_lblM){
             cellChildren.push(new Paragraph({ alignment:AlignmentType.JUSTIFIED, spacing:{before:160, after:40}, children:[
-              new TextRun({text:_lblM[1]+': ', font:"Nunito", size:18, color:"1a1a1a", bold:true}),
-              new TextRun({text:_lblM[2], font:"Nunito", size:18, color:"1a1a1a"})
-            ]}));
+              new TextRun({text:_lblM[1]+': ', font:"Nunito", size:18, color:"1a1a1a", bold:true})
+            ].concat(apRuns(_lblM[2],{size:18}))}));
           } else {
             cellChildren.push(new Paragraph({
               numbering:{reference:"bullets", level:0},
               alignment:AlignmentType.JUSTIFIED, spacing:{after:40},
-              children:[new TextRun({text: b, font:"Nunito", size:18, color:"1a1a1a"})]
+              children:apRuns(b,{size:18})
             }));
           }
         });
@@ -7599,11 +7629,11 @@ function renderSpecialDocx(def, ch, K){
       ch.push(H1(def.title));
       ch.push(P("From our discussions with you, we understand that your financial goals and objectives are as follows:"));
       const g = F.goals.filter(x=>x.text.trim());
-      const goalSubBul = (t)=> new Paragraph({ numbering:{reference:"bullets", level:1}, spacing:{after:30, line:276, lineRule:"auto"}, children:[new TextRun({text:String(t), font:"Nunito", size:20, color:"1a1a1a"})] });
+      const goalSubBul = (t)=> new Paragraph({ numbering:{reference:"bullets", level:1}, spacing:{after:30, line:276, lineRule:"auto"}, children:apRuns(String(t),{size:20}) });
       // v191: render adviser-decision phrases (shares/property choice; keep/remove existing-cover review)
       // with a yellow highlight so they stand out in the Word document for the paraplanner to action.
       const BulHL = (t)=> new Paragraph({ numbering:{reference:"bullets", level:0}, spacing:{after:90, line:276, lineRule:"auto"},
-        children: v191GoalDecisionSegments(String(t)).map(s=> new TextRun({text:s.t, font:"Nunito", size:20, color:"1a1a1a", highlight:(s.hl?"yellow":undefined)})) });   // adviser-decision phrases carry the yellow highlight into the Word doc too
+        children: apRuns(String(t),{size:20}) });   // apRuns highlights the decision phrases AND every auto-pulled value
       if(g.length) g.forEach(x=>{
         ch.push(BulHL(fill(x.text)));
         const _gn=Array.isArray(x.notes)?x.notes.filter(n=>n&&n.trim()):[];
@@ -7648,7 +7678,7 @@ function renderSpecialDocx(def, ch, K){
       try{ if(typeof autoSyncSummary==='function') autoSyncSummary(); }catch(e){}
       ch.push(P("In summary, our recommendations regarding the steps that you need to take in order to achieve your financial goals and objectives are as follows:"));
       const subHead = (t)=> new Paragraph({spacing:{before:160,after:60}, children:[new TextRun({text:t, font:"Nunito", size:21, bold:true, color:"0C2E3F"})]});
-      const SubBul = (t)=> new Paragraph({ numbering:{reference:"bullets", level:1}, spacing:{after:40, line:276, lineRule:"auto"}, children:[new TextRun({text:String(t), font:"Nunito", size:20, color:"1a1a1a"})] });
+      const SubBul = (t)=> new Paragraph({ numbering:{reference:"bullets", level:1}, spacing:{after:40, line:276, lineRule:"auto"}, children:apRuns(String(t),{size:20}) });
       const grp=(arr,label)=>{ const s=(arr||[]).filter(x=>x.text.trim()); if(!s.length) return; ch.push(subHead(label)); s.forEach(x=>{ const t=fill(x.text); if(/^\t/.test(x.text)) ch.push(SubBul(t.replace(/^\t+/,''))); else ch.push(Bul(t)); if(Array.isArray(x.notes)) x.notes.filter(n=>n&&n.trim()).forEach(n=>ch.push(SubBul(fill(n)))); }); };
       try{ v180SanitizeSummary(); }catch(_){}
       grp(F.summaryStrategies,"Strategies:");
@@ -7658,7 +7688,7 @@ function renderSpecialDocx(def, ch, K){
     case "summary_products": {
       try{ if(typeof autoSyncSummary==='function') autoSyncSummary(); }catch(e){}
       const subHead = (t)=> new Paragraph({spacing:{before:160,after:60}, children:[new TextRun({text:t, font:"Nunito", size:21, bold:true, color:"0C2E3F"})]});
-      const SubBul = (t)=> new Paragraph({ numbering:{reference:"bullets", level:1}, spacing:{after:40, line:276, lineRule:"auto"}, children:[new TextRun({text:String(t), font:"Nunito", size:20, color:"1a1a1a"})] });
+      const SubBul = (t)=> new Paragraph({ numbering:{reference:"bullets", level:1}, spacing:{after:40, line:276, lineRule:"auto"}, children:apRuns(String(t),{size:20}) });
       const grp=(arr,label)=>{ const s=(arr||[]).filter(x=>x.text.trim()); if(!s.length) return; ch.push(subHead(label)); s.forEach(x=>{ const t=fill(x.text); if(/^\t/.test(x.text)) ch.push(SubBul(t.replace(/^\t+/,''))); else ch.push(Bul(t)); if(Array.isArray(x.notes)) x.notes.filter(n=>n&&n.trim()).forEach(n=>ch.push(SubBul(fill(n)))); }); };
       grp(F.summaryProducts,"Products:");
       return;
@@ -7666,7 +7696,7 @@ function renderSpecialDocx(def, ch, K){
     case "summary_outcomes": {
       try{ if(typeof autoSyncSummary==='function') autoSyncSummary(); }catch(e){}
       const subHead = (t)=> new Paragraph({spacing:{before:160,after:60}, children:[new TextRun({text:t, font:"Nunito", size:21, bold:true, color:"0C2E3F"})]});
-      const SubBul = (t)=> new Paragraph({ numbering:{reference:"bullets", level:1}, spacing:{after:40, line:276, lineRule:"auto"}, children:[new TextRun({text:String(t), font:"Nunito", size:20, color:"1a1a1a"})] });
+      const SubBul = (t)=> new Paragraph({ numbering:{reference:"bullets", level:1}, spacing:{after:40, line:276, lineRule:"auto"}, children:apRuns(String(t),{size:20}) });
       const grp=(arr,label)=>{ const s=(arr||[]).filter(x=>x.text.trim()); if(!s.length) return; ch.push(subHead(label)); s.forEach(x=>{ const t=fill(x.text); if(/^\t/.test(x.text)) ch.push(SubBul(t.replace(/^\t+/,''))); else ch.push(Bul(t)); if(Array.isArray(x.notes)) x.notes.filter(n=>n&&n.trim()).forEach(n=>ch.push(SubBul(fill(n)))); }); };
       grp(F.summaryOutcomes,"Outcomes:");
       // Services as its own underlined heading with paragraphs
@@ -8907,12 +8937,10 @@ function renderSpecialDocx(def, ch, K){
       const _fcf=(typeof fill==='function')?fill(c[f]):c[f];
       if(/(^|\n)[\t§]/.test(String(_fcf||''))){
         String(_fcf).split('\n').forEach(ln=>{
-          if(/^\s*§/.test(ln)){ let body=ln.replace(/^\s*§\s*/,'').trim(); let _bold=false; const _bm=body.match(/^\*\*([\s\S]*)\*\*$/); if(_bm){ body=_bm[1].trim(); _bold=true; } if(body) inner.push(new Paragraph({spacing:{before:160,after:80}, children:[new TextRun({text:body, font:"Nunito", size:18, color:"1a1a1a", bold:_bold})]})); return; }
+          if(/^\s*§/.test(ln)){ let body=ln.replace(/^\s*§\s*/,'').trim(); let _bold=false; const _bm=body.match(/^\*\*([\s\S]*)\*\*$/); if(_bm){ body=_bm[1].trim(); _bold=true; } if(body) inner.push(new Paragraph({spacing:{before:160,after:80}, children:apRuns(body,{size:18,bold:_bold})})); return; }
           const body=ln.replace(/^\t+/,'').trim(); if(!body) return;
-          // [41] Auto-populated platform-cost lines ("BT Panorama $641.57") highlight yellow so the
-          // adviser double-checks them against WealthSolver.
-          const _hlCost=(f==='alternatives') && /\$[\d,]+(?:\.\d{2})?\s*$/.test(body) && body.length<90;
-          inner.push(new Paragraph({numbering:{reference:"bullets",level:/^\t/.test(ln)?1:0}, spacing:{after:40}, children:[new TextRun({text:body, font:"Nunito", size:18, color:"1a1a1a", highlight:(_hlCost?"yellow":undefined)})]}));
+          // Auto-populated values (platform-cost lines, $, %, names…) highlight yellow via apRuns.
+          inner.push(new Paragraph({numbering:{reference:"bullets",level:/^\t/.test(ln)?1:0}, spacing:{after:40}, children:apRuns(body,{size:18})}));
         });
       } else {
       const sections = (typeof v11SplitBullets === 'function') ? v11SplitBullets(_fcf) : [{head:null, bullets:[_fcf]}];
@@ -8924,11 +8952,10 @@ function renderSpecialDocx(def, ch, K){
             // A "Note:" line is a standalone paragraph, not a bullet (label in bold).
             const m=_bt.match(/^(Note:)\s*([\s\S]*)$/i);
             inner.push(new Paragraph({spacing:{before:80,after:40}, children:[
-              new TextRun({text:(m?m[1]:'Note:')+' ', font:"Nunito", size:18, color:"1a1a1a", bold:true}),
-              new TextRun({text:(m?m[2]:_bt), font:"Nunito", size:18, color:"1a1a1a"})
-            ]}));
+              new TextRun({text:(m?m[1]:'Note:')+' ', font:"Nunito", size:18, color:"1a1a1a", bold:true})
+            ].concat(apRuns(m?m[2]:_bt,{size:18}))}));
           } else {
-            inner.push(new Paragraph({numbering:{reference:"bullets",level:0}, spacing:{after:40}, children:[new TextRun({text: b, font:"Nunito", size:18, color:"1a1a1a"})]}));
+            inner.push(new Paragraph({numbering:{reference:"bullets",level:0}, spacing:{after:40}, children:apRuns(b,{size:18})}));
           }
         });
       });
