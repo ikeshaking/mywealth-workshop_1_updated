@@ -1920,19 +1920,19 @@ function buildInsuranceRecText(){
       else leadIn=lead+(hasProv?(" recommend you take out new insurance cover through "+provider+" and therefore be insured for the following amounts:"):" recommend you take out new insurance cover and therefore be insured for the following amounts:");
       out.push(leadIn);
       g.forEach(r=>out.push("\t"+fmt(r)));   // \t => sub-dot-point under the lead-in
-      // Total cost lines (split by funding source via the owner field), when premiums are known.
-      const prem=r=>{ const n=parseFloat(String(r.premium||'').replace(/[^0-9.]/g,'')); return isFinite(n)?n:0; };
-      const isSuper=r=>/super/i.test(String(r.owner||''));
-      const superTot=g.filter(isSuper).reduce((a,r)=>a+prem(r),0);
-      const cashTot =g.filter(r=>!isSuper(r)).reduce((a,r)=>a+prem(r),0);
-      // F.insurance premiums are stored ANNUALLY (editor labels them "$/yr"); the cost
-      // summary is quoted per month, so convert here rather than mislabelling the figure.
-      const mo=n=>'$'+Math.round(n/12).toLocaleString('en-AU');
-      if(superTot>0) out.push("Total Super Cost: "+mo(superTot)+" per month");
-      if(cashTot>0)  out.push("Total Cash Flow Cost: "+mo(cashTot)+" per month");
-      const ps=[...new Set(g.map(r=>r.premStruct).filter(Boolean))];
-      // premium-structure dot point removed per template (covered in the products table).
     });
+    // Total cost lines (once per person), auto-populated from the fact-find funding split
+    // (inside-super vs personal cash flow) when available — this captures flexi-linked covers whose
+    // premium is only partly funded from super. Falls back to the per-cover premium split by owner.
+    const prem=r=>{ const n=parseFloat(String(r.premium||r.premiumAnnual||'').replace(/[^0-9.]/g,'')); return isFinite(n)?n:0; };
+    const isSuper=r=>/super/i.test(String(r.owner||''));
+    const _fc=(typeof F==='object'&&F.insCostByPerson)?F.insCostByPerson[p]:null;
+    // F.insurance premiums are stored ANNUALLY; the cost summary is quoted per month.
+    const superMo=_fc?_fc.superMonthly:(pr.filter(isSuper).reduce((a,r)=>a+prem(r),0)/12);
+    const cashMo =_fc?_fc.cashMonthly :(pr.filter(r=>!isSuper(r)).reduce((a,r)=>a+prem(r),0)/12);
+    const mo=n=>'$'+Math.round(n).toLocaleString('en-AU');
+    if(superMo>0) out.push("Total Super Cost: "+mo(superMo)+" per month");
+    if(cashMo>0)  out.push("Total Cash Flow Cost: "+mo(cashMo)+" per month");
   });
   // "apply through <provider>" dot point removed per template (provider shown in the products table).
   // Safety closing only when new/replacement cover is being taken out.
@@ -3404,11 +3404,16 @@ function importProjectorJSON(raw){
     _buildInsForPerson("prot_p2","partner",{life:"pe_life_c2",tpd:"pe_tpd_c2",ip:"pe_income_c2"}).forEach(r=>ins.push(r));
   }
   if(ins.length) F.insurance=ins;
-  // Annual insurance premium funded from WITHIN superannuation (the inside-super portion the
-  // fact-find calculates per person) — drives the "impact on your retirement balance" risk figure.
+  // Insurance premium funding split (per person) from the fact-find: the inside-super annual premium
+  // and the personal (cash flow) monthly premium. Drives the "Total Super Cost / Total Cash Flow Cost"
+  // lines in the insurance recommendation and the "impact on your retirement balance" risk figure.
   { const _sp=v=>{ const n=Number(String(v==null?'':v).replace(/[^0-9.]/g,'')); return isFinite(n)?n:0; };
-    const _pAnn=_sp(jget(raw,"prot_manual_annual_super_p1"))+_sp(jget(raw,"prot_manual_annual_super_p2"));
-    if(_pAnn>0) F.insSuperPremAnnual=_pAnn; }
+    const sa1=_sp(jget(raw,"prot_manual_annual_super_p1")), sa2=_sp(jget(raw,"prot_manual_annual_super_p2"));
+    const cm1=_sp(jget(raw,"prot_manual_monthly_personal_p1")), cm2=_sp(jget(raw,"prot_manual_monthly_personal_p2"));
+    const _pAnn=sa1+sa2; if(_pAnn>0) F.insSuperPremAnnual=_pAnn;
+    F.insCostByPerson={};
+    if(sa1||cm1) F.insCostByPerson.client ={superMonthly:sa1/12, cashMonthly:cm1};
+    if(sa2||cm2) F.insCostByPerson.partner={superMonthly:sa2/12, cashMonthly:cm2}; }
 
   // ---- annexure data ----
   F.allocCurrent=(jget(raw,"wr_alloc")||[]).map(a=>({asset:a.asset,weight:String(a.weight).replace(/%/g,"")}));
@@ -4387,7 +4392,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B31 — insurance risks 9-pt list + auto super-impact + OnePath insurer + 9.5pt advice headings</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B32 — strategy card banner 16pt (sub-heading stays 9.5pt) + insurance risks/insurer fixes</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -7248,7 +7253,7 @@ async function generateSOA(){
       children:[new Paragraph({children:[new TextRun({text:label, font:"Nunito", size:19, color:"FFFFFF", bold:true})]})]}, _span));
     const rows = [ new TableRow({children:[ new TableCell(Object.assign({borders, width:{size:W,type:WidthType.DXA},
       margins:{top:50,bottom:50,left:110,right:110}, shading:{fill:NAVY_HEX,type:ShadingType.CLEAR},
-      children:[new Paragraph({children:[new TextRun({text:title, font:(window.BRAND&&window.BRAND.headingFont)||"ABC Arizona Flare", size:24, color:"FFFFFF", bold:true})]})] }, _span))] }) ];
+      children:[new Paragraph({children:[new TextRun({text:title, font:(window.BRAND&&window.BRAND.headingFont)||"ABC Arizona Flare", size:32, color:"FFFFFF", bold:true})]})] }, _span))] }) ];
     const seg = (label,txt)=>{
       if(!txt||!txt.trim()) return;
       rows.push(new TableRow({children:[subCell(label)]}));
@@ -7971,9 +7976,12 @@ function renderSpecialDocx(def, ch, K){
     /\bComments?:/i,
     /\bWarning ?[-–—]?[^.]{0,80}:/i,
     /\bAnnexure More information[^.]{0,80}\./i,
-    // v186: insurance product-risk cover-type headings (colon-terminated, from Risks – product doc)
-    /(?:^|\n)\s*(?:Any|Linked Life\/TPD|TPD Inside Super|Trauma|Income protection|Increasing claim option):/i,
-    /(?:^|\n)\s*Child \([^)]*\):/i,
+    // v186: insurance product-risk cover-type headings (colon-terminated, from Risks – product doc).
+    // Only treat these as headings when the label sits on its OWN line (colon at end-of-line) — the
+    // insurance-strategy "Why" uses the same words as INLINE labels ("Income Protection: We have…"),
+    // which must fall through to the bold-label paragraph path, not be split into a heading + bullets.
+    /(?:^|\n)\s*(?:Any|Linked Life\/TPD|TPD Inside Super|Trauma|Income protection|Increasing claim option):\s*(?=\n|$)/i,
+    /(?:^|\n)\s*Child \([^)]*\):\s*(?=\n|$)/i,
     // Estate Planning section headings + the "reasons" lead-in and the Risks sub-headings.
     /ESTATE PLANNING\s*[–—-][^\n]*/i,
     /We have made this recommendation for the following reasons:/i,
