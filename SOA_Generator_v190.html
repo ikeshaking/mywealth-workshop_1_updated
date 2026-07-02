@@ -4322,7 +4322,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B24 — comment sweep: invest rec/notes/headings/paras/ins highlights</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B25 — outcomes insurance template wording</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -5872,7 +5872,7 @@ function collectSummarySuggestions(){
     out.push("The inclusion of the Reserves Portfolio provides a source of liquidity to fund pension payments and short-term income needs, reducing the need to draw on growth assets during periods of market volatility and helping to preserve capital.");
   }
   if(blockActive("insurance") && ((F.insurance&&F.insurance.length) || F.recInsurer)){
-    out.push("You will have affordable cover that meets your needs and protects your family and lifestyle.");
+    out.push("You will have affordable "+((typeof F!=='undefined'&&F&&F.insTopUpScoped)?"additional ":"")+"cover that meets your needs, with appropriate features and benefits to maintain your family and lifestyle.");  // exact template wording (Santosha exemplar); "additional" only for a top-up of existing cover
     // Benefit-of-insurance outcome(s) (ticked in the advice request): link the recommended cover back
     // to the client's goals / appropriateness of the advice — one outcome line per selected benefit.
     (typeof v200InsBenefitList==='function'?v200InsBenefitList():[]).forEach(b=>out.push(b+"."));
