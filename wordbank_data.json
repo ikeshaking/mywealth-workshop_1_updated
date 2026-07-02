@@ -1,0 +1,3620 @@
+{
+ "areas": [
+  {
+   "name": "0 · Client framing & scope",
+   "note": "Document-level wording. Triggered by whether the advice request marks the client NEW or EXISTING, and which areas are scoped in/out.",
+   "scenarios": [
+    {
+     "name": "New client — Introduction & Current Situation opener",
+     "triggers": [
+      "new client"
+     ],
+     "type": "Always-on (new client)",
+     "gate": "clientType = new",
+     "figures": "—",
+     "strat": "[Name], you have sought advice as you would like to [opening goal — e.g. plan for a comfortable retirement and create additional passive income to support your lifestyle].",
+     "outcome": "—",
+     "why": [
+      "Standard Introduction boilerplate (thank you / Pathway to Wealth / tax-advice disclaimer) applies."
+     ],
+     "risks": [],
+     "alts": [],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Existing / current client — Introduction & Current Situation opener",
+     "triggers": [
+      "existing client",
+      "current client",
+      "review and enhance existing strategies"
+     ],
+     "type": "Always-on (existing client)",
+     "gate": "clientType = existing",
+     "figures": "—",
+     "strat": "[Name], you are a current client of My Wealth Solutions and have sought further advice to review and enhance your existing strategies as you continue progressing toward your financial freedom goal.\n(or) [Names], you are a current client of My Wealth Solutions. You have sought advice as you wish to build upon your existing wealth in order to secure your financial freedom goal.",
+     "outcome": "—",
+     "why": [
+      "Frames the SOA as a review/enhancement of existing strategies rather than first-time advice."
+     ],
+     "risks": [],
+     "alts": [],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Risk profile — reviewed & remains appropriate (existing client)",
+     "triggers": [
+      "risk profile remains appropriate",
+      "reviewed your answers"
+     ],
+     "type": "Always-on (existing client)",
+     "gate": "Risk profile unchanged",
+     "figures": "{riskProfile}",
+     "strat": "We reviewed your answers in the Risk Profile Questionnaire, and we believe that a [High Growth] risk profile remains appropriate for your circumstances.",
+     "outcome": "—",
+     "why": [
+      "Confirms the existing risk profile after review rather than setting a new one."
+     ],
+     "risks": [],
+     "alts": [],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Scope — reference by incorporation (existing client)",
+     "triggers": [
+      "incorporates information",
+      "previous statement of advice dated"
+     ],
+     "type": "Tailored",
+     "gate": "Area covered in a prior SOA",
+     "figures": "{priorSoaDate}",
+     "strat": "This SOA incorporates information about [areas — e.g. Cashflow Management & Budgeting and Estate Planning] in your Statement of Advice dated [date].",
+     "outcome": "—",
+     "why": [
+      "Lets an area be scoped out of this SOA because it was addressed in a prior SOA (reference by incorporation)."
+     ],
+     "risks": [],
+     "alts": [],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Scope-out — business advice (and other common scope-outs)",
+     "triggers": [
+      "business advice scoped out",
+      "scope out business"
+     ],
+     "type": "Tailored",
+     "gate": "Business/other area out of scope",
+     "figures": "—",
+     "strat": "We have agreed that we should not advise you about: Business Advice — We have not provided specific business planning/tax advice as this must be provided by a licensed tax agent and/or business consultant. [plus the standard scope-out list: specific residential property, existing shares, existing investment property, international assets, cryptocurrency, defined-benefit/military super, family trust.]",
+     "outcome": "—",
+     "why": [
+      "Standard scope-out wording — each item appears only when that area is being scoped out of the advice."
+     ],
+     "risks": [],
+     "alts": [],
+     "draft": false,
+     "appliesTo": "both"
+    }
+   ]
+  },
+  {
+   "name": "1 · Debt Management",
+   "note": "Standard offset/surplus/tax wording is always-on when debt is scoped; the rest are tailored modules triggered by keywords. Gearing wording (term loan / equity release) only appears when a gearing strategy is scoped.",
+   "scenarios": [
+    {
+     "name": "Establish or utilise an offset account",
+     "triggers": [
+      "offset account",
+      "utilise offset",
+      "establish offset"
+     ],
+     "type": "Tailored",
+     "gate": "—",
+     "figures": "—",
+     "strat": "We recommend you [establish / utilise] an offset account against your home loan and hold your cash and surplus within it.",
+     "outcome": "Directing your surplus income towards your existing home loan offset will save you an estimated $XX in interest costs and reduce the repayment period on your loan from XX to XX years.",
+     "why": [
+      "An offset account will allow you to reduce your current interest payments but still provide you the flexibility to withdraw these funds for your liquidity needs.",
+      "The offset account use will provide estimated interest savings of $XXX over the life of the loan compared to repayment over the regular term."
+     ],
+     "risks": [
+      "The effectiveness of an offset account depends on maintaining a sufficient cash balance. Withdrawing funds from the offset will increase the interest payable on your loan.",
+      "Holding funds in an offset account may result in lower investment returns than investing those funds in growth assets over the long term."
+     ],
+     "alts": [
+      "Direct your surplus cashflow to a high interest savings account or a term deposit account. I discounted this strategy as you will yield a high effective after tax return by directing your surplus to your offset account (estimated to be approximately X.XX% based on your current home loan interest rate). This also allows you to reduce your bad debt at a faster rate.",
+      "We considered making additional home loan repayments instead of utilising your existing offset account, however we discounted this strategy as your offset account will provide you with flexible access to your funds, should you need to draw upon these at any point."
+     ],
+     "draft": false,
+     "appliesTo": "accumulator",
+     "pick": [
+      "Establish",
+      "Utilise"
+     ]
+    },
+    {
+     "name": "Direct surplus income to offset",
+     "triggers": [
+      "surplus to offset",
+      "direct surplus income"
+     ],
+     "type": "Always-on",
+     "gate": "",
+     "figures": "$ amount",
+     "strat": "We recommend you direct your surplus income of $___ to your home loan offset account.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "accumulator",
+     "draft": false
+    },
+    {
+     "name": "Direct tax savings to offset",
+     "triggers": [
+      "tax savings to offset",
+      "direct tax savings"
+     ],
+     "type": "Always-on",
+     "gate": "",
+     "figures": "$ amount",
+     "strat": "We recommend you direct your tax savings of $___ to your home loan offset account.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "accumulator",
+     "draft": false
+    },
+    {
+     "name": "Use cash / sale proceeds to reduce the home loan",
+     "triggers": [
+      "pay down home loan",
+      "reduce home loan",
+      "clear mortgage",
+      "sale proceeds to reduce",
+      "use $X to reduce"
+     ],
+     "type": "Tailored",
+     "gate": "—",
+     "figures": "{amt}",
+     "strat": "We recommend using {amt} from your existing cash or sale proceeds to reduce your home loan.",
+     "outcome": "Paying down your home loan will release available equity for investment opportunities while reducing your minimum loan repayments, improving your ongoing cashflow.",
+     "why": [
+      "Reducing non‑deductible (bad) debt improves your cashflow and releases equity for future investment."
+     ],
+     "risks": [
+      "Applying cash to debt reduction may reduce your available liquidity and emergency funds. It may also limit your ability to access these funds without further borrowing."
+     ],
+     "alts": [
+      "We considered retaining your available cash rather than reducing your home loan. This was not recommended as reducing your home loan improves your cash flow, reduces interest costs and/or provides greater flexibility to implement your investment strategy."
+     ],
+     "draft": false,
+     "appliesTo": "accumulator"
+    },
+    {
+     "name": "Retain an emergency cash buffer in the offset",
+     "triggers": [
+      "emergency buffer",
+      "cash buffer",
+      "retain $X in offset"
+     ],
+     "type": "Tailored",
+     "gate": "—",
+     "figures": "{amt}",
+     "strat": "We recommend retaining {amt} in your offset account as an emergency cash buffer.",
+     "outcome": "Retaining cash in your home loan offset account provides a readily accessible emergency reserve while continuing to reduce the interest payable on your home loan.",
+     "why": [
+      "Maintains accessible funds for emergencies while still reducing home loan interest."
+     ],
+     "risks": [
+      "Holding funds in an offset account may result in lower investment returns than investing those funds in growth assets over the long term."
+     ],
+     "alts": [],
+     "draft": false,
+     "appliesTo": "accumulator"
+    },
+    {
+     "name": "Consolidate car loan into home loan",
+     "triggers": [
+      "consolidate car loan",
+      "car loan into home loan",
+      "roll car loan into mortgage"
+     ],
+     "type": "Tailored",
+     "gate": "—",
+     "figures": "—",
+     "strat": "We recommend consolidating your existing car loan into your home loan.",
+     "outcome": "Consolidating your car loan into your home loan will reduce your overall borrowing costs by replacing higher-interest debt with lower-interest home loan debt, while simplifying the management of your debts.",
+     "why": [
+      "Replaces higher‑interest short‑term debt with lower‑interest home loan debt and simplifies your lending."
+     ],
+     "risks": [
+      "While this may reduce your interest rate and repayments, extending short-term debt over a longer home loan term could result in paying more total interest if additional repayments are not made."
+     ],
+     "alts": [
+      "We considered retaining your existing car loan. This was not recommended as consolidating your debt reduces interest costs and simplifies your lending arrangements."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Consolidate other debt (personal loan / credit card)",
+     "triggers": [
+      "consolidate personal loan",
+      "consolidate credit card",
+      "consolidate debt into home loan"
+     ],
+     "type": "Tailored",
+     "gate": "—",
+     "figures": "{amt}",
+     "strat": "We recommend you clear your credit card / personal loan balance using funds from your home loan offset account, and close the facility to prevent re-accumulation.",
+     "outcome": "High-interest consumer debt is repaid using lower-cost funds, and the facility is closed to stop it building up again.",
+     "why": [
+      "Credit cards and personal loans typically carry far higher interest than your home loan; clearing them removes that high-cost interest.",
+      "Closing the facility removes the temptation to re-borrow."
+     ],
+     "risks": [
+      "If the facility is not closed, the balance can re-accumulate; closing a card may briefly affect your credit score."
+     ],
+     "alts": [
+      "Maintain minimum repayments on the existing facility — discounted as it leaves high-interest debt in place."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Refinance investment property loan from P&I to interest only",
+     "triggers": [
+      "investment property interest only",
+      "refinance IP to interest only",
+      "P&I to IO"
+     ],
+     "type": "Tailored",
+     "gate": "—",
+     "figures": "—",
+     "strat": "We recommend refinancing your investment property loan from principal and interest to interest only repayments.",
+     "outcome": "Switching your investment property loan from principal and interest to interest-only repayments will improve your short-term cash flow. Following the debt restructure, surplus funds can be redirected towards other wealth creation opportunities.",
+     "why": [
+      "Improves short‑term cashflow and frees surplus for other wealth‑creation opportunities."
+     ],
+     "risks": [
+      "Interest only repayments do not reduce the loan principal, meaning the outstanding balance will remain unchanged and total interest paid over the life of the loan may be higher."
+     ],
+     "alts": [
+      "We considered retaining principal and interest repayments. This was not recommended as interest-only repayments improve short-term cash flow, allowing surplus funds to be directed towards other wealth creation opportunities."
+     ],
+     "draft": false,
+     "appliesTo": "accumulator"
+    },
+    {
+     "name": "Refinance to draw on available equity (GEARING)",
+     "triggers": [
+      "draw on equity",
+      "release equity",
+      "refinance to draw equity",
+      "equity release"
+     ],
+     "type": "Tailored",
+     "gate": "Only if a gearing strategy is scoped",
+     "figures": "{limit}",
+     "strat": "We recommend you refinance your existing home and/or investment property loan to draw on your available equity.",
+     "outcome": "Your home loan will be split into tax deductible and non-deductible components, increasing your tax efficiency.",
+     "why": [
+      "Refinance of your existing loan structure to use available equity will allow you to begin investing more now as opposed to waiting until the loan is fully repaid.",
+      "Replaces “bad” (non tax deductible) debt with “good” (tax deductible) investment debt."
+     ],
+     "risks": [
+      "(uses the standard gearing risk list — see Term Loan / debt recycling)"
+     ],
+     "alts": [
+      "(uses the gearing alternatives — see Investment Plan)"
+     ],
+     "draft": false,
+     "appliesTo": "accumulator"
+    },
+    {
+     "name": "Use equity to fund the 20% deposit for an investment property purchase (GEARING)",
+     "triggers": [
+      "investment property purchase",
+      "20% deposit",
+      "use equity for deposit"
+     ],
+     "type": "Tailored",
+     "gate": "Only if an IP purchase funded by equity is scoped",
+     "figures": "{limit}",
+     "strat": "We recommend you use the equity to fund the 20% deposit (plus costs) for an investment property purchase.",
+     "outcome": "(outcome carried by the Investment Property section)",
+     "why": [
+      "Allows you to acquire a growth asset now using available equity rather than waiting to accumulate a cash deposit."
+     ],
+     "risks": [
+      "(uses the standard gearing risk list)"
+     ],
+     "alts": [],
+     "draft": false,
+     "appliesTo": "accumulator"
+    },
+    {
+     "name": "Establish a Term Loan / debt recycling (GEARING)",
+     "triggers": [
+      "term loan",
+      "debt recycling",
+      "instalment gearing",
+      "borrow to invest"
+     ],
+     "type": "Tailored",
+     "gate": "Only if a gearing strategy is scoped",
+     "figures": "{limit},{drawdown12},{repayMo}",
+     "strat": "We recommend you establish a Term Loan for investment purposes using your existing home or investment property loan as equity.\nWe recommend you utilise the offset account against your home mortgage.",
+     "outcome": "A debt recycling strategy essentially converts your non tax deductible (home loan) debt into tax deductible investment debt over a period of time.",
+     "why": [
+      "Many people wait until their home loan is repaid before starting to invest. A strategy that lets you invest now and continue to pay off your home loan reasonably quickly is called debt recycling. It involves three key steps: use your home equity as security for a separate investment loan; use any tax savings (and surplus cash flow) to reduce your outstanding home loan balance; re‑borrow from your investment loan the amount you have paid off your home loan to purchase additional investments.",
+      "Refinance of your existing loan structure to use available equity will allow you to begin investing more now as opposed to waiting until the loan is fully repaid.",
+      "Replaces “bad” (non tax deductible) debt with “good” (tax deductible) investment debt.",
+      "Allows for your home loan to be repaid in approximately XX years instead of XX years.",
+      "Allows you to utilise your Term Loan to invest in assets sooner than would have otherwise been possible.",
+      "Additional Benefits: Interest on investment debt provides ongoing tax deductions, reducing the amount of interest you pay. Debt recycling helps to establish an investment portfolio sooner and allows a portfolio to realise long term growth."
+     ],
+     "risks": [
+      "You remain liable for the principal borrowed, irrespective of the performance of your investment portfolio;",
+      "There is the risk of the lender having recourse to the home used as security, and therefore the risk of losing the home;",
+      "If interest rates increase your interest payments will increase accordingly, requiring additional cash. Gearing increases the risk attached to a portfolio, as gearing will magnify both gains and losses;",
+      "Gearing is inappropriate for people without satisfactory cash flow/income to meet borrowing costs;",
+      "While gearing enhances your potential for bigger gains, it can also expose you to a greater risk in a falling market;",
+      "Assets purchased with borrowed funds may actually fall in value. This means that although you might receive extra tax deductions over time, you might actually lose funds;",
+      "Due to the high risk nature of a gearing strategy, I recommend that you review the suitability of your leveraged portfolio on at least an annual basis;",
+      "A gearing strategy requires a long term investment horizon. Investment returns can be volatile, and in order to withstand short term fluctuations, I recommend a minimum 5 year investment time horizon;"
+     ],
+     "alts": [
+      "We considered restructuring all of your lending to interest only loans and making additional salary sacrifice contributions to super for the difference you were paying on your home loan principal. I have discounted this strategy because home ownership is a higher priority for you than growing your superannuation at this time and you wish to take advantage of a debt recycling strategy to reduce your “bad” non tax deductible debt within your existing loan account and pay your home off as soon as possible."
+     ],
+     "draft": false,
+     "appliesTo": "accumulator"
+    },
+    {
+     "name": "Use inheritance / windfall to pay down the home loan",
+     "triggers": [
+      "inheritance to pay down",
+      "use inheritance to reduce loan",
+      "windfall to mortgage"
+     ],
+     "type": "Tailored",
+     "gate": "—",
+     "figures": "{amt}",
+     "strat": "We recommend you use $XXX of your anticipated inheritance to pay down your home loan [after your fixed rate has expired], and retain $XXX of your inheritance in your offset account to cover [expected home renovations / an emergency buffer].",
+     "outcome": "Applying your inheritance to your home loan reduces non-deductible debt and interest cost, while retaining a portion in offset keeps funds accessible for planned expenses.",
+     "why": [
+      "Reduces bad (non-deductible) debt, improving cashflow and bringing forward the date your home loan is repaid.",
+      "Retaining a portion in the offset keeps funds accessible for planned costs (e.g. renovations) while still reducing home loan interest."
+     ],
+     "risks": [
+      "Applying funds to debt reduces your available liquidity; retaining an appropriate offset buffer mitigates this.",
+      "If a fixed rate applies, break costs may arise from paying down before the fixed term expires — time the repayment for after the fixed rate expires."
+     ],
+     "alts": [
+      "Invest the inheritance instead of reducing the home loan — discounted where reducing non-deductible debt provides a certain, tax-effective return equal to your home loan rate."
+     ],
+     "draft": false,
+     "appliesTo": "accumulator"
+    },
+    {
+     "name": "Switch investment property loan(s) from principal & interest to interest only",
+     "triggers": [
+      "switch home loan to interest only",
+      "home loan interest only",
+      "P&I to interest only home"
+     ],
+     "type": "Tailored",
+     "gate": "—",
+     "figures": "—",
+     "strat": "We recommend you switch your investment property loan(s) from principal & interest to interest only to improve cashflow and maintain tax-deductible debt.",
+     "outcome": "Switching to interest-only repayments improves your short-term cash flow, freeing surplus to direct towards your investment strategy or offset.",
+     "why": [
+      "Improves short-term cashflow, freeing surplus for other wealth-creation opportunities or to hold in offset."
+     ],
+     "risks": [
+      "Interest only repayments do not reduce the loan principal, so the outstanding balance remains unchanged and total interest paid over the life of the loan may be higher.",
+      "Interest on your home loan is not tax deductible, so interest-only on non-deductible debt should be used with a clear plan to reduce the principal."
+     ],
+     "alts": [
+      "Retain principal and interest repayments — discounted where the cashflow freed up is better directed to your investment strategy or offset."
+     ],
+     "draft": true,
+     "appliesTo": "accumulator"
+    },
+    {
+     "name": "Custom debt management strategy (free text)",
+     "triggers": [
+      "custom debt"
+     ],
+     "type": "Custom (free text)",
+     "gate": "",
+     "figures": "—",
+     "strat": "[Free-type the debt recommendation; it pulls through verbatim.]",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": true
+    },
+    {
+     "name": "Sell current home and purchase a new home (PPR — set aside funds)",
+     "triggers": [
+      "sell home and upgrade",
+      "upgrade home",
+      "sell and buy new home",
+      "new home",
+      "made an offer",
+      "equity loan for deposit",
+      "home upgrade",
+      "sell current home and upgrade"
+     ],
+     "type": "Tailored",
+     "gate": "—",
+     "figures": "{saleProceeds},{newValue}",
+     "strat": "You intend to sell your current home. As this is your principal residence we do not provide advice on it; we recommend you set aside $___ to fund the purchase of your new home.",
+     "outcome": "Your move to the new home is funded with an equity-drawdown deposit now, then tidied up with the sale proceeds, and your debt and cashflow are restructured around the upgraded home.",
+     "why": [
+      "Setting aside the required funds ensures the purchase of your next home is covered from sale proceeds and available cash."
+     ],
+     "risks": [
+      "Sale price and timing are uncertain; transaction costs (agent, legal, stamp duty) apply."
+     ],
+     "alts": [],
+     "draft": false,
+     "appliesTo": "accumulator"
+    }
+   ]
+  },
+  {
+   "name": "2 · Investment Property",
+   "note": "Existing or proposed. The purchase‑using‑equity wording is verbatim from your SOAs; the event scenarios (sell‑to‑buy, upgrade, convert to IP, downsizer) are my drafts for your review.",
+   "scenarios": [
+    {
+     "name": "Purchase an investment property using equity",
+     "triggers": [
+      "purchase investment property",
+      "buy investment property",
+      "IP purchase using equity"
+     ],
+     "type": "Tailored",
+     "gate": "Property block scoped",
+     "figures": "{propValue},{deposit}",
+     "strat": "We recommend you purchase an investment property (in the name of [owner]) to the value of approximately $XXX (plus costs).\nWe recommend the loan for the investment property should be Interest Only.\nWe recommend you arrange for all property costs and property loan repayments to come out of the ICA, and for the rental income to be paid into the ICA.",
+     "outcome": "Our projections indicate this strategy may generate additional wealth of approximately $XXX over the term (estimated at XX years).",
+     "why": [
+      "Builds a long-term growth investment outside of the super environment and share market providing long term diversification for your investment portfolio.",
+      "Additional Benefits: As a growth asset, an investment property provides a combination of long-term investment income and capital growth, as well as ongoing tax deductions. Property can be less volatile than shares and/or other investments."
+     ],
+     "risks": [
+      "There is the risk of the lender having recourse to the home used as security, and therefore the risk of losing the home;",
+      "If interest rates increase your interest payments will increase accordingly. Gearing increases the risk attached to a property, as gearing will magnify both gains and losses;",
+      "The return on the investment (rent) may decrease or temporarily cease, which may place some strain on your cash flow;",
+      "A gearing strategy requires a long term investment horizon. I recommend a minimum 5 year investment time horizon;"
+     ],
+     "alts": [
+      "Direct additional funds to Australian shares instead of purchasing an investment property. I have discounted this strategy as shares may require a high level of ongoing monitoring... and your managed fund already has an allocation to Australian shares so allocating additional funds may concentrate your portfolio excessively within the one asset class.",
+      "Direct additional funds to your superannuation account instead of purchasing an investment property. I have discounted this strategy, as funds in superannuation are not generally accessible unless specific conditions of release are met...",
+      "While we do not give specific advice on which property to purchase, we provide purchase criteria and can assist you to locate an appropriately licenced real estate agent / buyer's advocate. Alternatively, you may wish to source the property yourself."
+     ],
+     "draft": false,
+     "appliesTo": "accumulator"
+    },
+    {
+     "name": "Purchase an investment property using cash / savings",
+     "triggers": [
+      "purchase property using cash",
+      "buy IP with savings"
+     ],
+     "type": "Tailored",
+     "gate": "Property block scoped",
+     "figures": "{propValue}",
+     "strat": "We recommend you purchase an investment property to the value of approximately $XXX (plus costs), funded from your available cash/savings.",
+     "outcome": "Our projections indicate this strategy may generate additional wealth of approximately $XXX over the term.",
+     "why": [
+      "Builds a long‑term growth investment outside super, diversifying your portfolio, without taking on additional borrowings."
+     ],
+     "risks": [
+      "Property is an illiquid asset; you may be unable to access funds quickly if needed.",
+      "The return on the investment (rent) may decrease or temporarily cease."
+     ],
+     "alts": [
+      "Direct the funds to your investment portfolio or superannuation instead — discounted for the reasons noted in the Investment Plan alternatives."
+     ],
+     "draft": true,
+     "appliesTo": "accumulator"
+    },
+    {
+     "name": "Sell current property and use proceeds to buy a new property",
+     "triggers": [
+      "sell property and buy",
+      "sell and purchase new property",
+      "use sale proceeds to buy"
+     ],
+     "type": "Tailored",
+     "gate": "Property block scoped",
+     "figures": "{saleProceeds},{newValue}",
+     "strat": "We recommend you sell your existing property at [address] for an estimated $XXX and use the net proceeds to purchase a new property to the value of approximately $XXX (plus costs).",
+     "outcome": "Realising your existing property allows you to reposition into a property better aligned with your goals while managing your overall borrowings.",
+     "why": [
+      "Allows you to reposition into a more suitable property/location aligned to your goals.",
+      "Net sale proceeds reduce the borrowings required for the new purchase."
+     ],
+     "risks": [
+      "Selling will trigger transaction costs (agent fees, legals) and may crystallise capital gains tax.",
+      "Timing risk between sale and purchase; you may require bridging finance."
+     ],
+     "alts": [
+      "Retain the existing property and borrow separately for the new purchase — discounted where servicing two loans is not appropriate for your cashflow."
+     ],
+     "draft": true,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Convert current home into an investment property",
+     "triggers": [
+      "convert home to investment property",
+      "rent out current home",
+      "home becomes investment"
+     ],
+     "type": "Tailored",
+     "gate": "—",
+     "figures": "—",
+     "strat": "We recommend you retain your existing home and convert it into an investment property, renting it at an estimated $XXX per week.",
+     "outcome": "Converting your home to an investment property retains a growth asset and creates a new source of rental income and tax deductions.",
+     "why": [
+      "Retains a growth asset you know well and creates rental income.",
+      "Interest on the loan (to the extent it relates to the income‑producing use) may become tax deductible."
+     ],
+     "risks": [
+      "The deductibility of interest depends on the use of the borrowed funds, not the security — obtain advice from your accountant.",
+      "As a former home, capital gains tax may apply on a future sale (subject to the 6‑year absence rule).",
+      "Rental income may decrease or temporarily cease."
+     ],
+     "alts": [
+      "Sell the existing home and invest the proceeds — discounted where retaining the property better meets your long‑term goals."
+     ],
+     "draft": true,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Retain an existing investment property",
+     "triggers": [
+      "retain investment property",
+      "keep the investment property",
+      "hold the property"
+     ],
+     "type": "Tailored",
+     "gate": "—",
+     "figures": "—",
+     "strat": "We recommend you retain your existing investment property for now. Where a sale is intended, we recommend timing it to occur after your fund has commenced pension phase to minimise capital gains tax, and directing the proceeds to fund your retirement income.",
+     "outcome": "The property is retained and, if sold, the sale is timed for the pension phase to reduce or remove CGT, with proceeds funding your income.",
+     "why": [
+      "Retaining the property preserves the asset and rental income; timing any eventual sale to the pension phase reduces the CGT payable on the gain."
+     ],
+     "risks": [
+      "Property is illiquid and concentrated; market timing on any sale is uncertain; confirm the tax treatment with your accountant."
+     ],
+     "alts": [
+      "Sell the property now — discounted where deferring the sale to pension phase materially reduces CGT."
+     ],
+     "draft": false,
+     "appliesTo": "retirement"
+    },
+    {
+     "name": "Sell an existing investment property",
+     "triggers": [
+      "sell investment property",
+      "dispose of IP"
+     ],
+     "type": "Tailored",
+     "gate": "—",
+     "figures": "{saleProceeds}",
+     "strat": "We recommend you sell your existing investment property at [address] for an estimated $XXX and redeploy the net proceeds as set out in this advice.",
+     "outcome": "Realising the property frees capital to redeploy into a more suitable, diversified and liquid strategy.",
+     "why": [
+      "Frees capital for a more diversified/liquid strategy aligned to your goals.",
+      "Reduces concentration and gearing risk."
+     ],
+     "risks": [
+      "The sale will trigger transaction costs and may crystallise capital gains tax — consult your accountant.",
+      "You forgo future rental income and any further capital growth on the property."
+     ],
+     "alts": [
+      "Retain the property — discounted where it no longer suits your goals or cashflow."
+     ],
+     "draft": true,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Downsizer (sell home, downsize, contribute proceeds)",
+     "triggers": [
+      "downsize",
+      "sell home and downsize",
+      "sell the home",
+      "downsizing"
+     ],
+     "type": "Tailored",
+     "gate": "Age 55+ eligibility",
+     "figures": "{saleProceeds},{dsAmount}",
+     "strat": "You have advised you have sold (or intend to sell) your home and would like to use the proceeds to assist in funding your retirement. We recommend you downsize and direct the proceeds to superannuation via the downsizer contribution.",
+     "outcome": "Selling and downsizing frees up capital from your home which is redirected into super to fund retirement, without affecting your existing Centrelink entitlements where confirmed.",
+     "why": [
+      "Downsizing releases equity tied up in your home and, via the downsizer contribution, moves it into the tax-effective super environment to fund a retirement income stream."
+     ],
+     "risks": [
+      "Selling and buying incurs transaction costs (agent, legal, stamp duty); proceeds in super are preserved; the home sale and any new purchase must be timed carefully."
+     ],
+     "alts": [
+      "Retain the home and draw on other assets — discounted where releasing home equity is needed to fund retirement."
+     ],
+     "draft": false,
+     "appliesTo": "retirement"
+    }
+   ]
+  },
+  {
+   "name": "3 · Investment Bond",
+   "note": "Investment bond strategies + product, separate from the investment plan.",
+   "scenarios": [
+    {
+     "name": "Establish an investment bond",
+     "triggers": [
+      "investment bond",
+      "insurance bond",
+      "education bond",
+      "establish investment bond",
+      "new investment bond"
+     ],
+     "type": "Tailored",
+     "gate": "Investment bond scoped (commonly for children's education / high-income earners)",
+     "figures": "initial $___ + ongoing $___ pm",
+     "strat": "We recommend you establish [a new investment bond / two new investment bonds for each of your children] through the Generation Life – Life Builder Investment Bond platform and invest in line with your risk profile.\nYou will be able to nominate [child/beneficiary] as the beneficiary of this account.\nWe recommend you invest the funds into the following investment options: [e.g. Vanguard Growth Portfolio – 100%].",
+     "outcome": "An investment bond provides a tax-effective, long-term structure (earnings taxed within the bond at a maximum of 30%, with no tax payable on withdrawals subject to the 10-year rule), ideal for accumulating for your children's future.",
+     "why": [
+      "Earnings within the bond are taxed at a maximum of 30% (not your marginal rate), and there is no tax payable on future withdrawals subject to the 10-year rule.",
+      "You can nominate your child / beneficiary on the account, making it a tax-effective vehicle to accumulate for their future (e.g. education).",
+      "The recommended index funds aim to track particular market indices — a passive, cost-effective way to gain broad, diversified market exposure, reducing overall risk."
+     ],
+     "risks": [
+      "If you withdraw part or all of your investment bond prior to the 10th year, some of the profits will be assessable to you, although you will receive a 30% tax offset equal to the assessable amount.",
+      "If you contribute more than 125% of the previous year's contributions, the 10-year period will restart (this applies where, for example, you make no contribution in a year and then later look to make further contributions).",
+      "You may pay a buy/sell spread and switching fees; there are fees and costs associated with using an investment bond.",
+      "Investment bonds involve some investment risk and do not guarantee your returns; values may fall. By investing instead of holding cash you lose capital stability and access to the government deposit guarantee up to $250,000."
+     ],
+     "alts": [
+      "Hold the funds in cash (a cash management trust or savings account) for your children — discounted as, over the medium to long term, a managed investment provides greater opportunity for capital growth than holding cash.",
+      "Invest via an ordinary investment platform for your children — discounted as you would not receive the same tax benefits (earnings taxed at a maximum of 30% and no tax payable on future withdrawals, subject to the 10-year rule).",
+      "We completed a price comparison between Generation Life, Australian Unity and Centuria investment bonds. Generation Life was the most cost-effective platform."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Retain existing investment bond",
+     "triggers": [
+      "retain investment bond",
+      "keep existing bond"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend you retain your existing investment bond.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false
+    },
+    {
+     "name": "Sell down existing investment bond",
+     "triggers": [
+      "sell investment bond",
+      "selldown bond",
+      "withdraw from bond"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "$ amount",
+     "strat": "We recommend you sell down (withdraw from) your existing investment bond.",
+     "outcome": "",
+     "why": [],
+     "risks": [
+      "Withdrawing within the 10-year period may have tax implications (30% offset); the 125% rule may apply."
+     ],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false
+    },
+    {
+     "name": "CGT implications — investment bond (free text)",
+     "triggers": [
+      "bond cgt",
+      "investment bond tax"
+     ],
+     "type": "Custom (free text)",
+     "gate": "",
+     "figures": "—",
+     "strat": "[Free-type the CGT / tax implications of the bond — 10-year rule, 125% rule, 30% offset on early withdrawal.]",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": true
+    }
+   ]
+  },
+  {
+   "name": "4 · Investment Plan",
+   "note": "Regular investment / debt recycling wording is verbatim. Investment bond, lump‑sum and inheritance variants are drafts for your review (no investment‑bond example in these five SOAs — please send one).",
+   "scenarios": [
+    {
+     "name": "Lump-sum investment",
+     "triggers": [
+      "lump sum investment",
+      "invest lump sum",
+      "invest savings"
+     ],
+     "type": "Tailored",
+     "gate": "Investment plan scoped",
+     "figures": "{lump}",
+     "strat": "We recommend you invest a lump sum of $XXX into a new investment account and invest in line with your risk profile.",
+     "outcome": "Our projections indicate this strategy may generate additional wealth of $XXX over the term.",
+     "why": [
+      "Puts surplus capital to work in a diversified, professionally managed portfolio you can access outside super.",
+      "Reinvesting distributions accelerates growth through compounding."
+     ],
+     "risks": [
+      "Investment funds involve some investment risk and do not guarantee your returns; values may fall.",
+      "By investing instead of holding cash you lose capital stability and the deposit guarantee up to $250,000."
+     ],
+     "alts": [
+      "Hold the funds in cash/term deposit — discounted as it yields a lower long‑term return and does not meet your wealth‑creation goal.",
+      "Contribute to superannuation instead — discounted as super is not accessible until a condition of release is met."
+     ],
+     "draft": true,
+     "appliesTo": "both"
+    },
+    {
+     "name": "In-specie transfer — retain existing holdings in the new platform (no sale)",
+     "triggers": [
+      "in specie transfer",
+      "inspecie",
+      "transfer existing shares",
+      "transfer portfolio in specie"
+     ],
+     "type": "Tailored",
+     "gate": "Existing portfolio present",
+     "figures": "{cgt}",
+     "strat": "We recommend you in-specie transfer your existing portfolio into the new account and retain the holdings (no sale), avoiding CGT and transaction costs.",
+     "outcome": "Transferring your holdings in‑specie retains your investments while bringing them under professional management, with internal netting used to reduce transaction costs and CGT.",
+     "why": [
+      "Retains your existing holdings while bringing them under the recommended professionally managed portfolio.",
+      "Internal netting with the CARE portfolio reduces transaction costs and potential capital gains tax."
+     ],
+     "risks": [
+      "As part of the rebalance into the CARE portfolio, the remaining assets that cannot be internally netted may need to be sold down, which may crystallise an estimated capital gain of $XXX and an estimated tax liability of approximately $XXX. Please consult an accountant to confirm the tax implications and ensure sufficient cash reserves are available."
+     ],
+     "alts": [
+      "Sell the entire portfolio and re‑invest the cash — discounted as the in‑specie transfer with internal netting reduces transaction costs and CGT."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Use inheritance / windfall to invest",
+     "triggers": [
+      "inheritance to invest",
+      "invest inheritance",
+      "windfall to invest"
+     ],
+     "type": "Tailored",
+     "gate": "Investment plan scoped",
+     "figures": "{amt}",
+     "strat": "We recommend you invest your inheritance of {amt} into a new investment account, invested in line with your risk profile, and elect to reinvest distributions.",
+     "outcome": "Investing your inheritance puts the capital to work in a diversified, professionally managed portfolio aligned to your goals.",
+     "why": [
+      "Puts a windfall to work toward your long‑term goals in a diversified, accessible portfolio."
+     ],
+     "risks": [
+      "Investment funds involve investment risk; values may fall. You lose capital stability vs holding cash."
+     ],
+     "alts": [
+      "Use the inheritance to reduce non‑deductible debt instead — see Debt. Discounted where building investment assets better meets the goal."
+     ],
+     "draft": true,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Sell down existing investment / asset",
+     "triggers": [
+      "sell down investment",
+      "sell existing investment account",
+      "sell your shares"
+     ],
+     "type": "Tailored",
+     "gate": "—",
+     "figures": "{cgt}",
+     "strat": "We recommend you sell down your existing [Hub24 Investment Account / share portfolio].",
+     "outcome": "Selling down your existing portfolio consolidates your assets into a more streamlined structure, reducing administration and management complexity and costs; after the sell-down you will no longer be liable to pay tax on future investment earnings on those assets.",
+     "why": [
+      "Consolidates assets into a more streamlined structure across superannuation and cash holdings, reducing ongoing administration and management costs."
+     ],
+     "risks": [
+      "As a result of the sell down, you will crystallise a capital gain of approximately $XXX and capital gains tax of approximately $XXX. Please consult with your accountant to understand your tax liability prior to implementing this advice.",
+      "There is a risk of being temporarily out of market between selling your existing investments and reinvesting, which could result in missed market returns during this period."
+     ],
+     "alts": [
+      "Retain the existing arrangement — discounted where consolidating simplifies administration and improves the overall structure."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Vanguard index option (instead of CARE managed portfolios)",
+     "triggers": [
+      "vanguard",
+      "index fund",
+      "passive approach",
+      "vanguard diversified",
+      "switch from CARE to index"
+     ],
+     "type": "Tailored",
+     "gate": "Investment approach = Vanguard/index",
+     "figures": "—",
+     "strat": "We recommend you establish a new [Hub24] investment account and transfer your existing CARE investment holdings to the Vanguard [Diversified Balanced] Portfolio. Investments common to both portfolios will be transferred via in-specie; assets not available within the Vanguard portfolio will be sold and the proceeds reinvested into the recommended portfolio.",
+     "outcome": "A passive index approach gives broad, low-cost diversified market exposure, minimising turnover so you can take advantage of available capital gains tax concessions.",
+     "why": [
+      "The recommended index funds aim to track the performance of particular market indices. Index funds are a passive, cost-effective way to gain exposure to the market and provide broad diversification, reducing your overall risk.",
+      "Vanguard index funds reduce the tracking-error risk of a portfolio by holding most index securities very close to their index weights, providing truly diversified market exposure at a lower investment cost than your managed fund.",
+      "An index management approach minimises portfolio turnover so investors can take advantage of available capital gains tax concessions."
+     ],
+     "risks": [
+      "A passive index approach does not seek to outperform the market and will move with it, including in falling markets.",
+      "Index funds carry the normal market and investment risks; values may fall."
+     ],
+     "alts": [
+      "While the recommended Vanguard [High Growth] Index Fund has higher ongoing management fees than the iShares Enhanced Strategic Growth Fund, the iShares manager has yet to demonstrate an ability to consistently add value, and the iShares fund would expose your portfolio to fund-manager risk whereas the Vanguard index fund does not.",
+      "Retain the CARE actively managed portfolio — discounted where the client prefers a lower-cost passive index approach."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Money on the move — tactical dollar-cost averaging acceleration",
+     "triggers": [
+      "money on the move",
+      "accelerate dca",
+      "bring forward dollar cost averaging",
+      "tactical dca"
+     ],
+     "type": "Tailored (overlay on regular investment)",
+     "gate": "Regular investment / DCA scoped",
+     "figures": "1 month of DCA brought forward per 5% market drop",
+     "strat": "As per the money-on-the-move framework, for every 5% drop in the market we may bring forward one month's dollar-cost averaging to ensure your funds are invested as efficiently as possible.",
+     "outcome": "Capital is deployed faster during market falls, improving the average entry price across your dollar-cost-averaging program.",
+     "why": [
+      "Bringing forward scheduled investments during market falls allows you to invest at lower prices, improving long-term efficiency of the dollar-cost-averaging approach."
+     ],
+     "risks": [
+      "Markets may fall further after funds are deployed; accelerating investment increases short-term exposure to further declines.",
+      "The framework is a guideline applied at our discretion, not a guarantee of improved returns."
+     ],
+     "alts": [
+      "Maintain a fixed dollar-cost-averaging schedule regardless of market movements — discounted as it forgoes the opportunity to invest at lower prices during falls."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Establish a new investment account",
+     "triggers": [
+      "joint investment account",
+      "held jointly",
+      "joint account",
+      "new investment account",
+      "establish investment account"
+     ],
+     "gate": "Couple establishing a non-super investment account together",
+     "strat": "We recommend you establish a new investment account and invest in line with your risk profile.",
+     "outcome": "A single jointly-held portfolio simplifies administration and estate transfer between you.",
+     "why": [
+      "Joint ownership simplifies estate transfer (the account passes to the survivor) and supports a unified investment plan for the household."
+     ],
+     "risks": [
+      "A joint account exposes the full balance to either party's creditors and is treated as a shared asset on separation.",
+      "Income and capital gains are split per ownership, which may not be the most tax-effective split if your incomes differ materially."
+     ],
+     "alts": [
+      "Hold separate individual accounts (cleaner separation) or invest in the lower-income earner's name (more tax-effective) — chosen approach reflects your preference for a shared plan."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Reserves & cash buffer for tactical liquidity (avoid forced selling)",
+     "triggers": [
+      "reserves",
+      "cash buffer",
+      "liquidity buffer",
+      "reserves and cash"
+     ],
+     "gate": "Investment / pension portfolio where a cash/reserves sleeve is held",
+     "strat": "We recommend you set aside funds in Reserves & Cash to provide you with liquidity and low volatility, so you shouldn't have to sell growth assets through necessity or bad decisions during downturns.",
+     "outcome": "A reserves sleeve funds your needs through market falls, so growth assets are not sold at the wrong time.",
+     "why": [
+      "Holding a low-volatility reserve protects you from forced sales at market troughs and preserves your growth assets to recover.",
+      "You rebalance by topping up reserves from growth assets as part of your annual review.",
+      "The reserve can be phased to your circumstances — e.g. hold a reduced reserve (1.5 years instead of the usual 2.5 years of pension requirements) where known cash inflows such as upcoming property sales are due, then restore it, reviewed each year."
+     ],
+     "risks": [
+      "Holding reserves creates a return drag during strong markets; the allocation must be rebalanced to stay aligned with your risk profile."
+     ],
+     "alts": [
+      "Remain fully invested for higher expected return — discounted as it exposes you to forced selling in downturns."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "retirement"
+    },
+    {
+     "name": "Regular investment from cashflow (initial + ongoing)",
+     "triggers": [
+      "regular investment from cashflow",
+      "invest from cashflow"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "initial $___ + ongoing $___ pm",
+     "strat": "We recommend you establish a new investment account and invest from your cashflow — $___ initial and $___ per month ongoing — in line with your risk profile.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "acc",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Regular investment from a Term Loan (initial + ongoing)",
+     "triggers": [
+      "invest from term loan",
+      "term loan investment"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "initial $___ + ongoing $___ pm",
+     "strat": "We recommend you establish a new investment account and invest from your Term Loan — $___ initial and $___ per month ongoing — in line with your risk profile.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "acc",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Draw an income from the investment (income needs / top up pension / financial freedom)",
+     "triggers": [
+      "draw income from investment",
+      "drawdown investment",
+      "top up pension from investment"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "$___ pa / pm",
+     "strat": "We recommend you draw an income of $___ from your investment account to help meet your income needs / top up your pension / fund your financial-freedom goal.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "ret",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Rebalance existing holdings into the recommended portfolio",
+     "triggers": [
+      "rebalance into care",
+      "rebalance existing holdings",
+      "switch into recommended portfolio"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend you rebalance your existing holdings into the recommended portfolio in line with your risk profile.",
+     "outcome": "",
+     "why": [
+      "Aligns your existing assets to the recommended strategy and risk profile."
+     ],
+     "risks": [
+      "Selling existing holdings to rebalance may crystallise CGT and incur transaction costs."
+     ],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "CGT wording / implications following a sell-down or CGT event (free text)",
+     "triggers": [
+      "cgt",
+      "capital gains",
+      "selldown cgt"
+     ],
+     "type": "Custom (free text)",
+     "gate": "",
+     "figures": "—",
+     "strat": "[Free-type the CGT implications of the sell-down / CGT event — estimated gain, discount, tax, consult accountant.]",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": true
+    },
+    {
+     "name": "Retain existing investment option and/or platform",
+     "triggers": [
+      "retain existing investment",
+      "retain platform",
+      "keep existing investment option"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend you retain your existing investment option and/or platform and invest in line with your risk profile.",
+     "outcome": "",
+     "why": [
+      "Avoids capital gains and transaction costs of switching where the existing platform/option remains suitable."
+     ],
+     "risks": [
+      "The existing platform may cost more than alternatives; reviewed at each ongoing review."
+     ],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false
+    },
+    {
+     "name": "CARE investment — like-for-like alternatives (Full CARE / MLC MultiActive / Passive Index Fund Portfolio)",
+     "triggers": [
+      "CARE recommended for the investment account",
+      "investApproach = CARE",
+      "careInvestAlloc present"
+     ],
+     "type": "alternatives",
+     "gate": "F.investApproach===\"CARE\" || careInvestAlloc.length || a CARE invest account exists (independent of the super approach — a CARE investment can sit alongside a Vanguard super)",
+     "figures": [
+      "balance threshold $250,000 (Full CARE suitability)"
+     ],
+     "strat": "",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [
+      "Full CARE Investment Portfolio",
+      "MLC MultiActive <risk profile>",
+      "Passive Index Fund Portfolio",
+      "We have discounted this investment option, as the cost to run the full CARE investment portfolio is far more expensive and is suitable for balances over $250,000. As your balance grows we may look at switching at a later date.",
+      "Netwealth & BT Panorama can also offer a managed portfolio approach using the MLC MultiActive <risk profile> portfolios. We have discounted this option as the MLC MultiActive <risk profile> portfolios are a less cost effective investment option compared with the CARE portfolios. This is shown in the cost comparison above.",
+      "An alternative to this is investing using a passive index fund approach instead of an actively managed approach like CARE. We have discounted this strategy as we believe the actively managed asset mix offered through the CARE philosophy provides the optimal way to achieve your long term investment goals while minimising volatility over the short term. By comparison using a mix of passive index funds would not have the ongoing oversight of the CARE Investment committee to ensure investment decisions are made at appropriate times to reduce the impact of emotional decisions negatively impacting performance."
+     ],
+     "draft": "§**Investment Plan Investment Options** — heading renders bold, no bullet. Full-CARE (non-Essentials) drops the \"Full CARE Investment Portfolio\" self-discount line. Fund-manager fee note renders as a footer paragraph below the table, not a card row.",
+     "appliesTo": "Any SOA with a CARE investment account (incl. mixed CARE-investment / Vanguard-super). Builder: v200ApplyCareInvestBlocks."
+    }
+   ]
+  },
+  {
+   "name": "5 · Personal Superannuation",
+   "note": "Rollover variants, defined benefit and SMSF wording are verbatim from your SOAs. Military super and pension/TTR variants are drafts.",
+   "scenarios": [
+    {
+     "name": "Establish new fund + full rollover (close & transfer 100%)",
+     "triggers": [
+      "rollover full benefits to new fund",
+      "close existing super",
+      "transfer 100% to new fund",
+      "establish new super fund"
+     ],
+     "type": "Tailored",
+     "gate": "Super scoped (full rollover)",
+     "figures": "—",
+     "strat": "[Name], we recommend you close your existing [Fund] and transfer 100% of the balance to a new fund that has been customised for your needs.\n[Name], we recommend that you provide your employer with the details of your new superannuation fund to ensure all future contributions are directed to your new account.",
+     "outcome": "Your superannuation strategies will be professionally managed in a way to maximise your superannuation benefits and stay in line with your needs. We estimate your new fund to have a total balance of approximately $XXX in XX years' time.",
+     "why": [
+      "Your superannuation will be invested in line with your risk profile and will help you achieve your goal of maximising your superannuation for retirement while being managed on your behalf.",
+      "Increased investment choice, which provides your adviser with the ability to tailor your investment portfolio to your long term investment strategy.",
+      "Achieve your goal of partially funding adviser fees from superannuation and the ability to maintain ongoing advice.",
+      "Seamless transfer from accumulation to pension (not required to sell down your assets to transfer into the pension phase). This can prevent unnecessary Capital Gains Tax consequences and/or sale of assets at a time of unfavourable market conditions."
+     ],
+     "risks": [
+      "Generally, any money held within superannuation is not accessible until retirement.",
+      "Depending on the components that make up your superannuation benefits, withdrawing money before age 60 may result in lump sum tax being payable.",
+      "When you die, the proceeds from your superannuation fund may be subject to lump sum tax if paid to non-dependants.",
+      "There may be transaction costs involved in establishing the strategy."
+     ],
+     "alts": [
+      "Rollover part of your super in order to retain your existing insurance cover within super. I have discounted this strategy as the recommended replacement insurance cover provides additional benefits (such as improved definitions and access to trauma insurance)... a partial rollover would also mean more than one super account, which makes keeping track of your super more difficult.",
+      "Retain your existing super accounts. I discounted this strategy as your existing super account has limited functionality for your adviser to easily manage your superannuation on your behalf."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Establish new fund + partial rollover, retain minimum for insurance",
+     "triggers": [
+      "partial rollover",
+      "retain minimum balance",
+      "keep insurance active",
+      "retain $X to retain insurance"
+     ],
+     "type": "Tailored",
+     "gate": "Super scoped (partial)",
+     "figures": "{retainMin}",
+     "strat": "[Name], we recommend you retain the minimum required ($XXX) in your existing [Fund] to retain your underwritten [Life & TPD] insurance and transfer the remaining balance to a new fund that has been customised for your needs. [Name], we recommend that you continue to direct your super guarantee to your existing [Fund] account and we recommend making annual partial rollovers to your new fund.",
+     "outcome": "Retaining your existing fund allows you to keep your underwritten insurance cover while moving the balance to a professionally managed fund.",
+     "why": [
+      "Retaining your [Fund] will allow you to retain your underwritten insurance cover.",
+      "Seamless transfer from accumulation to pension... prevents unnecessary Capital Gains Tax consequences and/or sale of assets at unfavourable market conditions.",
+      "Access to investment funds, ASX listed shares, cash and TDs, and ease of administration through consolidated reporting.",
+      "Two-stage approach: complete an initial partial rollover retaining the minimum balance (e.g. $6,000) to keep your existing insurance active; once your new cover is in place and underwritten, complete a full rollover to consolidate — this final rollover cancels the old fund's insurance."
+     ],
+     "risks": [
+      "By maintaining two superannuation accounts you will incur a duplication of fees and increased administration effort to maintain your multiple accounts.",
+      "You will experience market volatility. There may be transaction costs involved in establishing the strategy.",
+      "Withdrawing money from superannuation as a lump sum before you reach age 60 may result in lump sum tax being payable.",
+      "Do not cancel the old fund's cover until the new cover is confirmed in place — if the new application is declined or modified, the old cover cannot be reinstated."
+     ],
+     "alts": [
+      "[Name], we considered rolling over all of the balance and not retaining the existing insurance cover within super. I have discounted this strategy in order to maintain your insurance cover held within your existing super account."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Retain existing fund (invest in line with risk profile)",
+     "triggers": [
+      "retain existing super",
+      "keep current fund",
+      "retain and invest in line with risk profile"
+     ],
+     "type": "Tailored",
+     "gate": "Super scoped (retain)",
+     "figures": "—",
+     "strat": "We recommend you retain your existing [Fund] Superannuation account (in line with your risk profile) that has been customised for your needs. We recommend that you continue to direct your employer contributions to your existing [Fund] account.",
+     "outcome": "Your superannuation will be invested in line with your risk profile and will help you achieve your goal of maximising your superannuation for retirement.",
+     "why": [
+      "Increased investment choice, which provides your adviser with the ability to tailor your investment portfolio to your long term investment strategy.",
+      "You can fund your insurance premiums through your superannuation account as desired.",
+      "Reinvesting distributions will accelerate the growth potential and the benefits from compounding growth.",
+      "Retained to minimise crystallising capital gains tax on existing holdings."
+     ],
+     "risks": [
+      "Generally, any money held within superannuation is not accessible until retirement.",
+      "The underlying investments within super involve investment risk and do not guarantee your returns; values may fall."
+     ],
+     "alts": [
+      "An alternative is investing using a passive index fund approach instead of an actively managed approach like CARE. We have discounted this strategy as we believe the actively managed asset mix offered through CARE provides the optimal way to achieve your long term investment goals while minimising volatility over the short term."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Consolidate multiple super accounts",
+     "triggers": [
+      "consolidate super",
+      "combine super accounts",
+      "roll multiple funds together"
+     ],
+     "type": "Tailored",
+     "gate": "Super scoped",
+     "figures": "—",
+     "strat": "We recommend you consolidate your existing superannuation accounts into a single fund customised for your needs (after confirming no valuable insurance or benefits are lost).",
+     "outcome": "Consolidating your super reduces duplicated fees and simplifies the management of your retirement savings.",
+     "why": [
+      "Avoid multiple sets of fees – one fund means one set of fees.",
+      "Keep better track of your superannuation investment when it's in one place.",
+      "By having all of your super together in one account it's easier to plan for a future that includes a comfortable retirement."
+     ],
+     "risks": [
+      "Having a number of superannuation plans results in additional fees, difficulty keeping track of your funds and difficulty in maintaining a suitable investment strategy — however you may lose insurance cover or benefits held in a fund being closed, so confirm before consolidating."
+     ],
+     "alts": [
+      "Retain separate accounts — discounted where duplicated fees and administration outweigh any benefit of multiple funds."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "In-specie transfer of super holdings",
+     "triggers": [
+      "in specie super transfer",
+      "transfer super holdings in specie"
+     ],
+     "type": "Tailored",
+     "gate": "Existing super holdings",
+     "figures": "{cgt}",
+     "strat": "We recommend completing an in-specie transfer of your [SMSF / existing] assets ([Hub24 Investment and MCMA]) into a personal superannuation fund tailored to your needs.",
+     "outcome": "An in-specie transfer keeps your portfolio invested while moving it to the recommended fund, saving transaction costs and buy/sell spreads and minimising out-of-market risk.",
+     "why": [
+      "An in-specie transfer reduces the need to sell down assets, withdraw funds to your bank account, or re-purchase assets. This saves you on associated transaction costs and buy/sell spreads, and minimises out-of-market risk, ensuring your portfolios remain invested.",
+      "The recommended platform (Hub24) offers the option to in-specie transfer eligible investment options, helping you consolidate your investments into a single platform and streamline ongoing management and administration."
+     ],
+     "risks": [
+      "Assets that are not eligible for in-specie transfer (or that cannot be internally netted) may need to be sold down, which may crystallise capital gains tax — consult your accountant."
+     ],
+     "alts": [],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Retain a defined benefit fund (scope out)",
+     "triggers": [
+      "retain defined benefit",
+      "keep DB fund",
+      "defined benefit"
+     ],
+     "type": "Tailored",
+     "gate": "Defined benefit present",
+     "figures": "—",
+     "strat": "[Name], we recommend you retain your existing Defined Benefit [Fund] account including the insurance arrangements held within this account. [Name], your employer superannuation contributions are required to continue to be directed to your existing defined benefit account while you remain employed in the [public sector].",
+     "outcome": "Retaining your defined benefit account preserves your guaranteed scheme benefits and existing insurance.",
+     "why": [
+      "Preserves the guaranteed/defined-benefit entitlement and any valuable insurance held in the scheme.",
+      "Where the DB fund provides inbuilt Life and Income Protection benefits, these are retained as there is no premium cost charged to you for these benefits."
+     ],
+     "risks": [
+      "Due to restrictions within the fund (Defined Benefit portion) — and because the benefit is determined by a formula — we are unable to make any changes or provide advice on this; it is scoped out.",
+      "Defined benefit entitlements are subject to specific scheme rules, preservation requirements and legislative considerations which differ from accumulation funds."
+     ],
+     "alts": [
+      "Transfer the balance to an accumulation fund — discounted as it would forgo the valuable defined‑benefit entitlement."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Retain military super (member & ancillary + employer/DB portion)",
+     "triggers": [
+      "military super",
+      "msbs",
+      "retain military super"
+     ],
+     "type": "Tailored",
+     "gate": "Military super present",
+     "figures": "—",
+     "strat": "[Name], we recommend you retain your existing Military Super (Member and Ancillary Benefit portion), including the insurance arrangements held within this account, while you remain in service. We have scoped out your Military Super (Defined Benefit portion) from this advice.",
+     "outcome": "Retaining your military super preserves the employer/defined‑benefit entitlement and any insurance, while we manage the balance of your strategy.",
+     "why": [
+      "Preserves the employer/defined-benefit entitlement and any valuable insurance held in the scheme."
+     ],
+     "risks": [
+      "You are required to retain the defined benefit portion in your existing Military Super fund (Employer Benefit portion) as you are unable to access this until age 55 — it is scoped out of this advice.",
+      "These funds are not accessible until a condition of release is met, nor can they be rolled over to another fund."
+     ],
+     "alts": [
+      "Roll the member & ancillary balance to an accumulation fund — the employer/defined-benefit portion must be retained while in service."
+     ],
+     "draft": false,
+     "appliesTo": "both",
+     "firmLabel": "Military Super (Member and Ancillary Benefit portion)"
+    },
+    {
+     "name": "Redirect / continue employer contributions",
+     "triggers": [
+      "redirect employer contributions",
+      "provide employer new fund details",
+      "continue contributions to existing"
+     ],
+     "type": "Always-on (with rollover)",
+     "gate": "—",
+     "figures": "—",
+     "strat": "We recommend that you provide your employer with the details of your new superannuation fund to ensure all future contributions are directed to your new account.\n(OR, where a fund is retained:) We recommend that you continue to direct your employer contributions to your existing [Fund].",
+     "outcome": "Ensures your employer contributions flow to the appropriate fund under the recommended strategy.",
+     "why": [
+      "Keeps future contributions aligned with the recommended fund structure."
+     ],
+     "risks": [],
+     "alts": [],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Establish / set up an SMSF (and manage — rebalance + pension transition)",
+     "triggers": [
+      "smsf",
+      "self managed super fund",
+      "establish smsf",
+      "smsf rebalance"
+     ],
+     "type": "Tailored",
+     "gate": "SMSF scoped",
+     "figures": "{cgt}",
+     "strat": "We recommend you establish a new Account Based Pension account and invest in line with your risk profile.\nWe recommend you commence drawing an income of $XXX p.a. through your Account Based Pension account.",
+     "outcome": "We estimate your funds will sustain your desired income, making you able to draw approximately $XXX p.a. for approximately XX years.",
+     "why": [
+      "Rolling over the accumulation portion to a pension account will mean all future earnings within this fund will be tax free.",
+      "Drawing an income stream will provide you with the funds required to maintain your lifestyle in line with your retirement goals.",
+      "Funding your lifestyle in this manner will ensure you're drawing down your retirement capital in the most tax efficient manner."
+     ],
+     "risks": [
+      "Generally, any money held within superannuation is not accessible until retirement.",
+      "When you die, the proceeds from your superannuation fund may be subject to tax if they are paid as a lump sum to non-dependants, as defined for tax purposes.",
+      "The underlying investments within super involve some investment risk and do not guarantee your returns; values may fall.",
+      "Amounts moved to pension phase count toward your transfer balance cap; minimum annual pension payments must be drawn."
+     ],
+     "alts": [
+      "Remain in accumulation phase / take a partial rollover — if a partial rollover were to take place, this would also mean you end up with more than one super account, which makes keeping track of your super more difficult over time."
+     ],
+     "draft": false,
+     "appliesTo": "retirement"
+    },
+    {
+     "name": "Commence a pension / transition to retirement (TTR)",
+     "triggers": [
+      "account based pension",
+      "commence pension",
+      "transition to retirement",
+      "ttr",
+      "retirement income stream"
+     ],
+     "type": "Tailored",
+     "gate": "Retirement / pension scoped",
+     "figures": "{pensionBal}",
+     "strat": "We recommend you establish a new Transition to Retirement (TTR) pension account through your existing [Hub24 Super] platform and invest in line with your risk profile using the CARE Philosophy.\nWe recommend you roll over the full balance from your existing [Fund] (Accumulation) account into your new TTR pension account.\nWe recommend you withdraw the maximum allowable 10% of your TTR account balance as a lump sum each financial year — approximately $XXX per annum.",
+     "outcome": "Investment earnings within a TTR account are tax-free, and as you are over age 60 all income payments from the TTR pension are also tax-free, supplementing your cashflow while you remain employed.",
+     "why": [
+      "Your superannuation will be invested in line with your risk profile and will help you achieve your goal of maximising your superannuation for retirement while being managed on your behalf.",
+      "Investment earnings within a TTR account are tax-free, and as you are over age 60, all income payments received from the TTR pension will also be tax-free.",
+      "Drawing an income stream will provide you with the funds required to support your cashflow requirements."
+     ],
+     "risks": [
+      "A TTR strategy is primarily designed to supplement your income while you remain employed. It should be reviewed annually to ensure it continues to meet your income needs, remains aligned with your retirement objectives, and reflects any future legislative changes affecting TTR pension rules.",
+      "Withdrawing funds now will reduce the amount available when you convert your TTR pension to a full retirement pension.",
+      "There is the normal risk of markets falling and unforeseen circumstances requiring you to draw funds when markets are down."
+     ],
+     "alts": [
+      "We considered rolling over your full [existing] super account and rolling over 100% of the balance to the existing [Hub24] Super fund, however we discounted this strategy in order to maintain your insurance cover held within your existing super account."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Recontribution strategy",
+     "triggers": [
+      "recontribution",
+      "re-contribution",
+      "withdrawal and recontribution"
+     ],
+     "type": "Tailored",
+     "gate": "Eligible to withdraw & recontribute",
+     "figures": "{amount}",
+     "strat": "We recommend you establish two new superannuation accounts and invest in line with your risk profile. We recommend you make a non-concessional contribution of $XXX into [Account 2] to facilitate the implementation of a recontribution strategy.",
+     "outcome": "A recontribution strategy converts a taxable component into a tax-free component, improving the tax treatment of your super death benefit for non-dependant beneficiaries.",
+     "why": [
+      "Converts a taxable component to a tax-free component. A super death benefit paid to a dependant is tax free; if paid to a non-dependant, the tax payable depends on the components that make up the benefit — increasing the tax-free proportion reduces potential death benefits tax.",
+      "Can be combined with spouse equalisation to make better use of both transfer balance caps."
+     ],
+     "risks": [
+      "You must have met a condition of release to withdraw; the recontribution counts toward your non-concessional cap and is preserved. Obtain advice on the tax components before implementing."
+     ],
+     "alts": [
+      "Retain the existing components — discounted where improving the tax-free proportion benefits your beneficiaries."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "SMSF wind-up / split on separation (in-specie to personal super)",
+     "triggers": [
+      "separation",
+      "relationship breakdown",
+      "wind up smsf",
+      "split smsf assets"
+     ],
+     "type": "Tailored",
+     "gate": "SMSF + separation",
+     "figures": "—",
+     "strat": "Following your separation, we recommend completing an in-specie transfer of your allocated SMSF assets into a personal superannuation fund tailored to your needs.",
+     "outcome": "Moving your allocated SMSF assets in-specie to a personal fund keeps them invested while removing the ongoing trustee obligations of the SMSF following separation.",
+     "why": [
+      "Keeps your share of the assets invested while transferring them out of the SMSF, avoiding sell-down costs and out-of-market risk.",
+      "Removes the ongoing administration, audit and trustee compliance obligations of maintaining the SMSF after separation."
+     ],
+     "risks": [
+      "Assets not eligible for in-specie transfer may need to be sold down, which may crystallise CGT.",
+      "SMSF wind-up has its own administrative and compliance steps; consult your accountant/SMSF administrator."
+     ],
+     "alts": [
+      "Retain the SMSF — discounted where, following separation, the cost and complexity of the SMSF is no longer appropriate."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Disability super benefit — staged lump-sum withdrawals (TPD/disability payout, tax-free uplift)",
+     "triggers": [
+      "disability super benefit",
+      "tpd payout",
+      "disability payout",
+      "disabled",
+      "disability support pension",
+      "permanent incapacity"
+     ],
+     "gate": "Client has met a disability/permanent-incapacity condition of release; super boosted by a TPD/disability insurance payout",
+     "figures": "Staged one-off withdrawal amounts; tax-free vs taxable %; 22% tax withheld",
+     "strat": "We recommend you make one-off lump sum withdrawals from your new Accumulation fund as a disability super benefit (e.g. $80,550 in FY25/26, $40,000 in FY26/27, $15,000 in FY27/28) to fund your planned expenses, alongside commencing a pension income to cover your cashflow shortfall.",
+     "outcome": "At the time of writing, it is estimated that your balance after uplift will comprise approximately 48% tax-free and 52% taxable components.",
+     "why": [
+      "Because you have met a permanent-incapacity condition of release, you can access your superannuation as a disability super benefit, which receives a tax-free component uplift (the tax-free proportion is increased to reflect your prospective service period to retirement).",
+      "Staged lump-sum withdrawals fund known upcoming expenses while keeping the balance invested in line with your risk profile."
+     ],
+     "risks": [
+      "The 22% tax will be withheld at the time of each withdrawal. You are likely to receive a refund for the excess tax withheld when you lodge your tax return — consult an accountant before implementing.",
+      "As these withdrawals are intended for immediate expenses, no adverse impact on your Disability Support Pension (DSP) is expected under the assets and income test. However, if the withdrawn funds are not spent and remain in your savings account, your DSP payments may temporarily reduce until your balance falls below the relevant threshold.",
+      "The projection does not account for additional ad hoc withdrawals or material increases in pension drawdowns; we review annually."
+     ],
+     "alts": [
+      "Draw all income via pension only — discounted as it does not provide the lump sums needed for your planned one-off expenses."
+     ],
+     "type": "Tailored",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Reversionary beneficiary nomination (pension phase)",
+     "triggers": [
+      "reversionary beneficiary",
+      "reversionary pension",
+      "reversionary nomination"
+     ],
+     "gate": "Account-based pension recommended; spouse/dependant beneficiary",
+     "strat": "We recommend you nominate a reversionary beneficiary within your recommended pension funds. A reversionary nomination allows the nominated dependant to automatically receive the pension payments in the event of your passing.",
+     "outcome": "Seamless continuation of pension income to your surviving spouse, avoiding a lump-sum death benefit and probate delay.",
+     "why": [
+      "The pension automatically continues to your nominated dependant on death, preserving the tax-effective income stream.",
+      "Death benefit payment option — you can nominate dependants under the non-lapsing binding election, or you can select an automatic reversionary pension under the pension plan."
+     ],
+     "risks": [
+      "A reversionary nomination is generally only available to a spouse/de facto; it reduces flexibility if the beneficiary's circumstances change (a new nomination is required).",
+      "If the reversionary beneficiary pre-deceases you, the benefit reverts to your estate unless a backup nomination is in place."
+     ],
+     "alts": [
+      "Non-lapsing binding death benefit nomination only — provides a lump sum rather than a continuing income stream; less seamless for a surviving spouse in pension phase."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "retirement"
+    },
+    {
+     "name": "Seamless accumulation-to-pension transfer (no asset sale; avoid CGT / poor-timing sale)",
+     "triggers": [
+      "transition to pension",
+      "commence pension",
+      "accumulation to pension",
+      "in-specie pension transfer"
+     ],
+     "gate": "Commencing an account-based pension from an existing accumulation account on the same platform",
+     "strat": "We recommend a seamless transfer from accumulation to pension — you are not required to sell down your assets to transfer into the pension phase.",
+     "outcome": "Your assets move into the tax-free pension environment without being sold, preserving your position.",
+     "why": [
+      "This can prevent unnecessary Capital Gains Tax consequences and/or sale of assets at a time of unfavourable market conditions.",
+      "It maintains your existing investment holdings and their long-term timing."
+     ],
+     "risks": [
+      "Some platforms charge for in-specie transfers; holdings remain subject to market movements in the pension phase."
+     ],
+     "alts": [
+      "Sell down in accumulation and re-buy in pension — discounted as it can crystallise CGT and forces a sale that may occur at an unfavourable time."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "In-specie transfer of super on separation (SMSF asset split to personal super)",
+     "triggers": [
+      "separation",
+      "divorce",
+      "smsf split",
+      "relationship breakdown",
+      "asset split"
+     ],
+     "gate": "Separation with an SMSF or jointly-held super to be split",
+     "strat": "Following your recent separation, we recommend completing an in-specie transfer of your allocated SMSF assets (e.g. the platform investment and cash account) into a personal superannuation fund tailored to your needs.",
+     "outcome": "Your share of the fund moves to a personal super account without selling the underlying assets.",
+     "why": [
+      "An in-specie transfer preserves your portfolio and avoids crystallising capital gains, buy/sell spreads and market-timing risk that a sell-down would create."
+     ],
+     "risks": [
+      "There may be transaction costs involved in establishing the strategy.",
+      "In-specie transfer may not be available for all asset types; the asset split documentation must be finalised before execution."
+     ],
+     "alts": [
+      "Sell the SMSF assets and roll cash to personal super — discounted as it crystallises CGT and transaction costs."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Commence pension before rebalancing to minimise CGT (defer rebalance to pension phase)",
+     "triggers": [
+      "commence pension before rebalance",
+      "defer rebalance",
+      "pension phase cgt",
+      "rebalance in pension"
+     ],
+     "gate": "SMSF/super moving to pension phase with a portfolio rebalance required",
+     "strat": "We recommend commencing pension phase prior to the rebalance, and deferring the rebalance of the portfolio until pension phase commences, to reduce the CGT impact on the portion of the balance transferred to retirement phase. Please consult your accountant to confirm the tax implications.",
+     "outcome": "Assets are rebalanced once in the tax-free pension environment, reducing the capital gains tax on the changeover.",
+     "why": [
+      "Selling to rebalance in accumulation phase can trigger CGT at 10–15%; deferring the rebalance until the assets support a retirement-phase income stream reduces or removes that tax.",
+      "Where the rebalance is done within the Account-Based Pension accounts, we do not anticipate it will crystallise a capital gain, so you should not incur CGT as a result of the rebalance.",
+      "On platforms that match buy and sell orders internally, the rebalance offsets purchases and sales and keeps your portfolio fully invested, avoiding time-out-of-market risk.",
+      "Where an SMSF asset (e.g. an investment property) is to be sold, commencing the Account-Based Pension before the sale means the fund is in retirement phase, so the sale is not expected to be subject to capital gains tax. Please consult your accountant to confirm prior to implementing."
+     ],
+     "risks": [
+      "Markets may move while the rebalance is deferred; timing should be confirmed with your accountant."
+     ],
+     "alts": [
+      "Rebalance immediately in accumulation phase — discounted as it crystallises avoidable CGT."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "retirement"
+    },
+    {
+     "name": "Retain an existing SMSF (operate, add account, redirect contributions, reinvest)",
+     "triggers": [
+      "retain smsf",
+      "retain your smsf",
+      "existing smsf",
+      "keep smsf"
+     ],
+     "gate": "Existing SMSF that is to be kept (not wound up)",
+     "strat": "We recommend you retain your existing SMSF. We recommend you establish a new investment account held by the SMSF (invested in line with your risk profile), retain your existing SMSF cash account, provide your employer with the fund details so future contributions are directed to the SMSF, and reinvest distributions from the SMSF investment portfolio.",
+     "outcome": "Your SMSF continues as your super vehicle, with a customised investment account, a central cash account for transactions and compliance costs, all contributions consolidated to the fund, and distributions reinvested to compound.",
+     "why": [
+      "Retaining the SMSF cash account consolidates all super transactions into one central account, easing monitoring and providing liquidity for ongoing costs and administrative fees of being an SMSF trustee.",
+      "Directing all future employer (and personal) contributions to the SMSF consolidates your super into one fund for easier management.",
+      "Reinvesting distributions accelerates growth potential through compounding."
+     ],
+     "risks": [
+      "As trustee you remain responsible for the fund's compliance, administration and costs.",
+      "Reinvesting distributions means no access to that income until a condition of release is met."
+     ],
+     "alts": [
+      "Wind up the SMSF and roll to a retail/platform fund — discounted where the SMSF holds assets (e.g. an investment property) central to your long-term strategy."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "SMSF with corporate trustee holding a geared investment property (LRBA cashflow)",
+     "triggers": [
+      "smsf property",
+      "corporate trustee",
+      "limited recourse",
+      "lrba",
+      "smsf investment property"
+     ],
+     "gate": "SMSF holding (or acquiring) real property, typically with secured debt",
+     "strat": "Your SMSF (corporate trustee — Pty Ltd ATF the fund) holds an investment property with secured debt. We recommend consolidating both members' existing super into the SMSF via full rollover, maintaining a dedicated cash reserve for SMSF administration and property-related costs, and deploying the property's net rental income to fund your ongoing regular SMSF contributions.",
+     "outcome": "Both members' super is pooled in the SMSF behind the property, with a cash buffer for costs and rental surplus recycled into ongoing contributions.",
+     "why": [
+      "A corporate trustee structure (Pty Ltd as trustee for the fund) simplifies succession and limits trustee liability compared with individual trustees.",
+      "Consolidating both members' balances and the rental surplus into the fund concentrates capital behind the long-term property strategy."
+     ],
+     "risks": [
+      "SMSF borrowing and property holding add audit, compliance and liquidity complexity; the fund must hold enough cash to meet loan repayments and costs.",
+      "Property is illiquid and concentrated; a fall in value or rental income affects the fund's ability to meet obligations."
+     ],
+     "alts": [
+      "Wind up the SMSF — discounted as the fund was established to hold the investment property as part of your long-term superannuation strategy."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "SMSF wind-up / consolidation to a retail fund (non-separation, cost/suitability driven)",
+     "triggers": [
+      "close your smsf",
+      "wind up smsf",
+      "wind-up smsf",
+      "smsf not the right vehicle",
+      "consolidate smsf to retail",
+      "review suitability of smsf"
+     ],
+     "type": "Tailored",
+     "gate": "Existing SMSF whose original purpose no longer applies / costs outweigh benefit",
+     "figures": "Estimated reduction in ongoing admin fees p.a.",
+     "strat": "You have asked us to review the long-term suitability of retaining your SMSF. The initial purpose of establishing the SMSF was to purchase a property; as that is no longer being pursued, we recommend you close your SMSF and rollover the full benefits to a new retail/platform fund customised for your needs.",
+     "outcome": "Your super is simplified into a retail/platform fund, removing the cost and trustee responsibilities of the SMSF while keeping access to the recommended investment portfolio.",
+     "why": [
+      "We believe an SMSF is not the right vehicle for your super, considering your current SMSF position.",
+      "By simplifying your superannuation you will not be burdened by the responsibilities of operating an SMSF.",
+      "Since you are not actively considering purchasing property through your superannuation as initially planned, closing the SMSF aligns better with your current goals and objectives.",
+      "Transferring from an SMSF to a retail superannuation fund reduces your ongoing administrative fees and eliminates your legal and administrative responsibilities as an SMSF trustee.",
+      "We have discussed the short and long-term implications, including the costs that would occur if you ever wished to re-establish the SMSF in the future after winding it up now."
+     ],
+     "risks": [
+      "The SMSF wind-up will require the sale of the existing share portfolio within the fund, which may have capital gains implications and transaction costs.",
+      "Wind-up costs include completion of the current and previous SMSF financial statements, tax returns and any audit/compliance costs."
+     ],
+     "alts": [
+      "Retain your existing SMSF — discounted as an SMSF has high costs and ongoing legal/administrative trustee requirements that are not needed to meet your retirement goals where the original purpose is no longer being pursued."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Establish new fund + partial rollover, retain minimum for higher SG contributions",
+     "triggers": [
+      "retain minimum for sg",
+      "partial rollover for sg",
+      "retain minimum for higher sg"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend you retain the minimum balance in your existing fund to keep receiving your higher employer SG contributions, and roll the remainder to the new recommended fund.",
+     "outcome": "",
+     "why": [
+      "Some employers pay a higher SG into the existing fund; retaining a minimum balance preserves that benefit while still consolidating the bulk of your super."
+     ],
+     "risks": [
+      "Two accounts mean two sets of fees until the arrangement ends."
+     ],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Commence an Account-Based Pension and draw an income (minimum % or set amount)",
+     "triggers": [
+      "account based pension",
+      "commence abp",
+      "draw pension income",
+      "minimum pension"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "minimum % or $___ pa",
+     "strat": "We recommend you commence an Account-Based Pension and draw [the minimum % / $___ p.a.] to meet your income needs / top up your pension / fund your financial-freedom goal.",
+     "outcome": "",
+     "why": [
+      "Pension-phase earnings are tax-free and the income stream funds your retirement spending."
+     ],
+     "risks": [
+      "Minimum drawdowns are mandatory and apply even in a market downturn."
+     ],
+     "alts": [],
+     "appliesTo": "ret",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "CGT implications on a super changeover (SMSF, or rebalance Vanguard↔CARE) (free text)",
+     "triggers": [
+      "super cgt",
+      "smsf cgt",
+      "rebalance cgt"
+     ],
+     "type": "Custom (free text)",
+     "gate": "",
+     "figures": "—",
+     "strat": "[Free-type the CGT implications of the super changeover — applies for SMSF or a rebalance between Vanguard and CARE; not required for a standard rollover. Consult accountant.]",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": true
+    },
+    {
+     "name": "Phase a lump-sum super investment via money-on-the-move (DCA the rollover)",
+     "triggers": [
+      "money on the move super",
+      "dca rollover",
+      "phase lump sum super"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "For the lump sum entering super, we recommend phasing it into the market via the money-on-the-move framework — bringing forward instalments as markets fall.",
+     "outcome": "",
+     "why": [
+      "Phasing a large rollover smooths your entry price and reduces timing risk."
+     ],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    }
+   ]
+  },
+  {
+   "name": "6 · Superannuation Contributions",
+   "note": "Salary sacrifice / carry‑forward wording is verbatim. The remaining contribution types are drafts for your review.",
+   "scenarios": [
+    {
+     "name": "Salary sacrifice / concessional contributions",
+     "triggers": [
+      "salary sacrifice",
+      "concessional contribution",
+      "retain salary sacrifice"
+     ],
+     "type": "Tailored",
+     "gate": "Contributions scoped",
+     "figures": "{ccAmount},{taxSaving}",
+     "strat": "We recommend you [continue / increase / decrease / cease] your salary sacrifice (concessional) contributions of $___.",
+     "outcome": "Making concessional contributions builds your retirement savings tax‑effectively and provides net tax savings of approximately $XXX p.a.",
+     "why": [
+      "Save on income tax because your salary contributed into super is taxed at 15% (up to your concessional contributions cap), not your marginal tax rate, regardless of how much you earn.",
+      "Boost your super by contributing more now, creating a bigger nest egg for your retirement.",
+      "Suitable if you are under 75 and eligible to contribute, have a marginal tax rate above 15%, and can sacrifice income without a large impact on your lifestyle, with an employer willing to offer the arrangement.",
+      "Concessional contributions are taxed at 15% within super (up to your cap), not your marginal tax rate."
+     ],
+     "risks": [
+      "Care should be taken to ensure your employee entitlements are not adversely impacted as a result of salary sacrificing, or that you don't breach your concessional contributions cap. Contributions are preserved until a condition of release is met."
+     ],
+     "alts": [
+      "Invest the surplus outside super instead — discounted where the tax‑effectiveness of concessional contributions better meets the goal, noting reduced accessibility."
+     ],
+     "draft": false,
+     "appliesTo": "accumulator",
+     "pick": [
+      "Continue",
+      "Increase",
+      "Decrease",
+      "Cease"
+     ]
+    },
+    {
+     "name": "Carry-forward (catch-up) concessional contributions",
+     "triggers": [
+      "carry forward",
+      "catch up concessional",
+      "unused concessional cap"
+     ],
+     "type": "Tailored",
+     "gate": "Total super balance < $500k & unused cap",
+     "figures": "{cfAmount}",
+     "strat": "We recommend you make a carry-forward concessional contribution of $XXX, utilising your unused concessional cap amounts from previous years (after the 15% contributions tax).",
+     "outcome": "Using your carry‑forward concessional cap allows a larger tax‑deductible contribution this year, reducing your assessable income.",
+     "why": [
+      "The carry-forward arrangements involve accessing unused concessional cap amounts from previous years. An unused cap amount occurs when the concessional contributions you made in a financial year were less than your general concessional contributions cap. You can use caps from up to five previous financial years.",
+      "Tax-effective: contributions are taxed at 15% rather than your marginal rate."
+     ],
+     "risks": [
+      "To use your unused cap amounts: your total super balance at the end of 30 June of the previous financial year must be less than $500,000, and you must have made concessional contributions in the year that exceeded your general cap. Contributions are preserved until a condition of release is met."
+     ],
+     "alts": [
+      "Contribute only up to the standard cap — discounted where the carry‑forward provides a greater tax benefit this year."
+     ],
+     "draft": false,
+     "appliesTo": "accumulator"
+    },
+    {
+     "name": "Non-concessional contribution",
+     "triggers": [
+      "non-concessional contribution",
+      "after-tax contribution",
+      "ncc"
+     ],
+     "type": "Tailored",
+     "gate": "Contributions scoped & TSB under cap",
+     "figures": "{nccAmount}",
+     "strat": "This financial year, we recommend withdrawing [$amount] from your existing pension account and re-contributing it as a once-off non-concessional contribution as part of a re-contribution strategy. Next financial year, we recommend utilising the bring-forward rule to make a further non-concessional contribution of up to [$cap].",
+     "outcome": "Increasing the tax-free proportion of your superannuation reduces potential tax payable on death benefits, particularly for non-tax-dependant beneficiaries such as your adult children.",
+     "why": [
+      "Your existing pension comprises a taxable and a tax-free component. Withdrawing funds and re-contributing them as non-concessional contributions increases the tax-free proportion of your superannuation over time and improves overall tax efficiency.",
+      "It is expected to reduce potential tax payable on death benefits, particularly for non-tax-dependant beneficiaries such as adult children.",
+      "The strategy allows for optimal use of your available non-concessional contribution caps, including the bring-forward rule, to enhance long-term outcomes."
+     ],
+     "risks": [
+      "There is a risk that you don't follow or stick with the strategy, particularly at market extremes.",
+      "If you don't communicate changes in your circumstances, goals and objectives to us, your portfolio may no longer be appropriate.",
+      "The underlying investments within super are invested in investment funds. This involves some investment risk and does not guarantee your returns — values may fall from time to time."
+     ],
+     "alts": [
+      "Retain your existing pension account with current funds allocation. I discounted this strategy as the existing account has a high taxable component which makes your super less tax-effective as a wealth-transfer tool — compared to the tax-free component, it creates a larger tax liability for beneficiaries."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Bring-forward non-concessional contribution",
+     "triggers": [
+      "bring forward",
+      "bring-forward rule",
+      "large non-concessional",
+      "property sale proceeds",
+      "using proceeds",
+      "sale proceeds to super"
+     ],
+     "type": "Tailored",
+     "gate": "Under 75 & TSB eligibility",
+     "figures": "{bfAmount}",
+     "strat": "We recommend you use the bring-forward rule to make a non-concessional contribution of $XXX (bringing forward up to three years of your non-concessional cap).",
+     "outcome": "The bring‑forward rule lets you contribute a larger after‑tax amount now, accelerating your retirement savings.",
+     "why": [
+      "The non-concessional cap is $120,000 for 2024/2025. If you are under 75 years of age during the financial year, a $360,000 contribution can be made by 'bringing forward' two years' worth of contribution caps (in addition to contributions from that year). Accelerates the build-up of retirement savings in the low-tax super environment.",
+      "The bring-forward non-concessional contribution can be funded from the proceeds of a property sale (e.g. $360,000 using a portion of the proceeds), moving sale proceeds into the tax-free/low-tax super environment across the three-year window.",
+      "The bring-forward rule lets you use future years' non-concessional caps to make a larger one-off contribution now, maximising the funds in the tax-free super environment to draw retirement income from.",
+      "The contribution can be made via in-specie transfer of an existing investment portfolio (rather than selling to cash and re-buying), saving transaction costs and buy/sell spreads and avoiding time out of the market — noting the in-specie transfer crystallises CGT on the transferred assets."
+     ],
+     "risks": [
+      "Eligibility depends on your age and total super balance at the prior 30 June; contributions in excess of applicable limits will attract penalty tax. Triggering the bring-forward restricts contributions in the following years; contributions are preserved.",
+      "Sale proceeds must be held in cash until the contribution is made, which may mean time out of the market."
+     ],
+     "alts": [
+      "Contribute within the standard annual cap — discounted where the larger up‑front contribution better meets the goal."
+     ],
+     "draft": false,
+     "appliesTo": "accumulator"
+    },
+    {
+     "name": "Spouse contribution",
+     "triggers": [
+      "spouse contribution",
+      "contribute to spouse super"
+     ],
+     "type": "Tailored",
+     "gate": "Spouse income eligibility",
+     "figures": "{spouseAmount}",
+     "strat": "[Name], we recommend you make an after-tax spouse contribution of up to $3,000 p.a. to [Spouse]'s super to boost their retirement savings and receive a tax offset.",
+     "outcome": "A spouse contribution boosts your spouse's retirement savings and may provide you with a tax offset.",
+     "why": [
+      "Under current 2025/26 rules, you may claim an 18% tax offset on spouse super contributions up to $3,000, for a maximum offset of $540 where your spouse's income is $37,000 or less (reducing to nil at $40,000).",
+      "Because spouse contributions are from after-tax money, they aren't subject to the 15% contributions tax and are tax-free on withdrawal. Boosts the super of a lower-income/non-working spouse and helps you grow retirement savings as a couple."
+     ],
+     "risks": [
+      "Contributions count toward your spouse's non-concessional cap; both must be Australian residents and not living separately and apart on a permanent basis; your spouse must be under 75."
+     ],
+     "alts": [
+      "Contribute to your own super instead — discounted where equalising balances or the spouse offset better meets the goal."
+     ],
+     "draft": false,
+     "appliesTo": "accumulator"
+    },
+    {
+     "name": "Government co-contribution",
+     "triggers": [
+      "co-contribution",
+      "government co-contribution"
+     ],
+     "type": "Tailored",
+     "gate": "Low/middle income eligibility",
+     "figures": "—",
+     "strat": "We recommend you make a non-concessional (after-tax) contribution of up to $1,000 to superannuation to take advantage of the Federal Government co-contribution scheme.",
+     "outcome": "A small after‑tax contribution can attract up to $500 from the Government, an immediate uplift to your super.",
+     "why": [
+      "You receive a tax-free super contribution from the federal government when you make a non-concessional contribution to your super account, subject to satisfying a work test, an income test and an age test.",
+      "If you earn $47,488 or less (for the 2025/2026 year), the government pays $0.50 for every dollar you contribute in after-tax dollars, up to a maximum of $500 a year (reducing to nil at $62,488)."
+     ],
+     "risks": [
+      "Eligibility depends on your income, age and total super balance; the contribution is preserved."
+     ],
+     "alts": [
+      "Do not contribute — discounted as it forgoes the Government co‑contribution where you are eligible."
+     ],
+     "draft": false,
+     "appliesTo": "accumulator"
+    },
+    {
+     "name": "Contribution splitting",
+     "triggers": [
+      "contribution splitting",
+      "split contributions to spouse"
+     ],
+     "type": "Tailored",
+     "gate": "Spouse present",
+     "figures": "{splitAmount}",
+     "strat": "[Name], we recommend you split up to 85% of your concessional (employer and personal tax-deductible) contributions of $XXX to [Spouse]'s super account.",
+     "outcome": "Contribution splitting equalises your balances and can provide earlier access to super and a reduced tax liability.",
+     "why": [
+      "Super contributions splitting generally allows you to split up to 85% of your employer super contributions and personal tax-deductible (concessional) contributions to your spouse's super account, so you can both maximise the benefits of super.",
+      "Splitting contributions to a spouse who will reach age 60 before you may allow you earlier access to your super monies and the tax-free status of super withdrawals for those aged 60 or over.",
+      "Suitable if you have a spouse eligible to receive super contributions, a spouse who will reach 60 before you, or you want to boost your spouse's super savings."
+     ],
+     "risks": [
+      "Not all super funds offer contribution splitting. Super is subject to preservation rules and contributions cannot be accessed until a condition of release is met. When split to your spouse's account they do not count towards your spouse's concessional contributions cap (they count against yours)."
+     ],
+     "alts": [
+      "Retain the contributions in your own account — discounted where balance equalisation better meets the goal."
+     ],
+     "draft": false,
+     "appliesTo": "accumulator"
+    },
+    {
+     "name": "Personal deductible contribution",
+     "triggers": [
+      "personal deductible contribution",
+      "personal concessional",
+      "claim a tax deduction for contribution",
+      "lump sum concessional"
+     ],
+     "type": "Tailored",
+     "gate": "Contributions scoped",
+     "figures": "{pdAmount}",
+     "strat": "We recommend you commence making yearly concessional (personal deductible) contributions, setting aside the funds in your cash account through the year and making the contribution as a lump sum each year, then claiming a tax deduction for it.",
+     "outcome": "You use your concessional cap via a personal deductible contribution, reducing taxable income and building super, without needing a salary-sacrifice arrangement with your employer.",
+     "why": [
+      "Making ongoing concessional contributions helps reduce the effect of adviser fees and insurance premiums on your superannuation balance.",
+      "Claiming the contribution as a tax deduction provides net tax savings by moving income into the 15% super environment instead of your marginal rate."
+     ],
+     "risks": [
+      "You must stay within the concessional cap to avoid excess-contribution tax, and lodge a valid notice of intent to claim the deduction with your fund."
+     ],
+     "alts": [
+      "Salary sacrifice via your employer — equivalent outcome but requires an employer arrangement; non-concessional contribution — discounted as it gives no deduction."
+     ],
+     "draft": false,
+     "appliesTo": "accumulator"
+    },
+    {
+     "name": "Work test note (age 67+)",
+     "triggers": [
+      "work test",
+      "age 67",
+      "contribution eligibility"
+     ],
+     "type": "Always-on (where relevant)",
+     "gate": "Age 67–74",
+     "figures": "—",
+     "strat": "We recommend ensuring contributions are made prior to turning age 67, due to potential work test requirements and contribution eligibility restrictions.",
+     "outcome": "—",
+     "why": [
+      "Prior to age 67, a person can make superannuation contributions without restriction. Between 67 and 74, tax deduction claims can only be made if the work test is satisfied (gainfully employed at least 40 hours over not more than 30 consecutive days in the financial year)."
+     ],
+     "risks": [],
+     "alts": [],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Downsizer contribution",
+     "triggers": [
+      "downsizer",
+      "downsizer contribution",
+      "sold home",
+      "sale of home proceeds"
+     ],
+     "type": "Tailored",
+     "gate": "Age 55+ & 10-year ownership",
+     "figures": "{dsAmount}",
+     "strat": "We recommend you utilise the downsizer contribution strategy to make a one-off contribution of up to $300,000 each ($600,000 per couple) to your new superannuation account from the proceeds of the sale of your home.",
+     "outcome": "The proceeds of your home sale are moved into the concessionally-taxed superannuation environment and used to fund a tax-free retirement income stream.",
+     "why": [
+      "The downsizer contribution lets you move up to $300,000 each from the sale of a main residence (owned 10+ years, age 55+) into super, regardless of your other contribution caps or total super balance.",
+      "It allows the proceeds to be professionally managed in line with your risk profile and drawn as tax-free retirement income."
+     ],
+     "risks": [
+      "There is the normal risk of markets falling and unforeseen circumstances requiring you to draw funds when markets are down.",
+      "By investing your cash into a superannuation fund instead of a bank account you lose capital stability and a known rate of return. You also lose access to the government guarantee on deposits up to $250,000.",
+      "Funds are preserved — you cannot access them until you meet a condition of release."
+     ],
+     "alts": [
+      "Retain the proceeds in cash/term deposits — discounted as it forgoes the tax-effective superannuation environment and professional management.",
+      "Contribute via non-concessional contributions instead — discounted where the downsizer rules allow a larger contribution without using your NCC caps."
+     ],
+     "draft": false,
+     "appliesTo": "retirement"
+    },
+    {
+     "name": "Contributions reserving strategy (double concessional cap before age 67)",
+     "triggers": [
+      "contribution reserving",
+      "contributions reserving",
+      "reserve contribution",
+      "double concessional cap"
+     ],
+     "type": "Tailored",
+     "gate": "Super contributions scoped; client under 67 with capacity",
+     "figures": "Concessional cap × 2 (current + next FY)",
+     "strat": "We recommend implementing a contributions reserving strategy within your SMSF by making concessional contributions totalling [2 × cap] prior to 30 June. The full amount will be contributed and claimed as a tax deduction, with [one cap] in the current financial year and [one cap] in July (next financial year). This allows use of both years' concessional caps before age 67, when work test rules may limit further contributions.",
+     "outcome": "You bring forward and claim two years' worth of concessional caps in the current financial year, maximising the tax deduction and capital moved into super before the work test applies.",
+     "why": [
+      "By maximising your concessional contribution caps across both financial years before age 67, you enhance tax efficiency by reducing personal taxable income and increasing capital within the superannuation environment before work test requirements may apply."
+     ],
+     "risks": [
+      "The strategy relies on your accountant confirming eligibility and lodging the relevant ATO contribution-reserving forms; incorrect implementation can cause an excess concessional contribution.",
+      "The Fund must hold the reserved contribution and allocate it within the prescribed period."
+     ],
+     "alts": [
+      "Make a single year's concessional contribution only — discounted as it forgoes the additional cap available before the work test applies."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "First Home Super Saver Scheme (FHSSS)",
+     "triggers": [
+      "first home super saver",
+      "fhsss",
+      "first home",
+      "fhss"
+     ],
+     "gate": "Client(s) saving for a first home; eligible to make voluntary contributions",
+     "figures": "Voluntary contributions up to the FHSSS limit; salary-sacrifice amount",
+     "strat": "We recommend you each utilise the First Home Super Saver Scheme (FHSSS) to assist with the purchase of your first property: make a lump-sum personal contribution before 30 June, commence salary sacrificing up to the annual limit, and continue making voluntary contributions each year. Once you are prepared to purchase, withdraw your voluntary contributions and associated earnings by requesting a determination through myGov followed by a release request.",
+     "outcome": "You save for your deposit inside super at concessional tax rates, then release the funds (plus deemed earnings) to put toward your first home.",
+     "why": [
+      "Voluntary contributions are taxed concessionally in super, and the released amount (including associated earnings) is taxed more favourably than ordinary income, helping you build your deposit faster."
+     ],
+     "risks": [
+      "Funds are accessible only for an eligible first-home purchase; if you don't proceed, the contributions remain preserved in super.",
+      "Income/timing matters — salary sacrifice may interact with co-contribution eligibility, and the release requires a myGov determination then a release request."
+     ],
+     "alts": [
+      "Save the deposit outside super — discounted as it forgoes the FHSSS tax concession."
+     ],
+     "type": "Tailored",
+     "draft": false,
+     "appliesTo": "accumulator"
+    },
+    {
+     "name": "Salary packaging (employer-provided, e.g. health / PBI sector)",
+     "triggers": [
+      "salary packaging",
+      "salary package",
+      "fringe benefit",
+      "packaging"
+     ],
+     "gate": "Employer offers salary packaging (commonly health/charity/PBI employers)",
+     "figures": "Maximum annual packaging amount available from the employer",
+     "strat": "We recommend you commence salary packaging your income to the maximum amount available to you (e.g. $9,010 p.a.).",
+     "outcome": "Pre-tax income is diverted to packaged benefits, reducing your taxable income.",
+     "why": [
+      "Salary packaging reduces your assessable income at your marginal tax rate without using your concessional contribution cap, improving your after-tax position."
+     ],
+     "risks": [
+      "Availability depends on your employer and role; it ceases if you change employers.",
+      "It can interact with means-tested benefits; coordinate with any salary sacrifice so you do not exceed your concessional cap."
+     ],
+     "alts": [
+      "Forgo packaging and use post-tax income — discounted as it forgoes the tax saving available through your employer."
+     ],
+     "type": "Tailored",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Carry-forward concessional contribution to offset CGT on an asset sale",
+     "triggers": [
+      "carry forward",
+      "capital gains",
+      "cgt",
+      "sell investment property",
+      "asset sale",
+      "offset capital gain"
+     ],
+     "gate": "A capital gain is being realised (e.g. investment property sale) and unused concessional cap is available",
+     "figures": "Estimated capital gain; carry-forward concessional contribution; CGT before vs after",
+     "strat": "We recommend you each make a once-off concessional contribution using the carry-forward rule in the year you realise the capital gain (e.g. $26,000 each), claiming it as a tax deduction to reduce your assessable capital gain.",
+     "outcome": "The deduction reduces the tax payable on the sale (e.g. reducing the CGT liability from $41,000 to $33,000) while boosting your super.",
+     "why": [
+      "Unused concessional cap from prior years can be 'carried forward' and used in a high-income year to shelter a capital gain, moving money into the concessionally-taxed super environment."
+     ],
+     "risks": [
+      "Requires sufficient carry-forward cap room and a total super balance under the threshold; the contribution must be made in the same financial year as the gain.",
+      "Contributions are preserved until a condition of release is met."
+     ],
+     "alts": [
+      "Invest the sale proceeds outside super — discounted as it forgoes the CGT-offset benefit; or use the non-concessional cap (no deduction)."
+     ],
+     "type": "Tailored",
+     "draft": false,
+     "appliesTo": "accumulator"
+    },
+    {
+     "name": "Notice of intent — claim a tax deduction on unclaimed personal contributions",
+     "triggers": [
+      "notice of intent",
+      "claim tax deduction on contributions",
+      "unclaimed contributions"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend you submit a notice of intent to claim a tax deduction on any unclaimed personal contributions made this and the previous financial year.",
+     "outcome": "",
+     "why": [
+      "Claiming the deduction converts after-tax contributions into concessional ones, reducing your taxable income."
+     ],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "acc",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Arrange salary sacrifice with employer (switch post-tax to pre-tax)",
+     "triggers": [
+      "switch to salary sacrifice",
+      "speak to employer",
+      "post tax to pre tax"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend you speak with your employer to switch your current post-tax contributions to pre-tax salary-sacrifice contributions.",
+     "outcome": "",
+     "why": [
+      "Pre-tax (salary-sacrifice) contributions are taxed at 15% rather than your marginal rate."
+     ],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "acc",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Division 293 tax note (high-income earners)",
+     "triggers": [
+      "division 293",
+      "div293"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "Note: as a higher-income earner you may be subject to Division 293 tax — an additional 15% on concessional contributions where your income plus contributions exceeds the threshold.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Division 296 tax note (total super balance over $3m)",
+     "triggers": [
+      "division 296",
+      "div296"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "Note: Division 296 may apply an additional tax on earnings attributable to the portion of your total super balance above $3m.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    }
+   ]
+  },
+  {
+   "name": "7 · Personal Protection",
+   "note": "New, top‑up, replace/takeover and retain wording is verbatim from your SOAs (Linked/Own‑Occupation, inside‑super vs personal, 90‑day wait, etc.).",
+   "scenarios": [
+    {
+     "name": "Levels of cover as per quotes",
+     "triggers": [
+      "levels of cover as per quotes",
+      "cover as per quotes"
+     ],
+     "type": "Always-on (insurance scoped)",
+     "gate": "",
+     "figures": "—",
+     "strat": "Levels of cover as per the attached quotes.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false
+    },
+    {
+     "name": "Take out new cover (Life / TPD / Trauma / IP)",
+     "triggers": [
+      "new insurance",
+      "take out cover",
+      "be insured for"
+     ],
+     "type": "Tailored",
+     "gate": "Insurance scoped (new)",
+     "figures": "{life},{tpd},{trauma},{ip}",
+     "strat": "We recommend you take out new insurance cover through [Insurer] and therefore be insured for the following amounts:\n• Life $XXX (Linked)\n• TPD $XXX (Linked & Own-Occupation)\n• Trauma $XXX\n• IP $XXX per month (Indemnity, 90 day wait, to age 65)\nWe recommend a Variable Age-Stepped premium structure for all cover.\nWe strongly recommend you apply for the recommended cover and do not cancel any existing cover until the new cover is in force.",
+     "outcome": "You will have affordable cover that meets your needs, including covering your debts, with appropriate features and benefits to maintain your family and lifestyle.",
+     "why": [
+      "Your full existing personal debt, partial existing/proposed investment debt, and any funeral and final expenses will be covered. A lump sum has been added to gross up the life cover to allow linking with TPD and Trauma benefits, reducing the overall cost compared with holding standalone TPD and Trauma cover.",
+      "The lump sum for investment will cover $XXX per annum income in perpetuity, calculated on an assumed income return of 5% and no capital drawdown.",
+      "We have recommended TPD with Own Occupation which is the highest level of cover and ensures you are covered if you are unable to return to the occupation you were last engaged.",
+      "We have recommended income protection covering up to 70% of your income and super, with a 90 day wait (you have available cash and leave to fund this period, reducing cost) and the longest benefit period to ensure maximum coverage across your working life."
+     ],
+     "risks": [
+      "If personal insurance cover is held in a superannuation environment, any claim for the insured benefit is subject to superannuation release laws, so assessment can take some time, and proceeds may be subject to tax.",
+      "Some Crisis Recovery conditions will not be covered during the first 90 days of a new policy (this does not generally apply when replacing like cover).",
+      "The premium quoted is a guide only; 'loading' of premiums can occur following full underwriting.",
+      "Funding insurance premiums from your superannuation will have an impact on your retirement balance, estimated at $XXX or XX% over a 5 year period."
+     ],
+     "alts": [
+      "Apply for cover with a lower sum insured — discounted as it does not provide adequate protection in the event of a long-term illness/injury or death.",
+      "Apply for Standalone TPD — discounted as you are happy for TPD to be linked with Life due to premium affordability.",
+      "Apply for Income Protection with a shorter benefit period (e.g. 2 or 5 years) — discounted as it does not provide adequate protection.",
+      "Apply for Income Protection with a longer waiting period (e.g. 6/12 months) — discounted as you may not have sufficient funds to support you during the waiting period.",
+      "Self-insure using your net worth — discounted as your need for insurance exceeds the value of your net worth and you are not comfortable with the inherent level of risk."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Top-up / increase existing cover",
+     "triggers": [
+      "top-up insurance",
+      "increase cover",
+      "additional cover"
+     ],
+     "type": "Tailored",
+     "gate": "Insurance scoped (top-up)",
+     "figures": "{life},{tpd},{trauma},{ip}",
+     "strat": "We recommend you top-up your insurance cover through [Insurer] and therefore be insured for the following amounts: [amounts]. We recommend you apply for your top-up insurance cover through [Insurer].",
+     "outcome": "You will have affordable additional cover that meets your needs, including covering your debts, with appropriate features and benefits to maintain your family and lifestyle.",
+     "why": [
+      "Your full existing personal debt, partial existing/proposed investment debt, and any funeral and final expenses will be covered.",
+      "A lump sum has been added to gross up the life cover to allow linking with TPD and Trauma benefits, reducing the overall cost compared with standalone cover."
+     ],
+     "risks": [
+      "Your total premiums will increase, however the recommended policies provide for an increase to appropriate sums insured.",
+      "Funding insurance premiums from your superannuation will have an impact on your retirement balance estimated at $XXX or XX% over a 5 year period."
+     ],
+     "alts": [
+      "(uses the standard insurance alternatives above)"
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Replace / cancel & take out new cover (with takeover terms)",
+     "triggers": [
+      "cancel and replace insurance",
+      "replace existing cover",
+      "takeover terms"
+     ],
+     "type": "Tailored",
+     "gate": "Insurance scoped (replacement)",
+     "figures": "{life},{tpd},{trauma},{ip}",
+     "strat": "[Name], we recommend you cancel your existing insurance and take out new insurance cover and therefore be insured for the following amounts: [amounts]. [Name], we strongly recommend that you apply for the recommended replacement cover and do not cancel your current insurance within [Fund] until the new insurances are in force. This will ensure that if your application is declined for any reason you will still have some insurance in place.",
+     "outcome": "Once the recommended insurances are in place, cancelling your existing cover consolidates your insurance with one provider, easing administration and avoiding multiple policy fees.",
+     "why": [
+      "The recommended replacement cover provides additional benefits (such as improved definitions and access to trauma insurance) compared to your existing cover.",
+      "Your recommended insurance will be underwritten, which means come claim time you know where you stand with a payout; your current cover has never been underwritten, which leaves uncertainty.",
+      "Holding consolidated insurance with one provider eases ongoing administration and prevents paying multiple policy fees."
+     ],
+     "risks": [
+      "In replacing insurance policies, no two policies are exactly identical — depending on the claim circumstances one policy may provide a better benefit than another. We do not believe there are any significant disadvantages to our recommendation.",
+      "There may be restrictions in the new policy or the cover may be accepted on different terms than the existing policy.",
+      "You lose any cover you currently hold as soon as it is cancelled — wait to cancel until you receive confirmation from the new insurer.",
+      "Suicide (temporary) — as the new policy replaces part of your current cover, you will lose cover in the event of suicide during the first 13 months of the new life cover; this is reinstated once the policy has been in force more than 13 months."
+     ],
+     "alts": [
+      "Rollover part of your super in order to retain your existing insurance cover within super — discounted as the recommended replacement provides additional benefits, and a partial rollover would leave more than one super account to track."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Retain existing cover (inside super)",
+     "triggers": [
+      "retain insurance",
+      "keep existing cover",
+      "retain cover inside super"
+     ],
+     "type": "Tailored",
+     "gate": "Insurance scoped (retain)",
+     "figures": "—",
+     "strat": "We recommend you retain your existing insurance through [Fund] and remain insured for the following amounts: [amounts]. (Where applicable: [Name], we recommend you retain your existing Life insurance while cancelling your TPD and IP insurances through [Fund].)",
+     "outcome": "Retaining your existing cover maintains your underwritten terms while keeping premiums funded from super to protect your cashflow.",
+     "why": [
+      "Retains your underwritten Life & TPD insurance.",
+      "By holding insurance cover inside superannuation, the cost of the premiums can be met from your superannuation balance, which frees up your cashflow for other purposes.",
+      "As much cover as possible is held within the superannuation environment to reduce the effect on your personal cashflow."
+     ],
+     "risks": [
+      "If personal insurance cover is held in a superannuation environment, any claim is subject to superannuation release laws (assessment can take time) and proceeds may be subject to tax.",
+      "The premium quoted is a guide only; loading can occur following full underwriting."
+     ],
+     "alts": [
+      "Apply for cover completely outside superannuation — discounted as the premium cost would then need to be met from your everyday income.",
+      "Self-insure using your net worth — discounted as your need for insurance exceeds your net worth."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Income Protection — retain existing",
+     "triggers": [
+      "retain income protection",
+      "keep IP"
+     ],
+     "type": "Tailored",
+     "gate": "Insurance scoped",
+     "figures": "—",
+     "strat": "We have recommended retaining your income protection policy with 75% of your income and super. We have recommended retaining the 13 week wait period as you have available cash and leave to fund 13 weeks of expenses (this reduces the overall cost), and retaining the longest benefit period to ensure maximum coverage across your working life.",
+     "outcome": "Retaining your income protection maintains your income replacement while keeping the cost efficient.",
+     "why": [
+      "Maintains income replacement to age 65/longest benefit period, ensuring you can afford everyday expenses if unable to work."
+     ],
+     "risks": [
+      "Income protection does not fully replace your income (generally not designed to cover 100%), which may create a shortfall in disposable income.",
+      "Indemnity cover is subject to assessment of your income prior to claim — if your income has decreased you may receive a lower payout."
+     ],
+     "alts": [
+      "Apply for IP with a longer waiting period — discounted as you may not have sufficient funds during the waiting period."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Employer-paid / default cover (retain or note)",
+     "triggers": [
+      "employer paid cover",
+      "default cover",
+      "automatic acceptance",
+      "group cover within super"
+     ],
+     "type": "Tailored",
+     "gate": "Existing default/employer cover present",
+     "figures": "—",
+     "strat": "We recommend you retain your existing employer-paid (default) insurance cover of [amounts] held within [Fund], in addition to the recommended cover. (Or, where being replaced: we recommend you cancel your default cover within [Fund] once the new underwritten cover is in force.)",
+     "outcome": "Retaining your employer-paid cover maintains valuable cover at no cost to your cashflow while the recommended underwritten cover provides certainty at claim time.",
+     "why": [
+      "Default cover is provided at no direct cost to you (premiums met by your employer / within the fund) and is generally provided on an automatic-acceptance basis without underwriting.",
+      "Retaining it provides an additional layer of cover alongside the recommended underwritten policy."
+     ],
+     "risks": [
+      "Default/group cover is not underwritten, so at claim time the insurer may assess pre-existing conditions and exclusions, creating uncertainty. Cover usually ceases if you change employer or your account becomes inactive.",
+      "Default cover levels are generic and may not match your actual needs."
+     ],
+     "alts": [
+      "Cancel the default cover and rely solely on the new underwritten cover — discounted where the default cover provides valuable additional cover at no cashflow cost."
+     ],
+     "draft": true,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Apply for child cover",
+     "triggers": [
+      "child cover",
+      "children's insurance",
+      "child trauma"
+     ],
+     "type": "Tailored",
+     "gate": "Dependent children",
+     "figures": "{childSum}",
+     "strat": "We recommend you take out Child Cover of $XXX for [child/children] under your policy.",
+     "outcome": "Child Cover provides a lump sum to support your family if a child suffers a defined trauma event, and can later convert to adult cover.",
+     "why": [
+      "Provides a lump sum on a child's defined trauma event to fund medical costs and time away from work.",
+      "If the insured child meets the eligibility criteria, they may convert the Child Cover to an equivalent adult Life Insurance Plan without reapplying or providing medical evidence."
+     ],
+     "risks": [
+      "Child Cover is limited to defined conditions; some conditions carry a qualifying period.",
+      "Premiums add to the overall policy cost."
+     ],
+     "alts": [
+      "Self-fund a child's medical/recovery costs — discounted where a lump sum provides more certainty."
+     ],
+     "draft": true,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Premium structure — stepped vs level / variable age-stepped",
+     "triggers": [
+      "stepped premium",
+      "level premium",
+      "variable age-stepped"
+     ],
+     "type": "Always-on (with new cover)",
+     "gate": "—",
+     "figures": "—",
+     "strat": "We recommend a Variable Age-Stepped premium structure for all cover. [Couple variant: where a client prefers long-term affordability, recommend a level premium structure for that person, and a variable age-stepped structure for the other.]",
+     "outcome": "Your premium structure is matched to your affordability preference — variable age-stepped for immediate affordability and flexibility, level for long-term affordability.",
+     "why": [
+      "We have recommended a Variable Age-Stepped premium structure which will give you immediate affordability and ongoing flexibility of your coverage.",
+      "[Level variant] We have recommended retaining a level premium structure which will give you long-term affordability."
+     ],
+     "risks": [
+      "Premiums increase over time (for stepped / variable age-stepped structures).",
+      "Holding cover inside super reduces your retirement balance over time.",
+      "Underwriting may apply medical exclusions or loadings (e.g. higher premiums for smoker status); a suicide exclusion typically applies for the first 13 months."
+     ],
+     "alts": [
+      "Structure all premiums as level. While this would reduce your ongoing premium payable, I have discounted this strategy as premiums would be significantly higher initially making short-term affordability an issue. The recommended insurance structure provides immediate affordability and flexibility in the sum insured."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Cancel cover no longer required",
+     "triggers": [
+      "cancel insurance",
+      "reduce cover",
+      "no longer need cover"
+     ],
+     "type": "Tailored",
+     "gate": "Cover exceeds need",
+     "figures": "—",
+     "strat": "We recommend you cancel your existing [cover type] of $XXX as it exceeds your current insurance needs.",
+     "outcome": "Cancelling cover you no longer need removes an unnecessary premium cost, improving your cashflow.",
+     "why": [
+      "Reduces premium outlay where your need for cover has reduced (e.g. debts repaid, assets accumulated, children independent)."
+     ],
+     "risks": [
+      "Once cancelled you lose the cover immediately; if your circumstances change, new cover would require fresh underwriting and may be more expensive or declined. Do not cancel existing cover until you are certain it is no longer required."
+     ],
+     "alts": [
+      "Retain the cover — discounted where it clearly exceeds your assessed need and the premium is better directed elsewhere."
+     ],
+     "draft": true,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Income Protection — increasing/CPI-indexed claim benefit",
+     "triggers": [
+      "increasing claim",
+      "cpi indexation",
+      "indexed benefit",
+      "increasing claims"
+     ],
+     "gate": "Income Protection cover recommended/retained",
+     "strat": "We recommend an increasing-claim option so that, while you are receiving payments, your benefit is indexed at each review date in line with CPI. This increase is capped to 5% if income protection is structured through superannuation.",
+     "outcome": "Your income protection payments keep pace with inflation during a long claim.",
+     "why": [
+      "The increasing-claim option protects the real value of your benefit payments over a multi-year claim."
+     ],
+     "risks": [
+      "The 5% cap (for super-held cover) may not fully match CPI in high-inflation periods; the indexed benefit increases your premium; indexation applies only while you are on claim."
+     ],
+     "alts": [
+      "Level (non-indexed) benefit — lower ongoing premium but the benefit's real value erodes during a long claim."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Trauma cover with reinstatement benefit",
+     "triggers": [
+      "trauma reinstatement",
+      "reinstatement benefit",
+      "reinstate trauma"
+     ],
+     "gate": "Trauma cover recommended",
+     "strat": "We have recommended a trauma reinstatement benefit which allows you to reinstate the trauma benefit after a claim has been paid.",
+     "outcome": "After a trauma claim is paid, your cover can be reinstated so you remain protected against a later, unrelated trauma event.",
+     "why": [
+      "Recovery from one condition does not remove the risk of a later, unrelated trauma event; reinstatement restores cover for that scenario."
+     ],
+     "risks": [
+      "The reinstated benefit may be subject to conditions/waiting periods and adds to the premium; not all insurers offer it."
+     ],
+     "alts": [
+      "Single-claim trauma cover only — lower cost but no protection against a subsequent event."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Linked cover with buy-back feature",
+     "triggers": [
+      "buy back",
+      "buy-back",
+      "cover buy back",
+      "linked cover"
+     ],
+     "gate": "Life/TPD/Trauma written as linked cover",
+     "strat": "As your TPD/Trauma cover is linked to your Life/TPD cover, a claim on one type of cover will reduce the sum insured on the other — we recommend adding the cover buy-back feature so the reduced cover can be reinstated after a claim.",
+     "outcome": "After a linked claim reduces your other cover, the buy-back feature restores it without re-underwriting.",
+     "why": [
+      "Linked cover is more cost-effective than standalone policies, and the buy-back feature removes the main drawback by restoring the reduced cover after a claim."
+     ],
+     "risks": [
+      "The buy-back feature adds to the premium; it applies within defined terms and age limits."
+     ],
+     "alts": [
+      "Standalone (unlinked) policies — no claim-driven reduction but materially higher premiums; or linked cover without buy-back (cheaper, but cover reduces after a claim)."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Future insurability / guaranteed future increases",
+     "triggers": [
+      "future insurability",
+      "guaranteed future insurability",
+      "increase without underwriting"
+     ],
+     "gate": "Life/TPD/Trauma cover recommended",
+     "strat": "Your recommended policies contain future insurability clauses, meaning that if your circumstances change in future you can increase your cover periodically without further medical underwriting.",
+     "outcome": "You can raise your cover at set life events or intervals without a new health assessment.",
+     "why": [
+      "This locks in your current health rating, so deterioration in your health does not block reasonable future increases within policy limits."
+     ],
+     "risks": [
+      "Increases are limited to set amounts/intervals and have age limits; the increased benefit is still subject to claims assessment."
+     ],
+     "alts": [
+      "Lock cover at today's level with no increase option — lower flexibility if your needs grow."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Own-occupation TPD definition",
+     "triggers": [
+      "own occupation",
+      "own-occupation tpd"
+     ],
+     "gate": "TPD cover recommended for a specialised/high-income occupation",
+     "strat": "We have recommended TPD with an 'Own Occupation' definition, which is the highest level of cover.",
+     "outcome": "A claim can be met if you are unable to work in your own specific occupation, rather than any occupation.",
+     "why": [
+      "Own-occupation cover suits a specialised or high-income role where being unable to perform that specific occupation, even if able to do another, would end your earning capacity."
+     ],
+     "risks": [
+      "Own-occupation cover costs more than any-occupation; where linked, a claim reduces the linked cover unless a buy-back feature is added."
+     ],
+     "alts": [
+      "Any-occupation TPD — cheaper but a narrower claim trigger (must be unable to work in any occupation suited to you)."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Differentiate TPD definition by life stage (own-occ primary earner / any-occ spouse)",
+     "triggers": [
+      "differential tpd",
+      "any occupation",
+      "own occupation spouse"
+     ],
+     "gate": "Couple with differing work/earning situations (e.g. one on parental leave)",
+     "strat": "We recommend own-occupation TPD for the primary earner and retaining any-occupation TPD for the spouse who is currently out of the workforce / on parental leave.",
+     "outcome": "Cover definition is matched to each person's earning role and stage.",
+     "why": [
+      "The primary earner's income is concentrated in a specific occupation (own-occupation is appropriate); the spouse currently out of the workforce is adequately served by the existing any-occupation cover, which is reviewed on return to work."
+     ],
+     "risks": [
+      "Any-occupation has a higher claim hurdle; the spouse's cover should be reviewed and potentially upgraded on return to work."
+     ],
+     "alts": [
+      "Own-occupation for both — higher cost not warranted while the spouse is out of the workforce."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Trauma payout deployment (medical recovery + partner salary replacement)",
+     "triggers": [
+      "trauma payout",
+      "salary replacement",
+      "medical expense trauma"
+     ],
+     "gate": "Trauma cover recommended; sum insured sized to a purpose split",
+     "strat": "Your trauma cover is sized to cover an estimated amount for medical expenses plus an amount for your partner's salary replacement while you recover (e.g. $125,000 medical + the balance for partner salary replacement).",
+     "outcome": "The lump sum is explicitly sized to fund both your treatment/recovery costs and your partner's time off work to support you.",
+     "why": [
+      "Segmenting the trauma sum insured into medical-recovery and partner-salary-replacement components ensures the household keeps running while you recover."
+     ],
+     "risks": [
+      "The actual split needed may differ from the estimate; 'Plus' features may cap per condition."
+     ],
+     "alts": [
+      "Standalone trauma plus separate income protection for the partner — duplicates cost."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Retain cover during workforce absence (maternity / parental leave)",
+     "triggers": [
+      "maternity leave",
+      "parental leave",
+      "not working",
+      "while you are not working",
+      "return to work"
+     ],
+     "gate": "One person temporarily out of the workforce (e.g. parental leave)",
+     "strat": "While you are not working, we recommend you retain your existing in-super insurance cover (Life/TPD/IP) at its current levels, with the income protection structured with a shorter waiting period funded by available cash and leave, and we will reassess cover levels once you return to the workforce.",
+     "outcome": "Cover continuity is preserved through the leave period without re-underwriting, and is reviewed when income normalises.",
+     "why": [
+      "Retaining cover during leave preserves your future insurability and avoids re-underwriting on return to work.",
+      "We are not recommending an increase in cover at this time given your cashflow while on leave; we will reassess once you have returned to work."
+     ],
+     "risks": [
+      "You may be temporarily under-insured relative to your full needs analysis during the leave period; income protection may be limited while not earning."
+     ],
+     "alts": [
+      "Cancel cover and re-apply on return — discounted due to re-underwriting cost, delay and the risk of a health change in the interim."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Retain existing cover and top up with new cover",
+     "triggers": [
+      "dual layer",
+      "retain in super and apply",
+      "layer new cover"
+     ],
+     "gate": "Transitional period (e.g. workforce re-entry) where flexibility is wanted",
+     "strat": "We recommend you retain your existing cover and top up with new recommended cover.",
+     "outcome": "You keep tax-effective in-super cover while adding flexible personal cover that can be adjusted later.",
+     "why": [
+      "A small in-super retention is 'sticky' and tax-effective; the additional personal cover maintains optionality during a transitional period."
+     ],
+     "risks": [
+      "Two policies mean more administration; the new cover must remain affordable after your circumstances settle."
+     ],
+     "alts": [
+      "All new cover inside super — simpler but less flexible and locks in super deductions."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Cancel cover no longer required (age + debt-free + income-replacement redundant)",
+     "triggers": [
+      "cancel insurance",
+      "cancel cover",
+      "no longer require insurance"
+     ],
+     "gate": "Approaching/at retirement, debt cleared, no income to protect",
+     "strat": "By completing a full rollover of your existing super fund, your existing Life, TPD & Income Protection insurance will be cancelled. Due to your age and future lack of debt, we believe you do not require this or any other personal insurance going forward, and recommend you cancel your existing cover.",
+     "outcome": "Premiums no longer erode your balance once cover is no longer needed.",
+     "why": [
+      "With no debt, no dependants relying on your income, and retirement income in place, personal insurance is no longer required, and cancelling it preserves your capital."
+     ],
+     "risks": [
+      "If your circumstances change (e.g. new dependants), you may be unable to re-acquire cover at the same rates; ensure cover is genuinely no longer needed before cancelling."
+     ],
+     "alts": [
+      "Retain partial cover via a partial rollover — discounted as it leaves more than one super account and ongoing premiums for cover you no longer require."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Dual income protection — retail top-up over employer/industry cover (offset benefit)",
+     "triggers": [
+      "two income protection policies",
+      "top up cover",
+      "dual ip",
+      "offset benefit",
+      "employer ip plus retail"
+     ],
+     "gate": "Existing employer/industry-fund IP retained, with a retail policy added to top up",
+     "strat": "You will have two income protection policies (your existing fund cover plus the recommended retail policy). The retail policy is designed to top up the cover provided by your fund so that you receive up to 70% of your income. In the event of a claim you cannot receive the full benefit from both — the retail payout reduces by the amount paid from your fund cover.",
+     "outcome": "Your total income protection reaches ~70% of income at the lowest cost, by topping up rather than duplicating existing cover.",
+     "why": [
+      "Retaining the existing fund cover and topping it up is cheaper than replacing it entirely.",
+      "Where the existing cover has no pre-existing medical exclusions, keeping it means a condition excluded on the new retail policy may still be claimable under the retained cover."
+     ],
+     "risks": [
+      "The two policies overlap and benefits offset — you cannot stack both to exceed the insured percentage; coordination is required at claim time."
+     ],
+     "alts": [
+      "Single standalone retail policy — simpler but more expensive and forfeits the no-exclusions benefit of the retained cover."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Occupation pre-assessment / high-risk occupation constraint",
+     "triggers": [
+      "occupation pre-assessment",
+      "high risk occupation",
+      "manual labour",
+      "heavy machinery"
+     ],
+     "gate": "Client in a high-risk / manual occupation affecting insurability",
+     "strat": "Given your occupation, an occupation pre-assessment was completed for this plan. As your role is considered high risk, the recommended insurer is the only one offering full benefits — other insurers either do not provide TPD/Income Protection or offer Income Protection with a shorter benefit period. Where your occupation caps cover (e.g. income protection limited to a set monthly amount, a shorter benefit period and no super contribution option), we have recommended cover within those limits.",
+     "outcome": "Your cover is placed with the insurer that will offer the fullest terms for your occupation, within the caps your occupation imposes.",
+     "why": [
+      "High-risk occupations restrict insurer and product choice; a pre-assessment identifies the insurer offering the best available terms before you apply."
+     ],
+     "risks": [
+      "Occupational caps may leave cover below your full needs (e.g. limited benefit period or monthly cap); review if you change occupation."
+     ],
+     "alts": [
+      "Apply to a standard insurer — discounted as cover may be declined, loaded, or offered only with a reduced benefit period for your occupation."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Size TPD sum insured with a super-tax uplift (gross-up if claimed in super)",
+     "triggers": [
+      "22% uplift",
+      "tax uplift",
+      "gross up tpd",
+      "super tax on tpd"
+     ],
+     "gate": "TPD cover held inside super",
+     "strat": "The TPD sum insured is set to cover your identified needs plus an uplift (e.g. 22%) to cover the tax liability that would apply should you claim while the cover is held inside your superannuation fund.",
+     "outcome": "If you claim, the after-tax benefit still meets your identified needs because the sum insured was grossed up for the super tax.",
+     "why": [
+      "A TPD benefit paid from super to a member under preservation age is taxed; grossing up the sum insured ensures the net benefit covers debts, costs and school fees as intended."
+     ],
+     "risks": [
+      "If tax rates change the uplift may over- or under-compensate; the extra cover carries a small additional premium; if cover were held outside super this tax would not apply."
+     ],
+     "alts": [
+      "Hold TPD outside super (no benefits tax, but premiums are not funded from super) or take cover without the uplift (net benefit reduced by tax)."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Income Protection affordability structuring — waiting & benefit period calibrated to cash/leave",
+     "triggers": [
+      "90 day wait",
+      "waiting period",
+      "benefit period",
+      "cash and leave"
+     ],
+     "gate": "Income protection cover being structured",
+     "strat": "We have recommended a 90-day waiting period as you have available cash and leave to fund 90 days of expenses, which reduces the overall cost of the cover. The benefit period is set to balance coverage and cost — the longest available where maximum protection is wanted, or a shorter (e.g. 2-year) benefit period where cash and leave reserves can bridge a longer absence.",
+     "outcome": "Your income protection cost is minimised by matching the waiting and benefit periods to the reserves you already hold.",
+     "why": [
+      "A longer waiting period and/or shorter benefit period lowers the premium; this is appropriate where you hold sufficient cash and leave to self-fund the gap."
+     ],
+     "risks": [
+      "A longer wait or shorter benefit period leaves you self-funding longer — vulnerable if your cash/leave is depleted (e.g. redundancy alongside disability) or a disability extends beyond the benefit period."
+     ],
+     "alts": [
+      "Shorter waiting period (e.g. 30 days) and/or benefit period to age 65 — maximum security at a higher premium."
+     ],
+     "type": "Tailored",
+     "figures": "—",
+     "draft": false,
+     "appliesTo": "retirement"
+    },
+    {
+     "name": "Retain, alter and/or cancel a mix of existing covers (retain X / cancel Y / alter Z)",
+     "triggers": [
+      "retain and alter",
+      "retain cancel alter",
+      "alter existing cover"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend you retain [cover X], cancel [cover Y] and alter [cover Z] across your existing policies as set out below.",
+     "outcome": "",
+     "why": [
+      "Tailors your existing cover to current needs without wholesale replacement."
+     ],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Any-occupation TPD definition",
+     "triggers": [
+      "any occupation tpd",
+      "any-occupation"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend TPD cover on an Any-Occupation definition.",
+     "outcome": "",
+     "why": [
+      "Any-Occupation is more affordable than Own-Occupation; appropriate where own-occupation is not available or not warranted."
+     ],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Non-occupational / homemaker TPD definition",
+     "triggers": [
+      "non occupational tpd",
+      "homemaker tpd",
+      "non-working tpd"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend TPD cover on a Non-Occupational (homemaker) definition, appropriate as you are not currently in the workforce.",
+     "outcome": "",
+     "why": [
+      "Provides TPD protection for a non-working person where occupation-based definitions don't apply."
+     ],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Transfer existing cover to the recommended platform via takeover terms + top up with new cover",
+     "triggers": [
+      "takeover terms",
+      "transfer insurance takeover",
+      "industry insurance to hub24"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend transferring your existing [industry-fund] cover to the recommended platform via takeover terms, and topping up with new recommended cover through the product insurer.",
+     "outcome": "",
+     "why": [
+      "Takeover terms preserve your existing cover (and avoid new exclusions identified at pre-assessment) while the top-up provides the additional cover you need."
+     ],
+     "risks": [
+      "Takeover terms have conditions; the new top-up cover is separately underwritten and may carry exclusions or loadings."
+     ],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Pre-assessment factors (smoker / health / pastimes) affecting terms",
+     "triggers": [
+      "pre-assessment",
+      "preassessment",
+      "smoker",
+      "dangerous pastime"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "Note: based on pre-assessment of your [smoker status / health / pastimes], the recommended insurer offers the best available terms; cover may be subject to loadings or exclusions.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    }
+   ]
+  },
+  {
+   "name": "8 · Cashflow Management & Budgeting",
+   "note": "MCMA and surplus‑direction wording is verbatim from your SOAs.",
+   "scenarios": [
+    {
+     "name": "Establish an MCMA / cash hub",
+     "triggers": [
+      "MCMA",
+      "Macquarie Cash Management Account",
+      "cash hub",
+      "central account"
+     ],
+     "type": "Tailored",
+     "gate": "Cashflow scoped",
+     "figures": "{mcmaWk}",
+     "strat": "We recommend you establish a Macquarie Cash Management Account (MCMA).\nWe recommend you transfer $XXX per week ($XXX per month) to your MCMA to cover ongoing plan costs including: [itemised costs].",
+     "outcome": "Centralising your plan costs in one account simplifies administration and keeps your investment activity separate from personal spending.",
+     "why": [
+      "All investment transactions will be consolidated into one central account and separated from personal expenses, easing monitoring of investment related activity.",
+      "You will benefit from a competitive interest rate within the Macquarie Cash Management Account.",
+      "The My Wealth Portal includes an automated budgeting system which provides clarity and allows you to take control of your cashflow."
+     ],
+     "risks": [
+      "(administrative strategy — no material risks noted)"
+     ],
+     "alts": [
+      "[Alternative cash accounts] were considered; I have discounted the alternative products as the MCMA best suits the recommended structure."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Direct surplus income to offset / savings",
+     "triggers": [
+      "surplus to savings",
+      "surplus income to offset"
+     ],
+     "type": "Always-on",
+     "gate": "",
+     "figures": "$ amount",
+     "strat": "We recommend you direct your surplus income of $___ to your offset / savings account.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "accumulator",
+     "draft": false
+    },
+    {
+     "name": "Direct tax savings to offset / savings",
+     "triggers": [
+      "tax savings to savings",
+      "tax savings to offset"
+     ],
+     "type": "Always-on",
+     "gate": "",
+     "figures": "$ amount",
+     "strat": "We recommend you direct your tax savings of $___ to your offset / savings account.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "accumulator",
+     "draft": false
+    },
+    {
+     "name": "Budget / spending plan recommendation",
+     "triggers": [
+      "budget",
+      "spending plan",
+      "cashflow tracking",
+      "automated budgeting"
+     ],
+     "type": "Tailored",
+     "gate": "Cashflow scoped",
+     "figures": "—",
+     "strat": "We recommend you use the automated budgeting system within the My Wealth Portal to track your spending and align your cashflow with your goals (and, in retirement, your pension drawdowns).",
+     "outcome": "You gain clarity over spending and keep your cashflow aligned to your plan using the portal's automated budgeting tools.",
+     "why": [
+      "The My Wealth Portal's automated budgeting provides the clarity to take control of your cashflow and ensure spending stays aligned with your income and goals."
+     ],
+     "risks": [
+      "The tool supports but does not replace disciplined spending decisions."
+     ],
+     "alts": [
+      "Manual budgeting/spreadsheet tracking — discounted as it is more effort and less consistent than the automated portal."
+     ],
+     "draft": false,
+     "appliesTo": "retirement"
+    },
+    {
+     "name": "Direct ongoing plan costs to the MCMA — broken down (insurance / investments / advice fee)",
+     "triggers": [
+      "ongoing plan costs to mcma",
+      "mcma costs breakdown"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "total $___ pw, split by component",
+     "strat": "We recommend you direct your ongoing plan costs to the MCMA — $___ per week — comprising insurance $___, investments $___ and advice fee $___.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Set aside $X for ongoing insurance costs (where no other ongoing plan costs)",
+     "triggers": [
+      "set aside for insurance costs"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "$___ pw/pm",
+     "strat": "We recommend you set aside $___ to cover your ongoing insurance costs.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Establish an MCAA (Macquarie Accelerator) cash hub",
+     "triggers": [
+      "mcaa",
+      "macquarie accelerator"
+     ],
+     "type": "Tailored",
+     "gate": "",
+     "figures": "—",
+     "strat": "We recommend you establish a Macquarie Accelerator (MCAA) account as your cash hub.",
+     "outcome": "",
+     "why": [],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false,
+     "custom": false
+    },
+    {
+     "name": "Retain an emergency cash buffer",
+     "triggers": [
+      "emergency buffer",
+      "cash buffer",
+      "emergency fund"
+     ],
+     "type": "Always-on (cashflow scoped)",
+     "gate": "",
+     "figures": "$ amount",
+     "strat": "We recommend you retain an emergency cash buffer of $___ within your offset/savings for unexpected expenses.",
+     "outcome": "You hold a readily-accessible buffer for unexpected costs, reducing the need to draw on investments or credit.",
+     "why": [
+      "A cash buffer provides liquidity and peace of mind for unexpected expenses."
+     ],
+     "risks": [],
+     "alts": [],
+     "appliesTo": "both",
+     "draft": false
+    }
+   ]
+  },
+  {
+   "name": "9 · Estate Planning",
+   "note": "Will/POA and binding nomination wording is verbatim. Testamentary trust is a draft.",
+   "scenarios": [
+    {
+     "name": "Prepare / review your Will",
+     "triggers": [
+      "will",
+      "update will",
+      "estate planning"
+     ],
+     "type": "Always-on (estate scoped)",
+     "gate": "—",
+     "figures": "—",
+     "strat": "We recommend that you approach a solicitor to ensure that you have a valid and updated Will in place.",
+     "outcome": "A current Will ensures your assets are distributed according to your wishes.",
+     "why": [
+      "Control — a Will names the beneficiaries who receive your assets and on what terms, and appoints an executor to manage the distribution.",
+      "Intestacy — without a valid Will, your assets would be distributed by a prescribed government formula and possibly not in accordance with your wishes.",
+      "Relevance — a Will should be updated at least every three years and after any major change in circumstances."
+     ],
+     "risks": [
+      "If you fail to update your Will following marriage or divorce it may be rendered invalid, possibly resulting in parts of your estate not being distributed according to your wishes."
+     ],
+     "alts": [
+      "(estate documents are essential — no alternative presented)"
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Prepare / review Power of Attorney",
+     "triggers": [
+      "power of attorney",
+      "poa",
+      "enduring power of attorney"
+     ],
+     "type": "Always-on (estate scoped)",
+     "gate": "—",
+     "figures": "—",
+     "strat": "We recommend that you approach a solicitor to ensure that you have a valid and updated Power of Attorney in place.",
+     "outcome": "A Power of Attorney ensures someone you trust can manage your affairs if you are unable to.",
+     "why": [
+      "A Power of Attorney allows a trusted person to make financial/legal decisions on your behalf if you are unable to do so."
+     ],
+     "risks": [
+      "A Power of Attorney is a significant document granting authority to act on your behalf — ensure you appoint someone you trust."
+     ],
+     "alts": [
+      "(estate documents are essential — no alternative presented)"
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Non-lapsing binding death benefit nomination (super)",
+     "triggers": [
+      "binding nomination",
+      "death benefit nomination"
+     ],
+     "type": "Always-on (super scoped)",
+     "gate": "Fund must offer it",
+     "figures": "—",
+     "strat": "We recommend you choose a non-lapsing binding death nomination within your superannuation funds.",
+     "outcome": "A binding nomination ensures your super death benefit is paid according to your wishes.",
+     "why": [
+      "A non-lapsing binding nomination binds the trustee to pay your super death benefit according to your wishes and remains in force until amended or revoked (subject to the fund's Trust Deed).",
+      "Death benefit payment option — you can nominate dependants under the non-lapsing binding election, or you can select an automatic reversionary pension under the pension plan."
+     ],
+     "risks": [
+      "When you die, the proceeds from your superannuation fund may be subject to tax if paid as a lump sum to non-dependants. (delete if the fund cannot offer this nomination)"
+     ],
+     "alts": [],
+     "draft": false,
+     "appliesTo": "retirement"
+    },
+    {
+     "name": "Testamentary trust",
+     "triggers": [
+      "testamentary trust",
+      "estate trust"
+     ],
+     "type": "Tailored",
+     "gate": "Estate scoped",
+     "figures": "—",
+     "strat": "We recommend that you contact a solicitor to ensure that you have a valid and updated testamentary trust in place.",
+     "outcome": "A testamentary trust can provide tax‑effective and protected distribution of your estate.",
+     "why": [
+      "Tax Benefits — a testamentary trust allows trustees to distribute and split the income of the trust with tax planning in mind.",
+      "Asset Protection — the trust holds the title to the trust's assets (rather than the beneficiaries directly), allowing the trust to protect assets from any litigation, bankruptcy or legal action.",
+      "Flexibility — a testamentary trust can provide great flexibility to suit individual circumstances. For example, it is possible to restrict access to assets or distributions to a particular beneficiary."
+     ],
+     "risks": [
+      "Your solicitor may charge a fee to review / update your Wills and/or Powers of Attorney.",
+      "Estate planning laws vary between Australian states and territories as well as between countries. For this reason, it is important to ensure that your Will is valid for the state in which you live.",
+      "A Will does not expire and it is therefore important to have it reviewed and updated if or when your situation changes.",
+      "Should you fail to update your Will following marriage or divorce it will render it invalid, possibly resulting in parts of your estate not being distributed according to your wishes."
+     ],
+     "alts": [
+      "Distribute the estate directly via the Will — discounted where the tax and asset-protection benefits of a testamentary trust are valuable to your beneficiaries."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Apply for the Centrelink Age Pension (retirement trigger)",
+     "triggers": [
+      "age pension",
+      "centrelink",
+      "retire",
+      "reduce work"
+     ],
+     "gate": "Client(s) reaching/at Age Pension age and retiring or reducing work",
+     "figures": "Estimated fortnightly entitlement (homeowner couple/single rate)",
+     "strat": "We recommend that next financial year, when you retire or reduce your work, you apply for the Centrelink Age Pension.",
+     "outcome": "You access government income support to supplement your pension drawdowns once retired.",
+     "why": [
+      "On full retirement you may be entitled to a meaningful fortnightly payment as a homeowner, supplementing your account-based pension income and reducing the drawdown pressure on your super.",
+      "Eligibility for the Age Pension may also entitle you to additional Commonwealth concessions, including the Pensioner Concession Card — which may provide access to subsidised pharmaceutical costs under the PBS and other state-based concessions. Eligibility is determined by Services Australia and subject to ongoing assessment."
+     ],
+     "risks": [
+      "Entitlement depends on the assets and income tests at the time; rates and thresholds are subject to change and indexation."
+     ],
+     "alts": [
+      "Rely solely on pension drawdowns — discounted as it forgoes available government support."
+     ],
+     "type": "Tailored",
+     "draft": false,
+     "appliesTo": "retirement"
+    }
+   ]
+  },
+  {
+   "name": "10 · Administration Recommendations",
+   "note": "",
+   "scenarios": [
+    {
+     "name": "Use the My Wealth Portal",
+     "triggers": [
+      "my wealth portal",
+      "portal",
+      "track investments"
+     ],
+     "type": "Always-on (admin scoped)",
+     "gate": "—",
+     "figures": "—",
+     "strat": "We recommend you utilise the My Wealth Portal to track all your investments and cashflow.",
+     "outcome": "Consolidating your finances in one place streamlines administration and keeps you on track.",
+     "why": [
+      "The My Wealth Portal will allow you to consolidate your financial world into one place, streamlining administration.",
+      "The My Wealth Portal includes an automated budgeting system which provides clarity and allows you to take control of your cashflow.",
+      "Allows you to build personalised cash flow targets and goals which keep you accountable over time."
+     ],
+     "risks": [
+      "(administrative tool — no downside)"
+     ],
+     "alts": [],
+     "draft": false,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Establish your investments through the recommended platform",
+     "triggers": [
+      "platform",
+      "Hub24",
+      "Netwealth",
+      "Colonial First State",
+      "establish through platform"
+     ],
+     "type": "Always-on (product scoped)",
+     "gate": "—",
+     "figures": "{platform}",
+     "strat": "We recommend you establish your new [investment / superannuation] account through the [Hub24 Choice / Netwealth / Colonial First State Edge] platform.",
+     "outcome": "Using the recommended platform provides access to the recommended investment menu with competitive administration costs.",
+     "why": [
+      "We completed a price comparison between Colonial First State Edge, BT Panorama, Hub24 and Netwealth Wealth Accelerator Plus. Hub24 was the most cost-effective platform to manage your investment.",
+      "The CARE Essentials investment option is only available in the Hub24 platform.",
+      "Provides consolidated reporting and the ability for your adviser to manage your portfolio efficiently."
+     ],
+     "risks": [
+      "Platform administration fees apply (offset by reduced administration and management costs versus your current arrangement)."
+     ],
+     "alts": [
+      "Colonial First State Edge, BT Panorama and Netwealth Wealth Accelerator Plus were considered. The managed discretionary account and CARE portfolios are not available in Colonial First State Edge and BT Panorama; the alternatives were discounted on cost/feature grounds relative to Hub24."
+     ],
+     "draft": false,
+     "appliesTo": "both"
+    }
+   ]
+  },
+  {
+   "name": "11 · Entities (company / trust / SMSF)",
+   "note": "DRAFT — across 26 sample MWS SOAs, NO company/bucket company or family/discretionary trust ever appears as the advice CLIENT or asset owner; the only non-individual entity is an SMSF with a corporate trustee (e.g. 'KENZIE PTY LTD ATF The Trustee for Clooneyfund'). If MWS writes company/trust-as-client SOAs, please send one; otherwise these rows can be filled from your standard wording.",
+   "scenarios": [
+    {
+     "name": "Investment company / bucket company",
+     "triggers": [
+      "bucket company",
+      "investment company",
+      "company as entity"
+     ],
+     "type": "Tailored",
+     "gate": "Entity = company",
+     "figures": "{taxRate}",
+     "strat": "We recommend you [establish / utilise] your investment (bucket) company to receive trust distributions and invest the retained earnings in line with the company's objectives, capped at the corporate tax rate.",
+     "outcome": "Holding investments in a bucket company caps the tax on retained earnings at the corporate rate and provides a flexible structure for reinvestment.",
+     "why": [
+      "Caps tax on retained investment earnings at the corporate tax rate (25%/30%) rather than higher personal marginal rates.",
+      "Provides a flexible, long-term vehicle for accumulating and reinvesting trust distributions."
+     ],
+     "risks": [
+      "Franking credits, Division 7A and distribution rules apply; obtain advice from your accountant. The company structure has ongoing administration and compliance costs.",
+      "Capital gains in a company do not receive the 50% CGT discount."
+     ],
+     "alts": [
+      "Distribute and invest personally — discounted where the corporate tax cap and structure better suit the client's objectives."
+     ],
+     "draft": true,
+     "note_missing": true,
+     "appliesTo": "both"
+    },
+    {
+     "name": "Family / discretionary trust (as advice entity)",
+     "triggers": [
+      "family trust",
+      "discretionary trust",
+      "trust distribution"
+     ],
+     "type": "Tailored",
+     "gate": "Entity = trust",
+     "figures": "—",
+     "strat": "We recommend you [establish / utilise] your family (discretionary) trust to hold the investment portfolio and distribute income to beneficiaries in a tax-effective manner each year.",
+     "outcome": "A discretionary trust provides flexible, tax-effective distribution of investment income and capital across beneficiaries.",
+     "why": [
+      "Allows flexible distribution of income/capital to beneficiaries to manage the family's overall tax position.",
+      "Provides a degree of asset protection."
+     ],
+     "risks": [
+      "Trust income must generally be distributed each year; undistributed income is taxed at the top marginal rate. Obtain advice from your accountant on distributions and Division 7A where a company is a beneficiary."
+     ],
+     "alts": [
+      "Hold investments personally — discounted where the trust's flexibility and protection better suit the family."
+     ],
+     "draft": true,
+     "appliesTo": "both"
+    },
+    {
+     "name": "SMSF as advice entity",
+     "triggers": [
+      "smsf",
+      "self managed super fund as entity"
+     ],
+     "type": "Tailored",
+     "gate": "Entity = SMSF",
+     "figures": "—",
+     "strat": "(See Superannuation › Establish / manage an SMSF for in-fund wording.) Capture the SMSF entity: corporate trustee (e.g. \"[NAME] PTY LTD ATF The Trustee for [Fund] (SMSF)\"), members and the assets it owns (e.g. a Hub24 investment account + Macquarie MCMA).\nReal pattern seen: \"KENZIE PTY LTD ATF The Trustee for Clooneyfund (SMSF)\".",
+     "outcome": "—",
+     "why": [
+      "Captures the SMSF entity details (corporate/individual trustee name, members) for the cover, signatures and the asset ownership column."
+     ],
+     "risks": [],
+     "alts": [],
+     "draft": false,
+     "appliesTo": "both"
+    }
+   ]
+  },
+  {
+   "name": "CARE · Investment Philosophy justification",
+   "note": "Tickable reasons CARE is recommended (per client/entity, super and/or investment). Feeds Summary-Outcomes, Super & Investment strategy/product wording, Alternatives comparison and Replacement Implications — to justify best interests regardless of fee.",
+   "scenarios": [
+    {
+     "name": "Active, professional day-to-day management (dynamic asset allocation)",
+     "triggers": [
+      "care active management",
+      "actively managed",
+      "professional management"
+     ],
+     "type": "CARE justification (tailored)",
+     "gate": "CARE recommended for super and/or investment",
+     "figures": "—",
+     "strat": "",
+     "outcome": "Your portfolio is actively managed day-to-day with the asset allocation adjusted as markets and your circumstances change, pursuing greater risk-adjusted returns and wealth preservation aligned to your [risk profile] profile and goals.",
+     "why": [
+      "The CARE philosophy provides professional, active management of your portfolio rather than a set-and-forget approach. This is appropriate for you, [Name], because [you have indicated you prefer your investments outsourced and professionally managed / your goal of {goal} requires your portfolio to adapt over time].",
+      "Active management allows the portfolio to respond to changing markets and to your changing needs, which a static investment cannot."
+     ],
+     "risks": [],
+     "alts": [
+      "We considered a single diversified index fund; we discounted it as it does not provide the active management and separate components required to manage volatility and your personalised liquidity needs.",
+      "We considered you holding direct shares through a broker; we discounted this as you would not achieve the depth of diversification or the level of professional active management available through the managed account service."
+     ],
+     "replace": [
+      "While the recommended portfolio costs more than [your current arrangement / a basic index option], we believe the professional active management and the additional value it provides is in your best interests and justifies the higher cost given your objectives and your preference for a managed solution."
+     ],
+     "appliesTo": "both",
+     "draft": false,
+     "careReason": true
+    },
+    {
+     "name": "Reserves component — liquidity to avoid forced selling in downturns",
+     "triggers": [
+      "care reserves",
+      "reserves component",
+      "avoid forced selling",
+      "sequencing risk"
+     ],
+     "type": "CARE justification (tailored)",
+     "gate": "CARE recommended for super and/or investment",
+     "figures": "—",
+     "strat": "",
+     "outcome": "You hold a dedicated Reserves buffer that is continually topped up from portfolio income, so income and rebalancing can be funded without selling growth assets at the wrong time during a market downturn.",
+     "why": [
+      "A key benefit of the CARE approach is the separation of your investments into Core, Active, Reserves and Enhanced components, allowing the Reserves component to be continually topped up with income from the others.",
+      "This matters for you because [you are drawing an income / you are approaching retirement / you want to maintain your lifestyle and income through retirement] — it means you should not have to sell growth assets through necessity or at depressed prices during a downturn."
+     ],
+     "risks": [],
+     "alts": [
+      "A traditional diversified portfolio was discounted as it does not provide the separate Reserves component to smooth volatility at market extremes and provide for your personalised liquidity requirements."
+     ],
+     "replace": [
+      "The Reserves structure directly protects your retirement income from sequencing risk; we consider this protection to be in your best interests notwithstanding the higher cost relative to [your current fund / a basic option]."
+     ],
+     "appliesTo": "both",
+     "draft": false,
+     "careReason": true
+    },
+    {
+     "name": "Diversification & risk-adjusted returns (Core / Active / Enhanced)",
+     "triggers": [
+      "care diversification",
+      "core active enhanced",
+      "risk adjusted return"
+     ],
+     "type": "CARE justification (tailored)",
+     "gate": "CARE recommended for super and/or investment",
+     "figures": "—",
+     "strat": "",
+     "outcome": "Your capital is diversified across the Core, Active and Enhanced components to pursue stronger risk-adjusted returns for your [risk profile] profile.",
+     "why": [
+      "The CARE components provide diversification across management styles and asset classes, targeting better risk-adjusted returns than a single-fund approach.",
+      "This is aligned to your [risk profile] risk profile and your goal of {goal}."
+     ],
+     "risks": [],
+     "alts": [
+      "A single balanced fund was considered and discounted as it provides less diversification across management styles and less ability to tailor the portfolio to your profile."
+     ],
+     "replace": [
+      "The improved diversification supports the recommendation despite a higher fee than [your current arrangement]."
+     ],
+     "appliesTo": "both",
+     "draft": false,
+     "careReason": true
+    },
+    {
+     "name": "Behavioural discipline — removing emotion from investing",
+     "triggers": [
+      "care behavioural",
+      "remove emotion",
+      "discipline at market extremes"
+     ],
+     "type": "CARE justification (tailored)",
+     "gate": "CARE recommended for super and/or investment",
+     "figures": "—",
+     "strat": "",
+     "outcome": "A disciplined, managed process keeps your portfolio invested appropriately through market cycles, reducing the risk of poorly-timed decisions.",
+     "why": [
+      "The managed structure removes the need for you to make emotional buy/sell decisions at market extremes, which is one of the largest detractors from long-term returns.",
+      "This supports your goal of {goal} by keeping your strategy on track."
+     ],
+     "risks": [],
+     "alts": [
+      "A self-directed approach was discounted given the behavioural risk of selling at market lows and the time and expertise required to manage the portfolio yourself."
+     ],
+     "replace": [
+      "The discipline the managed account provides is, in our view, worth the additional cost over [a self-managed / lower-cost option]."
+     ],
+     "appliesTo": "both",
+     "draft": false,
+     "careReason": true
+    },
+    {
+     "name": "Tax efficiency — franking credits & CGT management within the managed account",
+     "triggers": [
+      "care tax efficiency",
+      "franking credits",
+      "cgt management"
+     ],
+     "type": "CARE justification (tailored)",
+     "gate": "CARE recommended for super and/or investment",
+     "figures": "—",
+     "strat": "",
+     "outcome": "Your account receives the direct benefit of franking credits and active capital-gains management, improving your after-tax return and helping to offset fees.",
+     "why": [
+      "Through the recommended platform you receive the direct benefit of any franking credits associated with your account (estimated approx. $[amount] p.a.), which reduces your tax and increases your effective return.",
+      "Capital gains are actively managed within the portfolio, improving tax outcomes compared with [your existing fund, where you may only receive a partial or no benefit of franking credits]."
+     ],
+     "risks": [],
+     "alts": [
+      "[Your existing fund] was considered for retention; we discounted it as you may only receive a partial or no franking-credit benefit, making it less tax-effective for you."
+     ],
+     "replace": [
+      "The after-tax benefit (franking credits + CGT management) partially offsets the fee differential and supports the recommendation as being in your best interests."
+     ],
+     "appliesTo": "both",
+     "draft": false,
+     "careReason": true
+    },
+    {
+     "name": "Direct ownership & transparency (franking direct to you; full visibility via the My Wealth Portal)",
+     "triggers": [
+      "care transparency",
+      "direct ownership",
+      "portal visibility"
+     ],
+     "type": "CARE justification (tailored)",
+     "gate": "CARE recommended for super and/or investment",
+     "figures": "—",
+     "strat": "",
+     "outcome": "You have direct ownership of your underlying holdings with full transparency and reporting through the My Wealth Portal.",
+     "why": [
+      "The managed account gives you direct beneficial ownership of the underlying assets and full visibility of holdings, transactions and performance through the My Wealth Portal.",
+      "This transparency supports your goal of being financially well organised with a clear plan."
+     ],
+     "risks": [],
+     "alts": [
+      "A pooled fund-of-funds structure was considered; we discounted it as it provides less transparency and you would not receive franking credits as directly."
+     ],
+     "replace": [
+      "The transparency and direct ownership benefits support the recommendation relative to a cheaper but less transparent structure."
+     ],
+     "appliesTo": "both",
+     "draft": false,
+     "careReason": true
+    },
+    {
+     "name": "Tailored to your risk profile and goals",
+     "triggers": [
+      "care tailored",
+      "aligned to goals",
+      "tailored to risk profile"
+     ],
+     "type": "CARE justification (tailored)",
+     "gate": "CARE recommended for super and/or investment",
+     "figures": "—",
+     "strat": "",
+     "outcome": "Your portfolio is constructed and managed specifically for your [risk profile] risk profile and your stated goals.",
+     "why": [
+      "The recommended portfolio is tailored to your [risk profile] risk profile and your objective of {goal}, rather than a generic allocation.",
+      "It will be reviewed at each ongoing review to ensure it remains appropriate as your circumstances change."
+     ],
+     "risks": [],
+     "alts": [
+      "An off-the-shelf option not tailored to your profile was discounted as it would not align as closely to your goals and risk tolerance."
+     ],
+     "replace": [
+      "Because the portfolio is tailored to your needs, we consider it appropriate and in your best interests despite the cost."
+     ],
+     "appliesTo": "both",
+     "draft": false,
+     "careReason": true
+    },
+    {
+     "name": "Value of ongoing professional management & advice (fee-for-value)",
+     "triggers": [
+      "care ongoing advice",
+      "fee for value",
+      "ongoing management value"
+     ],
+     "type": "CARE justification (tailored)",
+     "gate": "CARE recommended for super and/or investment",
+     "figures": "—",
+     "strat": "",
+     "outcome": "The fee includes ongoing professional management, regular review and access to advice, which together are designed to deliver value beyond the cost.",
+     "why": [
+      "The recommended fee covers ongoing active management, regular review and access to ongoing advice and education when you have queries.",
+      "We have weighed this value against the cost and consider it appropriate for your circumstances and goals."
+     ],
+     "risks": [],
+     "alts": [
+      "A lower-cost, advice-light option was considered; we discounted it as it would not provide the ongoing management and advice you have told us you value."
+     ],
+     "replace": [
+      "Although the recommended arrangement costs more than [your current situation], the ongoing management and advice it provides is, in our assessment, in your best interests and represents value for the fee."
+     ],
+     "appliesTo": "both",
+     "draft": false,
+     "careReason": true
+    },
+    {
+     "name": "Best-interests statement where fees are higher than the current arrangement",
+     "triggers": [
+      "care best interest",
+      "higher fee justified",
+      "fees are higher but"
+     ],
+     "type": "CARE justification (tailored)",
+     "gate": "CARE recommended for super and/or investment",
+     "figures": "—",
+     "strat": "",
+     "outcome": "Although the recommended approach may cost more than your current arrangement, we have determined that it is in your best interests because it better meets your goals and needs for the reasons set out above.",
+     "why": [
+      "We have compared the recommended CARE approach against your current arrangement and lower-cost alternatives.",
+      "Where the recommended approach costs more, we have determined it is in your best interests because the additional benefits — [active management, the Reserves liquidity buffer, tax efficiency, tailoring to your goals and ongoing advice] — better meet your objectives of {goal}."
+     ],
+     "risks": [],
+     "alts": [
+      "Retaining your current arrangement / selecting the cheapest option was discounted because it does not provide the benefits above that are important to achieving your goals."
+     ],
+     "replace": [
+      "This best-interests rationale should be reflected in the Replacement Implications and Alternatives sections: the benefits of the recommended approach outweigh the higher cost and any exit costs of moving from [current product]."
+     ],
+     "appliesTo": "both",
+     "draft": false,
+     "careReason": true
+    }
+   ]
+  }
+ ]
+}

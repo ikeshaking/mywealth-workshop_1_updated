@@ -1,0 +1,342 @@
+<title>SOA Generator — Architecture & Wording Audit Trail</title>
+<style>
+  :root{
+    --paper:#F6F8FB; --ink:#16222E; --ink-soft:#3A4757; --line:#DDE4ED;
+    --accent:#0C6AE1; --accent-wash:#EAF2FE;
+    --wired:#1F7A54; --wired-wash:#E7F3EC;
+    --data:#2563B0;  --data-wash:#E9F0FA;
+    --gap:#B26B12;   --gap-wash:#FBF0DF;
+    --static:#6B7686;--static-wash:#EEF1F5;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.55;
+    -webkit-font-smoothing:antialiased;font-size:16px}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  a{color:var(--accent);text-decoration:none}
+  code,.mono{font-family:var(--mono);font-size:.86em}
+  .chip{font-family:var(--mono);font-size:.8em;background:var(--static-wash);border:1px solid var(--line);
+    border-radius:5px;padding:1px 6px;white-space:nowrap;color:var(--ink)}
+  h1,h2,h3{text-wrap:balance;letter-spacing:-.02em;line-height:1.1;font-weight:800}
+  /* ---------- hero ---------- */
+  header{background:linear-gradient(180deg,#0E1B27 0%,#16283A 100%);color:#EAF1F8;padding:56px 0 44px}
+  header .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    color:#7FB0EE;margin:0 0 14px}
+  header h1{font-size:clamp(30px,5vw,50px);margin:0;color:#fff}
+  header p.thesis{font-size:clamp(16px,2.2vw,20px);max-width:70ch;color:#B9C7D6;margin:18px 0 0;font-weight:400;line-height:1.5}
+  header .meta{margin-top:26px;display:flex;flex-wrap:wrap;gap:8px}
+  header .meta .chip{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:#cfe0f2}
+  section{padding:44px 0;border-top:1px solid var(--line)}
+  section:first-of-type{border-top:none}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 8px}
+  h2{font-size:clamp(22px,3.2vw,30px);margin:0 0 6px}
+  h3{font-size:18px;margin:30px 0 10px}
+  p{margin:12px 0;max-width:74ch}
+  .lead{font-size:17px;color:var(--ink-soft);max-width:74ch}
+  /* ---------- pipeline ---------- */
+  .pipe{display:flex;flex-direction:column;gap:0;margin:24px 0 8px}
+  .stage{display:grid;grid-template-columns:64px 1fr;gap:18px;align-items:stretch}
+  .stage .rail{display:flex;flex-direction:column;align-items:center}
+  .stage .dot{width:34px;height:34px;border-radius:9px;flex:none;display:grid;place-items:center;
+    font-family:var(--mono);font-size:13px;font-weight:700;color:#fff;background:var(--accent)}
+  .stage .line{width:2px;flex:1;background:var(--line);margin:4px 0}
+  .stage:last-child .line{display:none}
+  .stage .body{padding:0 0 26px}
+  .stage .body h4{margin:4px 0 4px;font-size:16.5px;font-weight:800;letter-spacing:-.01em}
+  .stage .body p{margin:4px 0;color:var(--ink-soft);font-size:14.5px;max-width:76ch}
+  .stage .fns{margin-top:7px;display:flex;flex-wrap:wrap;gap:6px}
+  /* ---------- cards / columns ---------- */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px}
+  @media(max-width:760px){.cols{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  .card h3{margin:0 0 4px;font-size:16px}
+  .card.wired{border-top:3px solid var(--wired)}
+  .card.data{border-top:3px solid var(--data)}
+  .tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.05em;padding:3px 8px;border-radius:20px}
+  .tag.wired{background:var(--wired-wash);color:var(--wired)}
+  .tag.data{background:var(--data-wash);color:var(--data)}
+  .tag.gap{background:var(--gap-wash);color:var(--gap)}
+  .tag.static{background:var(--static-wash);color:var(--static)}
+  ul.tight{margin:10px 0 4px;padding-left:0;list-style:none}
+  ul.tight li{padding:7px 0;border-top:1px dashed var(--line);font-size:14.5px;color:var(--ink-soft)}
+  ul.tight li:first-child{border-top:none}
+  ul.tight li b{color:var(--ink);font-weight:650}
+  /* ---------- tables ---------- */
+  .tbl-wrap{overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:12px;background:#fff}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:640px}
+  th,td{text-align:left;padding:11px 14px;border-top:1px solid var(--line);vertical-align:top}
+  thead th{background:#F0F4F9;border-top:none;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);position:sticky;top:0}
+  tbody tr:hover{background:#FAFCFF}
+  td .chip{font-size:12px}
+  .num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+  /* ---------- wordbank grid ---------- */
+  .wb{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px}
+  @media(max-width:760px){.wb{grid-template-columns:1fr}}
+  .wb .area{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 15px;display:flex;
+    justify-content:space-between;align-items:flex-start;gap:12px}
+  .wb .area .n{font-weight:750;font-size:14.5px;letter-spacing:-.01em}
+  .wb .area .g{font-size:12.5px;color:var(--ink-soft);margin-top:3px;max-width:42ch}
+  .wb .area .cnt{font-family:var(--mono);font-weight:700;font-size:13px;color:#fff;background:var(--accent);
+    border-radius:7px;padding:3px 9px;flex:none;font-variant-numeric:tabular-nums}
+  .callout{background:var(--accent-wash);border:1px solid #C9DEFB;border-left:4px solid var(--accent);
+    border-radius:8px;padding:14px 18px;margin:20px 0}
+  .callout.gap{background:var(--gap-wash);border-color:#EAD3AC;border-left-color:var(--gap)}
+  .callout p{margin:6px 0}
+  .trace{background:#0E1B27;color:#D8E6F5;border-radius:12px;padding:20px 22px;margin:18px 0;
+    font-family:var(--mono);font-size:13.5px;line-height:1.8;overflow-x:auto}
+  .trace .k{color:#7FB0EE}.trace .v{color:#9EE6C0}.trace .c{color:#8494A6}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin:16px 0 0;font-size:13px}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .sw{width:12px;height:12px;border-radius:3px;flex:none}
+  footer{padding:40px 0 60px;color:var(--ink-soft);font-size:13.5px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
+  @media(max-width:760px){.grid3{grid-template-columns:1fr}}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .stat .big{font-size:30px;font-weight:820;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+  .stat .lbl{font-size:13px;color:var(--ink-soft);margin-top:2px}
+</style>
+
+<header>
+  <div class="wrap">
+    <p class="eyebrow">My Wealth Solutions · SOA Generator</p>
+    <h1>Architecture &amp; Wording Audit Trail</h1>
+    <p class="thesis">How an <b style="color:#fff">advice request</b> becomes a Statement of Advice — the word bank it triggers, the standard-template rules that fire on <span class="mono" style="color:#9EE6C0">when&nbsp;X</span> / <span class="mono" style="color:#9EE6C0">when&nbsp;Y</span>, the figures parsed from uploaded documents, and exactly which wording is bank-driven versus built in code.</p>
+    <div class="meta">
+      <span class="chip">SOA_Generator_v190.html · single file</span>
+      <span class="chip">wordbank · 13 areas · ~145 scenarios</span>
+      <span class="chip">build B56</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 1. THE PIPELINE ============ -->
+<section id="pipeline">
+  <div class="wrap">
+    <p class="kicker">01 · End-to-end flow</p>
+    <h2>The pipeline: advice request → Word document</h2>
+    <p class="lead">Seven stages. The advice request chooses <em>what</em> to say; the word bank and template rules supply <em>the words</em>; the uploaded documents supply <em>the figures</em>; a final pass resolves tokens and drops the wording that doesn't apply to this client.</p>
+
+    <div class="pipe">
+      <div class="stage"><div class="rail"><div class="dot">1</div><div class="line"></div></div>
+        <div class="body"><h4>Advice Request Builder → advice-request JSON</h4>
+          <p>The adviser ticks strategies per area and sets the framing. Output is a JSON the generator ingests: <code>soaType</code>, <code>ctype</code>, <code>scopeIn/scopeOut</code>, <code>strategies[]</code> (each with <code>area</code>, <code>name</code>, <code>est</code>, <code>owner</code>), <code>superProducts</code> / <code>insProducts</code> / <code>invProducts</code>, <code>risk</code>, <code>paraplanning</code>.</p>
+          <div class="fns"><span class="chip">MWS_Advice_Request_Builder.html</span></div>
+        </div></div>
+
+      <div class="stage"><div class="rail"><div class="dot">2</div><div class="line"></div></div>
+        <div class="body"><h4>Ingest &amp; route to blocks</h4>
+          <p>Each strategy's <code>area</code> maps to a document block via <code>V200_AREA_TO_BLOCK</code>, and <code>area&nbsp;::&nbsp;name</code> is the key into the word bank.</p>
+          <div class="fns"><span class="chip">v200ApplyAdviceRequest()</span><span class="chip">V200_AREA_TO_BLOCK</span></div>
+        </div></div>
+
+      <div class="stage"><div class="rail"><div class="dot">3</div><div class="line"></div></div>
+        <div class="body"><h4>Word bank lookup → block content</h4>
+          <p>For every strategy, <code>V200_WORD_BANK["area::name"]</code> yields its <code>strat / why / risks / alts / comments / altProducts / adminFees</code>. Tokens (<code>[Name]</code>, <code>&lt;super fund&gt;</code>, per-person expansion) resolve, and the text is written to <code>B[block].content.{recommendation,why,risks,alternatives,…}</code>.</p>
+          <div class="fns"><span class="chip">V200_WORD_BANK</span><span class="chip">v200Fill()</span><span class="chip">v200ResolveTokens()</span></div>
+        </div></div>
+
+      <div class="stage"><div class="rail"><div class="dot">4</div><div class="line"></div></div>
+        <div class="body"><h4>Standard-template post-passes (the “when X / when Y” rules)</h4>
+          <p>A fixed chain of conditional passes runs in order — each fires on a flag derived from the advice request or an uploaded doc, and adds / swaps / strips wording. Runs roughly: SOA type → products &amp; approach → super → debt → cashflow → insurance → risk → fees → scope-out.</p>
+          <div class="fns">
+            <span class="chip">v97ApplySoaType</span><span class="chip">v200ApplyProducts</span><span class="chip">v200DetectApproach</span>
+            <span class="chip">v200StandardSuperWording</span><span class="chip">v200ApplyCareEssSuperBlocks</span><span class="chip">v200ApplyCareInvestBlocks</span>
+            <span class="chip">v194BuildDebtWording</span><span class="chip">v200ApplyCashflow</span><span class="chip">v200ApplyInsuranceBenefit</span>
+            <span class="chip">v200ApplyInvestVanguard</span><span class="chip">v200ApplyRisk</span><span class="chip">v200ApplyFees</span><span class="chip">v200ApplyScopeOut</span>
+          </div>
+        </div></div>
+
+      <div class="stage"><div class="rail"><div class="dot">5</div><div class="line"></div></div>
+        <div class="body"><h4>Figure parsers (uploaded documents → the numbers)</h4>
+          <p>Wording carries <code>$XXX</code>/<code>XX%</code> placeholders until a source document fills them. Each parser is a separate import that writes to <code>F.*</code>; unresolved figures deliberately stay a visible <code>$XXX</code> (never invented).</p>
+          <div class="fns">
+            <span class="chip">importProjectorJSON · factfind</span><span class="chip">v48ImportCareDoc · CARE alloc/fees</span>
+            <span class="chip">v54ImportWealthSolver · per-fund costs</span><span class="chip">v141Import{OnePath,Neos,ClearView}</span>
+            <span class="chip">parseAustralianSuperExisting</span><span class="chip">parseAndApplyRR</span><span class="chip">v49 franking</span>
+          </div>
+        </div></div>
+
+      <div class="stage"><div class="rail"><div class="dot">6</div><div class="line"></div></div>
+        <div class="body"><h4>fill() → v51PostProcess (final resolve &amp; suppression)</h4>
+          <p>Every rendered string passes through <code>fill()</code>, whose last wrapper resolves names / franking / platform tokens and — crucially — performs <b>section-aware CARE vs Vanguard line suppression</b> and strips placeholder markers (<code>(CARE only)</code>, <code>(Keep for Essentials…)</code>). Output-only: it never writes back to the store.</p>
+          <div class="fns"><span class="chip">fill()</span><span class="chip">v51PostProcess()</span><span class="chip">v212StripCardField()</span><span class="chip">v137CareCompare()</span></div>
+        </div></div>
+
+      <div class="stage"><div class="rail"><div class="dot">7</div></div>
+        <div class="body"><h4>Build the .docx</h4>
+          <p>The block store is rendered to a Word document — strategy cards, product tables, replacement-implications tables, the Projected Outcomes / Pathway table, and the static annexures.</p>
+          <div class="fns"><span class="chip">generateSOA()</span><span class="chip">v13BuildProductTable()</span><span class="chip">strategyTable()</span><span class="chip">v13BuildReplacementTable()</span></div>
+        </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. WIRED vs DYNAMIC ============ -->
+<section id="linkage">
+  <div class="wrap">
+    <p class="kicker">02 · Does all tailored wording link to the word bank?</p>
+    <h2>Mostly — but not all. Three sources feed the document.</h2>
+    <p class="lead">The honest answer to “is every tailored line triggered from the advice-request word bank?” is: the <b>strategy narrative</b> is, comprehensively. But two other sources also write wording — data-driven builders (for anything that must reconcile to a parsed figure) and a fixed static layer (legal appendices). Knowing which is which is the whole audit trail.</p>
+
+    <div class="legend">
+      <span><span class="sw" style="background:var(--wired)"></span> Word-bank driven (advice-request-gated)</span>
+      <span><span class="sw" style="background:var(--data)"></span> Built in code (data / figure-driven)</span>
+      <span><span class="sw" style="background:var(--static)"></span> Static template layer</span>
+    </div>
+
+    <div class="cols">
+      <div class="card wired">
+        <span class="tag wired">Word-bank driven</span>
+        <h3 style="margin-top:10px">Triggered by <code>area::name</code> in the advice request</h3>
+        <p style="font-size:14px;color:var(--ink-soft)">The <b>Recommendation / Why / Risks / Alternatives</b> for every scoped strategy, across all 10 mapped areas. One tick in the builder → one word-bank scenario → one set of bullets.</p>
+        <ul class="tight">
+          <li><b>Debt</b> — offset, surplus, tax, gearing, term-loan, consolidation…</li>
+          <li><b>Super</b> — full/partial rollover, <b>retain</b>, consolidate, DB, military, SMSF, pension/TTR…</li>
+          <li><b>Contributions</b> — salary sacrifice, carry-forward, NCC, spouse, downsizer…</li>
+          <li><b>Insurance</b> — new / top-up / replace-takeover / retain, per cover &amp; definition…</li>
+          <li><b>Investment plan · property · bond · cashflow · estate · admin</b></li>
+        </ul>
+      </div>
+      <div class="card data">
+        <span class="tag data">Built in code</span>
+        <h3 style="margin-top:10px">Data-driven — must reconcile to a parsed figure or table</h3>
+        <p style="font-size:14px;color:var(--ink-soft)">These are <em>not</em> free-text word-bank entries because they are computed from an uploaded document or a table, and the words change with the numbers.</p>
+        <ul class="tight">
+          <li><b>Insurance “Why”</b> — <code>buildInsuranceWhyText()</code> from the quote/covers</li>
+          <li><b>Cashflow MCMA</b> — <code>CF_*</code> constants + figure injection</li>
+          <li><b>Per-fund super replacement table</b> — <code>v210SuperReplPerFund()</code></li>
+          <li><b>CARE fees / franking</b> — <code>v49</code> franking, <code>careFees</code>, from the CARE doc</li>
+          <li><b>Super/invest alternatives</b> — <code>v200BuildSuperAltFromWS()</code>, <code>v200ApplyCareInvestBlocks()</code> from WealthSolver / CARE allocation</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><b>The static layer (source #3).</b> The general-advice warning and the “Understanding Risk” appendix are the <b>same in every SOA</b> — a fixed annexure, not adviser-authored. In the exemplar audit these read as “missing” from the word bank only because they were never meant to live there. <b>Recommended:</b> add them once as a static annexure block (the single largest coverage win).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. THE WORD BANK MAP ============ -->
+<section id="wordbank">
+  <div class="wrap">
+    <p class="kicker">03 · The word bank</p>
+    <h2>13 areas · ~145 gated scenarios</h2>
+    <p class="lead">Each area maps to one document block; each scenario carries a <b>gate</b> (the condition under which it fires) plus its <code>strat / why / risks / alts</code> wording. This <em>is</em> the audit trail — every line of tailored narrative traces to a row here.</p>
+    <div class="wb">
+      <div class="area"><div><div class="n">0 · Client framing &amp; scope</div><div class="g">Gate: client NEW vs EXISTING; areas scoped in/out</div></div><div class="cnt">5</div></div>
+      <div class="area"><div><div class="n">1 · Debt Management</div><div class="g">Offset/surplus/tax always-on when debt scoped; gearing modules gated</div></div><div class="cnt">15</div></div>
+      <div class="area"><div><div class="n">2 · Investment Property</div><div class="g">Purchase-via-equity, sell/convert/retain, downsizer (age 55+)</div></div><div class="cnt">7</div></div>
+      <div class="area"><div><div class="n">3 · Investment Bond</div><div class="g">Establish / retain / sell-down + CGT</div></div><div class="cnt">4</div></div>
+      <div class="area"><div><div class="n">4 · Investment Plan</div><div class="g">Lump-sum, in-specie, Vanguard/index, DCA, reserves</div></div><div class="cnt">14</div></div>
+      <div class="area"><div><div class="n">5 · Personal Superannuation</div><div class="g">Rollover / <b>retain</b> / partial / DB / military / SMSF / pension</div></div><div class="cnt">24</div></div>
+      <div class="area"><div><div class="n">6 · Superannuation Contributions</div><div class="g">Salary sacrifice, carry-forward, NCC, spouse, downsizer, Div293/296</div></div><div class="cnt">18</div></div>
+      <div class="area"><div><div class="n">7 · Personal Protection</div><div class="g">New / top-up / replace-takeover / retain × cover &amp; definition</div></div><div class="cnt">29</div></div>
+      <div class="area"><div><div class="n">8 · Cashflow Management</div><div class="g">MCMA hub, surplus/tax direction, buffer, budget</div></div><div class="cnt">8</div></div>
+      <div class="area"><div><div class="n">9 · Estate Planning</div><div class="g">Will/POA, binding nomination, testamentary trust, Age Pension</div></div><div class="cnt">5</div></div>
+      <div class="area"><div><div class="n">10 · Administration</div><div class="g">My Wealth Portal, platform establishment</div></div><div class="cnt">2</div></div>
+      <div class="area"><div><div class="n">11 · Entities (company/trust/SMSF)</div><div class="g">Draft — rare across sampled SOAs</div></div><div class="cnt">3</div></div>
+      <div class="area"><div><div class="n">CARE · Philosophy justification</div><div class="g">Tickable reasons CARE is recommended (super and/or investment)</div></div><div class="cnt">9</div></div>
+    </div>
+    <div class="callout gap">
+      <p><b>Mapping gap — areas 0 &amp; 11.</b> <code>V200_AREA_TO_BLOCK</code> (L16276) routes only areas <b>1–10</b>. The <span class="chip">0 · Client framing</span> and <span class="chip">11 · Entities</span> scenarios have no target block, so on the advice-request JSON path their wording is <b>silently skipped</b> — the 8 scenarios there never render from a tick. They surface today only via the fact-find / free-text paths. <b>Recommended:</b> map area 0 → the opening/scope block and area 11 → a company-trust block (or fold entities into super/investment), so those ticks emit.</p>
+    </div>
+    <p style="font-size:13.5px;color:var(--ink-soft);margin-top:14px">Source: <code>wordbank_data.json</code> (the human-readable master) ⇄ <code>V200_WORD_BANK</code> (the runtime object the generator reads).</p>
+  </div>
+</section>
+
+<!-- ============ 4. CONDITIONAL TRIGGERS ============ -->
+<section id="triggers">
+  <div class="wrap">
+    <p class="kicker">04 · Standard-template rules</p>
+    <h2>The “when X / when Y” conditionals</h2>
+    <p class="lead">Beyond the per-strategy word bank, a fixed set of rules reshape the document based on the <em>shape</em> of the client. Each reads a flag (from the advice request or an uploaded doc) and adds, swaps, or removes wording.</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Trigger family</th><th>Condition (source)</th><th>Effect on the document</th><th>Where</th></tr></thead>
+        <tbody>
+          <tr><td><b>SOA type</b></td><td>accumulation vs retirement <span class="chip">soaType</span> <span class="chip">F.retirementSOA</span></td><td>Retirement swaps in pension / Account-Based-Pension wording, minimum-drawdown, reserves; accumulation strips it.</td><td><span class="chip">v97ApplySoaType</span></td></tr>
+          <tr><td><b>Investment approach</b></td><td>CARE vs Vanguard, <em>per section</em> <span class="chip">F.superApproach</span> <span class="chip">F.investApproach</span></td><td>Keeps CARE-only or index-only lines for that section; drops the other. Super and investment resolved independently (mixed SOAs).</td><td><span class="chip">v51PostProcess</span> <span class="chip">v212StripCardField</span></td></tr>
+          <tr><td><b>Super disposition</b></td><td>close / rollover / partial / <b>retain</b> <span class="chip">superProducts.disposition</span> → <span class="chip">action</span></td><td>Retain → “retain your existing &lt;fund&gt; … continue employer contributions”; close → “close &amp; transfer 100%”; partial → retain-minimum wording.</td><td><span class="chip">autoSummary ~L5783</span> <span class="chip">v200ApplyProducts</span></td></tr>
+          <tr><td><b>Client type</b></td><td>single / couple / entity <span class="chip">hasPartner()</span> <span class="chip">ctype</span></td><td>Per-person sentences &amp; names; single-client drops “(Client 2)” / partner clauses; couples get joint framing.</td><td><span class="chip">v51PostProcess</span> <span class="chip">resolvePathwayTokens</span></td></tr>
+          <tr><td><b>Dependants</b></td><td>has children? <span class="chip">F.numDependants</span></td><td>No kids → strip testamentary-trust + child-cover wording; kids → include.</td><td><span class="chip">v202StripTestamentaryTrust</span></td></tr>
+          <tr><td><b>Cashflow</b></td><td>MCMA specified? <span class="chip">F.mcmaWeekly</span></td><td>MCMA → establish-hub + transfer + Comments/Warning + admin-fee row; no-MCMA → set-aside variant.</td><td><span class="chip">injectFiguresIntoStrategies</span> · <span class="chip">CF_*</span></td></tr>
+          <tr><td><b>Insurance action</b></td><td>new / replace / retain / takeover <span class="chip">insProducts.action</span> <span class="chip">F.insTakeoverScoped</span></td><td>Selects the lead line + the Why/takeover paragraph; retain keeps existing cover wording.</td><td><span class="chip">_insLeadLine ~L5889</span> <span class="chip">buildInsuranceWhyText</span></td></tr>
+          <tr><td><b>CARE Essentials vs Full</b></td><td><span class="chip">v137CareCompare().isEss</span> from the CARE doc menu</td><td>Full CARE drops Essentials-only lines &amp; the “Full CARE Portfolio” self-discount; picks MLC MultiActive vs Horizon by risk profile.</td><td><span class="chip">v51PostProcess</span> <span class="chip">v200ApplyCareInvestBlocks</span></td></tr>
+          <tr><td><b>Reserves / pension phase</b></td><td>drawing an income + real reserves sleeve <span class="chip">_drawsIncome</span> <span class="chip">_hasReserves</span></td><td>Keeps the “reduced Reserves allocation” risk paragraph only in pension phase; strips it on accumulation.</td><td><span class="chip">v200ApplyCareEssSuperBlocks ~L16851</span></td></tr>
+          <tr><td><b>Block scoping</b></td><td><span class="chip">scopeIn</span>/<span class="chip">scopeOut</span> → <span class="chip">blockActive()</span></td><td>Whole sections appear/disappear; Projected-Outcomes rows add/remove; scoped-out areas get a reference-by-incorporation line.</td><td><span class="chip">v200ApplyScopeOut</span> <span class="chip">v150OutcomeRowVisible</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. AUDIT TRAIL — worked trace ============ -->
+<section id="trace">
+  <div class="wrap">
+    <p class="kicker">05 · Audit trail</p>
+    <h2>Tracing one recommendation, end to end</h2>
+    <p class="lead">Worked example — Jana Goelz, “retain the existing super fund”. Every hop is inspectable, which is what makes the output defensible.</p>
+    <div class="trace">
+<span class="c">// 1 · Advice Request Builder — adviser ticks, under area 5</span>
+strategy: { <span class="k">area</span>:<span class="v">"5 · Personal Superannuation"</span>, <span class="k">name</span>:<span class="v">"Retain existing fund (invest in line with risk profile)"</span> }
+superProducts: { <span class="k">product</span>:<span class="v">"CFS Edge Vanguard"</span>, <span class="k">disposition</span>:<span class="v">"Retain as-is (no change)"</span> }
+
+<span class="c">// 2 · route + key</span>
+V200_AREA_TO_BLOCK[<span class="v">"5 · Personal Superannuation"</span>] → <span class="k">block</span> = <span class="v">"super"</span>
+disposition <span class="v">"Retain as-is"</span> → superAccount.<span class="k">action</span> = <span class="v">"Retain"</span>   <span class="c">(v200ApplyProducts)</span>
+
+<span class="c">// 3 · standard-template rule fires (super disposition = retain)</span>
+autoSummary → <span class="v">"We recommend you retain your existing CFS First State Edge Superannuation account</span>
+              <span class="v">(in line with your risk profile) that has been customised for your needs."</span>
+            + <span class="v">"We recommend that you continue to direct your employer contributions…"</span>
+
+<span class="c">// 4 · approach split (super = Vanguard, investment = CARE)</span>
+v212StripCardField(<span class="v">"super"</span>) → drops CARE-only franking / passive-index / reserves lines
+v51PostProcess(<span class="v">invest</span>)   → keeps CARE lines; franking $ filled by v49 from the CARE doc
+
+<span class="c">// 5 · render → .docx  ✓ defensible: every hop logged</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. GAPS + UPDATES ============ -->
+<section id="updates">
+  <div class="wrap">
+    <p class="kicker">06 · Coverage &amp; the update deltas</p>
+    <h2>Where it stands, and what to add next</h2>
+    <div class="grid3">
+      <div class="stat"><div class="big" style="color:var(--wired)">44%</div><div class="lbl">of exemplar sentences match the generator's wording (conservative lower bound)</div></div>
+      <div class="stat"><div class="big" style="color:var(--static)">~35</div><div class="lbl">recurring “missing” lines are the static risk/advice-warning appendix — one block to add</div></div>
+      <div class="stat"><div class="big" style="color:var(--gap)">3</div><div class="lbl">tax-explainer clusters (excess-CC, Medicare, death benefit) — reusable library adds</div></div>
+    </div>
+
+    <h3>Word bank — additions from this build (to sync into <code>wordbank_data.json</code>)</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Area</th><th>New scenario / wording</th><th>Gate</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>5 · Super</td><td>Retain existing fund — “…that has been customised for your needs” + employer-contribution dot point</td><td>disposition = retain</td><td><span class="tag wired">in generator</span></td></tr>
+        <tr><td>5 · Super</td><td>Military super “(Member and Ancillary Benefit portion)” label</td><td>fund = Military</td><td><span class="tag gap">add to json</span></td></tr>
+        <tr><td>4 · Investment</td><td>CARE investment alternatives incl. “Passive Index Fund Portfolio”</td><td>investApproach = CARE</td><td><span class="tag gap">add to json</span></td></tr>
+        <tr><td>8 · Cashflow</td><td>MCMA card: Comments/Warning, Total Admin Service Fees, ANZ/Macquarie alternatives</td><td>MCMA scoped</td><td><span class="tag wired">in generator</span></td></tr>
+        <tr><td>Annexure</td><td>“Understanding Risk” + General Advice Warning appendix (static)</td><td>always-on</td><td><span class="tag gap">add block</span></td></tr>
+        <tr><td>6 · Contributions</td><td>Excess-CC tax / Medicare levy / death-benefit tax explainers</td><td>contribution strategy scoped</td><td><span class="tag gap">add to library</span></td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Advice Request Builder — fields it already carries</h3>
+    <p style="font-size:14.5px">The builder already emits the shape the generator consumes: <code>soaType</code>, <code>ctype</code>, per-area <code>strategies[]</code> with <code>est</code> product/amounts/source, <code>superProducts</code> (incl. <b>disposition</b>), <code>insProducts.action</code>, <code>invProducts</code>, <code>scopeIn/Out</code>, <code>risk</code>, <code>paraplanning</code>. The remaining alignment work is additive — surface the new scenarios above as tick options, and expose the CARE-vs-Vanguard <em>per-section</em> approach as an explicit toggle (today it is inferred from the uploaded CARE doc).</p>
+
+    <div class="callout gap">
+      <p><b>The one-sentence readiness statement.</b> The strategy narrative is comprehensively advice-request-driven and figure-accurate on wired paths; each genuinely new client <em>shape</em> still surfaces a one-time wiring add (the exemplar harness now finds these systematically rather than one SOA at a time). Treat it as a high-quality first-draft engine with adviser sign-off — not an autopilot — until the coverage map is green.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Generated from a static read of <code>SOA_Generator_v190.html</code>, <code>wordbank_data.json</code>, the advice-request builder, and the 49-exemplar coverage run. Identifiers link to functions in the single-file generator. Figures never fabricated — unresolved data renders as a visible <code>$XXX</code> placeholder.
+  </div>
+</footer>

@@ -345,10 +345,12 @@ function renderFree(ai){let h='';(FREE[ai]||[]).forEach((f,i)=>{h+=`<div class="
  document.querySelectorAll('[data-fr]').forEach(inp=>inp.addEventListener('input',e=>{const[a,i,k]=e.target.dataset.fr.split('.');FREE[a][i][k]=e.target.value;render()}));
  render();
 }
-function addProd(ai){PROD[ai]=PROD[ai]||[];PROD[ai].push({owner:'',acct:'Accumulation',product:''});renderProd(ai)}
+function addProd(ai){PROD[ai]=PROD[ai]||[];PROD[ai].push({owner:'',acct:'Accumulation',product:'',disposition:'New fund + full rollover',approach:''});renderProd(ai)}
 function renderProd(ai){let h='';(PROD[ai]||[]).forEach((p,i)=>{h+=`<div class="repeat"><button class="del" onclick="PROD[${ai}].splice(${i},1);renderProd(${ai})">remove</button><div class="row">`+
   `<div class="fld" style="flex:0 0 120px"><label>Owner</label><select data-pd="${ai}.${i}.owner">`+owners().map(o=>`<option ${p.owner==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
   `<div class="fld" style="flex:0 0 150px"><label>Account</label><select data-pd="${ai}.${i}.acct">`+['Accumulation','Pension','TTR Pension','SMSF Accumulation','SMSF Pension'].map(o=>`<option ${p.acct==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld" style="flex:0 0 200px"><label>Disposition</label><select data-pd="${ai}.${i}.disposition">`+['New fund + full rollover','Partial rollover (retain minimum)','Retain as-is (no change)','Consolidate into new fund','Rollover / transfer / close'].map(o=>`<option ${p.disposition==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld" style="flex:0 0 130px"><label>Approach</label><select data-pd="${ai}.${i}.approach"><option value="">(from CARE doc)</option>`+['CARE','Vanguard'].map(o=>`<option ${p.approach==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
   `<div class="fld"><label>Product</label><input list="PRODFULL" data-pd="${ai}.${i}.product" value="${(p.product||'').replace(/"/g,'&quot;')}" placeholder="e.g. Hub24 Core CARE Essentials"></div></div></div>`});
  document.getElementById('prodList_'+ai).innerHTML=h;
  document.querySelectorAll('[data-pd]').forEach(inp=>inp.addEventListener('input',e=>{const[a,i,k]=e.target.dataset.pd.split('.');PROD[a][i][k]=e.target.value;render()}));render()}
@@ -366,11 +368,12 @@ function renderBondProd(ai){let h='';(BONDPROD[ai]||[]).forEach((p,i)=>{h+=`<div
   `<div class="fld"><label>Product</label><input list="PRODBONDFULL" data-bp="${ai}.${i}.product" value="${(p.product||'').replace(/"/g,'&quot;')}" placeholder="Generation Life Vanguard portfolio"></div></div></div>`});
  document.getElementById('bondList_'+ai).innerHTML=h;
  document.querySelectorAll('[data-bp]').forEach(inp=>inp.addEventListener('input',e=>{const[a,i,k]=e.target.dataset.bp.split('.');BONDPROD[a][i][k]=e.target.value;render()}));render()}
-function addInvProd(ai){INVPROD[ai]=INVPROD[ai]||[];INVPROD[ai].push({owner:'',product:'',initial:'',initialFreq:'one-off',initialSource:'',ongoing:'',ongoingFreq:'per month',ongoingSource:''});renderInvProd(ai)}
+function addInvProd(ai){INVPROD[ai]=INVPROD[ai]||[];INVPROD[ai].push({owner:'',product:'',approach:'',initial:'',initialFreq:'one-off',initialSource:'',ongoing:'',ongoingFreq:'per month',ongoingSource:''});renderInvProd(ai)}
 function renderInvProd(ai){let h='';(INVPROD[ai]||[]).forEach((p,i)=>{
   const srcChips=(kind)=>INVSRC.map(s=>{const on=p[kind]===s;return `<label class="srcchip${on?' on':''}"><input type="radio" name="vsrc_${ai}_${i}_${kind}" data-vsrc="${ai}.${i}.${kind}" value="${s}" ${on?'checked':''}>${s}</label>`}).join('');
   h+=`<div class="repeat"><button class="del" onclick="INVPROD[${ai}].splice(${i},1);renderInvProd(${ai})">remove</button><div class="row">`+
   `<div class="fld" style="flex:0 0 130px"><label>Owner</label><select data-vp="${ai}.${i}.owner">`+owners().map(o=>`<option ${p.owner==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld" style="flex:0 0 130px"><label>Approach</label><select data-vp="${ai}.${i}.approach"><option value="">(from CARE doc)</option>`+['CARE','Vanguard'].map(o=>`<option ${p.approach==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
   `<div class="fld"><label>Product</label><input list="PRODINV" data-vp="${ai}.${i}.product" value="${(p.product||'').replace(/"/g,'&quot;')}" placeholder="e.g. Hub24 Core CARE Essentials"></div></div>`+
   `<div class="miniH" style="margin:8px 0 4px">Initial investment</div>`+
   `<div class="row">`+
