@@ -1970,15 +1970,25 @@ function buildInsuranceWhyText(){
   const hasTakeover=rows.some(r=>/takeover|transfer|retain/i.test(String(r.status||'')));
   const out=[];
   const persons=[...new Set(rows.map(r=>r.person||'client'))];
+  // Takeover is only correct when the advice request scoped it (F.insTakeoverScoped) or an explicit
+  // takeover/transfer/retain status is present AND not turned off — never as a static-template default.
+  const _takeoverOn = (F.insTakeoverScoped===true) || (F.insTakeover===true) || (hasTakeover && F.insTakeover!==false);
   persons.forEach(p=>{
     const pr=rows.filter(r=>(r.person||'client')===p);
     const who=joint?nm(p):'';
+    // Per-person recommended insurer (a couple may differ); own- vs any-occupation TPD from F.tpdOwnOcc.
+    const _prov=((p==='partner'?(F.recInsurerPartner||F.recInsurer):F.recInsurer)|| (typeof recommendedInsurer==='function'?recommendedInsurer():''))||'';
+    const _hasProv=_prov && _prov!=='the recommended provider';
+    const _ownOcc = F.tpdOwnOcc!==false;
+    // Recommended premium structure (quote-first via the mirrored premStruct on F.insurance rows, else AR).
+    const _isLevel = pr.some(r=>/level/i.test(String(r.premStruct||''))) || /level/i.test(String(F.premiumStructure||''));
+    const _hasIP = pr.some(r=>/income protection|\bip\b/i.test(String(r.cover||'')));
     out.push("§"+(who?who+", your":'Your')+" recommended levels of cover are based on your needs.");
-    // Three generic dot points under the lead (firm template), then per-cover labelled paragraphs.
-    out.push("Policy ownership has been structured to align with your tax, estate planning and beneficiary objectives.");
-    out.push("The waiting period has been selected to balance affordability with your available cash reserves and leave entitlements.");
-    out.push("Securing cover now reduces the risk of future health changes affecting your insurability.");
-    if((F.insTakeover===true || (hasTakeover && F.insTakeover!==false))){
+    // Three generic points as SUB dot points under the lead (firm template), then per-cover paragraphs.
+    out.push("\tPolicy ownership has been structured to align with your tax, estate planning and beneficiary objectives.");
+    out.push("\tThe waiting period has been selected to balance affordability with your available cash reserves and leave entitlements.");
+    out.push("\tSecuring cover now reduces the risk of future health changes affecting your insurability.");
+    if(_takeoverOn){
       out.push("Note: "+(who||nm('client'))+", you will be able to maintain your existing level of insurance cover, as Hub24 can match the amounts and terms of your "+fund+" insurance cover. Retaining this default cover ensures you maintain protection without exclusions, and as it is held under automatic acceptance terms no medical evidence is required, reducing the risk of declined applications or new exclusions in the future.");
     }
     const seen=new Set();
@@ -1986,6 +1996,15 @@ function buildInsuranceWhyText(){
     pr.map(r=>coverType(r.cover)).filter(Boolean)
       .sort((a,b)=>_order.indexOf(a)-_order.indexOf(b))
       .forEach(ct=>{ if(seen.has(ct)) return; seen.add(ct); if(REASON[ct]) out.push(ct+": "+REASON[ct]); });
+    // TPD own-occupation explanation (kept from the firm's OnePath wording), auto-resolved to the insurer.
+    if(seen.has('TPD') && _ownOcc){
+      out.push("We have recommended TPD with “Own Occupation” cover"+(_hasProv?(" through "+_prov):"")+", which is the highest level of cover and ensures that in the event of your total and permanent disablement you will be covered if you are unable to return to the occupation you were last engaged in.");
+    }
+    // Premium structure sentence — resolved to the recommended structure (no Level/Stepped slashes).
+    out.push(_isLevel
+      ? "We have recommended a Level premium structure which will give you long term affordability of your premiums and ongoing flexibility of your coverage."
+      : "We have recommended a Stepped premium structure which will give you immediate affordability and ongoing flexibility of your coverage.");
+    // ("Increasing claim option" is a Risks-section bold-lead paragraph — handled there, not in the Why.)
   });
   return out.join("\n");
 }
@@ -2027,12 +2046,13 @@ function buildInsuranceProductAltText(){
   const L=[
     "§I considered the above alternatives to the recommended product on a like for like basis.",
     "§The details below outline why the recommended product was selected over these alternative products:",
-    "Additional insurance through your existing [existing fund] fund was disregarded as it does not provide:",
+    "Additional insurance through your existing [existing fund] was disregarded as it does not provide:",
+    "\tCost-effective cover",
     "\tOwn occupation TPD",
     "\tTrauma cover",
+    "\tIncome Protection – Waiting Period of 90 days",
     "\tGuaranteed renewability. This means that the recommended <provider> policy will not have its underlying terms and conditions changed after you are underwritten. Comparatively your existing [existing fund] policy underlying terms, conditions and definitions can be altered at the insurers discretion.",
-    "[Alternate insurers] alternate insurances were disregarded on a like for like basis as although they were cheaper;",
-    "\tThe 5-year cumulative premiums for <provider> were cheaper than [Alternate insurers].",
+    "[Alternate insurers] alternate insurances were disregarded on a like for like basis as they were more expensive without providing any relevant additional benefits.",
     "§Based on our discussions, your highest priorities were:",
     "Stepped vs. Level premiums – you have advised that you would like immediate affordability of premiums and ongoing flexibility of cover.",
     "Inside vs. outside super – you have advised that you would like as much cover held within the superannuation environment as possible, to ensure the effect on your personal cashflow is reduced.",
@@ -3827,7 +3847,7 @@ function v96FillInsurance(){
       if(typeof buildInsuranceProductAltText==='function' && B['ins_prod']){
         if(!B['ins_prod'].content) B['ins_prod'].content={};
         const curPA=String(B['ins_prod'].content.alternatives||'');
-        if(!/5-year cumulative premiums for/i.test(curPA)) B['ins_prod'].content.alternatives=buildInsuranceProductAltText();
+        if(!/disregarded on a like for like basis as they were more expensive/i.test(curPA)) B['ins_prod'].content.alternatives=buildInsuranceProductAltText();
       }
     }catch(_){}
     // [G] Drop the "Child (For <client> only):" risk block from the insurance product card when no
@@ -4495,7 +4515,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B40 — Borgh joint SOA: per-client super rollover/product, per-owner insurer, TPD own-occ, gearing debt wording (14 risks + alternatives), 80% loan limit</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B41 — insurance Why auto-built (TPD/child/takeover/premium-structure gated), Duty of Reasonable Care footer, comparison table (3-col, light-blue, prefilled), fonts (light-blue/blue bands → Nunito), super close line + CARE placement</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -5369,7 +5389,12 @@ function autoSyncSummary(){
       if(/affordable (?:additional )?cover|cover that meets your needs|protects your family|insurance/.test(t)) return 6;
       if(/estate/.test(t)) return 7;
       return 4.5; };
-    return (arr||[]).map((x,i)=>({x,i,a:areaOf(x&&x.text)})).sort((p,q)=> (p.a-q.a) || (p.i-q.i)).map(o=>o.x);
+    // A "\t" sub dot point inherits its parent's rank (parent + a hair) so benefit sub-points stay
+    // grouped immediately AFTER their lead line (e.g. under "You will have affordable cover…").
+    let _lastRank=4.5;
+    const _dec=(arr||[]).map((x,i)=>{ const t=String((x&&x.text)||''); const _sub=/^\t/.test(t);
+      const a=_sub?(_lastRank+0.001):areaOf(t); if(!_sub) _lastRank=a; return {x,i,a}; });
+    return _dec.sort((p,q)=> (p.a-q.a) || (p.i-q.i)).map(o=>o.x);
   })(F.summaryOutcomes);
   // If named-fund super lines exist (e.g. "rollover your Australian Super"), drop the generic
   // "rollover your existing superannuation" fallback so they don't both appear.
@@ -7138,19 +7163,9 @@ function previewStrat(def){
       loanHtml+=`<p style="font-size:11px;line-height:1.5;margin:-4px 0 12px"><b>*Note:</b> This is the full balance of the loan to fund ${e(String(F.debtNote.years||5))} years worth of the plan, however the corresponding interest repayments presented in the above table are based on the initial investment plus 12 months\u2019 worth of drawdowns (estimated balance: ${e(money(F.debtNote.drawdown12))}).</p>`;
     }
   }
+  // [#5] Six-column insurer comparison box removed (preview parity with the docx). The three-column
+  // "[Client] | Cost | Comparison to Recommended" table in the Insurance Products section is the only one.
   let compHtml="";
-  if(def.id==="insurance" && F.insCompare && F.insCompare.length){
-    const th=`<th style="background:#0C2E3F;color:#fff;padding:6px 8px;text-align:left;font-size:10px">`;
-    const td=`<td style="background:#E5F4F6;padding:5px 8px;border:1px solid #B5CBD8;font-size:10px;vertical-align:top">`;
-    // v186: "Comparison to Recommended" = this insurer's annual premium minus the recommended insurer's.
-    const _pf=v=>{ const n=parseFloat(String(v||'').replace(/[^0-9.]/g,'')); return isFinite(n)?n:null; };
-    const _recRow=F.insCompare.find(c=>F.recInsurer&&c.insurer===F.recInsurer);
-    const _recPrem=_recRow?_pf(_recRow.premium):null;
-    const _cmp=c2=>{ if(_recRow&&c2.insurer===F.recInsurer) return '-'; const p=_pf(c2.premium); if(p==null||_recPrem==null) return ''; const d=p-_recPrem; return (d>=0?'+$':'-$')+Math.abs(d).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2}); };
-    compHtml=`<div class="strat-card"><div class="sc-sub">Insurance Comparison \u2014 alternative insurers considered</div><div class="sc-body" style="padding:0"><table style="border-collapse:collapse;width:100%"><tr>${th}Insurer</th>${th}Product</th>${th}Annual Premium</th>${th}Comparison to Recommended</th>${th}Core Score</th>${th}Supplementary Score</th></tr>`
-      + F.insCompare.map(c2=>`<tr>${td}${e(c2.insurer)}${F.recInsurer===c2.insurer?' <b>(recommended)</b>':''}</td>${td}${e(c2.product||'')}</td>${td}${c2.premium?('$'+e(c2.premium)):''}</td>${td}${e(_cmp(c2))}</td>${td}${e(c2.core||'')}</td>${td}${e(c2.supp||'')}</td></tr>`).join('')
-      + `</table></div></div>`;
-  }
   let scHtml="";
   if(def.id==="super" && typeof blockActive==='function' && blockActive("supercontrib") && B.supercontrib && B.supercontrib.content){
     const sc=B.supercontrib.content;
@@ -7396,7 +7411,7 @@ async function generateSOA(){
     margins:{top:60,bottom:60,left:110,right:110},
     shading: opts.header?{fill:NAVY_HEX,type:ShadingType.CLEAR}:(opts.sub?{fill:SUBLABEL_HEX,type:ShadingType.CLEAR}:{fill:TEAL_HEX,type:ShadingType.CLEAR}),
     columnSpan: opts.span||1,
-    children:[new Paragraph({children:[new TextRun({text:String(text==null?"":text), font:(opts.header||opts.sub)?window.BRAND.headingFont:"Nunito", size:19,
+    children:[new Paragraph({children:[new TextRun({text:String(text==null?"":text), font:opts.header?window.BRAND.headingFont:"Nunito", size:19,
       color:(opts.header||opts.sub)?"FFFFFF":"1a1a1a", bold:!!(opts.header||opts.bold||opts.sub)})]})]
   });
   const headerRow = (cells, widths)=> new TableRow({tableHeader:true, children:cells.map((c,i)=>cell(c,{w:widths[i],header:true}))});
@@ -7423,7 +7438,7 @@ async function generateSOA(){
     const _span = NG>1 ? {columnSpan:NG} : {};
     const subCell = (label)=> new TableCell(Object.assign({borders, width:{size:W,type:WidthType.DXA},
       margins:{top:50,bottom:50,left:110,right:110}, shading:{fill:SUBLABEL_HEX,type:ShadingType.CLEAR},
-      children:[new Paragraph({children:[new TextRun({text:label, font:window.BRAND.headingFont, size:19, color:"FFFFFF", bold:true})]})]}, _span));
+      children:[new Paragraph({children:[new TextRun({text:label, font:"Nunito", size:19, color:"FFFFFF", bold:true})]})]}, _span));
     const rows = [ new TableRow({children:[ new TableCell(Object.assign({borders, width:{size:W,type:WidthType.DXA},
       margins:{top:50,bottom:50,left:110,right:110}, shading:{fill:NAVY_HEX,type:ShadingType.CLEAR},
       children:[new Paragraph({children:[new TextRun({text:title, font:(window.BRAND&&window.BRAND.headingFont)||"ABC Arizona Flare", size:19, color:"FFFFFF", bold:true})]})] }, _span))] }) ];
@@ -7678,17 +7693,9 @@ async function generateSOA(){
       if(def.id==="super" && blockActive("supercontrib") && B.supercontrib && B.supercontrib.content){
         strategyTable("Superannuation Contributions", B.supercontrib.content).forEach(x=>children.push(x));
       }
-      if(def.id==="insurance" && F.insCompare && F.insCompare.length){
-        const _pf=v=>{ const n=parseFloat(String(v||'').replace(/[^0-9.]/g,'')); return isFinite(n)?n:null; };
-        const _recRow=F.insCompare.find(c=>F.recInsurer&&c.insurer===F.recInsurer);
-        const _recPrem=_recRow?_pf(_recRow.premium):null;
-        const _cmp=c2=>{ if(_recRow&&c2.insurer===F.recInsurer) return '-'; const p=_pf(c2.premium); if(p==null||_recPrem==null) return ''; const d=p-_recPrem; return (d>=0?'+$':'-$')+Math.abs(d).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2}); };
-        const cw=[1900,1700,1500,1700,1100,1126];
-        children.push(new Table({width:{size:9026,type:WidthType.DXA}, columnWidths:cw, rows:[
-          headerRow(["Insurer","Product","Annual Premium","Comparison to Recommended","Core Score","Supp. Score"],cw),
-          ...F.insCompare.map(c2=>dataRow([c2.insurer+(F.recInsurer===c2.insurer?' (recommended)':''), c2.product||'', c2.premium?('$'+c2.premium):'', _cmp(c2), c2.core||'', c2.supp||''],cw))]}));
-        children.push(new Paragraph({spacing:{after:120},children:[]}));
-      }
+      // [#5] The six-column insurer comparison box (Insurer | Product | Annual Premium | Comparison |
+      // Core | Supp.) has been removed — the three-column "[Client] | Cost | Comparison to Recommended"
+      // table in the Insurance Products section is the single comparison table.
       return;
     }
     if(def.type==="table"){
@@ -8684,7 +8691,11 @@ function renderSpecialDocx(def, ch, K){
     heading: "Insurance Products",
     columns: ["Cover","Sum Insured / Benefit","Ownership & Structure","Annual Premium"],
     defaultRows: [["Insurer","","",""],["Life","$","",""],["TPD","$","",""],["Income Protection","$ p.m.","",""],["Trauma","$","",""],["Total Annual Premium","","","$"]],
-    cardFields: [["why","Why"],["risks","Risks & Disadvantages"],["alternatives","Alternative Products"]]
+    // [#1/#2/#3/#4/#12] The insurance "Why" is rendered once, in the strategy section, from the dynamic
+    // buildInsuranceWhyText() (auto-gated on the advice request + quote). The product card no longer
+    // repeats a "Why" (which carried the static-template TPD duplicate / child bullets / Hub24 takeover /
+    // Level-Stepped placeholders) — only Risks & Alternative Products remain here.
+    cardFields: [["risks","Risks & Disadvantages"],["alternatives","Alternative Products"]]
   };
   window.REPLACEMENT_TEMPLATES = REPLACEMENT_TEMPLATES;
 
@@ -9084,7 +9095,8 @@ function renderSpecialDocx(def, ch, K){
         alignment: AlignmentType.LEFT,
         children: [new TextRun({
           text: ln.trim(),
-          font: opts.header ? window.BRAND.headingFont : "Nunito", size: 19,
+          // [#11] ABC Arizona only on the dark-navy band; light-blue / brand-blue bands use Nunito.
+          font: (opts.header && String(opts.shade||'').toUpperCase()==='0C2E3F') ? window.BRAND.headingFont : "Nunito", size: 19,
           color: opts.header ? "FFFFFF" : "1a1a1a",
           bold: !!(opts.header || opts.bold)
         })]
@@ -9115,7 +9127,7 @@ function renderSpecialDocx(def, ch, K){
           columnSpan: nCols, width:{size: totalW, type: WidthType.DXA}, borders: BORDER,
           margins:{top:50,bottom:50,left:110,right:110},
           shading:{fill:"5EA6FF", type:ShadingType.CLEAR, color:"auto"},
-          children:[new Paragraph({children:[new TextRun({text:_lbl, font:window.BRAND.headingFont, size:19, color:"FFFFFF", bold:true})]})]
+          children:[new Paragraph({children:[new TextRun({text:_lbl, font:"Nunito", size:19, color:"FFFFFF", bold:true})]})]
         })]}));
         // "[Optional] …" lines are editor-only prompts (e.g. the lump-sum DCA line) — omit from the doc
         // unless the paraplanner activates them by deleting the "[Optional] " prefix.
@@ -9270,7 +9282,8 @@ function renderSpecialDocx(def, ch, K){
           bullet: isBul ? {level: subBul?1:0} : undefined,
           children: [new TextRun({
             text: content,
-            font: (opts.header || opts.whiteText) ? window.BRAND.headingFont : "Nunito", size: 19,
+            // [#11] ABC Arizona only on the dark-navy band; light-blue / brand-blue bands use Nunito.
+            font: ((opts.header || opts.whiteText) && String(opts.shade||'').toUpperCase()==='0C2E3F') ? window.BRAND.headingFont : "Nunito", size: 19,
             color: (opts.header || opts.whiteText) ? "FFFFFF" : "1a1a1a",
             bold: !!(opts.header || opts.bold)
           })]
@@ -9987,7 +10000,7 @@ function renderSpecialDocx(def, ch, K){
     insurance: {
       recommendation: "We recommend you hold the personal insurance cover detailed in the table above.\nWe recommend Life and TPD cover be held within superannuation where appropriate to assist with affordability, with Income Protection and Trauma structured to suit your cash flow and needs.\nWe recommend you apply for the recommended cover and not cancel any existing cover until the new cover has been accepted and is in force.",
       why: "<client>, we have recommended transfering your <super fund> insurance to Hub24. This allows you to consolidate your insurance policies (and super) into one place. [delete if not doing takeover terms]\nLife and TPD policies will be flexi-linked with your new superannuation fund, and the insurance premiums will be funded partly by contributions to your superannuation fund and partly from your personal cash flow. \nIncome protection will be held entirely within superannuation for cash flow purposes.\nIncome protection will be held personally to ensure your insurance has reduced impact on your superannuation and is structured tax effectively.\nBy flexi-linking your insurance you will maintain higher insurance coverage in terms of broader definitions.\nTrauma insurance provides a lump sum payment and allow you to focus on recovery (if a traumatic medical event occurs) and not be held back with financial stress worries.\nChild cover offers a lump sum payment if the insured child experiences a trauma condition that is covered by the policy and fits the insurer’s specific definition of that condition. \nIf the insured child meets the eligibility criteria, they may convert the Child Cover to an equivalent adult Life Insurance Plan without reapplying or providing medical evidence. \nWe have recommended a Level/Stepped premium structure which will give you long term affordability of your premiums/immediate affordability and ongoing flexibility of your coverage.\nWe have recommended TPD with Own Occupation which is the highest level of cover you can hold and ensures that in the event of your TPD you will be covered if you are unable to return to the occupation you were last engaged. <:=getBothNames($client):>, your TPD definition has improved from Any to Own occupation.\nWe have recommended TPD with “Own Occupation” cover through <new insurer>, which is the highest level of cover and is not offered within your existing <super fund> or Hub24 Super fund. However, by reducing this cover by the amount retained in Hub24, you may become underinsured if you are unable to return to your own occupation, as the remaining cover would then need to meet the “Any Occupation” definition before benefits are payable. [delete if not doing takeover terms]\nYour Income Protection will be established as indemnity. Indemnity insurance is subject to assessment of your income prior to making a claim- the risk is your income may have decreased and you will receive a lower pay out. \nIncreasing claims will be inbuilt into your income protection policy ensuring that if you are on claim, your monthly benefit will be indexed at each review date with CPI.\nYour new income protection policy will be guaranteed renewable. This means that the insurer will guarantee to renew your policy each year without restrictions or changes to any underlying benefits because of changes to your health, occupation or pastimes. While your existing cover cannot be modified due to a change in personal circumstances, the policy itself as available to all members may have its terms, conditions or definitions altered.\nA Plus Trauma policy covers a more comprehensive list of specified medical events, in additional to those covered under the standard option.\nWe have recommended a trauma reinstatement benefit which allows you to reinstate the trauma benefit after a claim being paid.\nYour recommended insurance will be underwritten (asked medical questions about you personally) which means come claim time you know where you stand with getting a payout. <:=getBothNames($client):>, your current insurance has never been underwritten which come claim time leaves a lot of uncertainty with regards to medical history and payouts. \nBy retaining your employer paid insurances and supplementing this with new insurances this has reduced the amount of additional cover required to meet your needs, making it more cost effective.\nInsurance paid by super will be established via a MasterTrust facility, providing you an upfront 15% tax rebate.\nInsurance paid by super will receive a 15% tax rebate.\nOnce the recommended insurances are in place, by cancelling your existing insurances you will hold consolidated insurance with one provider. This will ease ongoing administration and prevent you from paying multiple policy fees.\nYour recommended policies contain future insurability clauses. This means that in the future should your health circumstances change, you can still have the ability to increase your policies periodically without further medical underwriting.",
-      risks: "Any:\nYou may receive a possible loading or exclusion as a result of a change in health. You will be charged an additional policy fee. Before a new contract of life insurance is entered into, you will have a duty of disclosure under the Insurance Contracts Act 1984. If this is not met the insurer may vary or avoid your contract for the first three years.\nLinked Life/TPD:\nAs the TPD/Trauma cover is linked to the Life/TPD cover, a claim on one type of cover will reduce the sum insured on the other cover, unless you add cover buy back feature to your policy.\nTPD Inside Super:\nWhen TPD is held within superannuation, benefits can only be paid by the trustee if you meet a superannuation condition of release. You must satisfy the insurer's strict definition of TPD to be eligible for claim. This may make it more difficult to assess your benefits particularly if you are under retirement age. Tax may be payable on death benefits paid from superannuation to a non-dependant beneficiary. Where you make a claim for TPD cover held within a super fund, access to the proceeds will be subject to meeting a superannuation condition of release as insurance benefits paid to you will form part of your superannuation benefits. The proceeds of a TPD claim will be paid to you when two legally qualified medical practitioners certify that your disablement is likely to result in you being unable to ever work again in a capacity for which you are reasonably qualified by education, training or experience. Once this condition is satisfied, the trustee is able to release the funds. The taxation implications upon payment will depend on a number of factors such as the size of the benefit, how it is paid and to whom it is paid. These issues are quite complex and planning is required – especially the significant tax that may be payable on a TPD payment where the cover is owned within a super fund. We have discussed the alternative of owning the cover in your own name, but you prefer the super owned structure as premiums don't affect your cash flow.\nTrauma:\nYour Trauma Cover is linked to Life Cover. This means a claim on the Trauma cover will reduce the Life Cover (and any linked TPD Cover if applicable) sum insured by the claimed amount. Not all illnesses and injuries are covered under trauma insurance. Claims may also only be paid if the illness progresses to a certain level. Please refer to the relevant product disclosure statement for a full list of insured conditions. A waiting period applies for certain conditions under the recommended trauma policy.\nChild (For <client> only):\nAs a result of the underwriting process, a possible loading or exclusion may be imposed on your child cover policies, which could restrict when benefits are paid. This may also affect the cost of your insurance policy. Not all illnesses and injuries are covered under child cover. Claims may also only be paid if the illness progresses to a certain level. Please refer to the relevant product disclosure statement for a full list of insured conditions.\nIncome protection:\nIncome protection insurance does not fully replace your income as it is generally not designed to provide cover for 100% of your income. This may create a shortfall in disposable income.\nIncreasing claim option:\nensures your benefit payments keep up with inflation. While you are receiving payments, we will increase benefit payments in line with consumer price index on the anniversary of the commencement of continuous benefit payments. This increase is capped to 5% if income protection is structure through superannuation.",
+      risks: "Any:\nYou may receive a possible loading or exclusion as a result of a change in health. You will be charged an additional policy fee. Before a new contract of life insurance is entered into, you will have a duty of disclosure under the Insurance Contracts Act 1984. If this is not met the insurer may vary or avoid your contract for the first three years.\nLinked Life/TPD:\nAs the TPD/Trauma cover is linked to the Life/TPD cover, a claim on one type of cover will reduce the sum insured on the other cover, unless you add cover buy back feature to your policy.\nTPD Inside Super:\nWhen TPD is held within superannuation, benefits can only be paid by the trustee if you meet a superannuation condition of release. You must satisfy the insurer's strict definition of TPD to be eligible for claim. This may make it more difficult to assess your benefits particularly if you are under retirement age. Tax may be payable on death benefits paid from superannuation to a non-dependant beneficiary. Where you make a claim for TPD cover held within a super fund, access to the proceeds will be subject to meeting a superannuation condition of release as insurance benefits paid to you will form part of your superannuation benefits. The proceeds of a TPD claim will be paid to you when two legally qualified medical practitioners certify that your disablement is likely to result in you being unable to ever work again in a capacity for which you are reasonably qualified by education, training or experience. Once this condition is satisfied, the trustee is able to release the funds. The taxation implications upon payment will depend on a number of factors such as the size of the benefit, how it is paid and to whom it is paid. These issues are quite complex and planning is required – especially the significant tax that may be payable on a TPD payment where the cover is owned within a super fund. We have discussed the alternative of owning the cover in your own name, but you prefer the super owned structure as premiums don't affect your cash flow.\nTrauma:\nYour Trauma Cover is linked to Life Cover. This means a claim on the Trauma cover will reduce the Life Cover (and any linked TPD Cover if applicable) sum insured by the claimed amount. Not all illnesses and injuries are covered under trauma insurance. Claims may also only be paid if the illness progresses to a certain level. Please refer to the relevant product disclosure statement for a full list of insured conditions. A waiting period applies for certain conditions under the recommended trauma policy.\nChild (For <client> only):\nAs a result of the underwriting process, a possible loading or exclusion may be imposed on your child cover policies, which could restrict when benefits are paid. This may also affect the cost of your insurance policy. Not all illnesses and injuries are covered under child cover. Claims may also only be paid if the illness progresses to a certain level. Please refer to the relevant product disclosure statement for a full list of insured conditions.\nIncome protection:\nIncome protection insurance does not fully replace your income as it is generally not designed to provide cover for 100% of your income. This may create a shortfall in disposable income.\nIncreasing claim option:\nensures your benefit payments keep up with inflation. While you are receiving payments, we will increase benefit payments in line with consumer price index on the anniversary of the commencement of continuous benefit payments. This increase is capped to 5% if income protection is structured through superannuation.",
       alternatives: "<client>, I considered the above alternatives to the recommended product on a like for like basis. The details below outline why the recommended product was selected over these alternative products:\nAdditional insurance through your existing [existing fund] was disregarded as it does not provide: Own occupation TPD; Trauma cover; Guaranteed renewability. This means that the recommended <provider> policy will not have its underlying terms and conditions changed after you are underwritten. Comparatively your existing [existing fund] policy underlying terms, conditions and definitions can be altered at the insurer's discretion.\n[Alternate insurers] alternate insurances were disregarded on a like for like basis – either they were cheaper but the cost comparison over a 5 year period was not as competitive as the recommended cover, or they were more expensive without providing any relevant additional benefits. [Repeat this paragraph for <partner> where a second life is insured, naming that person's existing fund and alternate insurers.]\nBased on our discussions, your highest priorities were:\nStepped vs. Level premiums – you have advised that you would like immediate affordability of premiums and ongoing flexibility of cover.\nInside vs. outside super – you have advised that you would like as much cover held within the superannuation environment as possible, to ensure the effect on your personal cashflow is reduced.\nLinked TPD vs. Standalone TPD – you have advised that you are happy for your TPD cover to be linked with your Life cover, due to affordability of premiums.\nIndustry vs. Retail – your existing fund does not offer Own-Occupation TPD and Trauma or Child Trauma cover.",
       dorc: "Before you apply for, extend, renew, vary or reinstate your insurance under the Insurance Contracts Act, it is important that you understand you have a legal duty to take reasonable care to not make a Misrepresentation to an Insurer. The answers you (and anyone covered under the policy) provide in response to the Insurer's questions are very important because the Insurers will use them to decide if they can provide cover and, if they do, the terms of the cover and the premium they will charge. You may make a misrepresentation if, for example, you provide an answer that is false, only partially true, or that does not fairly reflect the truth, it may be a misrepresentation. This means when answering Insurer's questions, you are obliged to respond fully, honesty and accurately.\nNot meeting your legal duty can have serious impacts on your insurance. Your cover could be treated as if it never existed, terms may be changed, claims declined or benefit reduced. If in doubt about whether or not something needs to be disclosed the best practice is to disclose it. Please refer to the PDS, or speak with your adviser, if you have any questions about your Duty of Reasonable Care."
     }
@@ -14415,13 +14428,26 @@ window.v50AllocGroups = function(){
     const colW=[1180,1270,1315,1090,1360,1360,1451]; const totalW=9026;
     const C=AlignmentType.CENTER, L=AlignmentType.LEFT;
 
+    const _vCenter=(typeof VerticalAlign!=='undefined'&&VerticalAlign.CENTER)?VerticalAlign.CENTER:((window.docx&&window.docx.VerticalAlign)?window.docx.VerticalAlign.CENTER:"center");
     const multiCell=(lines,opts)=>{ opts=opts||{};
       const valid=(lines||[]).filter(Boolean).map(String); if(!valid.length) valid.push("");
-      const runs=[]; valid.forEach((ln,idx)=>{ if(idx>0) runs.push(new TextRun({text:"",break:1,font:"Nunito",size:19}));
-        runs.push(new TextRun({text:ln,font:opts.header?window.BRAND.headingFont:"Nunito",size:19,color:opts.header?"FFFFFF":"1a1a1a",bold:!!opts.bold})); });
+      // [#11] White heading font: ABC Arizona only on the DARK-NAVY band; light-blue/blue bands use Nunito.
+      const _navy=String(opts.shade||'').toUpperCase()==='0C2E3F';
+      const _font=opts.header?(_navy?window.BRAND.headingFont:"Nunito"):"Nunito";
+      const _col=opts.header?"FFFFFF":"1a1a1a";
+      let kids;
+      if(opts.spaced && valid.length>1){
+        // [#8] Multi-line figures (e.g. Monthly Premium before/split/after-tax) as spaced paragraphs.
+        kids=valid.map((ln,idx)=>new Paragraph({alignment:opts.align||L,spacing:{before:idx?90:30,after:90},children:[new TextRun({text:ln,font:_font,size:19,color:_col,bold:!!opts.bold})]}));
+      } else {
+        const runs=[]; valid.forEach((ln,idx)=>{ if(idx>0) runs.push(new TextRun({text:"",break:1,font:"Nunito",size:19}));
+          runs.push(new TextRun({text:ln,font:_font,size:19,color:_col,bold:!!opts.bold})); });
+        kids=[new Paragraph({alignment:opts.align||L,spacing:{before:30,after:30},children:runs})];
+      }
       const spec={width:{size:opts.w||colW[0],type:WidthType.DXA},borders:BORDER,margins:{top:60,bottom:60,left:110,right:110},
         shading:opts.shade?{type:ShadingType.CLEAR,fill:opts.shade,color:"auto"}:undefined,
-        children:[new Paragraph({alignment:opts.align||L,spacing:{before:30,after:30},children:runs})]};
+        children:kids};
+      if(opts.valign) spec.verticalAlign=_vCenter;   // [#6/#7/#8] vertical-centre
       if(opts.colSpan) spec.columnSpan=opts.colSpan;
       if(opts.verticalMerge) spec.verticalMerge=opts.verticalMerge;
       return new TableCell(spec); };
@@ -14435,26 +14461,26 @@ window.v50AllocGroups = function(){
       drows.push(new TableRow({children:[ new TableCell({columnSpan:7,width:{size:totalW,type:WidthType.DXA},
         shading:{type:ShadingType.CLEAR,fill:BL,color:"auto"},margins:{top:60,bottom:60,left:110,right:110},
         borders:{top:{color:BL,style:BorderStyle.SINGLE,size:6},bottom:{color:BL,style:BorderStyle.SINGLE,size:6},left:{color:BL,style:BorderStyle.SINGLE,size:6},right:{color:BL,style:BorderStyle.SINGLE,size:6}},
-        children:[new Paragraph({children:[new TextRun({text:g.label||g.prov,font:window.BRAND.headingFont,size:19,bold:true,color:"FFFFFF"})]})]}) ]}));
+        children:[new Paragraph({children:[new TextRun({text:g.label||g.prov,font:"Nunito",size:19,bold:true,color:"FFFFFF"})]})]}) ]}));
       g.rows.forEach((r,i)=>{
         const premLines=splitPremLines(coverKindS(r.coverType)==='trauma'?[r.monthlyPremium,r.premiumNote]:[r.monthlyPremium,r.premiumNote,r.monthlyPremiumAfterTax]);
         const periodBits=[r.waitingPeriod,r.benefitPeriod].filter(Boolean).join(', ');
         const benefitLines=[r.benefitAmount||""]; if(periodBits) benefitLines.push("("+periodBits+")");
         const wOf={lifeInsured:colW[1],owner:colW[2],premiumStructure:colW[5]};
         const mergedCell=(col,val)=>{ const m=g.merge[i][col];
-          if(m&&m.cont) return oneCell("",{w:wOf[col],shade:TL,align:C,verticalMerge:VM_CONTINUE});
-          if(m&&m.start) return oneCell(val,{w:wOf[col],shade:TL,align:C,verticalMerge:VM_RESTART});
-          return oneCell(val,{w:wOf[col],shade:TL,align:C}); };
+          if(m&&m.cont) return oneCell("",{w:wOf[col],shade:TL,align:C,valign:true,verticalMerge:VM_CONTINUE});
+          if(m&&m.start) return oneCell(val,{w:wOf[col],shade:TL,align:C,valign:true,verticalMerge:VM_RESTART});
+          return oneCell(val,{w:wOf[col],shade:TL,align:C,valign:true}); };
         const pm=g.premMerge[i]; let premiumCell, premStructCell;
-        if(pm&&pm.cont){ premiumCell=multiCell([""],{w:colW[6],shade:TL,align:C,verticalMerge:VM_CONTINUE}); premStructCell=oneCell("",{w:colW[5],shade:TL,align:C,verticalMerge:VM_CONTINUE}); }
-        else if(pm&&pm.start){ premiumCell=multiCell(premLines,{w:colW[6],shade:TL,align:C,verticalMerge:VM_RESTART}); premStructCell=oneCell(r.premiumStructure||"",{w:colW[5],shade:TL,align:C,verticalMerge:VM_RESTART}); }
-        else { premiumCell=multiCell(premLines,{w:colW[6],shade:TL,align:C}); premStructCell=oneCell(r.premiumStructure||"",{w:colW[5],shade:TL,align:C}); }
+        if(pm&&pm.cont){ premiumCell=multiCell([""],{w:colW[6],shade:TL,align:C,valign:true,verticalMerge:VM_CONTINUE}); premStructCell=oneCell("",{w:colW[5],shade:TL,align:C,valign:true,verticalMerge:VM_CONTINUE}); }
+        else if(pm&&pm.start){ premiumCell=multiCell(premLines,{w:colW[6],shade:TL,align:C,valign:true,spaced:true,verticalMerge:VM_RESTART}); premStructCell=oneCell(r.premiumStructure||"",{w:colW[5],shade:TL,align:C,valign:true,verticalMerge:VM_RESTART}); }
+        else { premiumCell=multiCell(premLines,{w:colW[6],shade:TL,align:C,valign:true,spaced:true}); premStructCell=oneCell(r.premiumStructure||"",{w:colW[5],shade:TL,align:C,valign:true}); }
         drows.push(new TableRow({children:[
-          oneCell(r.coverType,{w:colW[0],shade:TL,bold:true,align:L}),
+          oneCell(r.coverType,{w:colW[0],shade:TL,align:L,valign:true}),
           mergedCell('lifeInsured',r.lifeInsured||""),
           mergedCell('owner',r.owner||""),
-          oneCell(r.status,{w:colW[3],shade:TL,align:C}),
-          multiCell(benefitLines,{w:colW[4],shade:TL,align:C}),
+          oneCell(r.status,{w:colW[3],shade:TL,align:C,valign:true}),
+          multiCell(benefitLines,{w:colW[4],shade:TL,align:C,valign:true,spaced:true}),
           premStructCell,
           premiumCell
         ]}));
@@ -14479,7 +14505,7 @@ window.v50AllocGroups = function(){
     const _pushField=(f,label,target)=>{
       if(!c[f]||!c[f].trim()) return;
       target.push(new TableRow({children:[ new TableCell({width:{size:totalW,type:WidthType.DXA},borders:BORDER,margins:{top:50,bottom:50,left:110,right:110},
-        shading:{fill:SUBLABEL,type:ShadingType.CLEAR,color:"auto"},children:[new Paragraph({children:[new TextRun({text:label,font:window.BRAND.headingFont,size:19,color:"FFFFFF",bold:true})]})]}) ]}));
+        shading:{fill:SUBLABEL,type:ShadingType.CLEAR,color:"auto"},children:[new Paragraph({children:[new TextRun({text:label,font:"Nunito",size:19,color:"FFFFFF",bold:true})]})]}) ]}));
       const inner=[]; const ftxt=_fill(c[f]);
       if(/(^|\n)\t/.test(String(ftxt||''))){
         String(ftxt).split('\n').forEach(ln=>{
@@ -14511,11 +14537,17 @@ window.v50AllocGroups = function(){
         const present=covOrder.filter(k=>(F.insurance||[]).some(r=>r&&key(r)===k));
         const recCovers=(present.length?present:covOrder).map(k=>covName[k]).join(' / ');
         let recCost=null;
-        try{ const oc=F.onecare&&(F.onecare.client||F.onecare.partner); if(oc&&oc.annual) recCost=oc.annual; }catch(_){}
+        // [#14] Recommended cost quote-first: OnePath/NEOS/ClearView parsed annuals, then the matching
+        // F.insCompare premium (quote where present, else Risk Researcher figure).
+        try{ const _q=(o)=>o&&(o.client||o.partner); const oc=_q(F.onecare), nq=_q(F.neos), cv=_q(F.clearview);
+          if(oc&&(oc.annual||oc.totalAnnual)) recCost=oc.annual||oc.totalAnnual;
+          else if(nq&&(nq.annual||nq.totalAnnual)) recCost=nq.annual||nq.totalAnnual;
+          else if(cv&&(cv.annual||cv.totalAnnual||cv.totalMonthly)) recCost=cv.annual||cv.totalAnnual||(cv.totalMonthly?Number(String(cv.totalMonthly).replace(/[^0-9.]/g,''))*12:null);
+        }catch(_){}
         if(recCost==null){ const cr=(F.insCompare||[]).find(x=>x&&x.insurer&&new RegExp(rec.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(x.insurer)); if(cr&&cr.premium) recCost=cr.premium; }
         const recN=Number(String(recCost==null?'':recCost).replace(/[^0-9.]/g,''))||0;
         const W3=[Math.round(totalW*0.5),Math.round(totalW*0.25),totalW-Math.round(totalW*0.5)-Math.round(totalW*0.25)];
-        const rows=[ new TableRow({tableHeader:true,children:[ oneCell(nm,{w:W3[0],shade:NY,header:true,bold:true,align:L}), oneCell('Cost',{w:W3[1],shade:NY,header:true,bold:true,align:C}), oneCell('Comparison to Recommended',{w:W3[2],shade:NY,header:true,bold:true,align:C}) ]}) ];
+        const rows=[ new TableRow({tableHeader:true,children:[ oneCell(nm,{w:W3[0],shade:BL,header:true,bold:true,align:L}), oneCell('Cost',{w:W3[1],shade:BL,header:true,bold:true,align:C}), oneCell('Comparison to Recommended',{w:W3[2],shade:BL,header:true,bold:true,align:C}) ]}) ];
         const addRow=(label,covers,costN,cmp)=> rows.push(new TableRow({children:[ multiCell([label,covers],{w:W3[0],shade:TL,align:L}), oneCell(costN?M(costN):'$XXX',{w:W3[1],shade:TL,align:C}), oneCell(cmp,{w:W3[2],shade:TL,align:C}) ]}));
         addRow(rec+' (Recommended)', recCovers, recN, '-');
         (F.insCompare||[]).forEach(x=>{ if(!x||!x.insurer) return; if(new RegExp(rec.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(x.insurer)) return;
@@ -14535,6 +14567,16 @@ window.v50AllocGroups = function(){
     // …then the Alternative Products card.
     { const altRows=[]; const af=(t.cardFields||[]).find(x=>x[0]==='alternatives'); if(af) _pushField('alternatives',af[1],altRows);
       if(altRows.length){ _sep(); children.push(new Table({columnWidths:[totalW],width:{size:totalW,type:WidthType.DXA},rows:altRows})); } }
+
+    // [#16] "Your Duty of Reasonable Care" footer — always present at the foot of the Insurance Products section.
+    { const _dorcH="Your Duty of Reasonable Care";
+      const _dorc1="Before you apply for, extend, renew, vary or reinstate your insurance under the Insurance Contracts Act, it is important that you understand you have a legal duty to take reasonable care to not make a Misrepresentation to an Insurer. The answers you (and anyone covered under the policy) provide in response to the Insurer’s questions are very important because the Insurers will use them to decide if they can provide cover and, if they do, the terms of the cover and the premium they will charge. You may make a misrepresentation if, for example, you provide an answer that is false, only partially true, or that does not fairly reflect the truth, it may be a misrepresentation. This means when answering Insurer’s questions, you are obliged to respond fully, honesty and accurately.";
+      const _dorc2="Not meeting your legal duty can have serious impacts on your insurance. Your cover could be treated as if it never existed, terms may be changed, claims declined or benefit reduced. If in doubt about whether or not something needs to be disclosed the best practice is to disclose it. Please refer to the PDS, or speak with your adviser, if you have any questions about your Duty of Reasonable Care.";
+      _sep();
+      children.push(new Paragraph({spacing:{before:120,after:60},children:[new TextRun({text:_dorcH,font:window.BRAND.headingFont,size:19,bold:true,color:"1a1a1a"})]}));
+      children.push(new Paragraph({spacing:{after:120},children:[new TextRun({text:_dorc1,font:"Nunito",size:19,color:"1a1a1a"})]}));
+      children.push(new Paragraph({spacing:{after:120},children:[new TextRun({text:_dorc2,font:"Nunito",size:19,color:"1a1a1a"})]}));
+    }
 
     return children;
   };
@@ -16001,10 +16043,14 @@ function v200ClientNames(){
 }
 function v200FundsFor(personKey){
   const accts=(typeof F==='object'&&Array.isArray(F.superAccounts))?F.superAccounts:[];
-  const list=accts.filter(a=>a&&a.person===personKey&&a.fund).map(a=>String(a.fund).trim());
+  // Firm label: a plain "Military Super" carries the "(Member and Ancillary Benefit portion)" suffix,
+  // matching the Summary — Strategies wording (collectSummarySuggestions _fundLabel).
+  const _lbl=f=>{ f=String(f||'').trim(); if(/military/i.test(f) && !/member|ancillary/i.test(f)) f=f+' (Member and Ancillary Benefit portion)'; return f; };
+  const list=accts.filter(a=>a&&a.person===personKey&&a.fund).map(a=>_lbl(a.fund));
   if(!list.length) return 'your existing super fund';
   if(list.length===1) return list[0];
-  return list.slice(0,-1).join(', ')+' and '+list[list.length-1];
+  // Multiple funds → "A and B funds" (plural), mirroring the summary line.
+  return list.slice(0,-1).join(', ')+' and '+list[list.length-1]+' funds';
 }
 function v200OwnerPersons(owner){
   const {c,p}=v200ClientNames();
@@ -16019,6 +16065,13 @@ function v200HasNameOrFund(t){ return /\[name\]|\[client\]|\[fund\]|\[existing f
 // Resolve a single audience's tokens. otherName = the spouse relative to this person.
 function v200ResolveOne(text, person, otherName){
   let t=String(text||'');
+  // Single-client SOA → drop the "[Name], " lead so lines read "We recommend you…" (matches the
+  // Summary — Strategies convention); a joint SOA keeps the per-person name prefix.
+  const _joint=(typeof hasPartner==='function' && hasPartner());
+  if(!_joint){
+    t=t.replace(/\[(?:name|client)\]\s*,\s*/gi,'').replace(/\[name\]|\[client\]/gi,'you');
+    t=t.replace(/^(\s*)we\b/,'$1We');
+  } else
   t=t.replace(/\[name\]|\[client\]/gi, person?person.name:'you');
   t=t.replace(/\[spouse\]|\[partner\]/gi, otherName||'');
   const fundKey=(person&&person.key==='partner')?'partner':'client';
@@ -16347,8 +16400,17 @@ function v200StandardSuperWording(){
   let rec=String(B.super.content.recommendation||'');
   // [27] pluralise any existing "super portfolio" references already in the content.
   if(multi){ rec=rec.replace(/\bsuper portfolio\b/gi,'super portfolios'); }
+  // [#10] CARE Philosophy line sits IMMEDIATELY AFTER the close-accounts line (not at the end). Splice it
+  // into rec right after the first "close your existing …" line; fall back to after the first line.
+  if(F.superApproach==='CARE' && !/using the CARE Philosophy/i.test(rec)){
+    const _care="We recommend that you invest in line with your risk profile using the CARE Philosophy.";
+    const _lines=String(rec||'').split('\n');
+    let _at=_lines.findIndex(l=>/close your existing/i.test(l));
+    if(_at<0) _at=0;
+    if(_lines.length && _lines[0]!==''){ _lines.splice(_at+1,0,_care); rec=_lines.join('\n'); }
+    else rec=_care;
+  }
   const adds=[];
-  if(F.superApproach==='CARE' && !/using the CARE Philosophy/i.test(rec)) adds.push("We recommend that you invest in line with your risk profile using the CARE Philosophy.");
   if(!/non-lapsing binding death nomination/i.test(rec)) adds.push("We recommend you choose a non-lapsing binding death nomination within your superannuation "+fundWord+".");
   if(F.retirementSOA){
     if(!/reversionary pension/i.test(rec)) adds.push("We recommend you select an automatic reversionary pension under the pension plan.");
