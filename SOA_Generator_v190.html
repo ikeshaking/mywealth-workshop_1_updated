@@ -4322,7 +4322,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B19 — raw JSON advice request import</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B20 — insurance product template wording</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -9731,14 +9731,19 @@ function renderSpecialDocx(def, ch, K){
       if(!B[def.id]) B[def.id]={active:false,content:{}};
       if(!B[def.id].content) B[def.id].content={};
       const c=B[def.id].content;
-      // Don't seed a default that is still raw template scaffolding (unresolved <…>/[…] editor
-      // tokens) — e.g. the insurance product card's why/alternatives. Leaving it empty keeps build
-      // instructions out of the SOA; the tailored Insurance Strategies block carries this wording.
-      const _SCAFFOLD=/<:|<super fund>|<provider>|<recommended provider>|<new insurer>|<client>|<partner>|\[delete if|\[existing fund\]|\[Alternate insurers\]|\[Repeat this paragraph/i;
+      // Seed the firm's templated wording (including the insurance product card's why/risks/
+      // alternatives). Fillable placeholders (<client>, <super fund>, [existing fund], [Alternate
+      // insurers] …) are kept so they highlight for the adviser to complete; only pure build-
+      // INSTRUCTION notes ("[delete if …]", "[Repeat this paragraph …]") are stripped so they don't
+      // print in the SOA.
+      const _cleanScaffold=s=>String(s)
+        .replace(/\s*\[delete if[^\]]*\]/gi,'')
+        .replace(/\s*\[Repeat this paragraph[^\]]*\]/gi,'')
+        .replace(/[ \t]{2,}/g,' ').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
       ['recommendation','why','risks','alternatives','dorc'].forEach(f=>{
         if(d[f] && (c[f]===undefined || c[f]==='')){
-          if(_SCAFFOLD.test(d[f])) return;
-          c[f]=(f==='alternatives')?window.v100NestAlternatives(d[f]):(f==='why'?window.v102NestThematic(d[f]):d[f]);
+          const val=/\[delete if|\[Repeat this paragraph/i.test(d[f])?_cleanScaffold(d[f]):d[f];
+          c[f]=(f==='alternatives')?window.v100NestAlternatives(val):(f==='why'?window.v102NestThematic(val):val);
         }
       });
       // Also re-nest already-populated alternatives (idempotent) — handles content seeded
