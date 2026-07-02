@@ -2720,6 +2720,17 @@ function fill(str){
   // The regular-investment ongoing commitment is the INVESTMENT weekly cost (F.mcmaInvestWeekly, e.g.
   // $76) — not the insurance cost — shown as "$76 per week ($329 per month)".
   (function(){ try{ const w=(typeof F!=='undefined'&&F)?(F.mcmaInvestWeekly||F.planWeekly):''; const n=Number(String(w||'').replace(/[^0-9.]/g,'')); if(isFinite(n)&&n>0){ _fo=_fo.replace(/ongoing commitment of \$\s*(?:XX|XXX)?\s*per week(\s*\(\$?\s*(?:XX|XXX)?\s*per month\))?/gi, 'ongoing commitment of '+money(n)+' per week ('+money(Math.round(n*52/12))+' per month)'); } }catch(_){ } })();
+  // [13] MCMA transfer line + Investment/Insurance/Advice breakdown fill from the advice-request
+  // cashflow costs (F.mcmaWeekly = sum of the weekly plan costs; the components fill the sub-points).
+  (function(){ try{ const F0=(typeof F!=='undefined'&&F)?F:{};
+    const wk=v=>{ const n=Number(String(v||'').replace(/[^0-9.]/g,'')); return isFinite(n)&&n>0?n:0; };
+    const mc=wk(F0.mcmaWeekly);
+    if(mc>0) _fo=_fo.replace(/transfer \$\s*(?:XX|XXX)\s*per week(?:\s*\(\$?\s*(?:XX|XXX)?\s*per month\))?\s*to your MCMA/gi, 'transfer '+money(mc)+' per week ('+money(Math.round(mc*52/12))+' per month) to your MCMA');
+    const inv=wk(F0.mcmaInvestWeekly), ins=wk(F0.mcmaInsWeekly), adv=wk(F0.mcmaAdviceWeekly);
+    if(inv>0) _fo=_fo.replace(/Investment(?: Fund)?:\s*\$\s*(?:XX|XXX)\s*per week/gi, 'Investment Fund: '+money(inv)+' per week');
+    if(ins>0) _fo=_fo.replace(/Insurance:\s*\$\s*(?:XX|XXX)\s*per week/gi, 'Insurance: '+money(ins)+' per week');
+    if(adv>0) _fo=_fo.replace(/Advice Fees?:\s*\$\s*(?:XX|XXX)\s*per week/gi, 'Advice Fees: '+money(adv)+' per week');
+  }catch(_){ } })();
   // [22] Investment alternatives: the salary-sacrifice-to-super alternative reads "salary sacrifice /
   // non concessional contributions" (highlighted for adviser check by the placeholder highlighter).
   _fo = _fo.replace(/salary sacrifice contributions to superannuation/gi, 'salary sacrifice / non concessional contributions to superannuation');
@@ -4329,7 +4340,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B28 — insurance why layout + summary Cash + trimmed ins rec</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B29 — MCMA transfer + breakdown auto-fill</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
