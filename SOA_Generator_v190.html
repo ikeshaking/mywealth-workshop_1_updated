@@ -12126,6 +12126,18 @@ function renderSpecialDocx(def, ch, K){
         // CARE doc is authoritative for the recommended/CARE cost — capture it so it overrides
         // the WealthSolver "Hub24" column in the cost-delta line, replacement table and alternatives.
         if(isSuper && acc.fees) F.careRecSuper={ admin:acc.fees.admin, adminPct:acc.fees.adminPct, inv:acc.fees.inv, invPct:acc.fees.invPct, gross:acc.fees.ongoing, grossPct:acc.fees.ongoingPct, careMgmt:acc.fees.careMgmt, careMgmtPct:acc.fees.careMgmtPct, underInv:acc.fees.underInv, underInvPct:(acc.fees.underInvPct||acc.blendedICR), familyDiscount:acc.fees.familyDiscount, familyDiscountPct:acc.fees.familyDiscountPct };
+        // Recompute the super cost-delta line now the CARE doc carries the AUTHORITATIVE recommended cost:
+        // increase/decrease = recommended CARE cost − current (as per WealthSolver), overriding the
+        // WealthSolver-time estimate that used Hub24's raw column before the CARE cost was known.
+        if(isSuper && acc.fees){ try{
+          const pg=F.wsProviderGross||{}; const cur=(pg.current!=null)?Number(pg.current):null;
+          const rec=Number(String((F.careRecSuper&&F.careRecSuper.gross)||'').replace(/[$,]/g,''));
+          if(cur!=null && !isNaN(cur) && !isNaN(rec)){
+            const d=rec-cur, tail='the recommended super fund & Investment strategy provides the below benefits;';
+            const _f=n=>'$'+Math.abs(n).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2})+' p.a.';
+            F.wsCostLine=(Math.abs(d)<0.005?'The ':((d<0?'In addition to the decrease in administration and management costs of ':'Despite the increase in administration and management costs of ')+_f(d)+', '))+tail;
+          }
+        }catch(_){} }
         if(isInvest && acc.fees) F.careRecInvest={ admin:acc.fees.admin, inv:acc.fees.inv, gross:acc.fees.ongoing };
         const targetId = isSuper? 'super_prod' : (isInvest? 'investplan_prod' : null);
         if(targetId && B[targetId]){
@@ -13731,6 +13743,9 @@ window.v50AllocGroups = function(){
         if(F.wsCostLine){
           out=out.replace(/In addition to the decrease in administration and management costs of[\s\S]*?provides the below benefits;/i, F.wsCostLine);
         }
+        // "We have selected these investments because:" is a lead sentence (§ = plain paragraph), not a
+        // bullet — put it on its own line with the benefit dot points underneath. Idempotent.
+        out=out.replace(/\n?[ \t]*(?:[••\-]\s*)?We have selected these investments because:?/i, '\n§We have selected these investments because:');
         const pg=F.wsProviderGross||{};
         const cc=F.careCompare||{};
         // CARE doc is authoritative for Hub24/Netwealth/BT Panorama costs; WealthSolver for CFS Edge
