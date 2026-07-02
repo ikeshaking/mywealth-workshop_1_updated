@@ -4322,7 +4322,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B15 — Vanguard invest why/alternatives</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B16 — super why cost + alt dedup</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -15865,7 +15865,10 @@ function v200BuildSuperAltFromWS(){
   const notAvailIn=(existNames.length?existNames:['your existing fund(s)']).concat(altPlat.map(l=>_stripCost(l)).filter(n=>/colonial|cfs|first\s*state|firstwrap/i.test(n))).join(' or ')||'your existing fund(s)';
   // Alternatives list: WealthSolver proposals (CFS, existing SW funds) + Netwealth & BT Panorama
   // (always considered for CARE super — alternative platforms carried in the CARE doc).
-  const listItems=altPlat.concat(existing);
+  // For CARE, drop any WealthSolver-derived Netwealth / BT Panorama entries so they don't DUPLICATE the
+  // CARE-doc versions added below (and so investment-side Netwealth/BT costs can't leak into super).
+  const _isNwBt=s=>/netwealth|wealth accelerator|\bbt\b|panorama/i.test(String(s||''));
+  const listItems=(isCare?altPlat.filter(s=>!_isNwBt(s)):altPlat).concat(isCare?existing.filter(s=>!_isNwBt(s)):existing);
   if(isCare){
     // Netwealth & BT Panorama alternative costs auto-populate from the CARE doc's Alternatives section.
     const _ac=F.careAltCosts||{};
