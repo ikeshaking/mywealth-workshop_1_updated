@@ -4515,7 +4515,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B42 — summary insurance-benefit sub-points cluster under affordable-cover; extra spacing around Total Super/Cash Flow Cost line</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B43 — testamentary-trust wording gated on dependants; datatable navy header → ABC Arizona</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -6268,9 +6268,29 @@ function v201SanitizeScaffold(){
     FIELDS.forEach(f=>{ if(typeof c[f]==='string' && SCAFFOLD.test(c[f])) c[f]=''; }); });
 }
 window.v201SanitizeScaffold=v201SanitizeScaffold;
+// [#6] Estate Planning: strip the Testamentary Trust wording when the client(s) have no children/
+// dependants (F.numDependants). Removes the "PREPARE / REVIEW TESTAMENTARY TRUST" recommendation block
+// and the "Testamentary Trusts – These trusts can be divided…" why bullet.
+function v202StripTestamentaryTrust(){
+  try{
+    if(typeof F!=='object' || typeof B==='undefined') return;
+    const kids = Number(String(F.numDependants||F.dependants||0).replace(/[^0-9]/g,''))>0;
+    if(kids) return;
+    const c=B.estate&&B.estate.content; if(!c) return;
+    ['recommendation','why','details','comments'].forEach(f=>{
+      if(typeof c[f]!=='string' || !c[f]) return;
+      let s=c[f];
+      s=s.replace(/(^|\n)[^\n]*PREPARE\s*\/\s*REVIEW TESTAMENTARY TRUST[\s\S]*?(?=\nESTATE PLANNING\s*[–-]|$)/i,'$1');
+      s=s.replace(/(^|\n)[^\n]*Testamentary Trusts\s*[–-][\s\S]*?(?=\n|$)/i,'$1');
+      c[f]=s.replace(/\n{3,}/g,'\n\n').replace(/^\n+/,'').trim();
+    });
+  }catch(_){}
+}
+window.v202StripTestamentaryTrust=v202StripTestamentaryTrust;
 function render(){
   applyTheme();
   try{ v201SanitizeScaffold(); }catch(_){}
+  try{ v202StripTestamentaryTrust(); }catch(_){}
   try{ if(typeof window.v151SyncGoals==='function') window.v151SyncGoals(); }catch(_){}
   try{ if(typeof bakeTaxIntoIntro==='function') bakeTaxIntoIntro(); }catch(_){}
   try{ if(typeof bakeAssociations==='function') bakeAssociations(); }catch(_){}
@@ -9871,7 +9891,7 @@ function renderSpecialDocx(def, ch, K){
     const NY="0C2E3F",TL="E5F4F6",BORD="B5CBD8",LEFT="0E6BE0",BAND="5DA5FD";
     const BORDER={top:{color:BORD,style:BorderStyle.SINGLE,size:6},bottom:{color:BORD,style:BorderStyle.SINGLE,size:6},left:{color:BORD,style:BorderStyle.SINGLE,size:6},right:{color:BORD,style:BorderStyle.SINGLE,size:6}};
     const totalW=9026, colW=Math.floor(totalW/n), widths=new Array(n).fill(colW);
-    function mc(text,o){o=o||{};return new TableCell({width:{size:o.w||colW,type:WidthType.DXA},columnSpan:o.span||1,shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,borders:BORDER,margins:{top:50,bottom:50,left:110,right:110},children:[new Paragraph({spacing:{before:20,after:20},children:[new TextRun({text:String(text==null?'':text),font:"Nunito",size:19,color:o.header?"FFFFFF":"1a1a1a",bold:!!(o.header||o.bold)})]})]});}
+    function mc(text,o){o=o||{};return new TableCell({width:{size:o.w||colW,type:WidthType.DXA},columnSpan:o.span||1,shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,borders:BORDER,margins:{top:50,bottom:50,left:110,right:110},children:[new Paragraph({spacing:{before:20,after:20},children:[new TextRun({text:String(text==null?'':text),font:(o.header&&String(o.shade||'').toUpperCase()==='0C2E3F')?window.BRAND.headingFont:"Nunito",size:19,color:o.header?"FFFFFF":"1a1a1a",bold:!!(o.header||o.bold)})]})]});}
     const _colsX=(c&&c.colHeader)||t.columns;
     const rows=[new TableRow({children:_colsX.map(col=>mc(RX(col),{shade:NY,header:true}))})];
     v150VisibleRows(def, c.rows).forEach((r,ri)=>{
