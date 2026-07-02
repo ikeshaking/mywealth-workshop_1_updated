@@ -4553,7 +4553,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B50 — industry-super existing-cover quote reader (AustralianSuper/QSuper/HESTA/Hostplus/… TAL calculators) feeds the Existing-Increased comparison row; cashflow MCMA card recommendation + outcome now byte-identical to the Summary — Strategies/Outcomes lines; plus B49 cashflow card layout, per-fund super columns, Pathway to Wealth auto-populate, premiums to the cent</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B51 — retain-existing-super path: an advice request that retains an existing fund (e.g. CFS First State Edge) now recommends retaining it in line with the risk profile + keeping employer contributions there, instead of the generic close/transfer boilerplate; investment amounts show their funding source (Initial – sale proceeds / Ongoing – cashflow); plus B50 industry-super quote reader, byte-identical cashflow card, per-fund super columns</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -5773,8 +5773,16 @@ function collectSummarySuggestions(){
     const _careInv = !_vanguardInv && ((F.careInvestAlloc&&F.careInvestAlloc.length) || (Array.isArray(F.careAccounts)&&F.careAccounts.some(a=>a&&a.type==='invest')));
     sug.push("We recommend you establish a new investment account and invest in line with your risk profile"+(_careInv?" utilising the CARE investment philosophy":"")+".");
     const _inotes=[];
-    if(F.planInitial) _inotes.push(`${money(F.planInitial)} (Initial)`);
-    if(F.planMonthly) _inotes.push(`${money(F.planMonthly)} per month (Ongoing)`);
+    // [#7/#8] Append the funding source from the advice request (est.initialSource / est.ongoingSource):
+    // e.g. "$350,000 (Initial) – From your sale proceeds", "$6,000 per month (Ongoing) – From your cashflow".
+    const _srcTxt=(s)=>{ s=String(s||'').trim().toLowerCase(); if(!s) return '';
+      if(/sale proceed/.test(s)) return 'your sale proceeds'; if(/cash\s*flow|^cash$|cashflow/.test(s)) return 'your cashflow';
+      if(/saving/.test(s)) return 'your savings'; if(/offset/.test(s)) return 'your offset account'; if(/loan|borrow|gear/.test(s)) return 'your Term Loan';
+      return s; };
+    const _iv=F._invEst||{};
+    const _iSrc=_srcTxt(_iv.initialSource), _oSrc=_srcTxt(_iv.ongoingSource);
+    if(F.planInitial) _inotes.push(`${money(F.planInitial)} (Initial)`+(_iSrc?` – From ${_iSrc}`:''));
+    if(F.planMonthly) _inotes.push(`${money(F.planMonthly)} per month (Ongoing)`+(_oSrc?` – From ${_oSrc}`:''));
     _inotes.push("Elect to reinvest distributions");
     const _fundSrc = (F.investGeared===true) ? 'Term Loan' : 'cashflow';
     sug.push({text:`We recommend you invest the following amounts from your ${_fundSrc}.`, notes:_inotes});
@@ -5782,6 +5790,21 @@ function collectSummarySuggestions(){
   const _superSugStart=sug.length;
   if(blockActive("super")){
     const _careSup = (F.careSuperAlloc&&F.careSuperAlloc.length) || (Array.isArray(F.careAccounts)&&F.careAccounts.some(a=>a&&a.type==='super'));
+    // RETAIN-EXISTING-SUPER path: when every existing super account is being retained (no new/close/
+    // rollover), recommend retaining the fund in line with the risk profile and keep employer
+    // contributions flowing there — instead of the "establish new / close / transfer" boilerplate.
+    const _superAcctsAll=(Array.isArray(F.superAccounts)?F.superAccounts:[]).filter(a=>a && String(a.fund||'').trim());
+    const _allRetain = _superAcctsAll.length>0 && _superAcctsAll.every(a=>/^retain/i.test(String(a.action||'')));
+    if(_allRetain && !F.retirementSOA){
+      const _fundLbl=(a)=>{ let f=String(a.fund||'your existing super fund').trim(); if(/super(annuation)?$/i.test(f)) return f; return f; };
+      _superAcctsAll.forEach(a=>{
+        const f=_fundLbl(a);
+        sug.push("We recommend you retain your existing "+f+" Superannuation account (in line with your risk profile) that has been customised for your needs.");
+      });
+      // [#27] Employer contributions continue to the existing fund — its own dot point.
+      sug.push("We recommend that you continue to direct your employer contributions to your existing super fund account.");
+      sug.push("We recommend that distributions from your super portfolio be reinvested.");
+    } else {
     sug.push("We recommend you establish a new superannuation account and invest in line with your risk profile"+(_careSup?" utilising the CARE investment philosophy":"")+".");
     if(!F.retirementSOA){
       // Per existing super account: rollover / partial rollover / close to the new fund
@@ -5862,6 +5885,7 @@ function collectSummarySuggestions(){
         const _multi=_live.length>1 || _live.some(a=>/partial|retain/i.test(String(a.action||'')));
         sug.push("We recommend that distributions from your super "+(_multi?'portfolios':'portfolio')+" be reinvested.");
       })();
+    }
     }
   }
   if(F.retirementSOA && blockActive("super")){
@@ -16307,6 +16331,31 @@ function v200ApplyProducts(ar){
       (flat(ar.superProducts)).forEach(p=>{ if(!p||!p.product) return; const per=_pr(p.owner); if(!_byP[per]) _byP[per]={person:per, platform:v200Platform(p.product), product:p.product}; });
       const _list=Object.keys(_byP).sort((a,b)=>(a==='client'?0:1)-(b==='client'?0:1)).map(k=>_byP[k]);
       if(_list.length) F.superProdByPerson=_list;
+    }catch(_){}
+    // Create super ACCOUNTS from the advice-request super products so the summary knows the disposition
+    // of each existing fund (retain / rollover / partial). Without this an "Existing → Retain as-is"
+    // fund would fall through to the generic "close your existing superannuation" line.
+    try{
+      const _pr=(nm)=>{ const s=String(nm||'').trim(); if(!s) return 'client';
+        if(F.partnerFirst && new RegExp('^'+F.partnerFirst.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(s)) return 'partner';
+        return 'client'; };
+      // "CFS Edge Vanguard" → "CFS First State Edge"; strip the investment-approach suffix from the name.
+      const _cleanFund=(prod)=>{ let s=String(prod||'').replace(/\b(vanguard|care|passive|active|index|diversified|full)\b/ig,' ').replace(/\s{2,}/g,' ').trim();
+        if(/cfs\s*edge|firstwrap|first\s*state\s*edge/i.test(s)) return 'CFS First State Edge';
+        if(/^cfs\b|colonial first state/i.test(s)) return 'CFS FirstChoice';
+        return s.replace(/\s+super(annuation)?$/i,'').trim() || 'your existing super fund'; };
+      const _actionOf=(p)=>{ const d=String((p&&p.disposition)||'').toLowerCase(), n=String((p&&p.nature)||'').toLowerCase();
+        if(/retain as-?is|no change|retain existing|retain \(/i.test(d)) return 'Retain';
+        if(/partial/i.test(d)) return 'Partial Rollover';
+        if(/rollover|transfer|consolidat|close/i.test(d)) return 'Close';
+        if(/new/i.test(n)) return 'New';
+        return 'Retain'; };
+      if(!Array.isArray(F.superAccounts)) F.superAccounts=[];
+      sp.forEach(p=>{ if(!p||!p.product) return;
+        const fund=_cleanFund(p.product); const per=_pr(p.owner);
+        if(F.superAccounts.some(a=>a && String(a.fund||'').toLowerCase()===fund.toLowerCase() && (a.person||'client')===per)) return;
+        F.superAccounts.push({person:per, fund, balance:String(p.balance||''), action:_actionOf(p), platform:v200Platform(p.product), retainMin:String(p.retainAmt||''), _fromV200Super:true});
+      });
     }catch(_){}
   }
   // Investment-plan products → recPlatform (if not already from super) + investplan_prod.
