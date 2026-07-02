@@ -3135,7 +3135,7 @@ function importProjectorJSON(raw){
   F.rates={ propGrowth:jget(raw,"prop_growthRate"), shareGrowth:jget(raw,"wc_shareGrowth")||jget(raw,"shares_capGrowth"),
             homeLoan:jget(raw,"wc_homeLoanRate")||jget(raw,"loans_rate_curr"), invPropRate:jget(raw,"prop_interestRate"),
             shareInt:jget(raw,"wc_shareIncome")||jget(raw,"shares_income")||jget(raw,"shares_interestRate"), superReturn:jget(raw,"super_m1_targetReturn"),
-            inflation:jget(raw,"wc_inflation"), cashRate:jget(raw,"wc_cashRate")||jget(raw,"cash_rate") };
+            inflation:jget(raw,"wc_inflation"), cashRate:jget(raw,"wc_cashRate")||jget(raw,"cash_rate")||jget(raw,"wc_cashrate")||jget(raw,"wc_rbaRate")||jget(raw,"wc_cashRateAssumption")||jget(raw,"assumptions_cashRate")||jget(raw,"disc_cashRate") };
   // v37: more confirmed prefills across sections
   F.clientEmail=jget(raw,"disc_c1_email")||F.clientEmail||"";
   F.clientMobile=jget(raw,"disc_c1_mobile")||"";
@@ -4515,7 +4515,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B44 — projection section prose (Reaching Your Targets + Projected Outcomes) now renders around the datatable with auto annexure number</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B45 — cash-rate assumption pulled from factfind (robust field mapping); projection prose + RR alt-insurers verified</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
