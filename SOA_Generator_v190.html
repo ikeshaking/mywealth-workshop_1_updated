@@ -4515,7 +4515,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B46 — super replacement table: navy/light-blue section bands, justified body, tiered Recommended-Fund menu (Hub24 Core), Lost/Gained benefits structure</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B47 — super replacement table: per-fund existing-fund columns (one current + one in-line-with-risk-profile column per existing super fund), combined current fee spans the per-fund current columns</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -9345,6 +9345,21 @@ function renderSpecialDocx(def, ch, K){
         rows.push(new TableRow({ children:[ makeCell(RX2(c.note), {colSpan:nCols, w:totalW}) ] }));
       }
     };
+    // [v210] MERGE-LEFT sentinel ("⟵"): a cell equal to it is absorbed into the preceding cell as a
+    // horizontal colspan. Used to span the single combined "current" fee across the per-fund current
+    // columns (WealthSolver reports one combined current cost, not one per fund).
+    const MERGE_LEFT='⟵';
+    const mergeMap=(r, optsFor)=>{
+      const out=[];
+      for(let ci=0; ci<r.length; ci++){
+        if(String(r[ci])===MERGE_LEFT) continue;                       // absorbed by the cell to its left
+        let span=1; for(let j=ci+1;j<r.length && String(r[j])===MERGE_LEFT;j++) span++;
+        const o=Object.assign({}, optsFor(ci)||{});
+        if(span>1){ o.colSpan=span; o.w=colW*span; }
+        out.push(makeCell(RX2(r[ci]), o));
+      }
+      return out;
+    };
     (c.rows||[]).forEach((r, ri) => {
       const lbl0 = String((r&&r[0])||'').trim();
       if (r.length === 1){
@@ -9409,19 +9424,19 @@ function renderSpecialDocx(def, ch, K){
       }
       // Teal data rows (Amount invested + fee rows) → light teal, label bold
       if (isTealRow(lbl0)){
-        rows.push(new TableRow({ children: r.map((cell,ci)=> makeCell(RX2(cell), {shade:TEAL, bold: ci===0})) }));
+        rows.push(new TableRow({ children: mergeMap(r, ci=> ({shade:TEAL, bold: ci===0})) }));
         return;
       }
       // Total based on current portfolio → plain, bold
       if (/^total based on current portfolio/i.test(lbl0)){
-        rows.push(new TableRow({ children: r.map(cell => makeCell(RX2(cell), {bold:true})) }));
+        rows.push(new TableRow({ children: mergeMap(r, ()=> ({bold:true})) }));
         return;
       }
       // NORMAL ROW (fallback)
       rows.push(new TableRow({
-        children: r.map((cell, ci) => ci === 0
-          ? makeCell(RX2(cell), {shade:"0E6BE0", header:true, bold:true})
-          : makeCell(RX2(cell), {shade: TEAL}))
+        children: mergeMap(r, ci=> ci === 0
+          ? {shade:"0E6BE0", header:true, bold:true}
+          : {shade: TEAL})
       }));
     });
     pushNoteRow();   // safety: if no "Total Cost After Tax" row matched, still place the note in-table
@@ -12621,6 +12636,7 @@ function renderSpecialDocx(def, ch, K){
       try{ if(typeof autoSyncSummary==='function') autoSyncSummary(); }catch(e){}
       try{ if(typeof v98FillReplacementFees==='function') v98FillReplacementFees(); }catch(_){}
       try{ if(typeof window.v149FillSuperRepl==='function') window.v149FillSuperRepl(); }catch(_){}
+      try{ if(typeof window.v210SuperReplPerFund==='function') window.v210SuperReplPerFund(); }catch(_){}
       try{ if(typeof v180BakeDelineation==='function') v180BakeDelineation(); }catch(_){}
       // A CARE doc carrying a super account means the super IS CARE — the advice request may not have
       // named a super product (empty superProducts), so infer the approach here (only when it wasn't
@@ -14158,6 +14174,7 @@ window.v50AllocGroups = function(){
         try{ window.v101FillReplExistingFromWS(); }catch(_){}
         try{ if(typeof v98FillReplacementFees==='function') v98FillReplacementFees(); }catch(_){}
         try{ if(typeof window.v149FillSuperRepl==='function') window.v149FillSuperRepl(); }catch(_){}
+        try{ if(typeof window.v210SuperReplPerFund==='function') window.v210SuperReplPerFund(); }catch(_){}
       } else if(_preWS.order && _preWS.order.length){
         // INVESTMENT comparison imported on top of an earlier SUPER comparison: v180 has consumed the
         // investment data (product rows, investAltPlatforms) — restore the super-scoped state so the
@@ -14646,7 +14663,8 @@ window.v50AllocGroups = function(){
     { const cardRows=[]; t.cardFields.forEach(([f,label])=>{ if(f==='alternatives') return; _pushField(f,label,cardRows); });
       if(cardRows.length){ _sep(); children.push(new Table({columnWidths:[totalW],width:{size:totalW,type:WidthType.DXA},rows:cardRows})); } }
     // …then the insurer comparison table…
-    { const cmp=_insCompareTable(); if(cmp){ _sep(); children.push(cmp); } }
+    // [gap] Connect the comparison table directly to the Why/Risks card above (no separator paragraph).
+    { const cmp=_insCompareTable(); if(cmp){ children.push(cmp); } }
     // …then the Alternative Products card.
     { const altRows=[]; const af=(t.cardFields||[]).find(x=>x[0]==='alternatives'); if(af) _pushField('alternatives',af[1],altRows);
       if(altRows.length){ _sep(); children.push(new Table({columnWidths:[totalW],width:{size:totalW,type:WidthType.DXA},rows:altRows})); } }
@@ -15157,6 +15175,69 @@ window.v50AllocGroups = function(){
         }catch(_){ }
       }
     }catch(e){ console.error('v149FillSuperRepl', e); }
+  };
+
+  // v210 — Per-fund Superannuation replacement-implications columns. When the client holds 2+ existing
+  // super funds (e.g. Military Super + AustralianSuper), split the single combined "Existing Fund"
+  // current column into one column PER FUND, each paired (in the same order) with that fund's
+  // "In line with Risk Profile" (SW) column. Result:
+  //   [Client] | Fund-A (current) | Fund-B (current) | Fund-A (RP) | Fund-B (RP) | Recommended Fund
+  // Data rows are rebuilt from source (F.wsHoldings + the WealthSolver fee sets) so the pass is
+  // idempotent and order-independent (safe to run after v148/v101/v149 on any import). The combined
+  // current FEE spans the per-fund current columns via the ⟵ merge sentinel (WealthSolver reports a
+  // single combined current cost, never one per fund). The Recommended column and the CARE wording
+  // rows (Reason / Changes / Taxation / Estate / Note) are preserved untouched.
+  window.v210SuperReplPerFund = function(){
+    try{
+      if(!B || !B.repl_super || !B.repl_super.content || !Array.isArray(B.repl_super.content.rows)) return;
+      const c=B.repl_super.content; const rows=c.rows; if(!rows.length) return;
+      const set=(F.wealthSolver&&F.wealthSolver.sets&&F.wealthSolver.sets[0])||null; if(!set) return;
+      const cur=(F.wsHoldings&&F.wsHoldings.current)||[]; if(!cur.length) return;
+      const gkey=(nm)=>{ nm=String(nm||''); if(/military/i.test(nm)) return 'military'; if(/australian\s*super/i.test(nm)) return 'aus'; return (nm.split(/\s+-\s+/)[0]||nm).toLowerCase().replace(/[^a-z0-9]+/g,''); };
+      const groups={}; const gorder=[]; cur.forEach(h=>{ const k=gkey(h.name); if(!groups[k]){ groups[k]=[]; gorder.push(k);} groups[k].push(h); });
+      const swk=swKeys();
+      // Per-fund model only when there are 2+ existing funds AND one SW (risk-profile) column per fund.
+      if(gorder.length<2 || swk.length!==gorder.length) return;
+      const swGroup=(k)=>{ const fn=(F.wsFunds&&F.wsFunds[k]&&F.wsFunds[k][0])||''; return gkey(fn); };
+      let ordered=swk.map(swGroup).filter(k=>groups[k]);
+      gorder.forEach(k=>{ if(ordered.indexOf(k)<0) ordered.push(k); });
+      if(ordered.length!==gorder.length) return;
+      const N=ordered.length, M=swk.length;
+      const dispFund=(k)=>{ if(k==='military') return 'Military Super'; if(k==='aus') return 'AustralianSuper'; const h=groups[k]&&groups[k][0]; return cleanName(String((h&&h.name)||'').split(/\s+-\s+/)[0])||k; };
+      const curLabel=(k)=> dispFund(k)+(k==='military'?' (Member and Ancillary Benefit portion)':'');
+      const optLine=(h)=>{ const nm=cleanName(h.name); const parts=nm.split(/\s+-\s+/); const opt=parts.length>1?parts.slice(1).join(' - '):nm; return opt+' - '+whole(h.amt); };
+      const curOpt=(k)=> (groups[k]||[]).map(optLine).join('\n');
+      const curTot=(k)=> whole((groups[k]||[]).reduce((s,h)=>s+Number(h.amt||0),0));
+      const rpOpt=(key)=> ((F.wsHoldings&&F.wsHoldings[key])||[]).map(optLine).join('\n');
+      const rpTot=(key)=> whole(holdTotal(key));
+      const money=(n)=>{ if(n==null||n==='') return ''; const v=Number(String(n).replace(/[$,]/g,'')); return isNaN(v)?'':'$'+v.toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+      const amtPct=(amt,pct)=>{ const a=money(amt); if(!a) return ''; let p=String(pct||'').trim(); if(!p) return a; if(!/%$/.test(p)) p=p+'%'; return a+' ('+p+')'; };
+      const feeOf=(s,which)=>{ if(!s) return ''; if(which==='admin') return money(s.adminBucket); if(which==='inv') return amtPct(s.inv,s.invPct); if(which==='indirect') return money(s.indirectBucket); if(which==='gross') return money(s.gross); return ''; };
+      const MERGE='⟵';
+      const curFeeCells=(which)=>{ const v=feeOf(set.current,which); const a=[v]; for(let i=1;i<N;i++) a.push(MERGE); return a; };
+      const rpFeeCells=(which)=> swk.map(k=> feeOf(set.byKey&&set.byKey[k], which));
+      const mk=(label, curCells, rpCells, rec)=> [label].concat(curCells, rpCells, [rec]);
+      const lastOf=(r)=> (Array.isArray(r)&&r.length)?r[r.length-1]:'';
+      let subDone=false;
+      for(let i=0;i<rows.length;i++){
+        const r=rows[i]; if(!Array.isArray(r)||r.length<2) continue;
+        const lbl=String(r[0]||'').trim(); const rec=lastOf(r);
+        if(!subDone && lbl===''){
+          rows[i]=mk('', ordered.map(curLabel), swk.map(k=> dispFund(swGroup(k))), rec); subDone=true; continue;
+        }
+        if(/^investment option$/i.test(lbl)){ rows[i]=mk(r[0], ordered.map(curOpt), swk.map(rpOpt), rec); continue; }
+        if(/^amount invested$/i.test(lbl)){ rows[i]=mk(r[0], ordered.map(curTot), swk.map(rpTot), rec); continue; }
+        if(/^administration fee/i.test(lbl)){ rows[i]=mk(r[0], curFeeCells('admin'), rpFeeCells('admin'), rec); continue; }
+        if(/^investment management fee/i.test(lbl)){ rows[i]=mk(r[0], curFeeCells('inv'), rpFeeCells('inv'), rec); continue; }
+        if(/^indirect cost ratio/i.test(lbl)){ rows[i]=mk(r[0], curFeeCells('indirect'), rpFeeCells('indirect'), rec); continue; }
+        if(/^group (fee|linking) discount/i.test(lbl)){ const blanks=[]; for(let j=0;j<N;j++) blanks.push(j===0?'':MERGE); rows[i]=mk(r[0], blanks, swk.map(()=> ''), rec); continue; }
+        if(/^total based on current portfolio/i.test(lbl)){ rows[i]=mk(r[0], curFeeCells('gross'), rpFeeCells('gross'), rec); continue; }
+      }
+      const t=(window.REPLACEMENT_TEMPLATES&&window.REPLACEMENT_TEMPLATES.super);
+      if(t){ const client=(t._cols0&&t._cols0[0])||t.columns[0];
+        t.columns=[client].concat(Array(N).fill('Existing Fund'), Array(M).fill('Existing Fund (In line with Risk Profile)'), ['Recommended Fund']); }
+      c._curColsPerFund=N;
+    }catch(e){ console.error('v210SuperReplPerFund', e); }
   };
 })();
 </script>
