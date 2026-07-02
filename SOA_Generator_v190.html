@@ -4553,7 +4553,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B51 — retain-existing-super path: an advice request that retains an existing fund (e.g. CFS First State Edge) now recommends retaining it in line with the risk profile + keeping employer contributions there, instead of the generic close/transfer boilerplate; investment amounts show their funding source (Initial – sale proceeds / Ongoing – cashflow); plus B50 industry-super quote reader, byte-identical cashflow card, per-fund super columns</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B52 — Jana Goelz investment product table: Initial Investment row bold, Total Costs (12-month) row dropped when an initial lump sum exists, Dollar Cost Average row moved below the cost rows; plus B51 retain-existing-super path</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -9047,12 +9047,18 @@ function renderSpecialDocx(def, ch, K){
         if(isInit(l)) return initN>0;
         if(isDCA(l))  return initN>0;
         if(isOng(l))  return monN>0;
-        // [IK7] The "Total Costs (based on projected 12 months balance)" row always stays.
+        // [#17] The "Total Costs (based on projected 12 months balance)" row is only used for an
+        // ongoing-ONLY plan; when there is an initial lump sum the Initial Investment row already carries
+        // the total cost, so the Total Costs row is dropped.
+        if(isTot(l))  return initN<=0;
         return true; });
-      if(monN>0 && !rows.some(r=>isTot(lbl(r)))){
+      if(monN>0 && initN<=0 && !rows.some(r=>isTot(lbl(r)))){
         const M=n=>'$'+Number(n||0).toLocaleString('en-AU',{maximumFractionDigits:0});
         rows.push(['Total Costs (based on projected 12 months balance)', M(initN+monN*12), feeCell]);
       }
+      // [#18] The Dollar Cost Average / Lump Sum row sits BELOW all of the cost rows.
+      const _dcaIdx=rows.findIndex(r=>isDCA(lbl(r)));
+      if(_dcaIdx>=0){ const _dca=rows.splice(_dcaIdx,1)[0]; rows.push(_dca); }
     }catch(_){}
     return rows;
   };
@@ -9265,7 +9271,8 @@ function renderSpecialDocx(def, ch, K){
       }
       // [IK7] Label column uses the 5EA6FF band blue (matching the Recommendation/Why bands); total
       // rows render bold across the row.
-      const _isTotal=/^(total costs?\b|complete portfolio)/i.test(_lbl.trim());
+      // [#16] The Initial Investment row (and the Total Costs / Complete Portfolio rows) render bold across.
+      const _isTotal=/^(total costs?\b|complete portfolio|(complete\s+)?initial investment)/i.test(_lbl.trim());
       rows.push(new TableRow({
         children: r.map((cell, ci) => ci === 0
           ? makeCell(RX(cell), {shade: "5EA6FF", header:true, bold:true})
