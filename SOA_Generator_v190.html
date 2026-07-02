@@ -2702,6 +2702,8 @@ function fill(str){
     .replace(/<super fund>/gi, "your existing super fund").replace(/<provider>/gi, recommendedInsurer())
     .replace(/<recommended provider>/gi, recommendedInsurer()).replace(/<new insurer>/gi, recommendedInsurer())
     .replace(/<insurer>/gi, recommendedInsurer()).replace(/<client>/gi, pref("client"))
+    .replace(/\[existing fund\]/gi, (typeof F!=='undefined'&&F&&(F.insExistingFund||F.superFund))||"your existing fund")
+    .replace(/\[Alternate insurers\]/gi, (function(){ try{ const rec=(typeof recommendedInsurer==='function')?recommendedInsurer():''; const alts=((typeof F!=='undefined'&&F&&F.insCompare)||[]).map(c=>c&&c.insurer).filter(x=>x&&x!==rec&&x!=='(insurer)'); return alts.length?(alts.length>1?alts.slice(0,-1).join(', ')+' and '+alts[alts.length-1]:alts[0]):"the alternate insurers considered"; }catch(_){ return "the alternate insurers considered"; } })())
     .replace(/(More information about this strategy is contained in Annexure)\s*(?:&lt;insert number&gt;|<insert number>|<number>|X+|\d+)\s*\.?/gi,
       (m,p1)=> `${p1} ${(typeof anxNum==='function'?anxNum('anx_moreinfo'):'')}.`)
     .replace(/\{adviser\}/gi, F.adviserName || "your adviser")
@@ -4392,7 +4394,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B33 — light-blue section headings 16pt, navy card banner 9.5pt</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B34 — body font 9.5pt + resolve [existing fund]/[Alternate insurers] tokens</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -7223,7 +7225,7 @@ async function generateSOA(){
     margins:{top:60,bottom:60,left:110,right:110},
     shading: opts.header?{fill:NAVY_HEX,type:ShadingType.CLEAR}:(opts.sub?{fill:SUBLABEL_HEX,type:ShadingType.CLEAR}:{fill:TEAL_HEX,type:ShadingType.CLEAR}),
     columnSpan: opts.span||1,
-    children:[new Paragraph({children:[new TextRun({text:String(text==null?"":text), font:"Nunito", size:18,
+    children:[new Paragraph({children:[new TextRun({text:String(text==null?"":text), font:"Nunito", size:19,
       color:(opts.header||opts.sub)?"FFFFFF":"1a1a1a", bold:!!(opts.header||opts.bold||opts.sub)})]})]
   });
   const headerRow = (cells, widths)=> new TableRow({tableHeader:true, children:cells.map((c,i)=>cell(c,{w:widths[i],header:true}))});
@@ -7233,7 +7235,7 @@ async function generateSOA(){
   // paragraphs (the default cell() collapses \n). Plus the matching "*Note" footnote paragraph.
   const mlCell = (text, w)=> new TableCell({ borders, width:{size:w,type:WidthType.DXA},
     margins:{top:60,bottom:60,left:110,right:110}, shading:{fill:TEAL_HEX,type:ShadingType.CLEAR},
-    children:String(text==null?'':text).split('\n').map(ln=> new Paragraph({children:[new TextRun({text:ln, font:"Nunito", size:18, color:"1a1a1a"})]})) });
+    children:String(text==null?'':text).split('\n').map(ln=> new Paragraph({children:[new TextRun({text:ln, font:"Nunito", size:19, color:"1a1a1a"})]})) });
   const debtRow = (l, widths)=> new TableRow({children:[
     cell(money(l.limit)+(l.noteRef?'*':''),{w:widths[0]}), cell(l.type,{w:widths[1]}), cell(l.purpose,{w:widths[2]}), mlCell(l.repayments, widths[3]) ]});
   const debtNoteP = ()=> (F.debtNote && Array.isArray(F.loans) && F.loans.some(l=>l&&l.noteRef)) ? new Paragraph({spacing:{after:120}, children:[
@@ -7262,7 +7264,7 @@ async function generateSOA(){
       if(/(^|\n)\t/.test(_raw)){
         _raw.split('\n').forEach(ln=>{ const body=ln.replace(/^\t+/,'').trim(); if(!body) return;
           // Auto-pulled values (cover amounts, $, %, names…) highlight yellow via apRuns.
-          cellChildren.push(new Paragraph({numbering:{reference:"bullets",level:/^\t/.test(ln)?1:0}, alignment:AlignmentType.JUSTIFIED, spacing:{after:40}, children:apRuns(body,{size:18})})); });
+          cellChildren.push(new Paragraph({numbering:{reference:"bullets",level:/^\t/.test(ln)?1:0}, alignment:AlignmentType.JUSTIFIED, spacing:{after:40}, children:apRuns(body,{size:19})})); });
       } else {
       const sections = (typeof v11SplitBullets === 'function')
         ? v11SplitBullets(_raw)
@@ -7271,33 +7273,33 @@ async function generateSOA(){
         if (sec.head) {
           cellChildren.push(new Paragraph({
             alignment:AlignmentType.JUSTIFIED, spacing:{before:(cellChildren.length?220:0), after:40},
-            children:[new TextRun({text: sec.head, font:"Nunito", size:18, color:"1a1a1a", bold:true})]
+            children:[new TextRun({text: sec.head, font:"Nunito", size:19, color:"1a1a1a", bold:true})]
           }));
         }
         (sec.bullets||[]).forEach(b => {
           const _bt=String(b||'').trim();
           // "§" = plain lead paragraph (no bullet); "§**…**" = bold plain paragraph.
-          if(/^§/.test(_bt)){ let body=_bt.replace(/^§\s*/,''); let _bold=false; const _bm=body.match(/^\*\*([\s\S]*)\*\*$/); if(_bm){ body=_bm[1].trim(); _bold=true; } if(body) cellChildren.push(new Paragraph({ alignment:AlignmentType.JUSTIFIED, spacing:{before:120, after:60}, children:apRuns(body,{size:18,bold:_bold})})); return; }
+          if(/^§/.test(_bt)){ let body=_bt.replace(/^§\s*/,''); let _bold=false; const _bm=body.match(/^\*\*([\s\S]*)\*\*$/); if(_bm){ body=_bm[1].trim(); _bold=true; } if(body) cellChildren.push(new Paragraph({ alignment:AlignmentType.JUSTIFIED, spacing:{before:120, after:60}, children:apRuns(body,{size:19,bold:_bold})})); return; }
           // v182: a "Note:" line, or an insurance per-cover label line ("Life:", "TPD:",
           // "Income Protection:", "Trauma:", "Child Cover:"), renders as a standalone paragraph
           // with the label in bold (not a bullet) — matching the firm's insurance "why" layout.
           const _lblM=_bt.match(/^(Note|Life|TPD|Income Protection|Trauma|Child Cover):\s*([\s\S]*)$/i);
           if(_lblM){
             cellChildren.push(new Paragraph({ alignment:AlignmentType.JUSTIFIED, spacing:{before:160, after:40}, children:[
-              new TextRun({text:_lblM[1]+': ', font:"Nunito", size:18, color:"1a1a1a", bold:true})
-            ].concat(apRuns(_lblM[2],{size:18}))}));
+              new TextRun({text:_lblM[1]+': ', font:"Nunito", size:19, color:"1a1a1a", bold:true})
+            ].concat(apRuns(_lblM[2],{size:19}))}));
           } else {
             cellChildren.push(new Paragraph({
               numbering:{reference:"bullets", level:0},
               alignment:AlignmentType.JUSTIFIED, spacing:{after:40},
-              children:apRuns(b,{size:18})
+              children:apRuns(b,{size:19})
             }));
           }
         });
       });
       }
       if (cellChildren.length === 0) {
-        cellChildren.push(new Paragraph({children:[new TextRun({text:'', font:"Nunito", size:18})]}));
+        cellChildren.push(new Paragraph({children:[new TextRun({text:'', font:"Nunito", size:19})]}));
       }
       rows.push(new TableRow({children:[ new TableCell(Object.assign({borders, width:{size:W,type:WidthType.DXA},
         margins:{top:60,bottom:60,left:110,right:110},
@@ -7319,8 +7321,8 @@ async function generateSOA(){
       rows.push(new TableRow({children:[subCell("Total Admin Service Fees")]}));
       _fees.split(/\n/).forEach(r=>{ const parts=r.split(/\t|\s*\|\s*/).map(x=>x.trim()).filter(x=>x!==''); if(!parts.length) return;
         rows.push(new TableRow({children:[
-          new TableCell({borders, width:{size:Math.round(W*0.45),type:WidthType.DXA}, margins:{top:50,bottom:50,left:110,right:110}, shading:{fill:TEAL_HEX,type:ShadingType.CLEAR}, children:[new Paragraph({children:[new TextRun({text:parts[0]||'', font:"Nunito", size:18, color:"1a1a1a", bold:true})]})]}),
-          new TableCell({borders, width:{size:Math.round(W*0.55),type:WidthType.DXA}, margins:{top:50,bottom:50,left:110,right:110}, children:[new Paragraph({children:[new TextRun({text:parts[1]||'', font:"Nunito", size:18, color:"1a1a1a"})]})]})
+          new TableCell({borders, width:{size:Math.round(W*0.45),type:WidthType.DXA}, margins:{top:50,bottom:50,left:110,right:110}, shading:{fill:TEAL_HEX,type:ShadingType.CLEAR}, children:[new Paragraph({children:[new TextRun({text:parts[0]||'', font:"Nunito", size:19, color:"1a1a1a", bold:true})]})]}),
+          new TableCell({borders, width:{size:Math.round(W*0.55),type:WidthType.DXA}, margins:{top:50,bottom:50,left:110,right:110}, children:[new Paragraph({children:[new TextRun({text:parts[1]||'', font:"Nunito", size:19, color:"1a1a1a"})]})]})
         ]})); });
     } else seg("Total Admin Service Fees", c.adminFees);
     seg("Risks & Disadvantages", c.risks);
@@ -7360,39 +7362,39 @@ async function generateSOA(){
     const NAVY_LINE = {style:BorderStyle.SINGLE, size:8, color:NAVY_HEX};
     const NO_BORDER = {style:BorderStyle.NONE, size:0, color:"FFFFFF"};
     const advLines = [
-      new Paragraph({spacing:{after:60}, children:[new TextRun({text:"YOUR FINANCIAL ADVISER"+(secondaryAdviser()?"S":"")+":", font:"Nunito", size:18, color:"1a1a1a", bold:true})]}),
+      new Paragraph({spacing:{after:60}, children:[new TextRun({text:"YOUR FINANCIAL ADVISER"+(secondaryAdviser()?"S":"")+":", font:"Nunito", size:19, color:"1a1a1a", bold:true})]}),
       new Paragraph({spacing:{after:secondaryAdviser()?60:(insSpecialist()?120:200)}, children:[new TextRun({text:F.adviserName||"Adviser Name", font:"ABC Arizona Flare", size:36, color:BLUE_HEX})]}),
       ...(secondaryAdviser()?[
         new Paragraph({spacing:{after:insSpecialist()?120:200}, children:[new TextRun({text:secondaryAdviser(), font:"ABC Arizona Flare", size:36, color:BLUE_HEX})]}),
       ]:[]),
       ...(insSpecialist()?[
-        new Paragraph({spacing:{after:60}, children:[new TextRun({text:"YOUR INSURANCE SPECIALIST ADVISER:", font:"Nunito", size:18, color:"1a1a1a", bold:true})]}),
+        new Paragraph({spacing:{after:60}, children:[new TextRun({text:"YOUR INSURANCE SPECIALIST ADVISER:", font:"Nunito", size:19, color:"1a1a1a", bold:true})]}),
         new Paragraph({spacing:{after:200}, children:[new TextRun({text:insSpecialist(), font:"ABC Arizona Flare", size:36, color:BLUE_HEX})]}),
       ]:[]),
-      new Paragraph({spacing:{after:40}, children:[new TextRun({text:"Authorised Representative"+((insSpecialist()||secondaryAdviser())?"s":"")+" of", font:"Nunito", size:18, color:"1a1a1a"})]}),
-      new Paragraph({spacing:{after:40}, children:[new TextRun({text:SETTINGS.licenseeName||"GPS Wealth Ltd", font:"Nunito", size:18, color:"1a1a1a"})]}),
-      new Paragraph({spacing:{after:40}, children:[new TextRun({text:`ABN: ${SETTINGS.licenseeABN||"17 005 482 726"}`, font:"Nunito", size:18, color:"1a1a1a"})]}),
-      new Paragraph({spacing:{after:200}, children:[new TextRun({text:`Australian Financial Services Licence number: ${SETTINGS.licenseeAFSL||"254544"}`, font:"Nunito", size:18, color:"1a1a1a"})]}),
-      new Paragraph({spacing:{after:40}, children:[new TextRun({text:SETTINGS.licenseeAddress||"GPO Box 1453, SYDNEY NSW 2001", font:"Nunito", size:18, color:"1a1a1a"})]}),
-      new Paragraph({spacing:{after:40}, children:[new TextRun({text:"T: "+(SETTINGS.licenseePhone||"1300 650 432"), font:"Nunito", size:18, color:"1a1a1a"})]}),
-      new Paragraph({spacing:{after:200}, children:[new TextRun({text:"E: "+(SETTINGS.licenseeEmail||"info@count.au"), font:"Nunito", size:18, color:HYPERLINK_HEX, underline:{}})]}),
+      new Paragraph({spacing:{after:40}, children:[new TextRun({text:"Authorised Representative"+((insSpecialist()||secondaryAdviser())?"s":"")+" of", font:"Nunito", size:19, color:"1a1a1a"})]}),
+      new Paragraph({spacing:{after:40}, children:[new TextRun({text:SETTINGS.licenseeName||"GPS Wealth Ltd", font:"Nunito", size:19, color:"1a1a1a"})]}),
+      new Paragraph({spacing:{after:40}, children:[new TextRun({text:`ABN: ${SETTINGS.licenseeABN||"17 005 482 726"}`, font:"Nunito", size:19, color:"1a1a1a"})]}),
+      new Paragraph({spacing:{after:200}, children:[new TextRun({text:`Australian Financial Services Licence number: ${SETTINGS.licenseeAFSL||"254544"}`, font:"Nunito", size:19, color:"1a1a1a"})]}),
+      new Paragraph({spacing:{after:40}, children:[new TextRun({text:SETTINGS.licenseeAddress||"GPO Box 1453, SYDNEY NSW 2001", font:"Nunito", size:19, color:"1a1a1a"})]}),
+      new Paragraph({spacing:{after:40}, children:[new TextRun({text:"T: "+(SETTINGS.licenseePhone||"1300 650 432"), font:"Nunito", size:19, color:"1a1a1a"})]}),
+      new Paragraph({spacing:{after:200}, children:[new TextRun({text:"E: "+(SETTINGS.licenseeEmail||"info@count.au"), font:"Nunito", size:19, color:HYPERLINK_HEX, underline:{}})]}),
       // My Contact Details inside the same box
-      new Paragraph({spacing:{after:80}, children:[new TextRun({text:"My Contact Details", font:"Nunito", size:18, color:"1a1a1a", bold:true})]}),
-      new Paragraph({numbering:{reference:"bullets", level:0}, spacing:{after:40}, children:[new TextRun({text:"Phone: "+(F.adviserPhone||SETTINGS.practicePhone||"07 3852 4114"), font:"Nunito", size:18, color:"1a1a1a"})]}),
+      new Paragraph({spacing:{after:80}, children:[new TextRun({text:"My Contact Details", font:"Nunito", size:19, color:"1a1a1a", bold:true})]}),
+      new Paragraph({numbering:{reference:"bullets", level:0}, spacing:{after:40}, children:[new TextRun({text:"Phone: "+(F.adviserPhone||SETTINGS.practicePhone||"07 3852 4114"), font:"Nunito", size:19, color:"1a1a1a"})]}),
       ...(((secondaryAdviser()&&secondaryAdviserEmail())||(insSpecialist()&&insSpecialistEmail())) ? [
-        new Paragraph({numbering:{reference:"bullets", level:0}, spacing:{after:20}, children:[new TextRun({text:"Email:", font:"Nunito", size:18, color:"1a1a1a"})]}),
-        new Paragraph({numbering:{reference:"bullets", level:1}, spacing:{after:40}, children:[new TextRun({text:(F.adviserEmail||"adviser@mywealthsolutions.com.au"), font:"Nunito", size:18, color:HYPERLINK_HEX, underline:{}})]}),
+        new Paragraph({numbering:{reference:"bullets", level:0}, spacing:{after:20}, children:[new TextRun({text:"Email:", font:"Nunito", size:19, color:"1a1a1a"})]}),
+        new Paragraph({numbering:{reference:"bullets", level:1}, spacing:{after:40}, children:[new TextRun({text:(F.adviserEmail||"adviser@mywealthsolutions.com.au"), font:"Nunito", size:19, color:HYPERLINK_HEX, underline:{}})]}),
         ...((secondaryAdviser()&&secondaryAdviserEmail())?[
-          new Paragraph({numbering:{reference:"bullets", level:1}, spacing:{after:40}, children:[new TextRun({text:secondaryAdviserEmail(), font:"Nunito", size:18, color:HYPERLINK_HEX, underline:{}})]}),
+          new Paragraph({numbering:{reference:"bullets", level:1}, spacing:{after:40}, children:[new TextRun({text:secondaryAdviserEmail(), font:"Nunito", size:19, color:HYPERLINK_HEX, underline:{}})]}),
         ]:[]),
         ...((insSpecialist()&&insSpecialistEmail())?[
-          new Paragraph({numbering:{reference:"bullets", level:1}, spacing:{after:40}, children:[new TextRun({text:insSpecialistEmail(), font:"Nunito", size:18, color:HYPERLINK_HEX, underline:{}})]}),
+          new Paragraph({numbering:{reference:"bullets", level:1}, spacing:{after:40}, children:[new TextRun({text:insSpecialistEmail(), font:"Nunito", size:19, color:HYPERLINK_HEX, underline:{}})]}),
         ]:[]),
       ] : [
-        new Paragraph({numbering:{reference:"bullets", level:0}, spacing:{after:40}, children:[new TextRun({text:"Email: ", font:"Nunito", size:18, color:"1a1a1a"}), new TextRun({text:(F.adviserEmail||"adviser@mywealthsolutions.com.au"), font:"Nunito", size:18, color:HYPERLINK_HEX, underline:{}})]}),
+        new Paragraph({numbering:{reference:"bullets", level:0}, spacing:{after:40}, children:[new TextRun({text:"Email: ", font:"Nunito", size:19, color:"1a1a1a"}), new TextRun({text:(F.adviserEmail||"adviser@mywealthsolutions.com.au"), font:"Nunito", size:19, color:HYPERLINK_HEX, underline:{}})]}),
       ]),
-      new Paragraph({numbering:{reference:"bullets", level:0}, spacing:{after:40}, children:[new TextRun({text:"Address: "+(SETTINGS.practiceAddress||"1/18 Masters Street, Newstead, Brisbane 4006"), font:"Nunito", size:18, color:"1a1a1a"})]}),
-      new Paragraph({numbering:{reference:"bullets", level:0}, spacing:{after:120}, children:[new TextRun({text:"Website: "+(SETTINGS.practiceWebsite||"www.mywealthsolutions.com.au"), font:"Nunito", size:18, color:HYPERLINK_HEX, underline:{}})]}),
+      new Paragraph({numbering:{reference:"bullets", level:0}, spacing:{after:40}, children:[new TextRun({text:"Address: "+(SETTINGS.practiceAddress||"1/18 Masters Street, Newstead, Brisbane 4006"), font:"Nunito", size:19, color:"1a1a1a"})]}),
+      new Paragraph({numbering:{reference:"bullets", level:0}, spacing:{after:120}, children:[new TextRun({text:"Website: "+(SETTINGS.practiceWebsite||"www.mywealthsolutions.com.au"), font:"Nunito", size:19, color:HYPERLINK_HEX, underline:{}})]}),
     ];
     children.push(new Table({
       width:{size:advW, type:WidthType.DXA}, columnWidths:[advW],
@@ -7573,8 +7575,8 @@ async function generateSOA(){
     ]});
   const footerLine3 = new Paragraph({alignment:AlignmentType.RIGHT,
     children:[
-      new TextRun({text:"Page | ", font:"Nunito", size:18, color:"1a1a1a", bold:true}),
-      new TextRun({children:[PageNumber.CURRENT], font:"Nunito", size:18, color:"1a1a1a", bold:true}),
+      new TextRun({text:"Page | ", font:"Nunito", size:19, color:"1a1a1a", bold:true}),
+      new TextRun({children:[PageNumber.CURRENT], font:"Nunito", size:19, color:"1a1a1a", bold:true}),
     ]});
   const brandFooter = new Footer({children:[footerLine1, footerLine2, footerLine3]});
 
@@ -8906,7 +8908,7 @@ function renderSpecialDocx(def, ch, K){
         alignment: AlignmentType.LEFT,
         children: [new TextRun({
           text: ln.trim(),
-          font: "Nunito", size: 18,
+          font: "Nunito", size: 19,
           color: opts.header ? "FFFFFF" : "1a1a1a",
           bold: !!(opts.header || opts.bold)
         })]
@@ -8937,7 +8939,7 @@ function renderSpecialDocx(def, ch, K){
           columnSpan: nCols, width:{size: totalW, type: WidthType.DXA}, borders: BORDER,
           margins:{top:50,bottom:50,left:110,right:110},
           shading:{fill:"5EA6FF", type:ShadingType.CLEAR, color:"auto"},
-          children:[new Paragraph({children:[new TextRun({text:_lbl, font:"Nunito", size:18, color:"FFFFFF", bold:true})]})]
+          children:[new Paragraph({children:[new TextRun({text:_lbl, font:"Nunito", size:19, color:"FFFFFF", bold:true})]})]
         })]}));
         // "[Optional] …" lines are editor-only prompts (e.g. the lump-sum DCA line) — omit from the doc
         // unless the paraplanner activates them by deleting the "[Optional] " prefix.
@@ -8945,7 +8947,7 @@ function renderSpecialDocx(def, ch, K){
         rows.push(new TableRow({children:[ new TableCell({
           columnSpan: nCols, width:{size: totalW, type: WidthType.DXA}, borders: BORDER,
           margins:{top:60,bottom:60,left:110,right:110},
-          children:(_clines.length?_clines:['']).map(ln=>new Paragraph({spacing:{before:30,after:30}, alignment:AlignmentType.LEFT, children:[new TextRun({text:ln.trim(), font:"Nunito", size:18, color:"1a1a1a"})]}))
+          children:(_clines.length?_clines:['']).map(ln=>new Paragraph({spacing:{before:30,after:30}, alignment:AlignmentType.LEFT, children:[new TextRun({text:ln.trim(), font:"Nunito", size:19, color:"1a1a1a"})]}))
         })]}));
         return;
       }
@@ -8993,30 +8995,30 @@ function renderSpecialDocx(def, ch, K){
       const _fcf=(typeof fill==='function')?fill(c[f]):c[f];
       if(/(^|\n)[\t§]/.test(String(_fcf||''))){
         String(_fcf).split('\n').forEach(ln=>{
-          if(/^\s*§/.test(ln)){ let body=ln.replace(/^\s*§\s*/,'').trim(); let _bold=false; const _bm=body.match(/^\*\*([\s\S]*)\*\*$/); if(_bm){ body=_bm[1].trim(); _bold=true; } if(body) inner.push(new Paragraph({spacing:{before:160,after:80}, children:apRuns(body,{size:18,bold:_bold})})); return; }
+          if(/^\s*§/.test(ln)){ let body=ln.replace(/^\s*§\s*/,'').trim(); let _bold=false; const _bm=body.match(/^\*\*([\s\S]*)\*\*$/); if(_bm){ body=_bm[1].trim(); _bold=true; } if(body) inner.push(new Paragraph({spacing:{before:160,after:80}, children:apRuns(body,{size:19,bold:_bold})})); return; }
           const body=ln.replace(/^\t+/,'').trim(); if(!body) return;
           // Auto-populated values (platform-cost lines, $, %, names…) highlight yellow via apRuns.
-          inner.push(new Paragraph({numbering:{reference:"bullets",level:/^\t/.test(ln)?1:0}, spacing:{after:40}, children:apRuns(body,{size:18})}));
+          inner.push(new Paragraph({numbering:{reference:"bullets",level:/^\t/.test(ln)?1:0}, spacing:{after:40}, children:apRuns(body,{size:19})}));
         });
       } else {
       const sections = (typeof v11SplitBullets === 'function') ? v11SplitBullets(_fcf) : [{head:null, bullets:[_fcf]}];
       sections.forEach(sec => {
-        if (sec.head) inner.push(new Paragraph({spacing:{before:(inner.length?60:0),after:30}, children:[new TextRun({text: sec.head, font:"Nunito", size:18, color:"1a1a1a", bold:true})]}));
+        if (sec.head) inner.push(new Paragraph({spacing:{before:(inner.length?60:0),after:30}, children:[new TextRun({text: sec.head, font:"Nunito", size:19, color:"1a1a1a", bold:true})]}));
         (sec.bullets||[]).forEach(b => {
           const _bt=String(b||'').trim();
           if(/^Note:/i.test(_bt)){
             // A "Note:" line is a standalone paragraph, not a bullet (label in bold).
             const m=_bt.match(/^(Note:)\s*([\s\S]*)$/i);
             inner.push(new Paragraph({spacing:{before:80,after:40}, children:[
-              new TextRun({text:(m?m[1]:'Note:')+' ', font:"Nunito", size:18, color:"1a1a1a", bold:true})
-            ].concat(apRuns(m?m[2]:_bt,{size:18}))}));
+              new TextRun({text:(m?m[1]:'Note:')+' ', font:"Nunito", size:19, color:"1a1a1a", bold:true})
+            ].concat(apRuns(m?m[2]:_bt,{size:19}))}));
           } else {
-            inner.push(new Paragraph({numbering:{reference:"bullets",level:0}, spacing:{after:40}, children:apRuns(b,{size:18})}));
+            inner.push(new Paragraph({numbering:{reference:"bullets",level:0}, spacing:{after:40}, children:apRuns(b,{size:19})}));
           }
         });
       });
       }
-      if(!inner.length) inner.push(new Paragraph({children:[new TextRun({text:'',font:"Nunito",size:18})]}));
+      if(!inner.length) inner.push(new Paragraph({children:[new TextRun({text:'',font:"Nunito",size:19})]}));
       cardRows.push(new TableRow({children:[ new TableCell({
         width:{size: totalW, type: WidthType.DXA}, borders: BORDER,
         margins:{top:80,bottom:160,left:110,right:110}, children: inner
@@ -9030,7 +9032,7 @@ function renderSpecialDocx(def, ch, K){
     // Fund-manager fee footnote — a plain paragraph BELOW the card table (no band/border), matching the
     // firm template's footer. Only present on the CARE super product card (careFundMgrNote).
     if(c.careFundMgrNote && String(c.careFundMgrNote).trim()){
-      children.push(new Paragraph({spacing:{before:120,after:60}, children:[new TextRun({text:String(c.careFundMgrNote).trim(), font:"Nunito", size:18, color:"1a1a1a"})]}));
+      children.push(new Paragraph({spacing:{before:120,after:60}, children:[new TextRun({text:String(c.careFundMgrNote).trim(), font:"Nunito", size:19, color:"1a1a1a"})]}));
     }
 
     return children;
@@ -9092,7 +9094,7 @@ function renderSpecialDocx(def, ch, K){
           bullet: isBul ? {level: subBul?1:0} : undefined,
           children: [new TextRun({
             text: content,
-            font: "Nunito", size: 18,
+            font: "Nunito", size: 19,
             color: (opts.header || opts.whiteText) ? "FFFFFF" : "1a1a1a",
             bold: !!(opts.header || opts.bold)
           })]
@@ -9101,7 +9103,7 @@ function renderSpecialDocx(def, ch, K){
       if (paras.length === 0) {
         paras.push(new Paragraph({
           spacing:{before:30,after:30}, alignment:AlignmentType.LEFT,
-          children:[new TextRun({text:"", font:"Nunito", size:18, color:(opts.header||opts.whiteText)?"FFFFFF":"1a1a1a", bold:!!(opts.header||opts.bold)})]
+          children:[new TextRun({text:"", font:"Nunito", size:19, color:(opts.header||opts.whiteText)?"FFFFFF":"1a1a1a", bold:!!(opts.header||opts.bold)})]
         }));
       }
       cellOpts.children = paras;
@@ -9674,7 +9676,7 @@ function renderSpecialDocx(def, ch, K){
     const NY="0C2E3F",TL="E5F4F6",BORD="B5CBD8",LEFT="0E6BE0",BAND="5DA5FD";
     const BORDER={top:{color:BORD,style:BorderStyle.SINGLE,size:6},bottom:{color:BORD,style:BorderStyle.SINGLE,size:6},left:{color:BORD,style:BorderStyle.SINGLE,size:6},right:{color:BORD,style:BorderStyle.SINGLE,size:6}};
     const totalW=9026, colW=Math.floor(totalW/n), widths=new Array(n).fill(colW);
-    function mc(text,o){o=o||{};return new TableCell({width:{size:o.w||colW,type:WidthType.DXA},columnSpan:o.span||1,shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,borders:BORDER,margins:{top:50,bottom:50,left:110,right:110},children:[new Paragraph({spacing:{before:20,after:20},children:[new TextRun({text:String(text==null?'':text),font:"Nunito",size:18,color:o.header?"FFFFFF":"1a1a1a",bold:!!(o.header||o.bold)})]})]});}
+    function mc(text,o){o=o||{};return new TableCell({width:{size:o.w||colW,type:WidthType.DXA},columnSpan:o.span||1,shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,borders:BORDER,margins:{top:50,bottom:50,left:110,right:110},children:[new Paragraph({spacing:{before:20,after:20},children:[new TextRun({text:String(text==null?'':text),font:"Nunito",size:19,color:o.header?"FFFFFF":"1a1a1a",bold:!!(o.header||o.bold)})]})]});}
     const _colsX=(c&&c.colHeader)||t.columns;
     const rows=[new TableRow({children:_colsX.map(col=>mc(RX(col),{shade:NY,header:true}))})];
     v150VisibleRows(def, c.rows).forEach((r,ri)=>{
@@ -9759,7 +9761,7 @@ function renderSpecialDocx(def, ch, K){
         const rows=seg.rows; if(!rows.length) return;
         const n=Math.max(...rows.map(r=>r.length));
         const totalW=9026, colW=Math.floor(totalW/n), widths=new Array(n).fill(colW);
-        function mc(t,o){o=o||{};return new TableCell({width:{size:colW,type:WidthType.DXA},columnSpan:o.span||1,shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,borders:BORDER,margins:{top:50,bottom:50,left:110,right:110},children:[new Paragraph({spacing:{before:20,after:20},children:[new TextRun({text:String(t==null?'':t),font:"Nunito",size:18,color:o.header?"FFFFFF":"1a1a1a",bold:!!(o.header||o.bold)})]})]});}
+        function mc(t,o){o=o||{};return new TableCell({width:{size:colW,type:WidthType.DXA},columnSpan:o.span||1,shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,borders:BORDER,margins:{top:50,bottom:50,left:110,right:110},children:[new Paragraph({spacing:{before:20,after:20},children:[new TextRun({text:String(t==null?'':t),font:"Nunito",size:19,color:o.header?"FFFFFF":"1a1a1a",bold:!!(o.header||o.bold)})]})]});}
         const trs=[];
         rows.forEach((r,ri)=>{
           const padded = r.slice(); while(padded.length<n) padded.push('');
@@ -9973,7 +9975,7 @@ function renderSpecialDocx(def, ch, K){
     const NY="0C2E3F",TL="E5F4F6",BORD="B5CBD8",LEFT="0E6BE0",BAND="5DA5FD";
     const BR={top:{color:BORD,style:BorderStyle.SINGLE,size:6},bottom:{color:BORD,style:BorderStyle.SINGLE,size:6},left:{color:BORD,style:BorderStyle.SINGLE,size:6},right:{color:BORD,style:BorderStyle.SINGLE,size:6}};
     const totalW=9026;
-    function mc(t,o){o=o||{};const w=o.w||Math.floor(totalW/(o.n||(j?3:2)));return new TableCell({width:{size:w,type:WidthType.DXA},columnSpan:o.span||1,shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,borders:BR,margins:{top:50,bottom:50,left:110,right:110},children:[new Paragraph({spacing:{before:20,after:20},children:[new TextRun({text:String(t==null?'':t),font:"Nunito",size:18,color:o.header?"FFFFFF":"1a1a1a",bold:!!(o.header||o.bold)})]})]});}
+    function mc(t,o){o=o||{};const w=o.w||Math.floor(totalW/(o.n||(j?3:2)));return new TableCell({width:{size:w,type:WidthType.DXA},columnSpan:o.span||1,shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,borders:BR,margins:{top:50,bottom:50,left:110,right:110},children:[new Paragraph({spacing:{before:20,after:20},children:[new TextRun({text:String(t==null?'':t),font:"Nunito",size:19,color:o.header?"FFFFFF":"1a1a1a",bold:!!(o.header||o.bold)})]})]});}
     const out=[H1(anxTitle("anx_situation"))];
     const n = j?3:2;
     function tbl(title, headerCells, rows){
@@ -10078,7 +10080,7 @@ function renderSpecialDocx(def, ch, K){
     const NY="0C2E3F",TL="E5F4F6",BORD="B5CBD8",LEFT="0E6BE0",BAND="5DA5FD";
     const BR={top:{color:BORD,style:BorderStyle.SINGLE,size:6},bottom:{color:BORD,style:BorderStyle.SINGLE,size:6},left:{color:BORD,style:BorderStyle.SINGLE,size:6},right:{color:BORD,style:BorderStyle.SINGLE,size:6}};
     const W=9026;
-    function mc(t,o){o=o||{};return new TableCell({width:{size:o.w||W,type:WidthType.DXA},columnSpan:o.span||1,shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,borders:BR,margins:{top:50,bottom:50,left:110,right:110},children:[new Paragraph({spacing:{before:20,after:20},children:[new TextRun({text:String(t==null?'':t),font:"Nunito",size:18,color:o.header?"FFFFFF":"1a1a1a",bold:!!(o.header||o.bold)})]})]});}
+    function mc(t,o){o=o||{};return new TableCell({width:{size:o.w||W,type:WidthType.DXA},columnSpan:o.span||1,shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,borders:BR,margins:{top:50,bottom:50,left:110,right:110},children:[new Paragraph({spacing:{before:20,after:20},children:[new TextRun({text:String(t==null?'':t),font:"Nunito",size:19,color:o.header?"FFFFFF":"1a1a1a",bold:!!(o.header||o.bold)})]})]});}
     const out=[H1(anxTitle("anx_alloc"))];
     out.push(P("The following describes the risk profile(s) relevant to your recommended investment strategy."));
 
@@ -10238,7 +10240,7 @@ function renderSpecialDocx(def, ch, K){
     const NY="0C2E3F",TL="E5F4F6",BORD="B5CBD8",LEFT="0E6BE0";
     const BR={top:{color:BORD,style:BorderStyle.SINGLE,size:6},bottom:{color:BORD,style:BorderStyle.SINGLE,size:6},left:{color:BORD,style:BorderStyle.SINGLE,size:6},right:{color:BORD,style:BorderStyle.SINGLE,size:6}};
     const W=9026, ROW=["Investment Objective","Suitability","Income/Growth Objective","Liquidity","Minimum Investment Term","Expected Long Term Return"];
-    function mc(t,o){o=o||{};return new TableCell({width:{size:o.w||W,type:WidthType.DXA},columnSpan:o.span||1,shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,borders:BR,margins:{top:50,bottom:50,left:110,right:110},children:[new Paragraph({spacing:{before:20,after:20},children:[new TextRun({text:String(t==null?'':t),font:"Nunito",size:18,color:o.header?"FFFFFF":"1a1a1a",bold:!!(o.header||o.bold)})]})]});}
+    function mc(t,o){o=o||{};return new TableCell({width:{size:o.w||W,type:WidthType.DXA},columnSpan:o.span||1,shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,borders:BR,margins:{top:50,bottom:50,left:110,right:110},children:[new Paragraph({spacing:{before:20,after:20},children:[new TextRun({text:String(t==null?'':t),font:"Nunito",size:19,color:o.header?"FFFFFF":"1a1a1a",bold:!!(o.header||o.bold)})]})]});}
     const profs = activeRiskProfiles();
     const out=[H1(anxTitle("anx_alloc"))];
     out.push(P("The following describes the risk profile(s) relevant to your recommended superannuation and investment strategy."));
@@ -10369,7 +10371,7 @@ function renderSpecialDocx(def, ch, K){
     const NY="0C2E3F",TL="E5F4F6",BORD="B5CBD8",LEFT="0E6BE0",BAND="5DA5FD";
     const BR={top:{color:BORD,style:BorderStyle.SINGLE,size:6},bottom:{color:BORD,style:BorderStyle.SINGLE,size:6},left:{color:BORD,style:BorderStyle.SINGLE,size:6},right:{color:BORD,style:BorderStyle.SINGLE,size:6}};
     const W=9026,L=Math.floor(W*0.62),R=W-L;
-    function mc(t,o){o=o||{};return new TableCell({width:{size:o.w||W,type:WidthType.DXA},columnSpan:o.span||1,shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,borders:BR,margins:{top:50,bottom:50,left:110,right:110},children:[new Paragraph({spacing:{before:20,after:20},children:[new TextRun({text:String(t==null?'':t),font:"Nunito",size:18,color:o.header?"FFFFFF":"1a1a1a",bold:!!(o.header||o.bold)})]})]});}
+    function mc(t,o){o=o||{};return new TableCell({width:{size:o.w||W,type:WidthType.DXA},columnSpan:o.span||1,shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,borders:BR,margins:{top:50,bottom:50,left:110,right:110},children:[new Paragraph({spacing:{before:20,after:20},children:[new TextRun({text:String(t==null?'':t),font:"Nunito",size:19,color:o.header?"FFFFFF":"1a1a1a",bold:!!(o.header||o.bold)})]})]});}
     const out=[H1(anxTitle("anx_insneeds"))];
     const j=(typeof hasPartner==='function'&&hasPartner());
     const people = j ? [pref('client'),pref('partner')] : [ (F.clientType==='entity'?(F.entityName||'Entity'):pref('client')) ];
@@ -10499,7 +10501,7 @@ function renderSpecialDocx(def, ch, K){
     const NY="0C2E3F",TL="E5F4F6",BORD="B5CBD8",LEFT="0E6BE0";
     const BR={top:{color:BORD,style:BorderStyle.SINGLE,size:6},bottom:{color:BORD,style:BorderStyle.SINGLE,size:6},left:{color:BORD,style:BorderStyle.SINGLE,size:6},right:{color:BORD,style:BorderStyle.SINGLE,size:6}};
     const W=9026,L=Math.floor(W*0.4),R=W-L;
-    function mc(t,o){o=o||{};return new TableCell({width:{size:o.w||W,type:WidthType.DXA},shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,borders:BR,margins:{top:50,bottom:50,left:110,right:110},children:[new Paragraph({spacing:{before:20,after:20},children:[new TextRun({text:String(t==null?'':t),font:"Nunito",size:18,color:o.header?"FFFFFF":"1a1a1a",bold:!!(o.header||o.bold)})]})]});}
+    function mc(t,o){o=o||{};return new TableCell({width:{size:o.w||W,type:WidthType.DXA},shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,borders:BR,margins:{top:50,bottom:50,left:110,right:110},children:[new Paragraph({spacing:{before:20,after:20},children:[new TextRun({text:String(t==null?'':t),font:"Nunito",size:19,color:o.header?"FFFFFF":"1a1a1a",bold:!!(o.header||o.bold)})]})]});}
     const out=[H1(anxTitle("anx_projections"))];
     out.push(H2("Projected Annual Cash Flow"));
     ANX3.cashflowIntro.forEach(p=>out.push(P(p)));
@@ -10902,7 +10904,7 @@ function renderSpecialDocx(def, ch, K){
       const NY="0C2E3F",TL="E5F4F6",BORD="B5CBD8",LEFT="0E6BE0";
       const BR={top:{color:BORD,style:BorderStyle.SINGLE,size:6},bottom:{color:BORD,style:BorderStyle.SINGLE,size:6},left:{color:BORD,style:BorderStyle.SINGLE,size:6},right:{color:BORD,style:BorderStyle.SINGLE,size:6}};
       const W=9026;
-      function mc(t,o){o=o||{};return new TableCell({width:{size:o.w||Math.floor(W/2),type:WidthType.DXA},shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,borders:BR,margins:{top:50,bottom:50,left:110,right:110},children:[new Paragraph({spacing:{before:20,after:20},children:[new TextRun({text:String(t==null?'':t),font:"Nunito",size:18,color:o.header?"FFFFFF":"1a1a1a",bold:!!(o.header||o.bold)})]})]});}
+      function mc(t,o){o=o||{};return new TableCell({width:{size:o.w||Math.floor(W/2),type:WidthType.DXA},shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,borders:BR,margins:{top:50,bottom:50,left:110,right:110},children:[new Paragraph({spacing:{before:20,after:20},children:[new TextRun({text:String(t==null?'':t),font:"Nunito",size:19,color:o.header?"FFFFFF":"1a1a1a",bold:!!(o.header||o.bold)})]})]});}
       function twoColTable(rows, headerFirst){
         const L=Math.floor(W*0.5),Rr=W-L; const trs=[];
         rows.forEach((r,ri)=>{
@@ -12418,7 +12420,7 @@ function renderSpecialDocx(def, ch, K){
         const NY="0C2E3F",TL="E5F4F6",BORD="B5CBD8",LEFT="0E6BE0",W=9026,c4=Math.floor(W/4);
         const BR={top:{color:BORD,style:BorderStyle.SINGLE,size:6},bottom:{color:BORD,style:BorderStyle.SINGLE,size:6},left:{color:BORD,style:BorderStyle.SINGLE,size:6},right:{color:BORD,style:BorderStyle.SINGLE,size:6}};
         const AT=(K.AlignmentType||{}).CENTER;
-        const mc=(t,o)=>{o=o||{};return new TableCell({width:{size:c4,type:WidthType.DXA},shading:o.sh?{type:ShadingType.CLEAR,fill:o.sh,color:"auto"}:undefined,borders:BR,margins:{top:40,bottom:40,left:90,right:90},children:[new Paragraph({alignment:o.center?AT:undefined,children:[new TextRun({text:String(t==null?'':t),font:"Nunito",size:18,color:o.hd?"FFFFFF":"1a1a1a",bold:!!(o.hd||o.lb)})]})]});};
+        const mc=(t,o)=>{o=o||{};return new TableCell({width:{size:c4,type:WidthType.DXA},shading:o.sh?{type:ShadingType.CLEAR,fill:o.sh,color:"auto"}:undefined,borders:BR,margins:{top:40,bottom:40,left:90,right:90},children:[new Paragraph({alignment:o.center?AT:undefined,children:[new TextRun({text:String(t==null?'':t),font:"Nunito",size:19,color:o.hd?"FFFFFF":"1a1a1a",bold:!!(o.hd||o.lb)})]})]});};
         const rows=[new TableRow({children:[mc("Asset Class",{sh:NY,hd:true}),mc("Proposed Weight",{sh:NY,hd:true,center:true}),mc("Benchmark",{sh:NY,hd:true,center:true}),mc("Variance",{sh:NY,hd:true,center:true})]})];
         let tw=0,tb=0,hasTotal=false;
         list.forEach(a=>{ if(_allocStandout(a.asset)){ hasTotal = hasTotal || /^total/i.test(String(a.asset).trim()); } else { tw+=_allocNum(a.weight); tb+=_allocNum(a.bench); } });
@@ -14233,8 +14235,8 @@ window.v50AllocGroups = function(){
 
     const multiCell=(lines,opts)=>{ opts=opts||{};
       const valid=(lines||[]).filter(Boolean).map(String); if(!valid.length) valid.push("");
-      const runs=[]; valid.forEach((ln,idx)=>{ if(idx>0) runs.push(new TextRun({text:"",break:1,font:"Nunito",size:18}));
-        runs.push(new TextRun({text:ln,font:"Nunito",size:18,color:opts.header?"FFFFFF":"1a1a1a",bold:!!opts.bold})); });
+      const runs=[]; valid.forEach((ln,idx)=>{ if(idx>0) runs.push(new TextRun({text:"",break:1,font:"Nunito",size:19}));
+        runs.push(new TextRun({text:ln,font:"Nunito",size:19,color:opts.header?"FFFFFF":"1a1a1a",bold:!!opts.bold})); });
       const spec={width:{size:opts.w||colW[0],type:WidthType.DXA},borders:BORDER,margins:{top:60,bottom:60,left:110,right:110},
         shading:opts.shade?{type:ShadingType.CLEAR,fill:opts.shade,color:"auto"}:undefined,
         children:[new Paragraph({alignment:opts.align||L,spacing:{before:30,after:30},children:runs})]};
@@ -14251,7 +14253,7 @@ window.v50AllocGroups = function(){
       drows.push(new TableRow({children:[ new TableCell({columnSpan:7,width:{size:totalW,type:WidthType.DXA},
         shading:{type:ShadingType.CLEAR,fill:BL,color:"auto"},margins:{top:60,bottom:60,left:110,right:110},
         borders:{top:{color:BL,style:BorderStyle.SINGLE,size:6},bottom:{color:BL,style:BorderStyle.SINGLE,size:6},left:{color:BL,style:BorderStyle.SINGLE,size:6},right:{color:BL,style:BorderStyle.SINGLE,size:6}},
-        children:[new Paragraph({children:[new TextRun({text:g.label||g.prov,font:"Nunito",size:18,bold:true,color:"FFFFFF"})]})]}) ]}));
+        children:[new Paragraph({children:[new TextRun({text:g.label||g.prov,font:"Nunito",size:19,bold:true,color:"FFFFFF"})]})]}) ]}));
       g.rows.forEach((r,i)=>{
         const premLines=splitPremLines(coverKindS(r.coverType)==='trauma'?[r.monthlyPremium,r.premiumNote]:[r.monthlyPremium,r.premiumNote,r.monthlyPremiumAfterTax]);
         const periodBits=[r.waitingPeriod,r.benefitPeriod].filter(Boolean).join(', ');
@@ -14298,13 +14300,13 @@ window.v50AllocGroups = function(){
       const inner=[]; const ftxt=_fill(c[f]);
       if(/(^|\n)\t/.test(String(ftxt||''))){
         String(ftxt).split('\n').forEach(ln=>{ const body=ln.replace(/^\t+/,'').trim(); if(!body)return;
-          inner.push(new Paragraph({numbering:{reference:"bullets",level:/^\t/.test(ln)?1:0},spacing:{after:40},children:[new TextRun({text:body,font:"Nunito",size:18,color:"1a1a1a"})]})); });
+          inner.push(new Paragraph({numbering:{reference:"bullets",level:/^\t/.test(ln)?1:0},spacing:{after:40},children:[new TextRun({text:body,font:"Nunito",size:19,color:"1a1a1a"})]})); });
       } else {
         const sections=(typeof v11SplitBullets==='function')?v11SplitBullets(ftxt):[{head:null,bullets:[ftxt]}];
-        sections.forEach(sec=>{ if(sec.head) inner.push(new Paragraph({spacing:{before:(inner.length?60:0),after:30},children:[new TextRun({text:sec.head,font:"Nunito",size:18,color:"1a1a1a",bold:true})]}));
-          (sec.bullets||[]).forEach(b=>inner.push(new Paragraph({numbering:{reference:"bullets",level:0},spacing:{after:40},children:[new TextRun({text:b,font:"Nunito",size:18,color:"1a1a1a"})]}))); });
+        sections.forEach(sec=>{ if(sec.head) inner.push(new Paragraph({spacing:{before:(inner.length?60:0),after:30},children:[new TextRun({text:sec.head,font:"Nunito",size:19,color:"1a1a1a",bold:true})]}));
+          (sec.bullets||[]).forEach(b=>inner.push(new Paragraph({numbering:{reference:"bullets",level:0},spacing:{after:40},children:[new TextRun({text:b,font:"Nunito",size:19,color:"1a1a1a"})]}))); });
       }
-      if(!inner.length) inner.push(new Paragraph({children:[new TextRun({text:'',font:"Nunito",size:18})]}));
+      if(!inner.length) inner.push(new Paragraph({children:[new TextRun({text:'',font:"Nunito",size:19})]}));
       cardRows.push(new TableRow({children:[ new TableCell({width:{size:totalW,type:WidthType.DXA},borders:BORDER,margins:{top:60,bottom:60,left:110,right:110},children:inner}) ]}));
     });
     if(cardRows.length){
