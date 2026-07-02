@@ -4322,7 +4322,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B14 — justify body + section spacing</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-01·B15 — Vanguard invest why/alternatives</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -7948,7 +7948,7 @@ function renderSpecialDocx(def, ch, K){
       const closeSub=()=>{ if(subOpen){ html+='</ul>'; subOpen=false; } };
       const closeList=()=>{ closeSub(); if(listOpen){ html+='</ul>'; listOpen=false; } };
       lines.forEach(ln=>{
-        if(/^\s*§/.test(ln)){ const body=escapeHtmlV11(ln.replace(/^\s*§\s*/,'').trim()); if(!body) return; closeList(); html+=`<p style="margin:6px 0">${body}</p>`; return; }
+        if(/^\s*§/.test(ln)){ let raw=ln.replace(/^\s*§\s*/,'').trim(); const bm=raw.match(/^\*\*([\s\S]*)\*\*$/); const bold=!!bm; if(bm) raw=bm[1].trim(); const body=escapeHtmlV11(raw); if(!body) return; closeList(); html+=`<p style="margin:6px 0">${bold?'<strong>'+body+'</strong>':body}</p>`; return; }
         const raw=ln.replace(/^\t+/,'').trim(); if(!raw) return; const isSub=/^\t/.test(ln); const body=escapeHtmlV11(raw);
         if(!listOpen){ html+='<ul>'; listOpen=true; }
         if(isSub){ if(!subOpen){ html+='<ul>'; subOpen=true; } html+=`<li>${body}</li>`; }
@@ -8860,7 +8860,7 @@ function renderSpecialDocx(def, ch, K){
       const _fcf=(typeof fill==='function')?fill(c[f]):c[f];
       if(/(^|\n)[\t§]/.test(String(_fcf||''))){
         String(_fcf).split('\n').forEach(ln=>{
-          if(/^\s*§/.test(ln)){ const body=ln.replace(/^\s*§\s*/,'').trim(); if(body) inner.push(new Paragraph({spacing:{before:160,after:80}, children:[new TextRun({text:body, font:"Nunito", size:18, color:"1a1a1a"})]})); return; }
+          if(/^\s*§/.test(ln)){ let body=ln.replace(/^\s*§\s*/,'').trim(); let _bold=false; const _bm=body.match(/^\*\*([\s\S]*)\*\*$/); if(_bm){ body=_bm[1].trim(); _bold=true; } if(body) inner.push(new Paragraph({spacing:{before:160,after:80}, children:[new TextRun({text:body, font:"Nunito", size:18, color:"1a1a1a", bold:_bold})]})); return; }
           const body=ln.replace(/^\t+/,'').trim(); if(!body) return;
           inner.push(new Paragraph({numbering:{reference:"bullets",level:/^\t/.test(ln)?1:0}, spacing:{after:40}, children:[new TextRun({text:body, font:"Nunito", size:18, color:"1a1a1a"})]}));
         });
@@ -9704,6 +9704,8 @@ function renderSpecialDocx(def, ch, K){
 
   window.v100NestAlternatives = function(text){
     if(!text || String(text).indexOf('\n')<0) return text;
+    // Fields that already use the "§ = plain lead paragraph" convention control their own layout — leave them.
+    if(/(^|\n)\s*§/.test(String(text))) return text;
     let mode=0; // 0=off, 1=header just seen (tolerate one blank), 2=collecting items
     return String(text).split('\n').map(ln=>{
       const t=ln.replace(/^\t+/,''); const tt=t.trim();
@@ -13621,6 +13623,21 @@ window.v50AllocGroups = function(){
       if(!(_initN>0) && _monN>0) rows.push(['Total Cost (Based on 12 months projections)', _allocTot>0?M(_allocTot):'$XXX', _gross]);
       // DCA row only when there is an initial lump sum.
       if(_initN>0) rows.push(['Dollar Cost Average/Lump Sum',"XX% of your funds will be lump sum invested and XX% will be Dollar Cost Averaged over XX months.\n\nAs per the Money on the Move framework, for every 5% drop in the market we may bring forward 1 month's Dollar Cost Averaging to ensure your funds are invested as efficiently as possible.\n\nThe above initial and ongoing DCA investment amounts will also be subject to change based on current market valuations and our Money on the Move framework to ensure your funds are invested as effectively as possible.",'']);
+      // Alternative platforms considered (name + gross cost) for the investment "Alternative Products"
+      // wording — mirrors the super alternatives. Excludes the current fund and the recommended platform.
+      try{
+        const byKey=(uniq&&uniq[0]&&uniq[0].byKey)||{};
+        const M2=n=>'$'+Number(n||0).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2});
+        const nmMap=k=>{ const f=byKey[k]||{}; const raw=String(f.name||k);
+          if(/netwealth|wealth accelerator/i.test(raw)||k==='nw') return 'Netwealth Wealth Accelerator Plus';
+          if(/panorama|\bbt\b/i.test(raw)||k==='bt') return 'BT Panorama';
+          if(/colonial|first state|\bcfs\b|edge/i.test(raw)||k==='cfs') return 'CFS Edge';
+          if(/hub\s*24/i.test(raw)||k==='hub24') return 'Hub24';
+          return raw.replace(/[†*]+\s*$/,'').trim(); };
+        const alts=[];
+        (F.wsProvOrder||[]).forEach(k=>{ if(!k||k==='current'||k===recKey) return; const f=byKey[k]; if(!f) return; alts.push({name:nmMap(k), cost:(f.gross!=null?M2(f.gross):'')}); });
+        F.investAltPlatforms=alts;
+      }catch(_){}
       if(B.investplan_prod){ if(!B.investplan_prod.content) B.investplan_prod.content={}; B.investplan_prod.content.rows=rows; B.investplan_prod.active=true; }
       if(B.investplan) B.investplan.active=true;
       // Replacement-implications (investment): recommended column = the new provider's holdings/fee.
@@ -15533,14 +15550,32 @@ function v200ApplyInvestVanguard(){
     + 'We recommend these funds be invested in accordance with your Risk Profile.\n'
     + 'We recommend that you invest the funds into the '+model+'.\n'
     + 'We recommend that the distributions from your investment be reinvested.';
-  c.why = 'The recommended Portfolio aims to track the performance of particular market indices. Index funds are a passive approach to investing and are a cost-effective way to gain exposure to the investment market. They also provide broad diversification to your portfolio, reducing your overall risk.\n'
+  c.why = 'Your funds will be invested in line with your risk profile.\n'
+    + 'You are able to use surplus funds from your cashflow to invest into a low-cost platform with low ongoing investment fees.\n'
+    + 'Investing in an investment fund means you can access a wider range of investments than you would be able to do if you invested directly. This ensures you have a diversified portfolio.\n'
+    + 'The recommended Portfolio aims to track the performance of particular market indices. Index funds are a passive approach to investing and are a cost-effective way to gain exposure to the investment market. They also provide broad diversification to your portfolio, reducing your overall risk.\n'
     + 'The '+model+' provides low-cost access to a range of sector funds, offering broad diversification across multiple asset classes. '+bias+' The portfolio’s long-term asset allocation target is '+def+'% defensive assets and '+grow+'% growth assets. The portfolio manager does not target a particular strategic asset allocation; the long-term asset allocation represents the manager’s indicative expected long-term average asset position.\n'
     + 'The '+model+' seeks to track the weighted average return of the various indices of the underlying funds in which it invests, in proportion to the Strategic Asset Allocation, before taking into account fees, expenses and tax.\n'
     + 'Vanguard funds reduce the tracking error risk of a portfolio by holding most of the index securities very close to their index weights, providing truly diversified market exposure at a lower investment cost than a managed fund.\n'
     + 'The fund’s management approach minimises portfolio turnover so investors can take advantage of available capital gains tax concessions.';
-  c.alternatives = 'I have discounted these products for the following reasons: We completed a price comparison between CFS Edge, BT Panorama, Hub24 and Netwealth Wealth Accelerator Plus. Hub24 was the most cost-effective platform to manage your investment.\n'
-    + 'Investment Fund Investment Options: I considered the following alternatives to the recommended investment options on a like-for-like basis: iShares Enhanced Strategic Aggressive Fund.\n'
-    + 'I have discounted these products for the following reasons: While the recommended '+model+' has higher ongoing management fees than the iShares Enhanced Strategic Aggressive Fund, the iShares manager has yet to demonstrate an ability to consistently add value. The iShares fund would expose your portfolio to fund-manager risk whereas the '+model+' does not. The iShares fund has a limited choice of underlying assets which provide less diversification than the recommended Vanguard fund; further, the target asset allocations for the comparable iShares funds are more defensive than the recommended Vanguard fund, so your investments would be less aligned with your risk profile.';
+  // Alternative Products: platform comparison (costs from WealthSolver) + Investment Fund options (iShares).
+  // "§" = plain lead paragraph; "§**…**" = bold lead; other lines render as dot points.
+  const _alts=(Array.isArray(F.investAltPlatforms)&&F.investAltPlatforms.length)?F.investAltPlatforms
+    :[{name:'CFS Edge',cost:''},{name:'BT Panorama',cost:''},{name:'Netwealth Wealth Accelerator Plus',cost:''}];
+  const _altList=_alts.map(a=>a.name+(a.cost?(' - '+a.cost):'')).join('\n');
+  const _cmp=_alts.map(a=>a.name).concat(['Hub24']);
+  const _cmpStr=_cmp.length>1?(_cmp.slice(0,-1).join(', ')+' and '+_cmp[_cmp.length-1]):(_cmp[0]||'Hub24');
+  c.alternatives = '§I considered the following alternatives to the recommended products on a like for like basis:\n'
+    + (_altList?_altList+'\n':'')
+    + '§I have discounted these products for the following reasons:\n'
+    + 'We completed a price comparison between '+_cmpStr+'. Hub24 was the most cost-effective platform to manage your investment.\n'
+    + '§**Investment Fund Investment Options:**\n'
+    + '§I considered the following alternatives to the recommended investment options on a like for like basis:\n'
+    + 'iShares Enhanced Strategic Aggressive Fund\n'
+    + '§I have discounted these products for the following reasons:\n'
+    + 'While the recommended '+model+' has higher ongoing management fees than the iShares Enhanced Strategic Aggressive Fund, the iShares Manager has yet to demonstrate an ability to consistently add value.\n'
+    + 'The iShares Enhanced Strategic Aggressive Fund would expose your portfolio to fund manager risk whereas, the '+model+' does not.\n'
+    + 'The iShares Fund has a limited choice of underlying assets which provide less diversification than that available with the recommended Vanguard fund. Further, the target asset allocations for the similar available iShares funds are more defensive than the recommended Vanguard fund. This means your investments will be less aligned with your risk profile.';
   // Stamp the platform + recommended model into the product table (WealthSolver fills exact $ figures).
   try{ if(Array.isArray(c.rows)){
     // A Vanguard investment doesn't use the CARE Core/Active/Enhanced/Reserves buckets — drop those
