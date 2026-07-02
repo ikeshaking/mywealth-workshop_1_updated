@@ -4487,7 +4487,7 @@ function renderTopbar(){
   return `<div class="topbar"><div class="topbar-inner">
     <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
     <div class="topbar-tag">SOA Paraplanner</div>
-    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B38 — OnePath OneCare deep quote parser feeds insurance products table</div>
+    <div class="topbar-tag" style="color:var(--lime,#cfe27a);letter-spacing:.5px" title="Build stamp — quote this when reporting an issue so we can confirm you're on the latest download.">BUILD 2026-07-02·B39 — insurer comparison table (recommended/alternate/existing) in insurance products</div>
     <div class="topbar-spacer"></div>
     <span class="topbar-btn" style="cursor:default">${active}/${BLOCK_DEFS.length} sections active</span>
     <button class="topbar-btn ghost" id="undoBtn" onclick="window.undoAction&&undoAction()" title="Undo (Ctrl/⌘+Z)" disabled>↶ Undo</button>
@@ -14397,11 +14397,12 @@ window.v50AllocGroups = function(){
     }
 
     // Recommendation-detail card fields (label band + bullets)
-    const SUBLABEL="5EA6FF"; const cardRows=[];
-    t.cardFields.forEach(([f,label])=>{
+    const SUBLABEL="5EA6FF";
+    // Render one card field (band + content) into `target` rows array.
+    const _pushField=(f,label,target)=>{
       if(!c[f]||!c[f].trim()) return;
-      cardRows.push(new TableRow({children:[ new TableCell({width:{size:totalW,type:WidthType.DXA},borders:BORDER,margins:{top:50,bottom:50,left:110,right:110},
-        shading:{fill:SUBLABEL,type:ShadingType.CLEAR,color:"auto"},children:[new Paragraph({children:[new TextRun({text:label,font:"Nunito",size:19,color:"FFFFFF",bold:true})]})]}) ]}));
+      target.push(new TableRow({children:[ new TableCell({width:{size:totalW,type:WidthType.DXA},borders:BORDER,margins:{top:50,bottom:50,left:110,right:110},
+        shading:{fill:SUBLABEL,type:ShadingType.CLEAR,color:"auto"},children:[new Paragraph({children:[new TextRun({text:label,font:window.BRAND.headingFont,size:19,color:"FFFFFF",bold:true})]})]}) ]}));
       const inner=[]; const ftxt=_fill(c[f]);
       if(/(^|\n)\t/.test(String(ftxt||''))){
         String(ftxt).split('\n').forEach(ln=>{
@@ -14415,13 +14416,48 @@ window.v50AllocGroups = function(){
           (sec.bullets||[]).forEach(b=>inner.push(new Paragraph({numbering:{reference:"bullets",level:0},spacing:{after:40},children:[new TextRun({text:b,font:"Nunito",size:19,color:"1a1a1a"})]}))); });
       }
       if(!inner.length) inner.push(new Paragraph({children:[new TextRun({text:'',font:"Nunito",size:19})]}));
-      cardRows.push(new TableRow({children:[ new TableCell({width:{size:totalW,type:WidthType.DXA},borders:BORDER,margins:{top:60,bottom:60,left:110,right:110},children:inner}) ]}));
-    });
-    if(cardRows.length){
-      // Clear separation between the insurance products table and the Recommendation/Why card.
-      children.push(new Paragraph({spacing:{before:60,after:60},children:[]}));
-      children.push(new Table({columnWidths:[totalW],width:{size:totalW,type:WidthType.DXA},rows:cardRows}));
-    }
+      target.push(new TableRow({children:[ new TableCell({width:{size:totalW,type:WidthType.DXA},borders:BORDER,margins:{top:60,bottom:60,left:110,right:110},children:inner}) ]}));
+    };
+    const _sep=()=>children.push(new Paragraph({spacing:{before:60,after:60},children:[]}));
+    // [H] Insurer comparison table (client | Cost | Comparison to Recommended): the recommended insurer
+    // (total cost from the recommended quote), alternate insurers/premiums (from alternate quotes or the
+    // insurer-comparison / Risk Researcher figures in F.insCompare), then an "Existing Increased" row for
+    // the client's existing insurer that offers cover.
+    const _insCompareTable=()=>{
+      try{
+        const rec=String((typeof recommendedInsurer==='function'?recommendedInsurer():F.recInsurer)||'').trim();
+        if(!rec || rec==='the recommended provider') return null;
+        const nm=_firstNameOf('client');
+        const M=n=>{ const v=Number(String(n==null?'':n).replace(/[^0-9.]/g,'')); return (isFinite(v)&&v>0)?('$'+Math.round(v).toLocaleString('en-AU')):'$XXX'; };
+        const covOrder=['life','tpd','ip','trauma'], covName={life:'Life',tpd:'TPD',ip:'Income Protection',trauma:'Trauma'};
+        const key=r=>(typeof _insCoverKey==='function')?_insCoverKey(r.cover):'';
+        const present=covOrder.filter(k=>(F.insurance||[]).some(r=>r&&key(r)===k));
+        const recCovers=(present.length?present:covOrder).map(k=>covName[k]).join(' / ');
+        let recCost=null;
+        try{ const oc=F.onecare&&(F.onecare.client||F.onecare.partner); if(oc&&oc.annual) recCost=oc.annual; }catch(_){}
+        if(recCost==null){ const cr=(F.insCompare||[]).find(x=>x&&x.insurer&&new RegExp(rec.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(x.insurer)); if(cr&&cr.premium) recCost=cr.premium; }
+        const recN=Number(String(recCost==null?'':recCost).replace(/[^0-9.]/g,''))||0;
+        const W3=[Math.round(totalW*0.5),Math.round(totalW*0.25),totalW-Math.round(totalW*0.5)-Math.round(totalW*0.25)];
+        const rows=[ new TableRow({tableHeader:true,children:[ oneCell(nm,{w:W3[0],shade:NY,header:true,bold:true,align:L}), oneCell('Cost',{w:W3[1],shade:NY,header:true,bold:true,align:C}), oneCell('Comparison to Recommended',{w:W3[2],shade:NY,header:true,bold:true,align:C}) ]}) ];
+        const addRow=(label,covers,costN,cmp)=> rows.push(new TableRow({children:[ multiCell([label,covers],{w:W3[0],shade:TL,align:L}), oneCell(costN?M(costN):'$XXX',{w:W3[1],shade:TL,align:C}), oneCell(cmp,{w:W3[2],shade:TL,align:C}) ]}));
+        addRow(rec+' (Recommended)', recCovers, recN, '-');
+        (F.insCompare||[]).forEach(x=>{ if(!x||!x.insurer) return; if(new RegExp(rec.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(x.insurer)) return;
+          const altN=Number(String(x.premium||'').replace(/[^0-9.]/g,''))||0; addRow(x.insurer+' (Alternate)', recCovers, altN, (altN&&recN)?M(altN-recN):'$XXX'); });
+        const ef=F.insExistingFund||''; if(ef){ const en=String(F.insExistingNotes||'');
+          const ec=covOrder.filter(k=> new RegExp(k==='ip'?'income protection|\\bip\\b':k,'i').test(en));
+          const existCovers=(ec.length?ec:['life','tpd','ip']).map(k=>covName[k]).join(' / ');
+          addRow(ef+' (Existing Increased)', existCovers, 0, '$XXX'); }
+        return new Table({columnWidths:W3,width:{size:totalW,type:WidthType.DXA},rows:rows});
+      }catch(_){ return null; }
+    };
+    // Why + Risks card first…
+    { const cardRows=[]; t.cardFields.forEach(([f,label])=>{ if(f==='alternatives') return; _pushField(f,label,cardRows); });
+      if(cardRows.length){ _sep(); children.push(new Table({columnWidths:[totalW],width:{size:totalW,type:WidthType.DXA},rows:cardRows})); } }
+    // …then the insurer comparison table…
+    { const cmp=_insCompareTable(); if(cmp){ _sep(); children.push(cmp); } }
+    // …then the Alternative Products card.
+    { const altRows=[]; const af=(t.cardFields||[]).find(x=>x[0]==='alternatives'); if(af) _pushField('alternatives',af[1],altRows);
+      if(altRows.length){ _sep(); children.push(new Table({columnWidths:[totalW],width:{size:totalW,type:WidthType.DXA},rows:altRows})); } }
 
     return children;
   };
