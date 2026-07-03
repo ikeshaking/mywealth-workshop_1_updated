@@ -246,6 +246,12 @@ export with literal bracketed placeholders (yellow-highlighted, but still manual
 ## 7. Recommended amendments (priority order)
 
 **P1 — must fix before relying on it for all client scenarios**
+> **STATUS: implemented in `SOA_Generator_v190_37.html` (this repo).** All six P1 items below are
+> done, plus two supporting fixes: the different-client detector now compares only the name
+> components both sides have (an AR with just "Rob" no longer forces a clean import when the
+> fact-find says "Rob Smith"), and the `csClientType`/`isExistingClient` flags are synced when the
+> AR states client status. Verified with a 36-check headless-browser test driving the real import
+> pipeline (advice request → tolerant matching → fact-find layering → paste box → legacy path).
 1. Preserve advice-request state across fact-find imports: move all v200-written fields into one
    namespace (e.g. `F._ar = {…}`) and add it to `importProjectorJSON`'s preserve lists; make
    `v200StripSeamless` and the MCMA/TPD render-time normalisers non-destructive (recompute from
