@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SOA Generation Toolchain — Audit Report &amp; Controls Register</title>
+<style>
+  :root{
+    --navy:#0C2E3F; --blue:#1F5C7A; --blue-light:#EAF2F6; --accent:#C9A227;
+    --text:#1a2733; --muted:#5b6b78; --border:#d8e0e6; --soft:#f5f8fa;
+    --good:#1e7d4f; --warn:#a86500; --bad:#b03030;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Georgia,'Times New Roman',serif;color:var(--text);background:#fff;line-height:1.55;font-size:15px}
+  .band{background:var(--navy);color:#fff;padding:38px 0 30px}
+  .band .inner{max-width:960px;margin:0 auto;padding:0 28px}
+  .band h1{font-size:30px;margin:0 0 6px;font-weight:700;letter-spacing:.2px}
+  .band .sub{color:#b9cdd8;font-size:15px}
+  .band .meta{margin-top:14px;font-size:13px;color:#8fb0c0;font-family:Arial,Helvetica,sans-serif}
+  main{max-width:960px;margin:0 auto;padding:26px 28px 80px}
+  h2{font-size:21px;color:var(--navy);border-bottom:2px solid var(--accent);padding-bottom:6px;margin:44px 0 14px}
+  h3{font-size:16px;color:var(--blue);margin:26px 0 8px}
+  p{margin:9px 0}
+  .lede{font-size:16.5px;color:#31424f}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-family:Arial,Helvetica,sans-serif;font-size:12.8px}
+  th{background:var(--navy);color:#fff;text-align:left;padding:8px 10px;font-weight:700;vertical-align:top}
+  td{border:1px solid var(--border);padding:7px 10px;vertical-align:top}
+  tr:nth-child(even) td{background:var(--soft)}
+  .tag{display:inline-block;font-family:Arial,Helvetica,sans-serif;font-size:10.5px;font-weight:700;letter-spacing:.4px;padding:2px 7px;border-radius:9px;white-space:nowrap}
+  .t-auto{background:#e3f2e9;color:var(--good)}
+  .t-flag{background:#fdf3e0;color:var(--warn)}
+  .t-human{background:#e8eef8;color:#27508f}
+  .box{background:var(--blue-light);border-left:4px solid var(--blue);padding:12px 16px;margin:16px 0;font-size:14.5px}
+  .box.warn{background:#fdf6e8;border-left-color:var(--accent)}
+  .flow{font-family:Arial,Helvetica,sans-serif;margin:18px 0}
+  .flow .step{display:flex;gap:14px;margin:0}
+  .flow .n{flex:0 0 34px;height:34px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+  .flow .rail{flex:0 0 34px;display:flex;justify-content:center}
+  .flow .rail span{width:2px;background:var(--border);flex:1}
+  .flow .body{padding:0 0 22px}
+  .flow .t{font-weight:700;font-size:14.5px;color:var(--navy)}
+  .flow .d{font-size:13.3px;color:var(--muted);margin-top:2px}
+  code{font-family:Consolas,Menlo,monospace;font-size:12.5px;background:var(--soft);border:1px solid var(--border);padding:1px 5px;border-radius:4px}
+  .sig{margin-top:18px;border:1px solid var(--border);border-radius:8px;padding:18px 22px;font-family:Arial,Helvetica,sans-serif;font-size:13.5px}
+  .sig .row{display:flex;gap:30px;margin-top:26px}
+  .sig .cell{flex:1;border-top:1px solid var(--text);padding-top:6px;color:var(--muted)}
+  ul{margin:8px 0 8px 22px;padding:0}
+  li{margin:4px 0}
+  .toc{background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:14px 20px;font-family:Arial,Helvetica,sans-serif;font-size:13.5px;column-count:2;column-gap:36px}
+  .toc a{color:var(--blue);text-decoration:none;display:block;padding:2.5px 0}
+  .toc a:hover{text-decoration:underline}
+  @media print{ .band{-webkit-print-color-adjust:exact;print-color-adjust:exact} h2{page-break-after:avoid} table{page-break-inside:auto} tr{page-break-inside:avoid} }
+  @media (max-width:700px){ .toc{column-count:1} .sig .row{flex-direction:column;gap:34px} }
+</style>
+</head>
+<body>
+
+<div class="band"><div class="inner">
+  <h1>SOA Generation Toolchain — Audit Report</h1>
+  <div class="sub">Logic, architecture and controls register: Advice Request Builder → Word Bank → SOA Generator</div>
+  <div class="meta">My Wealth Solutions &nbsp;·&nbsp; Prepared 4 July 2026 &nbsp;·&nbsp; Covers: MWS_Advice_Request_Builder_40.html, SOA_Words_MasterList (163 modules), SOA_Generator_v190_38.html &nbsp;·&nbsp; Rev. v190_38 (Robinson reviewer-comment fixes) &nbsp;·&nbsp; For director review and approval</div>
+</div></div>
+
+<main>
+
+<div class="toc">
+  <a href="#s1">1. Executive summary</a>
+  <a href="#s2">2. What the toolchain is (and is not)</a>
+  <a href="#s3">3. System components</a>
+  <a href="#s4">4. End-to-end data flow</a>
+  <a href="#s5">5. The word-bank concept</a>
+  <a href="#s6">6. Controls register</a>
+  <a href="#s7">7. Parameters considered per SOA</a>
+  <a href="#s8">8. Verification &amp; testing</a>
+  <a href="#s9">9. Known limitations &amp; human checkpoints</a>
+  <a href="#s10">10. Change management</a>
+  <a href="#s11">11. Approval</a>
+</div>
+
+<h2 id="s1">1. Executive summary</h2>
+<p class="lede">The SOA generation toolchain converts an adviser's structured Advice Request, plus the client's supporting documents, into a draft Statement of Advice in the firm's house style. It exists to make SOA production <strong>faster, more consistent and more complete</strong> — every recommendation the firm makes routinely arrives with its approved recommendation wording, "why this benefits you" reasoning, risks, and alternatives considered, drawn from a single reviewed word bank rather than re-typed (and re-varied) for each file.</p>
+<p>Three design principles run through the whole system:</p>
+<ul>
+  <li><strong>One source of truth for wording.</strong> All tailored wording lives in the Words Masterlist (163 modules). The Advice Request Builder's 118 strategy ticks map 1:1 onto it — verified programmatically, currently zero unmapped ticks — so nothing an adviser can request will silently arrive without approved wording.</li>
+  <li><strong>Fail loudly, never silently.</strong> Anything the system cannot confidently resolve is either surfaced in a post-import "still needs your attention" report, or left in the document as an unmissable placeholder (<code>$XXX</code>, yellow-highlighted bracket choices). The system never guesses between two plausible matches.</li>
+  <li><strong>Human in the loop.</strong> The output is a <em>draft</em>. The adviser/paraplanner confirms every file mapping before import, resolves every flagged gap, and reviews the document before it goes near a client. The tool standardises wording and assembly; it does not determine whether advice is appropriate.</li>
+</ul>
+
+<h2 id="s2">2. What the toolchain is (and is not)</h2>
+<table>
+  <tr><th style="width:50%">The toolchain DOES</th><th>The toolchain does NOT</th></tr>
+  <tr><td>Assemble the SOA skeleton for the scenario: single / couple / entity, new / existing client, accumulation / retirement</td><td>Decide whether a strategy is appropriate for the client — that is the adviser's professional judgement, recorded in the Advice Request</td></tr>
+  <tr><td>Insert the firm's approved recommendation / why / risks / alternatives wording for each ticked strategy</td><td>Produce advice projections — figures come from the Wealth Projector, WealthSolver, insurer quotes and data collection sheets</td></tr>
+  <tr><td>Read supporting documents (quotes, CARE docs, WealthSolver, Risk Researcher, data collection, commission reports) and route each to the right client and the right table</td><td>Approve its own output — export is a draft for paraplanning review and adviser sign-off</td></tr>
+  <tr><td>Compute derived presentation figures (fee tables, premium comparisons, cost increase/decrease lines) from imported data</td><td>Replace the compliance review — the standard SOA review process applies unchanged</td></tr>
+  <tr><td>Flag every gap, unmatched item and conflict it detects</td><td>Send, file or lodge anything — output is a local Word document</td></tr>
+</table>
+
+<h2 id="s3">3. System components</h2>
+<h3>3.1 Advice Request Builder (<code>MWS_Advice_Request_Builder_40.html</code>)</h3>
+<p>A single-file web form the adviser completes after the strategy meeting. It captures: SOA type (accumulation / retirement), client(s) and adviser, new / existing status, entities (SMSF / company / trust), the "Hi team" narrative, risk profile per client (and per entity), scope in / scope out per advice area, the strategy ticks (118 across 8 advice areas, each with the firm's default recommendation line and any dollar/percentage slots), product selections (super platform, recommended insurer per client), and the fee matrix. It exports the Advice Request as <strong>JSON</strong> (machine-readable, the generator's source of truth) and as a Word document (the human-readable paraplanning request).</p>
+<h3>3.2 Words Masterlist (<code>SOA_Words_MasterList.json</code> / <code>.docx</code>)</h3>
+<p>The firm's tailored-wording register: <strong>163 modules</strong>, of which <strong>148 are linked to builder ticks</strong> and 15 are standing rules (openers, scope wording, CARE philosophy justifications). Each module holds the trigger (tick name), keyword trigger phrases, mode and scope gate, and the SOA wording: recommendation line, why, risks, alternatives, outcome. The Word version is generated from the JSON, so the two cannot drift. Section 5 covers how it is matched and edited.</p>
+<h3>3.3 SOA Generator (<code>SOA_Generator_v190_37.html</code>)</h3>
+<p>A single-file web application (runs locally in a browser; no server, no data leaves the machine). It holds the SOA as 36 sections ("blocks"), each with standard wording plus the tailored content written in by imports. Its <em>smart drop</em> accepts any batch of files, classifies each, routes it to the right client, and applies everything in a fixed, safe order. A live preview mirrors the Word output; export produces the .docx via the embedded docx library.</p>
+
+<h2 id="s4">4. End-to-end data flow</h2>
+<div class="flow">
+  <div class="step"><div class="n">1</div><div class="body"><div class="t">Adviser completes the Advice Request Builder</div><div class="d">Ticks strategies, sets scope, risk profiles, products, fees and entities. Downloads the Advice Request JSON (+ Word copy for the file).</div></div></div>
+  <div class="step"><div class="rail"><span></span></div><div class="body"></div></div>
+  <div class="step"><div class="n">2</div><div class="body"><div class="t">Paraplanner gathers the supporting documents</div><div class="d">Wealth Projector fact-find JSON, data collection sheets (Excel/PDF), CARE portfolio doc, WealthSolver comparison, Risk Researcher, insurer quotes, existing-cover quote, commission reports.</div></div></div>
+  <div class="step"><div class="rail"><span></span></div><div class="body"></div></div>
+  <div class="step"><div class="n">3</div><div class="body"><div class="t">Everything is dropped onto the generator in one batch</div><div class="d">Each file is read and classified; client/partner routing is proposed from document content and filename. The paraplanner confirms the mapping in the smart-drop modal before anything is applied.</div></div></div>
+  <div class="step"><div class="rail"><span></span></div><div class="body"></div></div>
+  <div class="step"><div class="n">4</div><div class="body"><div class="t">Deterministic apply pipeline</div><div class="d">Regardless of drop order, files apply as: word bank → fact-find JSON → Advice Request → data collection → CARE → WealthSolver → Risk Researcher → insurer quotes → existing-cover quote → commissions. Identity loads before per-person documents; premiums exist before commission maths.</div></div></div>
+  <div class="step"><div class="rail"><span></span></div><div class="body"></div></div>
+  <div class="step"><div class="n">5</div><div class="body"><div class="t">Advice Request drives the word bank</div><div class="d">Each strategy tick is looked up in the word bank (exact key → normalised → unique containment; never a guess between two candidates). Matched modules write the recommendation / why / risks / alternatives into the right SOA section; scope flags activate sections; framing items set new/existing-client wording; entities activate the entity section. Every miss is recorded and reported.</div></div></div>
+  <div class="step"><div class="rail"><span></span></div><div class="body"></div></div>
+  <div class="step"><div class="n">6</div><div class="body"><div class="t">Gap &amp; conflict reporting, then human editing</div><div class="d">The import summary lists what applied, what was skipped, importer warnings, unmatched strategies and empty key figures. A conflicts panel flags scope-vs-projector mismatches. The paraplanner edits any section directly; unresolved figures remain as $XXX / yellow placeholders that cannot be missed.</div></div></div>
+  <div class="step"><div class="rail"><span></span></div><div class="body"></div></div>
+  <div class="step"><div class="n">7</div><div class="body"><div class="t">Render safety nets, then Word export</div><div class="d">On every render and again at export: scaffolding stripped, template conditionals resolved for the scenario, per-person tables built for couples, duplicate rows/lines de-duplicated, product defaults applied, cost lines computed from the replacement tables, token backfills. The exported .docx matches the live preview.</div></div></div>
+</div>
+
+<h2 id="s5">5. The word-bank concept</h2>
+<p>Every module is keyed <code>"Area::Strategy name"</code> (e.g. <code>"4 · Investment Plan::Add a reserves portfolio"</code>) and carries five wording fields:</p>
+<table>
+  <tr><th style="width:170px">Field</th><th>Lands in the SOA as</th></tr>
+  <tr><td><code>strat</code></td><td>The recommendation bullet(s) in the strategy table — dollar slots filled from the builder's amounts, per-person expansion for couples where the strategy is per-person</td></tr>
+  <tr><td><code>why</code></td><td>"Why this benefits you" list — de-duplicated across modules landing in the same section</td></tr>
+  <tr><td><code>risks</code></td><td>The section's risk list — de-duplicated</td></tr>
+  <tr><td><code>alts</code></td><td>"Alternatives considered" — including why each was discounted</td></tr>
+  <tr><td><code>outcome</code></td><td>Summary — Outcomes line where applicable</td></tr>
+</table>
+<p><strong>Matching is tolerant but never speculative.</strong> A tick is matched to a module by exact key first; failing that, by a normalised form that ignores case, separators, punctuation and area numbering; failing that, by containment — but only if exactly <em>one</em> candidate contains (or is contained by) the tick name. Two plausible candidates = no match = a recorded miss, reported to the paraplanner. A missed tick still lands in the SOA as its builder default text, so nothing the adviser requested disappears — it just arrives without the why/risks/alternatives, and flagged.</p>
+<p><strong>Coverage is complete and provable.</strong> A three-way reconciliation (builder ticks ↔ word bank ↔ masterlist) is part of the release checks: all 118 builder ticks currently resolve, and the bank and masterlist are identical at 163 modules in both directions.</p>
+<p><strong>The wording is editable without touching the tools.</strong> Dropping an edited <code>SOA_Words_MasterList.json</code> onto the generator replaces its live word bank (adds, rewordings <em>and removals</em> take effect, with counts reported). Dropping a small fragment keyed <code>"Area::Name"</code> merges — for adding or rewording individual modules. The masterlist Word document is generated from the JSON, so the readable register always matches what the tools actually use.</p>
+<div class="box">This is the compliance heart of the system: the wording clients receive is not whatever a paraplanner typed that day — it is the reviewed register, applied mechanically, with every exception flagged.</div>
+
+<h2 id="s6">6. Controls register</h2>
+<p>Legend: <span class="tag t-auto">AUTOMATIC</span> enforced by code on every run · <span class="tag t-flag">FLAG</span> automatic detection, human resolves · <span class="tag t-human">HUMAN</span> procedural checkpoint.</p>
+
+<h3>6.1 Input &amp; import controls</h3>
+<table>
+  <tr><th style="width:26%">Control</th><th>What it protects against</th><th style="width:13%">Type</th></tr>
+  <tr><td>File classification with confirmation modal — every file's detected type and client routing is shown and must be confirmed before anything applies</td><td>A misread document silently applied as the wrong type or to the wrong client</td><td><span class="tag t-human">HUMAN</span></td></tr>
+  <tr><td>Unrecognised file types default to "skip" and are listed in the completion report</td><td>Unknown content contaminating the SOA</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Advice Request JSON validation — a file labelled Advice Request that doesn't parse, or lacks <code>strategies[]</code>/<code>scopeIn[]</code>, errors loudly instead of falling through to the fact-find importer</td><td>A bad file silently resetting the whole SOA state while reporting success</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Word-bank shape detection — a masterlist JSON is recognised structurally and can never reach the fact-find importer, even if mislabelled</td><td>A wording file wiping client data</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Deterministic apply order (identity → advice request → supporting data → quotes → commissions), stable within type</td><td>Different results depending on the order files were dropped or selected</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Batch name pre-peek: client/partner names are read from any JSON in the batch <em>before</em> other files are classified</td><td>Per-person documents unroutable because identity arrived in the same batch</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Three-stage person resolution: document content names → filename surname/initial → re-resolution at apply time; if still ambiguous, the paraplanner is asked explicitly</td><td>Client 1's quote applied to Client 2</td><td><span class="tag t-flag">FLAG</span></td></tr>
+  <tr><td>Advice-request state preservation — everything the Advice Request writes (SOA type, fees, risk profiles, scope-outs, TPD basis, DCA flags, entity details…) survives a later fact-find import</td><td>Import order flipping the source of truth</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Importer warnings captured during batch and surfaced in the completion report (deduplicated)</td><td>A quote that parsed to nothing still reporting success</td><td><span class="tag t-flag">FLAG</span></td></tr>
+</table>
+
+<h3>6.2 Wording &amp; matching controls</h3>
+<table>
+  <tr><th style="width:26%">Control</th><th>What it protects against</th><th style="width:13%">Type</th></tr>
+  <tr><td>Word-bank matching: exact → normalised → unique containment; ambiguous = no match, recorded</td><td>Attaching the wrong module's why/risks to a strategy</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Every unmatched strategy, area or framing item recorded and shown in the post-import attention list</td><td>A requested strategy quietly missing its approved wording</td><td><span class="tag t-flag">FLAG</span></td></tr>
+  <tr><td>Free-text strategies normalised into house-style sentences where the pattern is known; otherwise passed through verbatim for editing</td><td>Raw builder notes appearing as SOA prose</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Why / risks / alternatives de-duplicated within each section; re-imports and re-applies are idempotent (adviser paragraphs, entity wording, association text)</td><td>Doubled paragraphs after a second import</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Scenario-conditional template markers resolved at render (retirement vs accumulation lines, CARE vs Vanguard, platform either/or wording, trust-only lines, testamentary-trust wording)</td><td>Template scaffolding or the wrong scenario's sentence reaching the client</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Gearing SOAs: the firm's authoritative debt wording (full 14-risk set, reordered why, loan-limit table) overrides word-bank debt wording last</td><td>Diluted gearing risk disclosure</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>New/existing-client flags kept in sync across the opener, risk-profile review sentence and scope wording</td><td>An internally inconsistent SOA (new-client opener with existing-client risk wording)</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+</table>
+
+<h3>6.3 Figures &amp; table controls</h3>
+<table>
+  <tr><th style="width:26%">Control</th><th>What it protects against</th><th style="width:13%">Type</th></tr>
+  <tr><td>Unresolved figures render as <code>$XXX</code>; unresolved wording choices as yellow-highlighted brackets — both unmissable in preview and export</td><td>A blank or wrong figure slipping through unnoticed</td><td><span class="tag t-flag">FLAG</span></td></tr>
+  <tr><td>Post-import gap report lists every key figure that came through empty (super balances, premiums, fees…)</td><td>Re-checking the whole document to find what's missing</td><td><span class="tag t-flag">FLAG</span></td></tr>
+  <tr><td>Data-conflicts panel: scope vs Wealth Projector modelling mismatches shown with severity until resolved</td><td>Advising on areas the projections don't model (or vice versa)</td><td><span class="tag t-flag">FLAG</span></td></tr>
+  <tr><td>Couples: product, replacement, comparison and asset-allocation tables are built per person; each client's quotes populate their own rows; a missing Client 2 is impossible to miss because their band is absent</td><td>Client 2's products/costs silently dropped</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Recommended insurer comes from the Advice Request (authoritative), not inferred from whichever insurer appears on cover rows; comparison premiums computed per person from that client's own research list, cheaper alternatives shown in brackets</td><td>The wrong insurer presented as recommended; manual comparison arithmetic</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Super cost increase/decrease line computed from the replacement table's own totals, per person, with the correct "Despite the increase… / In addition to the decrease…" template variant selected; left untouched (and flagged) when not computable</td><td>A cost line contradicting the table beside it</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Fee matrix aggregation re-derives dollar values from flat + percentage-of-balance definitions (monthly→annual) and rebuilds the remuneration tables after the advice request lands</td><td>Fee tables left as blank "$" placeholders</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Duplicate insurance rows de-duplicated ahead of table fill; super accounts upserted by fund name so data collection supplements rather than clobbers the fact-find</td><td>Double rows; a rundown wiping imported balances</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+</table>
+
+<h3>6.4 Compliance-block controls</h3>
+<table>
+  <tr><th style="width:26%">Control</th><th>What it protects against</th><th style="width:13%">Type</th></tr>
+  <tr><td>Authority to Proceed built per scenario: election checkboxes, one signature block per client, entity signer when applicable, adviser + secondary adviser + insurance-specialist declarations and signatures</td><td>A couple or dual-adviser SOA exporting a single-signer ATP</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Adviser association wording built per adviser, idempotently; director paragraphs excluded</td><td>Wrong or duplicated employee/authorisation declarations</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Annexure references normalised (annexures are produced as a separate document by decision)</td><td>References to annexure sections that no longer exist</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Standard disclaimers, tax-advice wording and remuneration disclosure ship in the prose library and are always present for active sections</td><td>Missing boilerplate disclosure</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+</table>
+
+<h3>6.5 Output &amp; session controls</h3>
+<table>
+  <tr><th style="width:26%">Control</th><th>What it protects against</th><th style="width:13%">Type</th></tr>
+  <tr><td>Live preview and Word export run the same safety-net pipeline — what you see is what exports</td><td>Preview/export divergence</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Undo/redo and auto-save; Reset requires explicit confirmation</td><td>Accidental loss of a working session</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Runs entirely locally in the browser — no server, no upload; client data never leaves the machine</td><td>Data leaving the firm's control</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Paraplanner review of the full draft, then standard adviser sign-off and compliance review</td><td>Any residual error reaching a client</td><td><span class="tag t-human">HUMAN</span></td></tr>
+</table>
+
+<h2 id="s7">7. Parameters considered per SOA</h2>
+<p>These are the scenario switches the toolchain reads and acts on. Together they define which sections appear, which wording variants are used, and how tables are laid out.</p>
+<table>
+  <tr><th style="width:24%">Parameter</th><th style="width:30%">Values</th><th>Effect</th></tr>
+  <tr><td>SOA type</td><td>Wealth accumulation / Retirement</td><td>Goal set, summaries, projected-outcome wording, pension/transfer lines; budgeting goal removed for retirement</td></tr>
+  <tr><td>Client type</td><td>Single / Couple / Entity</td><td>Per-person vs single tables, pronouns and name tokens, signature blocks, document routing slots</td></tr>
+  <tr><td>Client status</td><td>New / Existing</td><td>Introduction &amp; Current Situation opener, risk-profile "remains appropriate" wording, reference-by-incorporation of prior SOAs</td></tr>
+  <tr><td>Entities</td><td>SMSF (corporate/individual trustee), Company, Bucket company, Family/discretionary trust</td><td>Entity details captured for cover/signatures; Entity Strategies section with named company/trust wording; SMSF wording carried by the super area</td></tr>
+  <tr><td>Scope in / out</td><td>Per advice area</td><td>Sections activated/deactivated; scoped-out areas listed with reasons in Scope of our Advice</td></tr>
+  <tr><td>Risk profile (per client, per entity)</td><td>Profile + optional bump (e.g. Growth → High Growth)</td><td>Risk Profile section wording, bump explanation, target profile used in investment wording</td></tr>
+  <tr><td>Gearing scoped</td><td>Yes / No</td><td>Firm's authoritative gearing wording, 14-item risk set, loan-limit table</td></tr>
+  <tr><td>Investment approach</td><td>CARE / Vanguard (index) / platform choice</td><td>Product cards, philosophy justification, MER/cost wording, platform either/or resolution</td></tr>
+  <tr><td>Super approach &amp; funding</td><td>Rollover full/partial, retain minimum balance, lump sum, DCA %-split, MOTM overlay, CGT-in-super</td><td>Rollover wording, replacement tables, contribution lines (contributions render combined inside the Superannuation section, not as a separate section), DCA/MOTM paragraphs, CGT caution</td></tr>
+  <tr><td>Insurance structure</td><td>Recommended insurer per client, cover set, stepped/level, TPD own/any/non-occ/homemaker, employer-paid retain/top-up, IP CPI availability, pre-assessment factors</td><td>Product &amp; replacement tables per person, insurer comparison tables, TPD definition wording, employer-cover wording, pre-assessment disclosure</td></tr>
+  <tr><td>Fees</td><td>Commitment fee, advice &amp; implementation (super/cashflow), ongoing (super/MCMA), % or flat</td><td>Remuneration tables, ongoing-service wording, fee-change lines for existing clients</td></tr>
+  <tr><td>Existing products</td><td>Super accounts, existing covers &amp; premiums, existing platform costs</td><td>Replacement/comparison tables, "existing increased" rows, cost delta lines</td></tr>
+</table>
+
+<h2 id="s8">8. Verification &amp; testing</h2>
+<ul>
+  <li><strong>Automated regression:</strong> 12 headless-browser test suites (~180 individual checks) covering import classification and routing, couple rendering across all four table families, CARE single- and two-document workflows, insurer comparison maths, drag-and-drop order independence, the ATP compliance block, word-bank matching and editability, entity consumption, and the render safety nets. All suites pass on the shipped build; they run against the actual HTML file, not a mock.</li>
+  <li><strong>Exemplar parity:</strong> output structure and wording verified against six real SOAs spanning the scenario matrix — two accumulation couples, a couple + SMSF entity, a dual-adviser couple, a single existing client, and a dual-adviser single.</li>
+  <li><strong>Reviewer-comment cycle:</strong> 65 annotated comments across three reviewed drafts were individually triaged, fixed and re-verified with targeted automated checks.</li>
+  <li><strong>Coverage reconciliation:</strong> builder ticks ↔ word bank ↔ masterlist checked programmatically in both directions; currently 118/118 ticks resolve and 163 = 163 modules.</li>
+</ul>
+
+<h2 id="s9">9. Known limitations &amp; human checkpoints</h2>
+<ul>
+  <li>The tool assembles and standardises; it does not assess suitability. The Advice Request remains the adviser's professional determination.</li>
+  <li>Figures are only as good as the source documents. A wrong balance in the fact-find flows through — the gap report catches <em>missing</em> figures, not <em>incorrect</em> ones.</li>
+  <li>Free-text strategies (custom recommendations outside the 118 ticks) arrive without why/risks/alternatives and are flagged for manual completion. If a custom strategy becomes routine, add it to the masterlist (Section 10).</li>
+  <li>Scanned/image-only PDFs cannot be read; the paraplanner keys those figures manually and the gap report will show what's missing.</li>
+  <li>Multi-entity structures beyond one advice entity render the first entity's details in the entity fields; additional entities' wording lands in the Entity Strategies section but complex multi-entity covers remain a manual layout task.</li>
+  <li>Annexures are deliberately out of scope and produced separately.</li>
+</ul>
+<div class="box warn"><strong>Mandatory checkpoints before an SOA leaves paraplanning:</strong> (1) the smart-drop completion report shows no unresolved skips or warnings; (2) the attention list is empty; (3) no <code>$XXX</code> or yellow-bracket placeholder remains; (4) the conflicts panel is clear; (5) full read-through of the draft. These are procedural — the tool surfaces them but people close them.</div>
+
+<h2 id="s10">10. Change management</h2>
+<ul>
+  <li><strong>Wording changes</strong> are made in <code>SOA_Words_MasterList.json</code> (directly, or by updating the Word register and mirroring to JSON), reviewed like any advice-wording change, then dropped onto the generator — which reports exactly how many modules were added, updated and removed. No code changes, no redeployment.</li>
+  <li><strong>New builder ticks</strong> require a matching masterlist module (same area and name). The three-way reconciliation check (builder ↔ bank ↔ masterlist) is the release gate: zero unmatched ticks before a builder version ships.</li>
+  <li><strong>Tool versions</strong> are single files with version-stamped names; superseded versions are retained. The automated suites are the regression gate for any generator change.</li>
+</ul>
+
+<h2 id="s11">11. Approval</h2>
+<p>This report describes the toolchain's mechanics, controls and verification as at 4 July 2026. It is presented to the directors for approval of the toolchain for production use in SOA preparation, subject to the human checkpoints in Section 9 remaining part of the standard paraplanning procedure.</p>
+<div class="sig">
+  <strong>Director approval — SOA generation toolchain</strong>
+  <div class="row"><div class="cell">Director name</div><div class="cell">Signature</div><div class="cell">Date</div></div>
+  <div class="row"><div class="cell">Director name</div><div class="cell">Signature</div><div class="cell">Date</div></div>
+</div>
+
+</main>
+</body>
+</html>
