@@ -4,7 +4,8 @@
   "syncedWith": "MWS_Advice_Request_Builder_40.html",
   "totalModules": 163,
   "builderLinkedModules": 148,
-  "lastSynced": "2026-07-04"
+  "lastSynced": "2026-07-04",
+  "syncNote": "Retain-minimum module reworded per Robinson reviewer (IK31/IK32/IK37): strat = retain line + tab-indented super-guarantee sub-note; non-standard why bullet removed; alternatives = exemplar rolled-over-all wording."
  },
  "areas": [
   {
@@ -1443,11 +1444,9 @@
      "scopeGate": "Super scoped (partial)",
      "figures": "{retainMin}",
      "soa": {
-      "strategiesLine": "[Name], we recommend you retain the minimum required ($XXX) in your existing [Fund] to retain your underwritten [Life & TPD] insurance and transfer the remaining balance to a new fund that has been customised for your needs. [Name], we recommend that you continue to direct your super guarantee to your existing [Fund] account and we recommend making annual partial rollovers to your new fund.",
+      "strategiesLine": "[Name], we recommend you retain the minimum required ($XXX) in your existing [Fund] to retain your underwritten [Life & TPD] insurance and transfer the remaining balance to a new fund that has been customised for your needs.\n\t[Name], we recommend that you continue to direct your super guarantee to your existing [Fund] account and we recommend making annual partial rollovers to your new fund.",
       "outcomesLine": "Retaining your existing fund allows you to keep your underwritten insurance cover while moving the balance to a professionally managed fund.",
-      "why": [
-       "Access to investment funds, ASX listed shares, cash and TDs, and ease of administration through consolidated reporting."
-      ],
+      "why": [],
       "risks": [
        "By maintaining two superannuation accounts you will incur a duplication of fees and increased administration effort to maintain your multiple accounts.",
        "You will experience market volatility. There may be transaction costs involved in establishing the strategy.",
@@ -1455,7 +1454,7 @@
        "Do not cancel the old fund's cover until the new cover is confirmed in place — if the new application is declined or modified, the old cover cannot be reinstated."
       ],
       "alternatives": [
-       "[Name], we considered rolling over all of the balance and not retaining the existing insurance cover within super. I have discounted this strategy in order to maintain your insurance cover held within your existing super account."
+       "We considered closing your existing super accounts and rolling over 100% of the balance to a new fund, however we discounted this strategy in order to maintain your insurance cover held within your existing super account."
       ]
      }
     },

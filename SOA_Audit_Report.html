@@ -151,6 +151,8 @@
   <tr><td>Three-stage person resolution: document content names → filename surname/initial → re-resolution at apply time; if still ambiguous, the paraplanner is asked explicitly</td><td>Client 1's quote applied to Client 2</td><td><span class="tag t-flag">FLAG</span></td></tr>
   <tr><td>Advice-request state preservation — everything the Advice Request writes (SOA type, fees, risk profiles, scope-outs, TPD basis, DCA flags, entity details…) survives a later fact-find import</td><td>Import order flipping the source of truth</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
   <tr><td>Importer warnings captured during batch and surfaced in the completion report (deduplicated)</td><td>A quote that parsed to nothing still reporting success</td><td><span class="tag t-flag">FLAG</span></td></tr>
+  <tr><td>Quote role routing — a quote file named "…Rec…" applies as the recommended insurer (cover rows + product table); one named "…Alt…" only feeds the insurer-comparison list and can never overwrite the recommended insurer or cover rows</td><td>An alternate quote silently replacing the recommended insurer's covers and premiums</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
+  <tr><td>Insurance commissions estimated strictly per person from that person's own recommended quote (parsed syndicate rates, e.g. 66%/22%); a client without their own quote keeps the flagged "$" placeholder</td><td>One client's commission dollars presented as the other's</td><td><span class="tag t-auto">AUTOMATIC</span></td></tr>
 </table>
 
 <h3>6.2 Wording &amp; matching controls</h3>
