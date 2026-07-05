@@ -204,6 +204,7 @@ table.fee td.rowtot,table.fee tr.tot td{background:var(--blue-light);font-weight
  <div class="topbar-tag">Advice Request Builder</div>
  <div class="topbar-spacer"></div>
  <button class="topbar-btn ghost" onclick="toggleTheme()" id="themeBtn">☾ Night</button>
+ <button class="topbar-btn ghost" onclick="document.getElementById('mwsLoadInput').click()" title="Load a previously exported advice_request.json back into the form">⬆ Load .json</button><input type="file" id="mwsLoadInput" accept=".json,application/json" style="display:none" onchange="if(this.files[0])mwsLoadJSONFile(this.files[0]);this.value=''"> <button class="topbar-btn ghost" onclick="mwsRestoreLast()" title="Restore the last autosaved session from this browser">⟲ Restore last</button>
  <button class="topbar-btn ghost" onclick="copyOut()">⧉ Copy</button>
  <button class="topbar-btn ghost" onclick="dl('json')">⬇ .json</button>
  <button class="topbar-btn primary" onclick="dlWord()">⬇ Download Word</button>
@@ -724,5 +725,109 @@ function gather(){const out=[];const ins=scopeInIdx();document.querySelectorAll(
   const abp=(ABP[id]&&(ABP[id].mode||ABP[id].tbc||ABP[id].cond))?ABP[id]:null;
   out.push({area:DATA[ai].area,name:c.dataset.name,text:c.dataset.custom=='1'&&free&&free.value?free.value:c.dataset.text,owner,amounts:sl,pick:pk?pk.value:'',est,abp});});
   Object.keys(FREE).forEach(ai=>{if(!ins.includes(+ai))return;(FREE[ai]||[]).forEach(f=>{if(f.text)out.push({area:DATA[ai].area,name:f.text,text:f.text,owner:f.owner,amounts:[]})})});return out}
+
+/* ── [R8] Session restore ─────────────────────────────────────────────────────
+   The builder autosaves every change to localStorage (mws_ar7), but the ticks and
+   tables previously lived only in the DOM — closing or reloading the page lost
+   them, and the next export silently went out with strategies:[] (the SOA then
+   has no tailored strategy wording). mwsRestore() rebuilds the WHOLE form from a
+   saved/exported advice-request object: fields, entities, risk, scope, strategy
+   ticks (incl. per-client split columns, slot amounts, picks, free text, EstInv &
+   ABP panels), product rows, contributions, cash costs, CARE picks and the fee
+   matrix. Wired to auto-restore on open, the ⟲ Restore last button, and Load .json. */
+function mwsStratIds(s){const ai=DATA.findIndex(a=>a.area===s.area);if(ai<0)return{ai:-1,ids:null};
+ const si=DATA[ai].scen.findIndex(x=>x.name===s.name);if(si<0)return{ai,ids:null};
+ const base=ai+'_'+si;
+ if(!stratSplit(DATA[ai]))return{ai,ids:[base]};
+ const cl=clientList();const ci=cl.indexOf(s.owner);
+ if(ci>=0)return{ai,ids:[base+'_c'+ci]};
+ if(/^both$/i.test(String(s.owner||'')))return{ai,ids:cl.map((_,j)=>base+'_c'+j)};
+ return{ai,ids:[base+'_c0']};}
+function mwsRestore(o){if(!o||typeof o!=='object')return false;
+ try{
+  if(o.soaType)SOA=o.soaType;
+  if(o.ctype!=null)F.ctype=o.ctype;
+  if(o.status!=null)F.newex=o.status;
+  if(o.adviser!=null)F.adviser=o.adviser;
+  if(o.clients){const nm=String(o.clients).split(/\s*&\s*/);if(nm[0])F.c1name=nm[0].trim();if(nm[1])F.c2name=nm[1].trim();}
+  const MAP={narr:'narrative',cursit:'currentSituation',keycons:'keyConsiderations',budnotes:'notesBudget',rpexist:'riskExisting',scopeoth:'scopeOther',superDcaMethod:'superDcaMethod'};
+  Object.keys(MAP).forEach(fk=>{if(o[MAP[fk]]!=null&&o[MAP[fk]]!=='')F[fk]=o[MAP[fk]];});
+  if(Array.isArray(o.savingsBenefit))F.savingsBenefit=o.savingsBenefit;
+  if(Array.isArray(o.insuranceBenefit))F.insuranceBenefit=o.insuranceBenefit;
+  const fe=o.fee||{};
+  if(fe.commitment!=null)F.feecommit=fe.commitment;if(fe.status!=null)F.feestatus=fe.status;if(fe.cashSource!=null)F.feecashsrc=fe.cashSource;
+  (fe.rows||[]).forEach(r=>{const k=feeKey(r.name||'');['us','uc','os','oc'].forEach(c=>{const v=(r.cells||{})[c];if(v)F['__fee_'+c+'_'+k]=v;});if(r.superBal)F['__fbal_super_'+k]=r.superBal;if(r.invBal)F['__fbal_inv_'+k]=r.invBal;if(r.superBal||r.invBal)F.wmfee='Yes';});
+  const cc=o.cashCosts||{};if(cc.ins!=null)F.cIns=cc.ins;if(cc.inv!=null)F.cInv=cc.inv;if(cc.adv!=null)F.cAdv=cc.adv;if(cc.freq)F.cCostFreq=cc.freq;
+  COTH.length=0;(cc.others||[]).forEach(x=>COTH.push({label:x.label||'',amt:x.amt||''}));
+  if(!COTH.length&&cc.oth)COTH.push({label:'',amt:cc.oth}); // legacy single "oth" field
+
+  const cp=o.cashPos||{};if(cp.before!=null)F.cashbefore=cp.before;if(cp.after!=null)F.cashafter=cp.after;if(cp.note!=null)F.cashnote=cp.note;if(cp.leave!=null)F.leave=cp.leave;
+  CFLOW.length=0;(Array.isArray(o.cashflow)?o.cashflow:[]).forEach(c=>CFLOW.push(Object.assign({src:'',owner:'',amt:'',freq:'',note:''},c)));
+  CONTRIB.length=0;(Array.isArray(o.contributions)?o.contributions:[]).forEach(c=>CONTRIB.push(Object.assign({type:'',who:'',fy:'',acct:'',amt:'',freq:''},c)));
+  ENT=(Array.isArray(o.entities)&&o.entities.length)?o.entities.map(e=>({type:e.type||'',name:e.name||'',id:e.id||''})):[{type:'',name:'',id:''}];
+  Object.keys(RISK).forEach(k=>delete RISK[k]);
+  Object.keys(o.risk||{}).forEach(p=>{RISK[p.replace(/[^a-z0-9]/gi,'')]=Object.assign({},o.risk[p]);});
+  Object.keys(CAREPICK).forEach(k=>delete CAREPICK[k]);
+  (o.care||[]).forEach(c=>{const i=CARE.findIndex(x=>x.name===c.name);if(i>=0)CAREPICK[i]={on:true,owner:c.owner||'',applies:c.applies||'Both'};});
+  const setProds=(dst,src)=>{Object.keys(dst).forEach(k=>delete dst[k]);Object.keys(src||{}).forEach(area=>{const ai=DATA.findIndex(a=>a.area===area);if(ai>=0)dst[ai]=(src[area]||[]).map(x=>Object.assign({},x));});};
+  setProds(PROD,o.superProducts);setProds(INSPROD,o.insProducts);setProds(BONDPROD,o.bondProducts);setProds(INVPROD,o.invProducts);
+  Object.keys(o.products||{}).forEach(area=>{const ai=DATA.findIndex(a=>a.area===area);if(ai>=0)F['prod_'+ai]=o.products[area];});
+  Object.keys(o.paraplanning||{}).forEach(area=>{const ai=DATA.findIndex(a=>a.area===area);if(ai>=0)F['para_'+ai]=o.paraplanning[area];});
+  Object.keys(FREE).forEach(k=>delete FREE[k]);
+  // EstInv / ABP panel state must exist BEFORE buildStrats() so the panels render with values.
+  (o.strategies||[]).forEach(s=>{const r=mwsStratIds(s);if(r.ids)r.ids.forEach(id=>{if(s.est)ESTINV[id]=Object.assign({},s.est);if(s.abp)ABP[id]=Object.assign({},s.abp);});});
+  // Rebuild the panels
+  renderEnt();renderRisk();buildStrats();renderFee();
+  if(document.getElementById('careList')&&typeof renderCare==='function')renderCare();
+  Object.keys(PROD).forEach(ai=>renderProd(+ai));Object.keys(INSPROD).forEach(ai=>renderInsProd(+ai));
+  Object.keys(BONDPROD).forEach(ai=>renderBondProd(+ai));Object.keys(INVPROD).forEach(ai=>renderInvProd(+ai));
+  if(document.getElementById('contribList'))renderContrib();
+  if(document.getElementById('cothList'))renderCoth();
+  if(document.getElementById('cflowList'))renderCflow();
+  // Field values + dependent visibility
+  document.querySelectorAll('[data-f]').forEach(i=>{const v=F[i.dataset.f];if(v!=null&&v!=='')i.value=v;});
+  const c2=document.getElementById('c2wrap');if(c2)c2.style.display=(F.ctype=='Couple')?'':'none';
+  const fo=document.getElementById('feeOngWrap');if(fo)fo.style.display=(F.newex=='Existing')?'flex':'none';
+  const fb=document.getElementById('feeBalWrap');if(fb)fb.style.display=(F.wmfee=='Yes')?'block':'none';
+  document.querySelectorAll('[data-fm]').forEach(c=>{const arr=F[c.dataset.fm];if(Array.isArray(arr)){c.checked=arr.indexOf(c.value)>=0;const det=c.closest('details.multidrop');if(det){const nn=arr.length;det.querySelector('summary').textContent=nn?nn+' selected':'Select…';}}});
+  // Scope in / out
+  if(Array.isArray(o.scopeIn)&&o.scopeIn.length){document.querySelectorAll('[data-scope]').forEach(c=>{const on=o.scopeIn.indexOf(DATA[+c.dataset.scope].area)>=0;c.checked=on;const card=document.getElementById('areacard_'+c.dataset.scope);if(card)card.classList.toggle('scopedout',!on);});}
+  SCOPEOUT.clear();(o.scopeOut||[]).forEach(v=>SCOPEOUT.add(v));
+  document.querySelectorAll('[data-sop]').forEach(c=>{c.checked=SCOPEOUT.has(c.dataset.sop);});
+  document.querySelectorAll('[data-so]').forEach(c=>{c.classList.toggle('on',SCOPEOUT.has(c.dataset.so));});
+  // CARE ticks (renderCare doesn't restore checked state)
+  document.querySelectorAll('[data-care]').forEach(c=>{const i=+c.dataset.care;if(CAREPICK[i]&&CAREPICK[i].on){c.checked=true;const lab=c.closest('.strat');if(lab)lab.classList.add('on');}});
+  // Strategy ticks + their inputs
+  const openUp=cb=>{let el=cb.closest('details');while(el){el.open=true;el=el.parentElement?el.parentElement.closest('details'):null;}};
+  (o.strategies||[]).forEach(s=>{const r=mwsStratIds(s);
+    if(r.ai<0)return;
+    if(!r.ids){FREE[r.ai]=FREE[r.ai]||[];if(!FREE[r.ai].some(f=>f.text===s.name))FREE[r.ai].push({owner:s.owner||'',text:s.name});renderFree(r.ai);return;}
+    r.ids.forEach(id=>{const cb=document.querySelector('[data-strat="'+id+'"]');if(!cb)return;
+      cb.checked=true;const lab=cb.closest('.strat');if(lab)lab.classList.add('on');openUp(cb);
+      const own=document.querySelector('[data-own="'+id+'"]');if(own&&s.owner)own.value=s.owner;
+      const pk=document.querySelector('[data-pick="'+id+'"]');if(pk&&s.pick)pk.value=s.pick;
+      (s.amounts||[]).forEach((v,k)=>{const sl=document.querySelector('[data-slot="'+id+'_'+k+'"]');if(!sl)return;
+        let val=String(v||'');
+        // gather() derives "$X per week ($Y p.a.)" from a plain number — strip the echo back off
+        val=val.replace(/\(\$[\d,]+(?:\.\d+)?\s*p\.a\.\)\s*$/i,'').trim();
+        const fq=document.querySelector('[data-freq="'+id+'_'+k+'"]');
+        const m=val.match(/\s*(per week|per month|per annum|one-off)\s*$/i);
+        if(fq&&m){fq.value=m[1].toLowerCase();val=val.slice(0,m.index);}
+        sl.value=val.replace(/\s{2,}/g,' ').trim();});
+      if(cb.dataset.custom=='1'&&s.text&&s.text!==cb.dataset.text){const fr=document.querySelector('[data-free="'+id+'"]');if(fr)fr.value=s.text;}
+    });
+  });
+  render();
+  return true;
+ }catch(e){alert('Restore failed: '+e.message);return false}}
+function mwsRestoreLast(){try{const s=localStorage.getItem('mws_ar7');if(!s){alert('No saved session found in this browser.');return false}return mwsRestore(JSON.parse(s))}catch(e){alert('Could not restore: '+e.message);return false}}
+function mwsLoadJSONFile(file){const rd=new FileReader();rd.onload=()=>{try{mwsRestore(JSON.parse(rd.result))}catch(e){alert('Could not read that JSON: '+e.message)}};rd.readAsText(file);}
+
 build();
+// [R8] Offer to restore the previous session so reopening the page never silently loses the
+// strategy ticks again (an export after a reload used to go out with strategies:[]).
+(function(){try{const s=localStorage.getItem('mws_ar7');if(!s)return;const o=JSON.parse(s);
+ const has=(o.strategies&&o.strategies.length)||(o.entities&&o.entities.length)||o.clients||(o.scopeOut&&o.scopeOut.length)||(o.fee&&o.fee.rows&&o.fee.rows.some(r=>r&&r.total));
+ if(has&&confirm('Restore your last advice-request session'+(o.clients?' ('+o.clients+')':'')+'?\n\nOK restores everything (ticks, products, fees).\nCancel starts fresh — the saved session stays available under ⟲ Restore last.'))mwsRestore(o);
+}catch(e){}})();
 </script></body></html>
