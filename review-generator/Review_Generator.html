@@ -152,6 +152,17 @@ textarea{resize:vertical;min-height:60px}
 .tile.warn{background:var(--coral-light);border-color:var(--coral)}
 .upl-chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:3px 6px 3px 11px;font-size:11.5px;font-weight:600;color:var(--text-dim);margin:3px 5px 3px 0}
 .upl-chip .x{cursor:pointer;color:var(--coral);font-weight:800;border:none;background:transparent;font-size:13px;line-height:1}
+/* Live Word-style document preview (File note / ROA) */
+.doc-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media(max-width:1150px){.doc-wrap{grid-template-columns:1fr}}
+.doc-page{background:#fff;color:#16242e;padding:40px 46px;border:1px solid #d9e2ec;border-radius:6px;box-shadow:0 8px 26px rgba(10,30,50,.14);font-family:'Nunito',system-ui,sans-serif;font-size:12.5px;line-height:1.6;min-height:400px}
+.doc-page .doc-h{font-family:'Playfair Display',serif;color:#0C6AE1;font-weight:700;font-size:15px;margin:15px 0 5px}
+.doc-page .doc-h:first-child{margin-top:0}
+.doc-page .doc-rule{border-top:1px solid #d9e2ec;margin:8px 0}
+.doc-page .doc-p{margin:2px 0}
+.doc-page .doc-li{margin:2px 0 2px 16px;position:relative}
+.doc-page .doc-li:before{content:"•";position:absolute;left:-13px;color:#0C6AE1}
+.doc-preview-label{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}
 .acct-block{border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;background:var(--surface-2)}
 .acct-head{display:flex;gap:8px;align-items:center;margin-bottom:8px}
 .acct-head input{font-weight:700}
@@ -915,7 +926,8 @@ const SECTIONS=[
   {id:"portfolio",num:"6", title:"Portfolio Valuation", render:renderPortfolio},
   {id:"alloc",    num:"7", title:"Asset Allocation",    render:renderAlloc},
   {id:"insurance",num:"8", title:"Insurance Cover",     render:renderInsurance},
-  {id:"actions",  num:"9", title:"Actions & Services",  render:renderActions}
+  {id:"actions",  num:"9", title:"Actions & Services",  render:renderActions},
+  {id:"rebalance",num:"⇄", title:"Rebalance (draft)",   render:renderRebalance}
 ];
 const TABS=[
   {id:"checklist", label:"① Pre-Review Checklist", sub:"Complete the checklist for this client",
@@ -932,8 +944,7 @@ const TABS=[
       {id:"portfolio",num:"5", title:"Portfolio Valuation", render:renderPortfolio},
       {id:"alloc",    num:"6", title:"Asset Allocation",    render:renderAlloc},
       {id:"insurance",num:"7", title:"Insurance Cover",     render:renderInsurance},
-      {id:"actions",  num:"8", title:"Actions & Services",  render:renderActions},
-      {id:"rebalance",num:"⇄", title:"Rebalance (draft)",   render:renderRebalance}
+      {id:"actions",  num:"8", title:"Actions & Services",  render:renderActions}
     ]},
   {id:"post", label:"④ Post Review", sub:"File note & ROA from the changes made",
     sections:[
@@ -963,8 +974,20 @@ function switchTab(id){
     }
   }
   activeTab=id; activeSection=t.sections[0].id;
-  const rail=$("previewRail"); if(rail){ if(id==="generate"||id==="meeting") rail.classList.remove("hidden"); else rail.classList.add("hidden"); }
+  applyLayout();
   renderTabbar(); renderNav(); renderContent(); window.scrollTo(0,0);
+}
+/* Layout: the Pre-Review Checklist tab is full-width (its own section sidebar makes the app nav +
+   preview redundant); the wealth-doc preview shows only on Generate & Review Meeting (and the RSO can
+   hide it on the meeting). */
+let previewUserHidden=false;
+function applyLayout(){
+  const sidebar=document.querySelector("aside.sidebar");
+  const rail=$("previewRail");
+  const fullWidth=(activeTab==="checklist");
+  if(sidebar) sidebar.style.display=fullWidth?"none":"";
+  const railTab=(activeTab==="generate"||activeTab==="meeting");
+  if(rail) rail.classList.toggle("hidden", !(railTab && !previewUserHidden));
 }
 function snapshotState(){ const c={...S}; delete c._snapshot; return JSON.parse(JSON.stringify(c)); }
 
@@ -983,7 +1006,7 @@ function renderContent(){
   refreshPreviewRail();
 }
 function refreshPreviewRail(){ const b=$("previewRailBody"); if(b) b.innerHTML=buildPreviewPages(); }
-function togglePreviewRail(){ const r=$("previewRail"); if(r){ r.classList.toggle("hidden"); if(!r.classList.contains("hidden")) refreshPreviewRail(); } }
+function togglePreviewRail(){ previewUserHidden=!previewUserHidden; applyLayout(); if(!previewUserHidden) refreshPreviewRail(); }
 function setRailWidth(px){ const r=$("previewRail"),sc=$("previewRailBody"); if(!r)return; px=Math.max(280,Math.min(900,px)); r.style.width=px+"px"; if(sc){ const z=Math.max(0.2,Math.min(0.62,(px-34)/1123)); sc.style.zoom=z; } }
 (function initRailResize(){
   document.addEventListener("mousedown",e=>{
@@ -1766,6 +1789,7 @@ function renderDashboard(){
   </div>
   <div class="card"><div class="card-title"><span class="bar"></span>Present & wrap up</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="togglePreviewRail()">🖥 Hide / show wealth-review preview</button>
       <button class="btn btn-ghost btn-sm" onclick="openPrevFS()">⤢ Present preview (full screen)</button>
       <button class="btn btn-ghost btn-sm" onclick="go('actions')">✎ Edit action items</button>
       <button class="btn btn-ghost btn-sm" onclick="copyReviewSummary()">⧉ Copy review summary + to-dos</button>
@@ -1904,11 +1928,33 @@ ${acts}
 
 ${m.adviserName||"[prepared by]"}`;
 }
+// Render plain doc text into a live Word-style page (headings, bullets, dividers)
+const DOC_HEADINGS=/^(CONFIDENTIAL|My Wealth Solutions|After Review Summary|Client Name:|Date of File Note:|Time of File Note:|On .+ met with|The following were decided|Updates:|Action items:|Basis of this Advice|Risk Profile|Advice Fee|Disclosures|What this Record of Advice covers|Portfolio Rebalance)/;
+function docPreviewHTML(text){
+  return String(text==null?"":text).split("\n").map(l=>{
+    const t=l.trim();
+    if(t==="") return '<div style="height:7px"></div>';
+    if(/^_{6,}$/.test(t)) return '<div class="doc-rule"></div>';
+    if(/^[●•]/.test(t)) return `<div class="doc-li">${esc(t.replace(/^[●•]\s*/,""))}</div>`;
+    if(DOC_HEADINGS.test(t) && !/^[●•]/.test(t) && t.length<70) return `<div class="doc-h">${esc(t)}</div>`;
+    return `<div class="doc-p">${esc(l)}</div>`;
+  }).join("");
+}
 function renderFileNote(){
+  const txt=S._fileNote||buildFileNote();
   return `
-  <div class="section-head"><h2>Review File Note (draft)</h2><p>Pre-filled from the tracked changes + action items, in your firm's "After Review Summary" format. Edit, then download as Word or copy into your file-note system.</p></div>
+  <div class="section-head"><h2>Review File Note (draft)</h2><p>Pre-filled from the tracked changes + action items, in your firm's "After Review Summary" format. Edit on the left — the live document preview updates on the right. Download as Word or copy into your file-note system.</p></div>
   <div class="card"><div class="card-title"><span class="bar"></span>Draft file note</div>
-    <textarea rows="22" style="font-family:ui-monospace,Menlo,monospace;font-size:12px" oninput="S._fileNote=this.value">${esc(S._fileNote||buildFileNote())}</textarea>
+    <div class="doc-wrap">
+      <div>
+        <div class="doc-preview-label">Editable text</div>
+        <textarea rows="24" style="font-family:ui-monospace,Menlo,monospace;font-size:12px" oninput="S._fileNote=this.value;document.getElementById('fnPreview').innerHTML=docPreviewHTML(this.value)">${esc(txt)}</textarea>
+      </div>
+      <div>
+        <div class="doc-preview-label">Live document preview</div>
+        <div class="doc-page" id="fnPreview">${docPreviewHTML(txt)}</div>
+      </div>
+    </div>
     <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-primary btn-sm" onclick="generateFileNoteDocx()">⬇ Word</button>
       <button class="btn btn-ghost btn-sm" onclick="(navigator.clipboard&&navigator.clipboard.writeText($('content').querySelector('textarea').value));toast('File note copied.')">⧉ Copy</button>
@@ -1956,14 +2002,24 @@ Disclosures
 The disclosures under the Remuneration in the above-mentioned SOA have not changed.`;
 }
 function renderROA(){
+  const txt=S._roa||buildROA(S.rebalance.length?'rebalance':'nochange');
   return `
-  <div class="section-head"><h2>Review ROA (draft)</h2><p>Draft the Record of Advice content from the review. Pick the type, edit, then download as Word or paste into the ROA generator. The Word file adds the branded GPS Wealth / MWS header automatically.</p></div>
+  <div class="section-head"><h2>Review ROA (draft)</h2><p>Draft the Record of Advice content from the review. Pick the type, edit on the left — the live document preview updates on the right. Download as Word or paste into the ROA generator. The Word file adds the branded GPS Wealth / MWS header automatically.</p></div>
   <div class="card"><div class="card-title"><span class="bar"></span>Draft ROA</div>
     <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
       <button class="btn btn-ghost btn-sm" onclick="S._roa=buildROA('nochange');renderContent()">No-change ROA</button>
       <button class="btn btn-ghost btn-sm" onclick="S._roa=buildROA('rebalance');renderContent()">Rebalance ROA${S.rebalance.length?` (${S.rebalance.length} acct)`:''}</button>
     </div>
-    <textarea rows="22" style="font-family:ui-monospace,Menlo,monospace;font-size:12px" oninput="S._roa=this.value">${esc(S._roa||buildROA(S.rebalance.length?'rebalance':'nochange'))}</textarea>
+    <div class="doc-wrap">
+      <div>
+        <div class="doc-preview-label">Editable text</div>
+        <textarea rows="24" style="font-family:ui-monospace,Menlo,monospace;font-size:12px" oninput="S._roa=this.value;document.getElementById('roaPreview').innerHTML=docPreviewHTML(this.value)">${esc(txt)}</textarea>
+      </div>
+      <div>
+        <div class="doc-preview-label">Live document preview</div>
+        <div class="doc-page" id="roaPreview">${docPreviewHTML(txt)}</div>
+      </div>
+    </div>
     <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-primary btn-sm" onclick="generateRoaDocx()">⬇ Word</button>
       <button class="btn btn-ghost btn-sm" onclick="(navigator.clipboard&&navigator.clipboard.writeText($('content').querySelector('textarea').value));toast('ROA copied.')">⧉ Copy</button></div>
@@ -2609,7 +2665,7 @@ if(!S.checklist.answers) S.checklist.answers={};
 if(!S.checklist.answers.scope_clients) S.checklist.answers.scope_clients=S.meta.hasPartner?"2":"1";
 if(!S.checklist.answers.scope_c1name && S.client.name) S.checklist.answers.scope_c1name=S.client.name;
 if(!S.checklist.answers.scope_c2name && S.partner.name) S.checklist.answers.scope_c2name=S.partner.name;
-renderTabbar(); renderNav(); renderContent();
+renderTabbar(); renderNav(); applyLayout(); renderContent();
 </script>
 </body>
 </html>
