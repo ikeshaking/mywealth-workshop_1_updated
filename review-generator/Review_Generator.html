@@ -2607,16 +2607,17 @@ async function generateDocx(){
   const multiRun=(t,o={})=>String(t==null?"":t).split("\n").map((line,i)=>new TextRun(Object.assign({text:line,font:FONT,size:18,color:TEXT,break:i>0?1:0},o)));
   const P=(t,o={})=>new Paragraph({spacing:{after:o.after!=null?o.after:80},alignment:o.align||AlignmentType.LEFT,children:Array.isArray(t)?t:[run(t,o)]});
   const H2=(t)=>new Paragraph({spacing:{before:140,after:150},heading:HeadingLevel.HEADING_1,children:[new TextRun({text:t,font:DISP,size:52,color:BLUE})]});
-  const bandHead=(t)=>new Table({width:{size:W,type:WidthType.DXA},columnWidths:[W],borders:noBorder,rows:[new TableRow({children:[new TableCell({shading:{type:ShadingType.SOLID,color:BAND},margins:{top:70,bottom:70,left:160,right:160},children:[P([new TextRun({text:t,font:FONT,size:20,bold:true,color:WHITE,characterSpacing:30})],{after:0})]})]})]});
+  const bandHead=(t)=>new Table({width:{size:W,type:WidthType.DXA},columnWidths:[W],borders:noBorder,rows:[new TableRow({children:[new TableCell({shading:{type:ShadingType.CLEAR,fill:BAND,color:"auto"},margins:{top:70,bottom:70,left:160,right:160},children:[P([new TextRun({text:t,font:FONT,size:20,bold:true,color:WHITE,characterSpacing:30})],{after:0})]})]})]});
 
   const cell=(content,o={})=>new TableCell({
     width:o.w?{size:o.w,type:WidthType.DXA}:undefined, borders:cellBorder,
     columnSpan:o.columnSpan, verticalAlign:VerticalAlign.CENTER,
-    shading:{type:ShadingType.SOLID,color:o.shade||LIGHT},   // default teal cells (template look)
+    shading:{type:ShadingType.CLEAR,fill:o.shade||LIGHT,color:"auto"},   // default teal cells (template look)
     margins:{top:46,bottom:46,left:100,right:100},
     children:Array.isArray(content)?content:[new Paragraph({alignment:o.align||AlignmentType.LEFT,children:multiRun(content,Object.assign({},o.bold?{bold:true}:{},{color:o.color||TEXT},o.italics?{italics:true}:{},o.size?{size:o.size}:{}))})]});
-  const headRow=(labels,widths)=>new TableRow({tableHeader:true,children:labels.map((l,i)=>cell(l,{w:widths[i],shade:BLUE,bold:true,color:WHITE}))});
+  const headRow=(labels,widths,shd)=>new TableRow({tableHeader:true,children:labels.map((l,i)=>cell(l,{w:widths[i],shade:shd||BLUE,bold:true,color:WHITE}))});
   const dataRow=(vals,widths,opts=[])=>new TableRow({children:vals.map((v,i)=>cell(v,Object.assign({w:widths[i]},opts[i]||{})))});
+  const LBLOPT={bold:true,color:WHITE,shade:LBL};   // blue label cell (first column)
 
   // base64 -> Uint8Array
   const u8=(b64)=>{const bin=atob(b64);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a;};
@@ -2649,7 +2650,7 @@ async function generateDocx(){
   ch.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:[7200,W-7200],borders:noBorder,
     rows:[new TableRow({children:[
       new TableCell({width:{size:7200,type:WidthType.DXA},borders:noBorder,margins:{right:400,top:80,bottom:80},children:leftKids}),
-      new TableCell({width:{size:W-7200,type:WidthType.DXA},borders:noBorder,shading:{type:ShadingType.SOLID,color:LIGHT},margins:{left:260,right:260,top:220,bottom:220},children:rightKids})
+      new TableCell({width:{size:W-7200,type:WidthType.DXA},borders:noBorder,shading:{type:ShadingType.CLEAR,fill:LIGHT,color:"auto"},margins:{left:260,right:260,top:220,bottom:220},children:rightKids})
     ]})]}));
   ch.push(new Paragraph({children:[new PageBreak()]}));
 
@@ -2754,17 +2755,17 @@ async function generateDocx(){
   function assetTable(items,totalLabel){
     const w=[4200,1900,1900,2600,1640,2500];
     const rows=[headRow(["","VALUE","DEBT","TYPE","OWNER","REFERENCE"],w)];
-    items.forEach(it=>rows.push(dataRow([it.name||it.type,money(num(it.value)),money(num(it.debt)),it.type,it.owner,it.ref],w,[{bold:true,color:NAVY},{},{},{},{},{}])));
+    items.forEach(it=>rows.push(dataRow([it.name||it.type,money(num(it.value)),money(num(it.debt)),it.type,it.owner,it.ref],w,[LBLOPT,{},{},{align:AlignmentType.CENTER},{align:AlignmentType.CENTER},{italics:true}])));
     const tv=items.reduce((a,r)=>a+num(r.value),0),td=items.reduce((a,r)=>a+num(r.debt),0);
-    rows.push(new TableRow({children:[cell(totalLabel,{w:w[0],shade:LIGHT,bold:true,color:BLUE}),cell(money(tv),{w:w[1],shade:LBL,bold:true,color:WHITE}),cell(money(td),{w:w[2],shade:LBL,bold:true,color:WHITE}),cell("",{w:w[3],shade:LIGHT}),cell("",{w:w[4],shade:LIGHT}),cell("",{w:w[5],shade:LIGHT})]}));
+    rows.push(new TableRow({children:[cell(totalLabel,{w:w[0],bold:true,color:WHITE,shade:LBL}),cell(money(tv),{w:w[1],bold:true}),cell(money(td),{w:w[2],bold:true}),cell("",{w:w[3]}),cell("",{w:w[4]}),cell("",{w:w[5]})]}));
     return new Table({width:{size:W,type:WidthType.DXA},rows});
   }
   function incomeTable(){
     const w=[5200,3500,3200,2840];
     const rows=[headRow(["INCOME","ANNUAL AMOUNT","OWNER","FREQUENCY"],w)];
-    S.income.forEach(r=>rows.push(dataRow([r.label,money(num(r.amount)),r.owner,r.freq],w)));
+    S.income.forEach(r=>rows.push(dataRow([r.label,money(num(r.amount)),r.owner,r.freq],w,[LBLOPT,{},{},{}])));
     const tot=S.income.reduce((a,r)=>a+num(r.amount),0);
-    rows.push(new TableRow({children:[cell("INCOME TOTAL",{w:w[0],shade:LIGHT,bold:true,color:BLUE}),cell(money(tot),{w:w[1],shade:LBL,bold:true,color:WHITE}),cell("",{w:w[2],shade:LIGHT}),cell("",{w:w[3],shade:LIGHT})]}));
+    rows.push(new TableRow({children:[cell("INCOME TOTAL",{w:w[0],bold:true,color:WHITE,shade:LBL}),cell(money(tot),{w:w[1],bold:true}),cell("",{w:w[2]}),cell("",{w:w[3]})]}));
     return new Table({width:{size:W,type:WidthType.DXA},rows});
   }
   function totalsTable(){
@@ -2777,8 +2778,8 @@ async function generateDocx(){
     const w=[4900,3280,3280,3280];
     return new Table({width:{size:W,type:WidthType.DXA},rows:[
       new TableRow({children:[cell("",{w:w[0]}),cell("ASSETS",{w:w[1],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("DEBTS",{w:w[2],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("INCOME",{w:w[3],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER})]}),
-      new TableRow({children:[cell("TOTAL ALL CATEGORIES",{w:w[0],bold:true,color:BLUE}),cell(money(a),{w:w[1],align:AlignmentType.CENTER}),cell(money(d),{w:w[2],align:AlignmentType.CENTER}),cell(money(i),{w:w[3],align:AlignmentType.CENTER})]}),
-      new TableRow({children:[cell("NET WORTH / SURPLUS",{w:w[0],bold:true,color:BLUE}),cell(money(nw),{w:w[1]+w[2],align:AlignmentType.CENTER,columnSpan:2}),cell(money(sp),{w:w[3],align:AlignmentType.CENTER})]})
+      new TableRow({children:[cell("TOTAL ALL CATEGORIES",{w:w[0],bold:true,color:WHITE,shade:LBL}),cell(money(a),{w:w[1],align:AlignmentType.CENTER}),cell(money(d),{w:w[2],align:AlignmentType.CENTER}),cell(money(i),{w:w[3],align:AlignmentType.CENTER})]}),
+      new TableRow({children:[cell("NET WORTH / SURPLUS",{w:w[0],bold:true,color:WHITE,shade:LBL}),cell(money(nw),{w:w[1]+w[2],align:AlignmentType.CENTER,columnSpan:2}),cell(money(sp),{w:w[3],align:AlignmentType.CENTER})]})
     ]});
   }
   // Foundations + Estate as one table (matches the template's combined Foundations table)
@@ -2806,8 +2807,8 @@ async function generateDocx(){
     const w=[2400,2600,9740];
     const order={"Short Term":0,"Medium Term":1,"Long Term":2};
     const sorted=[...S.goals].sort((a,b)=> String(a.owner||"").localeCompare(String(b.owner||"")) || ((order[a.timeframe]??9)-(order[b.timeframe]??9)));
-    const rows=[headRow(["Owner","Timeframe","Goal"],w)];
-    sorted.forEach(g=>rows.push(dataRow([g.owner,g.timeframe,(g.desc||g.notes||"")],w,[{bold:true,color:NAVY},{},{}])));
+    const rows=[headRow(["Owner","Timeframe","Goal"],w,NAVY)];
+    sorted.forEach(g=>rows.push(dataRow([g.owner,g.timeframe,(g.desc||g.notes||"")],w,[LBLOPT,{},{}])));
     return new Table({width:{size:W,type:WidthType.DXA},rows});
   }
   function fiTable(){
@@ -2824,28 +2825,28 @@ async function generateDocx(){
   }
   function trackingTable(){
     const w=[2940,2000,2000,2000,2000,1600,2200];
-    const rows=[headRow(["STRATEGY","WHERE YOU WERE","SHOULD BE","WHERE YOU ARE","WANT TO BE","ON TRACK","ACTIONS"],w)];
+    const rows=[headRow(["STRATEGY","WHERE YOU WERE","SHOULD BE","WHERE YOU ARE","WANT TO BE","ON TRACK","ACTIONS"],w,NAVY)];
     S.goalTracking.forEach(t=>{
-      const iconCell=new TableCell({width:{size:w[5],type:WidthType.DXA},borders:cellBorder,verticalAlign:VerticalAlign.CENTER,
+      const iconCell=new TableCell({width:{size:w[5],type:WidthType.DXA},borders:cellBorder,verticalAlign:VerticalAlign.CENTER,shading:{type:ShadingType.CLEAR,fill:LIGHT,color:"auto"},
         children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new ImageRun({data:u8(ratingIconPNG(t.rating)),transformation:{width:15,height:15}})]})]});
       rows.push(new TableRow({children:[
-        cell(t.strategy,{w:w[0],bold:true,color:NAVY}),cell(t.were,{w:w[1]}),cell(t.shouldBe,{w:w[2]}),
+        cell(t.strategy,Object.assign({w:w[0]},LBLOPT)),cell(t.were,{w:w[1]}),cell(t.shouldBe,{w:w[2]}),
         cell(t.are,{w:w[3]}),cell(t.wantToBe,{w:w[4]}),iconCell,cell(t.actions,{w:w[6]})]}));
     });
     const T=S.goalTrackingTotals;
-    rows.push(new TableRow({children:[cell("TOTALS",{w:w[0],shade:LIGHT,bold:true,color:BLUE}),cell(T.were,{w:w[1],shade:LIGHT,bold:true}),cell(T.shouldBe,{w:w[2],shade:LIGHT,bold:true}),cell(T.are,{w:w[3],shade:LIGHT,bold:true}),cell(T.wantToBe,{w:w[4],shade:LIGHT,bold:true}),cell("",{w:w[5],shade:LIGHT}),cell("",{w:w[6],shade:LIGHT})]}));
+    rows.push(new TableRow({children:[cell("TOTALS",{w:w[0],bold:true,color:WHITE,shade:LBL}),cell(T.were,{w:w[1],bold:true}),cell(T.shouldBe,{w:w[2],bold:true}),cell(T.are,{w:w[3],bold:true}),cell(T.wantToBe,{w:w[4],bold:true}),cell("",{w:w[5]}),cell("",{w:w[6]})]}));
     return new Table({width:{size:W,type:WidthType.DXA},rows});
   }
   function portfolioPages(ch,who,name){
     ch.push(H2("Portfolio Valuation"));
     ch.push(P(String(name||"").split(" ")[0]||name,{bold:true,color:NAVY,after:90}));
     const w=[9000,2870,2870];
-    const rows=[headRow(["PRODUCTS","UNITS","VALUE"],w)];
+    const rows=[headRow(["PRODUCTS","UNITS","VALUE"],w,NAVY)];
     let grand=0;
     S.portfolios[who].forEach(a=>{
-      rows.push(new TableRow({children:[cell(a.acct,{w:W,shade:LBL,bold:true,color:WHITE,columnSpan:3})]}));
+      rows.push(new TableRow({children:[cell(a.acct,{w:W,shade:NAVY,bold:true,color:WHITE,columnSpan:3})]}));
       let sub=0;
-      a.holdings.forEach(h=>{sub+=num(h.value);rows.push(dataRow([h.product,h.units,money(num(h.value))],w,[{},{align:AlignmentType.RIGHT},{align:AlignmentType.RIGHT}]));});
+      a.holdings.forEach(h=>{sub+=num(h.value);rows.push(dataRow([h.product,h.units,money(num(h.value))],w,[LBLOPT,{align:AlignmentType.RIGHT},{align:AlignmentType.RIGHT}]));});
       grand+=sub;
       rows.push(new TableRow({children:[cell("Total for "+a.acct,{w:w[0]+w[1],bold:true,columnSpan:2}),cell(money(sub),{w:w[2],bold:true,align:AlignmentType.RIGHT})]}));
     });
@@ -2865,8 +2866,8 @@ async function generateDocx(){
       ch.push(P("",{after:90}));
     }catch(e){ console.warn("chart embed skipped",e); }
     const aw=[5740,3000,3000,3000];
-    const ar=[headRow(["ASSET CLASS","CURRENT WEIGHT","TARGET RISK PROFILE WEIGHT","VARIANCE"],aw)];
-    S.assetAlloc[who].forEach(a=>ar.push(dataRow([a.cls,a.cur,a.tgt,a.varc],aw,[{bold:true,color:NAVY},{align:AlignmentType.RIGHT},{align:AlignmentType.RIGHT},{align:AlignmentType.RIGHT}])));
+    const ar=[headRow(["ASSET CLASS","CURRENT WEIGHT","TARGET RISK PROFILE WEIGHT","VARIANCE"],aw,NAVY)];
+    S.assetAlloc[who].forEach(a=>ar.push(dataRow([a.cls,a.cur,a.tgt,a.varc],aw,[LBLOPT,{align:AlignmentType.RIGHT},{align:AlignmentType.RIGHT},{align:AlignmentType.RIGHT}])));
     ch.push(new Table({width:{size:W,type:WidthType.DXA},rows:ar}));
     ch.push(new Paragraph({children:[new PageBreak()]}));
   }
@@ -2874,8 +2875,8 @@ async function generateDocx(){
     ch.push(H2("Insurance Cover"));
     ch.push(P(String(name||"").split(" ")[0]||name,{bold:true,color:NAVY,after:90}));
     const w=[2200,1900,1300,1300,2200,2240,1800,1800];
-    const rows=[headRow(["INSURER - PRODUCT","POLICY #","OWNER","LIFE INSURED","TYPE OF COVER","AMOUNT OF COVER","STRUCTURE","MONTHLY PREMIUM*"],w)];
-    S.insurance[who].forEach(it=>rows.push(dataRow([it.insurer,it.policy,it.owner,it.life,it.coverType,it.amount,it.structure,it.premium],w,[{bold:true,color:NAVY},{},{},{},{},{},{},{}])));
+    const rows=[headRow(["INSURER - PRODUCT","POLICY #","OWNER","LIFE INSURED","TYPE OF COVER","AMOUNT OF COVER","STRUCTURE","MONTHLY PREMIUM*"],w,NAVY)];
+    S.insurance[who].forEach(it=>rows.push(dataRow([it.insurer,it.policy,it.owner,it.life,it.coverType,it.amount,it.structure,it.premium],w,[{bold:true},{},{},{},{},{},{},{}])));
     ch.push(new Table({width:{size:W,type:WidthType.DXA},rows}));
     ch.push(P("* The monthly premium is an estimate after-tax figure based on the data available at the time of producing this document. Further detail available on request.",{after:0,size:15,color:GREY,italics:true}));
     ch.push(new Paragraph({children:[new PageBreak()]}));
