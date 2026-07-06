@@ -251,6 +251,13 @@ textarea{resize:vertical;min-height:60px}
 .smartdrop .sd-types{font-size:11px;color:var(--text-dim);margin-top:8px}
 .smartdrop input{display:none}
 .sd-badge{display:inline-block;background:var(--green);color:#fff;border-radius:20px;padding:2px 11px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:9px}
+/* whole-window drag & drop overlay */
+#dropOverlay{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(12,46,63,.72);backdrop-filter:blur(2px)}
+#dropOverlay.show{display:flex}
+#dropOverlay .do-inner{border:3px dashed #7fb0ef;border-radius:18px;padding:44px 60px;text-align:center;color:#fff;background:rgba(12,46,63,.5);pointer-events:none}
+#dropOverlay .do-ic{font-size:44px;line-height:1}
+#dropOverlay .do-t{font-family:'ABC Arizona Flare','Playfair Display',serif;font-size:26px;font-weight:700;margin-top:10px}
+#dropOverlay .do-s{font-size:13px;color:#cfe0ec;margin-top:6px}
 /* dropzone/smart-drop labels are <label> elements — undo the global uppercase on their body text */
 .dz h4,.dz p,.smartdrop .sd-title,.smartdrop .sd-sub,.smartdrop .sd-types{text-transform:none;letter-spacing:normal}
 .cl-item{padding:9px 0}
@@ -926,8 +933,14 @@ async function importAnyPlatform(ev){
     if(!/\.pdf$/i.test(f.name)){ failed.push(f.name+" — not a PDF"); continue; }
     let text="";
     try{ text=await readPdfText(f); }catch(e){ failed.push(f.name+" — couldn't read PDF (is the reader still loading? open the file in a normal browser tab)"); continue; }
-    // Image-only / scanned PDFs (e.g. a CoreLogic property valuation) have no text layer to read.
-    if(!text || text.replace(/\s/g,"").length<40){ failed.push(f.name+" — no readable text (looks like a scanned/image PDF, e.g. a property valuation) — enter the value manually"); registerUpload(f.name,"Image PDF"); continue; }
+    // Image-only / scanned PDFs (e.g. a CoreLogic property valuation) have no text layer — OCR them.
+    if(!text || text.replace(/\s/g,"").length<40){
+      try{ toast(f.name+" looks scanned — running OCR (this can take a moment)…"); text=await ocrPdfFile(f); }
+      catch(e){ failed.push(f.name+" — scanned/image PDF and OCR unavailable (needs internet) — enter the value manually"); registerUpload(f.name,"Image PDF"); continue; }
+      if(!text || text.replace(/\s/g,"").length<40){ failed.push(f.name+" — scanned PDF, no text found by OCR — enter the value manually"); registerUpload(f.name,"Image PDF (OCR empty)"); continue; }
+      // OCR text is messy for tables; route it (auto-fills if a platform report, else keeps the text)
+      const r=routeScannedText(text,f.name,"Scanned PDF"); applied.push(f.name+" (OCR) · "+r); continue;
+    }
     try{
       // try each parser; the guards inside each return null for non-matching formats
       let done=false;
@@ -1474,25 +1487,89 @@ function loadJSONPromise(f){
     r.onload=()=>{ try{ Object.assign(S,JSON.parse(r.result)); if(!S.checklist.answers)S.checklist.answers={}; if(!S.uploads)S.uploads=[]; delete S._snapshot; delete S._fileNote; delete S._roa; res(); }catch(e){ rej(e); } };
     r.onerror=rej; r.readAsText(f); });
 }
+/* ---------- OCR (images & scanned PDFs) — Tesseract.js, lazy-loaded from CDN, runs in-browser ---------- */
+let _ocrPromise=null;
+function ensureOCR(){
+  if(typeof Tesseract!=="undefined") return Promise.resolve(Tesseract);
+  if(_ocrPromise) return _ocrPromise;
+  _ocrPromise=new Promise((res,rej)=>{
+    const s=document.createElement("script");
+    s.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+    s.onload=()=>res(typeof Tesseract!=="undefined"?Tesseract:null);
+    s.onerror=()=>{ _ocrPromise=null; rej(new Error("OCR engine could not load — this needs internet the first time")); };
+    document.head.appendChild(s);
+  });
+  return _ocrPromise;
+}
+async function ocrImageFile(file){
+  const T=await ensureOCR(); if(!T) throw new Error("OCR unavailable");
+  const url=URL.createObjectURL(file);
+  try{ const {data}=await T.recognize(url,"eng"); return (data&&data.text)||""; }
+  finally{ URL.revokeObjectURL(url); }
+}
+async function ocrPdfFile(file){
+  // render each page to a canvas, then OCR it (for scanned / image-only PDFs with no text layer)
+  const T=await ensureOCR(); if(!T) throw new Error("OCR unavailable");
+  const buf=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  let txt="";
+  for(let p=1;p<=Math.min(pdf.numPages,10);p++){
+    const page=await pdf.getPage(p);
+    const vp=page.getViewport({scale:2});
+    const canvas=document.createElement("canvas"); canvas.width=vp.width; canvas.height=vp.height;
+    const ctx=canvas.getContext("2d");
+    await page.render({canvasContext:ctx,viewport:vp}).promise;
+    const {data}=await T.recognize(canvas,"eng");
+    txt+=((data&&data.text)||"")+"\n";
+  }
+  return txt;
+}
+// route OCR'd/plain text: auto-fill if it's a recognised platform report, else keep the text so nothing is lost
+function routeScannedText(text,name,kindLabel){
+  const clean=(text||"").replace(/\s/g,"");
+  if(clean.length>=40){
+    try{ const h=parseHub24Text(text); if(h&&(h.holdings.length||h.total)){ applyHub24(h); registerUpload(name,"Scanned report (OCR)",text); return `HUB24 · ${money(h.total)}`; } }catch(e){}
+    try{ const b=parseBtText(text); if(b){ applyBt(b); registerUpload(name,"Scanned report (OCR)",text); return `BT Panorama · ${money(b.total)}`; } }catch(e){}
+    try{ const mq=parseMacqText(text); if(mq){ applyMacq(mq); registerUpload(name,"Scanned report (OCR)",text); return `Macquarie · ${money(mq.balance)}`; } }catch(e){}
+  }
+  if(clean.length<3){ registerUpload(name,(kindLabel||"Image")+" — no text found",""); return "no readable text found"; }
+  registerUpload(name,(kindLabel||"Scanned")+" text (OCR)",text.trim());
+  return "text captured (open it from the upload chip)";
+}
+async function importImages(files){
+  const done=[];
+  for(const f of files){
+    toast("Reading "+f.name+" with OCR — this can take a few seconds…");
+    let text="";
+    try{ text=await ocrImageFile(f); }
+    catch(e){ registerUpload(f.name,"Image — OCR unavailable",""); done.push(`${f.name} → OCR unavailable (needs internet)`); continue; }
+    done.push(`${f.name} → `+routeScannedText(text,f.name,"Screenshot"));
+  }
+  return done;
+}
+function isImageFile(f){ const n=(f.name||"").toLowerCase(); return /\.(png|jpe?g|webp|gif|bmp|tiff?)$/.test(n) || /^image\//.test(f.type||""); }
+
 async function smartDropFiles(files){
   files=(files||[]).filter(Boolean); if(!files.length) return;
-  const cat={json:[],docx:[],pdf:[],ptw:[],rebalance:[],xls:[],unknown:[]};
+  const cat={json:[],docx:[],pdf:[],ptw:[],rebalance:[],xls:[],image:[],unknown:[]};
   for(const f of files){
     const n=(f.name||"").toLowerCase();
     if(n.endsWith(".json")) cat.json.push(f);
-    else if(n.endsWith(".docx")) cat.docx.push(f);
+    else if(n.endsWith(".docx")||n.endsWith(".doc")) cat.docx.push(f);
     else if(n.endsWith(".pdf")) cat.pdf.push(f);
-    else if(n.endsWith(".xlsm")||n.endsWith(".xlsx")){ const k=await classifyXlsx(f); (cat[k]||cat.xls).push(f); }
+    else if(n.endsWith(".xlsm")||n.endsWith(".xlsx")||n.endsWith(".xls")||n.endsWith(".csv")){ const k=await classifyXlsx(f); (cat[k]||cat.xls).push(f); }
+    else if(isImageFile(f)) cat.image.push(f);
     else cat.unknown.push(f);
   }
   const done=[];
-  // ORDER: base first (saved draft → last review), then this year's overrides (platform → PTW → rebalance → checklist)
+  // ORDER: base first (saved draft → last review), then this year's overrides (platform → PTW → rebalance → checklist → images)
   for(const f of cat.json){ try{ await loadJSONPromise(f); registerUpload(f.name,"Saved draft"); done.push(`${f.name} → saved draft`);}catch(e){ done.push(`${f.name} → JSON error`);} }
   for(const f of cat.docx){ try{ await importReviewDoc({target:{files:[f]}}); done.push(`${f.name} → last review`);}catch(e){ done.push(`${f.name} → review error`);} }
   if(cat.pdf.length){ try{ await importAnyPlatform({target:{files:cat.pdf}}); done.push(`${cat.pdf.length} PDF → platform report(s)`);}catch(e){ done.push(`platform PDFs → error`);} }
   for(const f of cat.ptw){ try{ await importPTW({target:{files:[f]}}); done.push(`${f.name} → PTW`);}catch(e){ done.push(`${f.name} → PTW error`);} }
   if(cat.rebalance.length){ try{ await importRebalance({target:{files:cat.rebalance}}); done.push(`${cat.rebalance.length} → rebalance`);}catch(e){ done.push(`rebalance → error`);} }
   for(const f of cat.xls){ try{ await importChecklist({target:{files:[f]}}); done.push(`${f.name} → checklist`);}catch(e){ done.push(`${f.name} → checklist error`);} }
+  if(cat.image.length){ try{ done.push(...await importImages(cat.image)); }catch(e){ done.push(`images → error`);} }
   cat.unknown.forEach(f=>done.push(`${f.name} → not recognised`));
   renderContent();
   toast("Smart drop — "+done.join("; "));
@@ -1521,10 +1598,10 @@ function renderImports(){
     <label class="smartdrop" ondrop="smartDropHandle(event)" ondragover="smartDropOver(event)" ondragleave="smartDropLeave(event)">
       <div class="sd-badge">⚡ Recommended</div>
       <div class="sd-title">Smart drop — drop everything here</div>
-      <div class="sd-sub">Drop any files (Word, PDF, Excel or JSON). Each file is <b>identified by type</b> and applied in the right <b>order</b>: saved draft &amp; last review first (the base), then this year's platform reports &amp; PTW (the overrides).</div>
-      <div class="sd-types">Recognises: saved draft (.json) · last Wealth Review (.docx) · HUB24 / BT / Macquarie reports (.pdf) · Review PTW (.xlsm) · CARE rebalance (.xlsx)</div>
+      <div class="sd-sub">Drop any files here — or anywhere on the page (Word, PDF, Excel, JSON, or a PNG/JPG screenshot). Each file is <b>identified by type</b> and applied in the right <b>order</b>: saved draft &amp; last review first (the base), then this year's platform reports &amp; PTW (the overrides). Screenshots &amp; scanned PDFs are read with in-browser OCR.</div>
+      <div class="sd-types">Recognises: saved draft (.json) · last Wealth Review (.docx) · HUB24 / BT / Macquarie reports (.pdf) · Review PTW (.xlsm) · CARE rebalance (.xlsx) · screenshots &amp; scanned PDFs (.png / .jpg — OCR)</div>
       <div style="margin-top:12px"><span class="btn btn-primary btn-sm">Choose files…</span></div>
-      <input type="file" multiple accept=".json,.docx,.pdf,.xlsm,.xlsx" onchange="smartDrop(event)">
+      <input type="file" multiple accept=".json,.docx,.pdf,.xlsm,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.webp,image/*" onchange="smartDrop(event)">
     </label>
     ${uploadChips()}
     <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
@@ -2054,12 +2131,19 @@ function applyLicensee(key){
 }
 
 /* ---------- uploads register (chips + remove) ---------- */
-function registerUpload(name,kind){ S.uploads.push({name,kind,t:formatDate(S.meta.reviewDate)||""}); }
+function registerUpload(name,kind,text){ S.uploads.push({name,kind,t:formatDate(S.meta.reviewDate)||"",text:text||""}); }
+function viewUploadText(i){
+  const u=S.uploads[i]; if(!u||!u.text){ toast("No captured text for this file."); return; }
+  const w=window.open("","_blank");
+  if(!w){ toast("Allow pop-ups to view the captured text."); return; }
+  w.document.write("<title>"+esc(u.name)+" — captured text</title><pre style='white-space:pre-wrap;font:13px/1.5 ui-monospace,Menlo,monospace;padding:20px;max-width:820px;margin:auto'>"+esc(u.text)+"</pre>");
+  w.document.close();
+}
 function removeUpload(i){ S.uploads.splice(i,1); renderContent(); toast("Upload removed from the list. Use a section's Reset if you also want to clear the data it filled."); }
 function uploadChips(){
   if(!S.uploads.length) return "";
   return `<div style="margin-top:8px"><div class="cl-help" style="margin-bottom:3px">Uploaded this session — remove any from the list:</div>${
-    S.uploads.map((u,i)=>`<span class="upl-chip">${esc(u.kind?u.kind+": ":"")}${esc(u.name)}<button class="x" title="Remove" onclick="removeUpload(${i})">✕</button></span>`).join("")}</div>`;
+    S.uploads.map((u,i)=>`<span class="upl-chip">${esc(u.kind?u.kind+": ":"")}${esc(u.name)}${u.text?`<button class="x" title="View captured text" style="color:var(--blue)" onclick="viewUploadText(${i})">🔍</button>`:""}<button class="x" title="Remove" onclick="removeUpload(${i})">✕</button></span>`).join("")}</div>`;
 }
 
 /* ---------- meeting dashboard ---------- */
@@ -3053,6 +3137,25 @@ if(!S.checklist.answers.scope_clients) S.checklist.answers.scope_clients=S.meta.
 if(!S.checklist.answers.scope_c1name && S.client.name) S.checklist.answers.scope_c1name=S.client.name;
 if(!S.checklist.answers.scope_c2name && S.partner.name) S.checklist.answers.scope_c2name=S.partner.name;
 renderTabbar(); renderNav(); applyLayout(); renderContent();
+
+/* ---------- whole-window drag & drop: drop files anywhere to smart-import ---------- */
+(function initGlobalDnD(){
+  const ov=document.createElement("div"); ov.id="dropOverlay";
+  ov.innerHTML='<div class="do-inner"><div class="do-ic">⬇</div><div class="do-t">Drop files to import</div><div class="do-s">Word · PDF · Excel · JSON · PNG/JPG screenshots (OCR)</div></div>';
+  document.body.appendChild(ov);
+  let depth=0;
+  const hasFiles=(e)=>{ try{ return e.dataTransfer && [...e.dataTransfer.types].includes("Files"); }catch(_){ return false; } };
+  window.addEventListener("dragenter",e=>{ if(!hasFiles(e))return; e.preventDefault(); depth++; ov.classList.add("show"); });
+  window.addEventListener("dragover",e=>{ if(hasFiles(e)) e.preventDefault(); });
+  window.addEventListener("dragleave",e=>{ if(!hasFiles(e))return; depth--; if(depth<=0){ depth=0; ov.classList.remove("show"); } });
+  window.addEventListener("drop",e=>{
+    depth=0; ov.classList.remove("show");
+    if(!(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length)) return;
+    e.preventDefault();
+    if(activeTab!=="generate") switchTab("generate");
+    smartDropFiles([...e.dataTransfer.files]);
+  });
+})();
 </script>
 </body>
 </html>
