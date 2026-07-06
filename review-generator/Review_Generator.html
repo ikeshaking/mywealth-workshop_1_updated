@@ -190,11 +190,13 @@ textarea{resize:vertical;min-height:60px}
 .pv-h2{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif;font-size:21px;color:#0C6AE1;margin:22px 0 8px;border-bottom:2px solid #0C6AE1;padding-bottom:3px}
 .pv-band{background:#0C2E3F;color:#fff;font-weight:700;font-size:12px;letter-spacing:.04em;padding:6px 12px;margin:14px 0 0;border-radius:3px}
 .pv-tbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
-.pv-tbl th{background:#0C6AE1;color:#fff;text-align:left;padding:6px 9px;font-weight:700}
-.pv-tbl td{padding:5px 9px;border-bottom:1px solid #e6eef0;vertical-align:top}
-.pv-tbl tr:nth-child(even) td{background:#E3F2F4}
+.pv-tbl th{background:#0C6AE1;color:#fff;text-align:left;padding:6px 9px;font-weight:700;border:1px solid #fff}
+.pv-tbl.navy th{background:#0C2E3F}
+.pv-tbl td{padding:5px 9px;border:1px solid #fff;vertical-align:top;background:#E3F2F4;color:#16242e}
+.pv-tbl td.pv-lbl{background:#0B6AE1;color:#fff;font-weight:700}
 .pv-tbl td.r,.pv-tbl th.r{text-align:right}
-.pv-tot td{background:#cfe8ec!important;font-weight:700}
+.pv-tot td{background:#0B6AE1;color:#fff;font-weight:700}
+.pv-tot td.pv-val{background:#E3F2F4!important;color:#16242e}
 .pv-dot{display:inline-block;width:13px;height:13px;border-radius:50%;vertical-align:middle;margin-right:5px}
 .pv-legend{font-size:11px;color:#555;margin:6px 0}
 .pv-legend span.l{margin-right:14px;white-space:nowrap}
@@ -1276,13 +1278,18 @@ function pvTable(headers,rows,opts={}){
   if(!rows.length) return `<div class="pv-empty">${opts.empty||"Nothing entered yet."}</div>`;
   const align=opts.align||[];
   const acl=(i)=>align[i]==='r'?'r':(align[i]==='c'?'c':'');
+  const navy=opts.head==='navy'?' navy':'';
+  const lbl=!!opts.lbl;
   const th=headers.map((h,i)=>`<th class="${acl(i)}">${esc(h)}</th>`).join("");
   const body=rows.map(r=>{
     const cls=r.__tot?' class="pv-tot"':'';
-    const tds=r.cells.map((c,i)=>`<td class="${acl(i)}">${c.html||esc(c.v==null?'':c.v)}</td>`).join("");
+    const tds=r.cells.map((c,i)=>{
+      const cl=[acl(i), (lbl&&i===0&&!r.__tot)?'pv-lbl':'', (r.__tot&&i>0)?'pv-val':''].filter(Boolean).join(' ');
+      return `<td class="${cl}">${c.html||esc(c.v==null?'':c.v)}</td>`;
+    }).join("");
     return `<tr${cls}>${tds}</tr>`;
   }).join("");
-  return `<table class="pv-tbl"><thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;
+  return `<table class="pv-tbl${navy}"><thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;
 }
 // Live preview — mirrors the MWS FINAL Word template page-for-page.
 function buildPreviewPages(){
@@ -1341,9 +1348,9 @@ function buildPreviewPages(){
   const incRows=S.income.map(r=>({cells:[{v:r.label},{v:r.amount?money(num(r.amount)):""},{v:r.owner},{v:r.freq}]}));
   P.push(`<div class="wrprev-page">
     <div class="pv-h2">Current Situation</div>
-    <div class="pv-band">LIFESTYLE ASSETS</div>${pvTable(["Asset","Value","Debt","Type","Owner"],assetRows(S.lifestyle),{align:[,"r","r"],empty:"No lifestyle assets yet."})}
-    <div class="pv-band">NEST EGG ASSETS</div>${pvTable(["Asset","Value","Debt","Type","Owner"],assetRows(S.nestegg),{align:[,"r","r"],empty:"Upload platform reports or add assets."})}
-    <div class="pv-band">INCOME</div>${pvTable(["Income","Annual Amount","Owner","Frequency"],incRows,{align:[,"r"],empty:"No income entered."})}
+    <div class="pv-band">LIFESTYLE ASSETS</div>${pvTable(["Asset","Value","Debt","Type","Owner"],assetRows(S.lifestyle),{align:[,"r","r"],lbl:true,empty:"No lifestyle assets yet."})}
+    <div class="pv-band">NEST EGG ASSETS</div>${pvTable(["Asset","Value","Debt","Type","Owner"],assetRows(S.nestegg),{align:[,"r","r"],lbl:true,empty:"Upload platform reports or add assets."})}
+    <div class="pv-band">INCOME</div>${pvTable(["Income","Annual Amount","Owner","Frequency"],incRows,{align:[,"r"],lbl:true,empty:"No income entered."})}
     <div class="pv-band">TOTAL NET WORTH CALCULATION</div>
     ${pvTable(["","Assets","Debts","Income"],[{cells:[{v:"Total All Categories"},{v:money(assets)},{v:money(debts)},{v:money(inc)}],__tot:true}],{align:[,"r","r","r"]})}
     ${pvTable(["Net Worth / Surplus","",""],[{cells:[{v:"NET WORTH / SURPLUS"},{v:money(nw)},{v:money(sp)}],__tot:true}],{align:[,"r","r"]})}
@@ -1363,7 +1370,7 @@ function buildPreviewPages(){
     fRow("Super Death Nominations",e.superNomC,"",e.superNomP,""),
     fRow("Insurance Death Nominations",e.insNomC,"",e.insNomP,"")
   ];
-  P.push(`<div class="wrprev-page"><div class="pv-band">FOUNDATIONS</div>${pvTable(fHead,fRows,{empty:""})}${e.notes?`<div class="pv-band">REFERENCE &amp; NOTES</div><div class="pv-p" style="padding:6px 0">${esc(e.notes)}</div>`:""}</div>`);
+  P.push(`<div class="wrprev-page"><div class="pv-band">FOUNDATIONS</div>${pvTable(fHead,fRows,{lbl:true,empty:""})}${e.notes?`<div class="pv-band">REFERENCE &amp; NOTES</div><div class="pv-p" style="padding:6px 0">${esc(e.notes)}</div>`:""}</div>`);
 
   /* Goals + Financial Independence */
   const _go={"Short Term":0,"Medium Term":1,"Long Term":2};
@@ -1374,8 +1381,8 @@ function buildPreviewPages(){
     ["Estimated Lump Sum",fi.lumpToys,"one-off for toys"],["Estimated Lump Sum",fi.lumpFamily,"one-off family/charity"]
   ].filter(x=>x[1]).map(x=>({cells:[{v:x[0]},{v:x[1]},{v:x[2]}]}));
   P.push(`<div class="wrprev-page">
-    <div class="pv-h2">Your Goals</div>${pvTable(["Owner","Timeframe","Goal"],goalRows,{empty:"No goals entered yet."})}
-    <div class="pv-band">FINANCIAL INDEPENDENCE GOALS</div>${pvTable(["","",""],fiRows,{empty:"Upload the Review PTW to populate these."})}</div>`);
+    <div class="pv-h2">Your Goals</div>${pvTable(["Owner","Timeframe","Goal"],goalRows,{head:"navy",lbl:true,empty:"No goals entered yet."})}
+    <div class="pv-band">FINANCIAL INDEPENDENCE GOALS</div>${pvTable(["","",""],fiRows,{lbl:true,empty:"Upload the Review PTW to populate these."})}</div>`);
 
   /* Goal Tracking */
   const gtRows=S.goalTracking.map(g=>({cells:[
@@ -1387,7 +1394,7 @@ function buildPreviewPages(){
   P.push(`<div class="wrprev-page">
     <div class="pv-h2">Goal Tracking</div>
     <div class="pv-legend">${legend}</div>
-    ${pvTable(["Strategy","Where You Were","Where You Should Be","Where You Are","Where You Want To Be","On Track","Actions To Take"],gtRows,{empty:"Upload platform reports / PTW to populate goal tracking."})}
+    ${pvTable(["Strategy","Where You Were","Where You Should Be","Where You Are","Where You Want To Be","On Track","Actions To Take"],gtRows,{head:"navy",lbl:true,empty:"Upload platform reports / PTW to populate goal tracking."})}
     <div style="margin-top:10px;font-weight:700">OVERALL STRATEGY ON TRACK RATING: ${dot(S.overallRating)} ${esc(S.overallRating)}</div>
     ${S.adviserComments?`<div class="pv-band">ADVISER COMMENTS</div><div class="pv-p" style="padding:6px 0">${esc(S.adviserComments)}</div>`:""}</div>`);
 
@@ -1400,11 +1407,11 @@ function buildPreviewPages(){
       const rows=(acct.holdings||[]).map(h=>({cells:[{v:h.product},{v:h.units},{v:h.value?money(num(h.value)):""}]}));
       const tot=pvSum(acct.holdings,"value"); grand+=tot;
       if(rows.length) rows.push({cells:[{v:"Total for "+(acct.acct||"account")},{v:""},{v:money(tot)}],__tot:true});
-      return `<div class="pv-band">${esc(acct.acct||"Account")}</div>${pvTable(["Products","Units","Value"],rows,{align:[,,"r"],empty:"No holdings."})}`;
+      return `<div class="pv-band">${esc(acct.acct||"Account")}</div>${pvTable(["Products","Units","Value"],rows,{align:[,,"r"],head:"navy",lbl:true,empty:"No holdings."})}`;
     }).join("");
     P.push(`<div class="wrprev-page"><div class="pv-h2">Portfolio Valuation — ${esc(name)}</div>${blocks||'<div class="pv-empty">Upload platform reports to populate holdings.</div>'}${accts.length?`<div style="text-align:right;font-weight:700;margin-top:8px">Total for ${esc(name)}: ${money(grand)}</div>`:""}</div>`);
     const aaRows=(S.assetAlloc[side]||[]).map(a=>({cells:[{v:a.cls},{v:a.cur},{v:a.tgt},{v:a.varc}]}));
-    P.push(`<div class="wrprev-page"><div class="pv-h2">Portfolio Asset Allocation — ${esc(name)}</div>${pvTable(["Asset Class","Current Weight","Target Risk Profile Weight","Variance"],aaRows,{align:[,"r","r","r"],empty:"Enter or import the asset allocation."})}</div>`);
+    P.push(`<div class="wrprev-page"><div class="pv-h2">Portfolio Asset Allocation — ${esc(name)}</div>${pvTable(["Asset Class","Current Weight","Target Risk Profile Weight","Variance"],aaRows,{align:[,"r","r","r"],head:"navy",lbl:true,empty:"Enter or import the asset allocation."})}</div>`);
   });
 
   /* Insurance Cover (8 columns, per template) */
@@ -1412,7 +1419,7 @@ function buildPreviewPages(){
     if(side==="partner" && !hp) return;
     const name=side==="client"?S.client.name:S.partner.name; if(!name) return;
     const rows=(S.insurance[side]||[]).map(i=>({cells:[{v:i.insurer},{v:i.policy},{v:i.owner},{v:i.life},{v:i.coverType},{v:i.amount},{v:i.structure},{v:i.premium}]}));
-    P.push(`<div class="wrprev-page"><div class="pv-h2">Insurance Cover — ${esc(name)}</div>${pvTable(["Insurer - Product","Policy #","Owner","Life Insured","Type of Cover","Amount of Cover","Premium Structure","Monthly Premium*"],rows,{empty:"Insurance not entered yet."})}<div class="pv-foot">* The monthly premium is an estimate after-tax figure based on the data available at the time of producing this document.</div></div>`);
+    P.push(`<div class="wrprev-page"><div class="pv-h2">Insurance Cover — ${esc(name)}</div>${pvTable(["Insurer - Product","Policy #","Owner","Life Insured","Type of Cover","Amount of Cover","Premium Structure","Monthly Premium*"],rows,{head:"navy",empty:"Insurance not entered yet."})}<div class="pv-foot">* The monthly premium is an estimate after-tax figure based on the data available at the time of producing this document.</div></div>`);
   });
 
   /* Action items + Services */
