@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en-AU">
+<html lang="en-AU" data-theme="dark">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -27,20 +27,24 @@ const BACK_B64="/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBAUEBAYFBQUGBgYHCQ4JCQgICRIN
   --radius:10px; --radius-sm:7px; --shadow:0 1px 3px rgba(12,46,63,.08),0 4px 14px rgba(12,46,63,.06);
 }
 [data-theme="dark"]{
-  --bg:#0b1620; --surface:#12222e; --surface-2:#16293656; --row-alt:#16293650; --input-bg:#0e1d27;
-  --border:#234050; --border-soft:#1c3340; --border-strong:#2b4a5c;
-  --heading:#dce8f0; --text:#dbe7ef; --text-dim:#9fb4c2; --text-muted:#7e96a6; --text-faint:#5d7382;
-  --blue-light:#10283b; --coral-light:#2a1a18; --lime-light:#1e2814; --green-light:#11241a; --red-light:#2a1414;
-  --shadow:0 1px 3px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.3);
+  /* Tuned to the MyWealth SOA Paraplanner dark-blue theme */
+  --bg:#143654; --surface:#1a4062; --surface-2:#1f4c72; --row-alt:#1d4970; --input-bg:#102c46;
+  --border:#2c567c; --border-soft:#234a6b; --border-strong:#3a689a;
+  --navy:#0b2338; --navy-deep:#081c2e; --heading:#eaf3fb;
+  --blue:#3B82E6; --blue-bright:#4a90ea; --blue-light:#1c4066; --blue-soft:#4d7fb8;
+  --text:#dce9f4; --text-dim:#aec4d8; --text-muted:#90a9bf; --text-faint:#6f8698;
+  --green:#34C759; --green-light:#123726; --green-dark:#57d07f;
+  --coral-light:#3a2320; --lime-light:#25301a; --red-light:#3a1c1c;
+  --shadow:0 1px 3px rgba(0,0,0,.45),0 8px 24px rgba(0,0,0,.35);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Nunito',-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.45}
-h1,h2,h3{font-family:'Playfair Display',serif;color:var(--heading);font-weight:700}
+h1,h2,h3{font-family:'ABC Arizona Flare','Playfair Display',serif;color:var(--heading);font-weight:700}
 .app{display:flex;min-height:100vh}
 /* Sidebar */
 .sidebar{width:248px;background:var(--navy);color:#cfe0ec;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;padding:0 0 24px}
 .brand{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
-.brand .logo{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#fff;line-height:1;letter-spacing:-.4px}
+.brand .logo{font-family:'ABC Arizona Flare','Playfair Display',serif;font-size:26px;font-weight:700;color:#fff;line-height:1;letter-spacing:-.4px}
 .brand .logo-sub{font-size:11px;letter-spacing:.44em;text-transform:uppercase;color:#e6eef5;margin-top:3px;padding-left:2px}
 .brand .tag{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#7fa6c0;margin-top:12px}
 .nav{padding:10px 10px 24px}
@@ -91,7 +95,7 @@ textarea{resize:vertical;min-height:60px}
 .icon-btn:hover{background:var(--coral-light);color:var(--coral)}
 .totals{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;padding:12px 14px;background:var(--blue-light);border-radius:var(--radius-sm)}
 .totals .t{font-size:12px;color:var(--text-dim)}
-.totals .t b{display:block;font-size:17px;color:var(--heading);font-family:'Playfair Display';margin-top:2px}
+.totals .t b{display:block;font-size:17px;color:var(--heading);font-family:'ABC Arizona Flare','Playfair Display';margin-top:2px}
 /* Buttons */
 .btn{border:none;border-radius:var(--radius-sm);padding:9px 16px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;transition:.13s;display:inline-flex;align-items:center;gap:7px}
 .btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:var(--blue-bright)}
@@ -114,7 +118,7 @@ textarea{resize:vertical;min-height:60px}
 .pill{display:inline-block;padding:2px 9px;border-radius:11px;font-size:11px;font-weight:700;background:var(--blue-light);color:var(--blue)}
 .rating-sel{font-weight:800}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.person-tag{font-family:'Playfair Display';font-size:13px;color:var(--heading);margin-bottom:8px;font-weight:700}
+.person-tag{font-family:'ABC Arizona Flare','Playfair Display';font-size:13px;color:var(--heading);margin-bottom:8px;font-weight:700}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 20px;border-radius:24px;font-size:13px;font-weight:600;box-shadow:var(--shadow);z-index:200;opacity:0;pointer-events:none;transition:.25s}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 /* Checklist hybrid layout */
@@ -153,7 +157,7 @@ textarea{resize:vertical;min-height:60px}
 .dash{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px;margin-bottom:13px}
 .tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;box-shadow:var(--shadow)}
 .tile .tk{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)}
-.tile .tv{font-size:22px;font-weight:800;font-family:'Playfair Display';color:var(--heading);margin-top:4px}
+.tile .tv{font-size:22px;font-weight:800;font-family:'ABC Arizona Flare','Playfair Display';color:var(--heading);margin-top:4px}
 .tile .ts{font-size:11px;color:var(--text-muted);margin-top:2px}
 .tile.accent{background:var(--blue-light);border-color:var(--blue-soft)}
 .tile.warn{background:var(--coral-light);border-color:var(--coral)}
@@ -163,7 +167,7 @@ textarea{resize:vertical;min-height:60px}
 .doc-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
 @media(max-width:1150px){.doc-wrap{grid-template-columns:1fr}}
 .doc-page{background:#fff;color:#16242e;padding:40px 46px;border:1px solid #d9e2ec;border-radius:6px;box-shadow:0 8px 26px rgba(10,30,50,.14);font-family:'Nunito',system-ui,sans-serif;font-size:12.5px;line-height:1.6;min-height:400px}
-.doc-page .doc-h{font-family:'Playfair Display',serif;color:#0C6AE1;font-weight:700;font-size:15px;margin:15px 0 5px}
+.doc-page .doc-h{font-family:'ABC Arizona Flare','Playfair Display',serif;color:#0C6AE1;font-weight:700;font-size:15px;margin:15px 0 5px}
 .doc-page .doc-h:first-child{margin-top:0}
 .doc-page .doc-rule{border-top:1px solid #d9e2ec;margin:8px 0}
 .doc-page .doc-p{margin:2px 0}
@@ -181,10 +185,10 @@ textarea{resize:vertical;min-height:60px}
 .wrprev-page{width:1123px;min-height:794px;background:#fff;color:#222;margin:0 auto 22px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:46px 52px;font-family:Nunito,'Segoe UI',sans-serif;box-sizing:border-box;position:relative}
 .wrprev-page.cover{padding:0;overflow:hidden}
 .wrprev-page.cover img,.wrprev-page.back img{width:100%;height:100%;object-fit:cover;display:block}
-.pv-h1{font-family:'Playfair Display',Georgia,serif;font-size:34px;color:#103143;margin:0 0 4px}
+.pv-h1{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif;font-size:34px;color:#103143;margin:0 0 4px}
 .pv-sub{color:#0C6AE1;font-weight:700;margin:0 0 22px}
-.pv-h2{font-family:'Playfair Display',Georgia,serif;font-size:21px;color:#0C6AE1;margin:22px 0 8px;border-bottom:2px solid #0C6AE1;padding-bottom:3px}
-.pv-band{background:#222;color:#fff;font-weight:700;font-size:12px;letter-spacing:.04em;padding:6px 12px;margin:14px 0 0;border-radius:3px}
+.pv-h2{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif;font-size:21px;color:#0C6AE1;margin:22px 0 8px;border-bottom:2px solid #0C6AE1;padding-bottom:3px}
+.pv-band{background:#0C2E3F;color:#fff;font-weight:700;font-size:12px;letter-spacing:.04em;padding:6px 12px;margin:14px 0 0;border-radius:3px}
 .pv-tbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
 .pv-tbl th{background:#0C6AE1;color:#fff;text-align:left;padding:6px 9px;font-weight:700}
 .pv-tbl td{padding:5px 9px;border-bottom:1px solid #e6eef0;vertical-align:top}
@@ -195,7 +199,16 @@ textarea{resize:vertical;min-height:60px}
 .pv-legend{font-size:11px;color:#555;margin:6px 0}
 .pv-legend span.l{margin-right:14px;white-space:nowrap}
 .pv-2col{display:flex;gap:26px}.pv-2col>div{flex:1}
+.pv-2col-wide{gap:32px}
 .pv-empty{color:#9aa6b2;font-style:italic;font-size:12px;padding:8px 0}
+.pv-tbl td.c,.pv-tbl th.c{text-align:center}
+.wrprev-page .pv-h3{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif;font-size:15px;color:#0C6AE1;margin:2px 0 6px}
+.wrprev-page .pv-kv{font-size:12px;color:#222;margin:2px 0}
+.wrprev-page .pv-p{font-size:12px;color:#333;line-height:1.5;margin:5px 0}
+.wrprev-page .pv-ar{font-size:11px;color:#444;line-height:1.45;margin:4px 0}
+.wrprev-page .pv-foot{font-size:10.5px;color:#777;font-style:italic;margin-top:6px}
+.wrprev-page .pv-shade{background:#E3F2F4;border-radius:6px;padding:16px 18px}
+.wrprev-page .pv-shade p{font-size:12px;color:#333;line-height:1.5;margin:6px 0}
 .pv-fs{position:fixed;inset:0;z-index:9999;background:rgba(15,30,40,.92);display:none;flex-direction:column}
 .pv-fs.open{display:flex}
 .pv-fs-bar{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;color:#fff}
@@ -219,6 +232,22 @@ textarea{resize:vertical;min-height:60px}
 .pr-scale{zoom:.37}
 .pr-body .wrprev-page{box-shadow:0 4px 16px rgba(0,0,0,.16)}
 @media(max-width:1024px){.preview-rail{display:none}}
+/* ---- Compact / de-cluttered UI (fewer descriptions, tighter spacing) ---- */
+.section-head{margin-bottom:8px}
+.section-head h2{font-size:16px}
+.section-head p{display:none}
+.hint{display:none}
+.card{padding:11px 14px;margin-bottom:9px}
+.card-title{margin-bottom:9px;font-size:11px}
+.content{padding:18px 24px 70px}
+.topbar{padding:9px 22px}
+.dz{padding:8px 10px}
+.dz p{font-size:10px;line-height:1.28;max-height:3.9em;overflow:hidden}
+.imports{gap:8px}
+.cl-item{padding:9px 0}
+.cl-item .cl-help{font-size:10.5px;margin:-1px 0 6px}
+.field{margin-bottom:2px}
+.grid{gap:10px}
 </style>
 </head>
 <body>
@@ -245,7 +274,7 @@ textarea{resize:vertical;min-height:60px}
       <button class="btn btn-ghost btn-sm" onclick="togglePreviewRail()" id="prToggle">🖥 Preview</button>
       <button class="btn btn-ghost btn-sm" onclick="resetAll()">♻ Reset</button>
       <button class="btn btn-primary" onclick="generateDocx()">⬇ Export Word</button>
-      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">☀️ Light</button>
     </div>
     <div class="workarea">
       <div class="content" id="content"></div>
@@ -254,6 +283,7 @@ textarea{resize:vertical;min-height:60px}
         <div class="pr-head"><b>Live preview</b>
           <div class="pr-btns">
             <button class="btn btn-ghost btn-sm" onclick="openPrevFS()">⤢ Fullscreen</button>
+            <button class="btn btn-ghost btn-sm" onclick="togglePreviewRail()">✕ Hide</button>
             <button class="btn btn-primary btn-sm" onclick="generateDocx()">⬇ Word</button>
           </div>
         </div>
@@ -1096,7 +1126,9 @@ function applyLayout(){
   const fullWidth=(activeTab==="checklist");
   if(sidebar) sidebar.style.display=fullWidth?"none":"";
   const railTab=(activeTab==="generate"||activeTab==="meeting");
-  if(rail) rail.classList.toggle("hidden", !(railTab && !previewUserHidden));
+  const railShown=railTab && !previewUserHidden;
+  if(rail) rail.classList.toggle("hidden", !railShown);
+  const bt=$("prToggle"); if(bt){ bt.textContent=railShown?"🖥 Hide preview":"🖥 Show preview"; bt.style.display=railTab?"":"none"; }
 }
 function snapshotState(){ const c={...S}; delete c._snapshot; return JSON.parse(JSON.stringify(c)); }
 
@@ -1230,90 +1262,154 @@ function pvSum(arr,key){ return (arr||[]).reduce((a,x)=>a+num(x[key]),0); }
 function pvTable(headers,rows,opts={}){
   if(!rows.length) return `<div class="pv-empty">${opts.empty||"Nothing entered yet."}</div>`;
   const align=opts.align||[];
-  const th=headers.map((h,i)=>`<th class="${align[i]==='r'?'r':''}">${esc(h)}</th>`).join("");
+  const acl=(i)=>align[i]==='r'?'r':(align[i]==='c'?'c':'');
+  const th=headers.map((h,i)=>`<th class="${acl(i)}">${esc(h)}</th>`).join("");
   const body=rows.map(r=>{
     const cls=r.__tot?' class="pv-tot"':'';
-    const tds=r.cells.map((c,i)=>`<td class="${align[i]==='r'?'r':''}">${c.html||esc(c.v==null?'':c.v)}</td>`).join("");
+    const tds=r.cells.map((c,i)=>`<td class="${acl(i)}">${c.html||esc(c.v==null?'':c.v)}</td>`).join("");
     return `<tr${cls}>${tds}</tr>`;
   }).join("");
   return `<table class="pv-tbl"><thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;
 }
+// Live preview — mirrors the MWS FINAL Word template page-for-page.
 function buildPreviewPages(){
-  const m=S.meta, P=[];
+  const m=S.meta, l=S.licensee, pr=S.practice, hp=m.hasPartner, P=[];
   const dot=(r)=>`<span class="pv-dot" style="background:${RATING_COLORS[r]||'#9aa6b2'}"></span>`;
-  // Cover
+
+  /* Cover */
   if(typeof COVER_B64!=="undefined"&&COVER_B64) P.push(`<div class="wrprev-page cover"><img src="data:image/png;base64,${COVER_B64}"></div>`);
-  // Title + details
+
+  /* Cover-detail page: AR/compliance block + "what this covers" (matches template) */
+  const ar=(name)=>name?`<div class="pv-ar"><b>${esc(name)}</b> is an Authorised Representative of My Wealth Solutions, a Corporate Authorised Representative 441414 of GPS Wealth, Australian Financial Services Licence Number ${esc(l.afsl||"254 544")}, ABN 66 153 751 832.</div>`:"";
+  P.push(`<div class="wrprev-page">
+    <div class="pv-2col pv-2col-wide">
+      <div>
+        <div class="pv-h1" style="font-size:26px">Your Wealth Review</div>
+        <div class="pv-kv"><b>Prepared for:</b> ${esc(m.preparedFor||"[Client name]")}</div>
+        <div class="pv-kv"><b>Financial Adviser:</b> ${esc(m.adviserName||"[Adviser]")}</div>
+        ${m.insuranceAdviser?`<div class="pv-kv"><b>Insurance Specialist Adviser:</b> ${esc(m.insuranceAdviser)}</div>`:""}
+        <div class="pv-kv"><b>Date:</b> ${esc(formatDate(m.reviewDate)||"[date]")}</div>
+        <div class="pv-h3" style="margin-top:14px">Contact Details</div>
+        ${ar(m.adviserName)}${ar(m.insuranceAdviser)}
+        <div class="pv-kv" style="margin-top:8px">Office Phone: ${esc(pr.phone)}</div>
+        <div class="pv-kv">Office Email: ${esc(pr.email)}</div>
+      </div>
+      <div class="pv-shade">
+        <div class="pv-h3">What does this document cover?</div>
+        <p>${esc(m.noChangeNote)}</p>
+        <p>Please make sure you read each section of the Wealth Review. If you feel any information is incorrect, please contact me directly using the details on this page.</p>
+        <p>This document reviews the progress of your Financial Plan and Portfolio over the last 12 months. It details your asset allocations, the products you are using, and the services provided.</p>
+      </div>
+    </div></div>`);
+
+  /* Your Wealth Review — intro + Your Details */
   const det=(p)=>p&&p.name?[
-    ["Name",p.name],["Date of birth",p.dob],["Mobile",p.mobile],["Email",p.email],
-    ["Employment",[p.jobTitle,p.employer].filter(Boolean).join(", ")],["Risk profile",p.riskProfile]
+    ["Name",p.name],["Date of Birth",p.dob],["Mobile",p.mobile],["Marital Status",p.marital],["Email",p.email],
+    ["Estate Planning",p.estate],["Employment",[p.jobTitle,p.employer].filter(Boolean).join(", ")],["Risk Profile",p.riskProfile]
   ].filter(x=>x[1]):[];
   const detRows=(p)=>det(p).map(x=>({cells:[{v:x[0]},{v:x[1]}]}));
   P.push(`<div class="wrprev-page">
-    <div class="pv-h1">Wealth Review</div><div class="pv-sub">${esc(m.preparedFor||"[Client name]")} &nbsp;·&nbsp; ${esc(m.reviewType||"")} ${m.reviewDate?("&nbsp;·&nbsp; "+esc(formatDate(m.reviewDate))):""}</div>
-    <div class="pv-h2">Your Details</div>
+    <div class="pv-h2">Your Wealth Review</div>
+    <p class="pv-p">As life changes (such as your situation, legislation, goals and market performance) we are able to analyse the performance to adjust and realign the strategies to get you to your goals.</p>
+    <p class="pv-p">Please find your present situation below. If any values require updating, please let us know at your earliest convenience.</p>
+    <div class="pv-band">YOUR DETAILS</div>
     <div class="pv-2col">
-      <div>${S.client.name?pvTable(["",""],detRows(S.client)):'<div class="pv-empty">Add the client in Cover &amp; Details.</div>'}</div>
-      <div>${(m.hasPartner&&S.partner.name)?pvTable(["",""],detRows(S.partner)):''}</div>
+      <div>${S.client.name?pvTable([hp?(S.client.name):"",""],detRows(S.client)):'<div class="pv-empty">Add the client in Cover &amp; Details.</div>'}</div>
+      <div>${(hp&&S.partner.name)?pvTable([S.partner.name,""],detRows(S.partner)):''}</div>
     </div></div>`);
-  // Current situation
-  const assetRows=(arr)=>arr.map(a=>({cells:[{v:a.name},{v:a.owner},{v:a.value?money(num(a.value)):""},{v:a.debt?money(num(a.debt)):""}]}));
-  const assets=pvSum(S.lifestyle,"value")+pvSum(S.nestegg,"value");
-  const debts=pvSum(S.lifestyle,"debt")+pvSum(S.nestegg,"debt");
-  const nw=S.totalsOverride.useOverride?num(S.totalsOverride.netWorth):(assets-debts);
+
+  /* Current Situation */
+  const assetRows=(arr)=>arr.map(a=>({cells:[{v:a.name},{v:a.value?money(num(a.value)):""},{v:a.debt?money(num(a.debt)):""},{v:a.type},{v:a.owner}]}));
+  const o=S.totalsOverride;
+  const la=pvSum(S.lifestyle,"value"), lad=pvSum(S.lifestyle,"debt"), na=pvSum(S.nestegg,"value"), nad=pvSum(S.nestegg,"debt");
+  const assets=o.useOverride?num(o.assets):(la+na), debts=o.useOverride?num(o.debts):(lad+nad);
+  const inc=o.useOverride?num(o.income):pvSum(S.income,"amount");
+  const nw=o.useOverride?num(o.netWorth):(assets-debts), sp=o.useOverride?num(o.surplus):0;
+  const incRows=S.income.map(r=>({cells:[{v:r.label},{v:r.amount?money(num(r.amount)):""},{v:r.owner},{v:r.freq}]}));
   P.push(`<div class="wrprev-page">
     <div class="pv-h2">Current Situation</div>
-    <div class="pv-band">LIFESTYLE ASSETS</div>${pvTable(["Asset","Owner","Value","Debt"],assetRows(S.lifestyle),{align:[,,"r","r"],empty:"No lifestyle assets yet."})}
-    <div class="pv-band">NEST-EGG ASSETS</div>${pvTable(["Asset","Owner","Value","Debt"],assetRows(S.nestegg),{align:[,,"r","r"],empty:"Upload platform reports or add assets — they'll appear here."})}
-    ${pvTable(["",""],[
-      {cells:[{v:"Total assets"},{v:money(assets)}],__tot:true},
-      {cells:[{v:"Total debts"},{v:money(debts)}],__tot:true},
-      {cells:[{v:"Net worth"},{v:money(nw)}],__tot:true}
-    ],{align:[,"r"]})}</div>`);
-  // Goals + FI
+    <div class="pv-band">LIFESTYLE ASSETS</div>${pvTable(["Asset","Value","Debt","Type","Owner"],assetRows(S.lifestyle),{align:[,"r","r"],empty:"No lifestyle assets yet."})}
+    <div class="pv-band">NEST EGG ASSETS</div>${pvTable(["Asset","Value","Debt","Type","Owner"],assetRows(S.nestegg),{align:[,"r","r"],empty:"Upload platform reports or add assets."})}
+    <div class="pv-band">INCOME</div>${pvTable(["Income","Annual Amount","Owner","Frequency"],incRows,{align:[,"r"],empty:"No income entered."})}
+    <div class="pv-band">TOTAL NET WORTH CALCULATION</div>
+    ${pvTable(["","Assets","Debts","Income"],[{cells:[{v:"Total All Categories"},{v:money(assets)},{v:money(debts)},{v:money(inc)}],__tot:true}],{align:[,"r","r","r"]})}
+    ${pvTable(["Net Worth / Surplus","",""],[{cells:[{v:"NET WORTH / SURPLUS"},{v:money(nw)},{v:money(sp)}],__tot:true}],{align:[,"r","r"]})}
+  </div>`);
+
+  /* Foundations (foundations + estate combined, per template) */
+  const f=S.foundations, e=S.estate;
+  const fRow=(lab,cv,cr,pv2,pr2)=>({cells: hp?[{v:lab},{v:cv},{v:cr},{v:pv2},{v:pr2}]:[{v:lab},{v:cv},{v:cr}]});
+  const fHead=hp?["", (S.client.name||"Client"),"Reference",(S.partner.name||"Partner"),"Reference"]:["",(S.client.name||"Client"),"Reference"];
+  const fRows=[
+    fRow("Life Insurance",f.client.life,f.client.ref,f.partner.life,f.partner.ref),
+    fRow("Total & Permanent Disability",f.client.tpd,"",f.partner.tpd,""),
+    fRow("Trauma Insurance",f.client.trauma,"",f.partner.trauma,""),
+    fRow("Income Protection (month)",[f.client.ip,f.client.ipNotes].filter(Boolean).join(" · "),"",[f.partner.ip,f.partner.ipNotes].filter(Boolean).join(" · "),""),
+    fRow("Up to Date Wills",e.willsC,"",e.willsP,""),
+    fRow("Power of Attorney",e.poaC,"",e.poaP,""),
+    fRow("Super Death Nominations",e.superNomC,"",e.superNomP,""),
+    fRow("Insurance Death Nominations",e.insNomC,"",e.insNomP,"")
+  ];
+  P.push(`<div class="wrprev-page"><div class="pv-band">FOUNDATIONS</div>${pvTable(fHead,fRows,{empty:""})}${e.notes?`<div class="pv-band">REFERENCE &amp; NOTES</div><div class="pv-p" style="padding:6px 0">${esc(e.notes)}</div>`:""}</div>`);
+
+  /* Goals + Financial Independence */
   const _go={"Short Term":0,"Medium Term":1,"Long Term":2};
   const goalRows=[...S.goals].sort((a,b)=>String(a.owner||"").localeCompare(String(b.owner||""))||((_go[a.timeframe]??9)-(_go[b.timeframe]??9))).map(g=>({cells:[{v:g.owner},{v:g.timeframe},{v:g.desc||g.notes}]}));
   const fi=S.fiGoals, fiRows=[
-    ["Target (today's $)",fi.targetToday],["Target (future)",fi.targetFuture],["Timeframe",fi.years?fi.years+" years":""],
-    ["Income to live",fi.incomeLife],["Income for extras",fi.incomeNice],["Lump sum (toys)",fi.lumpToys],["Lump sum (family)",fi.lumpFamily]
-  ].filter(x=>x[1]).map(x=>({cells:[{v:x[0]},{v:x[1]}]}));
+    ["Target",fi.targetToday,"In today's values"],["Which is",fi.targetFuture,"In "+(fi.years||"…")+" years"],
+    ["Estimated Income",fi.incomeLife,"pa to pay for life"],["Estimated Income",fi.incomeNice,"pa for nice things"],
+    ["Estimated Lump Sum",fi.lumpToys,"one-off for toys"],["Estimated Lump Sum",fi.lumpFamily,"one-off family/charity"]
+  ].filter(x=>x[1]).map(x=>({cells:[{v:x[0]},{v:x[1]},{v:x[2]}]}));
   P.push(`<div class="wrprev-page">
     <div class="pv-h2">Your Goals</div>${pvTable(["Owner","Timeframe","Goal"],goalRows,{empty:"No goals entered yet."})}
-    <div class="pv-h2">Financial Independence</div>${pvTable(["",""],fiRows,{empty:"Upload the Review PTW to populate these.",align:[,"r"]})}</div>`);
-  // Goal tracking
+    <div class="pv-band">FINANCIAL INDEPENDENCE GOALS</div>${pvTable(["","",""],fiRows,{empty:"Upload the Review PTW to populate these."})}</div>`);
+
+  /* Goal Tracking */
   const gtRows=S.goalTracking.map(g=>({cells:[
-    {v:g.strategy},{v:g.were},{v:g.shouldBe},{v:g.are},{v:g.wantToBe},
-    {html:dot(g.rating)+esc(g.rating||"")},{v:g.actions}
+    {v:g.strategy},{v:g.were},{v:g.shouldBe},{v:g.are},{v:g.wantToBe},{html:dot(g.rating)+esc(g.rating||"")},{v:g.actions}
   ]}));
+  const T=S.goalTrackingTotals;
+  if(gtRows.length) gtRows.push({cells:[{v:"TOTALS"},{v:T.were},{v:T.shouldBe},{v:T.are},{v:T.wantToBe},{v:""},{v:""}],__tot:true});
   const legend=RATINGS.map(r=>`<span class="l">${dot(r)}${esc(r)}</span>`).join("");
   P.push(`<div class="wrprev-page">
     <div class="pv-h2">Goal Tracking</div>
     <div class="pv-legend">${legend}</div>
-    ${pvTable(["Strategy","Were","Should be","Are now","Want to be","On track","Actions"],gtRows,{empty:"Upload platform reports / PTW to populate goal tracking."})}
-    <div style="margin-top:10px;font-weight:700">Overall: ${dot(S.overallRating)} ${esc(S.overallRating)}</div>
-    ${S.adviserComments?`<div class="pv-band">ADVISER COMMENTS</div><div style="font-size:12px;padding:6px 0">${esc(S.adviserComments)}</div>`:""}</div>`);
-  // Portfolio valuation
-  const portPages=[];
+    ${pvTable(["Strategy","Where You Were","Where You Should Be","Where You Are","Where You Want To Be","On Track","Actions To Take"],gtRows,{empty:"Upload platform reports / PTW to populate goal tracking."})}
+    <div style="margin-top:10px;font-weight:700">OVERALL STRATEGY ON TRACK RATING: ${dot(S.overallRating)} ${esc(S.overallRating)}</div>
+    ${S.adviserComments?`<div class="pv-band">ADVISER COMMENTS</div><div class="pv-p" style="padding:6px 0">${esc(S.adviserComments)}</div>`:""}</div>`);
+
+  /* Portfolio Valuation + Asset Allocation, per person */
   ["client","partner"].forEach(side=>{
-    (S.portfolios[side]||[]).forEach(acct=>{
+    if(side==="partner" && !hp) return;
+    const name=side==="client"?S.client.name:S.partner.name; if(!name) return;
+    const accts=S.portfolios[side]||[]; let grand=0;
+    const blocks=accts.map(acct=>{
       const rows=(acct.holdings||[]).map(h=>({cells:[{v:h.product},{v:h.units},{v:h.value?money(num(h.value)):""}]}));
-      const tot=pvSum(acct.holdings,"value");
-      if(rows.length) rows.push({cells:[{v:"Total"},{v:""},{v:money(tot)}],__tot:true});
-      portPages.push(`<div class="pv-band">${esc(acct.acct||"Account")}</div>${pvTable(["Product","Units","Value"],rows,{align:[,,"r"],empty:"No holdings."})}`);
-    });
+      const tot=pvSum(acct.holdings,"value"); grand+=tot;
+      if(rows.length) rows.push({cells:[{v:"Total for "+(acct.acct||"account")},{v:""},{v:money(tot)}],__tot:true});
+      return `<div class="pv-band">${esc(acct.acct||"Account")}</div>${pvTable(["Products","Units","Value"],rows,{align:[,,"r"],empty:"No holdings."})}`;
+    }).join("");
+    P.push(`<div class="wrprev-page"><div class="pv-h2">Portfolio Valuation — ${esc(name)}</div>${blocks||'<div class="pv-empty">Upload platform reports to populate holdings.</div>'}${accts.length?`<div style="text-align:right;font-weight:700;margin-top:8px">Total for ${esc(name)}: ${money(grand)}</div>`:""}</div>`);
+    const aaRows=(S.assetAlloc[side]||[]).map(a=>({cells:[{v:a.cls},{v:a.cur},{v:a.tgt},{v:a.varc}]}));
+    P.push(`<div class="wrprev-page"><div class="pv-h2">Portfolio Asset Allocation — ${esc(name)}</div>${pvTable(["Asset Class","Current Weight","Target Risk Profile Weight","Variance"],aaRows,{align:[,"r","r","r"],empty:"Enter or import the asset allocation."})}</div>`);
   });
-  P.push(`<div class="wrprev-page"><div class="pv-h2">Portfolio Valuation</div>${portPages.join("")||'<div class="pv-empty">Upload platform reports to populate holdings.</div>'}</div>`);
-  // Insurance
-  const insRows=(arr)=>(arr||[]).map(i=>({cells:[{v:i.type||i.cover||i.label},{v:i.owner},{v:i.sum?money(num(i.sum)):(i.amount||"")},{v:i.premium||""}]}));
-  const insAll=[...insRows(S.insurance.client),...insRows(S.insurance.partner)];
-  P.push(`<div class="wrprev-page"><div class="pv-h2">Insurance Cover</div>${pvTable(["Cover","Owner","Sum insured","Premium"],insAll,{align:[,,"r","r"],empty:"Insurance not entered yet (upload coming soon)."})}</div>`);
-  // Actions + services
+
+  /* Insurance Cover (8 columns, per template) */
+  ["client","partner"].forEach(side=>{
+    if(side==="partner" && !hp) return;
+    const name=side==="client"?S.client.name:S.partner.name; if(!name) return;
+    const rows=(S.insurance[side]||[]).map(i=>({cells:[{v:i.insurer},{v:i.policy},{v:i.owner},{v:i.life},{v:i.coverType},{v:i.amount},{v:i.structure},{v:i.premium}]}));
+    P.push(`<div class="wrprev-page"><div class="pv-h2">Insurance Cover — ${esc(name)}</div>${pvTable(["Insurer - Product","Policy #","Owner","Life Insured","Type of Cover","Amount of Cover","Premium Structure","Monthly Premium*"],rows,{empty:"Insurance not entered yet."})}<div class="pv-foot">* The monthly premium is an estimate after-tax figure based on the data available at the time of producing this document.</div></div>`);
+  });
+
+  /* Action items + Services */
   const actRows=S.actionItems.map(a=>({cells:[{v:a.desc},{v:a.who},{v:a.when}]}));
-  const svcRows=S.services.filter(s=>s.provided).map(s=>({cells:[{v:s.label}]}));
+  const svcRows=S.services.map(s=>({cells:[{v:s.label},{html:s.provided?'<b style="color:#0C6AE1">✔</b>':''}]}));
   P.push(`<div class="wrprev-page">
-    <div class="pv-h2">Action Items</div>${pvTable(["Action","Who","When"],actRows,{empty:"No action items yet."})}
-    <div class="pv-h2">Services Available</div>${pvTable(["Service"],svcRows,{empty:""})}</div>`);
-  // Back cover
+    <div class="pv-h2">Action items and Discussion Points</div>${pvTable(["Description","Who","When"],actRows,{empty:"No action items yet."})}
+    <div class="pv-h2" style="margin-top:16px">Services Available</div>${pvTable(["Services Available","Services Provided"],svcRows,{align:[,"c"],empty:""})}</div>`);
+
+  /* Back cover */
   if(typeof BACK_B64!=="undefined"&&BACK_B64) P.push(`<div class="wrprev-page back"><img src="data:image/jpeg;base64,${BACK_B64}"></div>`);
   return P.join("");
 }
@@ -1349,17 +1445,7 @@ function renderImports(){
   }).join("");
   const addOptions=undetected.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("");
   return `
-  <div class="section-head"><h2>Inputs &amp; Imports</h2>
-    <p>Follow the flow below: <b>① the last review loads the whole document as your base</b>, then <b>② this year's platform reports &amp; supporting docs override those figures</b> (asset values, goal-tracking "where you are", action items). Slots marked <b>Ready</b> auto-fill now; <b>Sample needed</b> ones activate once a sample of that format is supplied.</p></div>
-
-  <div class="card" style="background:var(--blue-light);border-color:var(--blue)">
-    <div style="display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--heading)">
-      <span><b>1.</b> Start / load draft</span> <span style="color:var(--text-muted)">→</span>
-      <span><b>2.</b> Last review = base</span> <span style="color:var(--text-muted)">→</span>
-      <span><b>3.</b> This year's reports = overrides</span> <span style="color:var(--text-muted)">→</span>
-      <span><b>4.</b> Review sections &amp; Generate Word</span>
-    </div>
-  </div>
+  <div class="section-head"><h2>Inputs &amp; Imports</h2></div>
 
   <div class="card">
     <div class="card-title"><span class="bar"></span>1 · Start / resume</div>
