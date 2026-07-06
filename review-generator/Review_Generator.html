@@ -784,13 +784,13 @@ const CHECKLIST_SCHEMA=[
 
 /* Standard to-do items seeded into every new review (editable) */
 const STANDARD_TODOS=[
-  "Update assets & liabilities / financial position",
-  "Confirm and record client risk profile (CRP) — Client 1, Client 2 and Joint",
-  "Rebalance portfolio(s) in line with risk profile",
-  "Ask the client for a referral",
-  "Check / review insurances (loadings, exclusions, increases/decreases required)",
-  "Check MCMA cash transfers",
-  "Tax reporting — confirm if the client wants prior-year tax reports for their return"
+  "We will update your assets, liabilities, income and expenses on file as per discussions in your review meeting.",
+  "We will revisit your risk profile to assure it is still appropriate for your circumstances.",
+  "We will perform a rebalance of your portfolios in alignment with your personal risk profile.",
+  "We will ask you to refer any friends or family who may benefit from our advice.",
+  "We will review your insurances to confirm your cover remains appropriate (loadings, exclusions, increases/decreases required).",
+  "We will review your MCMA cash transfers to ensure your cash holdings remain appropriate.",
+  "We will confirm whether you would like prior-year tax reports prepared for your return."
 ];
 
 /* Adviser dropdown + licensee/practice presets (add entities as provided) */
@@ -1426,7 +1426,7 @@ function buildPreviewPages(){
   const actRows=S.actionItems.map(a=>({cells:[{v:a.desc},{v:a.who},{v:a.when}]}));
   const svcRows=S.services.map(s=>({cells:[{v:s.label},{html:s.provided?'<b style="color:#0C6AE1">✔</b>':''}]}));
   P.push(`<div class="wrprev-page">
-    <div class="pv-h2">Action items and Discussion Points</div>${pvTable(["Description","Who","When"],actRows,{empty:"No action items yet."})}
+    <div class="pv-h2">Action items and Discussion Points</div>${pvTable(["Description","Who","When"],actRows,{head:"navy",align:[,"c","c"],empty:"No action items yet."})}
     <div class="pv-h2" style="margin-top:16px">Services Available</div>${pvTable(["Services Available","Services Provided"],svcRows,{align:[,"c"],empty:""})}</div>`);
 
   /* Back cover */
@@ -2890,8 +2890,11 @@ async function generateDocx(){
   }
   function actionsTable(){
     const w=[10000,2540,2200];
-    const rows=[headRow(["DESCRIPTION","WHO","WHEN"],w)];
-    S.actionItems.forEach(a=>rows.push(dataRow([a.desc,a.who,a.when],w)));
+    const rows=[new TableRow({tableHeader:true,children:[
+      cell("Description",{w:w[0],shade:NAVY,bold:true,color:WHITE}),
+      cell("Who",{w:w[1],shade:NAVY,bold:true,color:WHITE,align:AlignmentType.CENTER}),
+      cell("When",{w:w[2],shade:NAVY,bold:true,color:WHITE,align:AlignmentType.CENTER})]})];
+    S.actionItems.forEach(a=>rows.push(dataRow([a.desc,a.who,a.when],w,[{},{align:AlignmentType.CENTER},{align:AlignmentType.CENTER}])));
     return new Table({width:{size:W,type:WidthType.DXA},rows});
   }
   function servicesTable(){
