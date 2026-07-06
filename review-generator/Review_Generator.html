@@ -132,6 +132,8 @@ textarea{resize:vertical;min-height:60px}
 .cl-perclient{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .cl-perclient .cl-clabel{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);margin-bottom:4px}
 .cl-followup{margin-top:9px;padding:9px 11px;border-left:3px solid var(--blue);background:var(--blue-light);border-radius:0 8px 8px 0}
+.cl-subhead{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--blue);margin:16px 0 2px;padding-top:12px;border-top:1px solid var(--border-soft)}
+.cl-subhead:first-child{border-top:none;padding-top:0;margin-top:2px}
 .cl-flag{margin-top:8px;padding:8px 11px;border-radius:8px;font-size:12px;font-weight:600;line-height:1.5}
 .cl-flag.warn{background:var(--coral-light);color:var(--coral);border:1px solid var(--coral)}
 .cl-flag.ok{background:var(--green-light);color:var(--green-dark);border:1px solid var(--green)}
@@ -269,7 +271,7 @@ const S = {
     noChangeNote:"No changes to your existing portfolios and strategies have been recommended; this document is for your information only.",
     hasPartner:true,
     meetingMethod:"", fileNoteDate:"", fileNoteTime:"", soaDate:"", osaDate:"",
-    crp:{c1:"", c2:"", joint:""}, anniversaryDate:""
+    crp:{c1:"", c2:"", joint:""}, anniversaryDate:"", insuranceAdviser:""
   },
   licensee:{
     name:"GPS Wealth Ltd", abn:"17 005 482 726", afsl:"254 544",
@@ -362,7 +364,8 @@ const CL={
   area:(id,prompt,o={})=>Object.assign({id,prompt,type:"area"},o),
   date:(id,prompt,o={})=>Object.assign({id,prompt,type:"date"},o),
   sel:(id,prompt,options,o={})=>Object.assign({id,prompt,type:"select",options},o),
-  info:(id,compute)=>({id,type:"computed",compute})
+  info:(id,compute)=>({id,type:"computed",compute}),
+  sub:(id,label)=>({id,type:"computed",compute:()=>`<div class="cl-subhead">${label}</div>`})
 };
 const yesTrig=(v)=>String(v).trim().toLowerCase()==="yes";
 const held=(id)=>()=>yesTrig(getAns(id));   // section appliesWhen a "holds X" toggle is Yes
@@ -417,7 +420,13 @@ const CHECKLIST_SCHEMA=[
       {help:"If Pro and last usage older than 6 months, add a note for the adviser to discuss and consider a downgrade to Lite."}),
     CL.yn("gen_portal_stale","(If Pro) last usage older than 6 months?",
       {showWhen:()=>getAns("gen_portal")==="Pro",
-       todo:"Discuss My Wealth Portal usage — consider downgrade from Pro to Lite (no usage in 6+ months)"})
+       todo:"Discuss My Wealth Portal usage — consider downgrade from Pro to Lite (no usage in 6+ months)"}),
+    CL.yn("gen_snapshot","Checked the drive & correspondence for the client's Review Data Snapshot?",
+      {help:"The client completes a Jotform review data snapshot when booking through Calendly — use it to complete the review with the most current information.",
+       todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Locate the client's Review Data Snapshot (drive / correspondence)"}),
+    CL.yn("gen_handover","(If the SOA is new) checked the Implementation Handover folder for outstanding tasks?",
+      {help:"New SOAs may leave implementation tasks (setting up investments, insurance changes, estate planning) to pick up or flag with the adviser.",
+       todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Review the Implementation Handover folder for outstanding tasks (new SOA)"})
   ]},
 
   /* ---- COMPLIANCE ---- */
@@ -433,12 +442,18 @@ const CHECKLIST_SCHEMA=[
     CL.yn("comp_schedule_ok","Review schedule in Xplan aligns with the SOP?",
       {help:"Check the full review schedule in Xplan against the SOP.",
        todoWhen:(v)=>String(v).trim().toLowerCase()==="no",
-       todo:"Correct the review schedule in Xplan to align with the SOP"})
+       todo:"Correct the review schedule in Xplan to align with the SOP"}),
+    CL.yn("comp_reviewdates","Review Dates Checklist checked & uploaded?",
+      {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Complete and upload the Review Dates Checklist"})
   ]},
 
   /* ---- RETAIL SUPER ---- */
   {id:"retailSuper", title:"Retail Super", icon:"$", appliesWhen:held("has_retailSuper"), items:[
     CL.cur("retail_cash","Cash level within the super fund",{perClient:true,routeNote:{target:"portfolio",prefix:"Retail super cash"}}),
+    CL.yn("retail_autobalance","Auto-rebalancing activated (if available)?",
+      {help:"Check cash levels and activate auto-rebalancing where the platform supports it.",
+       todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Activate auto-rebalancing on the super account (if available)"}),
+    CL.area("retail_components","Taxable / non-taxable components within the super fund",{perClient:true,routeNote:{target:"adviser",prefix:"Super components"}}),
     CL.info("retail_sg_head",()=>`<div class="cl-help"><b>Concessional contributions</b> — record prior FY & current FY-to-date and check against the caps. Enter income & SG % to estimate expected SG and auto-flag any shortfall.</div>`),
     CL.cur("retail_income","Employment income (p.a.)",{perClient:true}),
     CL.txt("retail_sgRate","SG rate %",{perClient:true,help:"e.g. 11.5 — used to estimate expected employer SG."}),
@@ -499,20 +514,17 @@ const CHECKLIST_SCHEMA=[
     CL.cur("held_balance","Held account balance",{perClient:true,
       help:"After confirming splitting / claimable NC needs, consider a partial rollover. If the balance exceeds the required minimum ($6k or $10k), a rollover may be required (ROA)."}),
     CL.info("held_rollover_calc",()=>rolloverPanel()),
+    CL.area("held_components","Taxable / non-taxable components within the held fund",{perClient:true,routeNote:{target:"adviser",prefix:"Held super components"}}),
     CL.area("held_bene","Beneficiaries — who is nominated and the type for each account",{routeNote:{target:"estate",prefix:"Held super beneficiaries"}})
   ]},
 
-  /* ---- SMSF ---- */
+  /* ---- SMSF (full SMSF Strategy Checklist) ---- */
   {id:"smsf", title:"SMSF", icon:"⌂", appliesWhen:held("has_smsf"), items:[
+    CL.sub("smsf_h_admin","Fund administration"),
     CL.yn("smsf_contact","Contact details match across all systems & the SMSF?",{todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Update SMSF contact details to match"}),
     CL.cur("smsf_platCash","Platform cash level within the fund"),
     CL.cur("smsf_cmaCash","CMA cash level within the fund",
       {help:"Check the CMA incomings/outgoings — does it need topping up or a cash sweep for investment? SMSFs should hold ~$10k cash minimum."}),
-    CL.yn("smsf_pension_all","Is the whole balance in pension phase (if intended)?",
-      {help:"Check the most recent tax reports. If not, flag with the adviser.",
-       todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Flag with adviser: not all of the SMSF balance is in pension phase"}),
-    CL.yn("smsf_pension_min","Minimum pension met / on track?",
-      {todo:"Check whether the pension amount needs adjustment (impacts rebalance & reserve)"}),
     CL.yn("smsf_intello","Managed via Intello — any pending tasks?",
       {followUps:[{when:yesTrig,items:[CL.area("smsf_intello_notes","Intello pending tasks (noted on WR)",{routeNote:{target:"adviser",prefix:"Intello"}})]}]}),
     CL.txt("smsf_taxYear","Most recent tax return year on file",
@@ -522,19 +534,103 @@ const CHECKLIST_SCHEMA=[
       {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Request a copy of the outstanding SMSF tax return for file (non-complying risk)"}),
     CL.yn("smsf_accountant","Accountant details on file?",
       {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Collect the SMSF accountant's details and save to file"}),
-    CL.yn("smsf_docs","Trust deed, bare trust (if req.), beneficiary form & investment strategy on file?",
-      {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Obtain missing SMSF documents (trust deed / bare trust / beneficiary form / investment strategy)"}),
-    CL.sel("smsf_trustee","Trustee structure?",["","Corporate","Individual"]),
-    CL.yn("smsf_is_ok","Does the investment strategy reflect the fund's actual asset allocation?",
-      {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Update the SMSF investment strategy to reflect the actual asset allocation"}),
     CL.yn("smsf_linked","Are the super/investment accounts linked for discounts?",
       {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Link SMSF-related accounts for fee discounts"}),
+
+    CL.sub("smsf_h_members","Members"),
+    CL.area("smsf_members","Members & ages"),
+
+    CL.sub("smsf_h_trustee","Trusteeship"),
+    CL.sel("smsf_trustee","Corporate or individual trustee?",["","Corporate","Individual"]),
+    CL.txt("smsf_directors","Directors of the corporate trustee"),
+    CL.txt("smsf_voting","Voting powers"),
+    CL.yn("smsf_pension_power","If individual trustee — any pension power issues?",{routeNote:{target:"adviser",prefix:"SMSF pension power"}}),
+
+    CL.sub("smsf_h_deed","Trust Deed"),
+    CL.yn("smsf_deed_original","Original deed on file?",{todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Obtain the original SMSF trust deed for file"}),
+    CL.yn("smsf_deed_variation","Current deed of variation on file?"),
+    CL.yn("smsf_deed_lumpsum","Deed allows lump sum and all styles of pensions?"),
+    CL.yn("smsf_deed_reform","Copes with Simplified Super reforms?"),
+    CL.yn("smsf_deed_splitting","Copes with spouse splitting & estate-planning options?"),
+    CL.yn("smsf_deed_inspecie","Allows in-specie / in-kind transfers?"),
+    CL.yn("smsf_deed_upgrade","Trust deed upgrade required?",{todo:"Arrange an SMSF trust deed upgrade"}),
+
+    CL.sub("smsf_h_io","Investment Objectives & Strategy"),
+    CL.yn("smsf_io_held","Investment objective & strategy held on file?",{todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Obtain / prepare the SMSF investment strategy"}),
+    CL.yn("smsf_io_riskreturn","Covers risk & likely return, referencing the objective and cashflow?"),
+    CL.yn("smsf_io_diversification","Addresses composition & diversification (risks from inadequate diversification)?"),
+    CL.yn("smsf_io_liquidity","Addresses liquidity & ability to meet cashflow requirements?"),
+    CL.yn("smsf_io_liabilities","Ability to discharge existing liabilities considered?"),
+    CL.yn("smsf_io_attitude","Investments linked to members' attitude to investment?"),
+    CL.yn("smsf_io_reviewed","Investment strategy reviewed?",{todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Review the SMSF investment strategy"}),
+    CL.yn("smsf_is_ok","Investment %'s consistent with the strategy / actual asset allocation?",
+      {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Update the SMSF investment strategy to reflect the actual asset allocation"}),
+
+    CL.sub("smsf_h_centrelink","Centrelink"),
+    CL.yn("smsf_cl_applicable","Centrelink strategies applicable?",
+      {followUps:[{when:yesTrig,items:[CL.area("smsf_cl_notes","Pension design notes (e.g. lump sums above minimum payments)",{routeNote:{target:"adviser",prefix:"SMSF Centrelink"}})]}]}),
+
+    CL.sub("smsf_h_estate","Estate Planning"),
+    CL.sel("smsf_ep_nomination","Nomination type",["","Binding","Non-binding","Death Benefit Rule","No plan"],{perClient:true}),
+    CL.yn("smsf_ep_wills","Consistent with wills?"),
+    CL.area("smsf_ep_taxstatus","Tax status of beneficiaries discussed"),
+    CL.yn("smsf_ep_recycling","Recycling (withdrawal & re-contribution) considered?",
+      {followUps:[{when:yesTrig,items:[
+        CL.yn("smsf_ep_reclimit","Contribution limit not exceeded?"),
+        CL.area("smsf_ep_timing","Timing of re-contribution & pension consequences")
+      ]}]}),
     CL.area("smsf_bene","Beneficiaries — who is nominated and the type for each member",{routeNote:{target:"estate",prefix:"SMSF beneficiaries"}}),
+
+    CL.sub("smsf_h_audit","Audit & Compliance"),
+    CL.sel("smsf_audit","Most recent audit",["","Unqualified","Qualified"],{routeNote:{target:"adviser",prefix:"SMSF audit"}}),
+    CL.yn("smsf_docs","Trust deed, bare trust (if req.), beneficiary form & investment strategy all on file?",
+      {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Obtain missing SMSF documents (trust deed / bare trust / beneficiary form / investment strategy)"}),
+
+    CL.sub("smsf_h_ownership","Asset Ownership"),
+    CL.yn("smsf_ao_separate","Fund assets kept separate from other (personal) assets?",{todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Ensure SMSF assets are held separately from personal assets"}),
+    CL.yn("smsf_ao_naming","Correct name convention on asset ownership?"),
+
+    CL.sub("smsf_h_inhouse","In-House / Related Party"),
+    CL.yn("smsf_ih_assets","In-house assets / related-party investments held?",{routeNote:{target:"adviser",prefix:"SMSF in-house assets"}}),
+    CL.yn("smsf_ih_personaluse","Has any member enjoyed personal use of the fund's assets?"),
+    CL.yn("smsf_ih_pre99","Pre-99 unit trust held?"),
+
+    CL.sub("smsf_h_contrib","Contribution Strategies"),
     CL.cur("smsf_concFYTD","Concessional — current FY to date",{perClient:true}),
     CL.cur("smsf_ncFYTD","Non-concessional — current FY to date",{perClient:true}),
+    CL.area("smsf_cs_conc","Concessional / salary sacrifice / self-employed notes"),
+    CL.yn("smsf_cs_splitting","Spouse splitting applicable?",{perClient:true,routeNote:{target:"adviser",prefix:"SMSF spouse splitting"}}),
+    CL.yn("smsf_cs_recontribution","Re-contribution analysis required (estate planning)?"),
+    CL.yn("smsf_cs_excess","Excess contributions made and/or reported?",{routeNote:{target:"adviser",prefix:"SMSF excess contributions"}}),
+    CL.yn("smsf_cs_worktest","Does a member need to meet the work test for contributions?"),
     CL.yn("smsf_div293","Div293 applicable?",{perClient:true,routeNote:{target:"adviser",prefix:"SMSF Div293"}}),
     CL.yn("smsf_div296","Div296 applicable?",{perClient:true,routeNote:{target:"adviser",prefix:"SMSF Div296"}}),
-    CL.area("smsf_other","Super splitting / catch-up / downsizer / other strategies",{routeNote:{target:"adviser",prefix:"SMSF strategies"}})
+
+    CL.sub("smsf_h_pension","Pensions"),
+    CL.yn("smsf_pension_all","Is the whole balance in pension phase (if intended)?",
+      {help:"Check the most recent tax reports. If not, flag with the adviser.",
+       todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Flag with adviser: not all of the SMSF balance is in pension phase"}),
+    CL.yn("smsf_pension_min","Minimum pension met / on track?",
+      {todo:"Check whether the pension amount needs adjustment (impacts rebalance & reserve)"}),
+    CL.area("smsf_pen_detail","Pension detail (owner / type / balance / tax-free / minimum / ABP)"),
+    CL.cur("smsf_pen_total","Total pension payments (minimum) p.a."),
+    CL.area("smsf_pen_accum","Accumulation balances — discuss actual income requirements"),
+
+    CL.sub("smsf_h_insurance","Insurance (within the fund)"),
+    CL.yn("smsf_ins_held","Insurance held within the fund?"),
+    CL.yn("smsf_ins_required","Insurance required?",{routeNote:{target:"adviser",prefix:"SMSF insurance required"}}),
+    CL.area("smsf_ins_policy","Policy & type"),
+    CL.yn("smsf_ins_coverlevels","Cover levels reviewed?"),
+    CL.yn("smsf_ins_terms","Policy terms reviewed?"),
+    CL.yn("smsf_ins_antidetriment","Anti-detriment provisions considered?"),
+    CL.txt("smsf_ins_payment","Method of payment (to member / to account)"),
+    CL.sel("smsf_ins_occ","Fund disablement rules",["","Any occupation","Own occupation"]),
+    CL.yn("smsf_ins_distribution","Any likelihood insurance proceeds could not be distributed?"),
+
+    CL.sub("smsf_h_fees","Trustee Fees & Professional Advisers"),
+    CL.yn("smsf_tf_remuneration","Under the fund rules, can the trustee be remunerated for professional services?"),
+    CL.yn("smsf_tf_appointed","Have professional advisers been appointed?"),
+    CL.yn("smsf_tf_minuted","Has the appointment of advisers been minuted?",{todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Minute the appointment of the SMSF's professional advisers"})
   ]},
 
   /* ---- MCMA ---- */
@@ -558,7 +654,12 @@ const CHECKLIST_SCHEMA=[
     CL.yn("inv_mom","MOM phase — active Xeppo entry-strategy task?",{todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"MOM phase — set up active Xeppo entry-strategy task for the investment account"}),
     CL.yn("inv_linked","Accounts linked for discounts?",{todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Link investment/super accounts for fee discounts"}),
     CL.yn("inv_w8ben","Valid W-8BEN form listed on the account?",
-      {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Complete a W-8BEN form for the investment account"})
+      {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Complete a W-8BEN form for the investment account"}),
+    CL.yn("inv_autobalance","Auto-rebalancing activated (if available)?",
+      {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Activate auto-rebalancing on the investment account (if available)"}),
+    CL.yn("inv_tax","Are tax statements available for the investment account/s?",
+      {help:"Investment accounts only — confirm the annual tax statements are available for the client's return.",
+       todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Obtain the investment account tax statements for the client's return"})
   ]},
 
   /* ---- INVESTMENT BONDS ---- */
@@ -715,7 +816,7 @@ function allocChartPNG(rows,key,title){
   return cv.toDataURL("image/png").split(",")[1];
 }
 /* ---------- goal-tracking rating icons (match manual review) ---------- */
-const RATING_COLORS={"Ahead of Projections":"#1FA39A","On Track":"#34A853","Needs Work":"#F4A721","No Progress":"#E11D1D","N/A":"#9AA6B2"};
+const RATING_COLORS={"Ahead of Projections":"#00B050","On Track":"#70AD47","Needs Work":"#ED7D31","No Progress":"#FF0000","N/A":"#BFBFBF"};
 function ratingIconPNG(rating){
   const col=RATING_COLORS[rating]||"#9AA6B2";
   const cv=document.createElement("canvas"); cv.width=120; cv.height=120; const x=cv.getContext("2d");
@@ -1263,6 +1364,7 @@ function renderMeta(){
       ${fld("Dated","meta.reviewDate",m.reviewDate)}
       ${fld("Prepared for","meta.preparedFor",m.preparedFor)}
       ${fld("Adviser","meta.adviserName",m.adviserName)}
+      ${fld("Insurance specialist adviser","meta.insuranceAdviser",m.insuranceAdviser)}
       <div class="field"><label>Has partner?</label><select onchange="S.meta.hasPartner=(this.value==='Yes');renderContent()"><option ${m.hasPartner?'selected':''}>Yes</option><option ${!m.hasPartner?'selected':''}>No</option></select></div>
     </div>
     <div style="margin-top:12px">${fld("Cover note","meta.noChangeNote",m.noChangeNote,"area")}</div>
@@ -2240,7 +2342,7 @@ async function generateDocx(){
     BorderStyle,ShadingType,PageBreak,Header,Footer,PageNumber,HeadingLevel,TableOfContents,
     ImageRun,PageOrientation,VerticalAlign}=D;
   // Brand palette (from template)
-  const BLUE="0C6AE1", NAVY="103143", BAND="222222", WHITE="FFFFFF", GREY="5c6b78", LIGHT="E3F2F4", TEXT="16242e";
+  const BLUE="0C6AE1", NAVY="0C2E3F", BAND="0C2E3F", WHITE="FFFFFF", GREY="5c6b78", LIGHT="E3F2F4", TEXT="16242e";
   const FONT="Nunito", DISP="ABC Arizona Flare";
   const W=14740;                              // full content width (landscape A4 minus margins)
   const thin={style:BorderStyle.SINGLE,size:4,color:"D4DDE7"};
@@ -2269,26 +2371,41 @@ async function generateDocx(){
   const l=S.licensee,pr=S.practice,m=S.meta;
   const ch=[];   // body section children
 
-  /* ===== Contents ===== */
-  ch.push(H2("Contents"));
-  ch.push(new TableOfContents("Contents",{hyperlink:true,headingStyleRange:"1-1"}));
-  ch.push(new Paragraph({children:[new PageBreak()]}));
-
-  /* ===== Front matter (new branding — no licensee/AR block) ===== */
-  ch.push(P(m.noChangeNote,{after:200}));
-  ch.push(P([run("Prepared for: ",{bold:true}),run(m.preparedFor)]));
-  ch.push(P([run("By ",{}),run(m.adviserName,{bold:true})],{after:120}));
-  ch.push(P([run("My Contact Details",{bold:true})],{after:60}));
-  ch.push(P("Office Phone: "+pr.phone)); ch.push(P("Email: "+pr.email));
-  ch.push(P("Street Address: "+pr.street)); ch.push(P("Postal Address: "+pr.postal,{after:160}));
-  ch.push(P([run("Dated: ",{bold:true}),run(formatDate(m.reviewDate))]));
+  /* ===== Cover-detail page: AR/compliance block + "what this covers" (matches template) ===== */
+  const AR_CAR="441414", MWS_ABN="66 153 751 832";
+  const arPara=(name)=>P([run(name,{bold:true}),run(" is an Authorised Representative of My Wealth Solutions, a Corporate Authorised Representative "+AR_CAR+" of GPS Wealth, Australian Financial Services Licence Number "+(l.afsl||"254 544")+", ABN "+MWS_ABN+".")],{after:100,size:16});
+  const leftKids=[
+    P([new TextRun({text:"Your Wealth Review",font:DISP,size:36,color:BLUE})],{after:140}),
+    P([run("Prepared for: ",{bold:true}),run(m.preparedFor)]),
+    P([run("Financial Adviser: ",{bold:true}),run(m.adviserName)]),
+    ...(m.insuranceAdviser?[P([run("Insurance Specialist Adviser: ",{bold:true}),run(m.insuranceAdviser)])]:[]),
+    P([run("Date: ",{bold:true}),run(formatDate(m.reviewDate))],{after:140}),
+    P([run("Contact Details",{bold:true})],{after:60}),
+    arPara(m.adviserName||"Your adviser"),
+    ...(m.insuranceAdviser?[arPara(m.insuranceAdviser)]:[]),
+    P("Office Phone: "+pr.phone,{size:16}),
+    P("Office Email: "+pr.email,{size:16})
+  ];
+  const rightKids=[
+    P([new TextRun({text:"What does this document cover?",font:DISP,size:24,color:BLUE})],{after:120}),
+    P(m.noChangeNote,{after:100}),
+    P("Please make sure you read each section of the Wealth Review. If you feel any information is incorrect, please contact me directly using the details on this page.",{after:100}),
+    P("This document reviews the progress of your Financial Plan and Portfolio over the last 12 months. It details your asset allocations, the products you are using, and the services provided.")
+  ];
+  ch.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:[7200,W-7200],borders:noBorder,
+    rows:[new TableRow({children:[
+      new TableCell({width:{size:7200,type:WidthType.DXA},borders:noBorder,margins:{right:400,top:80,bottom:80},children:leftKids}),
+      new TableCell({width:{size:W-7200,type:WidthType.DXA},borders:noBorder,shading:{type:ShadingType.SOLID,color:LIGHT},margins:{left:260,right:260,top:220,bottom:220},children:rightKids})
+    ]})]}));
   ch.push(new Paragraph({children:[new PageBreak()]}));
 
   /* ===== Your Wealth Review intro + details ===== */
   ch.push(H2("Your Wealth Review"));
   ch.push(P("As life changes (such as your situation, legislation, goals and market performance) we are able to analyse the performance to adjust and realign the strategies to get you to your goals."));
   ch.push(P("We recommend using this as a time to reflect on the financial challenges that brought you to My Wealth Solutions in the first place and how far you've come. We'd also like to commend you again for taking continual, proactive steps to achieving financial freedom."));
-  ch.push(P("Please find your present situation in relation to Current Position, as we have on our records. If these values require updating, please let us know at your earliest convenience.",{after:160}));
+  ch.push(P("Please find your present situation in relation to Current Position, as we have on our records. If these values require updating, please let us know at your earliest convenience to allow us to accurately reflect your situation and continue to provide updated information."));
+  ch.push(P("If you wish to come in to our office or arrange an online review meeting, please don't hesitate to contact our office on either:"));
+  ch.push(P([run("Phone: ",{bold:true}),run(pr.phone),run("; or Email: ",{bold:true}),run(pr.email)],{after:160}));
   ch.push(detailsTable());
   ch.push(new Paragraph({children:[new PageBreak()]}));
 
@@ -2308,8 +2425,6 @@ async function generateDocx(){
   ch.push(P("",{after:130}));
   ch.push(bandHead("FOUNDATIONS"));
   ch.push(foundationsTable());
-  ch.push(P("",{after:90}));
-  ch.push(estateTable());
   ch.push(new Paragraph({children:[new PageBreak()]}));
 
   /* ===== Goals ===== */
@@ -2400,33 +2515,25 @@ async function generateDocx(){
       new TableRow({children:[cell("NET WORTH / SURPLUS",{w:w[0],bold:true,color:BLUE}),cell(money(nw),{w:w[1]+w[2],align:AlignmentType.CENTER,columnSpan:2}),cell(money(sp),{w:w[3],align:AlignmentType.CENTER})]})
     ]});
   }
+  // Foundations + Estate as one table (matches the template's combined Foundations table)
   function foundationsTable(){
-    const f=S.foundations,hp=m.hasPartner;
-    const w=hp?[3700,3680,3680,3680]:[3700,11040];
-    const rowF=(lab,cv,cr,pv)=> hp
-      ? new TableRow({children:[cell(lab,{w:w[0],bold:true,color:NAVY}),cell(cv,{w:w[1]}),cell(cr,{w:w[2]}),cell(pv,{w:w[3]})]})
-      : new TableRow({children:[cell(lab,{w:w[0],bold:true,color:NAVY}),cell(cv,{w:w[1]})]});
+    const f=S.foundations,e=S.estate,hp=m.hasPartner;
+    const w=hp?[3200,4100,1670,4100,1670]:[3200,9870,1670];
+    const rowF=(lab,cv,cr,pv,pr)=> hp
+      ? new TableRow({children:[cell(lab,{w:w[0],bold:true,color:NAVY,shade:LIGHT}),cell(cv,{w:w[1]}),cell(cr,{w:w[2]}),cell(pv,{w:w[3]}),cell(pr,{w:w[4]})]})
+      : new TableRow({children:[cell(lab,{w:w[0],bold:true,color:NAVY,shade:LIGHT}),cell(cv,{w:w[1]}),cell(cr,{w:w[2]})]});
     const head= hp
-      ? new TableRow({children:[cell("",{w:w[0],shade:BLUE}),cell(S.client.name.toUpperCase(),{w:w[1],shade:BLUE,bold:true,color:WHITE}),cell("REFERENCE",{w:w[2],shade:BLUE,bold:true,color:WHITE}),cell(S.partner.name.toUpperCase(),{w:w[3],shade:BLUE,bold:true,color:WHITE})]})
-      : new TableRow({children:[cell("",{w:w[0],shade:BLUE}),cell(S.client.name.toUpperCase(),{w:w[1],shade:BLUE,bold:true,color:WHITE})]});
+      ? new TableRow({children:[cell("",{w:w[0],shade:BLUE}),cell((S.client.name||"Client").toUpperCase(),{w:w[1],shade:BLUE,bold:true,color:WHITE}),cell("REFERENCE",{w:w[2],shade:BLUE,bold:true,color:WHITE}),cell((S.partner.name||"Partner").toUpperCase(),{w:w[3],shade:BLUE,bold:true,color:WHITE}),cell("REFERENCE",{w:w[4],shade:BLUE,bold:true,color:WHITE})]})
+      : new TableRow({children:[cell("",{w:w[0],shade:BLUE}),cell((S.client.name||"Client").toUpperCase(),{w:w[1],shade:BLUE,bold:true,color:WHITE}),cell("REFERENCE",{w:w[2],shade:BLUE,bold:true,color:WHITE})]});
     return new Table({width:{size:W,type:WidthType.DXA},rows:[head,
-      rowF("Life Insurance",f.client.life,f.client.ref,f.partner.life),
-      rowF("Total & Permanent Disability",f.client.tpd,f.partner.ref,f.partner.tpd),
-      rowF("Trauma Insurance",f.client.trauma,"",f.partner.trauma),
-      rowF("Income Protection (month)",f.client.ip+"\n"+f.client.ipNotes,"",f.partner.ip+"\n"+f.partner.ipNotes)
-    ]});
-  }
-  function estateTable(){
-    const e=S.estate,hp=m.hasPartner;
-    const w=hp?[3740,5500,5500]:[3740,11000];
-    const rowE=(lab,cv,pv)=> hp
-      ? new TableRow({children:[cell(lab,{w:w[0],bold:true,color:NAVY,shade:LIGHT}),cell(cv,{w:w[1]}),cell(pv,{w:w[2]})]})
-      : new TableRow({children:[cell(lab,{w:w[0],bold:true,color:NAVY,shade:LIGHT}),cell(cv,{w:w[1]})]});
-    return new Table({width:{size:W,type:WidthType.DXA},rows:[
-      rowE("Up to Date Wills",e.willsC,e.willsP),
-      rowE("Power of Attorney",e.poaC,e.poaP),
-      rowE("Super Death Nominations",e.superNomC,e.superNomP),
-      rowE("Insurance Death Nominations",e.insNomC,e.insNomP)
+      rowF("Life Insurance",f.client.life,f.client.ref,f.partner.life,f.partner.ref),
+      rowF("Total & Permanent Disability",f.client.tpd,"",f.partner.tpd,""),
+      rowF("Trauma Insurance",f.client.trauma,"",f.partner.trauma,""),
+      rowF("Income Protection (month)",[f.client.ip,f.client.ipNotes].filter(Boolean).join("\n"),"",[f.partner.ip,f.partner.ipNotes].filter(Boolean).join("\n"),""),
+      rowF("Up to Date Wills",e.willsC,"",e.willsP,""),
+      rowF("Power of Attorney",e.poaC,"",e.poaP,""),
+      rowF("Super Death Nominations",e.superNomC,"",e.superNomP,""),
+      rowF("Insurance Death Nominations",e.insNomC,"",e.insNomP,"")
     ]});
   }
   function goalsTable(){
@@ -2520,10 +2627,15 @@ async function generateDocx(){
     return new Table({width:{size:W,type:WidthType.DXA},rows});
   }
 
-  /* ===== footer + sections (cover / body / back) ===== */
-  const footer=new Footer({children:[new Paragraph({alignment:AlignmentType.RIGHT,children:[
-    new TextRun({text:`My Wealth Solutions    ·    Page `,font:FONT,size:15,color:GREY}),
-    new TextRun({children:[PageNumber.CURRENT],font:FONT,size:15,color:GREY})]})]});
+  /* ===== footer (matches template: "PAGE n" left, "WEALTH REVIEW" right) ===== */
+  const footer=new Footer({children:[new Table({width:{size:W,type:WidthType.DXA},columnWidths:[W/2,W/2],borders:noBorder,
+    rows:[new TableRow({children:[
+      new TableCell({width:{size:W/2,type:WidthType.DXA},borders:noBorder,children:[new Paragraph({alignment:AlignmentType.LEFT,children:[
+        new TextRun({text:"PAGE ",font:FONT,size:15,color:GREY,characterSpacing:20}),
+        new TextRun({children:[PageNumber.CURRENT],font:FONT,size:15,color:GREY})]})]}),
+      new TableCell({width:{size:W/2,type:WidthType.DXA},borders:noBorder,children:[new Paragraph({alignment:AlignmentType.RIGHT,children:[
+        new TextRun({text:"WEALTH REVIEW",font:FONT,size:15,color:GREY,characterSpacing:20})]})]})
+    ]})]})]});
 
   // docx flips width/height for LANDSCAPE, so pass A4 *portrait* dims (it rotates them to landscape)
   const landscape={orientation:PageOrientation.LANDSCAPE,width:11906,height:16838};
