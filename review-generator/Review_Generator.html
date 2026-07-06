@@ -2716,27 +2716,39 @@ async function generateDocx(){
   ch.push(servicesTable());
 
   /* ============ table builders ============ */
+  // Matches the template: two fields per row, a blue LABEL row above a teal VALUE row,
+  // client on the left / partner on the right with a thin spacer column between.
   function detailsTable(){
     const c=S.client,p=S.partner,hp=m.hasPartner;
-    const wf=hp?[3685,3685,3685,3685]:[3685,11055];
-    const pair=(la,va,lb,vb)=> hp
-      ? new TableRow({children:[cell(la,{w:wf[0],shade:LBL,bold:true,color:WHITE}),cell(va,{w:wf[1]}),cell(lb,{w:wf[2],shade:LBL,bold:true,color:WHITE}),cell(vb,{w:wf[3]})]})
-      : new TableRow({children:[cell(la,{w:wf[0],shade:LBL,bold:true,color:WHITE}),cell(va,{w:wf[1]})]});
-    const rows=[
-      new TableRow({children:[cell("YOUR DETAILS",{shade:BLUE,bold:true,color:WHITE,columnSpan:hp?4:2})]}),
-      pair("Name",c.name,"Name",p.name),
-      pair("Date of Birth",c.dob,"Date of Birth",p.dob),
-      pair("Mobile",c.mobile,"Mobile",p.mobile),
-      pair("Marital Status",c.marital,"Marital Status",p.marital),
-      pair("Email",c.email,"Email",p.email),
-      pair("Estate Planning",c.estate,"Estate Planning",p.estate),
-      pair("Job Title",c.jobTitle,"Job Title",p.jobTitle),
-      pair("Employer",c.employer,"Employer",p.employer),
-      pair("Employment",c.employment,"Employment",p.employment),
-      pair("Risk Profile",c.riskProfile,"Risk Profile",p.riskProfile),
-      pair("Dependants",S.dependantsClient,"Dependants",S.dependantsPartner),
-      new TableRow({children:[cell("Address",{w:wf[0],shade:LBL,bold:true,color:WHITE}),cell(S.address,{w:W-wf[0],columnSpan:hp?3:1})]})
-    ];
+    const w=hp?[3450,3450,470,3450,3450]:[7370,7370];
+    const L=(t,ww,span)=>cell(t,{w:ww,shade:LBL,bold:true,color:WHITE,columnSpan:span});
+    const V=(t,ww,span)=>cell(t,{w:ww,columnSpan:span});
+    const SP=()=>cell("",{w:w[2],shade:WHITE});
+    const pairs=[["Name","name","Date of Birth","dob"],["Mobile","mobile","Marital Status","marital"],
+      ["Email","email","Estate Planning","estate"],["Job Title","jobTitle","Employer","employer"],
+      ["Employment","employment","Risk Profile","riskProfile"]];
+    const rows=[ new TableRow({children:[cell("YOUR DETAILS",{shade:BLUE,bold:true,color:WHITE,columnSpan:hp?5:2})]}) ];
+    pairs.forEach(([la,ka,lb,kb])=>{
+      if(hp){
+        rows.push(new TableRow({children:[L(la,w[0]),L(lb,w[1]),SP(),L(la,w[3]),L(lb,w[4])]}));
+        rows.push(new TableRow({children:[V(c[ka],w[0]),V(c[kb],w[1]),SP(),V(p[ka],w[3]),V(p[kb],w[4])]}));
+      } else {
+        rows.push(new TableRow({children:[L(la,w[0]),L(lb,w[1])]}));
+        rows.push(new TableRow({children:[V(c[ka],w[0]),V(c[kb],w[1])]}));
+      }
+    });
+    // Address (client) / Investment Address (partner), then Dependants — each label row + value row
+    if(hp){
+      rows.push(new TableRow({children:[L("Address",w[0],2),SP(),L("Investment Address",w[3],2)]}));
+      rows.push(new TableRow({children:[V(S.address,w[0],2),SP(),V(S.investmentAddresses,w[3],2)]}));
+      rows.push(new TableRow({children:[L("Dependants",w[0],2),SP(),L("Dependants",w[3],2)]}));
+      rows.push(new TableRow({children:[V(S.dependantsClient,w[0],2),SP(),V(S.dependantsPartner,w[3],2)]}));
+    } else {
+      rows.push(new TableRow({children:[L("Address",w[0]),L("Investment Address",w[1])]}));
+      rows.push(new TableRow({children:[V(S.address,w[0]),V(S.investmentAddresses,w[1])]}));
+      rows.push(new TableRow({children:[L("Dependants",w[0],2)]}));
+      rows.push(new TableRow({children:[V(S.dependantsClient,w[0],2)]}));
+    }
     return new Table({width:{size:W,type:WidthType.DXA},rows});
   }
   function assetTable(items,totalLabel){
@@ -2826,7 +2838,7 @@ async function generateDocx(){
   }
   function portfolioPages(ch,who,name){
     ch.push(H2("Portfolio Valuation"));
-    ch.push(P(name,{bold:true,color:NAVY,after:90}));
+    ch.push(P(String(name||"").split(" ")[0]||name,{bold:true,color:NAVY,after:90}));
     const w=[9000,2870,2870];
     const rows=[headRow(["PRODUCTS","UNITS","VALUE"],w)];
     let grand=0;
@@ -2841,7 +2853,7 @@ async function generateDocx(){
     ch.push(new Table({width:{size:W,type:WidthType.DXA},rows}));
     ch.push(new Paragraph({children:[new PageBreak()]}));
     ch.push(H2("Portfolio Asset Allocation"));
-    ch.push(P(name,{bold:true,color:NAVY,after:90}));
+    ch.push(P(String(name||"").split(" ")[0]||name,{bold:true,color:NAVY,after:90}));
     // Auto-generated donut charts (current vs target) embedded as images
     try{
       const curPng=allocChartPNG(S.assetAlloc[who],"cur","Current Asset Allocation");
@@ -2860,7 +2872,7 @@ async function generateDocx(){
   }
   function insurancePage(ch,who,name){
     ch.push(H2("Insurance Cover"));
-    ch.push(P(name,{bold:true,color:NAVY,after:90}));
+    ch.push(P(String(name||"").split(" ")[0]||name,{bold:true,color:NAVY,after:90}));
     const w=[2200,1900,1300,1300,2200,2240,1800,1800];
     const rows=[headRow(["INSURER - PRODUCT","POLICY #","OWNER","LIFE INSURED","TYPE OF COVER","AMOUNT OF COVER","STRUCTURE","MONTHLY PREMIUM*"],w)];
     S.insurance[who].forEach(it=>rows.push(dataRow([it.insurer,it.policy,it.owner,it.life,it.coverType,it.amount,it.structure,it.premium],w,[{bold:true,color:NAVY},{},{},{},{},{},{},{}])));
