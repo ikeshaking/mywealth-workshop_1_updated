@@ -906,8 +906,10 @@ function parseHub24Text(text){
     const tot=line.match(/Total\s+([\d,]+\.\d{2})\s+100\.00%/);
     if(tot) total=parseFloat(tot[1].replace(/,/g,""));
   });
-  // fallback total from the Consolidated Portfolio "Total Portfolio" end-of-period value
-  if(!total){ const cp=text.match(/Total Portfolio\s+[\d,]+\.\d{2}\s+[\d,]+\.\d{2}\s+[\d,]+\.\d{2}\s+([\d,]+\.\d{2})/); if(cp) total=parseFloat(cp[1].replace(/,/g,"")); }
+  // Prefer the Consolidated Portfolio "Total Portfolio" end-of-period market value (the true current
+  // balance). Tolerate integer columns like "0" (Performance reports) as well as $x,xxx.xx.
+  const cp=text.match(/Total Portfolio\s+([\d,]+(?:\.\d{2})?)\s+([\d,()]+(?:\.\d{2})?)\s+([\d,()]+(?:\.\d{2})?)\s+([\d,]+(?:\.\d{2})?)/);
+  if(cp) total=parseFloat(cp[4].replace(/,/g,""));
   if(!total) total=holdings.reduce((a,h)=>a+h.value,0);
   if(!holdings.length && total){ holdings.push({product:/super/i.test(type)?"Superannuation":"Account balance", units:"", value:total}); }
   if(!holdings.length && !total) return null;
@@ -923,7 +925,9 @@ async function importAnyPlatform(ev){
   for(const f of files){
     if(!/\.pdf$/i.test(f.name)){ failed.push(f.name+" — not a PDF"); continue; }
     let text="";
-    try{ text=await readPdfText(f); }catch(e){ failed.push(f.name+" — couldn't read PDF"); continue; }
+    try{ text=await readPdfText(f); }catch(e){ failed.push(f.name+" — couldn't read PDF (is the reader still loading? open the file in a normal browser tab)"); continue; }
+    // Image-only / scanned PDFs (e.g. a CoreLogic property valuation) have no text layer to read.
+    if(!text || text.replace(/\s/g,"").length<40){ failed.push(f.name+" — no readable text (looks like a scanned/image PDF, e.g. a property valuation) — enter the value manually"); registerUpload(f.name,"Image PDF"); continue; }
     try{
       // try each parser; the guards inside each return null for non-matching formats
       let done=false;
@@ -931,7 +935,7 @@ async function importAnyPlatform(ev){
       if(h && (h.holdings.length||h.total)){ applyHub24(h); applied.push(`HUB24 · ${h.name} · ${money(h.total)}`); done=true; }
       if(!done){ const b=parseBtText(text); if(b){ applyBt(b); applied.push(`BT Panorama · ${b.name} · ${money(b.total)}`); done=true; } }
       if(!done){ const mq=parseMacqText(text); if(mq){ applyMacq(mq); applied.push(`Macquarie · ${mq.name||"CMA"} · ${money(mq.balance)}`); done=true; } }
-      if(!done) failed.push(f.name+" — couldn't match HUB24 / BT / Macquarie");
+      if(!done) failed.push(f.name+" — unrecognised report format (auto-read: HUB24, BT, Macquarie)");
       else registerUpload(f.name,"Platform report");
     }catch(e){ failed.push(f.name+" — "+e.message); }
   }
@@ -2417,57 +2421,115 @@ function rollForward(){
   renderContent();
 }
 
-/* ---------- Pre-Review Checklist (.xlsx) ---------- */
+/* ---------- Pre-Review Checklist (.xlsx) — prefill the new sectioned questionnaire ---------- */
+// Map the old flat checklist item wording → new schema item id (+ account toggle to reveal the section).
+const CHECKLIST_IMPORT_MAP=[
+  {re:/id expiry|valid id/i, id:"gen_id", slot:"c1"},
+  {re:/outstanding tasks in xplan/i, id:"gen_xeppo"},
+  {re:/record amount of conce|superannuation account and record/i, id:"retail_concFYTD", account:"has_retailSuper", slot:"c1"},
+  {re:/taxable and non-taxable/i, id:"retail_components", account:"has_retailSuper", slot:"c1"},
+  {re:/bt panorama super/i, id:"retail_bt", account:"has_retailSuper"},
+  {re:/investment accounts|regular investment plan/i, id:"inv_rsp", account:"has_investment"},
+  {re:/accounts are linked/i, id:"retail_linked"},
+  {re:/review data snapshot/i, id:"gen_snapshot"},
+  {re:/partial rollover/i, id:"held_balance", account:"has_heldSuper", slot:"c1"},
+  {re:/opted in for insurance/i, id:"ins_optin", account:"has_insurance"},
+  {re:/efds is due/i, id:"comp_osa"},
+  {re:/review dates checklist/i, id:"comp_reviewdates"},
+  {re:/client category/i, id:"gen_category_ok"},
+  {re:/property valuations/i, id:"prop_ppor", account:"has_property"},
+  {re:/available equity/i, id:"loan_equity", account:"has_loans"},
+  {re:/my prosperity|prosperity level/i, id:"gen_portal"},
+  {re:/cash levels|auto rebalanc/i, id:"retail_cash", account:"has_retailSuper", slot:"c1"},
+  {re:/account beneficiaries/i, id:"retail_bene", account:"has_retailSuper"},
+  {re:/fees match soa/i, id:"fee_soa"},
+  {re:/ongoing fees/i, id:"fee_ongoing_dd"},
+  {re:/performance report/i, id:"retail_reports", account:"has_retailSuper"},
+  {re:/macquarie cash|mcma/i, id:"mcma_stmt", account:"has_mcma"},
+  {re:/w8ben|w-8ben/i, id:"inv_w8ben", account:"has_investment"},
+  {re:/tax statements/i, id:"inv_tax", account:"has_investment"},
+  {re:/client risk profile/i, id:"gen_crp_c1"},
+  {re:/income protection.*agreed|agreed valuation/i, id:"ins_ip_agreed", account:"has_insurance"},
+  {re:/insurance information is up to date|loadings|exclusions/i, id:"ins_loadings", account:"has_insurance"},
+  {re:/care essentials|winton/i, id:"retail_care", account:"has_retailSuper"},
+  {re:/work sorted|worksorted/i, id:"fee_snapshot"}
+];
+function findSchemaItem(id){
+  for(const sec of CHECKLIST_SCHEMA){ for(const it of (sec.items||[])){ if(it.id===id) return it;
+    for(const fu of (it.followUps||[])) for(const f of (fu.items||[])) if(f.id===id) return f; } }
+  return null;
+}
+function deriveChecklistAnswer(item,comment){
+  const c=String(comment||"").trim(); const t=item?item.type:"text";
+  if(!c) return null;
+  if(t==="yesno"){
+    if(/^n\/?a\b/i.test(c)) return "N/A";
+    if(/^(no\b|nil|none|expired|required|missing|not |suspended)/i.test(c)) return "No";
+    return "Yes";
+  }
+  if(t==="select"){ const opts=(typeof item.options==="function"?item.options():item.options)||[]; const hit=opts.find(o=>o&&o.toLowerCase().includes(c.toLowerCase().slice(0,5))); return hit||null; }
+  if(t==="currency"){ const m=c.match(/\$?\s*([\d,]+(?:\.\d+)?)/); return m?m[1].replace(/,/g,""):null; }
+  return /^n\/?a\b/i.test(c)?null:c; // text / area
+}
 async function importChecklist(ev){
   const f=ev.target.files[0]; if(!f)return;
+  if(typeof XLSX==="undefined"){ toast("Spreadsheet reader still loading — open the file in a normal browser tab and try again."); return; }
   try{
     const buf=await f.arrayBuffer();
     const wb=XLSX.read(buf,{type:"array",cellDates:true});
     const ws=wb.Sheets[wb.SheetNames.find(n=>/prereview|pre review|checklist/i.test(n))||wb.SheetNames[0]];
     const rows=XLSX.utils.sheet_to_json(ws,{header:1,blankrows:false,defval:""});
     const labelVal=(label)=>{ const r=rows.find(r=>String(r[0]||"").trim().toLowerCase().startsWith(label)); return r?r[1]:""; };
+    // meta (Review Date may be an Excel serial number)
     const rd=labelVal("review date");
-    if(rd){ const d=(rd instanceof Date)?rd:new Date(rd); if(!isNaN(d)) S.meta.reviewDate=d.toISOString().slice(0,10); }
+    if(rd!==""&&rd!=null){ let d = (rd instanceof Date)?rd : (typeof rd==="number"?new Date(Math.round((rd-25569)*86400000)) : new Date(rd)); if(!isNaN(d)) S.meta.reviewDate=d.toISOString().slice(0,10); }
     const rt=labelVal("review type"); if(rt) S.meta.reviewType=String(rt).trim();
-    const cl=labelVal("client"); if(cl && !S.meta.preparedFor) S.meta.preparedFor=String(cl).trim();
-    const ad=labelVal("adviser"); if(ad && !S.meta.adviserName) S.meta.adviserName=String(ad).trim();
+    const cl=labelVal("client"); if(cl){ S.meta.preparedFor=String(cl).trim(); if(!S.client.name){ S.client.name=String(cl).trim(); } clSet("scope_c1name",S.client.name,false); }
+    const ad=labelVal("adviser"); if(ad){ S.meta.adviserName=String(ad).trim(); clSet("scope_adviser",S.meta.adviserName,false); }
     const headIdx=rows.findIndex(r=>/^item$/i.test(String(r[0]||"").trim()) && /action/i.test(String(r[1]||"")));
     const dataRows=headIdx>=0?rows.slice(headIdx+1):rows;
-    // fill the editable checklist form from the upload
-    const formRows=dataRows.filter(r=>String(r[0]||"").trim()).map(r=>({item:String(r[0]||"").trim(), action:String(r[1]||"").trim(), comment:String(r[2]||"").trim()}));
-    if(formRows.length) S.checklist.rows=formRows;
-    const isStatus=(s)=>/^(yes|no|n\/?a|done|completed?|uploaded|downloaded|tbc|tba|pending|valid)\b/i.test(s.trim());
-    let added=0, routed=0;
+    // keep the raw rows (legacy) too
+    S.checklist.rows=dataRows.filter(r=>String(r[0]||"").trim()).map(r=>({item:String(r[0]||"").trim(), action:String(r[1]||"").trim(), comment:String(r[2]||"").trim()}));
+    // account toggles from the whole item+comment text so the right sections appear
+    const allText=dataRows.map(r=>String(r[0]||"")+" "+String(r[2]||"")).join("\n").toLowerCase();
+    const setTog=(id,re)=>{ if(re.test(allText)) clSet(id,"Yes",false); };
+    setTog("has_retailSuper",/hub\s*24 super|panorama super|retail super|hub super/);
+    setTog("has_investment",/hub\s*24 invest|hub invest|investment account|\bdr\b/);
+    setTog("has_mcma",/macquarie|mcma|cash management/);
+    setTog("has_smsf",/smsf|self[- ]managed/);
+    setTog("has_property",/property val|investment property|ppor|downloaded.*valuation/);
+    setTog("has_heldSuper",/held super|industry super/);
+    setTog("has_insurance",/income protection|insurance/);
+    let prefilled=0, added=0, routed=0;
     dataRows.forEach(r=>{
       const item=String(r[0]||"").trim(), action=String(r[1]||"").trim(), comment=String(r[2]||"").trim();
-      // ACTION column → action items to discuss
-      if(action && !isStatus(action) && action.replace(/[^a-z]/gi,"").length>=8){
-        let desc=action;
-        const m=action.match(/create (?:an )?action item (?:to |for the adviser to |for )?(.+)/i);
-        if(m) desc=m[1];
-        desc=desc.replace(/\s+/g," ").replace(/[.;:,]+$/,"").trim();
-        if(desc){ desc=desc.charAt(0).toUpperCase()+desc.slice(1);
-          if(!S.actionItems.find(a=>a.desc===desc)){ S.actionItems.push({desc, who:"MWS", when:"Review"}); added++; } }
+      if(!item) return;
+      const map=CHECKLIST_IMPORT_MAP.find(mm=>mm.re.test(item));
+      if(map){
+        if(map.account && comment && !/^n\/?a/i.test(comment) && getAns(map.account)!=="Yes") clSet(map.account,"Yes",false);
+        const si=findSchemaItem(map.id);
+        const val=deriveChecklistAnswer(si,comment);
+        if(val!=null){ if(si&&si.perClient) clSetC(map.id, map.slot||"c1", val, false); else clSet(map.id, val, false); prefilled++; }
       }
-      // COMMENT column → route to the relevant section
-      if(comment && !isStatus(comment)){
-        const hay=(item+" "+comment).toLowerCase();
-        if(/beneficiar|nomination|nominee/.test(item.toLowerCase())){
-          S.estate.notes=(S.estate.notes?S.estate.notes+"\n":"")+"Beneficiaries — "+comment; routed++;
-        } else if(/\brip\b|\brsp\b|investment account|regular (savings|investment)|savings plan/.test(hay)){
-          const gt=S.goalTracking.find(g=>/investment/i.test(g.strategy));
-          const note="Regular plan — "+comment;
-          if(gt) gt.actions=(gt.actions?gt.actions+" ":"")+note; else S.adviserComments=(S.adviserComments?S.adviserComments+"\n":"")+note;
-          routed++;
-        } else if(/income protection|\bip\b|waiting period|wait period/.test(item.toLowerCase())){
-          S.foundations.client.ipNotes=(S.foundations.client.ipNotes?S.foundations.client.ipNotes+" ":"")+comment; routed++;
-        } else if(/fee/.test(item.toLowerCase())){
-          S.adviserComments=(S.adviserComments?S.adviserComments+"\n":"")+"Fees — "+comment; routed++;
-        }
+      // ACTION column → to-do
+      if(action && action.replace(/[^a-z]/gi,"").length>=8){
+        let desc=action; const m=action.match(/create (?:an )?action item (?:to |for the adviser to |for )?(.+)/i); if(m) desc=m[1];
+        desc=desc.replace(/\s+/g," ").replace(/[.;:,]+$/,"").trim();
+        if(desc){ desc=desc.charAt(0).toUpperCase()+desc.slice(1); if(!S.actionItems.find(a=>a.desc===desc)){ S.actionItems.push({desc,who:"MWS",when:"Review"}); added++; } }
+      }
+      // rich COMMENT → route to the matching WR section
+      if(comment && !/^(yes|no|n\/?a|done|completed?|uploaded|downloaded|updated|expired|required|valid)\b/i.test(comment)){
+        const it=item.toLowerCase();
+        if(/beneficiar|nomination|nominee/.test(it)){ S.estate.notes=(S.estate.notes?S.estate.notes+"\n":"")+"Beneficiaries — "+comment; routed++; }
+        else if(/fee/.test(it)){ S.adviserComments=(S.adviserComments?S.adviserComments+"\n":"")+"Fees — "+comment; routed++; }
+        else if(/income protection|\bip\b/.test(it)){ S.foundations.client.ipNotes=(S.foundations.client.ipNotes?S.foundations.client.ipNotes+" ":"")+comment; routed++; }
       }
     });
-    toast(`Checklist imported — meta set${added?`, +${added} action item(s)`:""}${routed?`, ${routed} comment(s) routed`:""}.`);
+    if(!S.partner.name){ S.meta.hasPartner=false; clSet("scope_clients","1",false); }
+    syncPreparedFor();
     renderContent();
+    switchTab("checklist");
+    toast(`Checklist imported — ${prefilled} answers prefilled, +${added} to-do(s)${routed?`, ${routed} note(s) routed`:""}.`);
   }catch(e){ toast("Couldn't read checklist: "+e.message); }
 }
 async function importPTW(ev){
