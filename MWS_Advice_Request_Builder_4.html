@@ -646,8 +646,74 @@ function collectState(){
 }
 function saveState(){const c=JSON.stringify(collectState(),null,2);const b=new Blob([c],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='advice_request_state.json';a.click();URL.revokeObjectURL(u)}
 function loadStateFile(inp){const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{applyState(JSON.parse(e.target.result))}catch(err){alert('Could not load file: '+err.message)}inp.value='';};r.readAsText(f)}
+// Prefill the builder from an EXPORTED advice request (the ".json output" from the "↓ .json" button):
+// convert the flat export back into the internal state shape, then reuse applyState() to populate the UI.
+function arExportToState(o){
+ const _aexact={}; DATA.forEach((a,i)=>{_aexact[a.area]=i;});
+ // Tolerant area match — an advice request exported by an OLDER builder can use a slightly different
+ // area label/number (e.g. "5 · Personal Superannuation" vs the current "5 · Personal Superannuation &
+ // Contributions", or "7 · Personal Protection" now numbered "6"). Match on the text after the number.
+ const AIX=name=>{ if(_aexact[name]!=null) return _aexact[name];
+   const strip=s=>String(s||'').replace(/^\s*\d+\s*[·.\-]\s*/,'').trim().toLowerCase();
+   const t=strip(name); if(!t) return null; let best=null;
+   DATA.forEach((a,i)=>{ const at=strip(a.area); if(at===t||at.indexOf(t)===0||t.indexOf(at)===0) best=i; });
+   return best; };
+ const F2=Object.assign({},F);   // start from current defaults, overlay the export
+ const names=String(o.clients||'').split(/\s*&\s*/).map(s=>s.trim()).filter(Boolean);
+ F2.ctype=o.ctype||'Single';
+ F2.c1name=names[0]||''; if(F2.ctype==='Couple') F2.c2name=names[1]||''; else F2.c2name='';
+ F2.adviser=o.adviser||''; F2.newex=o.status||'New';
+ F2.narr=o.narrative||''; F2.cursit=o.currentSituation||''; F2.keycons=o.keyConsiderations||''; F2.budnotes=o.notesBudget||'';
+ F2.rpexist=o.riskExisting||''; F2.scopeoth=o.scopeOther||'';
+ F2.savingsBenefit=Array.isArray(o.savingsBenefit)?o.savingsBenefit:[]; F2.insuranceBenefit=Array.isArray(o.insuranceBenefit)?o.insuranceBenefit:[];
+ F2.superDcaMethod=o.superDcaMethod||'';
+ const cc=o.cashCosts||{}; F2.cIns=cc.ins||''; F2.cInv=cc.inv||''; F2.cAdv=cc.adv||''; F2.cCostFreq=cc.freq||'per week';
+ const cp=o.cashPos||{}; F2.cashbefore=cp.before||''; F2.cashafter=cp.after||''; F2.leave=cp.leave||''; F2.cashnote=cp.note||'';
+ const fee=o.fee||{}; F2.feecommit=fee.commitment||''; F2.feestatus=fee.status||''; F2.feecashsrc=fee.cashSource||'';
+ (fee.rows||[]).forEach(r=>{ const k=String(r.name||'').replace(/[^a-z0-9]/gi,''); const c=r.cells||{};
+   F2['__fee_us_'+k]=c.us||''; F2['__fee_uc_'+k]=c.uc||''; F2['__fee_os_'+k]=c.os||''; F2['__fee_oc_'+k]=c.oc||'';
+   if(r.superBal) F2['__fbal_super_'+k]=r.superBal; if(r.invBal) F2['__fbal_inv_'+k]=r.invBal; });
+ if((fee.rows||[]).some(r=>r.superBal||r.invBal)) F2.wmfee='Yes';
+ Object.keys(o.paraplanning||{}).forEach(area=>{ {const _ix=AIX(area); if(_ix!=null) F2['para_'+_ix]=o.paraplanning[area]}; });
+ Object.keys(o.products||{}).forEach(area=>{ {const _ix=AIX(area); if(_ix!=null) F2['prod_'+_ix]=o.products[area]}; });
+ try{ if(o.soaType) SOA=o.soaType; }catch(_){}
+
+ const byArea=src=>{ const out={}; Object.keys(src||{}).forEach(area=>{ const _ix=AIX(area); if(_ix!=null) out[_ix]=src[area]; }); return out; };
+ const st={v:1, type:'mws_ar_state', F:F2};
+ st.ENT=Array.isArray(o.entities)?o.entities:[];
+ st.PROD=byArea(o.superProducts); st.INSPROD=byArea(o.insProducts); st.BONDPROD=byArea(o.bondProducts); st.INVPROD=byArea(o.invProducts);
+ st.CONTRIB=Array.isArray(o.contributions)?o.contributions:[];
+ st.CFLOW=Array.isArray(o.cashflow)?o.cashflow:[];
+ st.COTH=(o.cashCosts&&Array.isArray(o.cashCosts.others))?o.cashCosts.others:[];
+ st.RISK={}; Object.keys(o.risk||{}).forEach(party=>{ st.RISK[party.replace(/[^a-z0-9]/gi,'')]=o.risk[party]; });
+ st.CAREPICK={}; (o.care||[]).forEach(c=>{ const i=(typeof CARE!=='undefined')?CARE.findIndex(x=>x.name===c.name):-1; if(i>=0) st.CAREPICK[i]={on:true,owner:c.owner||'',applies:c.applies||''}; });
+ st.ESTINV={}; st.ABP={}; st.FREE={};
+ st.scopeOut=Array.isArray(o.scopeOut)?o.scopeOut:[];
+ st.scopeIn={}; DATA.forEach((a,i)=>{ st.scopeIn[i]=false; });   // explicitly un-tick every area first…
+ (o.scopeIn||[]).forEach(area=>{ const _ix=AIX(area); if(_ix!=null) st.scopeIn[_ix]=true; });   // …then tick the scoped-in ones
+ st.strat=[]; st.owns={}; st.slots={}; st.picks={}; st.frees={}; st.freqs={};
+ const splitAmt=amt=>{ let s=String(amt||'').replace(/\s*\(\$?[\d,\.]+\s*p\.?a\.?\)\s*$/i,'').trim(); s=s.replace(/^\$\s*/,'');
+   const m=s.match(/(per week|per fortnight|per month|per annum|per year|p\.?w\.?|p\.?m\.?|p\.?a\.?|one[- ]?off|ongoing)\s*$/i);
+   let freq=''; if(m){ freq=m[1]; s=s.slice(0,m.index).trim(); }
+   if(/week/i.test(freq)) freq='per week'; else if(/fortnight/i.test(freq)) freq='per fortnight'; else if(/month|p\.?m/i.test(freq)) freq='per month'; else if(/annum|year|p\.?a/i.test(freq)) freq='per annum';
+   return {val:s, freq}; };
+ (o.strategies||[]).forEach(s=>{ const ai=AIX(s.area); if(ai==null) return;
+   let si=DATA[ai].scen.findIndex(x=>x.name===s.name);
+   if(si<0){ const _n=t=>String(t||'').toLowerCase().replace(/[^a-z0-9]/g,''); const tn=_n(s.name); si=DATA[ai].scen.findIndex(x=>_n(x.name)===tn); }   // tolerant scenario-name match (punctuation drift)
+   if(si<0){ st.FREE[ai]=st.FREE[ai]||[]; st.FREE[ai].push({text:s.text||s.name||'', owner:s.owner||''}); return; }
+   const id=ai+'_'+si; st.strat.push(id);
+   if(s.owner) st.owns[id]=s.owner;
+   if(s.pick) st.picks[id]=s.pick;
+   (Array.isArray(s.amounts)?s.amounts:[]).forEach((amt,k)=>{ const sid=id+'_'+k; const pv=splitAmt(amt); st.slots[sid]=pv.val; if(pv.freq) st.freqs[sid]=pv.freq; });
+   if(s.est) st.ESTINV[id]=s.est;
+ });
+ return st;
+}
 function applyState(st){
  if(!st||typeof st!=='object')return;
+ // An exported advice request (.json output) has strategies[]/scopeIn[] but no .F — accept it and
+ // prefill the builder from it (instead of rejecting it as "not a saved state").
+ if(st.strategies&&!st.F&&Array.isArray(st.scopeIn)){ try{ st=arExportToState(st); }catch(e){ alert('Could not read that advice request: '+(e&&e.message||e)); return; } }
  if(st.strategies&&!st.F){alert('This looks like an exported advice-request (.json output), not a saved state. Use a file created with the Save button.');return;}
  const replArr=(arr,src)=>{arr.length=0;(src||[]).forEach(x=>arr.push(x))};
  const replObj=(obj,src)=>{Object.keys(obj).forEach(k=>delete obj[k]);Object.assign(obj,src||{})};
