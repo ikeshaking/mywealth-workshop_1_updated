@@ -269,7 +269,9 @@ function arFileName(ext){
  const p1=nm(F.c1name), p2=(F.ctype=='Couple')?nm(F.c2name):[];
  const last=a=>a.length?a[a.length-1]:'';
  const init=a=>a.length?a[0].charAt(0).toUpperCase():'';
- const lasts=[last(p1),last(p2)].filter(Boolean).join('&')||'Client';
+ const l1=last(p1), l2=last(p2);
+ // Same surname (couple) → show it once, e.g. "Borgh" not "Borgh&Borgh" (initials still both, "J&A").
+ const lasts=(l1&&l2&&l1.toLowerCase()===l2.toLowerCase())?l1:([l1,l2].filter(Boolean).join('&')||'Client');
  const inits=[init(p1),init(p2)].filter(Boolean).join('&');
  // Date in AEST (Australia/Brisbane = UTC+10 all year, no daylight saving), so the filename is the
  // same for every adviser no matter what timezone their device is set to.
