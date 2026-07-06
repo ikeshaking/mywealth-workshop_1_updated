@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wealth Review Generator — Audit Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#0C2E3F;--blue:#0C6AE1;--blue2:#3B82E6;--teal:#E3F2F4;--ink:#16242e;--muted:#5c6b78;--line:#d9e2ec;--green:#2e7d32;--green-bg:#e8f5e9;--coral:#c0392b;--coral-bg:#fdeeec}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Nunito',-apple-system,Segoe UI,sans-serif;color:var(--ink);background:#eef2f6;line-height:1.6;font-size:15px}
+  h1,h2,h3,h4{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif;color:var(--navy);font-weight:700;line-height:1.2}
+  .banner{background:var(--navy);color:#fff;padding:34px 40px}
+  .banner .logo{font-family:'ABC Arizona Flare','Playfair Display',serif;font-size:30px;font-weight:700;color:#fff;letter-spacing:-.4px}
+  .banner .logo-sub{font-size:11px;letter-spacing:.44em;text-transform:uppercase;color:#e6eef5;margin-top:2px}
+  .banner h1{color:#fff;font-size:28px;margin-top:18px}
+  .banner .meta{color:#a9c4d6;font-size:13px;margin-top:6px}
+  .wrap{max-width:920px;margin:26px auto 60px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 30px rgba(12,46,63,.10);overflow:hidden}
+  .body{padding:34px 44px 48px}
+  h2{font-size:21px;color:var(--blue);margin:30px 0 10px;padding-top:20px;border-top:2px solid var(--teal)}
+  h2:first-of-type{border-top:none;padding-top:0;margin-top:6px}
+  h3{font-size:16px;margin:20px 0 8px;color:var(--navy)}
+  p{margin:8px 0}
+  ul,ol{margin:8px 0 8px 22px}
+  li{margin:4px 0}
+  code{background:#f1f5fa;border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:13px;font-family:ui-monospace,Menlo,monospace}
+  strong{color:var(--navy)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+  th{background:var(--blue);color:#fff;text-align:left;padding:8px 11px;font-size:12px;letter-spacing:.02em;text-transform:uppercase}
+  td{padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  tr:nth-child(even) td{background:#f6f9fc}
+  .ok{color:var(--green);font-weight:700}
+  .tag{display:inline-block;background:var(--teal);color:var(--navy);border-radius:20px;padding:2px 11px;font-size:12px;font-weight:700;margin:2px 4px 2px 0}
+  .callout{background:var(--teal);border-left:4px solid var(--blue);border-radius:0 8px 8px 0;padding:12px 16px;margin:14px 0;font-size:14px}
+  .footer{color:var(--muted);font-size:13px;font-style:italic;padding:18px 44px 30px;border-top:1px solid var(--line)}
+  @media(max-width:640px){.body,.banner{padding-left:20px;padding-right:20px}.wrap{margin:0;border-radius:0}}
+  @media print{body{background:#fff}.wrap{box-shadow:none;border:none;margin:0}}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="logo">MyWealth</div>
+  <div class="logo-sub">Solutions</div>
+  <h1>Wealth Review Generator — Audit Report</h1>
+  <div class="meta">Artifact: <code style="color:#cfe0ec;background:transparent;border:none">review-generator/Review_Generator.html</code> · Single self-contained file (~505 KB) · Client-side only</div>
+</div>
+<div class="wrap"><div class="body">
+
+<p><strong>Scope of this audit:</strong> architecture, feature coverage, data flows, checklist
+completeness vs the original firm checklist, Word-output fidelity vs the MWS FINAL template,
+security/privacy posture, known limitations, and verification performed.</p>
+
+<h2>1. Overview &amp; architecture</h2>
+<p>The tool is a <strong>single HTML file</strong> that runs entirely in the browser — no server, no
+backend, no database. All client data stays on the machine; nothing is transmitted anywhere. It is
+built around one in-memory state object (<code>S</code>) and pure render functions; there is no
+framework.</p>
+<ul>
+  <li><strong>~134 functions</strong>, one global state object <code>S</code>, <strong>14 checklist
+  sections</strong>, <strong>182 checklist prompts</strong>.</li>
+  <li><strong>Four-stage workflow</strong> (top tabs): ① Pre-Review Checklist → ② Generate Wealth Doc
+  → ③ Review Meeting → ④ Post Review.</li>
+  <li><strong>Rendering model:</strong> structural changes re-render; free-text inputs mutate state
+  without re-rendering (preserves focus).</li>
+</ul>
+
+<h3>Dependencies (loaded from CDN at runtime)</h3>
+<table>
+  <tr><th>Library</th><th>Purpose</th><th>Failure mode if offline</th></tr>
+  <tr><td><code>docx</code> 8.5</td><td>Word (.docx) generation</td><td>Export Word disabled until loaded</td></tr>
+  <tr><td><code>xlsx</code> 0.18</td><td>Read PTW / rebalance / legacy checklist</td><td>Those imports disabled</td></tr>
+  <tr><td><code>pdf.js</code> 3.11</td><td>Read platform PDF reports</td><td>PDF imports disabled</td></tr>
+  <tr><td><code>mammoth</code> 1.6</td><td>Read the prior review (.docx)</td><td>Last-review import disabled</td></tr>
+  <tr><td><code>FileSaver</code> 2.0</td><td>Download files</td><td>Downloads disabled</td></tr>
+  <tr><td>Google Fonts</td><td>Playfair Display / Nunito</td><td>Falls back to system fonts</td></tr>
+</table>
+<div class="callout">The embedded cover/back artwork and all core UI/logic are inline, so the app
+renders and the checklist/dashboard/previews work with <strong>no network</strong>. Only import/export
+(which need the CDN libraries) require connectivity.</div>
+
+<h3>State model <code>S</code> (top-level keys)</h3>
+<p><code>meta</code> (review + adviser + file-note/ROA + CRP + insuranceAdviser), <code>licensee</code>,
+<code>practice</code>, <code>client</code>, <code>partner</code>, <code>lifestyle</code>,
+<code>nestegg</code>, <code>income</code>, <code>expenses</code>, <code>totalsOverride</code>,
+<code>foundations</code>, <code>estate</code>, <code>goals</code>, <code>fiGoals</code>,
+<code>goalTracking</code>, <code>portfolios</code>, <code>assetAlloc</code>, <code>insurance</code>,
+<code>actionItems</code>, <code>services</code>, <code>uploads</code>,
+<code>checklist{answers, activeSection}</code>, <code>rebalance</code>, and transient
+<code>_snapshot</code>/<code>_fileNote</code>/<code>_roa</code> (excluded from saved JSON).</p>
+
+<h2>2. Feature-by-feature audit</h2>
+<h3>① Pre-Review Checklist</h3>
+<ul>
+  <li><strong>Data-driven schema</strong> (<code>CHECKLIST_SCHEMA</code>): sections have
+  <code>appliesWhen</code> (shown only if the client holds that account type); items are typed
+  (yes/no, currency, date, text, select), optionally <code>perClient</code>, with inline
+  <code>followUps</code>, <code>routeNote</code>, <code>todo</code>, and computed panels.</li>
+  <li><strong>Client 1 / Client 2 aware</strong>; captures Client 1, Client 2 and Joint CRP.</li>
+  <li><strong>14 sections:</strong> Scope, General, Compliance, Retail Super, Held Super, SMSF (full
+  strategy checklist), MCMA, Investment/DR, Investment Bonds, Property, Loans, Insurance, Held
+  Insurance, Adviser Fees.</li>
+  <li><strong>Computed rules/flags:</strong> SG expected-vs-actual (annualised) shortfall,
+  held-super partial-rollover $6k/$10k threshold, adviser-fee SOA/OSA/actual comparison.</li>
+  <li><strong>Routing on Apply:</strong> action answers → to-do items (de-duplicated); data answers →
+  the matching wealth-doc section; CRP → <code>meta.crp</code> + adviser comments.</li>
+  <li><strong>Presentation:</strong> hybrid — jump-to section sidebar with completion counts +
+  Back/Next; full-width tab.</li>
+</ul>
+<h3>② Generate Wealth Doc</h3>
+<ul>
+  <li><strong>Wired parsers:</strong> HUB24, BT Panorama, Macquarie (auto-detect per PDF); prior
+  review (.docx); PTW (.xlsm); CARE rebalance (.xlsx).</li>
+  <li><strong>Stub slots (await a sample):</strong> Review Data Snapshot, insurance CDM/renewal,
+  property valuations, Netwealth/CFS/Mercer — accept files with a clear "sample needed" state.</li>
+  <li>Uploaded reports show as removable chips; per-page and global <strong>Reset</strong>.</li>
+  <li><strong>Licensee/practice dropdown</strong> (seeded with GPS Wealth) prefills compliance details.</li>
+  <li><strong>Standard review to-do template</strong> seeded into every new review.</li>
+</ul>
+<h3>③ Review Meeting</h3>
+<ul>
+  <li><strong>Dashboard</strong> (net position, open actions, tracked changes, rebalance, rating)
+  beside the live preview.</li>
+  <li><strong>Live edit</strong> — a baseline is locked on entry; only in-meeting changes are tracked
+  and feed the file note &amp; ROA.</li>
+  <li><strong>Hide/unhide preview</strong> toggle.</li>
+</ul>
+<h3>④ Post Review</h3>
+<ul>
+  <li><strong>Changes Made</strong> (diff vs baseline), <strong>File Note</strong> (After Review
+  Summary), <strong>ROA</strong> (No-change / Rebalance) — each shown as a <strong>live Word-style
+  document preview</strong> beside the editable text.</li>
+  <li><strong>Copy review summary + to-dos</strong> handoff (for the Donna email / bcc Xeppo).</li>
+</ul>
+<h3>Word generation — fidelity vs the MWS FINAL template</h3>
+<ul>
+  <li>Landscape A4, embedded cover/back artwork, Nunito body + ABC Arizona Flare headings, brand blue
+  <code>#0C6AE1</code>, teal <code>#E3F2F4</code>, navy bands <code>#0C2E3F</code>.</li>
+  <li><strong>Front-matter AR/compliance block</strong> (Adviser + Insurance Specialist as Authorised
+  Reps, CAR 441414 of GPS Wealth, AFSL 254 544, ABN 66 153 751 832) + static "What does this document
+  cover?" panel.</li>
+  <li>Footer "PAGE n / WEALTH REVIEW"; combined Foundations + Estate; template rating palette.</li>
+  <li>The <strong>live on-screen preview</strong> now mirrors this template page-for-page.</li>
+</ul>
+
+<h2>3. Checklist coverage vs the original firm checklist (<code>Pre_Checklist_.xlsx</code>)</h2>
+<p><strong>PreReview sheet (31 items): fully covered.</strong> The items added to close gaps:
+taxable/non-taxable super components, Review Data Snapshot check, Implementation Handover folder,
+Review Dates Checklist, activate auto-rebalancing, investment-account tax statements.</p>
+<p><strong>SMSF Checklist sheet: fully covered.</strong> Expanded to the complete SMSF Strategy
+Checklist — Members, Trusteeship, Trust Deed, Investment Objectives, Centrelink, Estate Planning,
+Audit, Asset Ownership, In-House/Related Party, Contribution Strategies, Pensions, SMSF Insurance,
+Trustee Fees &amp; Professional Advisers.</p>
+<table>
+  <tr><th>Original category</th><th>Status</th></tr>
+  <tr><td>ID, tasks, contributions, BT, RSP, links, snapshot, partial rollover, opt-in, EFDS, review
+  dates, category, property, equity, portal, cash/rebalance, beneficiaries, fees, ongoing fees,
+  performance report, MCMA, W-8BEN, tax statements, risk profile, IP quote, insurance, CARE/Winton,
+  referrals, BT flag, Worksorted</td><td class="ok">✔ Covered</td></tr>
+  <tr><td>Taxable / non-taxable components</td><td class="ok">✔ Added</td></tr>
+  <tr><td>Full SMSF Strategy Checklist (13 sub-categories)</td><td class="ok">✔ Added</td></tr>
+</table>
+
+<h2>4. Security &amp; privacy posture</h2>
+<ul>
+  <li><strong>All processing is client-side.</strong> No network calls carry client data; documents
+  are read in-browser only. <strong>No AI/LLM</strong> and no third-party data egress — chosen for
+  client-financial-data privacy.</li>
+  <li>Saved drafts are plain <code>.json</code> files the user controls; transient keys are excluded
+  from saved output.</li>
+  <li>No secrets, tokens or credentials are stored in the file.</li>
+</ul>
+
+<h2>5. Known limitations &amp; risks</h2>
+<ol>
+  <li><strong>Report parsers not yet wired</strong> for several formats (Review Data Snapshot,
+  contributions, insurance CDM, MCMA statement, performance report, Cotality) — stub slots pending one
+  real sample each; figures entered/confirmed manually until then.</li>
+  <li><strong>Word/PDF export depends on CDN libraries</strong> — unavailable in a locked-down/offline
+  environment until they load.</li>
+  <li><strong>SG reconciliation</strong> annualises FY-to-date on a whole-month basis with a single SG
+  rate — treat the flag as a prompt, not a precise figure.</li>
+  <li><strong>Legacy <code>.xlsx</code> checklist upload</strong> routes actions/notes but does not
+  repopulate the new questionnaire (format predates the schema).</li>
+  <li><strong>Cover/back artwork</strong> uses the compressed JPEG (visually identical to the template
+  PNG) to keep the single-file size reasonable.</li>
+</ol>
+
+<h2>6. Verification performed</h2>
+<ul>
+  <li><strong>Headless browser (Chromium/Playwright):</strong> every tab and section rendered;
+  checklist exercised for 1 and 2 clients across all account types; conditional sections, per-client
+  fields, follow-ups, computed panels and routing verified; <strong>0 console errors</strong> (only
+  expected offline-CDN network errors).</li>
+  <li><strong>JSON save/load</strong> round-trips the checklist model.</li>
+  <li><strong>docx.js constructs</strong> (Table-in-Footer, cover two-column shaded table, 5-column
+  Foundations) packed successfully against the real <code>docx</code> package.</li>
+  <li><strong>Syntax</strong> validated with <code>node --check</code> after each change.</li>
+</ul>
+
+<h2>7. Recommendations / roadmap</h2>
+<ul>
+  <li>Wire the deterministic parsers as real samples are supplied (unlocks full auto-prefill).</li>
+  <li>Optionally add a bring-your-own-key AI-assist layer (off by default) for free-form SOA reading,
+  with a compliance review of data handling.</li>
+  <li>Add the firm's additional licensee/practice entities and advisers to the config lists.</li>
+  <li>Consider checking in the Playwright drivers as a lightweight automated test harness.</li>
+</ul>
+
+</div>
+<div class="footer">Prepared for My Wealth Solutions. This audit describes the tool as at the current branch head.</div>
+</div>
+</body>
+</html>
