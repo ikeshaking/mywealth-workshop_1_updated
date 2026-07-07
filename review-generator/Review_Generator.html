@@ -2933,21 +2933,30 @@ async function generateDocx(){
     P("If you wish to come in to our office or arrange an online review meeting, please don't hesitate to contact our Office on either;"),
     P([run("Phone: "),run(pr.phone),run("; or Email: "),run(pr.email)],{after:0})
   ];
-  const detW=Math.round(W*0.52), introW=W-detW;
-  ch.push(new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},columnWidths:[introW,detW],borders:noBorder,
-    rows:[new TableRow({children:[
-      new TableCell({width:{size:introW,type:WidthType.DXA},borders:noBorder,margins:{right:600,top:40,bottom:40},verticalAlign:VerticalAlign.TOP,children:introKids}),
-      new TableCell({width:{size:detW,type:WidthType.DXA},borders:noBorder,margins:{top:40,bottom:40},verticalAlign:VerticalAlign.TOP,children:[detailsTable(detW)]})
-    ]})]}));
+  if(m.hasPartner){
+    // Couple: intro blurb full-width across the top, then the two-client Your Details table
+    // fitted to the full page width underneath (matches the template exemplar).
+    introKids.forEach(k=>ch.push(k));
+    ch.push(new Paragraph({spacing:{before:180,after:100},alignment:AlignmentType.CENTER,children:[new TextRun({text:"YOUR DETAILS",font:DISP,size:26,bold:true,color:NAVY})]}));
+    ch.push(detailsTable(W,true));
+  } else {
+    // Single: intro on the left, Your Details table on the right.
+    const detW=Math.round(W*0.52), introW=W-detW;
+    ch.push(new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},columnWidths:[introW,detW],borders:noBorder,
+      rows:[new TableRow({children:[
+        new TableCell({width:{size:introW,type:WidthType.DXA},borders:noBorder,margins:{right:600,top:40,bottom:40},verticalAlign:VerticalAlign.TOP,children:introKids}),
+        new TableCell({width:{size:detW,type:WidthType.DXA},borders:noBorder,margins:{top:40,bottom:40},verticalAlign:VerticalAlign.TOP,children:[detailsTable(detW)]})
+      ]})]}));
+  }
   ch.push(new Paragraph({children:[new PageBreak()]}));
 
   /* ===== Current Situation ===== */
   ch.push(H2("Current Situation"));
   ch.push(bandHead("Lifestyle Assets"));
-  ch.push(assetTable(S.lifestyle,"Lifestyle Total"));
+  ch.push(assetTable(S.lifestyle,"LIFESTYLE TOTAL"));
   ch.push(P("",{after:80}));
   ch.push(bandHead("Nest Egg Assets"));
-  ch.push(assetTable(S.nestegg,"Nest Egg Total"));
+  ch.push(assetTable(S.nestegg,"NEST EGG TOTAL"));
   ch.push(new Paragraph({children:[new PageBreak()]}));
 
   ch.push(bandHead("Income"));
@@ -2958,6 +2967,8 @@ async function generateDocx(){
   ch.push(P("",{after:130}));
   ch.push(bandHead("Foundations"));
   ch.push(foundationsTable());
+  ch.push(P("",{after:60}));
+  ch.push(refNotesTable());
   ch.push(new Paragraph({children:[new PageBreak()]}));
 
   /* ===== Goals (left) + Financial Independence Goals (right), side by side ===== */
@@ -2980,8 +2991,10 @@ async function generateDocx(){
   }
   ch.push(trackingTable());
   ch.push(new Paragraph({spacing:{after:90},children:[run("OVERALL STRATEGY ON TRACK RATING:   ",{bold:true,color:BLUE}), new ImageRun({data:u8(ratingStripPNG(S.overallRating)),transformation:{width:104,height:15}})]}));
-  ch.push(bandHead("Adviser Comments"));
-  ch.push(P(S.adviserComments||" "));
+  ch.push(new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},columnWidths:[W],rows:[
+    new TableRow({children:[new TableCell({shading:{type:ShadingType.CLEAR,fill:NAVY,color:"auto"},borders:cellBorder,margins:{top:70,bottom:70,left:160,right:160},children:[new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:0},children:[new TextRun({text:"ADVISER COMMENTS",font:DISP,size:24,bold:true,color:WHITE})]})]})]}),
+    new TableRow({children:[cell((S.adviserComments||"")+"\n\n\n",{w:W,shade:LIGHT})]})
+  ]}));
   ch.push(new Paragraph({children:[new PageBreak()]}));
 
   /* ===== Portfolio + Allocation + Insurance ===== */
@@ -3000,14 +3013,14 @@ async function generateDocx(){
   /* ============ table builders ============ */
   // Matches the template: two fields per row, a blue LABEL row above a teal VALUE row,
   // client on the left / partner on the right with a thin spacer column between.
-  function detailsTable(tw){
+  function detailsTable(tw,noHeader){
     tw=tw||W;
     const c=S.client,p=S.partner,hp=m.hasPartner;
-    const w=hp?sc([3250,3250,1000,3250,3250],tw):sc([7370,7370],tw);
+    const w=hp?sc([3450,3450,470,3450,3450],tw):sc([7370,7370],tw);
     const L=(t,ww,span)=>cell(t,{w:ww,bold:true,color:WHITE,shade:BLUE,columnSpan:span});
     const V=(t,ww,span)=>cell(t,{w:ww,columnSpan:span});
     const SP=()=>cell("",{w:w[2],shade:WHITE});
-    const rows=[ new TableRow({children:[cell("Your Details",{shade:NAVY,bold:true,color:WHITE,font:DISP,size:20,columnSpan:hp?5:2})]}) ];
+    const rows=noHeader?[]:[ new TableRow({children:[cell("Your Details",{shade:NAVY,bold:true,color:WHITE,font:DISP,size:20,columnSpan:hp?5:2})]}) ];
     const pairRow=(la,ka,lb,kb)=>{
       if(hp){
         rows.push(new TableRow({children:[L(la,w[0]),L(lb,w[1]),SP(),L(la,w[3]),L(lb,w[4])]}));
@@ -3050,7 +3063,7 @@ async function generateDocx(){
     const rows=[headRow(["Income","Annual Amount","Owner","Frequency"],w,BLUE)];
     S.income.forEach(r=>rows.push(dataRow([r.label,money(num(r.amount)),r.owner,r.freq],w,[LBLOPT,{},{align:AlignmentType.CENTER},{align:AlignmentType.CENTER}])));
     const tot=S.income.reduce((a,r)=>a+num(r.amount),0);
-    rows.push(new TableRow({children:[cell("Income Total",{w:w[0],bold:true,color:WHITE,shade:TOTBLUE}),cell(money(tot),{w:w[1],bold:true}),cell("",{w:w[2]}),cell("",{w:w[3]})]}));
+    rows.push(new TableRow({children:[cell("INCOME TOTAL",{w:w[0],bold:true,color:WHITE,shade:TOTBLUE}),cell(money(tot),{w:w[1],bold:true}),cell("",{w:w[2]}),cell("",{w:w[3]})]}));
     return new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},rows});
   }
   function totalsTable(){
@@ -3062,9 +3075,9 @@ async function generateDocx(){
     const sp=o.useOverride?num(o.surplus):0;
     const w=[4900,3280,3280,3280];
     return new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},rows:[
-      new TableRow({children:[cell("",{w:w[0]}),cell("Assets",{w:w[1],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Debts",{w:w[2],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Income",{w:w[3],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER})]}),
+      new TableRow({children:[cell("",{w:w[0],shade:BLUE}),cell("Assets",{w:w[1],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Debts",{w:w[2],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Income",{w:w[3],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER})]}),
       new TableRow({children:[cell("Total All Categories",{w:w[0],bold:true,color:WHITE,shade:LBL}),cell(money(a),{w:w[1],align:AlignmentType.CENTER}),cell(money(d),{w:w[2],align:AlignmentType.CENTER}),cell(money(i),{w:w[3],align:AlignmentType.CENTER})]}),
-      new TableRow({children:[cell("Net Worth / Surplus",{w:w[0],bold:true,color:WHITE,shade:NAVY}),cell(money(nw),{w:w[1]+w[2],align:AlignmentType.CENTER,columnSpan:2}),cell(money(sp),{w:w[3],align:AlignmentType.CENTER})]})
+      new TableRow({children:[cell("NET WORTH / SURPLUS",{w:w[0],bold:true,color:WHITE,shade:TOTBLUE}),cell(money(nw),{w:w[1]+w[2],align:AlignmentType.CENTER,columnSpan:2}),cell(money(sp),{w:w[3],align:AlignmentType.CENTER})]})
     ]});
   }
   // Foundations + Estate as one table (matches the template's combined Foundations table)
@@ -3072,8 +3085,8 @@ async function generateDocx(){
     const f=S.foundations,e=S.estate,hp=m.hasPartner;
     const w=hp?[3000,3670,2200,3670,2200]:[3000,7900,3840];
     const rowF=(lab,cv,cr,pv,pr)=> hp
-      ? new TableRow({children:[cell(lab,Object.assign({w:w[0]},LBLOPT)),cell(cv,{w:w[1],align:AlignmentType.CENTER}),cell(cr,{w:w[2],align:AlignmentType.CENTER}),cell(pv,{w:w[3],align:AlignmentType.CENTER}),cell(pr,{w:w[4],align:AlignmentType.CENTER})]})
-      : new TableRow({children:[cell(lab,Object.assign({w:w[0]},LBLOPT)),cell(cv,{w:w[1],align:AlignmentType.CENTER}),cell(cr,{w:w[2],align:AlignmentType.CENTER})]});
+      ? new TableRow({children:[cell(lab,Object.assign({w:w[0],align:AlignmentType.RIGHT},LBLOPT)),cell(cv,{w:w[1],align:AlignmentType.CENTER}),cell(cr,{w:w[2],align:AlignmentType.CENTER}),cell(pv,{w:w[3],align:AlignmentType.CENTER}),cell(pr,{w:w[4],align:AlignmentType.CENTER})]})
+      : new TableRow({children:[cell(lab,Object.assign({w:w[0],align:AlignmentType.RIGHT},LBLOPT)),cell(cv,{w:w[1],align:AlignmentType.CENTER}),cell(cr,{w:w[2],align:AlignmentType.CENTER})]});
     const head= hp
       ? new TableRow({children:[cell("",{w:w[0],shade:BLUE}),cell((firstName("client")||S.client.name||"Client"),{w:w[1],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Reference",{w:w[2],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell((firstName("partner")||S.partner.name||"Partner"),{w:w[3],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Reference",{w:w[4],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER})]})
       : new TableRow({children:[cell("",{w:w[0],shade:BLUE}),cell((firstName("client")||S.client.name||"Client"),{w:w[1],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Reference",{w:w[2],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER})]});
@@ -3086,6 +3099,15 @@ async function generateDocx(){
       rowF("Power of Attorney",e.poaC,"",e.poaP,""),
       rowF("Super Death Nominations",e.superNomC,"",e.superNomP,""),
       rowF("Insurance Death Nominations",e.insNomC,"",e.insNomP,"")
+    ]});
+  }
+  // Blank "Reference & Notes" band under the Foundations table (matches the template)
+  function refNotesTable(){
+    const cw=[Math.round(W/4),Math.round(W/4),Math.round(W/4),W-3*Math.round(W/4)];
+    const notes=(S.foundationsNotes||"")+"\n\n\n";
+    return new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},columnWidths:cw,rows:[
+      new TableRow({children:[cell("Reference & Notes",{w:W,shade:NAVY,bold:true,color:WHITE,font:DISP,size:20,columnSpan:4})]}),
+      new TableRow({children:[cell(notes,{w:cw[0],shade:LIGHT}),cell("",{w:cw[1],shade:LIGHT}),cell("",{w:cw[2],shade:LIGHT}),cell("",{w:cw[3],shade:LIGHT})]})
     ]});
   }
   function goalsTable(tw){
@@ -3125,7 +3147,7 @@ async function generateDocx(){
         cell(t.are,{w:w[3],align:AlignmentType.CENTER}),cell(t.wantToBe,{w:w[4],align:AlignmentType.CENTER}),iconCell,cell(t.actions,{w:w[6]})]}));
     });
     const T=S.goalTrackingTotals;
-    rows.push(new TableRow({children:[cell("Totals",{w:w[0],bold:true,color:BLUE,align:AlignmentType.RIGHT}),cell(T.were,{w:w[1],bold:true,align:AlignmentType.CENTER}),cell(T.shouldBe,{w:w[2],bold:true,align:AlignmentType.CENTER}),cell(T.are,{w:w[3],bold:true,align:AlignmentType.CENTER}),cell(T.wantToBe,{w:w[4],bold:true,align:AlignmentType.CENTER}),cell("",{w:w[5]}),cell("",{w:w[6]})]}));
+    rows.push(new TableRow({children:[cell("Totals",{w:w[0],bold:true,color:BLUE,align:AlignmentType.RIGHT}),cell(T.were,{w:w[1],bold:true,align:AlignmentType.RIGHT}),cell(T.shouldBe,{w:w[2],bold:true,align:AlignmentType.RIGHT}),cell(T.are,{w:w[3],bold:true,align:AlignmentType.RIGHT}),cell(T.wantToBe,{w:w[4],bold:true,align:AlignmentType.RIGHT}),cell("",{w:w[5]}),cell("",{w:w[6]})]}));
     return new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},rows});
   }
   function portfolioPages(ch,who,name){
@@ -3183,8 +3205,10 @@ async function generateDocx(){
     return new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},rows});
   }
   function servicesTable(){
-    const w=[12740,2000];
-    const rows=[headRow(["Services Available","Services Provided"],w,NAVY)];
+    const w=[10740,4000];
+    const rows=[new TableRow({tableHeader:true,children:[
+      cell("Services Available",{w:w[0],shade:NAVY,bold:true,color:WHITE,font:DISP,size:20}),
+      cell("Services Provided",{w:w[1],shade:NAVY,bold:true,color:WHITE,font:DISP,size:20,align:AlignmentType.CENTER})]})];
     S.services.forEach(s=>rows.push(new TableRow({children:[cell(s.label,Object.assign({w:w[0]},LBLOPT)),cell(s.provided?"✔":"",{w:w[1],align:AlignmentType.CENTER,bold:true,color:"2E3132",size:26})]})));
     return new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},rows});
   }
