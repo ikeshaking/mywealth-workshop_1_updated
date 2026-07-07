@@ -277,6 +277,13 @@ textarea{resize:vertical;min-height:60px}
 .cl-note-add{background:none;border:none;color:var(--blue);font-size:11px;font-weight:700;cursor:pointer;padding:2px 0;text-transform:none}
 .cl-note-add:hover{text-decoration:underline}
 .cl-note-ta{width:100%;font-size:12px;min-height:34px;resize:vertical}
+/* bundled contributions grid */
+.cl-cg-wrap{display:flex;gap:16px;flex-wrap:wrap;margin:6px 0 4px}
+.cl-cg{border-collapse:collapse;font-size:12px;min-width:290px;flex:1}
+.cl-cg th,.cl-cg td{border:1px solid var(--border);padding:5px 7px;text-align:left;vertical-align:middle}
+.cl-cg thead th{background:var(--navy);color:#fff;font-weight:700}
+.cl-cg tbody th{background:var(--blue-light);color:var(--blue);font-weight:700;white-space:nowrap}
+.cl-cg-in{width:100%;font-size:12px;padding:4px 6px}
 .field{margin-bottom:2px}
 .grid{gap:10px}
 </style>
@@ -526,18 +533,12 @@ const CHECKLIST_SCHEMA=[
       {help:"Check cash levels and activate auto-rebalancing where the platform supports it.",
        todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Activate auto-rebalancing on the super account (if available)"}),
     CL.area("retail_components","Taxable / non-taxable components within the super fund",{perClient:true,routeNote:{target:"adviser",prefix:"Super components"}}),
-    CL.info("retail_sg_head",()=>`<div class="cl-help"><b>Concessional contributions</b> — record prior FY & current FY-to-date and check against the caps. Enter income & SG % to estimate expected SG and auto-flag any shortfall.</div>`),
-    CL.cur("retail_income","Employment income (p.a.)",{perClient:true}),
-    CL.txt("retail_sgRate","SG rate %",{perClient:true,help:"e.g. 11.5 — used to estimate expected employer SG."}),
-    CL.cur("retail_concPrior","Concessional — prior FY",{perClient:true}),
-    CL.cur("retail_concFYTD","Concessional — current FY to date",{perClient:true}),
-    CL.info("retail_sg_calc",()=>sgPanel("retail")),
-    CL.cur("retail_ncPrior","Non-concessional — prior FY",{perClient:true}),
-    CL.cur("retail_ncFYTD","Non-concessional — current FY to date",{perClient:true}),
+    CL.info("retail_contrib",()=>`<div class="cl-help"><b>Contributions</b> — last FY vs FY-to-date, concessional &amp; non-concessional. Check against the caps.</div>`+contribGrid("retail")),
+    CL.area("retail_contrib_types","Contribution notes — salary sacrifice, member voluntary, government co-contribution, etc.",{routeNote:{target:"adviser",prefix:"Contributions"}}),
     CL.yn("retail_bringfwd","Has a non-concessional contribution triggered bring-forward?",{perClient:true,
       help:"If triggered, note the relevant dates and check against caps and the SOA contribution schedule.",
       followUps:[{when:yesTrig,items:[CL.txt("retail_bringfwd_dates","Bring-forward — relevant dates",{perClient:true})]}]}),
-    CL.yn("retail_nc_claimable","Is a non-concessional contribution claimable (NOITC)?",{perClient:true,
+    CL.yn("retail_nc_claimable","Is a non-concessional contribution claimable and a NOITC needs to be submitted?",{perClient:true,
       todo:"Confirm whether we are submitting a NOITC for the claimable personal contribution"}),
     CL.yn("retail_div293","Is Div293 applicable?",{perClient:true,
       help:"Auto-flagged from income where possible. Discussion item: when you receive your Div293 letter, send it to us so we can assist you in facilitating payment (personally or via super).",
@@ -545,23 +546,19 @@ const CHECKLIST_SCHEMA=[
     CL.yn("retail_div296","Is Div296 applicable?",{perClient:true,
       help:"Balance > $3m. Discussion item: strategy to manage, or payment of the extra tax when requested.",
       routeNote:{target:"adviser",prefix:"Div296"}}),
-    CL.yn("retail_split","Is super splitting applicable?",{perClient:true,
-      help:"A split must be done in the FY directly following the year you wish to split (e.g. to split FY26, wait for 1 July 2026 = start of FY27). Must occur before any rollover or pension commencement.",
-      routeNote:{target:"adviser",prefix:"Super splitting"}}),
-    CL.yn("retail_catchup","Is catch-up (unused concessional) applicable or could it be?",{perClient:true,routeNote:{target:"adviser",prefix:"Catch-up contributions"}}),
-    CL.yn("retail_downsizer","Is downsizer applicable or upcoming in the strategy list?",{perClient:true,routeNote:{target:"adviser",prefix:"Downsizer"}}),
     CL.yn("retail_pension","Is the account in pension phase?",{perClient:true,
       followUps:[{when:yesTrig,items:[
         CL.sel("retail_pension_met","Minimum pension met / on track?",["","Met","On track","Behind"],{perClient:true})
       ]}],
       todo:"Check whether the client requires any adjustment to the pension amount (impacts rebalance & reserve allocation)"}),
-    CL.area("retail_other","Other super strategies (FHSS, spouse contributions, gov co-contribution)",{routeNote:{target:"adviser",prefix:"Super strategies"}}),
+    CL.area("retail_other","Other super strategies applicable (FHSS, spouse contributions, gov co-contribution)?",{routeNote:{target:"adviser",prefix:"Super strategies"}}),
     CL.yn("retail_bt","Is the client in BT Panorama?",
-      {help:"If Yes, add a to-do for the adviser to consider whether BT is the most suitable platform (cost/strategy).",
+      {help:"If Yes, add a to-do for the adviser to consider whether BT is the most suitable platform (cost/strategy). Use the note to record if considering a menu switch (full → compact or focus) or a platform switch (e.g. to HUB24).",
+       followUps:[{when:yesTrig,items:[CL.area("retail_bt_switch","Menu / platform switch note (e.g. full → compact or focus, or switch to HUB24)",{routeNote:{target:"adviser",prefix:"BT Panorama switch"}})]}],
        todo:"Consider whether BT Panorama is the most suitable platform (cost & strategy) vs alternatives"}),
     CL.yn("retail_winton","Does the client hold the Winton Global Alpha fund?",
       {todo:"Review the Winton Global Alpha fund holding"}),
-    CL.yn("retail_care","Balance grown to $200k–$250k — upgrade to full CARE?",
+    CL.yn("retail_care","Balance $250k (or close to) — upgrade to full CARE?",
       {todo:"Consider upgrading the client's investment strategy to full CARE"}),
     CL.yn("retail_linked","Are the super/investment accounts linked for fee discounts?",
       {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Link the client's super/investment accounts for fee discounts"}),
@@ -569,19 +566,15 @@ const CHECKLIST_SCHEMA=[
       {showWhen:()=>true,todoWhen:(v)=>String(v).trim().toLowerCase()==="no",
        todo:"MOM phase — set up an active Xeppo task outlining the entry strategy"}),
     CL.area("retail_bene","Beneficiaries — who is nominated and the type of nomination for each account",{routeNote:{target:"estate",prefix:"Retail super beneficiaries"}}),
-    CL.yn("retail_reports","Merged 12-month + since-inception performance reports?",
-      {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Merge a 12-month and since-inception performance report and save to the reports folder"})
+    CL.yn("retail_reports","Super and Investment reports provided for: 12-month + since-inception performance reports + asset allocation?",
+      {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Provide super & investment reports — 12-month and since-inception performance plus asset allocation — and save to the reports folder"})
   ]},
 
   /* ---- SECOND / HELD SUPER ---- */
   {id:"heldSuper", title:"Second (Held) Super", icon:"$", appliesWhen:held("has_heldSuper"), items:[
     CL.yn("held_contact","Contact details match across all systems & this held fund?",{todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Update contact details on the held super fund to match"}),
-    CL.cur("held_concPrior","Concessional — prior FY",{perClient:true}),
-    CL.cur("held_concFYTD","Concessional — current FY to date",{perClient:true}),
-    CL.cur("held_income","Employment income (p.a.)",{perClient:true}),
-    CL.txt("held_sgRate","SG rate %",{perClient:true}),
-    CL.info("held_sg_calc",()=>sgPanel("held")),
-    CL.cur("held_ncFYTD","Non-concessional — current FY to date",{perClient:true}),
+    CL.info("held_contrib",()=>`<div class="cl-help"><b>Contributions</b> — last FY vs FY-to-date, concessional &amp; non-concessional.</div>`+contribGrid("held")),
+    CL.area("held_contrib_types","Contribution notes — salary sacrifice, member voluntary, government co-contribution, etc.",{routeNote:{target:"adviser",prefix:"Held contributions"}}),
     CL.yn("held_split","Is super splitting applicable?",{perClient:true,routeNote:{target:"adviser",prefix:"Held super splitting"}}),
     CL.cur("held_balance","Held account balance",{perClient:true,
       help:"After confirming splitting / claimable NC needs, consider a partial rollover. If the balance exceeds the required minimum ($6k or $10k), a rollover may be required (ROA)."}),
@@ -599,18 +592,14 @@ const CHECKLIST_SCHEMA=[
       {help:"Check the CMA incomings/outgoings — does it need topping up or a cash sweep for investment? SMSFs should hold ~$10k cash minimum."}),
     CL.yn("smsf_intello","Managed via Intello — any pending tasks?",
       {followUps:[{when:yesTrig,items:[CL.area("smsf_intello_notes","Intello pending tasks (noted on WR)",{routeNote:{target:"adviser",prefix:"Intello"}})]}]}),
-    CL.txt("smsf_taxYear","Most recent tax return year on file",
-      {help:"Returns run ~a year in arrears. If (e.g.) we're in FY27 and FY25 is not on file, request a copy — being two years behind risks the fund becoming non-complying (47% tax).",
-       routeNote:{target:"adviser",prefix:"SMSF last tax return"}}),
     CL.yn("smsf_tax_current","Is the SMSF up to date on returns?",
-      {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Request a copy of the outstanding SMSF tax return for file (non-complying risk)"}),
+      {help:"Returns run ~a year in arrears. If (e.g.) we're in FY27 and FY25 is not on file, request a copy — being two years behind risks the fund becoming non-complying (47% tax).",
+       followUps:[{when:()=>true,items:[CL.txt("smsf_taxYear","Most recent tax return year on file",{routeNote:{target:"adviser",prefix:"SMSF last tax return"}})]}],
+       todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Request a copy of the outstanding SMSF tax return for file (non-complying risk)"}),
     CL.yn("smsf_accountant","Accountant details on file?",
       {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Collect the SMSF accountant's details and save to file"}),
     CL.yn("smsf_linked","Are the super/investment accounts linked for discounts?",
       {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Link SMSF-related accounts for fee discounts"}),
-
-    CL.sub("smsf_h_members","Members"),
-    CL.area("smsf_members","Members & ages"),
 
     CL.sub("smsf_h_trustee","Trusteeship"),
     CL.sel("smsf_trustee","Corporate or individual trustee?",["","Corporate","Individual"]),
@@ -668,9 +657,8 @@ const CHECKLIST_SCHEMA=[
     CL.yn("smsf_ih_pre99","Pre-99 unit trust held?"),
 
     CL.sub("smsf_h_contrib","Contribution Strategies"),
-    CL.cur("smsf_concFYTD","Concessional — current FY to date",{perClient:true}),
-    CL.cur("smsf_ncFYTD","Non-concessional — current FY to date",{perClient:true}),
-    CL.area("smsf_cs_conc","Concessional / salary sacrifice / self-employed notes"),
+    CL.info("smsf_contrib",()=>`<div class="cl-help"><b>Contributions</b> — last FY vs FY-to-date, concessional &amp; non-concessional.</div>`+contribGrid("smsf")),
+    CL.area("smsf_cs_conc","Contribution notes — salary sacrifice, member voluntary, government co-contribution, self-employed, etc."),
     CL.yn("smsf_cs_splitting","Spouse splitting applicable?",{perClient:true,routeNote:{target:"adviser",prefix:"SMSF spouse splitting"}}),
     CL.yn("smsf_cs_recontribution","Re-contribution analysis required (estate planning)?"),
     CL.yn("smsf_cs_excess","Excess contributions made and/or reported?",{routeNote:{target:"adviser",prefix:"SMSF excess contributions"}}),
@@ -711,7 +699,7 @@ const CHECKLIST_SCHEMA=[
       {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Download the MCMA 12-month transaction statement and save to the reports folder"}),
     CL.cur("mcma_balance","How much is in the MCMA?",
       {help:"Guide: no-loan accounts $500–$2k; accounts with loans $5k–$10k depending on transactions."}),
-    CL.yn("mcma_adjust","Considering incomings/outgoings, does the contribution need adjusting?",
+    CL.yn("mcma_adjust","Considering incomings/outgoings, does the transfers to MCMA need adjusting?",
       {todo:"Adjust the MCMA contribution (increase/decrease) based on incomings & outgoings",routeNote:{target:"adviser",prefix:"MCMA"}})
   ]},
 
@@ -2085,6 +2073,22 @@ function fyMonthsElapsed(){ // months from 1 July (FY start) to the review date 
   const d=S.meta.reviewDate?new Date(S.meta.reviewDate):null; if(!d||isNaN(d)) return 12;
   const m=d.getMonth(); // 0=Jan; FY starts Jul (6)
   const el=(m>=6)?(m-6):(m+6); return Math.min(12,Math.max(1,el+1));
+}
+// bundled contributions grid — concessional & non-concessional × Last FY / FY-to-date, per client
+function contribCellInput(id,slot){
+  const v=slot?getAnsC(id,slot):getAns(id);
+  const set=slot?`clSetC('${id}','${slot}',this.value,false)`:`clSet('${id}',this.value,false)`;
+  return `<input class="cl-cg-in" inputmode="decimal" placeholder="$" value="${esc(v==null?'':v)}" oninput="${set}">`;
+}
+function contribGrid(prefix){
+  const two=twoClients(), names=clientNames();
+  const cols=two?[["c1",names[0]],["c2",names[1]]]:[["c1",names[0]||"Client"]];
+  return `<div class="cl-cg-wrap">`+cols.map(([slot,name])=>`
+    <table class="cl-cg"><thead><tr><th>${esc(name)}</th><th>Last FY</th><th>FY to date</th></tr></thead>
+    <tbody>
+      <tr><th>Concessional</th><td>${contribCellInput(prefix+"_concPrior",slot)}</td><td>${contribCellInput(prefix+"_concFYTD",slot)}</td></tr>
+      <tr><th>Non-concessional</th><td>${contribCellInput(prefix+"_ncPrior",slot)}</td><td>${contribCellInput(prefix+"_ncFYTD",slot)}</td></tr>
+    </tbody></table>`).join("")+`</div>`;
 }
 function sgPanel(prefix){
   const clients=clientNames();
