@@ -876,7 +876,26 @@ function allocChartPNG(rows,key,title){
   return cv.toDataURL("image/png").split(",")[1];
 }
 /* ---------- goal-tracking rating icons (match manual review) ---------- */
-const RATING_COLORS={"Ahead of Projections":"#00B050","On Track":"#70AD47","Needs Work":"#ED7D31","No Progress":"#FF0000","N/A":"#BFBFBF"};
+const RATING_COLORS={"Ahead of Projections":"#00B050","On Track":"#92D050","Needs Work":"#ED7D31","No Progress":"#FF0000","N/A":"#BFBFBF"};
+// One coloured square (optionally ticked) — matches the template's rating swatches
+function ratingSquarePNG(rating,ticked){
+  const col=RATING_COLORS[rating]||"#BFBFBF";
+  const cv=document.createElement("canvas"); cv.width=64; cv.height=64; const x=cv.getContext("2d");
+  x.fillStyle=col; x.fillRect(0,0,64,64);
+  if(ticked){ x.strokeStyle="#2E3132"; x.lineWidth=7; x.lineCap="round"; x.lineJoin="round"; x.beginPath(); x.moveTo(16,34); x.lineTo(28,46); x.lineTo(50,20); x.stroke(); }
+  return cv.toDataURL("image/png").split(",")[1];
+}
+// Strip of all 5 rating squares, a tick on the selected one (template's "On Track Rating" cell)
+function ratingStripPNG(selected){
+  const n=RATINGS.length, s=64, gap=6, W=n*s+(n-1)*gap;
+  const cv=document.createElement("canvas"); cv.width=W; cv.height=s; const x=cv.getContext("2d");
+  RATINGS.forEach((rt,i)=>{
+    const ox=i*(s+gap);
+    x.fillStyle=RATING_COLORS[rt]||"#BFBFBF"; x.fillRect(ox,0,s,s);
+    if(rt===selected){ x.strokeStyle="#2E3132"; x.lineWidth=7; x.lineCap="round"; x.lineJoin="round"; x.beginPath(); x.moveTo(ox+16,34); x.lineTo(ox+28,46); x.lineTo(ox+50,20); x.stroke(); }
+  });
+  return cv.toDataURL("image/png").split(",")[1];
+}
 function ratingIconPNG(rating){
   const col=RATING_COLORS[rating]||"#9AA6B2";
   const cv=document.createElement("canvas"); cv.width=120; cv.height=120; const x=cv.getContext("2d");
@@ -2781,7 +2800,7 @@ async function generateDocx(){
     BorderStyle,ShadingType,PageBreak,Header,Footer,PageNumber,HeadingLevel,TableOfContents,
     ImageRun,PageOrientation,VerticalAlign}=D;
   // Brand palette (from template)
-  const BLUE="0C6AE1", NAVY="0C2E3F", BAND="0C2E3F", WHITE="FFFFFF", GREY="5c6b78", LIGHT="E3F2F4", TEXT="16242e", LBL="0B6AE1";
+  const BLUE="0C6AE1", NAVY="0C2D3E", BAND="0C2D3E", WHITE="FFFFFF", GREY="515151", LIGHT="E3F2F4", TEXT="16242e", LBL="0B6AE1", TOTBLUE="5EA6FF", ACCTGREY="DEE1E3";
   const FONT="Nunito", DISP="ABC Arizona Flare";
   const W=14740;                              // full content width (landscape A4 minus margins)
   // Template look: teal cells separated by thick white gridlines
@@ -2803,7 +2822,7 @@ async function generateDocx(){
     children:Array.isArray(content)?content:[new Paragraph({alignment:o.align||AlignmentType.LEFT,children:multiRun(content,Object.assign({},o.bold?{bold:true}:{},{color:o.color||TEXT},o.italics?{italics:true}:{},o.size?{size:o.size}:{}))})]});
   const headRow=(labels,widths,shd)=>new TableRow({tableHeader:true,children:labels.map((l,i)=>cell(l,{w:widths[i],shade:shd||NAVY,bold:true,color:WHITE}))});
   const dataRow=(vals,widths,opts=[])=>new TableRow({children:vals.map((v,i)=>cell(v,Object.assign({w:widths[i]},opts[i]||{})))});
-  const LBLOPT={bold:true};   // label cell (first column) — teal box, bold dark text (template look)
+  const LBLOPT={bold:true,color:WHITE,shade:LBL};   // label cell (first column) — blue box, white bold (template look)
 
   // base64 -> Uint8Array
   const u8=(b64)=>{const bin=atob(b64);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a;};
@@ -2878,13 +2897,13 @@ async function generateDocx(){
 
   /* ===== Goal Tracking ===== */
   ch.push(H2("Goal Tracking"));
-  { // icon legend
-    const iconRun=(rt)=>new ImageRun({data:u8(ratingIconPNG(rt)),transformation:{width:13,height:13}});
-    const legendKids=[]; RATINGS.forEach((rt,i)=>{ legendKids.push(iconRun(rt)); legendKids.push(run("  "+rt+(i<RATINGS.length-1?"      ":""),{size:16,color:GREY})); });
+  { // icon legend — a ticked square + label for each rating (matches the template)
+    const LBLMAP={"Ahead of Projections":"Ahead of\nProjections","On Track":"On Track","Needs Work":"Needs\nWork","No Progress":"No\nProgress","N/A":"N/A"};
+    const legendKids=[]; RATINGS.forEach((rt,i)=>{ legendKids.push(new ImageRun({data:u8(ratingSquarePNG(rt,true)),transformation:{width:15,height:15}})); legendKids.push(run("  "+(LBLMAP[rt]||rt).replace("\n"," ")+(i<RATINGS.length-1?"        ":""),{size:16,color:"000000"})); });
     ch.push(new Paragraph({spacing:{after:90},children:legendKids}));
   }
   ch.push(trackingTable());
-  ch.push(new Paragraph({spacing:{after:90},children:[run("OVERALL STRATEGY ON TRACK RATING:  ",{bold:true}), new ImageRun({data:u8(ratingIconPNG(S.overallRating)),transformation:{width:15,height:15}}), run("  "+S.overallRating,{bold:true,color:BLUE})]}));
+  ch.push(new Paragraph({spacing:{after:90},children:[run("OVERALL STRATEGY ON TRACK RATING:   ",{bold:true,color:BLUE}), new ImageRun({data:u8(ratingStripPNG(S.overallRating)),transformation:{width:104,height:15}})]}));
   ch.push(bandHead("ADVISER COMMENTS"));
   ch.push(P(S.adviserComments||" "));
   ch.push(new Paragraph({children:[new PageBreak()]}));
@@ -2908,7 +2927,7 @@ async function generateDocx(){
   function detailsTable(){
     const c=S.client,p=S.partner,hp=m.hasPartner;
     const w=hp?[3450,3450,470,3450,3450]:[7370,7370];
-    const L=(t,ww,span)=>cell(t,{w:ww,bold:true,columnSpan:span});
+    const L=(t,ww,span)=>cell(t,{w:ww,bold:true,color:WHITE,shade:BLUE,columnSpan:span});
     const V=(t,ww,span)=>cell(t,{w:ww,columnSpan:span});
     const SP=()=>cell("",{w:w[2],shade:WHITE});
     const pairs=[["Name","name","Date of Birth","dob"],["Mobile","mobile","Marital Status","marital"],
@@ -2940,18 +2959,18 @@ async function generateDocx(){
   }
   function assetTable(items,totalLabel){
     const w=[4200,1900,1900,2600,1640,2500];
-    const rows=[headRow(["","VALUE","DEBT","TYPE","OWNER","REFERENCE"],w)];
-    items.forEach(it=>rows.push(dataRow([it.name||it.type,money(num(it.value)),money(num(it.debt)),it.type,it.owner,it.ref],w,[LBLOPT,{},{},{align:AlignmentType.CENTER},{align:AlignmentType.CENTER},{italics:true}])));
+    const rows=[headRow(["","Value","Debt","Type","Owner","Reference"],w,BLUE)];
+    items.forEach(it=>rows.push(dataRow([it.name||it.type,money(num(it.value)),money(num(it.debt)),it.type,it.owner,it.ref],w,[LBLOPT,{},{},{align:AlignmentType.CENTER},{align:AlignmentType.CENTER},{align:AlignmentType.CENTER,italics:true}])));
     const tv=items.reduce((a,r)=>a+num(r.value),0),td=items.reduce((a,r)=>a+num(r.debt),0);
-    rows.push(new TableRow({children:[cell(totalLabel,{w:w[0],bold:true}),cell(money(tv),{w:w[1],bold:true}),cell(money(td),{w:w[2],bold:true}),cell("",{w:w[3]}),cell("",{w:w[4]}),cell("",{w:w[5]})]}));
+    rows.push(new TableRow({children:[cell(totalLabel,{w:w[0],bold:true,color:WHITE,shade:TOTBLUE}),cell(money(tv),{w:w[1],bold:true}),cell(money(td),{w:w[2],bold:true}),cell("",{w:w[3]}),cell("",{w:w[4]}),cell("",{w:w[5]})]}));
     return new Table({width:{size:W,type:WidthType.DXA},rows});
   }
   function incomeTable(){
     const w=[5200,3500,3200,2840];
-    const rows=[headRow(["INCOME","ANNUAL AMOUNT","OWNER","FREQUENCY"],w)];
-    S.income.forEach(r=>rows.push(dataRow([r.label,money(num(r.amount)),r.owner,r.freq],w,[LBLOPT,{},{},{}])));
+    const rows=[headRow(["INCOME","ANNUAL AMOUNT","OWNER","FREQUENCY"],w,BLUE)];
+    S.income.forEach(r=>rows.push(dataRow([r.label,money(num(r.amount)),r.owner,r.freq],w,[LBLOPT,{},{align:AlignmentType.CENTER},{align:AlignmentType.CENTER}])));
     const tot=S.income.reduce((a,r)=>a+num(r.amount),0);
-    rows.push(new TableRow({children:[cell("INCOME TOTAL",{w:w[0],bold:true}),cell(money(tot),{w:w[1],bold:true}),cell("",{w:w[2]}),cell("",{w:w[3]})]}));
+    rows.push(new TableRow({children:[cell("INCOME TOTAL",{w:w[0],bold:true,color:WHITE,shade:TOTBLUE}),cell(money(tot),{w:w[1],bold:true}),cell("",{w:w[2]}),cell("",{w:w[3]})]}));
     return new Table({width:{size:W,type:WidthType.DXA},rows});
   }
   function totalsTable(){
@@ -2963,9 +2982,9 @@ async function generateDocx(){
     const sp=o.useOverride?num(o.surplus):0;
     const w=[4900,3280,3280,3280];
     return new Table({width:{size:W,type:WidthType.DXA},rows:[
-      new TableRow({children:[cell("",{w:w[0]}),cell("ASSETS",{w:w[1],shade:NAVY,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("DEBTS",{w:w[2],shade:NAVY,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("INCOME",{w:w[3],shade:NAVY,bold:true,color:WHITE,align:AlignmentType.CENTER})]}),
-      new TableRow({children:[cell("TOTAL ALL CATEGORIES",{w:w[0],bold:true}),cell(money(a),{w:w[1],align:AlignmentType.CENTER}),cell(money(d),{w:w[2],align:AlignmentType.CENTER}),cell(money(i),{w:w[3],align:AlignmentType.CENTER})]}),
-      new TableRow({children:[cell("NET WORTH / SURPLUS",{w:w[0],bold:true}),cell(money(nw),{w:w[1]+w[2],align:AlignmentType.CENTER,columnSpan:2}),cell(money(sp),{w:w[3],align:AlignmentType.CENTER})]})
+      new TableRow({children:[cell("",{w:w[0]}),cell("ASSETS",{w:w[1],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("DEBTS",{w:w[2],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("INCOME",{w:w[3],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER})]}),
+      new TableRow({children:[cell("TOTAL ALL CATEGORIES",{w:w[0],bold:true,color:WHITE,shade:LBL}),cell(money(a),{w:w[1],align:AlignmentType.CENTER}),cell(money(d),{w:w[2],align:AlignmentType.CENTER}),cell(money(i),{w:w[3],align:AlignmentType.CENTER})]}),
+      new TableRow({children:[cell("NET WORTH / SURPLUS",{w:w[0],bold:true,color:WHITE,shade:LBL}),cell(money(nw),{w:w[1]+w[2],align:AlignmentType.CENTER,columnSpan:2}),cell(money(sp),{w:w[3],align:AlignmentType.CENTER})]})
     ]});
   }
   // Foundations + Estate as one table (matches the template's combined Foundations table)
@@ -2973,11 +2992,11 @@ async function generateDocx(){
     const f=S.foundations,e=S.estate,hp=m.hasPartner;
     const w=hp?[3200,4100,1670,4100,1670]:[3200,9870,1670];
     const rowF=(lab,cv,cr,pv,pr)=> hp
-      ? new TableRow({children:[cell(lab,{w:w[0],bold:true}),cell(cv,{w:w[1]}),cell(cr,{w:w[2]}),cell(pv,{w:w[3]}),cell(pr,{w:w[4]})]})
-      : new TableRow({children:[cell(lab,{w:w[0],bold:true}),cell(cv,{w:w[1]}),cell(cr,{w:w[2]})]});
+      ? new TableRow({children:[cell(lab,Object.assign({w:w[0]},LBLOPT)),cell(cv,{w:w[1],align:AlignmentType.CENTER}),cell(cr,{w:w[2],align:AlignmentType.CENTER}),cell(pv,{w:w[3],align:AlignmentType.CENTER}),cell(pr,{w:w[4],align:AlignmentType.CENTER})]})
+      : new TableRow({children:[cell(lab,Object.assign({w:w[0]},LBLOPT)),cell(cv,{w:w[1],align:AlignmentType.CENTER}),cell(cr,{w:w[2],align:AlignmentType.CENTER})]});
     const head= hp
-      ? new TableRow({children:[cell("",{w:w[0],shade:NAVY}),cell((S.client.name||"Client").toUpperCase(),{w:w[1],shade:NAVY,bold:true,color:WHITE}),cell("REFERENCE",{w:w[2],shade:NAVY,bold:true,color:WHITE}),cell((S.partner.name||"Partner").toUpperCase(),{w:w[3],shade:NAVY,bold:true,color:WHITE}),cell("REFERENCE",{w:w[4],shade:NAVY,bold:true,color:WHITE})]})
-      : new TableRow({children:[cell("",{w:w[0],shade:NAVY}),cell((S.client.name||"Client").toUpperCase(),{w:w[1],shade:NAVY,bold:true,color:WHITE}),cell("REFERENCE",{w:w[2],shade:NAVY,bold:true,color:WHITE})]});
+      ? new TableRow({children:[cell("",{w:w[0],shade:BLUE}),cell((S.client.name||"Client").toUpperCase(),{w:w[1],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Reference",{w:w[2],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell((S.partner.name||"Partner").toUpperCase(),{w:w[3],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Reference",{w:w[4],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER})]})
+      : new TableRow({children:[cell("",{w:w[0],shade:BLUE}),cell((S.client.name||"Client").toUpperCase(),{w:w[1],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Reference",{w:w[2],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER})]});
     return new Table({width:{size:W,type:WidthType.DXA},rows:[head,
       rowF("Life Insurance",f.client.life,f.client.ref,f.partner.life,f.partner.ref),
       rowF("Total & Permanent Disability",f.client.tpd,"",f.partner.tpd,""),
@@ -2990,11 +3009,15 @@ async function generateDocx(){
     ]});
   }
   function goalsTable(){
-    const w=[2400,2600,9740];
+    const w=[2600,2000,2200,7940];
     const order={"Short Term":0,"Medium Term":1,"Long Term":2};
     const sorted=[...S.goals].sort((a,b)=> String(a.owner||"").localeCompare(String(b.owner||"")) || ((order[a.timeframe]??9)-(order[b.timeframe]??9)));
-    const rows=[headRow(["Owner","Timeframe","Goal"],w,NAVY)];
-    sorted.forEach(g=>rows.push(dataRow([g.owner,g.timeframe,(g.desc||g.notes||"")],w,[LBLOPT,{},{}])));
+    const rows=[headRow(["Description","Owner","Timeframe","Notes"],w,NAVY)];
+    const C={align:AlignmentType.CENTER};
+    sorted.forEach(g=>{
+      const desc=g.desc||g.category||"", note=g.notes||(g.desc?"":"");
+      rows.push(dataRow([desc, g.owner, g.timeframe, note||(desc?"":g.desc)], w, [Object.assign({align:AlignmentType.CENTER},LBLOPT),C,C,{}]));
+    });
     return new Table({width:{size:W,type:WidthType.DXA},rows});
   }
   function fiTable(){
@@ -3011,32 +3034,32 @@ async function generateDocx(){
   }
   function trackingTable(){
     const w=[2940,2000,2000,2000,2000,1600,2200];
-    const rows=[headRow(["STRATEGY","WHERE YOU WERE","SHOULD BE","WHERE YOU ARE","WANT TO BE","ON TRACK","ACTIONS"],w,NAVY)];
+    const rows=[headRow(["Strategy","Where You Were","Where You Should Be","Where You Are","Where You Want To Be","On Track Rating","Actions To Take"],w,NAVY)];
     S.goalTracking.forEach(t=>{
       const iconCell=new TableCell({width:{size:w[5],type:WidthType.DXA},borders:cellBorder,verticalAlign:VerticalAlign.CENTER,shading:{type:ShadingType.CLEAR,fill:LIGHT,color:"auto"},
-        children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new ImageRun({data:u8(ratingIconPNG(t.rating)),transformation:{width:15,height:15}})]})]});
+        children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new ImageRun({data:u8(ratingStripPNG(t.rating)),transformation:{width:104,height:15}})]})]});
       rows.push(new TableRow({children:[
-        cell(t.strategy,Object.assign({w:w[0]},LBLOPT)),cell(t.were,{w:w[1]}),cell(t.shouldBe,{w:w[2]}),
-        cell(t.are,{w:w[3]}),cell(t.wantToBe,{w:w[4]}),iconCell,cell(t.actions,{w:w[6]})]}));
+        cell(t.strategy,Object.assign({w:w[0],align:AlignmentType.CENTER},LBLOPT)),cell(t.were,{w:w[1],align:AlignmentType.CENTER}),cell(t.shouldBe,{w:w[2],align:AlignmentType.CENTER}),
+        cell(t.are,{w:w[3],align:AlignmentType.CENTER}),cell(t.wantToBe,{w:w[4],align:AlignmentType.CENTER}),iconCell,cell(t.actions,{w:w[6]})]}));
     });
     const T=S.goalTrackingTotals;
-    rows.push(new TableRow({children:[cell("TOTALS",{w:w[0],bold:true}),cell(T.were,{w:w[1],bold:true}),cell(T.shouldBe,{w:w[2],bold:true}),cell(T.are,{w:w[3],bold:true}),cell(T.wantToBe,{w:w[4],bold:true}),cell("",{w:w[5]}),cell("",{w:w[6]})]}));
+    rows.push(new TableRow({children:[cell("TOTALS",{w:w[0],bold:true,color:BLUE,align:AlignmentType.RIGHT}),cell(T.were,{w:w[1],bold:true,align:AlignmentType.CENTER}),cell(T.shouldBe,{w:w[2],bold:true,align:AlignmentType.CENTER}),cell(T.are,{w:w[3],bold:true,align:AlignmentType.CENTER}),cell(T.wantToBe,{w:w[4],bold:true,align:AlignmentType.CENTER}),cell("",{w:w[5]}),cell("",{w:w[6]})]}));
     return new Table({width:{size:W,type:WidthType.DXA},rows});
   }
   function portfolioPages(ch,who,name){
     ch.push(H2("Portfolio Valuation"));
     ch.push(P(String(name||"").split(" ")[0]||name,{bold:true,color:NAVY,after:90}));
     const w=[9000,2870,2870];
-    const rows=[headRow(["PRODUCTS","UNITS","VALUE"],w,NAVY)];
+    const rows=[headRow(["Products","Units","Value"],w,NAVY)];
     let grand=0;
     S.portfolios[who].forEach(a=>{
-      rows.push(new TableRow({children:[cell(a.acct,{w:W,shade:NAVY,bold:true,color:WHITE,columnSpan:3})]}));
+      rows.push(new TableRow({children:[cell(a.acct,{w:W,shade:ACCTGREY,bold:true,color:BLUE,columnSpan:3})]}));
       let sub=0;
       a.holdings.forEach(h=>{sub+=num(h.value);rows.push(dataRow([h.product,h.units,money(num(h.value))],w,[LBLOPT,{align:AlignmentType.RIGHT},{align:AlignmentType.RIGHT}]));});
       grand+=sub;
-      rows.push(new TableRow({children:[cell("Total for "+a.acct,{w:w[0]+w[1],bold:true,columnSpan:2}),cell(money(sub),{w:w[2],bold:true,align:AlignmentType.RIGHT})]}));
+      rows.push(new TableRow({children:[cell("Total for "+a.acct,{w:w[0]+w[1],bold:true,color:BLUE,align:AlignmentType.RIGHT,columnSpan:2}),cell(money(sub),{w:w[2],bold:true,align:AlignmentType.RIGHT})]}));
     });
-    rows.push(new TableRow({children:[cell("Total for "+name,{w:w[0]+w[1],shade:NAVY,bold:true,color:WHITE,columnSpan:2}),cell(money(grand),{w:w[2],shade:NAVY,bold:true,color:WHITE,align:AlignmentType.RIGHT})]}));
+    rows.push(new TableRow({children:[cell("Total for "+name,{w:w[0]+w[1],bold:true,color:BLUE,align:AlignmentType.RIGHT,columnSpan:2}),cell(money(grand),{w:w[2],bold:true,color:BLUE,align:AlignmentType.RIGHT})]}));
     ch.push(new Table({width:{size:W,type:WidthType.DXA},rows}));
     ch.push(new Paragraph({children:[new PageBreak()]}));
     ch.push(H2("Portfolio Asset Allocation"));
@@ -3053,7 +3076,7 @@ async function generateDocx(){
     }catch(e){ console.warn("chart embed skipped",e); }
     const aw=[5740,3000,3000,3000];
     const ar=[headRow(["ASSET CLASS","CURRENT WEIGHT","TARGET RISK PROFILE WEIGHT","VARIANCE"],aw,NAVY)];
-    S.assetAlloc[who].forEach(a=>ar.push(dataRow([a.cls,a.cur,a.tgt,a.varc],aw,[LBLOPT,{align:AlignmentType.RIGHT},{align:AlignmentType.RIGHT},{align:AlignmentType.RIGHT}])));
+    S.assetAlloc[who].forEach(a=>ar.push(dataRow([a.cls,a.cur,a.tgt,a.varc],aw,[{},{align:AlignmentType.CENTER},{align:AlignmentType.CENTER},{align:AlignmentType.CENTER}])));
     ch.push(new Table({width:{size:W,type:WidthType.DXA},rows:ar}));
     ch.push(new Paragraph({children:[new PageBreak()]}));
   }
@@ -3061,8 +3084,9 @@ async function generateDocx(){
     ch.push(H2("Insurance Cover"));
     ch.push(P(String(name||"").split(" ")[0]||name,{bold:true,color:NAVY,after:90}));
     const w=[2200,1900,1300,1300,2200,2240,1800,1800];
-    const rows=[headRow(["INSURER - PRODUCT","POLICY #","OWNER","LIFE INSURED","TYPE OF COVER","AMOUNT OF COVER","STRUCTURE","MONTHLY PREMIUM*"],w,NAVY)];
-    S.insurance[who].forEach(it=>rows.push(dataRow([it.insurer,it.policy,it.owner,it.life,it.coverType,it.amount,it.structure,it.premium],w,[{bold:true},{},{},{},{},{},{},{}])));
+    const rows=[headRow(["Insurer - Product","Policy Number","Policy Owner","Life Insured","Type of Cover","Amount of Cover","Premium Structure","Monthly Premium*"],w,NAVY)];
+    const ctr={align:AlignmentType.CENTER};
+    S.insurance[who].forEach(it=>rows.push(dataRow([it.insurer,it.policy,it.owner,it.life,it.coverType,it.amount,it.structure,it.premium],w,[ctr,ctr,ctr,ctr,ctr,ctr,ctr,ctr])));
     ch.push(new Table({width:{size:W,type:WidthType.DXA},rows}));
     ch.push(P("* The monthly premium is an estimate after-tax figure based on the data available at the time of producing this document. Further detail available on request.",{after:0,size:15,color:GREY,italics:true}));
     ch.push(new Paragraph({children:[new PageBreak()]}));
@@ -3078,8 +3102,8 @@ async function generateDocx(){
   }
   function servicesTable(){
     const w=[12740,2000];
-    const rows=[headRow(["SERVICES AVAILABLE","SERVICES PROVIDED"],w)];
-    S.services.forEach(s=>rows.push(new TableRow({children:[cell(s.label,{w:w[0]}),cell(s.provided?"✔":"",{w:w[1],align:AlignmentType.CENTER,bold:true,color:BLUE})]})));
+    const rows=[headRow(["Services Available","Services Provided"],w,NAVY)];
+    S.services.forEach(s=>rows.push(new TableRow({children:[cell(s.label,Object.assign({w:w[0]},LBLOPT)),cell(s.provided?"✔":"",{w:w[1],align:AlignmentType.CENTER,bold:true,color:"2E3132",size:26})]})));
     return new Table({width:{size:W,type:WidthType.DXA},rows});
   }
 
