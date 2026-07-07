@@ -1,0 +1,433 @@
+{
+  "soaType": "retirement",
+  "clients": "Peter & Lynette",
+  "adviser": "Ben Budge & Damien Guazzo",
+  "ctype": "Couple",
+  "status": "New",
+  "entities": [],
+  "narrative": "Peter Holden (DOB 05/06/1967, retired) and Lynette Holden (DOB 11/05/1967, working full-time in administration at Shorrock-Browne Medical, ~$20,000 p.a. + 12% SG) are a married couple seeking retirement-focused advice. They own their home (~$2,200,000, Joint) and an investment property (~$2,000,000, Joint — retained/scoped out), and hold ~$2,000,000 cash on hand (Joint). Peter has ~$1,909,603 in Australian Retirement Trust Super Savings; Lynette ~$99,538 (same fund). Living expenses ~$133,400 p.a.\nGoals: feel confident their wealth supports their desired lifestyle throughout retirement; draw a reliable, tax-effective retirement income of $140,000 p.a. ($11,667/month) for life; maximise super before retirement; minimise tax; keep estate planning current; remain flexible. Peter is retired; Lynette is undecided on her retirement timeframe and wants flexibility. Both assessed as a Growth risk profile.\nPlease prepare the SOA per the strategies below: establish a Joint Hub24 investment account and new Hub24 super accounts on the CARE philosophy, close & fully roll over the ART accounts, one-off NCC/recontribution strategy (Peter $130,000; Lynette $390,000 bring-forward), and transition to account-based pension around age 60 drawing a combined ~$140,000 p.a.",
+  "currentSituation": "Discovery appointment / fact find (29 June 2026)",
+  "keyConsiderations": "",
+  "notesBudget": "Total living expenses ~$133,400 p.a.; desired retirement income $140,000 p.a. ($11,667/month). Cashflow to fund strategy from $2,000,000 cash: less CGT & tax payable ~$223,591; less upfront advice fee from cashflow $1,014; less maximise concessional (FY26) ~$57,600; less NCC (FY27 — Peter $130,000 + Lynette $390,000) $520,000; less 12 months living expenses $140,000; less upfront investment $800,000. Remaining cash ~$257,794 to be retained in a high-interest savings account as a buffer. Estimated combined super balance ~$2,745,000 in 12 months; combined starting benefits to draw income from ~$3,604,639 (today's dollars). Projection assumptions: inflation 2.5%, average return 6.40%.",
+  "risk": {
+    "Peter": {
+      "super": "Growth",
+      "superBump": "",
+      "inv": "Growth",
+      "invBump": ""
+    },
+    "Lynette": {
+      "super": "Growth",
+      "superBump": "",
+      "inv": "Growth",
+      "invBump": ""
+    }
+  },
+  "riskExisting": "",
+  "scopeIn": [
+    "4 · Investment Plan",
+    "5 · Personal Superannuation",
+    "6 · Superannuation Contributions"
+  ],
+  "scopeOut": [
+    "Existing Investment Property"
+  ],
+  "scopeOther": "Specific residential property advice (must be provided by a licensed property agent); personal protection and cashflow/budgeting scoped out at client request given proximity to retirement; estate planning (binding death nominations & Will/POA review) addressed within the superannuation recommendations.",
+  "strategies": [
+    {
+      "area": "4 · Investment Plan",
+      "name": "Establish a new investment account",
+      "owner": "Joint",
+      "text": "We recommend you establish a new investment account and invest in line with your risk profile.",
+      "amounts": [],
+      "pick": ""
+    },
+    {
+      "area": "4 · Investment Plan",
+      "name": "DCA strategy — % upfront, remainder dollar cost averaged over 12 months",
+      "owner": "Joint",
+      "amounts": [
+        "33%"
+      ],
+      "pick": "",
+      "text": "___% of your funds will be lump sum invested & the remainder will be Dollar Cost Averaged over 12 months."
+    },
+    {
+      "area": "4 · Investment Plan",
+      "name": "Money on the move (MOTM) framework",
+      "owner": "Joint",
+      "amounts": [],
+      "pick": "",
+      "text": "As per the Money on the Move framework, for every 5% drop in the market we may bring forward 1 month's Dollar Cost Averaging to ensure your funds are invested as efficiently as possible. The above initial and ongoing DCA investment amounts will also be subject to change based on current market valuations and our Money on the Move framework to ensure your funds are invested as effectively as possible."
+    },
+    {
+      "area": "4 · Investment Plan",
+      "name": "We recommend you elect to reinvest the distributions from your investment.",
+      "owner": "Joint",
+      "amounts": []
+    },
+    {
+      "area": "5 · Personal Superannuation",
+      "name": "Establish new fund + full rollover (close & transfer 100%)",
+      "owner": "Both",
+      "amounts": [],
+      "pick": "",
+      "text": ", we recommend you close your existing and transfer 100% of the balance to a new fund that has been customised for your needs."
+    },
+    {
+      "area": "5 · Personal Superannuation",
+      "name": "Recontribution strategy",
+      "owner": "Peter",
+      "amounts": [
+        "$130,000"
+      ],
+      "pick": "",
+      "text": "We recommend you establish two new superannuation accounts and invest in line with your risk profile."
+    },
+    {
+      "area": "5 · Personal Superannuation",
+      "name": "Recontribution strategy",
+      "owner": "Lynette",
+      "amounts": [
+        "$390,000"
+      ],
+      "pick": "",
+      "text": "We recommend you establish two new superannuation accounts and invest in line with your risk profile."
+    },
+    {
+      "area": "5 · Personal Superannuation",
+      "name": "DCA strategy — % upfront, remainder dollar cost averaged over 12 months (super)",
+      "owner": "Both",
+      "amounts": [
+        "33%"
+      ],
+      "pick": "",
+      "text": "___% of CARE funds will be lump sum invested upon rollover & the remainder will be Dollar Cost Averaged over 12 months."
+    },
+    {
+      "area": "5 · Personal Superannuation",
+      "name": "Money on the move (MOTM) framework — phase the lump sum into super",
+      "owner": "Both",
+      "amounts": [],
+      "pick": "",
+      "text": "As per the Money on the Move framework, for every 5% drop in the market we may bring forward 1 month's Dollar Cost Averaging to ensure your funds are invested as efficiently as possible."
+    },
+    {
+      "area": "5 · Personal Superannuation",
+      "name": "Commence an Account-Based Pension and draw an income (minimum % or set amount)",
+      "owner": "Both",
+      "amounts": [],
+      "pick": "",
+      "text": "We recommend you commence an Account-Based Pension. Drawing minimum pension payments is intended to support your lifestyle needs while preserving long-term capital growth.",
+      "abp": {
+        "mode": "amt",
+        "pct": "",
+        "bal": "",
+        "amt": "11,666",
+        "tbc": true,
+        "cond": "once each of you reaches age 60 and satisfies a condition of release (Peter ~June 2027; Lynette on cessation of employment) — combined pension ~$140,000 p.a., up to the maximum transfer balance cap"
+      }
+    },
+    {
+      "area": "5 · Personal Superannuation",
+      "name": "We recommend non-lapsing binding death benefit nominations within your new superannuation funds.",
+      "owner": "Both",
+      "amounts": []
+    },
+    {
+      "area": "5 · Personal Superannuation",
+      "name": "We recommend that distributions from your super portfolios be reinvested.",
+      "owner": "Both",
+      "amounts": []
+    },
+    {
+      "area": "5 · Personal Superannuation",
+      "name": "Estate planning: review and update your Wills and Powers of Attorney (currently not disclosed).",
+      "owner": "Both",
+      "amounts": []
+    },
+    {
+      "area": "6 · Superannuation Contributions",
+      "name": "Bring-forward non-concessional contribution",
+      "owner": "Lynette",
+      "amounts": [
+        "$390,000"
+      ],
+      "pick": "",
+      "text": "We recommend you use the bring-forward rule to make a non-concessional contribution of $XXX (bringing forward up to three years of your non-concessional cap)."
+    },
+    {
+      "area": "6 · Superannuation Contributions",
+      "name": "Personal deductible contribution (one-off lump sum concessional)",
+      "owner": "Both",
+      "amounts": [],
+      "pick": "each year",
+      "text": "We recommend you make a one-off personal deductible (concessional) contribution of $___ to maximise your concessional contributions."
+    },
+    {
+      "area": "6 · Superannuation Contributions",
+      "name": "Peter, we recommend you make a one-off non-concessional contribution of $130,000 to super in FY2026-27, then recontribute it to Account 1 as part of a recontribution strategy.",
+      "owner": "Peter",
+      "amounts": []
+    },
+    {
+      "area": "6 · Superannuation Contributions",
+      "name": "Lynette, in FY2029-30 we recommend using the non-concessional bring-forward rule again to contribute up to the maximum (currently $390,000), subject to eligibility and cashflow.",
+      "owner": "Lynette",
+      "amounts": []
+    }
+  ],
+  "care": [
+    {
+      "name": "Active, professional day-to-day management (dynamic asset allocation)",
+      "owner": "Both",
+      "applies": "Both"
+    },
+    {
+      "name": "Reserves component — liquidity to avoid forced selling in downturns",
+      "owner": "Both",
+      "applies": "Both"
+    },
+    {
+      "name": "Diversification & risk-adjusted returns (Core / Active / Enhanced)",
+      "owner": "Both",
+      "applies": "Both"
+    },
+    {
+      "name": "Behavioural discipline — removing emotion from investing",
+      "owner": "Both",
+      "applies": "Both"
+    },
+    {
+      "name": "Tax efficiency — franking credits & CGT management within the managed account",
+      "owner": "Both",
+      "applies": "Both"
+    },
+    {
+      "name": "Tailored to your risk profile and goals",
+      "owner": "Both",
+      "applies": "Both"
+    },
+    {
+      "name": "Value of ongoing professional management & advice (fee-for-value)",
+      "owner": "Both",
+      "applies": "Both"
+    },
+    {
+      "name": "Best-interests statement where fees are higher than the current arrangement",
+      "owner": "Both",
+      "applies": "Both"
+    }
+  ],
+  "superProducts": {
+    "5 · Personal Superannuation": [
+      {
+        "owner": "Peter",
+        "label": "Peter ART (existing)",
+        "nature": "Existing",
+        "acct": "Accumulation",
+        "product": "Australian Retirement Trust Super Savings",
+        "balance": "1,909,603",
+        "disposition": "Close — full rollover",
+        "retainAmt": "",
+        "retainReason": "",
+        "rolloverTo": "Peter Account 1"
+      },
+      {
+        "owner": "Peter",
+        "label": "Peter Account 1",
+        "nature": "New",
+        "acct": "Accumulation",
+        "product": "Hub24 Choice Full CARE",
+        "balance": "1,909,603",
+        "disposition": "Establish (new fund — destination)",
+        "retainAmt": "",
+        "retainReason": "",
+        "rolloverTo": ""
+      },
+      {
+        "owner": "Peter",
+        "label": "Peter Account 2",
+        "nature": "New",
+        "acct": "Accumulation",
+        "product": "Hub24 Core CARE Essentials",
+        "balance": "130,000",
+        "disposition": "Establish (new fund — destination)",
+        "retainAmt": "",
+        "retainReason": "",
+        "rolloverTo": ""
+      },
+      {
+        "owner": "Lynette",
+        "label": "Lynette ART (existing)",
+        "nature": "Existing",
+        "acct": "Accumulation",
+        "product": "Australian Retirement Trust Super Savings",
+        "balance": "99,538",
+        "disposition": "Close — full rollover",
+        "retainAmt": "",
+        "retainReason": "",
+        "rolloverTo": "Lynette Account 1"
+      },
+      {
+        "owner": "Lynette",
+        "label": "Lynette Account 1",
+        "nature": "New",
+        "acct": "Accumulation",
+        "product": "Hub24 Core CARE Essentials",
+        "balance": "99,538",
+        "disposition": "Establish (new fund — destination)",
+        "retainAmt": "",
+        "retainReason": "",
+        "rolloverTo": ""
+      },
+      {
+        "owner": "Lynette",
+        "label": "Lynette Account 2",
+        "nature": "New",
+        "acct": "Accumulation",
+        "product": "Hub24 Choice Full CARE",
+        "balance": "390,000",
+        "disposition": "Establish (new fund — destination)",
+        "retainAmt": "",
+        "retainReason": "",
+        "rolloverTo": ""
+      }
+    ]
+  },
+  "insProducts": {},
+  "bondProducts": {},
+  "invProducts": {
+    "4 · Investment Plan": [
+      {
+        "owner": "Joint",
+        "product": "Hub24 Choice Full CARE",
+        "initial": "$800,000",
+        "initialFreq": "one-off",
+        "initialSource": "Cash",
+        "ongoing": "",
+        "ongoingFreq": "per month",
+        "ongoingSource": ""
+      }
+    ]
+  },
+  "products": {},
+  "contributions": [
+    {
+      "type": "Non-concessional",
+      "who": "Peter",
+      "fy": "FY26/27",
+      "acct": "Peter Account 2",
+      "amt": "$130,000",
+      "freq": "one-off"
+    },
+    {
+      "type": "Bring-forward NCC",
+      "who": "Lynette",
+      "fy": "FY26/27",
+      "acct": "Lynette Account 2",
+      "amt": "$390,000",
+      "freq": "one-off"
+    },
+    {
+      "type": "Recontribution",
+      "who": "Peter",
+      "fy": "FY26/27",
+      "acct": "Peter Account 1",
+      "amt": "$130,000",
+      "freq": "one-off"
+    },
+    {
+      "type": "Recontribution",
+      "who": "Lynette",
+      "fy": "FY26/27",
+      "acct": "Lynette Account 1",
+      "amt": "$390,000",
+      "freq": "one-off"
+    },
+    {
+      "type": "Personal deductible",
+      "who": "Both",
+      "fy": "each year",
+      "acct": "",
+      "amt": "up to concessional cap",
+      "freq": "per annum"
+    },
+    {
+      "type": "Bring-forward NCC",
+      "who": "Lynette",
+      "fy": "",
+      "acct": "Lynette Account 1",
+      "amt": "up to $390,000 (FY2029-30)",
+      "freq": "one-off"
+    }
+  ],
+  "superDcaMethod": "DCA with MOTM (balance > $250k)",
+  "superLumpSum": true,
+  "superDcaMotm": true,
+  "cashflow": [],
+  "cashCosts": {
+    "ins": "",
+    "inv": "",
+    "adv": "",
+    "others": [],
+    "freq": "per week"
+  },
+  "cashPos": {
+    "before": "",
+    "after": "",
+    "leave": "",
+    "note": ""
+  },
+  "savingsBenefit": [],
+  "insuranceBenefit": [],
+  "paraplanning": {
+    "4 · Investment Plan": "Joint investment of $800,000 from cash savings into Hub24 (Full CARE): CARE Core Growth $476,400; CARE Active $119,100; CARE Enhanced Australian Equities $99,250; CARE Enhanced International Equities $99,250; Cash $6,000. 33% lump-sum invested / 67% dollar cost averaged over 12 months, subject to Money on the Move. Elect to reinvest distributions. Franking credits approx. $2,688 p.a. Remaining cash ~$257,794 retained in high-interest savings as a buffer.",
+    "5 · Personal Superannuation": "Peter — close ART Super Savings ($1,909,603) and roll 100% to new Hub24 Account 1 (Full CARE High Growth): Core High Growth $933,440; Active $233,360; Reserves $330,000; Enhanced Aus Eq $194,467; Enhanced Int Eq $194,467; Cash $23,870 (bal $1,909,603). Peter Account 2 (Hub24 CARE Essentials) = $130,000 one-off NCC (Essentials High Growth $102,700; Essentials Defensive $25,675; Cash $1,625) for a recontribution to Account 1.\nLynette — close ART Super Savings ($99,538) and roll 100% to new Hub24 Account 1 (Hub24 CARE Essentials): Essentials High Growth $78,635; Essentials Defensive $19,659; Cash $1,244 (bal $99,538). Lynette Account 2 (Full CARE) = $390,000 bring-forward NCC (Core High Growth $177,075; Active $44,269; Reserves $90,000; Enhanced Aus Eq $36,891; Enhanced Int Eq $36,891; Cash $4,875) for a recontribution to Account 1.\n33% lump sum on rollover / 67% DCA over 12 months with MOTM. Convert to account-based pension ~age 60 (Peter ~June 2027; Lynette once age 60 & condition of release), up to the maximum transfer balance cap, drawing combined ~$140,000 p.a. ($11,666/month). Non-lapsing binding death benefit nominations. Reinvest distributions. Estate planning: review/update Wills & POAs (currently not disclosed).",
+    "6 · Superannuation Contributions": "FY2026-27: Peter one-off NCC $130,000 into Account 2, then recontribute to Account 1; Lynette bring-forward NCC $390,000 into Account 2, then recontribute to Account 1. Both make concessional contributions up to their available cap each financial year (subject to cashflow, eligibility & tax). Lynette to use the NCC bring-forward rule again in FY2029-30 (up to $390,000). Review circumstances prior to implementing the recontribution strategy. CGT ~$223,591 payable on realising cash."
+  },
+  "fee": {
+    "commitment": "$1,214",
+    "status": "",
+    "cashSource": "Bank Account",
+    "rows": [
+      {
+        "name": "Peter",
+        "cells": {
+          "us": "$7,000",
+          "uc": "",
+          "os": "$18,610.69",
+          "oc": ""
+        },
+        "superBal": "",
+        "invBal": "",
+        "total": 0
+      },
+      {
+        "name": "Lynette",
+        "cells": {
+          "us": "$2,000",
+          "uc": "",
+          "os": "$5,455.48",
+          "oc": ""
+        },
+        "superBal": "",
+        "invBal": "",
+        "total": 0
+      },
+      {
+        "name": "Joint",
+        "cells": {
+          "us": "",
+          "uc": "$2,080",
+          "os": "",
+          "oc": "$1,014"
+        },
+        "superBal": "",
+        "invBal": "",
+        "total": 0
+      }
+    ],
+    "grand": 0
+  }
+}
