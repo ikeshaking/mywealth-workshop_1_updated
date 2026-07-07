@@ -2841,7 +2841,7 @@ async function generateDocx(){
   // Template look: teal cells separated by thick white gridlines
   const thin={style:BorderStyle.SINGLE,size:12,color:WHITE};
   const cellBorder={top:thin,bottom:thin,left:thin,right:thin};
-  const noBorder={top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE}};
+  const noBorder={top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideHorizontal:{style:BorderStyle.NONE},insideVertical:{style:BorderStyle.NONE}};
 
   const run=(t,o={})=>new TextRun(Object.assign({text:String(t==null?"":t),font:FONT,size:18,color:TEXT},o));
   const multiRun=(t,o={})=>String(t==null?"":t).split("\n").map((line,i)=>new TextRun(Object.assign({text:line,font:FONT,size:18,color:TEXT,break:i>0?1:0},o)));
@@ -3070,7 +3070,7 @@ async function generateDocx(){
   // Foundations + Estate as one table (matches the template's combined Foundations table)
   function foundationsTable(){
     const f=S.foundations,e=S.estate,hp=m.hasPartner;
-    const w=hp?[3200,4100,1670,4100,1670]:[3200,9870,1670];
+    const w=hp?[3000,3670,2200,3670,2200]:[3000,7900,3840];
     const rowF=(lab,cv,cr,pv,pr)=> hp
       ? new TableRow({children:[cell(lab,Object.assign({w:w[0]},LBLOPT)),cell(cv,{w:w[1],align:AlignmentType.CENTER}),cell(cr,{w:w[2],align:AlignmentType.CENTER}),cell(pv,{w:w[3],align:AlignmentType.CENTER}),cell(pr,{w:w[4],align:AlignmentType.CENTER})]})
       : new TableRow({children:[cell(lab,Object.assign({w:w[0]},LBLOPT)),cell(cv,{w:w[1],align:AlignmentType.CENTER}),cell(cr,{w:w[2],align:AlignmentType.CENTER})]});
