@@ -879,6 +879,39 @@ function allocChartPNG(rows,key,title){
 }
 /* ---------- goal-tracking rating icons (match manual review) ---------- */
 const RATING_COLORS={"Ahead of Projections":"#00B050","On Track":"#92D050","Needs Work":"#ED7D31","No Progress":"#FF0000","N/A":"#BFBFBF"};
+// Composite a green "Prepared for <name>" pill onto the cover artwork (matches the template cover)
+function coverWithNamePNG(){
+  return new Promise((res)=>{
+    try{
+      if(typeof COVER_B64==="undefined"||!COVER_B64) return res(COVER_B64);
+      const img=new Image();
+      img.onload=()=>{
+        try{
+          const cw=img.naturalWidth||1350, chh=img.naturalHeight||950;
+          const cv=document.createElement("canvas"); cv.width=cw; cv.height=chh;
+          const x=cv.getContext("2d"); x.drawImage(img,0,0,cw,chh);
+          const name=(S.meta.preparedFor||"").trim()||"[Client name]";
+          const label="Prepared for "+name;
+          const fs=Math.round(chh*0.021);
+          x.font="600 "+fs+"px Nunito, Arial, sans-serif";
+          const padX=Math.round(fs*0.85), padY=Math.round(fs*0.55);
+          const tw=x.measureText(label).width;
+          const bx=Math.round(cw*0.055), by=Math.round(chh*0.712);
+          const bw=Math.round(tw+padX*2), bh=Math.round(fs+padY*2), r=Math.round(bh*0.16);
+          x.fillStyle="#C4D66B";
+          x.beginPath();
+          x.moveTo(bx+r,by); x.arcTo(bx+bw,by,bx+bw,by+bh,r); x.arcTo(bx+bw,by+bh,bx,by+bh,r);
+          x.arcTo(bx,by+bh,bx,by,r); x.arcTo(bx,by,bx+bw,by,r); x.closePath(); x.fill();
+          x.fillStyle="#0C2D3E"; x.textBaseline="middle"; x.textAlign="left";
+          x.fillText(label, bx+padX, by+Math.round(bh/2)+1);
+          res(cv.toDataURL("image/png").split(",")[1]);
+        }catch(e){ res(COVER_B64); }
+      };
+      img.onerror=()=>res(COVER_B64);
+      img.src="data:image/png;base64,"+COVER_B64;
+    }catch(e){ res(COVER_B64); }
+  });
+}
 // One coloured square (optionally ticked) — matches the template's rating swatches
 function ratingSquarePNG(rating,ticked){
   const col=RATING_COLORS[rating]||"#BFBFBF";
@@ -2824,6 +2857,10 @@ async function generateDocx(){
     children:Array.isArray(content)?content:[new Paragraph({alignment:o.align||AlignmentType.LEFT,children:multiRun(content,Object.assign({},o.bold?{bold:true}:{},{color:o.color||TEXT},o.italics?{italics:true}:{},o.size?{size:o.size}:{},o.font?{font:o.font}:{}))})]});
   const headRow=(labels,widths,shd)=>new TableRow({tableHeader:true,children:labels.map((l,i)=>cell(l,{w:widths[i],shade:shd||NAVY,bold:true,color:WHITE,font:DISP,size:20}))});
   const dataRow=(vals,widths,opts=[])=>new TableRow({children:vals.map((v,i)=>cell(v,Object.assign({w:widths[i]},opts[i]||{})))});
+  // scale a set of column widths to a target total (for side-by-side / partial-width tables)
+  const sc=(arr,tw)=>{ const s=arr.reduce((a,b)=>a+b,0); const out=arr.map(x=>Math.round(x/s*tw)); out[out.length-1]=tw-out.slice(0,-1).reduce((a,b)=>a+b,0); return out; };
+  // a navy section band sized to a target width (for side-by-side blocks)
+  const bandHeadW=(t,tw)=>new Table({layout:TableLayoutType.FIXED,width:{size:tw,type:WidthType.DXA},columnWidths:[tw],borders:noBorder,rows:[new TableRow({children:[new TableCell({shading:{type:ShadingType.CLEAR,fill:BAND,color:"auto"},margins:{top:70,bottom:70,left:160,right:160},children:[P([new TextRun({text:t,font:DISP,size:24,bold:true,color:WHITE})],{after:0})]})]})]});
   const LBLOPT={bold:true,color:WHITE,shade:LBL};   // label cell (first column) — blue box, white bold (template look)
 
   // base64 -> Uint8Array
@@ -2879,30 +2916,38 @@ async function generateDocx(){
     kv("Email:",l.email,{color:BLUE}),
     kv("Website:",l.website,{color:BLUE})
   ];
+  const midBar={top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.SINGLE,size:6,color:"C6D0D8"}};
   ch.push(new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},columnWidths:[7370,W-7370],borders:noBorder,
     rows:[new TableRow({children:[
-      new TableCell({width:{size:7370,type:WidthType.DXA},borders:noBorder,margins:{right:500,top:80,bottom:80},children:leftKids}),
-      new TableCell({width:{size:W-7370,type:WidthType.DXA},borders:noBorder,margins:{left:200,right:200,top:80,bottom:80},children:rightKids})
+      new TableCell({width:{size:7370,type:WidthType.DXA},borders:midBar,margins:{right:500,top:80,bottom:80},children:leftKids}),
+      new TableCell({width:{size:W-7370,type:WidthType.DXA},borders:noBorder,margins:{left:500,right:200,top:80,bottom:80},children:rightKids})
     ]})]}));
   ch.push(new Paragraph({children:[new PageBreak()]}));
 
-  /* ===== Your Wealth Review intro + details ===== */
+  /* ===== Your Wealth Review intro (left) + Your Details table (right) ===== */
   ch.push(H2("Your Wealth Review"));
-  ch.push(P("As life changes (such as your situation, legislation, goals and market performance) we are able to analyse the performance to adjust and realign the strategies to get you to your goals."));
-  ch.push(P("We recommend using this as a time to reflect on the financial challenges that brought you to My Wealth Solutions in the first place and how far you've come. We'd also like to commend you again for taking continual, proactive steps to achieving financial freedom."));
-  ch.push(P("Please find your present situation in relation to Current Position, as we have on our records. If these values require updating, please let us know at your earliest convenience to allow us to accurately reflect your situation and continue to provide updated information."));
-  ch.push(P("If you wish to come in to our office or arrange an online review meeting, please don't hesitate to contact our office on either:"));
-  ch.push(P([run("Phone: ",{bold:true}),run(pr.phone),run("; or Email: ",{bold:true}),run(pr.email)],{after:160}));
-  ch.push(detailsTable());
+  const introKids=[
+    P("As life changes (such as: your situation, legislation, goals and market performance) we are able to analyse the performance to adjust and realign the strategies to get you to your goals."),
+    P("We recommend using this as a time to reflect on the financial challenges that brought you to My Wealth Solutions in the first place and how far you've come. We'd also like to use this moment to commend you again for taking continual, proactive steps to achieving financial freedom."),
+    P("Please find you present situation in relation to Current Position, as we have on our records. If these values require updating, please let us know at your earliest convenience to allow us to accurately reflect your situation and continue to provide updated information."),
+    P("If you wish to come in to our office or arrange an online review meeting, please don't hesitate to contact our Office on either;"),
+    P([run("Phone: "),run(pr.phone),run("; or Email: "),run(pr.email)],{after:0})
+  ];
+  const detW=Math.round(W*0.52), introW=W-detW;
+  ch.push(new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},columnWidths:[introW,detW],borders:noBorder,
+    rows:[new TableRow({children:[
+      new TableCell({width:{size:introW,type:WidthType.DXA},borders:noBorder,margins:{right:600,top:40,bottom:40},verticalAlign:VerticalAlign.TOP,children:introKids}),
+      new TableCell({width:{size:detW,type:WidthType.DXA},borders:noBorder,margins:{top:40,bottom:40},verticalAlign:VerticalAlign.TOP,children:[detailsTable(detW)]})
+    ]})]}));
   ch.push(new Paragraph({children:[new PageBreak()]}));
 
   /* ===== Current Situation ===== */
   ch.push(H2("Current Situation"));
   ch.push(bandHead("Lifestyle Assets"));
-  ch.push(assetTable(S.lifestyle,"LIFESTYLE TOTAL"));
+  ch.push(assetTable(S.lifestyle,"Lifestyle Total"));
   ch.push(P("",{after:80}));
   ch.push(bandHead("Nest Egg Assets"));
-  ch.push(assetTable(S.nestegg,"NEST EGG TOTAL"));
+  ch.push(assetTable(S.nestegg,"Nest Egg Total"));
   ch.push(new Paragraph({children:[new PageBreak()]}));
 
   ch.push(bandHead("Income"));
@@ -2915,12 +2960,15 @@ async function generateDocx(){
   ch.push(foundationsTable());
   ch.push(new Paragraph({children:[new PageBreak()]}));
 
-  /* ===== Goals ===== */
+  /* ===== Goals (left) + Financial Independence Goals (right), side by side ===== */
   ch.push(H2("Your Goals"));
-  ch.push(goalsTable());
-  ch.push(P("",{after:90}));
-  ch.push(bandHead("Financial Independence Goals"));
-  ch.push(fiTable());
+  const goalsW=Math.round(W*0.56), fiW=W-goalsW-300;
+  ch.push(new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},columnWidths:[goalsW,300,fiW],borders:noBorder,
+    rows:[new TableRow({children:[
+      new TableCell({width:{size:goalsW,type:WidthType.DXA},borders:noBorder,verticalAlign:VerticalAlign.TOP,children:[goalsTable(goalsW)]}),
+      new TableCell({width:{size:300,type:WidthType.DXA},borders:noBorder,children:[P("",{after:0})]}),
+      new TableCell({width:{size:fiW,type:WidthType.DXA},borders:noBorder,verticalAlign:VerticalAlign.TOP,children:[bandHeadW("Financial Independence Goals",fiW),fiTable(fiW)]})
+    ]})]}));
   ch.push(new Paragraph({children:[new PageBreak()]}));
 
   /* ===== Goal Tracking ===== */
@@ -2952,16 +3000,17 @@ async function generateDocx(){
   /* ============ table builders ============ */
   // Matches the template: two fields per row, a blue LABEL row above a teal VALUE row,
   // client on the left / partner on the right with a thin spacer column between.
-  function detailsTable(){
+  function detailsTable(tw){
+    tw=tw||W;
     const c=S.client,p=S.partner,hp=m.hasPartner;
-    const w=hp?[3450,3450,470,3450,3450]:[7370,7370];
+    const w=hp?sc([3450,3450,470,3450,3450],tw):sc([7370,7370],tw);
     const L=(t,ww,span)=>cell(t,{w:ww,bold:true,color:WHITE,shade:BLUE,columnSpan:span});
     const V=(t,ww,span)=>cell(t,{w:ww,columnSpan:span});
     const SP=()=>cell("",{w:w[2],shade:WHITE});
     const pairs=[["Name","name","Date of Birth","dob"],["Mobile","mobile","Marital Status","marital"],
       ["Email","email","Estate Planning","estate"],["Job Title","jobTitle","Employer","employer"],
       ["Employment","employment","Risk Profile","riskProfile"]];
-    const rows=[ new TableRow({children:[cell("YOUR DETAILS",{shade:NAVY,bold:true,color:WHITE,font:DISP,size:20,columnSpan:hp?5:2})]}) ];
+    const rows=[ new TableRow({children:[cell("Your Details",{shade:NAVY,bold:true,color:WHITE,font:DISP,size:20,columnSpan:hp?5:2})]}) ];
     pairs.forEach(([la,ka,lb,kb])=>{
       if(hp){
         rows.push(new TableRow({children:[L(la,w[0]),L(lb,w[1]),SP(),L(la,w[3]),L(lb,w[4])]}));
@@ -2983,7 +3032,7 @@ async function generateDocx(){
       rows.push(new TableRow({children:[L("Dependants",w[0],2)]}));
       rows.push(new TableRow({children:[V(S.dependantsClient,w[0],2)]}));
     }
-    return new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},rows});
+    return new Table({layout:TableLayoutType.FIXED,width:{size:tw,type:WidthType.DXA},rows});
   }
   function assetTable(items,totalLabel){
     const w=[4200,1900,1900,2600,1640,2500];
@@ -2995,10 +3044,10 @@ async function generateDocx(){
   }
   function incomeTable(){
     const w=[5200,3500,3200,2840];
-    const rows=[headRow(["INCOME","ANNUAL AMOUNT","OWNER","FREQUENCY"],w,BLUE)];
+    const rows=[headRow(["Income","Annual Amount","Owner","Frequency"],w,BLUE)];
     S.income.forEach(r=>rows.push(dataRow([r.label,money(num(r.amount)),r.owner,r.freq],w,[LBLOPT,{},{align:AlignmentType.CENTER},{align:AlignmentType.CENTER}])));
     const tot=S.income.reduce((a,r)=>a+num(r.amount),0);
-    rows.push(new TableRow({children:[cell("INCOME TOTAL",{w:w[0],bold:true,color:WHITE,shade:TOTBLUE}),cell(money(tot),{w:w[1],bold:true}),cell("",{w:w[2]}),cell("",{w:w[3]})]}));
+    rows.push(new TableRow({children:[cell("Income Total",{w:w[0],bold:true,color:WHITE,shade:TOTBLUE}),cell(money(tot),{w:w[1],bold:true}),cell("",{w:w[2]}),cell("",{w:w[3]})]}));
     return new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},rows});
   }
   function totalsTable(){
@@ -3010,9 +3059,9 @@ async function generateDocx(){
     const sp=o.useOverride?num(o.surplus):0;
     const w=[4900,3280,3280,3280];
     return new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},rows:[
-      new TableRow({children:[cell("",{w:w[0]}),cell("ASSETS",{w:w[1],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("DEBTS",{w:w[2],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("INCOME",{w:w[3],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER})]}),
-      new TableRow({children:[cell("TOTAL ALL CATEGORIES",{w:w[0],bold:true,color:WHITE,shade:LBL}),cell(money(a),{w:w[1],align:AlignmentType.CENTER}),cell(money(d),{w:w[2],align:AlignmentType.CENTER}),cell(money(i),{w:w[3],align:AlignmentType.CENTER})]}),
-      new TableRow({children:[cell("NET WORTH / SURPLUS",{w:w[0],bold:true,color:WHITE,shade:LBL}),cell(money(nw),{w:w[1]+w[2],align:AlignmentType.CENTER,columnSpan:2}),cell(money(sp),{w:w[3],align:AlignmentType.CENTER})]})
+      new TableRow({children:[cell("",{w:w[0]}),cell("Assets",{w:w[1],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Debts",{w:w[2],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Income",{w:w[3],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER})]}),
+      new TableRow({children:[cell("Total All Categories",{w:w[0],bold:true,color:WHITE,shade:LBL}),cell(money(a),{w:w[1],align:AlignmentType.CENTER}),cell(money(d),{w:w[2],align:AlignmentType.CENTER}),cell(money(i),{w:w[3],align:AlignmentType.CENTER})]}),
+      new TableRow({children:[cell("Net Worth / Surplus",{w:w[0],bold:true,color:WHITE,shade:LBL}),cell(money(nw),{w:w[1]+w[2],align:AlignmentType.CENTER,columnSpan:2}),cell(money(sp),{w:w[3],align:AlignmentType.CENTER})]})
     ]});
   }
   // Foundations + Estate as one table (matches the template's combined Foundations table)
@@ -3036,8 +3085,9 @@ async function generateDocx(){
       rowF("Insurance Death Nominations",e.insNomC,"",e.insNomP,"")
     ]});
   }
-  function goalsTable(){
-    const w=[2600,2000,2200,7940];
+  function goalsTable(tw){
+    tw=tw||W;
+    const w=sc([2600,1500,1800,6000],tw);
     const order={"Short Term":0,"Medium Term":1,"Long Term":2};
     const sorted=[...S.goals].sort((a,b)=> String(a.owner||"").localeCompare(String(b.owner||"")) || ((order[a.timeframe]??9)-(order[b.timeframe]??9)));
     const rows=[headRow(["Description","Owner","Timeframe","Notes"],w,NAVY)];
@@ -3046,12 +3096,13 @@ async function generateDocx(){
       const desc=g.desc||g.category||"", note=g.notes||(g.desc?"":"");
       rows.push(dataRow([desc, g.owner, g.timeframe, note||(desc?"":g.desc)], w, [Object.assign({align:AlignmentType.CENTER},LBLOPT),C,C,{}]));
     });
-    return new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},rows});
+    return new Table({layout:TableLayoutType.FIXED,width:{size:tw,type:WidthType.DXA},rows});
   }
-  function fiTable(){
-    const fi=S.fiGoals,w=[4913,4913,4914];
-    const r=(a,b,c)=>new TableRow({children:[cell(a,{w:w[0],bold:true}),cell(b,{w:w[1]}),cell(c,{w:w[2]})]});
-    return new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},rows:[
+  function fiTable(tw){
+    tw=tw||W;
+    const fi=S.fiGoals,w=sc([2400,2000,2600],tw);
+    const r=(a,b,c)=>new TableRow({children:[cell(a,{w:w[0],bold:true,align:AlignmentType.RIGHT,shade:WHITE}),cell(b,{w:w[1]}),cell(c,{w:w[2],shade:WHITE})]});
+    return new Table({layout:TableLayoutType.FIXED,width:{size:tw,type:WidthType.DXA},rows:[
       r("Target",fi.targetToday,"In today's values"),
       r("Which is",fi.targetFuture,"In "+fi.years+" years"),
       r("Estimated Income",fi.incomeLife,"pa to pay for life"),
@@ -3071,7 +3122,7 @@ async function generateDocx(){
         cell(t.are,{w:w[3],align:AlignmentType.CENTER}),cell(t.wantToBe,{w:w[4],align:AlignmentType.CENTER}),iconCell,cell(t.actions,{w:w[6]})]}));
     });
     const T=S.goalTrackingTotals;
-    rows.push(new TableRow({children:[cell("TOTALS",{w:w[0],bold:true,color:BLUE,align:AlignmentType.RIGHT}),cell(T.were,{w:w[1],bold:true,align:AlignmentType.CENTER}),cell(T.shouldBe,{w:w[2],bold:true,align:AlignmentType.CENTER}),cell(T.are,{w:w[3],bold:true,align:AlignmentType.CENTER}),cell(T.wantToBe,{w:w[4],bold:true,align:AlignmentType.CENTER}),cell("",{w:w[5]}),cell("",{w:w[6]})]}));
+    rows.push(new TableRow({children:[cell("Totals",{w:w[0],bold:true,color:BLUE,align:AlignmentType.RIGHT}),cell(T.were,{w:w[1],bold:true,align:AlignmentType.CENTER}),cell(T.shouldBe,{w:w[2],bold:true,align:AlignmentType.CENTER}),cell(T.are,{w:w[3],bold:true,align:AlignmentType.CENTER}),cell(T.wantToBe,{w:w[4],bold:true,align:AlignmentType.CENTER}),cell("",{w:w[5]}),cell("",{w:w[6]})]}));
     return new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},rows});
   }
   function portfolioPages(ch,who,name){
@@ -3103,7 +3154,7 @@ async function generateDocx(){
       ch.push(P("",{after:90}));
     }catch(e){ console.warn("chart embed skipped",e); }
     const aw=[5740,3000,3000,3000];
-    const ar=[headRow(["ASSET CLASS","CURRENT WEIGHT","TARGET RISK PROFILE WEIGHT","VARIANCE"],aw,NAVY)];
+    const ar=[headRow(["Asset Class","Current Weight","Target Risk Profile Weight","Variance"],aw,NAVY)];
     S.assetAlloc[who].forEach(a=>ar.push(dataRow([a.cls,a.cur,a.tgt,a.varc],aw,[{},{align:AlignmentType.CENTER},{align:AlignmentType.CENTER},{align:AlignmentType.CENTER}])));
     ch.push(new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},rows:ar}));
     ch.push(new Paragraph({children:[new PageBreak()]}));
@@ -3150,8 +3201,11 @@ async function generateDocx(){
   const haveCover=(typeof COVER_B64!=="undefined"&&COVER_B64.length>100);
   const haveBack=(typeof BACK_B64!=="undefined"&&BACK_B64.length>100);
 
+  // Composite the green "Prepared for <name>" pill onto the cover (matches template)
+  const coverImg = haveCover ? await coverWithNamePNG() : COVER_B64;
+
   const sections=[];
-  if(haveCover) sections.push({properties:{page:{size:landscape,margin:{top:0,bottom:0,left:0,right:0}}},children:[fullPageImg(COVER_B64)]});
+  if(haveCover) sections.push({properties:{page:{size:landscape,margin:{top:0,bottom:0,left:0,right:0}}},children:[fullPageImg(coverImg)]});
   sections.push({properties:{page:{size:landscape,margin:{top:1247,bottom:1247,left:873,right:1225,header:624,footer:624}}},footers:{default:footer},children:ch});
   if(haveBack) sections.push({properties:{page:{size:landscape,margin:{top:0,bottom:0,left:0,right:0}}},children:[fullPageImg(BACK_B64)]});
 
