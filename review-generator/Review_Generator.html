@@ -188,13 +188,15 @@ textarea{resize:vertical;min-height:60px}
 .pv-h1{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif;font-size:34px;color:#103143;margin:0 0 4px}
 .pv-sub{color:#0C6AE1;font-weight:700;margin:0 0 22px}
 .pv-h2{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif;font-size:21px;color:#0C6AE1;margin:22px 0 8px;border-bottom:2px solid #0C6AE1;padding-bottom:3px}
-.pv-band{background:#0C2E3F;color:#fff;font-weight:700;font-size:12px;letter-spacing:.04em;padding:6px 12px;margin:14px 0 0;border-radius:3px}
+.pv-band{background:#0C2D3E;color:#fff;font-weight:700;font-size:12px;letter-spacing:.04em;padding:6px 12px;margin:14px 0 0;border-radius:3px}
 .pv-tbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
-.pv-tbl th{background:#0C2E3F;color:#fff;text-align:left;padding:6px 9px;font-weight:700;border:1px solid #fff}
+.pv-tbl th{background:#0C6AE1;color:#fff;text-align:left;padding:6px 9px;font-weight:700;border:1px solid #fff}
+.pv-tbl.navy th{background:#0C2D3E}
 .pv-tbl td{padding:5px 9px;border:1px solid #fff;vertical-align:top;background:#E3F2F4;color:#16242e}
-.pv-tbl td.pv-lbl{font-weight:700}
+.pv-tbl td.pv-lbl{background:#0B6AE1;color:#fff;font-weight:700}
 .pv-tbl td.r,.pv-tbl th.r{text-align:right}
-.pv-tot td{font-weight:700}
+.pv-tot td{background:#5EA6FF;color:#fff;font-weight:700}
+.pv-tot td.pv-val{background:#E3F2F4;color:#16242e}
 .pv-dot{display:inline-block;width:13px;height:13px;border-radius:50%;vertical-align:middle;margin-right:5px}
 .pv-legend{font-size:11px;color:#555;margin:6px 0}
 .pv-legend span.l{margin-right:14px;white-space:nowrap}
@@ -1448,7 +1450,7 @@ function buildPreviewPages(){
     }).join("");
     P.push(`<div class="wrprev-page"><div class="pv-h2">Portfolio Valuation — ${esc(name)}</div>${blocks||'<div class="pv-empty">Upload platform reports to populate holdings.</div>'}${accts.length?`<div style="text-align:right;font-weight:700;margin-top:8px">Total for ${esc(name)}: ${money(grand)}</div>`:""}</div>`);
     const aaRows=(S.assetAlloc[side]||[]).map(a=>({cells:[{v:a.cls},{v:a.cur},{v:a.tgt},{v:a.varc}]}));
-    P.push(`<div class="wrprev-page"><div class="pv-h2">Portfolio Asset Allocation — ${esc(name)}</div>${pvTable(["Asset Class","Current Weight","Target Risk Profile Weight","Variance"],aaRows,{align:[,"r","r","r"],head:"navy",lbl:true,empty:"Enter or import the asset allocation."})}</div>`);
+    P.push(`<div class="wrprev-page"><div class="pv-h2">Portfolio Asset Allocation — ${esc(name)}</div>${pvTable(["Asset Class","Current Weight","Target Risk Profile Weight","Variance"],aaRows,{align:[,"c","c","c"],head:"navy",empty:"Enter or import the asset allocation."})}</div>`);
   });
 
   /* Insurance Cover (8 columns, per template) */
@@ -1464,7 +1466,7 @@ function buildPreviewPages(){
   const svcRows=S.services.map(s=>({cells:[{v:s.label},{html:s.provided?'<b style="color:#0C6AE1">✔</b>':''}]}));
   P.push(`<div class="wrprev-page">
     <div class="pv-h2">Action items and Discussion Points</div>${pvTable(["Description","Who","When"],actRows,{head:"navy",align:[,"c","c"],empty:"No action items yet."})}
-    <div class="pv-h2" style="margin-top:16px">Services Available</div>${pvTable(["Services Available","Services Provided"],svcRows,{align:[,"c"],empty:""})}</div>`);
+    <div class="pv-h2" style="margin-top:16px">Services Available</div>${pvTable(["Services Available","Services Provided"],svcRows,{head:"navy",lbl:true,align:[,"c"],empty:""})}</div>`);
 
   /* Back cover */
   if(typeof BACK_B64!=="undefined"&&BACK_B64) P.push(`<div class="wrprev-page back"><img src="data:image/jpeg;base64,${BACK_B64}"></div>`);
