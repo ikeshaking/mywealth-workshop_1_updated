@@ -2878,7 +2878,7 @@ async function generateDocx(){
   /* ===== Your Wealth Review — contact details + "what this covers" (matches template) ===== */
   const AR_CAR="441414", MWS_ABN="66 153 751 832";
   const adviserEmail=m.adviserEmail || ((m.adviserName||"").trim().split(/\s+/)[0].toLowerCase()+"@mywealthsolutions.com.au");
-  const subHead=(t,sz)=>P([new TextRun({text:t,font:DISP,size:sz||26,color:NAVY})],{after:60});
+  const subHead=(t,sz)=>P([new TextRun({text:t,font:DISP,size:sz||26,color:"152F8E",bold:true})],{after:60});
   const arPara=(name)=>[
     P([run(name,{bold:true,size:16}),run(" is an Authorised Representative of My Wealth Solutions a Corporate Authorised Representative "+AR_CAR+" of GPS Wealth Australian Financial Services Licence Number "+(l.afsl||"254 544"),{size:16})],{after:20}),
     P("ABN "+MWS_ABN,{after:120,size:16})
@@ -2919,7 +2919,7 @@ async function generateDocx(){
   const midBar={top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.SINGLE,size:6,color:"C6D0D8"}};
   ch.push(new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},columnWidths:[7370,W-7370],borders:noBorder,
     rows:[new TableRow({children:[
-      new TableCell({width:{size:7370,type:WidthType.DXA},borders:midBar,margins:{right:500,top:80,bottom:80},children:leftKids}),
+      new TableCell({width:{size:7370,type:WidthType.DXA},borders:noBorder,margins:{right:500,top:80,bottom:80},children:leftKids}),
       new TableCell({width:{size:W-7370,type:WidthType.DXA},borders:noBorder,margins:{left:500,right:200,top:80,bottom:80},children:rightKids})
     ]})]}));
   ch.push(new Paragraph({children:[new PageBreak()]}));
@@ -3003,7 +3003,7 @@ async function generateDocx(){
   function detailsTable(tw){
     tw=tw||W;
     const c=S.client,p=S.partner,hp=m.hasPartner;
-    const w=hp?sc([3450,3450,470,3450,3450],tw):sc([7370,7370],tw);
+    const w=hp?sc([3250,3250,1000,3250,3250],tw):sc([7370,7370],tw);
     const L=(t,ww,span)=>cell(t,{w:ww,bold:true,color:WHITE,shade:BLUE,columnSpan:span});
     const V=(t,ww,span)=>cell(t,{w:ww,columnSpan:span});
     const SP=()=>cell("",{w:w[2],shade:WHITE});
@@ -3064,7 +3064,7 @@ async function generateDocx(){
     return new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},rows:[
       new TableRow({children:[cell("",{w:w[0]}),cell("Assets",{w:w[1],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Debts",{w:w[2],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Income",{w:w[3],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER})]}),
       new TableRow({children:[cell("Total All Categories",{w:w[0],bold:true,color:WHITE,shade:LBL}),cell(money(a),{w:w[1],align:AlignmentType.CENTER}),cell(money(d),{w:w[2],align:AlignmentType.CENTER}),cell(money(i),{w:w[3],align:AlignmentType.CENTER})]}),
-      new TableRow({children:[cell("Net Worth / Surplus",{w:w[0],bold:true,color:WHITE,shade:LBL}),cell(money(nw),{w:w[1]+w[2],align:AlignmentType.CENTER,columnSpan:2}),cell(money(sp),{w:w[3],align:AlignmentType.CENTER})]})
+      new TableRow({children:[cell("Net Worth / Surplus",{w:w[0],bold:true,color:WHITE,shade:NAVY}),cell(money(nw),{w:w[1]+w[2],align:AlignmentType.CENTER,columnSpan:2}),cell(money(sp),{w:w[3],align:AlignmentType.CENTER})]})
     ]});
   }
   // Foundations + Estate as one table (matches the template's combined Foundations table)
@@ -3193,10 +3193,10 @@ async function generateDocx(){
   const footer=new Footer({children:[new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},columnWidths:[W/2,W/2],borders:noBorder,
     rows:[new TableRow({children:[
       new TableCell({width:{size:W/2,type:WidthType.DXA},borders:noBorder,children:[new Paragraph({alignment:AlignmentType.LEFT,children:[
-        new TextRun({text:"PAGE ",font:FONT,size:15,color:GREY,characterSpacing:20}),
-        new TextRun({children:[PageNumber.CURRENT],font:FONT,size:15,color:GREY})]})]}),
+        new TextRun({text:"PAGE ",font:FONT,size:15,bold:true,color:"0C2D3E",characterSpacing:20}),
+        new TextRun({children:[PageNumber.CURRENT],font:FONT,size:15,bold:true,color:"0C2D3E"})]})]}),
       new TableCell({width:{size:W/2,type:WidthType.DXA},borders:noBorder,children:[new Paragraph({alignment:AlignmentType.RIGHT,children:[
-        new TextRun({text:"WEALTH REVIEW",font:FONT,size:15,color:GREY,characterSpacing:20})]})]})
+        new TextRun({text:"WEALTH REVIEW",font:FONT,size:15,bold:true,color:"5EA6FF",characterSpacing:20})]})]})
     ]})]})]});
 
   // docx flips width/height for LANDSCAPE, so pass A4 *portrait* dims (it rotates them to landscape)
