@@ -2833,31 +2833,59 @@ async function generateDocx(){
   const l=S.licensee,pr=S.practice,m=S.meta;
   const ch=[];   // body section children
 
-  /* ===== Cover-detail page: AR/compliance block + "what this covers" (matches template) ===== */
+  /* ===== page 2: blank inside cover ===== */
+  ch.push(new Paragraph({children:[]}));
+  ch.push(new Paragraph({children:[new PageBreak()]}));
+  /* ===== page 3: Contents (auto table of contents from the section headings) ===== */
+  ch.push(new Paragraph({spacing:{before:0,after:180},children:[new TextRun({text:"Contents",font:DISP,size:52,color:BLUE})]}));
+  ch.push(new TableOfContents("Contents",{hyperlink:true,headingStyleRange:"1-1"}));
+  ch.push(new Paragraph({children:[new PageBreak()]}));
+
+  /* ===== Your Wealth Review — contact details + "what this covers" (matches template) ===== */
   const AR_CAR="441414", MWS_ABN="66 153 751 832";
-  const arPara=(name)=>P([run(name,{bold:true}),run(" is an Authorised Representative of My Wealth Solutions, a Corporate Authorised Representative "+AR_CAR+" of GPS Wealth, Australian Financial Services Licence Number "+(l.afsl||"254 544")+", ABN "+MWS_ABN+".")],{after:100,size:16});
+  const adviserEmail=m.adviserEmail || ((m.adviserName||"").trim().split(/\s+/)[0].toLowerCase()+"@mywealthsolutions.com.au");
+  const subHead=(t,sz)=>P([new TextRun({text:t,font:DISP,size:sz||26,color:NAVY})],{after:60});
+  const arPara=(name)=>[
+    P([run(name,{bold:true,size:16}),run(" is an Authorised Representative of My Wealth Solutions a Corporate Authorised Representative "+AR_CAR+" of GPS Wealth Australian Financial Services Licence Number "+(l.afsl||"254 544"),{size:16})],{after:20}),
+    P("ABN "+MWS_ABN,{after:120,size:16})
+  ];
+  const kv=(k,v,o)=>P([run(k+" ",{bold:true,size:16}),run(v,Object.assign({size:16},o||{}))],{after:20});
   const leftKids=[
-    P([new TextRun({text:"Your Wealth Review",font:DISP,size:36,color:BLUE})],{after:140}),
-    P([run("Prepared for: ",{bold:true}),run(m.preparedFor)]),
-    P([run("Financial Adviser: ",{bold:true}),run(m.adviserName)]),
-    ...(m.insuranceAdviser?[P([run("Insurance Specialist Adviser: ",{bold:true}),run(m.insuranceAdviser)])]:[]),
-    P([run("Date: ",{bold:true}),run(formatDate(m.reviewDate))],{after:140}),
-    P([run("Contact Details",{bold:true})],{after:60}),
-    arPara(m.adviserName||"Your adviser"),
-    ...(m.insuranceAdviser?[arPara(m.insuranceAdviser)]:[]),
-    P("Office Phone: "+pr.phone,{size:16}),
-    P("Office Email: "+pr.email,{size:16})
+    P([new TextRun({text:"Your Wealth Review",font:DISP,size:36,color:BLUE})],{after:160}),
+    P([run("Prepared for:  ",{bold:true}),run(m.preparedFor)],{after:140}),
+    P([run("Financial Adviser: ",{bold:true}),run(m.adviserName)],{after:20}),
+    ...(m.insuranceAdviser?[P([run("Insurance Specialist Adviser: ",{bold:true}),run(m.insuranceAdviser)],{after:20})]:[]),
+    P([run("Date: ",{bold:true}),run(formatDate(m.reviewDate))],{after:180}),
+    subHead("Contact Details"),
+    P("",{after:60}),
+    ...arPara(m.adviserName||"Your adviser"),
+    ...(m.insuranceAdviser?arPara(m.insuranceAdviser):[]),
+    P("",{after:20}),
+    kv("Office Phone:",pr.phone),
+    kv("Office Email:",pr.email,{color:BLUE}),
+    kv("Adviser Email:",adviserEmail,{color:BLUE}),
+    kv("Street Address:",pr.street),
+    kv("Postal Address:",pr.postal),
+    P([run("You can also visit the GPS Wealth website at ",{size:16}),run(l.website||"www.gpswealth.com.au",{bold:true,size:16})])
   ];
   const rightKids=[
-    P([new TextRun({text:"What does this document cover?",font:DISP,size:24,color:BLUE})],{after:120}),
-    P(m.noChangeNote,{after:100}),
-    P("Please make sure you read each section of the Wealth Review. If you feel any information is incorrect, please contact me directly using the details on this page.",{after:100}),
-    P("This document reviews the progress of your Financial Plan and Portfolio over the last 12 months. It details your asset allocations, the products you are using, and the services provided.")
+    P([new TextRun({text:"What does this document cover?",font:DISP,size:32,color:BLUE})],{after:140}),
+    P(m.noChangeNote,{after:120}),
+    P("Please make sure you read each section of the Wealth Review. If you feel any information is incorrect, please contact me directly using the details below.",{after:120}),
+    P("This document reviews the progress of your Financial Plan and Portfolio over the last 12 months. It details your asset allocations, the products you are using, and the services we have provided, along with any action items.",{after:180}),
+    subHead("GPS Wealth"),
+    P("ABN "+(l.abn||"17 005 482 726"),{after:20,size:16}),
+    P("Australian Financial Services Licence Number "+(l.afsl||"254 544"),{after:140,size:16}),
+    kv("Address:",l.address),
+    kv("Phone:",l.phone),
+    kv("Fax:",l.fax),
+    kv("Email:",l.email,{color:BLUE}),
+    kv("Website:",l.website,{color:BLUE})
   ];
-  ch.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:[7200,W-7200],borders:noBorder,
+  ch.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:[7370,W-7370],borders:noBorder,
     rows:[new TableRow({children:[
-      new TableCell({width:{size:7200,type:WidthType.DXA},borders:noBorder,margins:{right:400,top:80,bottom:80},children:leftKids}),
-      new TableCell({width:{size:W-7200,type:WidthType.DXA},borders:noBorder,shading:{type:ShadingType.CLEAR,fill:LIGHT,color:"auto"},margins:{left:260,right:260,top:220,bottom:220},children:rightKids})
+      new TableCell({width:{size:7370,type:WidthType.DXA},borders:noBorder,margins:{right:500,top:80,bottom:80},children:leftKids}),
+      new TableCell({width:{size:W-7370,type:WidthType.DXA},borders:noBorder,margins:{left:200,right:200,top:80,bottom:80},children:rightKids})
     ]})]}));
   ch.push(new Paragraph({children:[new PageBreak()]}));
 
@@ -3131,6 +3159,7 @@ async function generateDocx(){
 
   const doc=new Document({
     creator:"My Wealth Solutions", title:"Wealth Review",
+    features:{updateFields:true},
     styles:{default:{document:{run:{font:FONT,size:18,color:TEXT}}},
       paragraphStyles:[{id:"Heading1",name:"Heading 1",basedOn:"Normal",next:"Normal",quickFormat:true,run:{font:DISP,size:48,color:BLUE}}]},
     sections
