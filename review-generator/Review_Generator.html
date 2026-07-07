@@ -459,7 +459,7 @@ const CHECKLIST_SCHEMA=[
     CL.sel("scope_adviser","Adviser",()=>ADVISERS,{help:"Pick the adviser presenting this review."}),
     CL.info("scope_accounts_h",()=>`<div class="cl-help" style="margin-top:4px">Tick every account/product type the client holds — only the relevant sections then appear in the checklist.</div>`),
     CL.yn("has_retailSuper","Retail super (HUB24 / BT / CFS etc.)?"),
-    CL.yn("has_heldSuper","A second / held super (industry or external)?"),
+    CL.yn("has_heldSuper","External super (industry or other fund held away)?"),
     CL.yn("has_smsf","An SMSF?"),
     CL.yn("has_mcma","A Macquarie CMA (MCMA)?"),
     CL.yn("has_investment","An investment / DR account?"),
@@ -571,7 +571,7 @@ const CHECKLIST_SCHEMA=[
   ]},
 
   /* ---- SECOND / HELD SUPER ---- */
-  {id:"heldSuper", title:"Second (Held) Super", icon:"$", appliesWhen:held("has_heldSuper"), items:[
+  {id:"heldSuper", title:"External Super", icon:"$", appliesWhen:held("has_heldSuper"), items:[
     CL.yn("held_contact","Contact details match across all systems & this held fund?",{todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Update contact details on the held super fund to match"}),
     CL.info("held_contrib",()=>`<div class="cl-help"><b>Contributions</b> — last FY vs FY-to-date, concessional &amp; non-concessional.</div>`+contribGrid("held")),
     CL.area("held_contrib_types","Contribution notes — salary sacrifice, member voluntary, government co-contribution, etc.",{routeNote:{target:"adviser",prefix:"Held contributions"}}),
@@ -780,7 +780,7 @@ const CHECKLIST_SCHEMA=[
   {id:"fees", title:"Adviser Fees", icon:"%", always:true, items:[
     CL.cur("fee_soa","SOA fee"),
     CL.cur("fee_osa","Last OSA fee"),
-    CL.cur("fee_actual","Actual fees charged"),
+    CL.info("fee_matrix",()=>`<div class="cl-help"><b>Actual fees charged</b> — split super vs cashflow by owner (Client 1 / 2 / Joint / Entity), and record where each is paid from.</div>`+feesGrid()),
     CL.info("fee_calc",()=>feePanel()),
     CL.yn("fee_split_change","Adviser wants to change the fee split / structure / amounts?",
       {help:"If yes, an OSAV is required along with fee forms (the reference date remains unchanged in these cases).",
@@ -2121,12 +2121,26 @@ function rolloverPanel(){
   }).filter(Boolean).join("");
   return rows || `<div class="cl-help">Enter the held account balance to check the partial-rollover threshold ($6k / $10k).</div>`;
 }
+// split adviser-fee matrix — super vs cashflow, per owner (Client 1 / 2 / Joint / Entity), with payment source
+const FEE_SOURCES=["","Paid from super","MCMA","Bank account","Investment account"];
+function feeAmtInput(id){ const v=getAns(id); return `<input class="cl-cg-in" inputmode="decimal" placeholder="$" value="${esc(v==null?'':v)}" oninput="clSet('${id}',this.value,false)">`; }
+function feeSrcSelect(id){ const v=getAns(id)||""; return `<select class="cl-cg-in" onchange="clSet('${id}',this.value,false)">${FEE_SOURCES.map(o=>`<option value="${esc(o)}" ${o===v?'selected':''}>${o||'— paid from —'}</option>`).join("")}</select>`; }
+function feeOwners(){ const two=twoClients(), n=clientNames(); const o=[["c1",n[0]||"Client 1"]]; if(two) o.push(["c2",n[1]||"Client 2"]); o.push(["joint","Joint"],["entity","Entity"]); return o; }
+function feesTotal(){ let t=0; feeOwners().forEach(([s])=>{ t+=clNum(getAns("fee_super_"+s))+clNum(getAns("fee_cash_"+s)); }); return t; }
+function feesGrid(){
+  return `<div style="overflow-x:auto"><table class="cl-cg" style="min-width:680px"><thead><tr>
+    <th>Owner</th><th>Super fee</th><th>Paid from</th><th>Cashflow fee</th><th>Paid from</th></tr></thead><tbody>`+
+    feeOwners().map(([slot,name])=>`<tr><th>${esc(name)}</th>
+      <td>${feeAmtInput("fee_super_"+slot)}</td><td>${feeSrcSelect("fee_super_"+slot+"_src")}</td>
+      <td>${feeAmtInput("fee_cash_"+slot)}</td><td>${feeSrcSelect("fee_cash_"+slot+"_src")}</td></tr>`).join("")+
+    `</tbody></table></div>`;
+}
 function feePanel(){
-  const soa=clNum(getAns("fee_soa")), osa=clNum(getAns("fee_osa")), act=clNum(getAns("fee_actual"));
-  if(!soa && !osa && !act) return `<div class="cl-help">Enter SOA, last OSA and actual fees to compare — any discrepancy is flagged for the adviser to review.</div>`;
+  const soa=clNum(getAns("fee_soa")), osa=clNum(getAns("fee_osa")), act=feesTotal()||clNum(getAns("fee_actual"));
+  if(!soa && !osa && !act) return `<div class="cl-help">Enter the SOA fee, last OSA fee and the actual fees above — any discrepancy is flagged for the adviser to review.</div>`;
   const vals=[soa,osa,act].filter(x=>x>0);
   const off=vals.length>1 && (Math.max(...vals)-Math.min(...vals))>Math.max(50,Math.min(...vals)*0.02);
-  return `<div class="cl-flag ${off?'warn':'ok'}">SOA ${money(soa)} · last OSA ${money(osa)} · actual ${money(act)} — ${off?"discrepancy flagged for the adviser to review & advise.":"consistent."}</div>`;
+  return `<div class="cl-flag ${off?'warn':'ok'}">SOA ${money(soa)} · last OSA ${money(osa)} · actual (total) ${money(act)} — ${off?"discrepancy flagged for the adviser to review & advise.":"consistent."}</div>`;
 }
 
 /* ---------- apply: rules, to-dos, routing ---------- */
