@@ -2,10 +2,10 @@
  "meta": {
   "source": "SOA_Generator_v190_38_17.html (V200_WORD_BANK, rev v190_38r)",
   "syncedWith": "MWS Advice Request Builder (db626d61, auto-naming build) · SOA_Generator_v190_38_17.html (v190_38r)",
-  "totalModules": 163,
+  "totalModules": 164,
   "builderLinkedModules": 148,
   "lastSynced": "2026-07-07",
-  "syncNote": "Refreshed from the generator's live V200_WORD_BANK (rev v190_38r) so every module's recommendation/why/risks/alternatives/outcome matches the generator exactly, including the TTR module (new builder tick 'Commence a pension / transition to retirement (TTR)' with a min/max drawdown panel; added the 4% minimum-withdrawal note, the 'customised for your needs' rollover wording, and the 'short-term expenses' risk). Edit wording here (keep the .docx mirror in step) and drop this JSON onto the generator via smart-drop to push changes live."
+  "syncNote": "Refreshed from the generator's live V200_WORD_BANK (rev v190_38r) so every module's recommendation/why/risks/alternatives/outcome matches the generator exactly, including the TTR module (new builder tick 'Commence a pension / transition to retirement (TTR)' with a min/max drawdown panel; added the 4% minimum-withdrawal note, the 'customised for your needs' rollover wording, and the 'short-term expenses' risk). Edit wording here (keep the .docx mirror in step) and drop this JSON onto the generator via smart-drop to push changes live. | 2026-07-07: added standing-rule goal (area 0) — when a TTR strategy is triggered from the advice request for an existing client on a retirement SOA, this goal is auto-added to the Goals & Objectives section."
  },
  "areas": [
   {
@@ -111,6 +111,27 @@
       "why": [
        "Standard scope-out wording — each item appears only when that area is being scoped out of the advice."
       ],
+      "risks": [],
+      "alternatives": [],
+      "outcomesLine": "—"
+     }
+    },
+    {
+     "trigger": "TTR goal — commence a TTR to supplement income (auto-added: existing client, retirement SOA)",
+     "builderTick": false,
+     "builderArea": "0 · Client framing & scope",
+     "triggerPhrases": [
+      "transition to retirement",
+      "ttr",
+      "supplement your income",
+      "commence a transition to retirement account"
+     ],
+     "mode": "Always-on (conditional)",
+     "scopeGate": "SOA = retirement AND existing client AND a TTR strategy is triggered from the advice request",
+     "figures": "",
+     "soa": {
+      "strategiesLine": "During your recent review meeting, you advised that you would like to commence a Transition to Retirement account to help supplement your income. You are seeking our advice on the most appropriate way to proceed with this request.",
+      "why": [],
       "risks": [],
       "alternatives": [],
       "outcomesLine": "—"
