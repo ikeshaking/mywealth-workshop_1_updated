@@ -259,9 +259,24 @@ textarea{resize:vertical;min-height:60px}
 #dropOverlay .do-t{font-family:'ABC Arizona Flare','Playfair Display',serif;font-size:26px;font-weight:700;margin-top:10px}
 #dropOverlay .do-s{font-size:13px;color:#cfe0ec;margin-top:6px}
 /* dropzone/smart-drop labels are <label> elements — undo the global uppercase on their body text */
-.dz h4,.dz p,.smartdrop .sd-title,.smartdrop .sd-sub,.smartdrop .sd-types{text-transform:none;letter-spacing:normal}
+.dz h4,.dz p,.smartdrop .sd-title,.smartdrop .sd-sub,.smartdrop .sd-types,.cl-drop{text-transform:none;letter-spacing:normal}
+/* checklist tab fills the full width; questions flow into columns so the space isn't wasted */
+.content.cl-full{max-width:none}
+.content.cl-full .cl-wrap{grid-template-columns:250px 1fr}
+.cl-body{column-gap:44px}
+@media(min-width:1180px){.content.cl-full .cl-body{column-count:2}}
+@media(min-width:1750px){.content.cl-full .cl-body{column-count:3}}
+.cl-body .cl-item{break-inside:avoid;-webkit-column-break-inside:avoid}
+/* drag-drop old-checklist zone (replaces the plain upload button) */
+.cl-drop{display:block;border:2px dashed var(--blue-soft);border-radius:10px;background:var(--blue-light);color:var(--blue);text-align:center;padding:12px 10px;font-size:12px;font-weight:700;line-height:1.4;cursor:pointer;transition:.13s}
+.cl-drop:hover,.cl-drop.drag{border-color:var(--blue);background:var(--surface-2)}
+.cl-drop input{display:none}
 .cl-item{padding:9px 0}
 .cl-item .cl-help{font-size:10.5px;margin:-1px 0 6px}
+.cl-note{margin-top:6px}
+.cl-note-add{background:none;border:none;color:var(--blue);font-size:11px;font-weight:700;cursor:pointer;padding:2px 0;text-transform:none}
+.cl-note-add:hover{text-decoration:underline}
+.cl-note-ta{width:100%;font-size:12px;min-height:34px;resize:vertical}
 .field{margin-bottom:2px}
 .grid{gap:10px}
 </style>
@@ -367,7 +382,7 @@ const S = {
   ],
   extraPlatforms:[],
   uploads:[],
-  checklist:{ rows:[], answers:{}, activeSection:"" },
+  checklist:{ rows:[], answers:{}, notes:{}, activeSection:"" },
   rebalance:[],
   _snapshot:null, _fileNote:"", _roa:""
 };
@@ -411,6 +426,7 @@ const CHECKLIST_ITEMS=[
    Each section: {id,title,icon,appliesWhen(S), items[]}
    Each item:    {id,prompt,type,perClient,help,options,followUps,todo,todoWhen,routeNote,compute}
    ============================================================ */
+const CRP_OPTIONS=["Updated","Up to Date","High Growth","Growth","Balanced","Moderately Conservative","Conservative"];
 const CL={
   yn:(id,prompt,o={})=>Object.assign({id,prompt,type:"yesno"},o),
   cur:(id,prompt,o={})=>Object.assign({id,prompt,type:"currency"},o),
@@ -418,6 +434,7 @@ const CL={
   area:(id,prompt,o={})=>Object.assign({id,prompt,type:"area"},o),
   date:(id,prompt,o={})=>Object.assign({id,prompt,type:"date"},o),
   sel:(id,prompt,options,o={})=>Object.assign({id,prompt,type:"select",options},o),
+  combo:(id,prompt,options,o={})=>Object.assign({id,prompt,type:"combo",options},o),   // dropdown suggestions + free type
   info:(id,compute)=>({id,type:"computed",compute}),
   sub:(id,label)=>({id,type:"computed",compute:()=>`<div class="cl-subhead">${label}</div>`})
 };
@@ -453,11 +470,11 @@ const CHECKLIST_SCHEMA=[
     CL.yn("gen_id_needed","Is ID required to action something in this review (e.g. a new account/rollover)?",
       {todo:"Collect valid ID from the client — only required to complete another action point this review",
        help:"If Yes, an optional 'collect ID' to-do is added to the wealth review for the adviser to action in-meeting."}),
-    CL.txt("gen_crp_c1","Client Risk Profile — Client 1",{help:"Record the CRP accurately. Note: one client may be High Growth and the other Growth, with a Growth joint CRP — all three are noted on the WR."}),
-    CL.txt("gen_crp_c2","Client Risk Profile — Client 2",{showWhen:()=>twoClients()}),
-    CL.txt("gen_crp_joint","Joint CRP",{showWhen:()=>twoClients()}),
-    CL.yn("gen_xeppo","Xeppo profile reviewed — all tasks assumed by the allocated RSO?",
-      {help:"Take full responsibility of the Xeppo profile: chase/complete old open projects, take over ad-hoc tasks from other RSOs, and add any needed follow-up as a WR to-do.",
+    CL.combo("gen_crp_c1","Client Risk Profile — Client 1",CRP_OPTIONS,{help:"Pick a profile or type your own. Note: one client may be High Growth and the other Growth, with a Growth joint CRP — all three are noted on the WR."}),
+    CL.combo("gen_crp_c2","Client Risk Profile — Client 2",CRP_OPTIONS,{showWhen:()=>twoClients()}),
+    CL.combo("gen_crp_joint","Joint CRP",CRP_OPTIONS,{showWhen:()=>twoClients()}),
+    CL.yn("gen_xeppo","Xeppo activities & projects checked — all outstanding tasks reallocated to current RSO?",
+      {help:"Take full responsibility of the Xeppo profile: chase/complete old open projects, take over ad-hoc tasks from other RSOs. Use the note below to list any outstanding open items — they're added to the WR discussion points on Apply.",
        todoWhen:(v)=>String(v).trim().toLowerCase()==="no",
        todo:"Clean up the Xeppo profile — assume/close outstanding tasks and set up any recurring tasks"}),
     CL.yn("gen_history","Reviewed engagement, SOA, latest WR & recent file notes?",
@@ -470,7 +487,7 @@ const CHECKLIST_SCHEMA=[
       {help:"Check the review data snapshot / most recent correspondence against Xeppo, Adviser Centre, Worksorted and every platform and insurance policy (including held cover/super).",
        todoWhen:(v)=>String(v).trim().toLowerCase()==="no",
        todo:"Update client contact details so they match across Xeppo, AC, Worksorted and all platforms/policies"}),
-    CL.sel("gen_portal","My Wealth Portal login — level?",["","None","Lite","Pro"],
+    CL.sel("gen_portal","My Wealth Portal login — level?",["","N/A","Lite","Pro"],
       {help:"If Pro and last usage older than 6 months, add a note for the adviser to discuss and consider a downgrade to Lite."}),
     CL.yn("gen_portal_stale","(If Pro) last usage older than 6 months?",
       {showWhen:()=>getAns("gen_portal")==="Pro",
@@ -480,12 +497,13 @@ const CHECKLIST_SCHEMA=[
        todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Locate the client's Review Data Snapshot (drive / correspondence)"}),
     CL.yn("gen_handover","(If the SOA is new) checked the Implementation Handover folder for outstanding tasks?",
       {help:"New SOAs may leave implementation tasks (setting up investments, insurance changes, estate planning) to pick up or flag with the adviser.",
-       todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Review the Implementation Handover folder for outstanding tasks (new SOA)"})
+       todoWhen:(v)=>/^(yes|no)$/i.test(String(v).trim()),
+       todo:"Check the last SOA recommendations and confirm all implementation is complete — no outstanding or missed tasks from the SOA implementation and implementation review"})
   ]},
 
   /* ---- COMPLIANCE ---- */
   {id:"compliance", title:"Compliance", icon:"⚖", always:true, items:[
-    CL.sel("comp_osa","OSA / EFDS status?",["","Not due","Due — draft available","Due — signed (send to finance to execute)","Due — draft not available (ask finance)"],
+    CL.sel("comp_osa","OSA / EFDS status?",["","Not due","Due — draft available","Due — drafted & printed to sign in office","Due — drafted & in DocuSign to sign online","Due — signed (send to finance to execute)","Due — draft not available (ask finance)"],
       {help:"Check DocuSign: if signed, send to finance officer to execute and note as received on the WR to-do; if incomplete, print for signing in-meeting (or DocuSign if online); if no draft, ask the finance officer to produce it."}),
     CL.date("comp_anniv","Client anniversary date",
       {help:"Ensure this aligns with the most recent OSA on file and Xplan. Any discrepancy → raise with your Team Leader.",
@@ -504,7 +522,7 @@ const CHECKLIST_SCHEMA=[
   /* ---- RETAIL SUPER ---- */
   {id:"retailSuper", title:"Retail Super", icon:"$", appliesWhen:held("has_retailSuper"), items:[
     CL.cur("retail_cash","Cash level within the super fund",{perClient:true,routeNote:{target:"portfolio",prefix:"Retail super cash"}}),
-    CL.yn("retail_autobalance","Auto-rebalancing activated (if available)?",
+    CL.yn("retail_autobalance","Auto-rebalancing activated (if applicable as per SOP)?",
       {help:"Check cash levels and activate auto-rebalancing where the platform supports it.",
        todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Activate auto-rebalancing on the super account (if available)"}),
     CL.area("retail_components","Taxable / non-taxable components within the super fund",{perClient:true,routeNote:{target:"adviser",prefix:"Super components"}}),
@@ -709,7 +727,7 @@ const CHECKLIST_SCHEMA=[
     CL.yn("inv_linked","Accounts linked for discounts?",{todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Link investment/super accounts for fee discounts"}),
     CL.yn("inv_w8ben","Valid W-8BEN form listed on the account?",
       {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Complete a W-8BEN form for the investment account"}),
-    CL.yn("inv_autobalance","Auto-rebalancing activated (if available)?",
+    CL.yn("inv_autobalance","Auto-rebalancing activated (if applicable as per SOP)?",
       {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Activate auto-rebalancing on the investment account (if available)"}),
     CL.yn("inv_tax","Are tax statements available for the investment account/s?",
       {help:"Investment accounts only — confirm the annual tax statements are available for the client's return.",
@@ -1151,6 +1169,7 @@ function applyLayout(){
   const rail=$("previewRail");
   const fullWidth=(activeTab==="checklist");
   if(sidebar) sidebar.style.display=fullWidth?"none":"";
+  const content=$("content"); if(content) content.classList.toggle("cl-full", fullWidth);
   const railTab=(activeTab==="generate"||activeTab==="meeting");
   const railShown=railTab && !previewUserHidden;
   if(rail) rail.classList.toggle("hidden", !railShown);
@@ -1463,7 +1482,11 @@ function closePrevFS(){ const fs=$("pvFS"); if(fs)fs.classList.remove("open"); }
 function smartDrop(ev){ const files=[...ev.target.files]; ev.target.value=""; smartDropFiles(files); }
 function smartDropOver(ev){ ev.preventDefault(); ev.currentTarget.classList.add("drag"); }
 function smartDropLeave(ev){ ev.currentTarget.classList.remove("drag"); }
-function smartDropHandle(ev){ ev.preventDefault(); ev.currentTarget.classList.remove("drag"); const f=ev.dataTransfer&&ev.dataTransfer.files; if(f&&f.length) smartDropFiles([...f]); }
+function smartDropHandle(ev){ ev.preventDefault(); ev.stopPropagation(); ev.currentTarget.classList.remove("drag"); if(typeof hideDropOverlay==="function") hideDropOverlay(); const f=ev.dataTransfer&&ev.dataTransfer.files; if(f&&f.length) smartDropFiles([...f]); }
+// drag-drop onto the checklist "old checklist" zone (stopPropagation so the window-level DnD doesn't also fire)
+function clDropOver(ev){ ev.preventDefault(); ev.currentTarget.classList.add("drag"); }
+function clDropLeave(ev){ ev.currentTarget.classList.remove("drag"); }
+function checklistDrop(ev){ ev.preventDefault(); ev.stopPropagation(); ev.currentTarget.classList.remove("drag"); if(typeof hideDropOverlay==="function") hideDropOverlay(); const f=ev.dataTransfer&&ev.dataTransfer.files; if(f&&f.length) importChecklist({target:{files:[...f]}}); }
 function classifyXlsx(f){
   return new Promise(res=>{
     const n=(f.name||"").toLowerCase();
@@ -1484,7 +1507,7 @@ function classifyXlsx(f){
 }
 function loadJSONPromise(f){
   return new Promise((res,rej)=>{ const r=new FileReader();
-    r.onload=()=>{ try{ Object.assign(S,JSON.parse(r.result)); if(!S.checklist.answers)S.checklist.answers={}; if(!S.uploads)S.uploads=[]; delete S._snapshot; delete S._fileNote; delete S._roa; res(); }catch(e){ rej(e); } };
+    r.onload=()=>{ try{ Object.assign(S,JSON.parse(r.result)); if(!S.checklist.answers)S.checklist.answers={}; if(!S.checklist.notes)S.checklist.notes={}; if(!S.uploads)S.uploads=[]; delete S._snapshot; delete S._fileNote; delete S._roa; res(); }catch(e){ rej(e); } };
     r.onerror=rej; r.readAsText(f); });
 }
 /* ---------- OCR (images & scanned PDFs) — Tesseract.js, lazy-loaded from CDN, runs in-browser ---------- */
@@ -1918,6 +1941,11 @@ function getAns(id){ return S.checklist.answers[id]; }
 function clSet(id,v,rerender){ S.checklist.answers[id]=v; if(typeof CL_ONCHANGE[id]==="function") CL_ONCHANGE[id](v); if(rerender) renderContent(); }
 function getAnsC(id,slot){ const a=S.checklist.answers[id]; return (a&&typeof a==="object")?(a[slot]||""):(slot==="c1"?(a||""):""); }
 function clSetC(id,slot,v,rerender){ let a=S.checklist.answers[id]; if(!a||typeof a!=="object"){ a={c1:"",c2:""}; S.checklist.answers[id]=a; } a[slot]=v; if(rerender) renderContent(); }
+// per-item notes — any note is added to the WR discussion points on Apply
+const clNoteOpen=new Set();
+function clGetNote(id){ return (S.checklist.notes&&S.checklist.notes[id])||""; }
+function clSetNote(id,v){ if(!S.checklist.notes) S.checklist.notes={}; S.checklist.notes[id]=v; }
+function clToggleNote(id){ if(clNoteOpen.has(id)&&!clGetNote(id)) clNoteOpen.delete(id); else clNoteOpen.add(id); renderContent(); }
 const CL_ONCHANGE={
   scope_clients:(v)=>{ S.meta.hasPartner=(v==="2"); },
   scope_c1name:(v)=>{ if(v) S.client.name=v; syncPreparedFor(); },
@@ -1978,14 +2006,14 @@ function renderChecklistForm(){
     <aside class="cl-side">
       <div class="cl-side-h">Sections</div>${side}
       <div style="padding:8px 8px 4px;display:flex;flex-direction:column;gap:6px">
-        <label class="btn btn-ghost btn-sm" style="cursor:pointer;justify-content:center">⬆ Upload old checklist (.xlsx)<input type="file" accept=".xlsx,.xlsm" style="display:none" onchange="importChecklist(event)"></label>
+        <label class="cl-drop" ondrop="checklistDrop(event)" ondragover="clDropOver(event)" ondragleave="clDropLeave(event)">⬆ Drop or click<br>old checklist (.xlsx)<input type="file" accept=".xlsx,.xlsm" onchange="importChecklist(event)"></label>
         <button class="btn btn-ghost btn-sm" onclick="clReset()">↺ Reset answers</button>
       </div>
     </aside>
     <div class="cl-main">
       <div class="card">
         <div class="card-title"><span class="bar"></span>${esc(active.icon||'')} ${esc(active.title)}</div>
-        ${body||'<div class="pv-empty">No items in this section.</div>'}
+        <div class="cl-body">${body||'<div class="pv-empty">No items in this section.</div>'}</div>
         <div style="display:flex;justify-content:space-between;margin-top:14px">
           <button class="btn btn-ghost btn-sm" ${idx<=0?'disabled style=\"opacity:.4\"':''} onclick="clGo('${secs[Math.max(0,idx-1)].id}')">← Back</button>
           ${idx<secs.length-1
@@ -2020,7 +2048,12 @@ function renderCLItem(it){
   }
   const follow=(it.followUps||[]).map(fu=>clFollowActive(it,fu)
     ? `<div class="cl-followup">${(fu.items||[]).map(renderCLItem).join("")}</div>` : "").join("");
-  return `<div class="cl-item"><div class="cl-q">${esc(it.prompt||"")}</div>${help}${control}${follow}</div>`;
+  const noteVal=clGetNote(it.id);
+  const noteShown=!!noteVal || clNoteOpen.has(it.id);
+  const noteUI=`<div class="cl-note">${noteShown
+    ? `<textarea class="cl-note-ta" rows="1" placeholder="Note — added to the WR discussion points on Apply…" oninput="clSetNote('${it.id}',this.value)">${esc(noteVal)}</textarea>`
+    : `<button type="button" class="cl-note-add" onclick="clToggleNote('${it.id}')">＋ Add note</button>`}</div>`;
+  return `<div class="cl-item"><div class="cl-q">${esc(it.prompt||"")}</div>${help}${control}${follow}${noteUI}</div>`;
 }
 function clControl(it, slot){
   const get=()=> slot? getAnsC(it.id,slot) : getAns(it.id);
@@ -2034,6 +2067,11 @@ function clControl(it, slot){
   if(it.type==="select"){
     const opts=typeof it.options==="function"?it.options():it.options;
     return `<select onchange="${setR(true)}">${opts.map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join("")}</select>`;
+  }
+  if(it.type==="combo"){   // dropdown of suggestions but free-typeable
+    const opts=typeof it.options==="function"?it.options():it.options;
+    const lid="dl_"+it.id+(slot||"");
+    return `<input list="${lid}" placeholder="Select or type…" value="${esc(v)}" oninput="${setR(false)}" onchange="renderContent()"><datalist id="${lid}">${opts.map(o=>`<option value="${esc(o)}"></option>`).join("")}</datalist>`;
   }
   if(it.type==="area"){ return `<textarea rows="2" placeholder="Notes / data…" oninput="${setR(false)}">${esc(v)}</textarea>`; }
   if(it.type==="date"){ return `<input type="date" value="${esc(v)}" oninput="${setR(false)}">`; }
@@ -2146,6 +2184,12 @@ function applyChecklistData(){
       }
     });
   });
+  // per-item notes → WR discussion points (one line = one discussion item)
+  if(S.checklist.notes){
+    Object.values(S.checklist.notes).forEach(note=>{
+      String(note||"").split("\n").map(s=>s.trim()).filter(Boolean).forEach(line=>{ todos+=pushTodo(line,"MWS","Review"); });
+    });
+  }
   toast(`Checklist applied — ${todos} to-do(s) added, ${routed} note(s) routed.`);
 }
 
@@ -2692,7 +2736,7 @@ function saveJSON(){
 function loadJSON(ev){
   const file=ev.target.files[0]; if(!file)return;
   const r=new FileReader();
-  r.onload=()=>{ try{ Object.assign(S,JSON.parse(r.result)); if(!S.checklist.answers) S.checklist.answers={}; if(!S.uploads) S.uploads=[]; delete S._snapshot; delete S._fileNote; delete S._roa; renderContent(); toast("Draft loaded."); }catch(e){ toast("Invalid JSON file."); } };
+  r.onload=()=>{ try{ Object.assign(S,JSON.parse(r.result)); if(!S.checklist.answers) S.checklist.answers={}; if(!S.checklist.notes) S.checklist.notes={}; if(!S.uploads) S.uploads=[]; delete S._snapshot; delete S._fileNote; delete S._roa; renderContent(); toast("Draft loaded."); }catch(e){ toast("Invalid JSON file."); } };
   r.readAsText(file);
 }
 function resetAll(){
@@ -3168,23 +3212,26 @@ async function generateRoaDocx(){
 /* ---------- boot ---------- */
 if(!S.actionItems.length) seedStandardTodos(false);   // seed the standard review to-dos into a fresh review
 if(!S.checklist.answers) S.checklist.answers={};
+if(!S.checklist.notes) S.checklist.notes={};
 if(!S.checklist.answers.scope_clients) S.checklist.answers.scope_clients=S.meta.hasPartner?"2":"1";
 if(!S.checklist.answers.scope_c1name && S.client.name) S.checklist.answers.scope_c1name=S.client.name;
 if(!S.checklist.answers.scope_c2name && S.partner.name) S.checklist.answers.scope_c2name=S.partner.name;
 renderTabbar(); renderNav(); applyLayout(); renderContent();
 
 /* ---------- whole-window drag & drop: drop files anywhere to smart-import ---------- */
+function hideDropOverlay(){ const ov=$("dropOverlay"); if(ov) ov.classList.remove("show"); window.__dndDepth=0; }
 (function initGlobalDnD(){
   const ov=document.createElement("div"); ov.id="dropOverlay";
   ov.innerHTML='<div class="do-inner"><div class="do-ic">⬇</div><div class="do-t">Drop files to import</div><div class="do-s">Word · PDF · Excel · JSON · PNG/JPG screenshots (OCR)</div></div>';
   document.body.appendChild(ov);
-  let depth=0;
+  window.__dndDepth=0;
   const hasFiles=(e)=>{ try{ return e.dataTransfer && [...e.dataTransfer.types].includes("Files"); }catch(_){ return false; } };
-  window.addEventListener("dragenter",e=>{ if(!hasFiles(e))return; e.preventDefault(); depth++; ov.classList.add("show"); });
+  window.addEventListener("dragenter",e=>{ if(!hasFiles(e))return; e.preventDefault(); window.__dndDepth++; ov.classList.add("show"); });
   window.addEventListener("dragover",e=>{ if(hasFiles(e)) e.preventDefault(); });
-  window.addEventListener("dragleave",e=>{ if(!hasFiles(e))return; depth--; if(depth<=0){ depth=0; ov.classList.remove("show"); } });
+  window.addEventListener("dragleave",e=>{ if(!hasFiles(e))return; window.__dndDepth--; if(window.__dndDepth<=0){ hideDropOverlay(); } });
+  // a drop onto a specific zone (smart-drop / checklist) calls stopPropagation, so it never reaches here — that's fine
   window.addEventListener("drop",e=>{
-    depth=0; ov.classList.remove("show");
+    hideDropOverlay();
     if(!(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length)) return;
     e.preventDefault();
     if(activeTab!=="generate") switchTab("generate");
