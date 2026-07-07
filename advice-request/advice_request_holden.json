@@ -5,7 +5,7 @@
   "ctype": "Couple",
   "status": "New",
   "entities": [],
-  "narrative": "Peter Holden (DOB 05/06/1967, retired) and Lynette Holden (DOB 11/05/1967, working full-time in administration at Shorrock-Browne Medical, ~$20,000 p.a. + 12% SG) are a married couple seeking retirement-focused advice. They own their home (~$2,200,000, Joint) and an investment property (~$2,000,000, Joint — retained/scoped out), and hold ~$2,000,000 cash on hand (Joint). Peter has ~$1,909,603 in Australian Retirement Trust Super Savings; Lynette ~$99,538 (same fund). Living expenses ~$133,400 p.a.\nGoals: feel confident their wealth supports their desired lifestyle throughout retirement; draw a reliable, tax-effective retirement income of $140,000 p.a. ($11,667/month) for life; maximise super before retirement; minimise tax; keep estate planning current; remain flexible. Peter is retired; Lynette is undecided on her retirement timeframe and wants flexibility. Both assessed as a Growth risk profile.\nPlease prepare the SOA per the strategies below: establish a Joint Hub24 investment account and new Hub24 super accounts on the CARE philosophy, close & fully roll over the ART accounts, one-off NCC/recontribution strategy (Peter $130,000; Lynette $390,000 bring-forward), and transition to account-based pension around age 60 drawing a combined ~$140,000 p.a.",
+  "narrative": "Peter Holden (DOB 05/06/1967, retired) and Lynette Holden (DOB 11/05/1967, working full-time in administration at Shorrock-Browne Medical, ~$20,000 p.a. + 12% SG) are a married couple seeking retirement-focused advice. They own their home (~$2,200,000, Joint) and an investment property (~$2,000,000, Joint — retained/scoped out), and hold ~$2,000,000 cash on hand (Joint). Peter has ~$1,909,603 in Australian Retirement Trust Super Savings; Lynette ~$99,538 (same fund). Living expenses ~$133,400 p.a.\nGoals: feel confident their wealth supports their desired lifestyle throughout retirement; draw a reliable, tax-effective income of $140,000 p.a. ($11,667/month) for life; maximise super; minimise tax; remain flexible. Peter is retired; Lynette is undecided on her retirement timeframe and wants flexibility. Both assessed as a Growth risk profile.\nPlease prepare the advice per the strategies below: establish a Joint Hub24 investment account and new Hub24 super accounts on the CARE philosophy, close & fully roll over the ART accounts, and a one-off NCC/recontribution strategy (Peter $130,000; Lynette $390,000 bring-forward).",
   "currentSituation": "Discovery appointment / fact find (29 June 2026)",
   "keyConsiderations": "",
   "notesBudget": "Total living expenses ~$133,400 p.a.; desired retirement income $140,000 p.a. ($11,667/month). Cashflow to fund strategy from $2,000,000 cash: less CGT & tax payable ~$223,591; less upfront advice fee from cashflow $1,014; less maximise concessional (FY26) ~$57,600; less NCC (FY27 — Peter $130,000 + Lynette $390,000) $520,000; less 12 months living expenses $140,000; less upfront investment $800,000. Remaining cash ~$257,794 to be retained in a high-interest savings account as a buffer. Estimated combined super balance ~$2,745,000 in 12 months; combined starting benefits to draw income from ~$3,604,639 (today's dollars). Projection assumptions: inflation 2.5%, average return 6.40%.",
@@ -32,7 +32,7 @@
   "scopeOut": [
     "Existing Investment Property"
   ],
-  "scopeOther": "Specific residential property advice (must be provided by a licensed property agent); personal protection and cashflow/budgeting scoped out at client request given proximity to retirement; estate planning (binding death nominations & Will/POA review) addressed within the superannuation recommendations.",
+  "scopeOther": "Specific residential property advice (must be provided by a licensed property agent); personal protection and cashflow/budgeting scoped out at client request given proximity to retirement.",
   "strategies": [
     {
       "area": "4 · Investment Plan",
@@ -114,35 +114,7 @@
     },
     {
       "area": "5 · Personal Superannuation",
-      "name": "Commence an Account-Based Pension and draw an income (minimum % or set amount)",
-      "owner": "Both",
-      "amounts": [],
-      "pick": "",
-      "text": "We recommend you commence an Account-Based Pension. Drawing minimum pension payments is intended to support your lifestyle needs while preserving long-term capital growth.",
-      "abp": {
-        "mode": "amt",
-        "pct": "",
-        "bal": "",
-        "amt": "11,666",
-        "tbc": true,
-        "cond": "once each of you reaches age 60 and satisfies a condition of release (Peter ~June 2027; Lynette on cessation of employment) — combined pension ~$140,000 p.a., up to the maximum transfer balance cap"
-      }
-    },
-    {
-      "area": "5 · Personal Superannuation",
-      "name": "We recommend non-lapsing binding death benefit nominations within your new superannuation funds.",
-      "owner": "Both",
-      "amounts": []
-    },
-    {
-      "area": "5 · Personal Superannuation",
       "name": "We recommend that distributions from your super portfolios be reinvested.",
-      "owner": "Both",
-      "amounts": []
-    },
-    {
-      "area": "5 · Personal Superannuation",
-      "name": "Estate planning: review and update your Wills and Powers of Attorney (currently not disclosed).",
       "owner": "Both",
       "amounts": []
     },
@@ -383,7 +355,7 @@
   "insuranceBenefit": [],
   "paraplanning": {
     "4 · Investment Plan": "Joint investment of $800,000 from cash savings into Hub24 (Full CARE): CARE Core Growth $476,400; CARE Active $119,100; CARE Enhanced Australian Equities $99,250; CARE Enhanced International Equities $99,250; Cash $6,000. 33% lump-sum invested / 67% dollar cost averaged over 12 months, subject to Money on the Move. Elect to reinvest distributions. Franking credits approx. $2,688 p.a. Remaining cash ~$257,794 retained in high-interest savings as a buffer.",
-    "5 · Personal Superannuation": "Peter — close ART Super Savings ($1,909,603) and roll 100% to new Hub24 Account 1 (Full CARE High Growth): Core High Growth $933,440; Active $233,360; Reserves $330,000; Enhanced Aus Eq $194,467; Enhanced Int Eq $194,467; Cash $23,870 (bal $1,909,603). Peter Account 2 (Hub24 CARE Essentials) = $130,000 one-off NCC (Essentials High Growth $102,700; Essentials Defensive $25,675; Cash $1,625) for a recontribution to Account 1.\nLynette — close ART Super Savings ($99,538) and roll 100% to new Hub24 Account 1 (Hub24 CARE Essentials): Essentials High Growth $78,635; Essentials Defensive $19,659; Cash $1,244 (bal $99,538). Lynette Account 2 (Full CARE) = $390,000 bring-forward NCC (Core High Growth $177,075; Active $44,269; Reserves $90,000; Enhanced Aus Eq $36,891; Enhanced Int Eq $36,891; Cash $4,875) for a recontribution to Account 1.\n33% lump sum on rollover / 67% DCA over 12 months with MOTM. Convert to account-based pension ~age 60 (Peter ~June 2027; Lynette once age 60 & condition of release), up to the maximum transfer balance cap, drawing combined ~$140,000 p.a. ($11,666/month). Non-lapsing binding death benefit nominations. Reinvest distributions. Estate planning: review/update Wills & POAs (currently not disclosed).",
+    "5 · Personal Superannuation": "Peter — close ART Super Savings ($1,909,603) and roll 100% to new Hub24 Account 1 (Full CARE High Growth): Core High Growth $933,440; Active $233,360; Reserves $330,000; Enhanced Aus Eq $194,467; Enhanced Int Eq $194,467; Cash $23,870 (bal $1,909,603). Peter Account 2 (Hub24 CARE Essentials) = $130,000 one-off NCC (Essentials High Growth $102,700; Essentials Defensive $25,675; Cash $1,625) for a recontribution to Account 1.\nLynette — close ART Super Savings ($99,538) and roll 100% to new Hub24 Account 1 (Hub24 CARE Essentials): Essentials High Growth $78,635; Essentials Defensive $19,659; Cash $1,244 (bal $99,538). Lynette Account 2 (Full CARE) = $390,000 bring-forward NCC (Core High Growth $177,075; Active $44,269; Reserves $90,000; Enhanced Aus Eq $36,891; Enhanced Int Eq $36,891; Cash $4,875) for a recontribution to Account 1.\n33% lump sum on rollover / 67% DCA over 12 months with MOTM. Reinvest distributions.",
     "6 · Superannuation Contributions": "FY2026-27: Peter one-off NCC $130,000 into Account 2, then recontribute to Account 1; Lynette bring-forward NCC $390,000 into Account 2, then recontribute to Account 1. Both make concessional contributions up to their available cap each financial year (subject to cashflow, eligibility & tax). Lynette to use the NCC bring-forward rule again in FY2029-30 (up to $390,000). Review circumstances prior to implementing the recontribution strategy. CGT ~$223,591 payable on realising cash."
   },
   "fee": {

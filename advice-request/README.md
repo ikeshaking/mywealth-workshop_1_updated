@@ -17,12 +17,13 @@ Pre-filled MWS Advice Request Builder, populated from the Statement of Advice
 - **Risk profile:** Growth (Super & Investment) for both
 - **Scope in:** Investment Plan, Personal Superannuation, Superannuation Contributions
 - **Scope out:** Existing investment property (retained); specific residential property advice;
-  personal protection; cashflow & budgeting. Estate planning (binding nominations / Will & POA
-  review) is noted within the super recommendations.
+  personal protection; cashflow & budgeting.
 - **Investment Plan:** Joint $800,000 into Hub24 Full CARE (33% lump sum / 67% DCA + MOTM), reinvest distributions.
 - **Superannuation:** close & 100% roll over both ART accounts to new Hub24 accounts; Peter Account 2
-  ($130k NCC) and Lynette Account 2 ($390k bring-forward NCC) for a recontribution strategy;
-  account-based pension at ~age 60 drawing a combined ~$140,000 p.a. ($11,666/mth).
+  ($130k NCC) and Lynette Account 2 ($390k bring-forward NCC) for a recontribution strategy.
+
+> Retirement (account-based pension) and estate-planning content are driven by the SOA type,
+> so they are intentionally **not** drafted as strategies in the advice request.
 - **Contributions:** Peter NCC $130k and Lynette bring-forward NCC $390k (FY26/27) + recontributions;
   concessional up to cap each year; Lynette bring-forward again FY2029-30.
 - **CARE philosophy:** 8 justification reasons ticked.
