@@ -942,14 +942,14 @@ async function importAnyPlatform(ev){
       const r=routeScannedText(text,f.name,"Scanned PDF"); applied.push(f.name+" (OCR) · "+r); continue;
     }
     try{
-      // try each parser; the guards inside each return null for non-matching formats
+      // try each wired parser; the guards inside each return null for non-matching formats
       let done=false;
       const h=parseHub24Text(text);
-      if(h && (h.holdings.length||h.total)){ applyHub24(h); applied.push(`HUB24 · ${h.name} · ${money(h.total)}`); done=true; }
-      if(!done){ const b=parseBtText(text); if(b){ applyBt(b); applied.push(`BT Panorama · ${b.name} · ${money(b.total)}`); done=true; } }
-      if(!done){ const mq=parseMacqText(text); if(mq){ applyMacq(mq); applied.push(`Macquarie · ${mq.name||"CMA"} · ${money(mq.balance)}`); done=true; } }
-      if(!done) failed.push(f.name+" — unrecognised report format (auto-read: HUB24, BT, Macquarie)");
-      else registerUpload(f.name,"Platform report");
+      if(h && (h.holdings.length||h.total)){ applyHub24(h); applied.push(`HUB24 · ${h.name} · ${money(h.total)}`); registerUpload(f.name,"Platform report"); done=true; }
+      if(!done){ const b=parseBtText(text); if(b){ applyBt(b); applied.push(`BT Panorama · ${b.name} · ${money(b.total)}`); registerUpload(f.name,"Platform report"); done=true; } }
+      if(!done){ const mq=parseMacqText(text); if(mq){ applyMacq(mq); applied.push(`Macquarie · ${mq.name||"CMA"} · ${money(mq.balance)}`); registerUpload(f.name,"Platform report"); done=true; } }
+      // not a wired platform → generic best-effort (grab headline balance + keep full text) rather than failing
+      if(!done) applied.push(f.name+" · "+genericPlatformImport(text,f.name));
     }catch(e){ failed.push(f.name+" — "+e.message); }
   }
   renderContent();
@@ -1533,8 +1533,43 @@ function routeScannedText(text,name,kindLabel){
     try{ const mq=parseMacqText(text); if(mq){ applyMacq(mq); registerUpload(name,"Scanned report (OCR)",text); return `Macquarie · ${money(mq.balance)}`; } }catch(e){}
   }
   if(clean.length<3){ registerUpload(name,(kindLabel||"Image")+" — no text found",""); return "no readable text found"; }
-  registerUpload(name,(kindLabel||"Scanned")+" text (OCR)",text.trim());
-  return "text captured (open it from the upload chip)";
+  // generic best-effort: recognise which platform it looks like, grab a headline balance, keep the full text
+  return genericPlatformImport(text,name,kindLabel);
+}
+// which listed platform does this text look like? (labelling only)
+function detectPlatformName(text){
+  const p=PLATFORMS.find(p=>p.re.test(text||""));
+  return p?p.name:"Unknown platform";
+}
+// heuristic headline balance: the largest $ figure sitting on a "total / balance / value" line
+function guessHeadlineBalance(text){
+  const lines=String(text||"").split("\n");
+  const KEY=/(total\s*portfolio|portfolio\s*(value|total)|total\s*account\s*value|total\s*value|closing\s*balance|account\s*balance|total\s*balance|net\s*(worth|value)|market\s*value|total)\b/i;
+  const amtRe=/\$?\s*(\d{1,3}(?:,\d{3})+(?:\.\d{2})?|\d+\.\d{2})/g;
+  let best=0, ctx="";
+  lines.forEach(ln=>{ if(!KEY.test(ln)) return; let m; amtRe.lastIndex=0; while((m=amtRe.exec(ln))){ const v=parseFloat(m[1].replace(/,/g,"")); if(v>best){ best=v; ctx=ln.trim(); } } });
+  if(!best){ let m; amtRe.lastIndex=0; while((m=amtRe.exec(text))){ const v=parseFloat(m[1].replace(/,/g,"")); if(v>best) best=v; } }   // fall back to largest figure anywhere
+  return {value:best, ctx};
+}
+// generic best-effort import for an unrecognised (not-yet-wired) platform PDF or screenshot
+function genericPlatformImport(text,name,kindLabel){
+  const plat=detectPlatformName(text);
+  const chipKind=(kindLabel?kindLabel+" — ":"")+plat+" (text captured)";
+  registerUpload(name, chipKind, String(text||"").trim());
+  const {value}=guessHeadlineBalance(text);
+  if(value>0){
+    const who="client";
+    const isSuper=/super|pension|smsf/i.test(text);
+    const label=plat+" (unconfirmed — check figure)";
+    let asset=S.nestegg.find(a=>a.name===label);
+    if(!asset){ asset={name:label, value:0, debt:0, type:isSuper?"Super":"Investment", owner:firstName(who)||"", ref:""}; S.nestegg.push(asset); }
+    asset.value=value;
+    let acct=(S.portfolios[who]||[]).find(a=>a.acct===label);
+    if(!acct){ acct={acct:label, holdings:[]}; (S.portfolios[who]=S.portfolios[who]||[]).push(acct); }
+    acct.holdings=[{product:"Account balance (from "+plat+" report — confirm)", units:"", value:value}];
+    return `${plat} · best-guess balance ${money(value)} — UNCONFIRMED, check figure (full text on the 🔍 chip)`;
+  }
+  return `${plat} · text captured (no balance detected) — open the 🔍 chip to read it`;
 }
 async function importImages(files){
   const done=[];
@@ -1615,7 +1650,7 @@ function renderImports(){
     <summary style="cursor:pointer;font-weight:800;color:var(--blue);font-size:11px;letter-spacing:.07em;text-transform:uppercase">Or upload individually / add a platform we don't auto-read</summary>
     <div style="margin-top:12px" class="imports">
       <label class="dz"><span class="badge badge-ready">DOCX</span><h4>Last Wealth Review</h4><p>Prior review → details, assets, income, goals, tracking, actions.</p><input type="file" accept=".docx" onchange="importReviewDoc(event)"></label>
-      <label class="dz"><span class="badge badge-ready">PDF · multi</span><h4>Platform reports</h4><p>HUB24 / BT / Macquarie → Portfolio, Situation, Goal Tracking.</p><input type="file" accept=".pdf" multiple onchange="importAnyPlatform(event)"></label>
+      <label class="dz"><span class="badge badge-ready">PDF · multi</span><h4>Platform reports</h4><p>HUB24 / BT / Macquarie auto-fill fully. Any other platform (CFS Edge, Netwealth…) → best-guess balance + full text captured to confirm.</p><input type="file" accept=".pdf" multiple onchange="importAnyPlatform(event)"></label>
       <label class="dz"><span class="badge badge-ready">XLSM</span><h4>Current Review PTW</h4><p>Projection → Financial Independence goals.</p><input type="file" accept=".xlsm,.xlsx" onchange="importPTW(event)"></label>
       <label class="dz"><span class="badge badge-soon">Sample needed</span><h4>Review Snapshot (Jotform)</h4><p>Pre-meeting questionnaire.</p><input type="file" onchange="stubImport('Review Snapshot')"></label>
       <label class="dz"><span class="badge badge-soon">Sample needed</span><h4>Insurance (CDM / renewal)</h4><p>Policy data → Insurance + Foundations.</p><input type="file" accept=".pdf,.docx" multiple onchange="stubImport('Insurance reports')"></label>
