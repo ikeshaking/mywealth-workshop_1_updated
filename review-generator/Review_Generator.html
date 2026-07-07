@@ -393,7 +393,7 @@ const S = {
   uploads:[],
   checklist:{ rows:[], answers:{}, notes:{}, activeSection:"" },
   rebalance:[],
-  _snapshot:null, _fileNote:"", _roa:""
+  _snapshot:null, _fileNote:"", _roa:"", _snapReview:null
 };
 const CHECKLIST_ITEMS=[
 "Check ID Expiry date",
@@ -1002,6 +1002,9 @@ async function importAnyPlatform(ev){
       const r=routeScannedText(text,f.name,"Scanned PDF"); applied.push(f.name+" (OCR) · "+r); continue;
     }
     try{
+      // Review Data Snapshot (Jotform) → stage it as an override layer over the last-review base
+      const snap=parseReviewSnapshot(text);
+      if(snap){ stageSnapshotLayer(snap,f.name); applied.push("Review Data Snapshot · "+(snap.clientName||f.name)+" → staged as override layer"); registerUpload(f.name,"Review Data Snapshot"); continue; }
       // try each wired parser; the guards inside each return null for non-matching formats
       let done=false;
       const h=parseHub24Text(text);
@@ -1016,6 +1019,217 @@ async function importAnyPlatform(ev){
   let msg = applied.length ? ("✓ Imported "+applied.length+" report(s): "+applied.join("   ·   ")) : "No platform reports recognised in those files.";
   if(failed.length) msg += "   |   Skipped "+failed.length+": "+failed.join("; ");
   toast(msg);
+}
+/* ============================================================
+   REVIEW DATA SNAPSHOT (Jotform) — parse + layer over the base
+   The last Wealth Review (.docx) creates the BASE; the snapshot is an
+   OVERRIDE LAYER the RSO confirms, updating income / assets / liabilities /
+   estate and pushing the client's raised points into the discussion items.
+   ============================================================ */
+function parseReviewSnapshot(raw){
+  if(!raw || !/Review Data Snapshot|Wealth Review Personal Update/i.test(raw)) return null;
+  const F = raw.replace(/\s+/g,' ').replace(/ /g,' ').trim();
+  const clean=(s)=>String(s||"").replace(/\s+/g,' ').trim();
+  const BOUND = [
+    /Is your financial plan for/i, /Your Full Name/i, /Your Partner'?s Full Name/i, /Your Preferred E-?mail/i,
+    /Confirm Your Home/i, /Client Two/i, /Please provide an update/i,
+    /Are there any other changes to your personal/i, /Additional details about the assets/i,
+    /Cash On Hand/i, /Cash Savings/i, /Personal Shares/i, /Other Assets/i,
+    /Who is it with/i, /Are there any other changes to the details/i, /Any further notes or details/i,
+    /Do you have a\b/i, /Do you believe your current Will/i, /When was your\b/i,
+    /Are there any specific/i, /Are there any upcoming/i,
+    /You can edit this submission/i, /My Wealth Solutions Mail/i, /https:\/\/mail\.google/i
+  ];
+  const boundIdx=(from)=>{ let best=F.length; for(const re of BOUND){ const m=F.slice(from).match(re); if(m && m.index>=0){ const at=from+m.index; if(at>from && at<best) best=at; } } return best; };
+  const stripLabel=(block,label)=>{ const bw=clean(block).split(' '); const lw=clean(label).split(' '); const o=[]; let j=0; for(const w of bw){ if(j<lw.length && w.toLowerCase()===lw[j].toLowerCase()) j++; else o.push(w); } return o.join(' ').trim(); };
+  const grab=(head,label)=>{ const m=F.match(head); if(!m) return ""; const s=m.index; const e=boundIdx(s+m[0].length); return stripLabel(F.slice(s,e),label); };
+  const out={ hasPartner:false, clientName:"", partnerName:"", email:"", address:"",
+    occupation:{c1:"",c2:""}, employer:{c1:"",c2:""}, income:{c1:"",c2:""}, superText:{c1:"",c2:""},
+    assets:[], assetNotes:"", liabilities:[], liabilityNotes:"",
+    will:{has:"",reflects:"",updated:""}, personalChanges:"", focus:"", events:"", furtherNotes:"" };
+  let m;
+  if((m=F.match(/Your Full Name\s+(.+?)\s+Your Partner'?s Full Name\s+(.+?)\s+(?:Your Preferred|Confirm Your Home|Client 1:|Please provide)/i))){
+    out.clientName=clean(m[1]); out.partnerName=clean(m[2]); out.hasPartner=!!out.partnerName;
+  } else if((m=F.match(/Your Full Name\s+(.+?)\s+(?:Your Preferred|Confirm Your Home|Please provide)/i))){ out.clientName=clean(m[1]); }
+  if(!out.clientName && (m=F.match(/Review Data Snapshot\s+Client One\s+(.+?)\s+(?:Client Two\s+(.+?)\s+)?(?:Please provide|Address|Are there|Do you have|Confirm)/i))){
+    out.clientName=clean(m[1]); if(m[2]){ out.partnerName=clean(m[2]); out.hasPartner=true; } }
+  if(out.partnerName) out.hasPartner=true;
+  if((m=F.match(/Your Preferred E-?mail\s+([^\s]+@[^\s]+)/i))) out.email=clean(m[1]);
+  if((m=F.match(/(?:Confirm Your Home(?:\s*Address)?|\bAddress)\s+Street Address:\s*(.*?)\s+(?:Address\s+)?City:\s*(.*?)\s+State ?\/ ?Province:\s*(.*?)\s+Postal ?\/ ?Zip Code:\s*([0-9A-Za-z]+)/i))){
+    out.address=[clean(m[1]),clean(m[2]),clean(m[3])+" "+clean(m[4])].filter(Boolean).join(', '); }
+  { const ds=F.search(/following details/i); const de=F.search(/Please provide an update on the val/i);
+    const DET=(ds>=0)?F.slice(ds,(de>ds?de:F.length)):"";
+    const detLbl=/(Occupation(?:\/Position)?|Employer|Total Annual Income[^)]*\)|Annual Income[^)]*\)|Super Contribution Percentage|Super ?\/ ?Bonus Package|Address|Client One|Client Two)/gi;
+    const cellAfter=(re)=>{ const mm=DET.match(re); if(!mm) return ""; const s=mm.index+mm[0].length; detLbl.lastIndex=s; const nx=detLbl.exec(DET); return clean(DET.slice(s, nx?nx.index:DET.length)); };
+    const nums=(re)=>{ const c=cellAfter(re); const ns=c.match(/[\d,]{3,}/g)||[]; return ns.map(x=>x.replace(/[^\d]/g,'')); };
+    const oc=cellAfter(/Occupation(?:\/Position)?/i); if(oc) out.occupation.c1=oc;
+    const em=cellAfter(/Employer\b/i); if(em) out.employer.c1=em;
+    const inc=nums(/(?:Total Annual Income|Annual Income)[^)]*\)/i); if(inc.length){ out.income.c1=inc[0]||""; out.income.c2=inc[1]||""; }
+    const sup=nums(/Super ?\/ ?Bonus Package/i); if(sup.length){ out.superText.c1=sup[0]||""; out.superText.c2=sup[1]||""; } }
+  const ASSET_ROWS=[["Cash On Hand",/Cash On Hand/i],["Cash Savings",/Cash Savings/i],
+    ["Personal Shares/Funds",/Personal Shares(?: or Funds|\/Funds)?/i],["Other Assets",/Other Assets/i]];
+  ASSET_ROWS.forEach(([lbl,re])=>{ const mm=F.match(re); if(!mm) return; const s=mm.index+mm[0].length; const e=boundIdx(s);
+    let cell=clean(F.slice(s,e)); if(!cell) return; let c1=cell,c2="";
+    const nn=cell.match(/^\$?([\d,]+)\s+\$?([\d,]+)$/);
+    if(nn){ c1="$"+Number(nn[1].replace(/,/g,'')).toLocaleString(); c2="$"+Number(nn[2].replace(/,/g,'')).toLocaleString(); }
+    out.assets.push({label:lbl,c1,c2}); });
+  out.assetNotes=grab(/Additional details about the assets/i,"Additional details about the assets not currently managed by us.");
+  { const mm=F.match(/Who is it with/i);
+    if(mm){ const s=mm.index; const e=boundIdx(s+120); const blk=F.slice(s,e);
+      const re=/([A-Za-z][A-Za-z '\-\/]*?)\s+\$?([\d,]{2,})\s+\$?([\d,]+)\s+([\d.]+)\b/g; let r;
+      while((r=re.exec(blk))){ let desc=clean(r[1]).replace(/Who is it with.*?\(%\)/i,'').trim();
+        const tm=desc.match(/(Mortgage|Car Loan|Personal Loans?|Total Credit Card Debt|Credit Card|Other Loans?|Other)\b[\s\S]*$/i);
+        if(tm) desc=clean(tm[0]);
+        if(/^(Amount Owing|Monthly Payments|Interest Rate)/i.test(desc) || !r[2]) continue;
+        out.liabilities.push({desc, owing:r[2].replace(/,/g,''), monthly:r[3].replace(/,/g,''), rate:r[4]}); } } }
+  out.liabilityNotes=grab(/Are there any other changes to the details/i,"Are there any other changes to the details or valuation of your liabilities that aren't in the table above? If so, please provide below.");
+  const willBlock=(head)=>{ const mm=F.match(head); if(!mm) return ""; return F.slice(mm.index, boundIdx(mm.index+mm[0].length)); };
+  const stripWords=(block,words)=>{ const set=new Set(words.map(w=>w.toLowerCase())); return clean(block).split(' ').filter(w=>!set.has(w.toLowerCase())).join(' ').trim(); };
+  { const b=willBlock(/Do you have a\b/i); const yn=b.match(/\b(Yes|No)\b/i); out.will.has=yn?yn[1]:""; }
+  out.will.reflects=grab(/Do you believe your current Will/i,"Do you believe your current Will/EPA reflect your wishes?");
+  out.will.updated=stripWords(willBlock(/When was your\b/i),["When","was","your","Will/EPA","Will","or","Enduring","Power","of","Attorney","last","updated?"]);
+  out.personalChanges=grab(/Are there any other changes to your personal/i,"Are there any other changes to your personal details or circumstance that aren't in the table above? If so, please provide below.");
+  out.focus=grab(/Are there any specific/i,"Are there any specific areas you wish to focus on in this review, or anything you feel we need to know?");
+  out.events=grab(/Are there any upcoming/i,"Are there any upcoming major life events or expenses that you need to plan for?");
+  out.furtherNotes=grab(/Any further notes or details/i,"Any further notes or details on assets or liabilities?");
+  return out;
+}
+function snapshotIsNo(s){ const t=String(s||"").replace(/\s+/g,' ').trim().toLowerCase().replace(/[.\s]+$/,''); return t===""||t==="no"||t==="n/a"||t==="none"||t==="nil"; }
+function snapTitleCase(s){ return String(s||"").replace(/\S+/g,w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()); }
+async function importSnapshot(ev){
+  const files=[...ev.target.files]; let staged=0;
+  for(const f of files){
+    if(!/\.pdf$/i.test(f.name)){ toast(f.name+" — the Review Data Snapshot should be a PDF"); continue; }
+    let text=""; try{ text=await readPdfText(f); }catch(e){}
+    if(!text || text.replace(/\s/g,"").length<40){ try{ toast(f.name+" looks scanned — running OCR…"); text=await ocrPdfFile(f); }catch(e){} }
+    const snap=parseReviewSnapshot(text);
+    if(!snap){ toast(f.name+" — doesn't look like a Review Data Snapshot / Wealth Review Personal Update."); continue; }
+    stageSnapshotLayer(snap,f.name); registerUpload(f.name,"Review Data Snapshot"); staged++;
+  }
+  renderContent();
+  if(staged) toast("Snapshot staged as an override layer — review & apply below.");
+}
+function stageSnapshotLayer(snap,fname){
+  snap._file=fname||"";
+  snap._inc={ contact:true, employment:false, income:true, estate:true,
+    assets:snap.assets.map(a=>!snapshotIsNo(a.c1)||!snapshotIsNo(a.c2)),
+    liabilities:snap.liabilities.map(()=>true),
+    disc:{ personalChanges:!snapshotIsNo(snap.personalChanges), assetNotes:!snapshotIsNo(snap.assetNotes),
+      liabilityNotes:!snapshotIsNo(snap.liabilityNotes), focus:!snapshotIsNo(snap.focus),
+      events:!snapshotIsNo(snap.events), furtherNotes:!snapshotIsNo(snap.furtherNotes) } };
+  S._snapReview=snap;
+}
+function discardSnapshotLayer(){ S._snapReview=null; renderContent(); toast("Snapshot layer discarded."); }
+function applySnapshotLayer(){
+  const s=S._snapReview; if(!s){ return; } const inc=s._inc; const log=[];
+  const cap=(x)=>{ x=String(x||"").trim(); return x?x.charAt(0).toUpperCase()+x.slice(1).toLowerCase():""; };
+  if(inc.contact){
+    if(s.clientName){ S.client.name=snapTitleCase(s.clientName); }
+    if(s.partnerName){ S.partner.name=snapTitleCase(s.partnerName); }
+    if(s.hasPartner){ S.meta.hasPartner=true; }
+    if(s.email){ S.client.email=s.email; }
+    if(s.address){ S.address=s.address; }
+    if(!S.meta.preparedFor && S.client.name){ S.meta.preparedFor=S.client.name+(s.hasPartner&&S.partner.name?(" & "+S.partner.name):""); }
+    log.push("contact");
+  }
+  if(inc.employment){ if(s.occupation.c1) S.client.jobTitle=s.occupation.c1; if(s.employer.c1) S.client.employer=s.employer.c1; log.push("employment"); }
+  const setSalary=(who,val)=>{ const n=num(val); if(!n) return; const fn=firstName(who)||(who==="partner"?"Partner":"Client");
+    let row=S.income.find(r=>String(r.owner||"").toLowerCase().includes(fn.toLowerCase()) && /salary|income|wage/i.test(r.label));
+    if(!row){ row={label:"Salary",amount:0,owner:fn,freq:"Annual"}; S.income.push(row); } row.amount=n; };
+  if(inc.income){ setSalary("client",s.income.c1); if(s.hasPartner) setSalary("partner",s.income.c2); if(num(s.income.c1)||num(s.income.c2)) log.push("income"); }
+  let aC=0;
+  s.assets.forEach((a,i)=>{ if(!inc.assets[i]) return;
+    const add=(cell,who)=>{ if(snapshotIsNo(cell)) return; const val=num(cell);
+      const type=/cash/i.test(a.label)?"Cash on Hand":/shares|funds/i.test(a.label)?"Investment":"Other Asset";
+      const target=/other assets/i.test(a.label)?S.lifestyle:S.nestegg;
+      target.push({name: val?a.label:(a.label+" — "+cell), value:val, debt:0, type, owner:firstName(who)||(who==="partner"?"Partner":"Client"), ref:"Client-reported (snapshot)"}); aC++; };
+    add(a.c1,"client"); if(s.hasPartner && a.c2 && a.c2!==a.c1) add(a.c2,"partner"); });
+  if(aC) log.push(aC+" asset(s)");
+  let lC=0;
+  s.liabilities.forEach((l,i)=>{ if(!inc.liabilities[i]) return; const debt=num(l.owing); if(!debt) return;
+    const ref=[l.monthly?("$"+Number(l.monthly).toLocaleString()+"/mth"):"", l.rate?(l.rate+"%"):""].filter(Boolean).join(" · ");
+    S.lifestyle.push({name:l.desc||"Loan", value:0, debt, type:/mortgage/i.test(l.desc)?"Mortgage":"Loan", owner:"", ref:ref||"Client-reported (snapshot)"}); lC++; });
+  if(lC) log.push(lC+" liability(ies)");
+  if(inc.estate){ if(s.will.has){ const v=cap(s.will.has); S.estate.willsC=v; S.estate.poaC=v; if(s.hasPartner){ S.estate.willsP=v; S.estate.poaP=v; } }
+    const en=[]; if(s.will.updated) en.push("Will/EPA last updated: "+s.will.updated); if(s.will.reflects) en.push("Reflects wishes: "+s.will.reflects);
+    if(en.length) S.estate.notes=[S.estate.notes,...en].filter(Boolean).join("; "); log.push("estate"); }
+  const disc=[["Client update",s.personalChanges,inc.disc.personalChanges],["Assets not managed — note",s.assetNotes,inc.disc.assetNotes],
+    ["Liabilities — note",s.liabilityNotes,inc.disc.liabilityNotes],["Client focus area",s.focus,inc.disc.focus],
+    ["Upcoming event / expense",s.events,inc.disc.events],["Further notes",s.furtherNotes,inc.disc.furtherNotes]];
+  let dC=0;
+  disc.forEach(([pfx,txt,on])=>{ if(!on || snapshotIsNo(txt)) return; const desc=pfx+": "+txt;
+    if(!S.actionItems.some(a=>a.desc===desc)){ S.actionItems.push({desc, who:"Discuss with client", when:"Review meeting"}); dC++; } });
+  if(dC) log.push(dC+" discussion point(s)");
+  S._snapReview=null; renderContent();
+  toast(log.length?("Snapshot layer applied → "+log.join(", ")):"Snapshot layer applied (nothing selected).");
+}
+function renderSnapshotLayer(){
+  const s=S._snapReview; if(!s) return "";
+  const inc=s._inc; const e=esc;
+  const chk=(path,on)=>`<input type="checkbox" ${on?"checked":""} onchange="${path}=this.checked" style="margin-right:6px">`;
+  const inp=(path,val)=>`<input value="${e(val||"")}" oninput="${path}=this.value" style="width:100%">`;
+  const disc=[["personalChanges","Client update",s.personalChanges],["assetNotes","Assets not managed — note",s.assetNotes],
+    ["liabilityNotes","Liabilities — note",s.liabilityNotes],["focus","Client focus area",s.focus],
+    ["events","Upcoming event / expense",s.events],["furtherNotes","Further notes",s.furtherNotes]]
+    .filter(d=>!snapshotIsNo(d[2]));
+  return `
+  <div class="card" style="border:2px solid var(--blue);background:var(--panel)">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span class="badge badge-ready">Override layer</span>
+      <b style="font-size:15px">Review Data Snapshot — ${e(s.clientName||"client")}${s.hasPartner&&s.partnerName?(" &amp; "+e(s.partnerName)):""}</b>
+      <span class="hint" style="margin:0">Confirm/edit, then apply on top of the last-review base. ${e(s._file||"")}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px">
+      <div>
+        <div style="font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);margin-bottom:6px">${chk("S._snapReview._inc.contact",inc.contact)}Contact &amp; address</div>
+        <div style="display:grid;gap:6px">
+          <label>Client name ${inp("S._snapReview.clientName",s.clientName)}</label>
+          ${s.hasPartner?`<label>Partner name ${inp("S._snapReview.partnerName",s.partnerName)}</label>`:""}
+          <label>Email ${inp("S._snapReview.email",s.email)}</label>
+          <label>Address ${inp("S._snapReview.address",s.address)}</label>
+        </div>
+        <div style="font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);margin:12px 0 6px">${chk("S._snapReview._inc.income",inc.income)}Income (annual, excl. super)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <label>${e(s.clientName)||"Client 1"} ${inp("S._snapReview.income.c1",s.income.c1)}</label>
+          ${s.hasPartner?`<label>${e(s.partnerName)||"Client 2"} ${inp("S._snapReview.income.c2",s.income.c2)}</label>`:""}
+        </div>
+        <div style="font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);margin:12px 0 6px">${chk("S._snapReview._inc.employment",inc.employment)}Employment <span class="hint" style="margin:0">(off by default — often needs a tidy-up)</span></div>
+        <div style="display:grid;gap:6px">
+          <label>Occupation ${inp("S._snapReview.occupation.c1",s.occupation.c1)}</label>
+          <label>Employer ${inp("S._snapReview.employer.c1",s.employer.c1)}</label>
+        </div>
+        <div style="font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);margin:12px 0 6px">${chk("S._snapReview._inc.estate",inc.estate)}Will / EPA</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <label>Has Will/EPA ${inp("S._snapReview.will.has",s.will.has)}</label>
+          <label>Last updated ${inp("S._snapReview.will.updated",s.will.updated)}</label>
+        </div>
+      </div>
+      <div>
+        <div style="font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);margin-bottom:6px">Assets not managed by us → Current Situation</div>
+        <div style="display:grid;gap:6px">
+          ${s.assets.length?s.assets.map((a,i)=>`<div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;align-items:center">
+            <span>${chk(`S._snapReview._inc.assets[${i}]`,inc.assets[i])}<b style="font-size:12px">${e(a.label)}</b></span>
+            ${inp(`S._snapReview.assets[${i}].c1`,a.c1)}${s.hasPartner?inp(`S._snapReview.assets[${i}].c2`,a.c2):"<span></span>"}</div>`).join(""):`<span class="hint" style="margin:0">None provided.</span>`}
+        </div>
+        <div style="font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);margin:12px 0 6px">Liabilities → Current Situation (debt)</div>
+        <div style="display:grid;gap:6px">
+          ${s.liabilities.length?s.liabilities.map((l,i)=>`<div style="display:grid;grid-template-columns:auto 2fr 1fr 1fr 1fr;gap:6px;align-items:center">
+            <span>${chk(`S._snapReview._inc.liabilities[${i}]`,inc.liabilities[i])}</span>
+            ${inp(`S._snapReview.liabilities[${i}].desc`,l.desc)}${inp(`S._snapReview.liabilities[${i}].owing`,l.owing)}${inp(`S._snapReview.liabilities[${i}].monthly`,l.monthly)}${inp(`S._snapReview.liabilities[${i}].rate`,l.rate)}</div>`).join(""):`<span class="hint" style="margin:0">None provided.</span>`}
+        </div>
+        <div style="font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);margin:12px 0 6px">Discussion points → Action items &amp; Discussion Points</div>
+        <div style="display:grid;gap:8px">
+          ${disc.length?disc.map(([k,lbl,txt])=>`<div style="display:grid;grid-template-columns:22px 1fr;gap:6px;align-items:start">
+            ${chk(`S._snapReview._inc.disc.${k}`,inc.disc[k])}<div><b style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:2px">${e(lbl)}</b><textarea rows="2" oninput="S._snapReview.${k}=this.value" style="width:100%;box-sizing:border-box">${e(txt)}</textarea></div></div>`).join(""):`<span class="hint" style="margin:0">No client-raised points.</span>`}
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="applySnapshotLayer()">✓ Apply as override layer</button>
+      <button class="btn btn-ghost" onclick="discardSnapshotLayer()">Discard</button>
+      <span class="hint" style="margin:0;align-self:center">The last Wealth Review is the base; ticked items above override it.</span>
+    </div>
+  </div>`;
 }
 function whoFromName(name){
   const fn=(s)=>String(s||"").trim().split(/\s+/)[0].toLowerCase();
@@ -1549,7 +1763,7 @@ function classifyXlsx(f){
 }
 function loadJSONPromise(f){
   return new Promise((res,rej)=>{ const r=new FileReader();
-    r.onload=()=>{ try{ Object.assign(S,JSON.parse(r.result)); if(!S.checklist.answers)S.checklist.answers={}; if(!S.checklist.notes)S.checklist.notes={}; if(!S.uploads)S.uploads=[]; delete S._snapshot; delete S._fileNote; delete S._roa; res(); }catch(e){ rej(e); } };
+    r.onload=()=>{ try{ Object.assign(S,JSON.parse(r.result)); if(!S.checklist.answers)S.checklist.answers={}; if(!S.checklist.notes)S.checklist.notes={}; if(!S.uploads)S.uploads=[]; delete S._snapshot; delete S._fileNote; delete S._roa; delete S._snapReview; res(); }catch(e){ rej(e); } };
     r.onerror=rej; r.readAsText(f); });
 }
 /* ---------- OCR (images & scanned PDFs) — Tesseract.js, lazy-loaded from CDN, runs in-browser ---------- */
@@ -1693,6 +1907,7 @@ function renderImports(){
   const addOptions=undetected.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("");
   return `
   <div class="section-head"><h2>Inputs &amp; Imports</h2></div>
+  ${renderSnapshotLayer()}
 
   <div class="card">
     <label class="smartdrop" ondrop="smartDropHandle(event)" ondragover="smartDropOver(event)" ondragleave="smartDropLeave(event)">
@@ -1717,7 +1932,7 @@ function renderImports(){
       <label class="dz"><span class="badge badge-ready">DOCX</span><h4>Last Wealth Review</h4><p>Prior review → details, assets, income, goals, tracking, actions.</p><input type="file" accept=".docx" onchange="importReviewDoc(event)"></label>
       <label class="dz"><span class="badge badge-ready">PDF · multi</span><h4>Platform reports</h4><p>HUB24 / BT / Macquarie auto-fill fully. Any other platform (CFS Edge, Netwealth…) → best-guess balance + full text captured to confirm.</p><input type="file" accept=".pdf" multiple onchange="importAnyPlatform(event)"></label>
       <label class="dz"><span class="badge badge-ready">XLSM</span><h4>Current Review PTW</h4><p>Projection → Financial Independence goals.</p><input type="file" accept=".xlsm,.xlsx" onchange="importPTW(event)"></label>
-      <label class="dz"><span class="badge badge-soon">Sample needed</span><h4>Review Snapshot (Jotform)</h4><p>Pre-meeting questionnaire.</p><input type="file" onchange="stubImport('Review Snapshot')"></label>
+      <label class="dz"><span class="badge badge-ready">PDF</span><h4>Review Data Snapshot (Jotform)</h4><p>Client's pre-meeting update → <b>override layer</b>: income, assets, liabilities, estate + client-raised points into discussion items. Confirm before applying.</p><input type="file" accept=".pdf" multiple onchange="importSnapshot(event)"></label>
       <label class="dz"><span class="badge badge-soon">Sample needed</span><h4>Insurance (CDM / renewal)</h4><p>Policy data → Insurance + Foundations.</p><input type="file" accept=".pdf,.docx" multiple onchange="stubImport('Insurance reports')"></label>
       <label class="dz"><span class="badge badge-soon">Sample needed</span><h4>Property valuations</h4><p>PPR / IP reports → assets.</p><input type="file" accept=".pdf" multiple onchange="stubImport('Property valuations')"></label>
     </div>
@@ -2808,7 +3023,7 @@ function saveJSON(){
 function loadJSON(ev){
   const file=ev.target.files[0]; if(!file)return;
   const r=new FileReader();
-  r.onload=()=>{ try{ Object.assign(S,JSON.parse(r.result)); if(!S.checklist.answers) S.checklist.answers={}; if(!S.checklist.notes) S.checklist.notes={}; if(!S.uploads) S.uploads=[]; delete S._snapshot; delete S._fileNote; delete S._roa; renderContent(); toast("Draft loaded."); }catch(e){ toast("Invalid JSON file."); } };
+  r.onload=()=>{ try{ Object.assign(S,JSON.parse(r.result)); if(!S.checklist.answers) S.checklist.answers={}; if(!S.checklist.notes) S.checklist.notes={}; if(!S.uploads) S.uploads=[]; delete S._snapshot; delete S._fileNote; delete S._roa; delete S._snapReview; renderContent(); toast("Draft loaded."); }catch(e){ toast("Invalid JSON file."); } };
   r.readAsText(file);
 }
 function resetAll(){
