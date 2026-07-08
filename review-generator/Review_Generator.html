@@ -1646,8 +1646,10 @@ function applyHub24(r){
   // clean up any leftover empty HUB placeholder rows of the same sense from earlier mis-matches
   S.nestegg=S.nestegg.filter(a=> a===asset || !(isHub(a)&&typeMatch(a)&&senseMatch(a)&&num(a.value)===0&&(!a.holdings||!a.holdings.length)));
   const fn=firstName(who);
-  let gt=S.goalTracking.find(g=> isSuper ? (fn&&new RegExp(fn+".*super","i").test(g.strategy)) : /investment\b/i.test(g.strategy) );
-  if(!gt){ gt={strategy:(isSuper?((fn||"Client")+" Super"):"Investment"), were:"",shouldBe:"",are:"",wantToBe:"",rating:"On Track",actions:""}; S.goalTracking.push(gt); }
+  // update the existing super / investment strategy (e.g. "Superannuation") instead of
+  // spawning a duplicate like "Kendra Super"
+  let gt=S.goalTracking.find(g=> isSuper ? /super|pension/i.test(g.strategy) : /investment/i.test(g.strategy) );
+  if(!gt){ gt={strategy:(isSuper?"Superannuation":"Investment"), were:"",shouldBe:"",are:"",wantToBe:"",rating:"On Track",actions:""}; S.goalTracking.push(gt); }
   gt.are=money(r.total);
   // pull the platform report's asset allocation into the person's allocation
   applyHub24Alloc(who, r.id, r.alloc);
@@ -2384,16 +2386,23 @@ function buildPreviewPages(){
   const _go={"Short Term":0,"Medium Term":1,"Long Term":2};
   const goalRows=[...S.goals].sort((a,b)=>String(a.owner||"").localeCompare(String(b.owner||""))||((_go[a.timeframe]??9)-(_go[b.timeframe]??9)))
     .map(g=>({cells:[{v:g.desc||g.category||""},{v:g.owner},{v:g.timeframe},{v:g.notes||(g.desc?"":g.desc)}]}));
-  const fi=S.fiGoals, fiData=[
-    ["Target",fi.targetToday,"In today's values"],["Which is",fi.targetFuture,"In "+(fi.years||"…")+" years"],
-    ["Estimated Income",fi.incomeLife,"pa to pay for life"],["Estimated Income",fi.incomeNice,"pa for nice things"],
-    ["Estimated Lump Sum",fi.lumpToys,"one-off for toys"],["Estimated Lump Sum",fi.lumpFamily,"one-off family/charity"]
-  ].filter(x=>x[1]);
-  const fiHTML=fiData.length?`<table class="pv-tbl"><tbody>${fiData.map(r=>`<tr><td class="pv-fiwhite" style="text-align:right;font-weight:800">${esc(r[0])}</td><td>${esc(r[1])}</td><td class="pv-fiwhite">${esc(r[2])}</td></tr>`).join("")}</tbody></table>`:'<div class="pv-empty">Upload the Review PTW to populate these.</div>';
+  const fi=S.fiGoals;
+  const fibox=(v)=>`<span style="display:inline-block;min-width:34px;background:#E3F2F4;padding:1px 10px;border-radius:2px;text-align:center">${esc(v||"")}</span>`;
+  const fiRow=(l,val,desc)=>`<tr><td class="pv-fiwhite" style="text-align:right;font-weight:800">${esc(l)}</td><td>${esc(val||"")}</td><td class="pv-fiwhite">${desc}</td></tr>`;
+  const fiHTML=`<table class="pv-tbl"><tbody>`
+    +fiRow("Target",fi.targetToday,"In today&rsquo;s values")
+    +fiRow("Which is",fi.targetFuture,`In ${fibox(fi.years)} years`)
+    +`<tr><td colspan="3" style="height:12px;background:#fff;border:none"></td></tr>`
+    +fiRow("Estimated Income",fi.incomeLife,"pa to pay for life")
+    +fiRow("Estimated Income",fi.incomeNice,"pa for nice things")
+    +fiRow("Estimated Lump Sum",fi.lumpToys,"one-off for toys")
+    +fiRow("Estimated Lump Sum",fi.lumpFamily,"one-off family/charity")
+    +`<tr><td colspan="3" style="height:64px;background:#E3F2F4"></td></tr>`
+    +`</tbody></table>`;
   P.push(`<div class="wrprev-page">
     <div class="pv-h2">Your Goals</div>
     <div class="pv-2col" style="align-items:flex-start"><div style="flex:1.35">
-      ${pvTable(["Description","Owner","Timeframe","Notes"],goalRows,{head:"navy",lbl:true,align:['c','c','c'],empty:"No goals entered yet."})}
+      ${pvTable(["Description","Owner","Timeframe","Notes"],goalRows,{head:"navy",lbl:true,align:['c','c','c','c'],empty:"No goals entered yet."})}
     </div><div style="flex:1">
       <div class="pv-band" style="margin-top:0">Financial Independence Goals</div>${fiHTML}
     </div></div></div>`);
@@ -3659,7 +3668,10 @@ async function importReviewDoc(ev){
       const cur=v=>{ const m=String(v||"").match(/\$[\d,]+(?:\.\d+)?/); return m?m[0]:(String(v||"").trim()==="-"?"-":""); };
       // capture the aggregate Totals row (Where You Were / Should Be / Are / Want To Be)
       const totRow=rows.find(r=>/^total/i.test((r[0]||"").trim()));
-      rows.forEach(r=>{ const s=(r[0]||"").trim(); if(!s||/^total/i.test(s)) return; if(!groups[s]){groups[s]=[];order.push(s);} groups[s].push(r); });
+      // ignore junk "strategy" cells — the ratings legend and stray tick/icon rows
+      // (e.g. a "✓" cell) that aren't real strategies
+      const isJunk=s=>!/[A-Za-z]{3,}/.test(s) || /^(ahead of projections|on track|needs work|no progress|n\/?a)$/i.test(s);
+      rows.forEach(r=>{ const s=(r[0]||"").trim(); if(!s||/^total/i.test(s)||isJunk(s)) return; if(!groups[s]){groups[s]=[];order.push(s);} groups[s].push(r); });
       const out=order.map(s=>{ const g=groups[s], f=g[0], tick=g.some(r=>r.join(" ").includes("✔"));
         return {strategy:s, were:cur(f[1]), shouldBe:cur(f[2]), are:cur(f[3]), wantToBe:cur(f[4]), rating:tick?"On Track":(cur(f[3])?"On Track":"N/A"), actions:(f[f.length-1]||"").trim()}; });
       if(out.length){ S.goalTracking=out; got.push(out.length+" goal-tracking rows"); }
@@ -3770,7 +3782,10 @@ async function importReviewDoc(ev){
       const fg=S.fiGoals; const inc=[], lump=[]; let fn=0;
       fiRows.forEach(r=>{ const lab=(r[0]||"").trim().toLowerCase(); const v=fiV(r[1])||fiV(r[2]);
         if(/^target$/.test(lab)){ if(v){ fg.targetToday=v; fn++; } }
-        else if(/^which is$/.test(lab)){ if(v){ fg.targetFuture=v; fn++; } const y=(r.join(" ").match(/(?:In\s+)?(\d+)\s*year/i)||[])[1]; if(y) fg.years=y; }
+        else if(/^which is$/.test(lab)){ if(v){ fg.targetFuture=v; fn++; }
+          // the review is a year later than the last one, so the timeframe to financial
+          // freedom is one year less — decrement the years by 1 on import
+          const y=(r.join(" ").match(/(?:In\s+)?(\d+)\s*year/i)||[])[1]; if(y) fg.years=String(Math.max(0,parseInt(y,10)-1)); }
         else if(/estimated income/.test(lab)){ inc.push(v); }
         else if(/estimated lump/.test(lab)){ lump.push(v); }
       });
@@ -4278,21 +4293,31 @@ async function generateDocx(){
     const C={align:AlignmentType.CENTER};
     sorted.forEach(g=>{
       const desc=g.desc||g.category||"", note=g.notes||(g.desc?"":"");
-      rows.push(dataRow([desc, g.owner, g.timeframe, note||(desc?"":g.desc)], w, [Object.assign({align:AlignmentType.CENTER},LBLOPT),C,C,{}]));
+      rows.push(dataRow([desc, g.owner, g.timeframe, note||(desc?"":g.desc)], w, [Object.assign({align:AlignmentType.CENTER},LBLOPT),C,C,C]));
     });
     return new Table({layout:TableLayoutType.FIXED,width:{size:tw,type:WidthType.DXA},rows});
   }
   function fiTable(tw){
     tw=tw||W;
-    const fi=S.fiGoals,w=sc([2400,2000,2600],tw);
-    const r=(a,b,c)=>new TableRow({children:[cell(a,{w:w[0],bold:true,align:AlignmentType.RIGHT,shade:WHITE}),cell(b,{w:w[1]}),cell(c,{w:w[2],shade:WHITE})]});
+    const fi=S.fiGoals, w=sc([2200,2400,500,700,2000],tw);
+    const R=AlignmentType.RIGHT, C=AlignmentType.CENTER;
+    const lab=t=>cell(t,{w:w[0],bold:true,align:R,shade:WHITE});
+    const valc=t=>cell(t,{w:w[1],align:C});
+    // normal row: description spans the last 3 columns
+    const row3=(l,v,d)=>new TableRow({children:[lab(l),valc(v),cell(d,{w:w[2]+w[3]+w[4],shade:WHITE,columnSpan:3})]});
+    // "Which is" row: In | [years box] | years
+    const rowY=(l,v,y)=>new TableRow({children:[lab(l),valc(v),cell("In",{w:w[2],shade:WHITE,align:R}),cell(String(y||""),{w:w[3],align:C}),cell("years",{w:w[4],shade:WHITE})]});
+    const spacer=new TableRow({children:[cell("",{w:tw,shade:WHITE,columnSpan:5})]});
+    const blankBox=new TableRow({children:[cell("\n\n\n",{w:tw,columnSpan:5})]});   // trailing teal box
     return new Table({layout:TableLayoutType.FIXED,width:{size:tw,type:WidthType.DXA},rows:[
-      r("Target",fi.targetToday,"In today's values"),
-      r("Which is",fi.targetFuture,"In "+fi.years+" years"),
-      r("Estimated Income",fi.incomeLife,"pa to pay for life"),
-      r("Estimated Income",fi.incomeNice,"pa for nice things"),
-      r("Estimated Lump Sum",fi.lumpToys,"one-off for toys"),
-      r("Estimated Lump Sum",fi.lumpFamily,"one-off family/charity")
+      row3("Target",fi.targetToday,"In today's values"),
+      rowY("Which is",fi.targetFuture,fi.years),
+      spacer,
+      row3("Estimated Income",fi.incomeLife,"pa to pay for life"),
+      row3("Estimated Income",fi.incomeNice,"pa for nice things"),
+      row3("Estimated Lump Sum",fi.lumpToys,"one-off for toys"),
+      row3("Estimated Lump Sum",fi.lumpFamily,"one-off family/charity"),
+      blankBox
     ]});
   }
   function trackingTable(){
