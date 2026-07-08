@@ -5,7 +5,7 @@
   "totalModules": 164,
   "builderLinkedModules": 148,
   "lastSynced": "2026-07-07",
-  "syncNote": "Refreshed from the generator's live V200_WORD_BANK (rev v190_38r) so every module's recommendation/why/risks/alternatives/outcome matches the generator exactly, including the TTR module (new builder tick 'Commence a pension / transition to retirement (TTR)' with a min/max drawdown panel; added the 4% minimum-withdrawal note, the 'customised for your needs' rollover wording, and the 'short-term expenses' risk). Edit wording here (keep the .docx mirror in step) and drop this JSON onto the generator via smart-drop to push changes live. | 2026-07-07: added standing-rule goal (area 0) — when a TTR strategy is triggered from the advice request for an existing client on a retirement SOA, this goal is auto-added to the Goals & Objectives section. | 2026-07-08 MERGE: combined the other-chat edits (area-0 TTR review-meeting goal, builder v200 TTR/ABP auto-scope + tolerant super-area resolver) with the Account-Based Pension 'draw an income' enrichment (how-long/in-perpetuity outcome + why/risks). 164 modules."
+  "syncNote": "Refreshed from the generator's live V200_WORD_BANK (rev v190_38r) so every module's recommendation/why/risks/alternatives/outcome matches the generator exactly, including the TTR module (new builder tick 'Commence a pension / transition to retirement (TTR)' with a min/max drawdown panel; added the 4% minimum-withdrawal note, the 'customised for your needs' rollover wording, and the 'short-term expenses' risk). Edit wording here (keep the .docx mirror in step) and drop this JSON onto the generator via smart-drop to push changes live. | 2026-07-07: added standing-rule goal (area 0) — when a TTR strategy is triggered from the advice request for an existing client on a retirement SOA, this goal is auto-added to the Goals & Objectives section. | 2026-07-08 MERGE: combined the other-chat edits (area-0 TTR review-meeting goal, builder v200 TTR/ABP auto-scope + tolerant super-area resolver) with the Account-Based Pension 'draw an income' enrichment (how-long/in-perpetuity outcome + why/risks). 164 modules. | 2026-07-08 triggers: de-collided the TTR and Account-Based Pension trigger phrases (removed the shared 'account based pension'/'commence pension' from TTR) so free-text narrative matches the right module. Wording unchanged."
  },
  "areas": [
   {
@@ -1677,10 +1677,9 @@
      "builderTick": true,
      "builderArea": "5 · Personal Superannuation",
      "triggerPhrases": [
-      "account based pension",
-      "commence pension",
       "transition to retirement",
       "ttr",
+      "commence a ttr",
       "retirement income stream"
      ],
      "mode": "Tailored",
@@ -2032,7 +2031,9 @@
      "builderArea": "5 · Personal Superannuation",
      "triggerPhrases": [
       "account based pension",
+      "account-based pension",
       "commence abp",
+      "commence an account based pension",
       "draw pension income",
       "minimum pension"
      ],
