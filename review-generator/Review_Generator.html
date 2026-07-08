@@ -1895,10 +1895,13 @@ function parseMacqText(text){
 function applyMacq(r){
   const digits=s=>String(s||"").replace(/\D/g,"");
   const who=whoFromName(r.name||"");
-  // Portfolio (cash) account — match by account id first, else any Macquarie/CMA account
+  // Portfolio (cash) account — match by account id; else CREATE one so the MCMA shows
+  // in the Portfolio Valuation section (e.g. "965985294 (Macq Cash) - KENDRA HAMMOND"),
+  // exactly as the last review lists it.
   let acct=(S.portfolios[who]||[]).find(a=>r.id&&a.acct.includes(r.id))
         || (S.portfolios.client||[]).find(a=>r.id&&a.acct.includes(r.id));
-  if(acct){ const h=acct.holdings.find(x=>/macquarie cma|cma|cash/i.test(x.product))||acct.holdings[0]; if(h) h.value=r.balance; else acct.holdings.push({product:"Macquarie CMA",units:"",value:r.balance}); }
+  if(!acct){ acct={acct:`${r.id?r.id+" ":""}(Macq Cash) - ${r.name||firstName(who)||"Cash Account"}`, holdings:[]}; (S.portfolios[who]=S.portfolios[who]||[]).push(acct); }
+  { const h=acct.holdings.find(x=>/macquarie cma|cma|cash/i.test(x.product))||acct.holdings[0]; if(h){ h.value=r.balance; } else acct.holdings.push({product:"Macquarie CMA",units:"",value:r.balance}); }
   // Nest-egg cash row. Match by account id/ref first; then a Macquarie/CMA/MCMA row
   // of the SAME trust/personal sense; then an unlabelled one. This keeps a personal
   // MCMA and a trust MCMA on separate rows (a personal statement must not overwrite
@@ -1947,7 +1950,7 @@ function drawAllocPreview(id,rows,key,title){
 const $=(id)=>document.getElementById(id);
 const esc=(s)=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 const num=(v)=>{const n=parseFloat(String(v).replace(/[^0-9.\-]/g,""));return isNaN(n)?0:n;};
-const money=(n)=>"$"+(Math.round(n*100)/100).toLocaleString("en-AU",{minimumFractionDigits:0,maximumFractionDigits:2});
+const money=(n)=>"$"+Math.round(num(n)).toLocaleString("en-AU",{maximumFractionDigits:0});
 function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200);}
 function setPath(path,val){const ks=path.split(".");let o=S;for(let i=0;i<ks.length-1;i++)o=o[ks[i]];o[ks[ks.length-1]]=val;}
 function bindRow(arr,idx,key,val){arr[idx][key]=val;}
@@ -2011,6 +2014,14 @@ function insuranceEmpty(){
   if(isNo(has("has_insurance")) && isNo(has("has_heldInsurance"))) return true;
   return false;
 }
+// The client has no insurance when both checklist insurance toggles are No/N/A.
+function noInsuranceInChecklist(){
+  const no=id=>{ const x=(typeof getAns==="function"?String(getAns(id)||""):"").trim().toLowerCase(); return x==="no"||x==="n/a"; };
+  return no("has_insurance") && no("has_heldInsurance");
+}
+// A Foundations Life/TPD/Trauma/IP cell: the entered value, else "N/A" when the
+// client has no insurance (per the pre-checklist), else blank.
+function foundInsCell(v){ if(v) return v; return noInsuranceInChecklist()?"N/A":""; }
 
 function renderTabbar(){
   const tb=$("tabbar"); if(!tb)return;
@@ -2336,10 +2347,10 @@ function buildPreviewPages(){
   const ipC=[f.client.ip,f.client.ipNotes].filter(Boolean).join("\n"), ipP=[f.partner.ip,f.partner.ipNotes].filter(Boolean).join("\n");
   const fHead=hp?["", (firstName("client")||"Client"),"Reference",(firstName("partner")||"Partner"),"Reference"]:["",(firstName("client")||"Client"),"Reference"];
   const fRows=[
-    fRow("Life Insurance",f.client.life,f.client.ref,f.partner.life,f.partner.ref),
-    fRow("Total & Permanent Disability",f.client.tpd,"",f.partner.tpd,""),
-    fRow("Trauma Insurance",f.client.trauma,"",f.partner.trauma,""),
-    fRow("Income Protection (month)",ipC,"",ipP,""),
+    fRow("Life Insurance",foundInsCell(f.client.life),f.client.ref,foundInsCell(f.partner.life),f.partner.ref),
+    fRow("Total & Permanent Disability",foundInsCell(f.client.tpd),"",foundInsCell(f.partner.tpd),""),
+    fRow("Trauma Insurance",foundInsCell(f.client.trauma),"",foundInsCell(f.partner.trauma),""),
+    fRow("Income Protection (month)",foundInsCell(ipC),"",foundInsCell(ipP),""),
     fRow("Up to Date Wills",e.willsC,"",e.willsP,""),
     fRow("Power of Attorney",e.poaC,"",e.poaP,""),
     fRow("Super Death Nominations",e.superNomC,e.superNomRef||"",e.superNomP,e.superNomRefP||""),
@@ -3677,9 +3688,9 @@ async function importReviewDoc(ev){
         owner:(r[2]||"").trim(), freq:(r[3]||"Yearly").trim()
       }));
       if(items.length){ S.income=items; got.push(items.length+" income lines"); }
-      const totRow=inc.find(r=>/income total/i.test((r[0]||"")));
-      if(totRow){ const tv=num(totRow[1]); const sum=items.reduce((a,r)=>a+num(r.amount),0);
-        if(tv>0 && Math.round(tv)!==Math.round(sum)){ S.totalsOverride.income=String(tv); S.totalsOverride.useOverride=true; } }
+      // Note: the "INCOME TOTAL" row is intentionally NOT imported as a line and NOT
+      // forced as a manual override — the Net Worth table auto-totals Assets, Debts and
+      // Income from the line items (a manual override zeroed the computed asset totals).
     }
     // Goals (table with Description / Owner / Timeframe / Notes). Read column
     // positions from the header so the goals mirror the last doc exactly,
@@ -3724,6 +3735,23 @@ async function importReviewDoc(ev){
         else if(/insurance death/.test(lab)){ set(e,"insNomC",cV); set(e,"insNomRef",cR); if(couple){ set(e,"insNomP",pV); set(e,"insNomRefP",pR);} }
       });
       if(n) got.push("foundations & estate");
+    }
+    // Financial Independence Goals (Target today / future + years, and the estimated
+    // income & lump-sum lines) — mirror the last doc's FI panel.
+    const fiRows=[];
+    tables.forEach(t=>t.forEach(r=>{ if(/^(target|which is|estimated income|estimated lump sum)$/i.test((r[0]||"").trim())) fiRows.push(r); }));
+    if(fiRows.length){
+      const fiV=v=>{ const m=String(v||"").match(/\$?\s?[\d,]+(?:\.\d+)?/); return m?m[0].replace(/\s/g,""):""; };
+      const fg=S.fiGoals; const inc=[], lump=[]; let fn=0;
+      fiRows.forEach(r=>{ const lab=(r[0]||"").trim().toLowerCase(); const v=fiV(r[1])||fiV(r[2]);
+        if(/^target$/.test(lab)){ if(v){ fg.targetToday=v; fn++; } }
+        else if(/^which is$/.test(lab)){ if(v){ fg.targetFuture=v; fn++; } const y=(r.join(" ").match(/(?:In\s+)?(\d+)\s*year/i)||[])[1]; if(y) fg.years=y; }
+        else if(/estimated income/.test(lab)){ inc.push(v); }
+        else if(/estimated lump/.test(lab)){ lump.push(v); }
+      });
+      if(inc.length){ if(inc[0]) fg.incomeLife=inc[0]; if(inc[1]!=null) fg.incomeNice=inc[1]; fn++; }
+      if(lump.length){ if(lump[0]!=null) fg.lumpToys=lump[0]; if(lump[1]!=null) fg.lumpFamily=lump[1]; }
+      if(fn) got.push("financial independence goals");
     }
     if(got.length){ registerUpload(f.name,"Last review"); toast("Imported from review: "+got.join(", ")+"."); renderContent(); }
     else { toast("Read the file but couldn't find the expected review tables."); }
@@ -3838,7 +3866,7 @@ async function importChecklist(ev){
       if(comment && !/^(yes|no|n\/?a|done|completed?|uploaded|downloaded|updated|expired|required|valid)\b/i.test(comment)){
         const it=item.toLowerCase();
         if(/beneficiar|nomination|nominee/.test(it)){ S.estate.notes=(S.estate.notes?S.estate.notes+"\n":"")+"Beneficiaries — "+comment; routed++; }
-        else if(/fee/.test(it)){ S.adviserComments=(S.adviserComments?S.adviserComments+"\n":"")+"Fees — "+comment; routed++; }
+        else if(/fee/.test(it)){ S.foundationsNotes=(S.foundationsNotes?S.foundationsNotes+"\n":"")+"Fees — "+comment; routed++; }
         else if(/income protection|\bip\b/.test(it)){ S.foundations.client.ipNotes=(S.foundations.client.ipNotes?S.foundations.client.ipNotes+" ":"")+comment; routed++; }
       }
     });
@@ -4195,10 +4223,10 @@ async function generateDocx(){
       ? new TableRow({children:[cell("",{w:w[0],shade:BLUE}),cell((firstName("client")||S.client.name||"Client"),{w:w[1],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Reference",{w:w[2],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell((firstName("partner")||S.partner.name||"Partner"),{w:w[3],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Reference",{w:w[4],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER})]})
       : new TableRow({children:[cell("",{w:w[0],shade:BLUE}),cell((firstName("client")||S.client.name||"Client"),{w:w[1],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Reference",{w:w[2],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER})]});
     return new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},rows:[head,
-      rowF("Life Insurance",f.client.life,f.client.ref,f.partner.life,f.partner.ref),
-      rowF("Total & Permanent Disability",f.client.tpd,"",f.partner.tpd,""),
-      rowF("Trauma Insurance",f.client.trauma,"",f.partner.trauma,""),
-      rowF("Income Protection (month)",[f.client.ip,f.client.ipNotes].filter(Boolean).join("\n"),"",[f.partner.ip,f.partner.ipNotes].filter(Boolean).join("\n"),""),
+      rowF("Life Insurance",foundInsCell(f.client.life),f.client.ref,foundInsCell(f.partner.life),f.partner.ref),
+      rowF("Total & Permanent Disability",foundInsCell(f.client.tpd),"",foundInsCell(f.partner.tpd),""),
+      rowF("Trauma Insurance",foundInsCell(f.client.trauma),"",foundInsCell(f.partner.trauma),""),
+      rowF("Income Protection (month)",foundInsCell([f.client.ip,f.client.ipNotes].filter(Boolean).join("\n")),"",foundInsCell([f.partner.ip,f.partner.ipNotes].filter(Boolean).join("\n")),""),
       rowF("Up to Date Wills",e.willsC,"",e.willsP,""),
       rowF("Power of Attorney",e.poaC,"",e.poaP,""),
       rowF("Super Death Nominations",e.superNomC,e.superNomRef||"",e.superNomP,e.superNomRefP||""),
