@@ -248,8 +248,8 @@ textarea{resize:vertical;min-height:60px}
 .tabbtn.active{background:var(--bg);color:var(--blue)}
 /* ---- docked preview rail (SOA-style) ---- */
 .workarea{display:flex;align-items:flex-start;min-height:0}
-.workarea .content{flex:1}
-.preview-rail{width:440px;flex-shrink:0;position:sticky;top:0;height:100vh;overflow:hidden;border-left:1px solid var(--line);background:var(--bg);display:flex;flex-direction:column}
+.workarea .content{flex:1;max-width:none}
+.preview-rail{width:520px;flex-shrink:0;position:sticky;top:0;height:100vh;overflow:hidden;border-left:1px solid var(--line);background:var(--bg);display:flex;flex-direction:column}
 .pr-resize{position:absolute;left:0;top:0;width:7px;height:100%;cursor:col-resize;background:var(--line);opacity:.5;z-index:6}
 .pr-resize:hover{opacity:1;background:var(--blue)}
 .preview-rail.hidden{display:none}
@@ -257,7 +257,7 @@ textarea{resize:vertical;min-height:60px}
 .pr-head b{font-size:14px;color:var(--heading)}
 .pr-head .pr-btns{display:flex;gap:8px}
 .pr-body{flex:1;overflow:auto;padding:16px;background:var(--bg)}
-.pr-scale{zoom:.37}
+.pr-scale{zoom:.43}
 .pr-body .wrprev-page{box-shadow:0 4px 16px rgba(0,0,0,.16)}
 @media(max-width:1024px){.preview-rail{display:none}}
 /* ---- Compact / de-cluttered UI (fewer descriptions, tighter spacing) ---- */
@@ -335,6 +335,7 @@ textarea{resize:vertical;min-height:60px}
       </div>
       <div class="topstat" id="topStat"></div>
       <div class="spacer"></div>
+      <span id="autosaveInd" class="hint" style="margin:0 6px 0 0;font-size:11px;color:var(--text-muted);white-space:nowrap"></span>
       <button class="btn btn-ghost btn-sm" onclick="saveJSON()">💾 Save draft</button>
       <label class="btn btn-ghost btn-sm" style="cursor:pointer">📂 Load<input type="file" accept=".json" style="display:none" onchange="loadJSON(event)"></label>
       <button class="btn btn-ghost btn-sm" onclick="togglePreviewRail()" id="prToggle">🖥 Preview</button>
@@ -1744,6 +1745,7 @@ function renderContent(){
   renderNav(); updateTopStat();
   refreshPreviewRail();
   if(typeof requestAnimationFrame==="function") requestAnimationFrame(clGrowAllNotes); else clGrowAllNotes();
+  if(typeof autoSave==="function") autoSave();
 }
 function refreshPreviewRail(){ const b=$("previewRailBody"); if(b) b.innerHTML=buildPreviewPages(); }
 function togglePreviewRail(){ previewUserHidden=!previewUserHidden; applyLayout(); if(!previewUserHidden) refreshPreviewRail(); }
@@ -3413,11 +3415,36 @@ function saveJSON(){
 function loadJSON(ev){
   const file=ev.target.files[0]; if(!file)return;
   const r=new FileReader();
-  r.onload=()=>{ try{ Object.assign(S,JSON.parse(r.result)); if(!S.checklist.answers) S.checklist.answers={}; if(!S.checklist.notes) S.checklist.notes={}; if(!S.uploads) S.uploads=[]; delete S._snapshot; delete S._fileNote; delete S._roa; delete S._snapReview; renderContent(); toast("Draft loaded."); }catch(e){ toast("Invalid JSON file."); } };
+  r.onload=()=>{ try{ Object.assign(S,JSON.parse(r.result)); if(!S.checklist.answers) S.checklist.answers={}; if(!S.checklist.notes) S.checklist.notes={}; if(!S.uploads) S.uploads=[]; delete S._snapshot; delete S._fileNote; delete S._roa; delete S._snapReview; renderContent(); autoSave(); toast("Draft loaded."); }catch(e){ toast("Invalid JSON file."); } };
   r.readAsText(file);
 }
+/* ---------- auto-save to this browser (localStorage) ---------- */
+const AUTOSAVE_KEY="mws_wr_autosave_v1";
+let _autosaveT=null;
+function autoSave(){
+  if(_autosaveT) clearTimeout(_autosaveT);
+  _autosaveT=setTimeout(()=>{ try{
+    const out={}; for(const k in S){ if(!k.startsWith("_")) out[k]=S[k]; }
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(out));
+    const el=$("autosaveInd"); if(el) el.textContent="✓ Auto-saved "+new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+  }catch(e){ /* storage full / disabled — ignore */ } }, 600);
+}
+function restoreAutoSave(){
+  try{
+    const raw=localStorage.getItem(AUTOSAVE_KEY); if(!raw) return false;
+    Object.assign(S, JSON.parse(raw));
+    ["_snapshot","_fileNote","_roa","_snapReview"].forEach(k=>delete S[k]);
+    if(!S.checklist) S.checklist={rows:[],answers:{},notes:{},activeSection:""};
+    if(!S.checklist.answers) S.checklist.answers={};
+    if(!S.checklist.notes) S.checklist.notes={};
+    if(!S.uploads) S.uploads=[];
+    return true;
+  }catch(e){ return false; }
+}
+function clearAutoSave(){ try{ localStorage.removeItem(AUTOSAVE_KEY); }catch(e){} }
 function resetAll(){
-  if(!confirm("Reset EVERYTHING and start a new blank client?\n\nThis clears all imported data, checklist answers and to-dos. Save a draft first if you want to keep this one.")) return;
+  if(!confirm("Reset EVERYTHING and start a new blank client?\n\nThis clears all imported data, checklist answers and to-dos (including the auto-saved copy in this browser). Save a draft first if you want to keep this one.")) return;
+  clearAutoSave();
   location.reload();
 }
 
@@ -3968,6 +3995,7 @@ async function generateRoaDocx(){
 }
 
 /* ---------- boot ---------- */
+restoreAutoSave();   // restore this browser's auto-saved draft if present (before seeding defaults)
 if(!S.actionItems.length) seedStandardTodos(false);   // seed the standard review to-dos into a fresh review
 if(!S.checklist.answers) S.checklist.answers={};
 if(!S.checklist.notes) S.checklist.notes={};
@@ -3975,6 +4003,9 @@ if(!S.checklist.answers.scope_clients) S.checklist.answers.scope_clients=S.meta.
 if(!S.checklist.answers.scope_c1name && S.client.name) S.checklist.answers.scope_c1name=S.client.name;
 if(!S.checklist.answers.scope_c2name && S.partner.name) S.checklist.answers.scope_c2name=S.partner.name;
 renderTabbar(); renderNav(); applyLayout(); renderContent();
+// auto-save on any field edit anywhere in the app (debounced)
+document.addEventListener("input", ()=>{ if(typeof autoSave==="function") autoSave(); }, {passive:true});
+document.addEventListener("change", ()=>{ if(typeof autoSave==="function") autoSave(); }, {passive:true});
 
 /* ---------- whole-window drag & drop: drop files anywhere to smart-import ---------- */
 function hideDropOverlay(){ const ov=$("dropOverlay"); if(ov) ov.classList.remove("show"); window.__dndDepth=0; }
