@@ -3823,11 +3823,12 @@
      ],
      "mode": "Tailored",
      "scopeGate": "",
-     "figures": "$___ pw",
+     "figures": "$___ pw (per cost; itemised when multiple)",
      "soa": {
-      "strategiesLine": "We recommend you set aside $___ per week to cover your ongoing existing property costs.",
+      "strategiesLine": "We recommend you set aside $___ per week to cover your ongoing existing property costs. (Where several costs are paid outside the MCMA the amounts are itemised into one line, e.g. “We recommend you set aside $190 per week to cover your ongoing costs paid outside the MCMA — comprising existing investment property $120, personal loan $40 and insurance $30.”)",
       "why": [
-       "Existing investment property (and other) costs that you are retaining are met directly from your own cashflow rather than routed through the plan's Macquarie Cash Management Account (MCMA), so they are budgeted for as an ongoing cost without forming part of your ongoing plan costs."
+       "Existing costs you are retaining — such as an existing investment property, a personal loan or insurance paid directly — are met from your own cashflow rather than routed through the plan's Macquarie Cash Management Account (MCMA), so they are budgeted for as an ongoing cost without forming part of your ongoing plan costs.",
+       "Each outside-MCMA cost is captured separately in the advice request (description + weekly amount) and combined into a single set-aside figure, so the recommendation reflects the full amount you need to set aside each week."
       ],
       "risks": [
        "These costs are not automated through the MCMA, so you remain responsible for ensuring the set-aside amount is available each period to meet them."
