@@ -1424,7 +1424,7 @@ function findExistingAsset(list, cand){
   if(!Array.isArray(list)||!list.length) return null;
   const norm=s=>String(s||"").toLowerCase().replace(/[\s\-,.'/]/g,"");
   const digits=s=>String(s||"").replace(/\D/g,"");
-  const candRef=digits(cand.id||cand.ref);
+  const candRef=cand.id?digits(cand.id):_acctRef(cand.ref);
   const candName=norm(cand.name);
   const isProp=/property|real ?estate|home|ppor|land|unit|apartment|house/i.test((cand.type||"")+" "+(cand.name||""));
   const superSense=cand.isSuper!=null?!!cand.isSuper:/super|pension|smsf|pens|retire/i.test((cand.type||"")+" "+(cand.name||""));
@@ -1432,7 +1432,7 @@ function findExistingAsset(list, cand){
   const senseOK=a=>cand.isSuper==null?true:sense(a)===superSense;
   // 1) by account id / reference number (most reliable)
   if(candRef && candRef.length>=4){
-    const byRef=list.find(a=>{ const r=digits(a.ref); return r&&r.length>=4&&(r===candRef||r.includes(candRef)||candRef.includes(r)); });
+    const byRef=list.find(a=>{ const r=_acctRef(a.ref); return r&&(r===candRef||r.includes(candRef)||candRef.includes(r)); });
     if(byRef) return byRef;
   }
   // 2) by normalised platform / fund name (containment either way, or shared keyword)
@@ -1476,9 +1476,32 @@ function findExistingAsset(list, cand){
 function _dnorm(s){ return String(s||"").toLowerCase().replace(/[\s\-,.'/]/g,""); }
 function _ddig(s){ return String(s||"").replace(/\D/g,""); }
 function _isSuperRow(x){ return /super|pension|smsf|pens|retire/i.test((x.type||"")+" "+(x.name||"")); }
+/* An account-number-like reference: digits ONLY when the ref actually looks like an
+   account/member number — NOT a date ("Value as of 08/08/2025") and not a descriptive
+   note ("as at", "valuation", "estimate"). Otherwise a shared valuation date would make
+   three unrelated supers look like the same account. */
+function _acctRef(ref){
+  const s=String(ref||"");
+  if(!s) return "";
+  if(/\d{1,2}\s*[\/\-.]\s*\d{1,2}\s*[\/\-.]\s*\d{2,4}/.test(s)) return "";   // a date
+  if(/\bas\s*(of|at)\b|value|valuation|update|updated|required|estimat|balance/i.test(s)) return ""; // a note
+  const d=s.replace(/\D/g,"");
+  return d.length>=5 ? d : "";                                              // real acct/member no.
+}
+// first name(s) on an owner label, minus joint/trust markers — for same-name/different-owner guard
+function _ownerPerson(x){
+  const o=String((x&&x.owner)||"").toLowerCase();
+  if(!o||/joint|both|trust|smsf|company|ptyltd|atf|estate|&|\band\b/.test(o)) return "";
+  const m=o.replace(/[^a-z\s]/g," ").trim().split(/\s+/)[0];
+  return (m&&m.length>=2)?m:"";
+}
 function assetsLikelySame(a,b){
-  const ra=_ddig(a.ref), rb=_ddig(b.ref);
-  if(ra&&rb&&ra.length>=4&&rb.length>=4){ return (ra===rb||ra.includes(rb)||rb.includes(ra)); }
+  const ra=_acctRef(a.ref), rb=_acctRef(b.ref);
+  if(ra&&rb){ return (ra===rb||ra.includes(rb)||rb.includes(ra)); }
+  // Same-named accounts owned by DIFFERENT people are not duplicates — e.g.
+  // "Hub24 Super" (Jon) vs "Hub24 Super" (Marion), or "Car" (Jon) vs "Car" (Marion).
+  const oa=_ownerPerson(a), ob=_ownerPerson(b);
+  if(oa&&ob&&oa!==ob) return false;
   const na=_dnorm(a.name), nb=_dnorm(b.name);
   if(!na||!nb) return false;
   if(_isSuperRow(a)!==_isSuperRow(b)) return false;            // different sense → different accounts
