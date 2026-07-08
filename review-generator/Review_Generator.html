@@ -1353,6 +1353,68 @@ function applyInsuranceSchedule(sched){
   if(F.ip)f.ip=F.ip; if(F.ipNotes)f.ipNotes=F.ipNotes; if(F.ref&&!f.ref)f.ref=F.ref;
 }
 
+/* ---------- Data Collection spreadsheet (e.g. QSuper) parser ---------- */
+function parseDataCollection(rows){
+  if(!rows||!rows.length) return null;
+  const grid=rows.map(r=>(r||[]).map(c=>c==null?"":String(c)));
+  const flat=grid.map(r=>r.join(" ")).join("\n");
+  if(!/Member No|Data collected by|Fund Name/i.test(flat)) return null;
+  const clean=s=>String(s||"").replace(/\s+/g," ").trim();
+  const after=(labelRe)=>{ for(const r of grid){ const li=r.findIndex(c=>labelRe.test(c)); if(li>=0){ for(let j=li+1;j<r.length;j++){ if(clean(r[j])) return clean(r[j]); } } } return ""; };
+  const numAfter=(labelRe)=>{ for(const r of grid){ const li=r.findIndex(c=>labelRe.test(c)); if(li>=0){ for(let j=li+1;j<r.length;j++){ const cell=String(r[j]); const m=cell.match(/\$?\s*([\d,]+(?:\.\d+)?)/); if(m){ const n=parseFloat(m[1].replace(/,/g,"")); if(n>0 && (cell.includes("$")||n>=100)) return n; } } } } return 0; };
+  const out={};
+  out.client=after(/Client Name/i);
+  out.member=after(/Member No/i);
+  out.fund=after(/Fund Name/i)||after(/Product Name/i)||"External Super";
+  out.balance=numAfter(/Current Value/i);
+  out.taxable=numAfter(/Taxable \(Concessional\)/i);
+  out.taxfree=numAfter(/Tax Free \(Non-?Concessional\)/i);
+  out.sgCurrent=numAfter(/SG Contributions/i);
+  out.contribFreq=after(/What Frequency/i);
+  out.minBalance=numAfter(/Mimimum amount|Minimum amount/i);
+  out.ins=[];
+  const insRow=(labelRe,type)=>{ const sum=numAfter(labelRe); if(sum>0) out.ins.push({coverType:type,amount:sum}); };
+  insRow(/^LIFE:?$/i,"Life"); insRow(/^TPD:?$/i,"TPD"); insRow(/IP\/SC/i,"Income Protection");
+  out.insStepped=/Stepped/i.test(after(/Stepped, Level/i)||"")?"Stepped":"";
+  return out;
+}
+function applyDataCollection(dc){
+  const who=whoFromName(dc.client||"");
+  const fn=firstName(who)||dc.client||"Client";
+  const norm=s=>String(s||"").toLowerCase().replace(/[\s\-]/g,"");
+  // Nest Egg super balance (match by member no, else fund name + super type)
+  let a=(dc.member && S.nestegg.find(x=>x.ref&&String(x.ref).replace(/\D/g,"")!=="" && String(x.ref).replace(/\D/g,"").includes(String(dc.member).replace(/\D/g,""))))
+     || (dc.fund && S.nestegg.find(x=>norm(x.name).includes(norm(dc.fund))&&/super/i.test((x.type||"")+(x.name||""))));
+  if(!a){ a={name:dc.fund||"External Super",value:0,debt:0,type:"Superannuation",owner:fn,ref:dc.member?("Member "+dc.member):""}; S.nestegg.push(a); }
+  if(dc.balance)a.value=dc.balance; if(dc.fund)a.name=dc.fund; if(dc.member)a.ref="Member "+dc.member;
+  // Held insurance within the fund → Insurance Cover rows
+  (dc.ins||[]).forEach(it=>{ const owner=(dc.fund||"Super")+" (Super)";
+    let row=S.insurance[who].find(x=>norm(x.owner).includes(norm(dc.fund))&&new RegExp(it.coverType.split(/\s|\//)[0],"i").test(x.coverType));
+    if(!row){ row={insurer:dc.fund||"Super",policy:dc.member||"",owner,life:fn,coverType:it.coverType,amount:"",structure:dc.insStepped||"Stepped",premium:""}; S.insurance[who].push(row); }
+    row.amount="$"+Number(it.amount).toLocaleString(); });
+  // capture components/balance into the External Super checklist for prep
+  const slot=(who==="partner")?"c2":"c1";
+  if(dc.balance && typeof clSetC==="function") clSetC("held_balance",slot,String(Math.round(dc.balance)),false);
+  const comp=[dc.taxable?("Taxable (Concessional) $"+Number(dc.taxable).toLocaleString()):"",dc.taxfree?("Tax Free (NC) $"+Number(dc.taxfree).toLocaleString()):""].filter(Boolean).join("; ");
+  if(comp && typeof clSetC==="function") clSetC("held_components",slot,comp,false);
+}
+async function importDataCollection(ev){
+  const files=[...ev.target.files]; if(!files.length)return; let n=0;
+  if(typeof XLSX==="undefined"){ toast("Spreadsheet reader still loading — try again in a moment."); return; }
+  for(const f of files){
+    if(!/\.(xlsx|xlsm|xls|csv)$/i.test(f.name)){ toast(f.name+" — the data collection should be an Excel file"); continue; }
+    try{ const buf=await f.arrayBuffer(); const wb=XLSX.read(buf,{type:"array"});
+      const sn=wb.SheetNames.find(x=>/data template|data collection/i.test(x))||wb.SheetNames[0];
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,blankrows:false,defval:""});
+      const dc=parseDataCollection(rows);
+      if(!dc){ toast(f.name+" — doesn't look like a data collection template"); continue; }
+      applyDataCollection(dc); registerUpload(f.name,"Data Collection"); n++;
+      toast("Data collection imported: "+(dc.fund||"fund")+(dc.balance?(" "+money(dc.balance)):"")+" · "+(dc.ins||[]).length+" cover(s)");
+    }catch(e){ toast(f.name+" — "+e.message); }
+  }
+  renderContent();
+}
+
 /* ---------- BT Panorama parser ---------- */
 function parseBtText(text){
   const idm=text.match(/Account ID\s*([0-9]+)/i);
@@ -1851,6 +1913,7 @@ function classifyXlsx(f){
       const s=(wb.SheetNames||[]).map(x=>String(x).toLowerCase());
       if(s.some(x=>/projector/.test(x))) return res("ptw");
       if(s.some(x=>/rebalance/.test(x))) return res("rebalance");
+      if(s.some(x=>/data template|data collection/.test(x))||/datacollection/.test(n)) return res("datacoll");
       if(s.some(x=>/prereview|checklist/.test(x))) return res("xls");
       res(byName());
     }catch(e){ res(byName()); } };
@@ -1962,7 +2025,7 @@ function isImageFile(f){ const n=(f.name||"").toLowerCase(); return /\.(png|jpe?
 
 async function smartDropFiles(files){
   files=(files||[]).filter(Boolean); if(!files.length) return;
-  const cat={json:[],docx:[],pdf:[],ptw:[],rebalance:[],xls:[],image:[],unknown:[]};
+  const cat={json:[],docx:[],pdf:[],ptw:[],rebalance:[],xls:[],datacoll:[],image:[],unknown:[]};
   for(const f of files){
     const n=(f.name||"").toLowerCase();
     if(n.endsWith(".json")) cat.json.push(f);
@@ -1979,6 +2042,7 @@ async function smartDropFiles(files){
   if(cat.pdf.length){ try{ await importAnyPlatform({target:{files:cat.pdf}}); done.push(`${cat.pdf.length} PDF → platform report(s)`);}catch(e){ done.push(`platform PDFs → error`);} }
   for(const f of cat.ptw){ try{ await importPTW({target:{files:[f]}}); done.push(`${f.name} → PTW`);}catch(e){ done.push(`${f.name} → PTW error`);} }
   if(cat.rebalance.length){ try{ await importRebalance({target:{files:cat.rebalance}}); done.push(`${cat.rebalance.length} → rebalance`);}catch(e){ done.push(`rebalance → error`);} }
+  for(const f of cat.datacoll){ try{ await importDataCollection({target:{files:[f]}}); done.push(`${f.name} → data collection`);}catch(e){ done.push(`${f.name} → data collection error`);} }
   for(const f of cat.xls){ try{ await importChecklist({target:{files:[f]}}); done.push(`${f.name} → checklist`);}catch(e){ done.push(`${f.name} → checklist error`);} }
   if(cat.image.length){ try{ done.push(...await importImages(cat.image)); }catch(e){ done.push(`images → error`);} }
   cat.unknown.forEach(f=>done.push(`${f.name} → not recognised`));
@@ -2031,6 +2095,7 @@ function renderImports(){
       <label class="dz"><span class="badge badge-ready">XLSM</span><h4>Current Review PTW</h4><p>Projection → Financial Independence goals.</p><input type="file" accept=".xlsm,.xlsx" onchange="importPTW(event)"></label>
       <label class="dz"><span class="badge badge-ready">PDF</span><h4>Review Data Snapshot (Jotform)</h4><p>Client's pre-meeting update → <b>override layer</b>: income, assets, liabilities, estate + client-raised points into discussion items. Confirm before applying.</p><input type="file" accept=".pdf" multiple onchange="importSnapshot(event)"></label>
       <label class="dz"><span class="badge badge-ready">PDF</span><h4>Insurance Schedule (existing insurances)</h4><p>The consolidated SOI insurance schedule → fills the Insurance Cover table (policy, owner, cover type, sum insured, premium) &amp; Foundations (Life / TPD / Trauma / IP).</p><input type="file" accept=".pdf" multiple onchange="importAnyPlatform(event)"></label>
+      <label class="dz"><span class="badge badge-ready">XLSX</span><h4>Data Collection (super fund)</h4><p>The fund data-collection template → super balance to Nest Egg, held cover to Insurance, tax components &amp; balance to the External Super checklist.</p><input type="file" accept=".xlsx,.xlsm,.xls" multiple onchange="importDataCollection(event)"></label>
       <label class="dz"><span class="badge badge-soon">Sample needed</span><h4>Property valuations</h4><p>PPR / IP reports → assets.</p><input type="file" accept=".pdf" multiple onchange="stubImport('Property valuations')"></label>
     </div>
     ${undetected.length?`<div style="margin:12px 0 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
