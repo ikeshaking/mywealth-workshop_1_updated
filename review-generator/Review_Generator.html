@@ -1636,19 +1636,24 @@ function applyHub24(r){
   const wantTrust=isTrust(r.name||"");
   const senseMatch=(a)=> isTrust((a.name||"")+" "+(a.owner||""))===wantTrust;
   const claimed=(a)=> digits(a.ref) && r.id && digits(a.ref)!==digits(r.id);
+  // for a COUPLE with a HUB super each, also match on the person so Jon's report
+  // updates Jon's super and Marion's updates Marion's (instead of duplicating)
+  const fn=firstName(who);
+  const ownerMatch=(a)=> !fn || new RegExp("\\b"+fn.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"i").test(a.owner||"");
   let asset = (r.id && S.nestegg.find(a=>digits(a.ref)&&digits(a.ref)===digits(r.id)))
-           || S.nestegg.find(a=>isHub(a)&&typeMatch(a)&&senseMatch(a)&&!claimed(a));
+           || S.nestegg.find(a=>isHub(a)&&typeMatch(a)&&senseMatch(a)&&ownerMatch(a)&&!claimed(a))
+           || S.nestegg.find(a=>isHub(a)&&typeMatch(a)&&senseMatch(a)&&!(a.owner||"").trim()&&!claimed(a));
   if(!asset){
     const label=isSuper?(wantTrust?"HUB24 Super (Trust)":"HUB24 Super"):(wantTrust?"HUB24 Investment (Trust)":"HUB24 Investment");
-    asset={name:label, value:0, debt:0, type:isSuper?"Super":"Investment", owner:wantTrust?"Trust":(firstName(who)||r.name), ref:r.id}; S.nestegg.push(asset);
+    asset={name:label, value:0, debt:0, type:isSuper?"Super":"Investment", owner:wantTrust?"Trust":(fn||r.name), ref:r.id}; S.nestegg.push(asset);
   }
   asset.value=r.total; if(r.id) asset.ref=r.id;
   // clean up any leftover empty HUB placeholder rows of the same sense from earlier mis-matches
   S.nestegg=S.nestegg.filter(a=> a===asset || !(isHub(a)&&typeMatch(a)&&senseMatch(a)&&num(a.value)===0&&(!a.holdings||!a.holdings.length)));
-  const fn=firstName(who);
   // update the existing super / investment strategy (e.g. "Superannuation") instead of
   // spawning a duplicate like "Kendra Super"
-  let gt=S.goalTracking.find(g=> isSuper ? /super|pension/i.test(g.strategy) : /investment/i.test(g.strategy) );
+  let gt=(fn && S.goalTracking.find(g=> isSuper ? (/super|pension/i.test(g.strategy)&&new RegExp("\\b"+fn.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"i").test(g.strategy)) : (/investment/i.test(g.strategy)&&new RegExp("\\b"+fn,"i").test(g.strategy)) ))
+       || S.goalTracking.find(g=> isSuper ? /super|pension/i.test(g.strategy) : /investment/i.test(g.strategy) );
   if(!gt){ gt={strategy:(isSuper?"Superannuation":"Investment"), were:"",shouldBe:"",are:"",wantToBe:"",rating:"On Track",actions:""}; S.goalTracking.push(gt); }
   gt.are=money(r.total);
   // pull the platform report's asset allocation into the person's allocation
@@ -1985,10 +1990,12 @@ function fmtAddresses(s){
 // 50% Non-lapsing Binding to Jordan" → one beneficiary per line).
 function tidyNotes(s){
   return String(s||"")
+    .replace(/([\d)])\s*(?=\$\d)/g, "$1\n")                  // "$866,250$124,800" → two lines
     .replace(/(N?LB)(?=[A-Z])/g, "$1\n")                    // "NLBJordan" → "NLB\nJordan"
+    .replace(/(?:^|\s)(?=(?:Non-?Lapsing|Lapsing)\s+Binding)/gi, "\n")           // before "Non-Lapsing Binding…"
     .replace(/\s+(?=\d{1,3}\s*%?\s*(?:Non-?lapsing|Lapsing|Binding))/gi, "\n")   // before "50% Non-lapsing…"
     .replace(/([a-z0-9%\)])([A-Z][a-z]{2,})/g, "$1\n$2")    // jammed name boundary → newline
-    .replace(/[ \t]{2,}/g," ").replace(/\n{2,}/g,"\n").trim();
+    .replace(/[ \t]{2,}/g," ").replace(/^\n+/,"").replace(/\n{2,}/g,"\n").trim();
 }
 // Drop junk "strategy" rows (a stray tick/ratings-legend cell) that shouldn't be tracked
 function realTracking(list){
@@ -2395,10 +2402,10 @@ function buildPreviewPages(){
   const ipC=[f.client.ip,f.client.ipNotes].filter(Boolean).join("\n"), ipP=[f.partner.ip,f.partner.ipNotes].filter(Boolean).join("\n");
   const fHead=hp?["", (firstName("client")||"Client"),"Reference",(firstName("partner")||"Partner"),"Reference"]:["",(firstName("client")||"Client"),"Reference"];
   const fRows=[
-    fRow("Life Insurance",foundInsCell(f.client.life),f.client.ref,foundInsCell(f.partner.life),f.partner.ref),
-    fRow("Total & Permanent Disability",foundInsCell(f.client.tpd),"",foundInsCell(f.partner.tpd),""),
-    fRow("Trauma Insurance",foundInsCell(f.client.trauma),"",foundInsCell(f.partner.trauma),""),
-    fRow("Income Protection (month)",foundInsCell(ipC),"",foundInsCell(ipP),""),
+    fRow("Life Insurance",foundInsCell(tidyNotes(f.client.life)),f.client.ref,foundInsCell(tidyNotes(f.partner.life)),f.partner.ref),
+    fRow("Total & Permanent Disability",foundInsCell(tidyNotes(f.client.tpd)),"",foundInsCell(tidyNotes(f.partner.tpd)),""),
+    fRow("Trauma Insurance",foundInsCell(tidyNotes(f.client.trauma)),"",foundInsCell(tidyNotes(f.partner.trauma)),""),
+    fRow("Income Protection (month)",foundInsCell(tidyNotes(ipC)),"",foundInsCell(tidyNotes(ipP)),""),
     fRow("Up to Date Wills",e.willsC,"",e.willsP,""),
     fRow("Power of Attorney",e.poaC,"",e.poaP,""),
     fRow("Super Death Nominations",e.superNomC,tidyNotes(e.superNomRef||""),e.superNomP,tidyNotes(e.superNomRefP||"")),
@@ -3686,6 +3693,13 @@ async function importReviewDoc(ev){
         }
       }
       if(S.partner.name) S.meta.hasPartner=true;
+      // sync the Pre-Review Checklist scope so a couple is recognised (2 clients +
+      // their names) rather than defaulting to a single client
+      if(typeof clSet==="function"){
+        if(S.partner.name){ clSet("scope_clients","2",false); clSet("scope_c2name",S.partner.name,false); }
+        else clSet("scope_clients","1",false);
+        if(S.client.name) clSet("scope_c1name",S.client.name,false);
+      }
       if(filled) got.push("details");
     }
     // Goal tracking (table with WHERE YOU WERE)
@@ -3726,7 +3740,14 @@ async function importReviewDoc(ev){
         t.slice(hi+1).forEach(r=>{
           const name=(r[0]||"").trim(); if(!name || /total/i.test(name)) return;
           const type=(r[3]||"").trim();
-          const row={name, value:numv(r[1]), debt:numv(r[2]), type, owner:(r[4]||"").trim(), ref:(r[5]||"").trim()};
+          // Some last reviews put a note in the OWNER column (e.g. "Loan Limit:
+          // $150,000Available: $118,050" or "Value as of 08/08/2025"). Detect that
+          // and move it to the Reference column, leaving the owner blank.
+          let owner=(r[4]||"").trim(), ref=(r[5]||"").trim();
+          if(/[:$]|loan limit|available|value as|as at|as of|\d{2}\/\d{2}\/\d{4}/i.test(owner)){
+            ref=tidyNotes([owner, ref].filter(Boolean).join(" ")); owner="";
+          }
+          const row={name, value:numv(r[1]), debt:numv(r[2]), type, owner, ref};
           const grp = tableGroup ||
             (/residence|home|vehicle|motor|contents|lifestyle|boat|caravan|furniture|jewel|artwork|collectible|personal use/i.test(type+" "+name) ? "life" : "nest");
           (grp==="life"?life:nest).push(row);
@@ -4319,10 +4340,10 @@ async function generateDocx(){
       ? new TableRow({children:[cell("",{w:w[0],shade:BLUE}),cell((firstName("client")||S.client.name||"Client"),{w:w[1],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Reference",{w:w[2],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell((firstName("partner")||S.partner.name||"Partner"),{w:w[3],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Reference",{w:w[4],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER})]})
       : new TableRow({children:[cell("",{w:w[0],shade:BLUE}),cell((firstName("client")||S.client.name||"Client"),{w:w[1],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Reference",{w:w[2],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER})]});
     return new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},rows:[head,
-      rowF("Life Insurance",foundInsCell(f.client.life),f.client.ref,foundInsCell(f.partner.life),f.partner.ref),
-      rowF("Total & Permanent Disability",foundInsCell(f.client.tpd),"",foundInsCell(f.partner.tpd),""),
-      rowF("Trauma Insurance",foundInsCell(f.client.trauma),"",foundInsCell(f.partner.trauma),""),
-      rowF("Income Protection (month)",foundInsCell([f.client.ip,f.client.ipNotes].filter(Boolean).join("\n")),"",foundInsCell([f.partner.ip,f.partner.ipNotes].filter(Boolean).join("\n")),""),
+      rowF("Life Insurance",foundInsCell(tidyNotes(f.client.life)),f.client.ref,foundInsCell(tidyNotes(f.partner.life)),f.partner.ref),
+      rowF("Total & Permanent Disability",foundInsCell(tidyNotes(f.client.tpd)),"",foundInsCell(tidyNotes(f.partner.tpd)),""),
+      rowF("Trauma Insurance",foundInsCell(tidyNotes(f.client.trauma)),"",foundInsCell(tidyNotes(f.partner.trauma)),""),
+      rowF("Income Protection (month)",foundInsCell(tidyNotes([f.client.ip,f.client.ipNotes].filter(Boolean).join("\n"))),"",foundInsCell(tidyNotes([f.partner.ip,f.partner.ipNotes].filter(Boolean).join("\n"))),""),
       rowF("Up to Date Wills",e.willsC,"",e.willsP,""),
       rowF("Power of Attorney",e.poaC,"",e.poaP,""),
       rowF("Super Death Nominations",e.superNomC,tidyNotes(e.superNomRef||""),e.superNomP,tidyNotes(e.superNomRefP||"")),
