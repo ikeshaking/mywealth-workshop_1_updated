@@ -1625,14 +1625,26 @@ function applyHub24(r){
   // Tolerate name variants ("Hub 24 Super", "HUB24 Super", "Hub24") and match on the
   // account id first (most reliable), then platform + super/investment type.
   const norm=(s)=>String(s||"").toLowerCase().replace(/[\s\-]/g,"");
-  const isHub=(a)=>norm(a.name).includes("hub24");
-  const typeMatch=(a)=> isSuper ? (/super/i.test(a.type)||/super/i.test(a.name)) : (!/super/i.test(a.type)&&!/super/i.test(a.name));
-  let asset = (r.id && S.nestegg.find(a=>a.ref&&String(a.ref).replace(/\D/g,"")===String(r.id).replace(/\D/g,"")&&String(r.id).replace(/\D/g,"")!==""))
-           || S.nestegg.find(a=>isHub(a)&&typeMatch(a));
-  if(!asset){ asset={name:isSuper?"HUB24 Super":"HUB24 Investment", value:0, debt:0, type:isSuper?"Super":"Investment", owner:firstName(who)||r.name, ref:r.id}; S.nestegg.push(asset); }
+  const digits=s=>String(s||"").replace(/\D/g,"");
+  // match a "hub"/"hub24" row (the last review may name it "HUB Investment - Trust",
+  // not "HUB24 Investment") of the same super/investment sense AND the same
+  // trust/personal sense — so the trust HUB investment updates the trust row and a
+  // personal HUB super updates the personal row, instead of adding a duplicate.
+  const isHub=(a)=>/hub/i.test(a.name||"");
+  const typeMatch=(a)=> isSuper ? /super|pension/i.test((a.type||"")+" "+(a.name||"")) : !/super|pension/i.test((a.type||"")+" "+(a.name||""));
+  const isTrust=(x)=>/trust|pty ?ltd|atf|smsf|company/i.test(x);
+  const wantTrust=isTrust(r.name||"");
+  const senseMatch=(a)=> isTrust((a.name||"")+" "+(a.owner||""))===wantTrust;
+  const claimed=(a)=> digits(a.ref) && r.id && digits(a.ref)!==digits(r.id);
+  let asset = (r.id && S.nestegg.find(a=>digits(a.ref)&&digits(a.ref)===digits(r.id)))
+           || S.nestegg.find(a=>isHub(a)&&typeMatch(a)&&senseMatch(a)&&!claimed(a));
+  if(!asset){
+    const label=isSuper?(wantTrust?"HUB24 Super (Trust)":"HUB24 Super"):(wantTrust?"HUB24 Investment (Trust)":"HUB24 Investment");
+    asset={name:label, value:0, debt:0, type:isSuper?"Super":"Investment", owner:wantTrust?"Trust":(firstName(who)||r.name), ref:r.id}; S.nestegg.push(asset);
+  }
   asset.value=r.total; if(r.id) asset.ref=r.id;
-  // clean up any leftover empty HUB24 placeholder rows of the same type from earlier mis-matches
-  S.nestegg=S.nestegg.filter(a=> a===asset || !(isHub(a)&&typeMatch(a)&&num(a.value)===0&&(!a.holdings||!a.holdings.length)));
+  // clean up any leftover empty HUB placeholder rows of the same sense from earlier mis-matches
+  S.nestegg=S.nestegg.filter(a=> a===asset || !(isHub(a)&&typeMatch(a)&&senseMatch(a)&&num(a.value)===0&&(!a.holdings||!a.holdings.length)));
   const fn=firstName(who);
   let gt=S.goalTracking.find(g=> isSuper ? (fn&&new RegExp(fn+".*super","i").test(g.strategy)) : /investment\b/i.test(g.strategy) );
   if(!gt){ gt={strategy:(isSuper?((fn||"Client")+" Super"):"Investment"), were:"",shouldBe:"",are:"",wantToBe:"",rating:"On Track",actions:""}; S.goalTracking.push(gt); }
@@ -1951,6 +1963,8 @@ const $=(id)=>document.getElementById(id);
 const esc=(s)=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 const num=(v)=>{const n=parseFloat(String(v).replace(/[^0-9.\-]/g,""));return isNaN(n)?0:n;};
 const money=(n)=>"$"+Math.round(num(n)).toLocaleString("en-AU",{maximumFractionDigits:0});
+// money with cents — used only where exact figures matter (Portfolio Valuation)
+const moneyc=(n)=>"$"+num(n).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2});
 function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200);}
 function setPath(path,val){const ks=path.split(".");let o=S;for(let i=0;i<ks.length-1;i++)o=o[ks[i]];o[ks[ks.length-1]]=val;}
 function bindRow(arr,idx,key,val){arr[idx][key]=val;}
@@ -2014,10 +2028,14 @@ function insuranceEmpty(){
   if(isNo(has("has_insurance")) && isNo(has("has_heldInsurance"))) return true;
   return false;
 }
-// The client has no insurance when both checklist insurance toggles are No/N/A.
+// The client has no insurance when the pre-checklist marks it No/N/A: at least one
+// insurance toggle is No/N/A and neither is Yes (so N/A shows even if the other
+// insurance question was left blank).
 function noInsuranceInChecklist(){
-  const no=id=>{ const x=(typeof getAns==="function"?String(getAns(id)||""):"").trim().toLowerCase(); return x==="no"||x==="n/a"; };
-  return no("has_insurance") && no("has_heldInsurance");
+  const v=id=>(typeof getAns==="function"?String(getAns(id)||""):"").trim().toLowerCase();
+  const no=x=>x==="no"||x==="n/a", yes=x=>x==="yes";
+  if(yes(v("has_insurance"))||yes(v("has_heldInsurance"))) return false;
+  return no(v("has_insurance"))||no(v("has_heldInsurance"));
 }
 // A Foundations Life/TPD/Trauma/IP cell: the entered value, else "N/A" when the
 // client has no insurance (per the pre-checklist), else blank.
@@ -2404,12 +2422,12 @@ function buildPreviewPages(){
     const sub=firstName(side)||name;
     const accts=S.portfolios[side]||[]; let grand=0;
     const body=accts.map(acct=>{
-      const holds=(acct.holdings||[]).map(h=>`<tr><td class="pv-lbl">${esc(h.product)}</td><td class="r">${esc(h.units)}</td><td class="r">${h.value?money(num(h.value)):""}</td></tr>`).join("");
+      const holds=(acct.holdings||[]).map(h=>`<tr><td class="pv-lbl">${esc(h.product)}</td><td class="r">${esc(h.units)}</td><td class="r">${h.value?moneyc(num(h.value)):""}</td></tr>`).join("");
       const tot=pvSum(acct.holdings,"value"); grand+=tot;
-      return `<tr><td class="pv-acct" colspan="3">${esc(acct.acct||"Account")}</td></tr>${holds}<tr><td class="pv-ptot" colspan="2">Total for ${esc(acct.acct||"account")}</td><td class="pv-ptot">${money(tot)}</td></tr>`;
+      return `<tr><td class="pv-acct" colspan="3">${esc(acct.acct||"Account")}</td></tr>${holds}<tr><td class="pv-ptot" colspan="2">Total for ${esc(acct.acct||"account")}</td><td class="pv-ptot">${moneyc(tot)}</td></tr>`;
     }).join("");
     const portTable=accts.length
-      ? `<table class="pv-tbl navy"><thead><tr><th>Products</th><th>Units</th><th>Value</th></tr></thead><tbody>${body}<tr><td class="pv-ptot" colspan="2">Total for ${esc(name)}</td><td class="pv-ptot">${money(grand)}</td></tr></tbody></table>`
+      ? `<table class="pv-tbl navy"><thead><tr><th>Products</th><th>Units</th><th>Value</th></tr></thead><tbody>${body}<tr><td class="pv-ptot" colspan="2">Total for ${esc(name)}</td><td class="pv-ptot">${moneyc(grand)}</td></tr></tbody></table>`
       : '<div class="pv-empty">Upload platform reports to populate holdings.</div>';
     P.push(`<div class="wrprev-page"><div class="pv-h2">Portfolio Valuation</div><div class="pv-subname">${esc(sub)}</div>${portTable}</div>`);
     // Asset allocation with the actual donut charts (same generator as the doc)
@@ -3700,13 +3718,20 @@ async function importReviewDoc(ev){
     if(gtbl){
       const head=(gtbl[0]||[]).map(c=>String(c||"").toLowerCase());
       const col=re=>head.findIndex(c=>re.test(c));
-      const di=col(/description|goal/), oi=col(/owner/), ti=col(/timeframe/), ni=col(/notes/);
+      let di=col(/description|goal/), oi=col(/owner/), ti=col(/timeframe/), ni=col(/notes/);
+      // If the header collapsed into a single merged cell, findIndex returns 0 for
+      // every column, which made desc=owner=timeframe=notes (all the same value). Fall
+      // back to fixed positions when the columns aren't distinct.
+      const distinct=new Set([di,oi,ti,ni].filter(x=>x>=0));
+      if(head.length<4 || distinct.size<3){ di=0; oi=1; ti=2; ni=3; }
       const items=gtbl.slice(1).map(r=>({
         desc:(r[di>=0?di:0]||"").trim(),
         owner:(r[oi>=0?oi:1]||"").trim(),
         timeframe:(r[ti>=0?ti:2]||"").replace(/\s+/g," ").trim(),
         notes:(ni>=0?(r[ni]||""):"").trim()
-      })).filter(g=>g.desc && !/^description$/i.test(g.desc));
+      })).filter(g=> g.desc && !/^description$/i.test(g.desc)
+        // exclude Financial Independence rows that can sit in the same table
+        && !/^(target|which is|estimated income|estimated lump sum|financial independence goals?)$/i.test(g.desc));
       if(items.length){ S.goals=items; got.push(items.length+" goals"); }
     }
     // Foundations & Estate (the combined table: Life / TPD / Trauma / IP + Wills /
@@ -3866,7 +3891,7 @@ async function importChecklist(ev){
       if(comment && !/^(yes|no|n\/?a|done|completed?|uploaded|downloaded|updated|expired|required|valid)\b/i.test(comment)){
         const it=item.toLowerCase();
         if(/beneficiar|nomination|nominee/.test(it)){ S.estate.notes=(S.estate.notes?S.estate.notes+"\n":"")+"Beneficiaries — "+comment; routed++; }
-        else if(/fee/.test(it)){ S.foundationsNotes=(S.foundationsNotes?S.foundationsNotes+"\n":"")+"Fees — "+comment; routed++; }
+        else if(/fee/.test(it)){ /* fees are intentionally NOT dumped into the doc — kept in the checklist only */ }
         else if(/income protection|\bip\b/.test(it)){ S.foundations.client.ipNotes=(S.foundations.client.ipNotes?S.foundations.client.ipNotes+" ":"")+comment; routed++; }
       }
     });
@@ -4293,11 +4318,11 @@ async function generateDocx(){
     S.portfolios[who].forEach(a=>{
       rows.push(new TableRow({children:[cell(a.acct,{w:W,shade:ACCTGREY,bold:true,color:BLUE,columnSpan:3})]}));
       let sub=0;
-      a.holdings.forEach(h=>{sub+=num(h.value);rows.push(dataRow([h.product,h.units,money(num(h.value))],w,[LBLOPT,{align:AlignmentType.RIGHT},{align:AlignmentType.RIGHT}]));});
+      a.holdings.forEach(h=>{sub+=num(h.value);rows.push(dataRow([h.product,h.units,moneyc(num(h.value))],w,[LBLOPT,{align:AlignmentType.RIGHT},{align:AlignmentType.RIGHT}]));});
       grand+=sub;
-      rows.push(new TableRow({children:[cell("Total for "+a.acct,{w:w[0]+w[1],bold:true,color:BLUE,align:AlignmentType.RIGHT,columnSpan:2}),cell(money(sub),{w:w[2],bold:true,align:AlignmentType.RIGHT})]}));
+      rows.push(new TableRow({children:[cell("Total for "+a.acct,{w:w[0]+w[1],bold:true,color:BLUE,align:AlignmentType.RIGHT,columnSpan:2}),cell(moneyc(sub),{w:w[2],bold:true,align:AlignmentType.RIGHT})]}));
     });
-    rows.push(new TableRow({children:[cell("Total for "+name,{w:w[0]+w[1],bold:true,color:BLUE,align:AlignmentType.RIGHT,columnSpan:2}),cell(money(grand),{w:w[2],bold:true,color:BLUE,align:AlignmentType.RIGHT})]}));
+    rows.push(new TableRow({children:[cell("Total for "+name,{w:w[0]+w[1],bold:true,color:BLUE,align:AlignmentType.RIGHT,columnSpan:2}),cell(moneyc(grand),{w:w[2],bold:true,color:BLUE,align:AlignmentType.RIGHT})]}));
     ch.push(new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},rows}));
     ch.push(new Paragraph({children:[new PageBreak()]}));
     ch.push(H2("Portfolio Asset Allocation"));
