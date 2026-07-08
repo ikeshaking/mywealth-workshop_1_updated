@@ -1,0 +1,904 @@
+<!DOCTYPE html><html lang="en" data-theme="night"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MWS Advice Request Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Nunito+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>
+@import url('https://fonts.cdnfonts.com/css/abc-arizona-flare');
+@import url('https://fonts.cdnfonts.com/css/abc-arizona-serif');
+:root{
+  --bg:#f0f4f8; --surface:#fff; --surface-2:#f6f9fc; --input-bg:#f8fbfd;
+  --border:#d0dbe6; --border-soft:#e4ecf4; --border-strong:#c9beb4;
+  --navy:#0C2E3F; --navy-deep:#0a1e2e; --blue:#0B6AE1; --blue-bright:#1A7EE6;
+  --blue-light:#EAF4FB; --blue-soft:#5EA6FF; --coral:#FF6550; --coral-light:#fff0ee;
+  --lime:#D9F09A; --lime-dark:#4a6a10; --lime-light:#f3f9e4;
+  --text:#1a1a1a; --text-dim:#3e5a6a; --text-muted:#595959; --text-faint:#9aa6b2;
+  --green:#27ae60; --green-light:#e8f5e9; --green-dark:#2e7d32;
+  --red:#d63031; --red-light:#fdeaea; --amber:#b8860b; --amber-light:#fef6e0;
+  --gold:#b8860b;
+  --hf:'ABC Arizona Flare','ABC Arizona Serif','Playfair Display','Georgia',serif;
+  --bf:'Nunito Sans','Nunito',-apple-system,BlinkMacSystemFont,sans-serif;
+  --shadow-sm:0 1px 2px rgba(12,46,63,.04); --shadow:0 2px 6px rgba(12,46,63,.06);
+  --shadow-md:0 4px 12px rgba(12,46,63,.08); --shadow-lg:0 8px 24px rgba(12,46,63,.08);
+}
+[data-theme="night"]{
+  --bg:#1C394E; --surface:#224A68; --surface-2:#2A5379; --input-bg:#2F4A45;
+  --border:#345a7b; --border-soft:#2c4f6e; --border-strong:#456a88;
+  --navy:#15293c; --navy-deep:#0f2030; --blue:#8fbdf0; --blue-bright:#a9d0fb;
+  --blue-light:#284f72; --blue-soft:#2f5575; --coral:#ff7a68; --coral-light:#5a2420;
+  --lime:#CCE185; --lime-dark:#CCE185; --lime-light:#33401c;
+  --text:#e9f1f8; --text-dim:#c4d3df; --text-muted:#cfdce6; --text-faint:#90a8b8;
+  --green:#5bb55b; --green-light:#1f3d33; --green-dark:#5bb55b; --red:#f1707a; --red-light:#3f2024; --amber:#e6b34d; --amber-light:#3a3320;
+  --gold:#F9D949;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--bf);background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--hf);color:var(--navy);font-weight:600;line-height:1.2}
+[data-theme="night"] h1,[data-theme="night"] h2,[data-theme="night"] h3,[data-theme="night"] h4{color:#f1f6fb}
+button{font-family:var(--bf);cursor:pointer;border:none;background:none}
+input,select,textarea{font-family:var(--bf);font-size:13px}
+
+/* ── Branded topbar (matches SOA generator) ── */
+header.topbar{position:sticky;top:0;z-index:50;background:var(--navy);color:#fff;padding:0;box-shadow:var(--shadow-md);border-bottom:none}
+[data-theme="night"] header.topbar{box-shadow:0 1px 0 rgba(207,226,122,.18),0 4px 18px rgba(0,0,0,.35)}
+.topbar-inner{max-width:1400px;margin:0 auto;padding:13px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand-mark{display:flex;flex-direction:column;justify-content:center;line-height:1}
+.brand-mark .bm-line{font-family:var(--hf);font-size:20px;font-weight:500;color:#cdd9ea;letter-spacing:.2px}
+.brand-mark .bm-line .bm-my{color:#8e9fc1}
+.brand-mark .bm-sub{font-size:9px;font-weight:600;letter-spacing:4px;color:#8aa0bd;margin-top:3px}
+.topbar-tag{font-size:12px;color:rgba(255,255,255,.6);font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.topbar-spacer{flex:1}
+.topbar-btn{color:rgba(255,255,255,.85);font-size:12px;font-weight:600;padding:7px 13px;border-radius:8px;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+.topbar-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+.topbar-btn.primary{background:var(--coral);color:#fff}
+.topbar-btn.primary:hover{background:#ff7a68}
+.topbar-btn.ghost{border:1px solid rgba(255,255,255,.25)}
+
+/* Segmented Accumulator/Retirement/Mixed toggle */
+.toggle{display:inline-flex;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:9px;overflow:hidden}
+.toggle button{background:transparent;color:rgba(255,255,255,.75);border:0;padding:7px 14px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;transition:.15s}
+.toggle button:hover{color:#fff}
+.toggle button.on{background:var(--blue);color:#fff}
+[data-theme="night"] .toggle button.on{background:linear-gradient(180deg,#3171ac 0%,#285b8e 100%)}
+
+.legend{font-size:10.5px;color:rgba(255,255,255,.6)}
+.legend b{border-radius:5px;padding:1px 6px;font-weight:700}
+.legend b.acc{background:#2d6a4f;color:#fff}.legend b.ret{background:#9b2226;color:#fff}
+
+/* ── Layout ── */
+.wrap{display:flex;gap:18px;max-width:1400px;margin:0 auto;padding:20px 24px 80px;align-items:flex-start}
+.form{flex:1 1 100%;min-width:0;max-width:900px;margin:0 auto}
+.side{flex:1 1 42%;position:sticky;top:72px;max-height:calc(100vh - 92px);overflow:auto}
+@media(max-width:960px){.wrap{flex-direction:column}.side{position:static;max-height:none;width:100%}}
+
+/* ── Cards (matches SOA generator) ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);margin-bottom:16px;overflow:hidden}
+[data-theme="night"] .card{background:linear-gradient(180deg,#1f3e5a 0%,#1a374f 100%);border-color:#32567a}
+.card>h2{margin:0;padding:14px 18px;font-size:14px;font-weight:800;font-family:var(--hf);background:var(--surface-2);color:var(--navy);cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-soft)}
+[data-theme="night"] .card>h2{background:linear-gradient(180deg,#2A5D8A 0%,#23547F 100%);color:#fff;border-bottom:none;letter-spacing:.3px}
+.card>h2 small.hint{color:var(--text-faint);font-weight:600}
+[data-theme="night"] .card>h2 small.hint{color:#b9c9d6}
+.card>h2 .chev{transition:transform .15s;font-size:12px}
+.card.collapsed>h2 .chev{transform:rotate(-90deg)}
+.card .body{padding:18px}
+.card.collapsed .body{display:none}
+.card.care>h2{background:var(--surface-2)}
+.card.scopedout{opacity:.45}.card.scopedout .body{display:none}
+
+/* ── Fields ── */
+.row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.fld{flex:1 1 200px;min-width:140px}
+.fld label{display:block;font-weight:700;font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+[data-theme="night"] .fld label{color:#b9c9d6}
+.fld input,.fld select,.fld textarea{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:9px;font-size:13px;font-family:inherit;background:var(--input-bg);color:var(--text);transition:.15s}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-light)}
+[data-theme="night"] .fld input:not([type=checkbox]):not([type=radio]),[data-theme="night"] .fld select{color:var(--gold);font-weight:600}
+[data-theme="night"] .fld textarea{color:#e9f1f8;font-weight:400}
+.fld input::placeholder,.opts input::placeholder{color:var(--text-faint)}
+.fld textarea{min-height:62px;resize:vertical;line-height:1.55}
+
+.miniH{font-weight:800;font-size:11px;color:var(--blue);font-family:var(--bf);text-transform:uppercase;letter-spacing:.4px;margin:14px 0 6px}
+.chklist{display:flex;flex-direction:column;gap:4px;margin-top:3px}.chkitem{display:flex;align-items:flex-start;gap:6px;font-size:11.5px;font-weight:500;cursor:pointer}.chkitem input{margin-top:2px}
+[data-theme="night"] .miniH{color:var(--blue-bright)}
+
+/* ── Strategy rows (chip-styled) ── */
+.strat{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:9px;flex-wrap:wrap;border:1px solid transparent;transition:.12s}
+.strat:hover{background:var(--surface-2);border-color:var(--border-soft)}
+.strat.on{background:var(--coral-light);border-color:var(--coral)}
+.strat>input[type=checkbox]{width:17px;height:17px;flex:none;accent-color:var(--coral)}
+.strat .lbl{flex:1 1 230px;min-width:150px;color:var(--text);font-weight:600;font-size:13px}
+.tg{font-size:9px;color:#fff;background:var(--text-faint);border-radius:5px;padding:1px 6px;margin-left:6px;font-weight:700}
+.tg.acc{background:#2d6a4f}.tg.ret{background:#9b2226}
+.opts{display:none;gap:7px;flex:1 1 100%;padding:4px 0 5px 26px}
+.strat.on .opts{display:flex;flex-wrap:wrap}
+.opts select,.opts input{padding:6px 9px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:var(--input-bg);color:var(--text);font-family:inherit}
+[data-theme="night"] .opts select,[data-theme="night"] .opts input{color:var(--gold)}
+.opts .own{width:140px}.opts .sl{width:140px}.opts .pk{width:115px}.opts .freq{width:110px}
+.srcchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;border:1px solid var(--border);border-radius:20px;padding:5px 12px;cursor:pointer;background:var(--input-bg);color:var(--text-dim);font-weight:600;user-select:none;transition:.12s}
+.srcchip:hover{border-color:var(--coral)}
+.srcchip input{width:14px;height:14px;accent-color:var(--coral);margin:0}
+.srcchip.on{background:var(--coral-light);border-color:var(--coral);color:var(--coral)}
+
+/* ── Repeatable rows ── */
+.repeat{border:1px solid var(--border-soft);border-radius:11px;padding:13px;margin-bottom:10px;background:var(--surface-2);position:relative}
+[data-theme="night"] .repeat{background:#1a3046;border-color:#2c4f6e}
+.riskrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 0;border-bottom:1px solid var(--border-soft)}
+.riskrow .who{font-weight:800;font-size:12px;color:var(--navy);flex:0 0 110px}
+[data-theme="night"] .riskrow .who{color:#f1f6fb}
+.riskrow input,.riskrow select{flex:1 1 90px;min-width:80px;padding:6px 9px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:var(--input-bg);color:var(--text)}
+[data-theme="night"] .riskrow input,[data-theme="night"] .riskrow select{color:var(--gold)}
+
+/* ── Buttons ── */
+.addbtn{background:var(--surface);color:var(--blue);border:1px solid var(--blue);border-radius:9px;padding:7px 13px;font-size:12px;cursor:pointer;font-weight:700;margin:4px 0;font-family:inherit;transition:.15s}
+.addbtn:hover{background:var(--blue-light)}
+[data-theme="night"] .addbtn{background:transparent;border-color:#3f7cb4;color:#d3e2ee}
+[data-theme="night"] .addbtn:hover{border-color:var(--lime);color:var(--lime);background:transparent}
+.del{background:var(--red-light);color:var(--red);border:0;border-radius:7px;padding:4px 10px;cursor:pointer;font-size:11px;float:right;font-family:inherit;font-weight:700;transition:.15s}
+.del:hover{background:var(--red);color:#fff}
+.btn{display:inline-flex;align-items:center;gap:7px;background:var(--blue);color:#fff;border:0;border-radius:9px;padding:8px 15px;font-weight:700;font-size:12.5px;cursor:pointer;margin:2px;font-family:inherit;transition:.15s}
+.btn:hover{box-shadow:var(--shadow)}
+.btn.alt{background:var(--surface);border:1px solid var(--border);color:var(--text-dim)}
+.btn.alt:hover{border-color:var(--blue);color:var(--blue)}
+
+/* ── Live preview ── */
+pre{white-space:pre-wrap;word-break:break-word;background:var(--surface-2);color:var(--text);padding:15px;border-radius:11px;font-size:11.5px;line-height:1.6;max-height:72vh;overflow:auto;margin:0;border:1px solid var(--border-soft);font-family:ui-monospace,'SF Mono',Menlo,monospace}
+[data-theme="night"] pre{background:#101c2e;color:#dbe6f4;border-color:#2c4f6e}
+
+.muted{color:var(--text-faint);font-size:11px;margin:6px 0 0}
+.count{font-size:11px;color:var(--text-faint);font-weight:600}
+small.hint{color:var(--text-faint);font-size:10px;font-weight:600}
+
+/* ── Chips / scope-out ── */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;border:1px solid var(--border);border-radius:20px;padding:5px 12px;cursor:pointer;background:var(--blue-light);color:var(--blue);font-weight:600;transition:.12s}
+.chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.sop{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:9px;background:var(--lime-light);margin-bottom:6px;border:1px solid var(--border-soft)}
+.sop input{width:17px;height:17px;flex:none;accent-color:var(--green)}
+.sop .lbl{color:var(--lime-dark);font-size:12.5px;font-weight:700}
+[data-theme="night"] .sop .lbl{color:var(--lime)}
+
+/* ── Fee table ── */
+table.fee{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px}
+table.fee th,table.fee td{border:1px solid var(--border);padding:6px 7px}
+table.fee th{background:var(--navy);color:#fff;font-size:10.5px;font-weight:800;text-align:left}
+[data-theme="night"] table.fee th{background:#23547F}
+table.fee td{background:var(--surface)}
+[data-theme="night"] table.fee td{background:#1f3e5a}
+table.fee td:first-child{font-weight:700;color:var(--text-dim)}
+table.fee input{width:100%;border:0;font-size:11.5px;padding:3px;background:transparent;color:var(--text);font-family:inherit}
+[data-theme="night"] table.fee input{color:var(--gold)}
+table.fee td.rowtot,table.fee tr.tot td{background:var(--blue-light);font-weight:800;color:var(--blue)}
+[data-theme="night"] table.fee td.rowtot,[data-theme="night"] table.fee tr.tot td{background:#284f72;color:var(--blue-bright)}
+.splitcols{display:flex;gap:12px;flex-wrap:wrap}
+.splitcol{flex:1 1 300px;min-width:260px;border:1px solid var(--border);border-radius:11px;padding:11px;background:var(--surface-2)}
+.splitcol>h4{margin:0 0 7px;font-size:12px;font-weight:800;color:var(--blue);border-bottom:1px solid var(--border-soft);padding-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+@media(max-width:760px){.splitcol{flex:1 1 100%}}
+.stratgroup{border:1px solid var(--border-soft);border-radius:9px;margin:6px 0}
+.stratgroup>summary{cursor:pointer;padding:7px 11px;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--blue);background:var(--surface-2);border-radius:8px;list-style:none}
+.stratgroup[open]>summary{border-bottom:1px solid var(--border-soft);border-radius:8px 8px 0 0}
+.stratgroup>summary::-webkit-details-marker{display:none}
+.stratgroup>summary::before{content:"\25B8  ";color:var(--text-faint)}
+.stratgroup[open]>summary::before{content:"\25BE  "}
+.stratgroup .gcount{color:var(--text-faint);font-weight:600}
+.stratgroup>.strat{margin:2px 5px}
+.repeat .fld label{font-size:9.5px;letter-spacing:.3px;margin-bottom:2px}
+.repeat .fld input,.repeat .fld select{padding:6px 9px;font-size:12px;border-radius:7px}
+.repeat .row{gap:8px;margin-bottom:7px}
+.multidrop{border:1px solid var(--border);border-radius:9px;background:var(--input-bg);margin-top:2px}
+.multidrop>summary{cursor:pointer;padding:9px 11px;list-style:none;color:var(--text-dim);font-weight:600;font-size:13px}
+.multidrop>summary::-webkit-details-marker{display:none}
+.multidrop>summary::after{content:"\25BE";float:right;color:var(--text-faint)}
+.multidrop[open]>summary::after{content:"\25B4"}
+[data-theme="night"] .multidrop>summary{color:var(--gold)}
+.multidrop .chklist{padding:2px 11px 9px;max-height:230px;overflow:auto}
+.tight .fld label{font-size:9.5px;letter-spacing:.3px;margin-bottom:2px}
+.tight .fld input,.tight .fld select{padding:6px 9px;font-size:12px;border-radius:7px}
+.tight .row{gap:8px;margin-bottom:7px}
+.tight .miniH{margin:8px 0 4px}
+.tight table.fee th,.tight table.fee td{padding:4px 5px}
+.tight p.muted{margin:4px 0}
+.chkitem{display:flex;align-items:center;gap:8px}
+.chkitem input[type=checkbox]{width:15px;height:15px;flex:none;margin:0}
+.multidrop .chklist{padding:6px 11px 9px}
+</style></head><body>
+<header class="topbar"><div class="topbar-inner">
+ <div class="brand-mark"><span class="bm-line"><span class="bm-my">My</span>Wealth</span><span class="bm-sub">SOLUTIONS</span></div>
+ <div class="topbar-tag">Advice Request Builder</div>
+ <div class="topbar-spacer"></div>
+ <button class="topbar-btn ghost" onclick="toggleTheme()" id="themeBtn">☾ Night</button>
+ <button class="topbar-btn ghost" onclick="copyOut()">⧉ Copy</button>
+ <button class="topbar-btn ghost" onclick="dl('json')">⬇ .json</button>
+ <button class="topbar-btn ghost" onclick="document.getElementById('loadJson').click()">⬆ Load</button>
+ <input type="file" id="loadJson" accept=".json,application/json" style="display:none" onchange="loadStateFile(this)">
+ <button class="topbar-btn primary" onclick="dlWord()">⬇ Download Word</button>
+</div></header>
+<div class="wrap"><div class="form" id="form"></div></div>
+<script>
+/* ── Day/Night theme (matches SOA generator) ── */
+let _theme=(function(){try{return localStorage.getItem('mws_ar_theme')||'night'}catch(e){return 'night'}})();
+function applyTheme(){document.documentElement.setAttribute('data-theme',_theme==='night'?'night':'day');var b=document.getElementById('themeBtn');if(b)b.textContent=_theme==='night'?'☀ Day':'☾ Night';}
+function toggleTheme(){_theme=_theme==='night'?'day':'night';try{localStorage.setItem('mws_ar_theme',_theme)}catch(e){}applyTheme();}
+applyTheme();
+const DATA=[{"area": "1 · Debt Management", "scen": [{"name": "Establish or utilise an offset account", "strat": "We recommend you an offset account against your home loan and hold your cash and surplus within it.", "to": "accumulator", "slots": [], "custom": false, "pick": ["Establish", "Utilise"]}, {"name": "Direct surplus income to offset", "strat": "We recommend you direct your surplus of $___ to your home loan offset account.", "to": "accumulator", "slots": ["weekly amount"], "custom": false}, {"name": "Direct tax savings to offset", "strat": "We recommend you direct your annual tax savings of $___ to your home loan offset account.", "to": "accumulator", "slots": ["annual amount"], "custom": false}, {"name": "Use cash / sale proceeds to reduce the home loan", "strat": "We recommend using {amt} from your existing cash or sale proceeds to reduce your home loan.", "to": "accumulator", "slots": ["$ amount"], "custom": false}, {"name": "Retain an emergency cash buffer in the offset", "strat": "We recommend retaining {amt} in your offset account as an emergency cash buffer.", "to": "accumulator", "slots": ["$ amount"], "custom": false}, {"name": "Consolidate car loan into home loan", "strat": "We recommend consolidating your existing car loan into your home loan.", "to": "both", "slots": [], "custom": false}, {"name": "Consolidate other debt (personal loan / credit card)", "strat": "We recommend you clear your credit card / personal loan balance using funds from your home loan offset account, and close the facility to prevent re-accumulation.", "to": "both", "slots": [], "custom": false}, {"name": "Refinance property loan(s) from P&I to interest only", "strat": "We recommend refinancing your property loan(s) from principal and interest to interest only repayments.", "to": "accumulator", "slots": [], "custom": false}, {"name": "Refinance to draw on available equity (GEARING)", "strat": "We recommend you refinance your existing home and/or investment property loan to draw on your available equity.", "to": "accumulator", "slots": [], "custom": false}, {"name": "Use equity to fund the 20% deposit for an investment property purchase (GEARING)", "strat": "We recommend you use the equity to fund the 20% deposit (plus costs) for an investment property purchase.", "to": "accumulator", "slots": [], "custom": false}, {"name": "Establish a Term Loan / debt recycling (GEARING)", "strat": "We recommend you establish a Term Loan for investment purposes using your existing home or investment property loan as equity.", "to": "accumulator", "slots": ["$ amount"], "custom": false}, {"name": "Use inheritance / windfall to pay down the home loan", "strat": "We recommend you use $XXX of your anticipated inheritance to pay down your home loan , and retain $XXX of your inheritance in your offset account to cover .", "to": "accumulator", "slots": ["$ amount"], "custom": false}, {"name": "Custom debt management strategy (free text)", "strat": "", "to": "both", "slots": [], "custom": true}, {"name": "Set aside funds for upcoming home sale & purchase (PPR — no property advice)", "strat": "You intend to sell your current home and purchase a new home. As we cannot provide advice on the purchase of your home, our advice is limited to setting aside funds of $___ (and factoring in your anticipated home debt) for this purpose.", "to": "accumulator", "slots": ["$ set aside"], "custom": false}], "hasProd": false, "superMulti": false, "insMulti": false, "bondMulti": false, "invMulti": false, "isCash": false, "isContrib": false}, {"area": "2 · Investment Property", "scen": [{"name": "Purchase an investment property using equity", "strat": "We recommend you purchase an investment property (in the name of ) to the value of approximately $XXX (plus costs).", "to": "accumulator", "slots": ["$ (plus costs)"], "custom": false}, {"name": "Purchase an investment property using cash / savings", "strat": "We recommend you purchase an investment property to the value of approximately $XXX (plus costs), funded from your available cash/savings.", "to": "accumulator", "slots": ["$ amount"], "custom": false}, {"name": "Sell current property and use proceeds to buy a new property", "strat": "We recommend you sell your existing property for estimated net sale proceeds of $___ and use the proceeds to purchase a new property (plus costs).", "to": "both", "slots": ["$ sale proceeds"], "custom": false}, {"name": "Convert current home into an investment property", "strat": "We recommend you retain your existing home and convert it into an investment property, renting it at an estimated $XXX per week.", "to": "both", "slots": [], "custom": false}, {"name": "Retain an existing investment property", "strat": "We recommend you retain your existing investment property for now.", "to": "retirement", "slots": [], "custom": false}, {"name": "Sell an existing investment property", "strat": "We recommend you sell your existing investment property for anticipated net sale proceeds (after costs & CGT) of $___ and redeploy the proceeds as set out in this advice.", "to": "both", "slots": ["$ net proceeds (after costs & CGT)"], "custom": false}], "hasProd": false, "superMulti": false, "insMulti": false, "bondMulti": false, "invMulti": false, "isCash": false, "isContrib": false}, {"area": "3 · Investment Bond", "scen": [{"name": "Establish an investment bond", "strat": "We recommend you establish through the Generation Life – Life Builder Investment Bond platform and invest in line with your risk profile.", "to": "both", "slots": ["initial $", "ongoing $ pm"], "custom": false}, {"name": "Retain existing investment bond", "strat": "We recommend you retain your existing investment bond.", "to": "both", "slots": [], "custom": false}, {"name": "Sell down existing investment bond", "strat": "We recommend you sell down (withdraw from) your existing investment bond.", "to": "both", "slots": ["$ amount"], "custom": false}, {"name": "CGT implications — investment bond (free text)", "strat": "", "to": "both", "slots": [], "custom": true}], "hasProd": true, "superMulti": false, "insMulti": false, "bondMulti": true, "invMulti": false, "isCash": false, "isContrib": false}, {"area": "4 · Investment Plan", "scen": [{"name": "Lump-sum investment", "strat": "We recommend you invest a lump sum of $XXX into a new investment account and invest in line with your risk profile.", "to": "both", "slots": ["$ amount"], "custom": false, "g": "core"}, {"name": "In-specie transfer — retain existing holdings in the new platform (no sale)", "strat": "We recommend you in-specie transfer your existing portfolio into the new account and retain the holdings (no sale), avoiding CGT and transaction costs.", "to": "both", "slots": ["$ amount"], "custom": false, "g": "existing"}, {"name": "Use inheritance / windfall to invest", "strat": "We recommend you invest your inheritance of {amt} into a new investment account, invested in line with your risk profile, and elect to reinvest distributions.", "to": "both", "slots": ["$ amount"], "custom": false, "g": "core"}, {"name": "Sell down existing investment / asset", "strat": "We recommend you sell down your existing .", "to": "both", "slots": ["$ amount"], "custom": false, "g": "existing"}, {"name": "Vanguard index option (instead of CARE managed portfolios)", "strat": "We recommend you establish a new investment account and transfer your existing CARE investment holdings to the Vanguard Portfolio.", "to": "both", "slots": [], "custom": false, "g": "existing"}, {"name": "Establish a new investment account", "strat": "We recommend you establish a new investment account and invest in line with your risk profile.", "to": "both", "slots": [], "custom": false, "estInv": true, "g": "core"}, {"name": "Add a reserves portfolio", "strat": "We recommend the inclusion of the Reserves Portfolio to provide a source of liquidity to fund pension payments and short-term income needs. This may assist in reducing the need to draw on growth assets during periods of market volatility, thereby helping to manage sequencing risk.", "to": "retirement", "slots": [], "custom": false, "g": "draw"}, {"name": "Commence drawdown (draw an income from the investment)", "strat": "We recommend you commence a drawdown of $___ from your investment account to help meet your income needs. Drawing an income stream will provide you with the funds required to maintain your lifestyle in line with your financial freedom goals.", "to": "ret", "slots": ["monthly amount"], "custom": false, "g": "draw"}, {"name": "Rebalance existing holdings into the recommended portfolio", "strat": "We recommend you rebalance your existing holdings into the recommended portfolio in line with your risk profile.", "to": "both", "slots": [], "custom": false, "g": "existing"}, {"name": "CGT wording / implications following a sell-down or CGT event (free text)", "strat": "", "to": "both", "slots": [], "custom": true, "g": "cgt"}, {"name": "Retain existing investment option and/or platform", "strat": "We recommend you retain your existing investment option and/or platform and invest in line with your risk profile.", "to": "both", "slots": [], "custom": false, "g": "existing"}, {"name": "DCA strategy — % upfront, remainder dollar cost averaged over 12 months", "strat": "___% of your funds will be lump sum invested & the remainder will be Dollar Cost Averaged over 12 months.", "to": "both", "slots": ["% upfront"], "custom": false, "g": "core"}, {"name": "Money on the move (MOTM) framework", "strat": "As per the Money on the Move framework, for every 5% drop in the market we may bring forward 1 month's Dollar Cost Averaging to ensure your funds are invested as efficiently as possible. The above initial and ongoing DCA investment amounts will also be subject to change based on current market valuations and our Money on the Move framework to ensure your funds are invested as effectively as possible.", "to": "both", "slots": ["$ amount"], "custom": false, "g": "core"}, {"name": "100% lump sum invested", "strat": "100% of your funds will be lump sum invested upon implementation.", "to": "both", "slots": [], "custom": false, "g": "core"}, {"name": "In-specie transfer to minimise buy/sell spread & time out of market risks", "strat": "An in-specie transfer reduces the need to sell down assets, withdraw funds to your bank account, or re-purchase assets. This transfer process saves you on associated transaction costs and buy/sell spreads, and minimises out of market risks, ensuring your portfolios remain invested.", "to": "both", "slots": [], "custom": false, "g": "cgt"}], "hasProd": true, "superMulti": false, "insMulti": false, "bondMulti": false, "invMulti": true, "isCash": false, "isContrib": false}, {"area": "5 · Personal Superannuation & Contributions", "scen": [{"name": "Establish new fund + full rollover (close & transfer 100%)", "strat": ", we recommend you close your existing and transfer 100% of the balance to a new fund that has been customised for your needs.", "to": "both", "slots": [], "custom": false, "g": "setup"}, {"name": "Establish new fund + partial rollover, retain minimum for insurance", "strat": ", we recommend you retain the minimum required ($XXX) in your existing to retain your underwritten insurance and transfer the remaining balance to a new fund that has been customised for your needs.", "to": "both", "slots": [], "custom": false, "g": "setup"}, {"name": "Establish new fund + partial rollover, retain minimum for higher SG contributions", "strat": "We recommend you retain the minimum balance in your existing fund to keep receiving your higher employer SG contributions, and roll the remainder to the new recommended fund.", "to": "both", "slots": [], "custom": false, "g": "setup"}, {"name": "Retain existing fund (invest in line with risk profile)", "strat": "We recommend you retain your existing Superannuation account (in line with your risk profile) that has been customised for your needs.", "to": "both", "slots": [], "custom": false, "g": "setup"}, {"name": "Consolidate multiple super accounts", "strat": "We recommend you consolidate your existing superannuation accounts into a single fund customised for your needs (after confirming no valuable insurance or benefits are lost).", "to": "both", "slots": [], "custom": false, "g": "setup"}, {"name": "In-specie transfer of super holdings", "strat": "We recommend completing an in-specie transfer of your assets () into a personal superannuation fund tailored to your needs.", "to": "both", "slots": ["$ amount"], "custom": false, "g": "setup"}, {"name": "Redirect / continue employer contributions", "strat": "We recommend that you provide your employer with the details of your new superannuation fund to ensure all future contributions are directed to your new account.", "to": "both", "slots": [], "custom": false, "g": "setup"}, {"name": "Establish / set up an SMSF (and manage — rebalance + pension transition)", "strat": "We recommend you establish a new Account Based Pension account and invest in line with your risk profile.", "to": "retirement", "slots": ["$ amount"], "custom": false, "g": "smsf"}, {"name": "Recontribution strategy", "strat": "We recommend you establish two new superannuation accounts and invest in line with your risk profile.", "to": "both", "slots": ["$ amount"], "custom": false, "g": "pension"}, {"name": "SMSF wind-up / split on separation (in-specie to personal super)", "strat": "Following your separation, we recommend completing an in-specie transfer of your allocated SMSF assets into a personal superannuation fund tailored to your needs.", "to": "both", "slots": [], "custom": false, "g": "smsf"}, {"name": "Disability super benefit — staged lump-sum withdrawals (TPD/disability payout, tax-free uplift)", "strat": "We recommend you make one-off lump sum withdrawals from your new Accumulation fund as a disability super benefit (e.g.", "to": "both", "slots": ["$ amount"], "custom": false, "g": "tpd"}, {"name": "Reversionary beneficiary nomination (pension phase)", "strat": "We recommend you nominate a reversionary beneficiary within your recommended pension funds.", "to": "retirement", "slots": [], "custom": false, "g": "pension"}, {"name": "In-specie transfer of super on separation (SMSF asset split to personal super)", "strat": "Following your recent separation, we recommend completing an in-specie transfer of your allocated SMSF assets (e.g.", "to": "both", "slots": [], "custom": false, "g": "smsf"}, {"name": "Retain an existing SMSF (operate, add account, redirect contributions, reinvest)", "strat": "We recommend you retain your existing SMSF.", "to": "both", "slots": [], "custom": false, "g": "smsf"}, {"name": "SMSF with corporate trustee holding a geared investment property (LRBA cashflow)", "strat": "Your SMSF (corporate trustee — Pty Ltd ATF the fund) holds an investment property with secured debt.", "to": "both", "slots": [], "custom": false, "g": "smsf"}, {"name": "SMSF wind-up / consolidation to a retail fund (non-separation, cost/suitability driven)", "strat": "You have asked us to review the long-term suitability of retaining your SMSF.", "to": "both", "slots": [], "custom": false, "g": "smsf"}, {"name": "Commence an Account-Based Pension and draw an income (minimum % or set amount)", "strat": "We recommend you commence an Account-Based Pension. Drawing minimum pension payments is intended to support your lifestyle needs while preserving long-term capital growth.", "to": "ret", "slots": [], "custom": false, "abp": true, "g": "pension"}, {"name": "Commence a pension / transition to retirement (TTR)", "strat": "We recommend you establish a new Transition to Retirement (TTR) pension account, roll over your existing accumulation balance into it, and draw the maximum allowable 10% as a lump sum each financial year (minimum 4% while under age 65).", "to": "both", "slots": [], "custom": false, "ttr": true, "g": "pension"}, {"name": "CGT implications on a super changeover (SMSF, or rebalance Vanguard↔CARE) (free text)", "strat": "", "to": "both", "slots": [], "custom": true, "g": "cgt"}, {"name": "DCA strategy — % upfront, remainder dollar cost averaged over 12 months (super)", "strat": "___% of CARE funds will be lump sum invested upon rollover & the remainder will be Dollar Cost Averaged over 12 months.", "to": "both", "slots": ["% upfront"], "custom": false, "g": "setup"}, {"name": "Money on the move (MOTM) framework — phase the lump sum into super", "strat": "As per the Money on the Move framework, for every 5% drop in the market we may bring forward 1 month's Dollar Cost Averaging to ensure your funds are invested as efficiently as possible.", "to": "both", "slots": [], "custom": false, "g": "setup"}, {"name": "100% lump sum invested upon rollover", "strat": "100% of CARE funds will be lump sum invested upon rollover.", "to": "both", "slots": [], "custom": false, "g": "setup"}, {"name": "CGT applicable within super upon rollover or rebalance", "strat": "It is anticipated that the rollover/rebalance will trigger a capital gains tax (CGT) event within your superannuation, resulting in tax being payable on some of the underlying holdings. Any available carried-forward capital losses may be used to offset these or future capital gains. We estimate an approximate CGT impact of $___.", "to": "both", "slots": ["$ estimated CGT"], "custom": false, "g": "cgt"}, {"name": "Apply for the Centrelink Age Pension (retirement trigger)", "strat": "We recommend that next financial year, when you retire or reduce your work, you apply for the Centrelink Age Pension.", "to": "both", "slots": [], "custom": false, "g": "pension"}, {"name": "Salary sacrifice / concessional contributions", "strat": "We recommend you your salary sacrifice (concessional) contributions of $___.", "to": "accumulator", "slots": ["weekly amount"], "custom": false, "pick": ["Commence", "Continue", "Increase", "Decrease", "Cease"], "g": "concessional"}, {"name": "Carry-forward (catch-up) concessional contributions", "strat": "We recommend you make a carry-forward concessional contribution of $XXX, utilising your unused concessional cap amounts from previous years (after the 15% contributions tax).", "to": "accumulator", "slots": ["$ amount"], "custom": false, "g": "concessional"}, {"name": "Non-concessional contribution", "strat": "This financial year, we recommend withdrawing from your existing pension account and re-contributing it as a once-off non-concessional contribution as part of a re-contribution strategy.", "to": "both", "slots": ["$ amount"], "custom": false, "g": "ncc"}, {"name": "Bring-forward non-concessional contribution", "strat": "We recommend you use the bring-forward rule to make a non-concessional contribution of $XXX (bringing forward up to three years of your non-concessional cap).", "to": "accumulator", "slots": ["$ amount"], "custom": false, "g": "ncc"}, {"name": "Spouse contribution", "strat": ", we recommend you make an after-tax spouse contribution of up to $3,000 p.a.", "to": "accumulator", "slots": ["$ amount"], "custom": false, "g": "ncc"}, {"name": "Government co-contribution", "strat": "We recommend you make a non-concessional (after-tax) contribution of up to $1,000 to superannuation to take advantage of the Federal Government co-contribution scheme.", "to": "accumulator", "slots": [], "custom": false, "g": "ncc"}, {"name": "Contribution splitting", "strat": ", we recommend you split up to ___% of your concessional (employer and personal tax-deductible) contributions to your spouse's super account annually.", "to": "accumulator", "slots": ["% (up to)"], "custom": false, "g": "concessional"}, {"name": "Personal deductible contribution (one-off lump sum concessional)", "strat": "We recommend you make a one-off personal deductible (concessional) contribution of $___ to maximise your concessional contributions.", "to": "accumulator", "slots": ["$ amount"], "custom": false, "pick": ["maximise this FY", "each year", "for a set number of years"], "g": "concessional"}, {"name": "Work test note (age 67+)", "strat": "We recommend ensuring contributions are made prior to turning age 67, due to potential work test requirements and contribution eligibility restrictions.", "to": "both", "slots": [], "custom": false, "g": "notes"}, {"name": "Downsizer contribution", "strat": "We recommend you utilise the downsizer contribution strategy to make a one-off contribution of up to $300,000 each ($600,000 per couple) to your new superannuation account from the proceeds of the sal", "to": "retirement", "slots": ["$ amount"], "custom": false, "g": "ncc"}, {"name": "Contributions reserving strategy (double concessional cap before age 67)", "strat": "We recommend implementing a contributions reserving strategy within your SMSF by making concessional contributions totalling prior to 30 June.", "to": "both", "slots": ["$ amount"], "custom": false, "g": "concessional"}, {"name": "First Home Super Saver Scheme (FHSSS)", "strat": "We recommend you each utilise the First Home Super Saver Scheme (FHSSS) to assist with the purchase of your first property: make a lump-sum personal contribution before 30 June, commence salary sacrif", "to": "accumulator", "slots": ["$ amount"], "custom": false, "g": "ncc"}, {"name": "Salary packaging (employer-provided, e.g. health / PBI sector)", "strat": "We recommend you commence salary packaging your income to the maximum amount available to you (e.g.", "to": "both", "slots": ["$ amount"], "custom": false, "g": "concessional"}, {"name": "Carry-forward concessional contribution to offset CGT on an asset sale", "strat": "We recommend you each make a once-off concessional contribution using the carry-forward rule in the year you realise the capital gain (e.g.", "to": "accumulator", "slots": ["$ amount"], "custom": false, "g": "concessional"}, {"name": "Notice of intent — claim a tax deduction on unclaimed personal contributions", "strat": "We recommend you submit a notice of intent to claim a tax deduction on any unclaimed personal contributions made this and the previous financial year.", "to": "acc", "slots": [], "custom": false, "g": "concessional"}, {"name": "Arrange salary sacrifice with employer (switch post-tax to pre-tax)", "strat": "We recommend you speak with your employer to switch your current post-tax contributions to pre-tax salary-sacrifice contributions.", "to": "acc", "slots": [], "custom": false, "g": "concessional"}, {"name": "Division 293 tax note (high-income earners)", "strat": "Note: as a higher-income earner you may be subject to Division 293 tax — an additional 15% on concessional contributions where your income plus contributions exceeds the threshold.", "to": "both", "slots": [], "custom": false, "g": "notes"}, {"name": "Division 296 tax note (total super balance over $3m)", "strat": "Note: Division 296 may apply an additional tax on earnings attributable to the portion of your total super balance above $3m.", "to": "both", "slots": [], "custom": false, "g": "notes"}, {"name": "Establish a new investment account within your existing SMSF", "strat": "We recommend you establish your new investment account within your existing SMSF.", "to": "both", "slots": [], "custom": false, "g": "smsf"}, {"name": "Invest utilising the CARE investment philosophy", "strat": "We recommend you invest utilising the CARE investment philosophy.", "to": "both", "slots": [], "custom": false, "g": "smsf"}], "hasProd": true, "superMulti": true, "insMulti": false, "bondMulti": false, "invMulti": false, "isCash": false, "isContrib": true}, {"area": "6 · Personal Protection", "scen": [{"name": "Levels of cover as per quotes", "strat": "Levels of cover as per the attached quotes.", "to": "both", "slots": [], "custom": false, "g": "core"}, {"name": "Take out new cover (Life / TPD / Trauma / IP)", "strat": "We recommend you take out new insurance cover through and therefore be insured for the following amounts: • Life $XXX (Linked) • TPD $XXX (Linked & Own-Occupation) • Trauma $XXX • IP $XXX per month (I", "to": "both", "slots": [], "custom": false, "g": "core"}, {"name": "Replace / cancel & take out new cover", "strat": ", we recommend you cancel your existing insurance and take out new insurance cover and therefore be insured for the following amounts: .", "to": "both", "slots": [], "custom": false, "g": "core"}, {"name": "Top-up / increase existing cover", "strat": "We recommend you top-up your insurance cover through and therefore be insured for the following amounts: .", "to": "both", "slots": [], "custom": false, "g": "core"}, {"name": "Income Protection — retain existing", "strat": "We have recommended retaining your income protection policy with 75% of your income and super.", "to": "both", "slots": [], "custom": false, "g": "ip"}, {"name": "Apply for child cover", "strat": "We recommend you take out Child Cover of $XXX for under your policy.", "to": "both", "slots": ["$ amount"], "custom": false, "g": "sit"}, {"name": "Cancel cover no longer required", "strat": "We recommend you cancel your existing of $XXX as it exceeds your current insurance needs.", "to": "both", "slots": [], "custom": false, "g": "core"}, {"name": "Income Protection — increasing/CPI-indexed claim benefit", "strat": "We recommend an increasing-claim option so that, while you are receiving payments, your benefit is indexed at each review date in line with CPI.", "to": "both", "slots": [], "custom": false, "g": "ip"}, {"name": "Own-occupation TPD definition", "strat": "We have recommended TPD with an 'Own Occupation' definition, which is the highest level of cover.", "to": "both", "slots": [], "custom": false, "g": "tpd"}, {"name": "Differentiate TPD definition by life stage (own-occ primary earner / any-occ spouse)", "strat": "We recommend own-occupation TPD for the primary earner and retaining any-occupation TPD for the spouse who is currently out of the workforce / on parental leave.", "to": "both", "slots": [], "custom": false, "g": "tpd"}, {"name": "Trauma payout deployment (medical recovery + partner salary replacement)", "strat": "Your trauma cover is sized to cover an estimated amount for medical expenses plus an amount for your partner's salary replacement while you recover (e.g.", "to": "both", "slots": [], "custom": false, "g": "sit"}, {"name": "Retain cover during workforce absence (maternity / parental leave)", "strat": "While you are not working, we recommend you retain your existing in-super insurance cover (Life/TPD/IP) at its current levels, with the income protection structured with a shorter waiting period funde", "to": "both", "slots": [], "custom": false, "g": "sit"}, {"name": "Retain existing cover and top up with new cover", "strat": "We recommend you retain your existing cover and top up with new recommended cover.", "to": "both", "slots": [], "custom": false, "g": "core"}, {"name": "Cancel cover no longer required (age + debt-free + income-replacement redundant)", "strat": "By completing a full rollover of your existing super fund, your existing Life, TPD & Income Protection insurance will be cancelled.", "to": "both", "slots": [], "custom": false, "g": "core"}, {"name": "Dual income protection — retail top-up over employer/industry cover (offset benefit)", "strat": "You will have two income protection policies (your existing fund cover plus the recommended retail policy).", "to": "both", "slots": [], "custom": false, "g": "sit"}, {"name": "Occupation pre-assessment / high-risk occupation constraint", "strat": "Given your occupation, an occupation pre-assessment was completed for this plan.", "to": "both", "slots": [], "custom": false, "g": "sit"}, {"name": "Size TPD sum insured with a super-tax uplift (gross-up if claimed in super)", "strat": "The TPD sum insured is set to cover your identified needs plus an uplift (e.g.", "to": "both", "slots": [], "custom": false, "g": "tpd"}, {"name": "Income Protection affordability structuring — waiting & benefit period calibrated to cash/leave", "strat": "We have recommended a 90-day waiting period as you have available cash and leave to fund 90 days of expenses, which reduces the overall cost of the cover.", "to": "retirement", "slots": [], "custom": false, "g": "ip"}, {"name": "Retain, alter and/or cancel a mix of existing covers (retain X / cancel Y / alter Z)", "strat": "We recommend you retain , cancel and alter across your existing policies as set out below.", "to": "both", "slots": [], "custom": false, "g": "core"}, {"name": "Transfer existing cover to the recommended platform via takeover terms + top up with new cover", "strat": "We recommend transferring your existing cover to the recommended platform via takeover terms, and topping up with new recommended cover through the product insurer.", "to": "both", "slots": [], "custom": false, "g": "core"}, {"name": "Retain employer paid insurance cover", "strat": "We recommend you retain your existing employer-paid (default) insurance cover.", "to": "both", "slots": [], "custom": false, "g": "core"}, {"name": "Retain employer paid insurance cover + top up with new cover", "strat": "We recommend you retain your existing employer-paid (default) insurance cover and top up with new recommended cover.", "to": "both", "slots": [], "custom": false, "g": "core"}, {"name": "Only eligible for Any-Occupation TPD definition", "strat": "Based on your circumstances you are only eligible for TPD cover on an Any-Occupation definition.", "to": "both", "slots": [], "custom": false, "g": "sit"}, {"name": "Only eligible for Non-occupational TPD definition", "strat": "Based on your circumstances you are only eligible for TPD cover on a Non-occupational definition.", "to": "both", "slots": [], "custom": false, "g": "sit"}, {"name": "Only eligible for Homemaker TPD definition", "strat": "Based on your circumstances you are only eligible for TPD cover on a Homemaker definition.", "to": "both", "slots": [], "custom": false, "g": "sit"}, {"name": "Income Protection increasing claims (CPI) not available", "strat": "Please note an increasing-claims (CPI-indexed) benefit is not available on the recommended income protection cover.", "to": "both", "slots": [], "custom": false, "g": "sit"}, {"name": "Pre-assessment factors: smoker", "strat": "Note: based on pre-assessment, smoker status affects the available terms; cover may be subject to loadings or exclusions.", "to": "both", "slots": [], "custom": false, "g": "sit"}, {"name": "Pre-assessment factors: health disclosure", "strat": "Note: based on pre-assessment of your health disclosures, cover may be subject to loadings or exclusions.", "to": "both", "slots": [], "custom": false, "g": "sit"}, {"name": "Pre-assessment factors: pastimes", "strat": "Note: based on pre-assessment of your pastimes/pursuits, cover may be subject to loadings or exclusions.", "to": "both", "slots": [], "custom": false, "g": "sit"}], "hasProd": true, "superMulti": false, "insMulti": true, "bondMulti": false, "invMulti": false, "isCash": false, "isContrib": false}, {"area": "7 · Cashflow Management & Budgeting", "scen": [{"name": "Establish an MCMA / cash hub", "strat": "We recommend you establish a Macquarie Cash Management Account (MCMA).", "to": "both", "slots": [], "custom": false, "mcma": true}, {"name": "Direct surplus income to offset / savings", "strat": "We recommend you direct your surplus of $___ to your offset / savings account.", "to": "accumulator", "slots": ["weekly amount"], "custom": false}, {"name": "Direct tax savings to offset / savings", "strat": "We recommend you direct your annual tax savings of $___ to your offset / savings account.", "to": "accumulator", "slots": ["annual amount"], "custom": false}, {"name": "Budget / spending plan recommendation", "strat": "We recommend you use the automated budgeting system within the My Wealth Portal to track your spending and align your cashflow with your goals (and, in retirement, your pension drawdowns).", "to": "retirement", "slots": [], "custom": false}, {"name": "Set aside $X for ongoing insurance costs (where no other ongoing plan costs)", "strat": "We recommend you set aside $___ to cover your ongoing insurance costs.", "to": "both", "slots": ["$ amount"], "custom": false}, {"name": "Establish an MCAA (Macquarie Accelerator) cash hub", "strat": "We recommend you establish a Macquarie Accelerator (MCAA) account as your cash hub.", "to": "both", "slots": [], "custom": false}, {"name": "Retain an emergency cash buffer", "strat": "We recommend you retain an emergency cash buffer of $___ within your offset/savings for unexpected expenses.", "to": "both", "slots": ["$ amount"], "custom": false}], "hasProd": false, "superMulti": false, "insMulti": false, "bondMulti": false, "invMulti": false, "isCash": true, "isContrib": false}];const CARE=[{"name": "Active, professional day-to-day management (dynamic asset allocation)"}, {"name": "Reserves component — liquidity to avoid forced selling in downturns"}, {"name": "Diversification & risk-adjusted returns (Core / Active / Enhanced)"}, {"name": "Behavioural discipline — removing emotion from investing"}, {"name": "Tax efficiency — franking credits & CGT management within the managed account"}, {"name": "Direct ownership & transparency (franking direct to you; full visibility via the My Wealth Portal)"}, {"name": "Tailored to your risk profile and goals"}, {"name": "Value of ongoing professional management & advice (fee-for-value)"}, {"name": "Best-interests statement where fees are higher than the current arrangement"}];let SOA='accumulator';const F={};let ENT=[];const PROD={};const INSPROD={};const BONDPROD={};const INVPROD={};const ESTINV={};const ABP={};const TTR={};const CONTRIB=[];const CFLOW=[];const COTH=[];const FREE={};const SCOPEOUT=new Set();const RISK={};const CAREPICK={};const REMUN=[];
+const RPV=['High Growth','Growth','Balanced','Moderately Defensive','Conservative'];
+const PLATSUPER=['Hub24 Choice','Hub24 Core','Hub24 Discover','Netwealth','BT Panorama Full','BT Panorama Compact','BT Panorama Focus','CFS Edge'];
+const PRODSUPER=['CARE Essentials – as per doc','CARE Full Care – as per doc','CARE with ESG','Realm','Vanguard Diversified ETFs – as per WealthSolver','Vanguard Index funds – as per WealthSolver'];
+const PLATBOND=['Generation Life'];const PRODBOND=['Vanguard portfolio','Dimensional World Equity 80% + Tax Effective Australian Share Fund 20%'];
+const INSURERS=['Acenda','ClearView ClearChoice','AIA Priority Protect','TAL Accelerated Protection','NEOS Protection','Zurich Protection Plan','Zurich Active Health Events','OnePath Protection Plan','MetLife Protection','PPS Mutual Protection','Acenda Insurance','Encompass'];
+const PRODFULL=['Hub24 Core CARE Essentials','Hub24 Choice Full CARE','Hub24 CARE Essentials – as per doc','Hub24 CARE with ESG','Hub24 Vanguard','Hub24 Discover - Vanguard Diversified','CFS Edge Vanguard','CFS Edge CARE Essentials','Netwealth CARE Full','Netwealth Vanguard','BT Panorama CARE Essentials','Realm'];
+const PRODBONDFULL=['Generation Life Vanguard portfolio','Generation Life Dimensional World Equity 80% + Tax Effective Australian Share Fund 20%'];
+const PRODINV=['Hub24 Core CARE Essentials','Hub24 Choice Full CARE','Hub24 CARE with ESG','Hub24 Discover - Vanguard Diversified','CFS Edge CARE Essentials','CFS Edge Vanguard','Netwealth Full CARE','Netwealth Vanguard','BT Panorama Full CARE','Realm'];
+const FREQ=['per week','per month','per annum','one-off'];const FYOPTS=['FY25/26','FY26/27','FY27/28','each year','over a set number of years'];
+// Concise trigger labels — the SOA generator expands each to the full wording in the right section.
+const SAVINGS_BENEFITS=['Emergency cash buffer','Home deposit','Wedding / car / travel','Planned renovations','Liquidity & lower interest','Financial flexibility','Future investment opportunities'];
+const INSURANCE_BENEFITS=['Favourable pre-assessment','Consolidation simplifies management','Retains valuable existing benefits','Cancels unnecessary / duplicate cover','Greater certainty & security','Ownership aligned to tax & estate','Waiting period balances affordability','Insurer suits occupation & claims','Favourable occupational rating','Secures insurability now'];
+const INVSRC=['Cash','In-specie transfer','Term Loan','Sale proceeds'];
+// ── Multi super-account model: per-account disposition + directed rollovers ──
+const DISP_EXISTING=['Retain as-is (no change)','Retain partial — rollover remainder','Close — full rollover','Receive rollover / contributions (retain)'];
+const DISP_NEW=['Establish (new fund — destination)'];
+const RETAINREASONS=['Retain existing insurances','Maintain higher employer SG','Keep account open / avoid re-establishment','Meet minimum balance requirement','Other (see paraplanning notes)'];
+function eH(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function acctLetter(j){return String.fromCharCode(65+(j%26))}
+function acctDisplay(p,j){return (p&&p.label&&p.label.trim())?p.label.trim():('Account '+acctLetter(j))}
+function superAcctIdx(){return DATA.findIndex(a=>a.superMulti)}
+function superAccountList(){const ai=superAcctIdx();return (ai>=0&&PROD[ai])?PROD[ai]:[]}
+function superAccountNames(){return superAccountList().map((p,j)=>acctDisplay(p,j))}
+function contribAcctOpts(cur){let names=superAccountNames();let opts=(names.length?names:['Account A','Account B','Account C']).concat(['New fund','Existing fund']);if(cur&&opts.indexOf(cur)<0)opts=[cur].concat(opts);return opts}
+function superFlowHTML(ai){const arr=PROD[ai]||[];const parts=[];
+  arr.forEach((p,j)=>{const disp=p.disposition||'';const nm=acctDisplay(p,j);
+   if(/^Retain partial/.test(disp))parts.push(`${nm} → ${p.rolloverTo||'?'} (retain ${p.retainAmt?('$'+p.retainAmt):'min'}${p.retainReason?', '+p.retainReason:''})`);
+   else if(/^Close/.test(disp))parts.push(`${nm} → ${p.rolloverTo||'?'} (full)`);
+   else if(/^Retain as-is/.test(disp))parts.push(`${nm} (retain as-is)`);});
+  const names=arr.map((p,j)=>acctDisplay(p,j));
+  CONTRIB.forEach(c=>{if(c.type&&c.acct&&names.indexOf(c.acct)>=0)parts.push(`${c.type} → ${c.acct}${c.amt?' '+c.amt:''}`);});
+  return parts.length?('<b>Flow:</b> '+parts.map(eH).join('  ·  ')):'';}
+function freqSelect(attrs,val){return `<select ${attrs}><option value="">freq…</option>`+FREQ.map(o=>`<option ${val==o?'selected':''}>${o}</option>`).join('')+`</select>`}
+const DLISTS={PLATSUPER,PRODSUPER,PLATBOND,PRODBOND,INSURERS,PRODFULL,PRODINV,PRODBONDFULL,RETAINREASONS};
+function datalistsHTML(){return Object.keys(DLISTS).map(n=>`<datalist id="${n}">`+DLISTS[n].map(o=>`<option value="${o.replace(/"/g,'&quot;')}">`).join('')+`</datalist>`).join('')}
+function fHL(id,l,list){return `<div class="fld"><label>${l} <small class="hint">(pick or free-type)</small></label><input list="${list}" data-f="${id}"></div>`}
+const SCOPE_PRESET=['Existing Shares','Existing Investment Property','Cryptocurrency','International Assets','Military Super (Defined Benefit portion)'];
+function fH(id,l,t,o,h){let i;if(t=='select')i=`<select data-f="${id}"><option value=""></option>`+o.map(x=>`<option>${x}</option>`).join('')+`</select>`;else if(t=='area')i=`<textarea data-f="${id}" placeholder="${h||''}"></textarea>`;else i=`<input data-f="${id}" placeholder="${h||''}">`;return `<div class="fld"><label>${l}</label>${i}</div>`}
+// Multi-select as a checkbox list — several benefits can apply per SOA. Stores an array in F[id].
+function fMulti(id,l,opts){const cur=Array.isArray(F[id])?F[id]:[];const n=cur.length;return `<div class="fld" style="flex:1 1 100%"><label>${l} <small class="hint">(tick all that apply)</small></label><details class="multidrop"><summary>${n?n+' selected':'Select…'}</summary><div class="chklist">`+opts.map(x=>`<label class="chkitem"><input type="checkbox" data-fm="${id}" value="${x.replace(/"/g,'&quot;')}"${cur.indexOf(x)>=0?' checked':''}> ${x}</label>`).join('')+`</div></details></div>`}
+function card(t,b,open=true,id='',cls=''){return `<div class="card ${cls} ${open?'':'collapsed'}" ${id?`id="${id}"`:''}><h2 onclick="this.parentNode.classList.toggle('collapsed')">${t}<span class="chev">▾</span></h2><div class="body">${b}</div></div>`}
+function parties(){let p=(F.ctype=='Couple')?[F.c1name||'Client 1',F.c2name||'Client 2']:[F.c1name||'Client'];ENT.forEach(e=>{if(e.name)p.push(e.name)});return p}
+function clientTitle(){const a=(F.c1name||'').trim();const b=(F.ctype=='Couple')?(F.c2name||'').trim():'';return [a,b].filter(Boolean).join(' & ');}
+// Auto filename: YYMMDD;LastName1[&LastName2];Initial1[&Initial2];AdviceRequest;DDMMYY.<ext>
+// e.g. 260707;Smith;J;AdviceRequest;070726.doc  or  260707;Smith&Johns;J&P;AdviceRequest;070726.json
+function arFileName(ext){
+ const nm=s=>String(s||'').trim().split(/\s+/).filter(Boolean);
+ const p1=nm(F.c1name), p2=(F.ctype=='Couple')?nm(F.c2name):[];
+ const last=a=>a.length?a[a.length-1]:'';
+ const init=a=>a.length?a[0].charAt(0).toUpperCase():'';
+ const l1=last(p1), l2=last(p2);
+ // Same surname (couple) → show it once, e.g. "Borgh" not "Borgh&Borgh" (initials still both, "J&A").
+ const lasts=(l1&&l2&&l1.toLowerCase()===l2.toLowerCase())?l1:([l1,l2].filter(Boolean).join('&')||'Client');
+ const inits=[init(p1),init(p2)].filter(Boolean).join('&');
+ // Date in AEST (Australia/Brisbane = UTC+10 all year, no daylight saving), so the filename is the
+ // same for every adviser no matter what timezone their device is set to.
+ let yy,mm,dd;
+ try{
+   const parts=new Intl.DateTimeFormat('en-AU',{timeZone:'Australia/Brisbane',year:'2-digit',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+   const g=t=>(parts.find(x=>x.type===t)||{}).value||'';
+   yy=g('year'); mm=g('month'); dd=g('day');
+ }catch(e){ const d=new Date(),pad=n=>String(n).padStart(2,'0'); yy=String(d.getFullYear()).slice(-2); mm=pad(d.getMonth()+1); dd=pad(d.getDate()); }
+ return `${yy}${mm}${dd};${lasts};${inits};AdviceRequest;${dd}${mm}${yy}.${ext}`;
+}
+function owners(){let o=(F.ctype=='Couple')?['Both','Joint',F.c1name||'Client 1',F.c2name||'Client 2']:[F.c1name||'Personal'];ENT.forEach(e=>{if(e.name)o.push(e.name)});return o}
+function build(){
+ let h='';
+ h+=card('1 · Header & Clients',
+  '<div class="row">'+'<div class="fld"><label>Single / Joint</label><select data-f="ctype"><option value=""></option><option value="Single">Single</option><option value="Couple">Joint</option></select></div>'+fH('newex','New or existing','select',['New','Existing'])+'</div>'+'<div class="row">'+fH('adviser','Adviser','text','','')+'</div>'+
+  '<div class="row">'+fH('c1name','Client 1 name','text','','first name — builds the title line & labels')+'<div class="fld" id="c2wrap" style="display:none"><label>Client 2 name</label><input data-f="c2name" placeholder="first name"></div>'+'</div>'+
+  
+  '<div class="row">'+fH('narr','“Hi Team,” narrative','area','','free text — read + keyword-scanned')+'</div>'+
+  '<div class="row">'+fH('cursit','Existing situation source (existing clients)','text','','e.g. wealth review doc + previous SOA')+'</div>');
+ h+=card('2 · Entities (0+)','<div id="entList"></div><button class="addbtn" onclick="addEnt()">+ Add entity</button>');
+ h+=card('3 · Notes','<div class="row">'+fH('budnotes','Additional Notes for budget','area','','')+'</div>',false);
+ h+=card('4 · Risk Profile <small class="hint">(per client AND entity)</small>','<div id="riskRows"></div><div class="row" style="margin-top:6px">'+fH('rpexist','Existing-client wording','select',['remains appropriate (reviewed)','no change from previous SOA'])+'</div>');
+ let scopein=DATA.map((a,ai)=>`<label class="strat" style="padding:2px 4px"><input type="checkbox" data-scope="${ai}" checked> <span class="lbl">${a.area}</span></label>`).join('');
+ let preset='<div id="soPreset">'+SCOPE_PRESET.map(s=>`<label class="sop"><input type="checkbox" data-sop="${s}"> <span class="lbl">${s}</span></label>`).join('')+'</div>';
+ h+=card('5 · Scope <small class="hint">(untick an area to blank it out below)</small>','<div class="miniH">Scope In (areas)</div>'+scopein+'<div class="miniH">Scope Out (tick all that apply)</div>'+preset+'<div class="row" style="margin-top:6px">'+fH('scopeoth','Other scope-out (free text)','text','','')+'</div>');
+ DATA.forEach((a,ai)=>{
+  let inner=`<div class="areaH miniH">Strategy Recommendations</div><div id="strat_${ai}"></div>`;
+  inner+=`<div id="freeList_${ai}"></div><button class="addbtn" onclick="addFree(${ai})">+ Add free-text recommendation</button>`;
+  if(a.hasProd){inner+=`<div class="miniH">Product Recommendation(s) <small class="hint">— the platform / account / insurer & action. (Strategy ticks above drive the SOA wording.)</small></div>`;
+    if(a.superMulti)inner+=`<div class="muted" style="margin:2px 0 8px">Add one row per super account (existing or new). Set each account's <b>disposition</b> — retain as-is, retain a minimum &amp; rollover the remainder, close &amp; fully rollover, or establish a new fund — and point rollovers to a destination account. Contributions below can then target any of these accounts.</div><div id="prodList_${ai}"></div><div class="muted" id="superFlow_${ai}" style="margin:4px 0 2px"></div><button class="addbtn" onclick="addProd(${ai})">+ Add super account</button>`;
+    else if(a.insMulti)inner+=`<div id="insList_${ai}"></div><button class="addbtn" onclick="addInsProd(${ai})">+ Add insurance cover/product</button>`+
+      `<div class="miniH">Benefit of insurance <small class="hint">(links the cover back to the client's goals/appropriateness — appears in Summary → Outcomes, the insurance "why" and the replacement implications section)</small></div><div class="row">`+fMulti('insuranceBenefit','Benefit of insurance',INSURANCE_BENEFITS)+`</div>`;
+      else if(a.bondMulti)inner+=`<div id="bondList_${ai}"></div><button class="addbtn" onclick="addBondProd(${ai})">+ Add investment bond (e.g. one per child)</button>`;
+      else if(a.invMulti)inner+=`<div id="invList_${ai}"></div><button class="addbtn" onclick="addInvProd(${ai})">+ Add investment product</button>`;}
+  if(a.isContrib)inner+=`<div class="miniH">Contributions (multi-stage / per person / per year)</div><div class="row">`+fH('defFY','Default financial year (new rows pre-fill)','select',FYOPTS)+`</div><div id="contribList"></div><button class="addbtn" onclick="addContrib()">+ Add contribution</button>`
+    +`<div class="miniH">Lump-sum contribution — Dollar Cost Averaging <small class="hint">(only when a lump-sum contribution is being dollar-cost-averaged into super. Carry-forward / non-concessional top-ups on their own are NOT a lump-sum DCA — leave as "No lump-sum DCA" and the DCA sentence is omitted. MOTM applies when the resulting super balance will exceed $250,000)</small></div><div class="row">`
+    +fH('superDcaMethod','DCA method','select',['No lump-sum DCA','DCA (plain — balance ≤ $250k)','DCA with MOTM (balance > $250k)'])+`</div>`;
+  if(a.isCash)inner+=`<div class="miniH">Costs paid from <small class="hint">(MCMA if FTW/PTW/WM · Bank acct if FTW no inv plan · Investment fund if existing paying from fund/WM)</small></div><div id="cflowList"></div><button class="addbtn" onclick="addCflow()">+ Add cost line</button>`+
+    `<div class="miniH">Cash position</div><div class="tight"><div class="row">`+fH('cashbefore','Cash before recommendations','text','','$')+fH('cashafter','Cash after recommendations','text','','$')+fH('cashnote','Cash note','text','','e.g. existing savings for insurance recommendations')+`</div></div>`+
+    `<div class="miniH">Benefit of saving <small class="hint">(links the surplus/tax savings back to the client's goals — appears in the SOA as "…which &lt;benefit&gt;")</small></div><div class="row">`+fMulti('savingsBenefit','Benefit of saving',SAVINGS_BENEFITS)+`</div>`;
+  inner+=`<div class="miniH">Paraplanning Notes</div><div class="row">`+fH('para_'+ai,'','area','','')+`</div>`;
+  h+=card(`${a.area} <span class="count" style="color:var(--grey)" id="cnt_${ai}"></span>`,inner,ai<2,`areacard_${ai}`);
+ });
+  h+=card('Fees & Remuneration','<div class="tight">'+feeHTML()+'</div>',false);
+ document.getElementById('form').innerHTML=h+datalistsHTML();
+ document.querySelectorAll('[data-f]').forEach(i=>i.addEventListener('input',e=>{F[e.target.dataset.f]=e.target.value;if(['ctype','c1name','c2name'].includes(e.target.dataset.f)){if(e.target.dataset.f==='ctype'){const _w=document.getElementById('c2wrap');if(_w)_w.style.display=(F.ctype=='Couple')?'':'none'}renderRisk();renderOwners();buildStrats();renderFee()}if(e.target.dataset.f==='newex'){const _o=document.getElementById('feeOngWrap');if(_o)_o.style.display=(F.newex=='Existing')?'flex':'none';renderFee()}if(e.target.dataset.f==='wmfee'){const _b=document.getElementById('feeBalWrap');if(_b)_b.style.display=(F.wmfee=='Yes')?'block':'none';renderFee()}render()}));
+ document.querySelectorAll('[data-fm]').forEach(c=>c.addEventListener('change',e=>{const id=e.target.dataset.fm;const set=document.querySelectorAll('[data-fm="'+id+'"]');F[id]=[...set].filter(x=>x.checked).map(x=>x.value);const det=e.target.closest('details.multidrop');if(det){const nn=F[id].length;det.querySelector('summary').textContent=nn?nn+' selected':'Select…'}render()}));
+ document.querySelectorAll('[data-scope]').forEach(i=>i.addEventListener('change',e=>{document.getElementById('areacard_'+e.target.dataset.scope).classList.toggle('scopedout',!e.target.checked);render()}));
+ document.querySelectorAll('[data-so]').forEach(c=>c.addEventListener('click',()=>{const v=c.dataset.so;if(SCOPEOUT.has(v)){SCOPEOUT.delete(v);c.classList.remove('on')}else{SCOPEOUT.add(v);c.classList.add('on')}render()}));
+ document.querySelectorAll('[data-sop]').forEach(c=>c.addEventListener('change',()=>{const v=c.dataset.sop;if(c.checked)SCOPEOUT.add(v);else SCOPEOUT.delete(v);render()}));
+ addEnt();renderRisk();buildStrats();renderFee();
+}
+function careCard(){return `<div class="card care"><h2 onclick="this.parentNode.classList.toggle('collapsed')">CARE · Investment Philosophy — why it's recommended (auditor justification)<span class="chev">▾</span></h2><div class="body"><p class="muted">Tick the reasons that apply, assign the client/entity and whether it's for Super, Investment or both. These feed Summary-Outcomes, the Super &amp; Investment strategy/product wording, the Alternatives cost comparison and the Replacement Implications — to justify best interests regardless of fee.</p><div id="careList"></div></div></div>`}
+function renderCare(){let h='';CARE.forEach((c,i)=>{CAREPICK[i]=CAREPICK[i]||{owner:'',applies:'Both'};
+  h+=`<label class="strat"><input type="checkbox" data-care="${i}"> <span class="lbl">${c.name}</span>`+
+     `<span class="opts" style="display:flex"><select class="own" data-cown="${i}">`+owners().map(o=>`<option ${CAREPICK[i].owner==o?'selected':''}>${o}</option>`).join('')+`</select>`+
+     `<select class="ap" data-cap="${i}">`+['Both','Super','Investment'].map(o=>`<option ${CAREPICK[i].applies==o?'selected':''}>${o}</option>`).join('')+`</select></span></label>`});
+ document.getElementById('careList').innerHTML=h;
+ document.querySelectorAll('[data-care]').forEach(c=>c.addEventListener('change',e=>{CAREPICK[+e.target.dataset.care].on=e.target.checked;e.target.closest('.strat').classList.toggle('on',e.target.checked);render()}));
+ document.querySelectorAll('[data-cown]').forEach(s=>s.addEventListener('input',e=>{CAREPICK[+e.target.dataset.cown].owner=e.target.value;render()}));
+ document.querySelectorAll('[data-cap]').forEach(s=>s.addEventListener('input',e=>{CAREPICK[+e.target.dataset.cap].applies=e.target.value;render()}));
+ render();
+}
+function feeRows(){let r=(F.ctype=='Couple')?[F.c1name||'Client 1',F.c2name||'Client 2','Joint']:[F.c1name||'Client'];ENT.forEach(e=>{if(e.name)r.push(e.name)});
+ if(F.wmfee=='Yes')superAccountList().forEach((p,j)=>{const nm=acctDisplay(p,j)+(p.acct?' — '+p.acct:'')+(p.owner&&p.owner!=='Personal'?' ('+p.owner+')':'');r.push(nm);const k=feeKey(nm);if(p.balance)F['__fbal_super_'+k]=p.balance;});
+ return r}
+function feeVal(k){return F['__fee_'+k]||''}
+function feeKey(r){return r.replace(/[^a-z0-9]/gi,'')}
+function cellDollar(v,bal){const r=parseFee(v);return r.flat+(r.pct?parseFloat(r.pct)/100*bal:0)}
+function feeBalHTML(){let t='<div class="miniH">Balances (for % fees) — Super &amp; Investment, per client/entity</div>';
+ feeRows().forEach(r=>{const k=feeKey(r);t+=`<div class="riskrow"><span class="who">${r}</span><input data-fbal="super_${k}" placeholder="Super balance $" value="${(F['__fbal_super_'+k]||'').replace(/"/g,'&quot;')}"><input data-fbal="inv_${k}" placeholder="Investment balance $" value="${(F['__fbal_inv_'+k]||'').replace(/"/g,'&quot;')}"></div>`});return t;}
+function feeTableHTML(){let t='<table class="fee" id="feeTbl"><tr><th></th><th>Up·Super</th><th>Up·Cash</th><th>Ong·Super</th><th>Ong·Cash</th><th>Their total p.a.</th></tr>';
+ feeRows().forEach(r=>{const k=feeKey(r);t+=`<tr><td>${r}</td>`+['us','uc','os','oc'].map(c=>`<td><input data-fee="${c}_${k}" value="${(F['__fee_'+c+'_'+k]||'').replace(/"/g,'&quot;')}"></td>`).join('')+`<td class="rowtot" id="rt_${k}"></td></tr>`});
+ t+='<tr class="tot"><td>Total</td><td id="tt_us"></td><td id="tt_uc"></td><td id="tt_os"></td><td id="tt_oc"></td><td id="tt_grand"></td></tr></table>';return t;}
+function rowDollar(k){const sb=parseFee(F['__fbal_super_'+k]||'').flat;const ib=parseFee(F['__fbal_inv_'+k]||'').flat;const col={};let rt=0;['us','uc','os','oc'].forEach(c=>{const bal=(c=='us'||c=='os')?sb:ib;const d=cellDollar(F['__fee_'+c+'_'+k]||'',bal);col[c]=d;rt+=d});return {col,rt};}
+function renderFeeBal(){const w=document.getElementById('feeBalWrap');if(w){w.innerHTML=feeBalHTML();w.querySelectorAll('[data-fbal]').forEach(i=>i.addEventListener('input',e=>{F['__fbal_'+e.target.dataset.fbal]=e.target.value;render()}))}}
+function renderFee(){const w=document.getElementById('feeTblWrap');if(w){w.innerHTML=feeTableHTML();w.querySelectorAll('[data-fee]').forEach(i=>i.addEventListener('input',e=>{F['__fee_'+e.target.dataset.fee]=e.target.value;render()}))}renderFeeBal();render()}
+function feeHTML(){let t='<div class="row">'+fH('feecommit','Commitment fee (paid prior to SOA appt)','text','','$')+'<div id="feeOngWrap" style="display:'+(F.newex=='Existing'?'flex':'none')+';flex:1 1 200px">'+fH('feestatus','Ongoing status','select',['New','No changes','Increase from existing','Decrease from existing'])+'</div>'+fH('feecashsrc','Cashflow fees paid from','select',['MCMA','Bank Account','Investment Fund'])+fH('wmfee','WM fee applicable?','select',['No','Yes'])+'</div>';
+ t+='<div id="feeBalWrap" style="display:'+(F.wmfee=='Yes'?'block':'none')+'">'+feeBalHTML()+'</div>';
+ t+='<p class="muted">Each fee cell: flat <b>$</b>, a <b>%</b>, or <b>$200 pm + 0.33%</b>. A % in a Super column uses the Super balance above; a % in a Cash column uses the Investment balance. Monthly ($ pm) figures are annualised.</p>';
+ t+='<div id="feeTblWrap">'+feeTableHTML()+'</div>';return t;}
+function renderRisk(){let h='';parties().forEach(p=>{const k=p.replace(/[^a-z0-9]/gi,'');RISK[k]=RISK[k]||{};
+  h+=`<div class="riskrow"><span class="who">${p}</span>`+
+   `<select data-rk="${k}.super"><option value="">Super…</option>`+RPV.map(o=>`<option ${RISK[k].super==o?'selected':''}>${o}</option>`).join('')+`</select>`+
+   `<select data-rk="${k}.superBump"><option value="">no super variation</option>`+RPV.map(o=>`<option ${RISK[k].superBump==o?'selected':''}>bumped to ${o}</option>`).join('')+`</select>`+
+   `<select data-rk="${k}.inv"><option value="">Inv…</option>`+RPV.map(o=>`<option ${RISK[k].inv==o?'selected':''}>${o}</option>`).join('')+`</select>`+
+   `<select data-rk="${k}.invBump"><option value="">no inv variation</option>`+RPV.map(o=>`<option ${RISK[k].invBump==o?'selected':''}>bumped to ${o}</option>`).join('')+`</select></div>`});
+ document.getElementById('riskRows').innerHTML=h;
+ document.querySelectorAll('[data-rk]').forEach(inp=>inp.addEventListener('input',e=>{const[k,f]=e.target.dataset.rk.split('.');RISK[k]=RISK[k]||{};RISK[k][f]=e.target.value;render()}));
+ render();
+}
+function addEnt(){ENT.push({type:'',name:'',id:''});renderEnt()}
+function renderEnt(){let h='';ENT.forEach((e,i)=>{h+=`<div class="repeat"><button class="del" onclick="ENT.splice(${i},1);renderEnt();renderRisk();renderOwners();buildStrats();renderFee()">remove</button><div class="row">`+
+  `<div class="fld"><label>Type</label><select data-ent="${i}.type"><option value=""></option>`+['SMSF (corporate trustee)','SMSF (individual trustees)','Company','Bucket company','Family/discretionary trust'].map(o=>`<option ${e.type==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld"><label>Name</label><input data-ent="${i}.name" value="${e.name||''}"></div>`+
+  `</div></div>`});
+ document.getElementById('entList').innerHTML=h;
+ document.querySelectorAll('[data-ent]').forEach(inp=>inp.addEventListener('input',e=>{const[i,k]=e.target.dataset.ent.split('.');ENT[i][k]=e.target.value;if(k=='name'){renderOwners();renderRisk();renderFee()}render()}));
+ render();
+}
+function ownersFor(a){if(a&&/Investment Property/.test(a.area)){const base=(F.ctype=='Couple')?['Joint',(F.c1name||'Client 1'),(F.c2name||'Client 2')]:[(F.c1name||'Client')];ENT.forEach(e=>{if(e.name)base.push(e.name)});return base;}return owners();}
+function renderOwners(){document.querySelectorAll('select.own,[data-pd$=".owner"],[data-ip$=".owner"],[data-bp$=".owner"],[data-vp$=".owner"],[data-ct$=".who"],[data-cf$=".owner"],[data-fr$=".owner"],[data-cown]').forEach(sel=>{const v=sel.value;let list=owners();const dv=sel.getAttribute('data-own');if(dv){const ai=+dv.split('_')[0];if(DATA[ai])list=ownersFor(DATA[ai]);}sel.innerHTML=list.map(o=>`<option ${o==v?'selected':''}>${o}</option>`).join('')})}
+function ttrPanel(id){const a=TTR[id]||(TTR[id]={mode:'max',pct:'10',bal:'',amt:''});
+ const num=v=>parseFloat(String(v||'').replace(/[^0-9.]/g,''))||0;
+ const pct=a.mode==='min'?4:(a.mode==='pct'?num(a.pct):10);
+ let calc='';
+ if(a.mode!=='amt'&&num(a.bal)&&pct){const ann=num(a.bal)*pct/100;calc=`= ${pct}% of $${num(a.bal).toLocaleString('en-AU')} → $${Math.round(ann).toLocaleString('en-AU')} per annum ($${Math.round(ann/12).toLocaleString('en-AU')} per month)`;}
+ if(a.mode==='amt'&&num(a.amt)){calc=`= $${num(a.amt).toLocaleString('en-AU')} per annum`;}
+ return `<div class="estpanel" style="flex:1 1 100%;margin-top:6px;padding:9px 11px;border:1px dashed var(--border);border-radius:9px;background:var(--surface-2)">`+
+  `<div class="miniH" style="margin:2px 0 4px">TTR drawdown (lump sum p.a.)</div>`+
+  `<div class="chips">`+
+   `<label class="srcchip${a.mode==='max'?' on':''}"><input type="radio" name="ttr_${id}" data-ttr="${id}.mode" value="max" ${a.mode==='max'?'checked':''}>Maximum 10%</label>`+
+   `<label class="srcchip${a.mode==='min'?' on':''}"><input type="radio" name="ttr_${id}" data-ttr="${id}.mode" value="min" ${a.mode==='min'?'checked':''}>Minimum 4%</label>`+
+   `<label class="srcchip${a.mode==='pct'?' on':''}"><input type="radio" name="ttr_${id}" data-ttr="${id}.mode" value="pct" ${a.mode==='pct'?'checked':''}>Custom %</label>`+
+   `<label class="srcchip${a.mode==='amt'?' on':''}"><input type="radio" name="ttr_${id}" data-ttr="${id}.mode" value="amt" ${a.mode==='amt'?'checked':''}>Set $ p.a.</label>`+
+  `</div>`+
+  (a.mode!=='amt'?`<div class="row" style="margin-top:6px"><div class="fld" style="flex:0 0 170px"><label>TTR account balance</label><input data-ttr="${id}.bal" value="${(a.bal||'').replace(/"/g,'&quot;')}" placeholder="$ balance"></div>`+
+   (a.mode==='pct'?`<div class="fld" style="flex:0 0 120px"><label>Drawdown %</label><input data-ttr="${id}.pct" value="${(a.pct||'').replace(/"/g,'&quot;')}" placeholder="e.g. 8"></div>`:'')+`</div>`:'')+
+  (a.mode==='amt'?`<div class="row" style="margin-top:6px"><div class="fld" style="flex:0 0 170px"><label>Amount per annum</label><input data-ttr="${id}.amt" value="${(a.amt||'').replace(/"/g,'&quot;')}" placeholder="$ per annum"></div></div>`:'')+
+  (calc?`<div class="muted" data-ttrcalc="${id}">${calc}</div>`:'')+
+  `<div class="muted" style="margin-top:4px">A minimum 4% drawdown applies each year while under age 65 (maximum 10%).</div>`+
+ `</div>`;}
+function abpPanel(id){const a=ABP[id]||(ABP[id]={mode:'',pct:'',bal:'',amt:'',tbc:false,cond:''});
+ const num=v=>parseFloat(String(v||'').replace(/[^0-9.]/g,''))||0;
+ let calc='';
+ if(a.mode==='min'){const ann=num(a.bal)*num(a.pct)/100;if(ann)calc=`= $${Math.round(ann/12).toLocaleString('en-AU')} per month ($${Math.round(ann).toLocaleString('en-AU')} p.a.)`;}
+ if(a.mode==='amt'){const mo=num(a.amt);if(mo)calc=`= $${mo.toLocaleString('en-AU')} per month ($${Math.round(mo*12).toLocaleString('en-AU')} p.a.)`;}
+ return `<div class="estpanel" style="flex:1 1 100%;margin-top:6px;padding:9px 11px;border:1px dashed var(--border);border-radius:9px;background:var(--surface-2)">`+
+  `<div class="chips">`+
+   `<label class="srcchip${a.mode==='min'?' on':''}"><input type="radio" name="abp_${id}" data-abp="${id}.mode" value="min" ${a.mode==='min'?'checked':''}>Minimum pension %</label>`+
+   `<label class="srcchip${a.mode==='amt'?' on':''}"><input type="radio" name="abp_${id}" data-abp="${id}.mode" value="amt" ${a.mode==='amt'?'checked':''}>Set amount (monthly)</label>`+
+   `<label class="srcchip${a.tbc?' on':''}"><input type="checkbox" data-abp="${id}.tbc" ${a.tbc?'checked':''}>Up to max Transfer Balance Cap <small class="hint">(optional — large balances)</small></label>`+
+  `</div>`+
+  (a.mode==='min'?`<div class="row" style="margin-top:6px"><div class="fld" style="flex:0 0 150px"><label>Pension balance</label><input data-abp="${id}.bal" value="${(a.bal||'').replace(/"/g,'&quot;')}" placeholder="$ balance"></div>`+
+   `<div class="fld" style="flex:0 0 120px"><label>Minimum %</label><input data-abp="${id}.pct" value="${(a.pct||'').replace(/"/g,'&quot;')}" placeholder="e.g. 4"></div></div>`:'')+
+  (a.mode==='amt'?`<div class="row" style="margin-top:6px"><div class="fld" style="flex:0 0 170px"><label>Amount per month</label><input data-abp="${id}.amt" value="${(a.amt||'').replace(/"/g,'&quot;')}" placeholder="$ per month"></div></div>`:'')+
+  (calc?`<div class="muted" data-abpcalc="${id}">${calc}</div>`:'')+
+  `<div class="row" style="margin-top:6px"><div class="fld" style="flex:1 1 100%"><label>Condition of release / age note <small class="hint">(optional)</small></label><input data-abp="${id}.cond" value="${(a.cond||'').replace(/"/g,'&quot;')}" placeholder="e.g. once you reach age 60 and cease an employment arrangement"></div></div>`+
+ `</div>`;}
+function mcmaPanel(){return `<div class="estpanel" style="flex:1 1 100%;margin-top:6px;padding:9px 11px;border:1px dashed var(--border);border-radius:9px;background:var(--surface-2)">`+
+  `<div class="miniH" style="margin:2px 0 6px">Direct ongoing plan costs to the MCMA — broken down (insurance / investments / advice fee)</div>`+
+  `<div class="row">`+
+   `<div class="fld"><label>Insurance</label><input data-fc="cIns" value="${(F.cIns||'').replace(/"/g,'&quot;')}" placeholder="$"></div>`+
+   `<div class="fld"><label>Investments</label><input data-fc="cInv" value="${(F.cInv||'').replace(/"/g,'&quot;')}" placeholder="$"></div>`+
+   `<div class="fld"><label>Advice fee</label><input data-fc="cAdv" value="${(F.cAdv||'').replace(/"/g,'&quot;')}" placeholder="$"></div>`+
+   `<div class="fld" style="flex:0 0 160px"><label>Frequency</label><select data-fc="cCostFreq"><option value=""></option>`+FREQ.map(o=>`<option ${F.cCostFreq==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `</div>`+
+  `<div id="cothList"></div><button class="addbtn" onclick="addCoth()">+ Add other cost (with label)</button>`+
+  `<div class="muted" id="cTotal"></div>`+
+ `</div>`;}
+function estInvPanel(id){const e=ESTINV[id]||(ESTINV[id]={product:'',initial:'',initialFreq:'one-off',initialSource:'',ongoing:'',ongoingFreq:'per month',ongoingSource:''});
+ const chips=(kind)=>INVSRC.map(s=>{const on=e[kind]===s;return `<label class="srcchip${on?' on':''}"><input type="radio" name="est_${id}_${kind}" data-est="${id}.${kind}" value="${s}" ${on?'checked':''}>${s}</label>`}).join('');
+ return `<div class="estpanel" style="flex:1 1 100%;margin-top:6px;padding:9px 11px;border:1px dashed var(--border);border-radius:9px;background:var(--surface-2)">`+
+
+  `<div class="miniH" style="margin:2px 0 4px">Initial investment</div>`+
+  `<div class="row"><div class="fld" style="flex:0 0 150px"><label>Initial amount</label><input data-est="${id}.initial" value="${(e.initial||'').replace(/"/g,'&quot;')}" placeholder="initial $"></div>`+
+  `</div>`+
+  `<div class="row"><div class="fld" style="flex:1 1 100%"><label>Initial funded from <small class="hint">(tick the most appropriate)</small></label><div class="chips" style="margin-top:2px">`+chips('initialSource')+`</div></div></div>`+
+  `<div class="miniH" style="margin:6px 0 4px">Ongoing investment</div>`+
+  `<div class="row"><div class="fld" style="flex:0 0 150px"><label>Ongoing amount</label><input data-est="${id}.ongoing" value="${(e.ongoing||'').replace(/"/g,'&quot;')}" placeholder="ongoing $"></div>`+
+  `<div class="fld" style="flex:0 0 130px"><label>Ongoing freq</label>`+freqSelect(`data-est="${id}.ongoingFreq"`,e.ongoingFreq||'per month')+`</div></div>`+
+  `<div class="row"><div class="fld" style="flex:1 1 100%"><label>Ongoing funded from <small class="hint">(tick the most appropriate)</small></label><div class="chips" style="margin-top:2px">`+chips('ongoingSource')+`</div></div></div>`+
+ `</div>`;}
+function buildStrats(){
+ DATA.forEach((a,ai)=>{const list=a.scen.map((s,i)=>({s,i}));let h='';
+  list.forEach(({s,i})=>{const id=ai+'_'+i;const tag=s.to=='accumulator'?'<span class="tg acc">ACC</span>':s.to=='retirement'?'<span class="tg ret">RET</span>':'';
+    const slotInputs=s.slots.map((sl,k)=>{const isFreq=/\bpm\b|\bpw\b|per month|per week|per annum|ongoing/i.test(sl);const ph=sl.replace(/\s*\bp\.?m\.?\b/i,'').replace(/\s*\bp\.?w\.?\b/i,'').trim();const df=/pm|month/i.test(sl)?'per month':(/pw|week/i.test(sl)?'per week':'');const fsel=isFreq?freqSelect(`class="freq" data-freq="${id}_${k}"`,df):'';return `<input class="sl" data-slot="${id}_${k}" placeholder="${ph}">${fsel}`;}).join('');
+    const pickSel=s.pick?`<select class="pk" data-pick="${id}">`+s.pick.map(o=>`<option>${o}</option>`).join('')+`</select>`:'';
+    h+=`<label class="strat"><input type="checkbox" data-strat="${id}" data-name="${s.name.replace(/"/g,'&quot;')}" data-text="${(s.strat||'').replace(/"/g,'&quot;')}" data-custom="${s.custom?1:0}" data-estinv="${s.estInv?1:0}">`+
+       `<span class="lbl">${s.name}${tag}</span>`+
+       `<span class="opts"><select class="own" data-own="${id}">`+owners().map(o=>`<option>${o}</option>`).join('')+`</select>${pickSel}${slotInputs}`+
+       (s.custom?`<input class="sl" style="flex:1 1 100%" data-free="${id}" placeholder="free-type wording">`:'')+
+       (s.estInv?estInvPanel(id):'')+`</span></label>`;});
+  const box=document.getElementById('strat_'+ai);if(box)box.innerHTML=h;});
+ document.querySelectorAll('[data-strat]').forEach(c=>c.addEventListener('change',e=>{e.target.closest('.strat').classList.toggle('on',e.target.checked);render()}));
+ document.querySelectorAll('[data-own],[data-slot],[data-free],[data-pick],[data-freq]').forEach(i=>i.addEventListener('input',render));
+ document.querySelectorAll('.estpanel [data-est]').forEach(inp=>{
+   if(inp.type==='radio'){
+     inp.addEventListener('change',e=>{const[id,kind]=e.target.dataset.est.split('.');ESTINV[id][kind]=e.target.value;e.target.closest('.chips').querySelectorAll('.srcchip').forEach(c=>c.classList.remove('on'));e.target.closest('.srcchip').classList.add('on');render()});
+     inp.addEventListener('click',e=>{const[id,kind]=e.target.dataset.est.split('.');if(ESTINV[id][kind]===e.target.value){ESTINV[id][kind]='';e.target.checked=false;e.target.closest('.srcchip').classList.remove('on');render()}});
+   }else{
+     inp.addEventListener('input',e=>{const[id,kind]=e.target.dataset.est.split('.');ESTINV[id][kind]=e.target.value;render()});
+   }
+ });
+ render();
+}
+function addFree(ai){FREE[ai]=FREE[ai]||[];FREE[ai].push({owner:'',text:''});renderFree(ai)}
+function renderFree(ai){let h='';(FREE[ai]||[]).forEach((f,i)=>{h+=`<div class="repeat"><button class="del" onclick="FREE[${ai}].splice(${i},1);renderFree(${ai})">remove</button><div class="row">`+
+  `<div class="fld" style="flex:0 0 130px"><label>Owner</label><select data-fr="${ai}.${i}.owner">`+owners().map(o=>`<option ${f.owner==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld"><label>Free-text recommendation</label><input data-fr="${ai}.${i}.text" value="${f.text||''}" placeholder="We recommend you…"></div></div></div>`});
+ document.getElementById('freeList_'+ai).innerHTML=h;
+ document.querySelectorAll('[data-fr]').forEach(inp=>inp.addEventListener('input',e=>{const[a,i,k]=e.target.dataset.fr.split('.');FREE[a][i][k]=e.target.value;render()}));
+ render();
+}
+function addProd(ai){PROD[ai]=PROD[ai]||[];PROD[ai].push({owner:'',label:'',nature:'Existing',acct:'Accumulation',product:'',balance:'',disposition:'Retain as-is (no change)',retainAmt:'',retainReason:'',rolloverTo:''});renderProd(ai);renderContrib();renderFee()}
+function renderProd(ai){let h='';const acctTypes=['Accumulation','Pension','TTR Pension','SMSF Accumulation','SMSF Pension'];
+ (PROD[ai]||[]).forEach((p,i)=>{
+  const disp=p.disposition||'';const isPartial=/^Retain partial/.test(disp);const isClose=/^Close/.test(disp);const needsDest=isPartial||isClose;
+  const dispOpts=(p.nature==='New')?DISP_NEW:DISP_EXISTING;
+  const destOpts=(PROD[ai]||[]).map((q,j)=>({j,name:acctDisplay(q,j)})).filter(x=>x.j!==i);
+  h+=`<div class="repeat"><button class="del" onclick="PROD[${ai}].splice(${i},1);renderProd(${ai});renderContrib()">remove</button>`+
+   `<div class="row">`+
+   `<div class="fld" style="flex:0 0 105px"><label>Owner</label><select data-pd="${ai}.${i}.owner">`+owners().map(o=>`<option ${p.owner==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+   `<div class="fld" style="flex:0 0 110px"><label>Account ref</label><input data-pd="${ai}.${i}.label" value="${(p.label||'').replace(/"/g,'&quot;')}" placeholder="Account ${acctLetter(i)}"></div>`+
+   `<div class="fld" style="flex:0 0 110px"><label>Existing / New</label><select data-pd="${ai}.${i}.nature" data-reflow="1">`+['Existing','New'].map(o=>`<option ${p.nature==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+   `<div class="fld" style="flex:0 0 150px"><label>Account type</label><select data-pd="${ai}.${i}.acct">`+acctTypes.map(o=>`<option ${p.acct==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+   `</div>`+
+   `<div class="row">`+
+   `<div class="fld"><label>Fund / product</label><input list="PRODFULL" data-pd="${ai}.${i}.product" value="${(p.product||'').replace(/"/g,'&quot;')}" placeholder="e.g. Hub24 Core CARE Essentials"></div>`+
+   (isPartial?`<div class="fld" style="flex:0 0 100px"><label>Balance</label><input data-pd="${ai}.${i}.balance" value="${(p.balance||'').replace(/"/g,'&quot;')}" placeholder="$"></div>`:'')+
+   `<div class="fld" style="flex:0 0 230px"><label>Disposition</label><select data-pd="${ai}.${i}.disposition" data-reflow="1">`+dispOpts.map(o=>`<option ${disp==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+   `</div>`;
+  if(needsDest){h+=`<div class="row">`;
+   if(isPartial)h+=`<div class="fld" style="flex:0 0 150px"><label>Retain (minimum) $</label><input data-pd="${ai}.${i}.retainAmt" value="${(p.retainAmt||'').replace(/"/g,'&quot;')}" placeholder="$ to retain"></div>`+
+     `<div class="fld"><label>Reason to retain</label><input list="RETAINREASONS" data-pd="${ai}.${i}.retainReason" value="${(p.retainReason||'').replace(/"/g,'&quot;')}" placeholder="e.g. retain existing insurances"></div>`;
+   h+=`<div class="fld" style="flex:0 0 180px"><label>${isPartial?'Rollover remainder to':'Rollover to'}</label><select data-pd="${ai}.${i}.rolloverTo"><option value="">— select account —</option>`+destOpts.map(d=>`<option ${p.rolloverTo==d.name?'selected':''}>${eH(d.name)}</option>`).join('')+`</select></div>`+
+     `</div>`;}
+  h+=`</div>`;});
+ const box=document.getElementById('prodList_'+ai);if(box)box.innerHTML=h;
+ const fb=document.getElementById('superFlow_'+ai);if(fb)fb.innerHTML=superFlowHTML(ai);
+ document.querySelectorAll(`[data-pd^="${ai}."]`).forEach(inp=>inp.addEventListener('input',e=>{const[a,i,k]=e.target.dataset.pd.split('.');PROD[a][i][k]=e.target.value;
+   if(k==='nature')PROD[a][i].disposition=(e.target.value==='New')?DISP_NEW[0]:DISP_EXISTING[0];
+   if(e.target.dataset.reflow){renderProd(+a);}
+   if(k==='label'||k==='nature'){renderContrib();}
+   render();}));render()}
+function addInsProd(ai){INSPROD[ai]=INSPROD[ai]||[];INSPROD[ai].push({owner:'',action:'Apply (new cover)',insurer:''});renderInsProd(ai)}
+function renderInsProd(ai){let h='';(INSPROD[ai]||[]).forEach((p,i)=>{h+=`<div class="repeat"><button class="del" onclick="INSPROD[${ai}].splice(${i},1);renderInsProd(${ai})">remove</button><div class="row">`+
+  `<div class="fld" style="flex:0 0 120px"><label>Owner</label><select data-ip="${ai}.${i}.owner">`+owners().map(o=>`<option ${p.owner==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld" style="flex:0 0 175px"><label>Action</label><select data-ip="${ai}.${i}.action">`+['Apply (new cover)','Top up','Retain','Alter','Transfer (via takeover)','Cancel'].map(o=>`<option ${p.action==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld"><label>Insurer / product</label><input list="INSURERS" data-ip="${ai}.${i}.insurer" value="${(p.insurer||'').replace(/"/g,'&quot;')}" placeholder="e.g. TAL"></div></div></div>`});
+ document.getElementById('insList_'+ai).innerHTML=h;
+ document.querySelectorAll('[data-ip]').forEach(inp=>inp.addEventListener('input',e=>{const[a,i,k]=e.target.dataset.ip.split('.');INSPROD[a][i][k]=e.target.value;render()}));render()}
+function addBondProd(ai){BONDPROD[ai]=BONDPROD[ai]||[];BONDPROD[ai].push({owner:'',forwhom:'',product:'Generation Life '});renderBondProd(ai)}
+function renderBondProd(ai){let h='';(BONDPROD[ai]||[]).forEach((p,i)=>{h+=`<div class="repeat"><button class="del" onclick="BONDPROD[${ai}].splice(${i},1);renderBondProd(${ai})">remove</button><div class="row">`+
+  `<div class="fld" style="flex:0 0 120px"><label>Owner</label><select data-bp="${ai}.${i}.owner">`+owners().map(o=>`<option ${p.owner==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld" style="flex:0 0 150px"><label>For (child/beneficiary)</label><input data-bp="${ai}.${i}.forwhom" value="${(p.forwhom||'').replace(/"/g,'&quot;')}" placeholder="e.g. child's name"></div>`+
+  `<div class="fld"><label>Product</label><input list="PRODBONDFULL" data-bp="${ai}.${i}.product" value="${(p.product||'').replace(/"/g,'&quot;')}" placeholder="Generation Life Vanguard portfolio"></div></div></div>`});
+ document.getElementById('bondList_'+ai).innerHTML=h;
+ document.querySelectorAll('[data-bp]').forEach(inp=>inp.addEventListener('input',e=>{const[a,i,k]=e.target.dataset.bp.split('.');BONDPROD[a][i][k]=e.target.value;render()}));render()}
+function addInvProd(ai){INVPROD[ai]=INVPROD[ai]||[];INVPROD[ai].push({owner:'',product:'',initial:'',initialFreq:'one-off',initialSource:'',ongoing:'',ongoingFreq:'per month',ongoingSource:''});renderInvProd(ai)}
+function renderInvProd(ai){let h='';(INVPROD[ai]||[]).forEach((p,i)=>{
+  const srcChips=(kind)=>INVSRC.map(s=>{const on=p[kind]===s;return `<label class="srcchip${on?' on':''}"><input type="radio" name="vsrc_${ai}_${i}_${kind}" data-vsrc="${ai}.${i}.${kind}" value="${s}" ${on?'checked':''}>${s}</label>`}).join('');
+  h+=`<div class="repeat"><button class="del" onclick="INVPROD[${ai}].splice(${i},1);renderInvProd(${ai})">remove</button><div class="row">`+
+  `<div class="fld" style="flex:0 0 130px"><label>Owner</label><select data-vp="${ai}.${i}.owner">`+owners().map(o=>`<option ${p.owner==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld"><label>Product</label><input list="PRODINV" data-vp="${ai}.${i}.product" value="${(p.product||'').replace(/"/g,'&quot;')}" placeholder="e.g. Hub24 Core CARE Essentials"></div></div>`+
+  `<div class="miniH" style="margin:8px 0 4px">Initial investment</div>`+
+  `<div class="row">`+
+  `<div class="fld" style="flex:0 0 150px"><label>Initial amount</label><input data-vp="${ai}.${i}.initial" value="${(p.initial||'').replace(/"/g,'&quot;')}" placeholder="initial $"></div>`+
+  `<div class="fld" style="flex:0 0 130px"><label>Initial freq</label>`+freqSelect(`data-vp="${ai}.${i}.initialFreq"`,p.initialFreq||'one-off')+`</div></div>`+
+  `<div class="row"><div class="fld" style="flex:1 1 100%"><label>Initial funded from <small class="hint">(tick the most appropriate)</small></label><div class="chips" style="margin-top:2px">`+srcChips('initialSource')+`</div></div></div>`+
+  `<div class="miniH" style="margin:8px 0 4px">Ongoing investment</div>`+
+  `<div class="row">`+
+  `<div class="fld" style="flex:0 0 150px"><label>Ongoing amount</label><input data-vp="${ai}.${i}.ongoing" value="${(p.ongoing||'').replace(/"/g,'&quot;')}" placeholder="ongoing $"></div>`+
+  `<div class="fld" style="flex:0 0 130px"><label>Ongoing freq</label>`+freqSelect(`data-vp="${ai}.${i}.ongoingFreq"`,p.ongoingFreq||'per month')+`</div></div>`+
+  `<div class="row"><div class="fld" style="flex:1 1 100%"><label>Ongoing funded from <small class="hint">(tick the most appropriate)</small></label><div class="chips" style="margin-top:2px">`+srcChips('ongoingSource')+`</div></div></div>`+
+  `</div>`});
+ document.getElementById('invList_'+ai).innerHTML=h;
+ document.querySelectorAll('[data-vp]').forEach(inp=>inp.addEventListener('input',e=>{const[a,i,k]=e.target.dataset.vp.split('.');INVPROD[a][i][k]=e.target.value;render()}));
+ document.querySelectorAll('[data-vsrc]').forEach(cb=>{
+   cb.addEventListener('change',e=>{const[a,i,kind]=e.target.dataset.vsrc.split('.');INVPROD[a][i][kind]=e.target.value;renderInvProd(a)});
+   cb.addEventListener('click',e=>{const[a,i,kind]=e.target.dataset.vsrc.split('.');if(INVPROD[a][i][kind]===e.target.value){INVPROD[a][i][kind]='';e.target.checked=false;renderInvProd(a)}});
+ });
+ render()}
+function addContrib(){CONTRIB.push({type:'',who:'',fy:F.defFY||'',acct:'',amt:'',freq:''});renderContrib()}
+function renderContrib(){let h='';CONTRIB.forEach((c,i)=>{h+=`<div class="repeat"><button class="del" onclick="CONTRIB.splice(${i},1);renderContrib()">remove</button><div class="row">`+
+  `<div class="fld"><label>Type</label><select data-ct="${i}.type">`+['Salary sacrifice (concessional)','Carry-forward concessional','Non-concessional','Bring-forward NCC','Personal deductible','Spouse','Co-contribution','Downsizer','Recontribution'].map(o=>`<option ${c.type==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld"><label>Who</label><select data-ct="${i}.who">`+owners().map(o=>`<option ${c.who==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld"><label>FY</label><select data-ct="${i}.fy"><option value=""></option>`+FYOPTS.map(o=>`<option ${c.fy==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld"><label>Target account <small class="hint">(from super accounts)</small></label><select data-ct="${i}.acct"><option value=""></option>`+contribAcctOpts(c.acct).map(o=>`<option ${c.acct==o?'selected':''}>${eH(o)}</option>`).join('')+`</select></div>`+
+  `<div class="fld"><label>Amount</label><input data-ct="${i}.amt" value="${c.amt||''}" placeholder="$"></div>`+
+  `<div class="fld" style="flex:0 0 130px"><label>Frequency</label>`+freqSelect(`data-ct="${i}.freq"`,c.freq)+`</div></div></div>`});
+ document.getElementById('contribList').innerHTML=h;
+ document.querySelectorAll('[data-ct]').forEach(inp=>inp.addEventListener('input',e=>{const[i,k]=e.target.dataset.ct.split('.');CONTRIB[i][k]=e.target.value;const sai=superAcctIdx();const fb=document.getElementById('superFlow_'+sai);if(fb)fb.innerHTML=superFlowHTML(sai);render()}));
+ const sai=superAcctIdx();const fb=document.getElementById('superFlow_'+sai);if(fb)fb.innerHTML=superFlowHTML(sai);
+ render();
+}
+function addCoth(){COTH.push({label:'',amt:''});renderCoth()}
+function renderCoth(){const box=document.getElementById('cothList');if(!box)return;let h='';COTH.forEach((c,i)=>{h+=`<div class="row" style="align-items:flex-end"><div class="fld" style="flex:1 1 180px"><label>Other cost label</label><input data-coth="${i}.label" value="${(c.label||'').replace(/"/g,'&quot;')}" placeholder="e.g. Debt package fee"></div><div class="fld" style="flex:0 0 120px"><label>Amount</label><input data-coth="${i}.amt" value="${(c.amt||'').replace(/"/g,'&quot;')}" placeholder="$"></div><button class="del" style="float:none;margin-bottom:8px" onclick="COTH.splice(${i},1);renderCoth()">remove</button></div>`});
+ box.innerHTML=h;box.querySelectorAll('[data-coth]').forEach(inp=>inp.addEventListener('input',e=>{const[i,k]=e.target.dataset.coth.split('.');COTH[i][k]=e.target.value;render()}));render()}
+function addCflow(){CFLOW.push({src:'',owner:'',amt:'',freq:'',note:''});renderCflow()}
+function renderCflow(){let h='';CFLOW.forEach((c,i)=>{h+=`<div class="repeat"><button class="del" onclick="CFLOW.splice(${i},1);renderCflow()">remove</button><div class="row">`+
+  `<div class="fld"><label>Paid from</label><select data-cf="${i}.src">`+['','MCMA','Bank Account','Investment Fund (Joint)','WM'].map(o=>`<option ${c.src==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld"><label>Owner</label><select data-cf="${i}.owner">`+owners().map(o=>`<option ${c.owner==o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+  `<div class="fld"><label>Amount</label><input data-cf="${i}.amt" value="${c.amt||''}" placeholder="$"></div>`+
+  `<div class="fld" style="flex:0 0 120px"><label>Frequency</label>`+freqSelect(`data-cf="${i}.freq"`,c.freq)+`</div>`+
+  `<div class="fld"><label>Breakdown</label><input data-cf="${i}.note" value="${c.note||''}"></div></div></div>`});
+ document.getElementById('cflowList').innerHTML=h;
+ document.querySelectorAll('[data-cf]').forEach(inp=>inp.addEventListener('input',e=>{const[i,k]=e.target.dataset.cf.split('.');CFLOW[i][k]=e.target.value;render()}));
+ render();
+}
+function scopeInIdx(){return [...document.querySelectorAll('[data-scope]:checked')].map(c=>+c.dataset.scope)}
+function gather(){const out=[];const ins=scopeInIdx();document.querySelectorAll('[data-strat]:checked').forEach(c=>{const id=c.dataset.strat;const ai=+id.split('_')[0];if(!ins.includes(ai))return;
+  const own=document.querySelector(`[data-own="${id}"]`);const free=document.querySelector(`[data-free="${id}"]`);
+  const sl=[...document.querySelectorAll(`[data-slot^="${id}_"]`)].map(x=>{const v=(x.value||'').trim();if(!v)return '';const fq=document.querySelector(`[data-freq="${x.dataset.slot}"]`);return v+(fq&&fq.value?' '+fq.value:'');}).filter(Boolean);
+  const pk=document.querySelector(`[data-pick="${id}"]`);
+  const est=(c.dataset.estinv=='1'&&ESTINV[id])?ESTINV[id]:null;
+  out.push({area:DATA[ai].area,name:c.dataset.name,text:c.dataset.custom=='1'&&free&&free.value?free.value:c.dataset.text,owner:own?own.value:'',amounts:sl,pick:pk?pk.value:'',est});});
+  Object.keys(FREE).forEach(ai=>{if(!ins.includes(+ai))return;(FREE[ai]||[]).forEach(f=>{if(f.text)out.push({area:DATA[ai].area,name:f.text,text:f.text,owner:f.owner,amounts:[]})})});return out}
+function parseFee(str){if(!str)return{flat:0,pct:''};const pm=str.match(/(\d+(?:\.\d+)?)\s*%/);const pct=pm?pm[1]+'%':'';
+ let rest=str.replace(/(\d+(?:\.\d+)?)\s*%/,'');const mon=/p\.?m\.?|per month|month|pm/i.test(rest);
+ const dm=rest.match(/\$\s*([\d,]+(?:\.\d+)?)|([\d,]+(?:\.\d+)?)/);let flat=0;if(dm){const n=dm[1]||dm[2];if(n){flat=parseFloat(n.replace(/,/g,''));if(mon)flat*=12;}}return{flat,pct}}
+function careSel(){const out=[];CARE.forEach((c,i)=>{if(CAREPICK[i]&&CAREPICK[i].on)out.push({name:c.name,owner:CAREPICK[i].owner,applies:CAREPICK[i].applies})});return out}
+function buildObj(){const ins=scopeInIdx();
+  const prods={};Object.keys(PROD).forEach(ai=>{if(ins.includes(+ai))prods[DATA[ai].area]=PROD[ai]});
+  const insP={};Object.keys(INSPROD).forEach(ai=>{if(ins.includes(+ai))insP[DATA[ai].area]=INSPROD[ai]});
+  const bondP={};Object.keys(BONDPROD).forEach(ai=>{if(ins.includes(+ai))bondP[DATA[ai].area]=BONDPROD[ai]});
+  const invP={};Object.keys(INVPROD).forEach(ai=>{if(ins.includes(+ai))invP[DATA[ai].area]=INVPROD[ai]});
+  const simpleProd={};DATA.forEach((a,ai)=>{if(!ins.includes(ai))return;if(F['prod_'+ai])simpleProd[a.area]=F['prod_'+ai];else{var ps=((F['platS_'+ai]||'')+(F['prodS_'+ai]?' — '+F['prodS_'+ai]:'')).trim();if(ps)simpleProd[a.area]=ps}});
+  const paras={};DATA.forEach((a,ai)=>{if(ins.includes(ai)&&F['para_'+ai])paras[a.area]=F['para_'+ai]});
+  const risk={};parties().forEach(p=>{const k=p.replace(/[^a-z0-9]/gi,'');if(RISK[k])risk[p]=RISK[k]});
+  return{soaType:SOA,clients:clientTitle(),adviser:F.adviser,ctype:F.ctype,status:F.newex,entities:ENT.filter(e=>e.name||e.type),
+   narrative:F.narr,currentSituation:F.cursit,keyConsiderations:F.keycons,notesBudget:F.budnotes,
+   risk,riskExisting:F.rpexist,scopeIn:ins.map(i=>DATA[i].area),scopeOut:[...SCOPEOUT],scopeOther:F.scopeoth,
+   strategies:gather(),care:careSel(),superProducts:prods,insProducts:insP,bondProducts:bondP,invProducts:invP,products:simpleProd,
+   contributions:(ins.some(i=>DATA[i].isContrib)?CONTRIB.filter(c=>c.type):[]),
+   superDcaMethod:F.superDcaMethod||'', superLumpSum:/dca/i.test(F.superDcaMethod||'')&&!/^no\b/i.test(F.superDcaMethod||''), superDcaMotm:/motm/i.test(F.superDcaMethod||''),
+   cashflow:(ins.some(i=>DATA[i].isCash)?CFLOW.filter(c=>c.src||c.amt):[]),
+   cashCosts:{ins:F.cIns,inv:F.cInv,adv:F.cAdv,others:COTH.filter(x=>x.label||x.amt),freq:F.cCostFreq||'per week'},cashPos:{before:F.cashbefore,after:F.cashafter,leave:F.leave,note:F.cashnote},savingsBenefit:F.savingsBenefit,insuranceBenefit:F.insuranceBenefit,
+   paraplanning:paras,fee:(()=>{const f={commitment:F.feecommit,status:F.feestatus,cashSource:F.feecashsrc,rows:[],grand:0};
+     feeRows().forEach(r=>{const k=feeKey(r);const cells={};['us','uc','os','oc'].forEach(c=>cells[c]=F['__fee_'+c+'_'+k]||'');const rd=rowDollar(k);f.rows.push({name:r,cells,superBal:F['__fbal_super_'+k]||'',invBal:F['__fbal_inv_'+k]||'',total:rd.rt});f.grand+=rd.rt});return f})()}}
+function rpLine(lbl,r){let p=[];if(r.super)p.push(`${r.super} for Super${r.superBump?' ('+r.superBump+')':''}`);if(r.inv)p.push(`${r.inv} for Inv${r.invBump?' ('+r.invBump+')':''}`);return p.length?`  ${lbl}: ${p.join('; ')}`:''}
+function asText(o){let L=[];
+ L.push(`Advice Request – ${o.clients||'…'}`);L.push(`Adviser: ${o.adviser||'…'}`);
+ L.push(`(${o.ctype||'?'} · ${o.status||'?'} client)`);
+ o.entities.forEach(e=>L.push(`Entity: ${e.type||''} ${e.name||''}`.trim()));
+ L.push('');if(o.narrative){L.push('Hi Team,');L.push(o.narrative);L.push('')}
+ if(o.currentSituation)L.push(`Current situation source: ${o.currentSituation}`);
+ if(o.notesBudget){L.push('');L.push('Additional Notes for budget');L.push(o.notesBudget)}
+ L.push('');L.push('Risk Profile'+(o.riskExisting?' — '+o.riskExisting:''));
+ Object.keys(o.risk).forEach(p=>{const l=rpLine(p,o.risk[p]);if(l)L.push(l)});
+ L.push('');L.push('Scope of Advice');o.scopeIn.forEach(s=>L.push('  '+s));
+ if(o.scopeOut.length||o.scopeOther){L.push('Scope Out');o.scopeOut.forEach(s=>L.push('  '+s));if(o.scopeOther)L.push('  '+o.scopeOther)}
+ const byArea={};o.strategies.forEach(s=>{(byArea[s.area]=byArea[s.area]||[]).push(s)});
+ DATA.forEach(a=>{if(!o.scopeIn.includes(a.area))return;const area=a.area;const ss=byArea[area];
+   const hasP=(o.superProducts[area]&&o.superProducts[area].length)||(o.insProducts[area]&&o.insProducts[area].length)||(o.bondProducts[area]&&o.bondProducts[area].length)||(o.invProducts[area]&&o.invProducts[area].length)||o.products[area]||o.paraplanning[area]||(a.isContrib&&o.contributions.length)||(a.isCash&&(o.cashflow.length||o.cashCosts.ins||o.cashCosts.inv||o.cashCosts.adv));
+   if(!ss&&!hasP)return;L.push('');L.push(area+' Advice');
+   if(ss){L.push('  Strategy Recommendations');ss.forEach(s=>{const w=s.owner&&s.owner!=='Personal'?s.owner+': ':'';let _amts=(s.amounts||[]).slice();let _text=(s.text||s.name).replace(/\$___/g,()=>{const a=_amts.shift();return a?('$'+String(a).replace(/^\$/,'')):'$___'});const amt=_amts.length?'  ['+_amts.join(', ')+']':'';const pk=s.pick?' → '+s.pick:'';L.push(`    • ${w}${_text}${pk}${amt}`);
+     if(s.ttr){const a=s.ttr;const num=v=>parseFloat(String(v||'').replace(/[^0-9.]/g,''))||0;const pct=a.mode==='min'?4:(a.mode==='pct'?num(a.pct):10);
+       if(a.mode!=='amt'&&num(a.bal)&&pct){const ann=num(a.bal)*pct/100;L.push(`      TTR drawdown ${pct}% of $${num(a.bal).toLocaleString('en-AU')}: $${Math.round(ann).toLocaleString('en-AU')} per annum (lump sum)`);}
+       if(a.mode==='amt'&&num(a.amt)){L.push(`      TTR drawdown: $${num(a.amt).toLocaleString('en-AU')} per annum (lump sum)`);}
+       L.push(`      Note: minimum 4% drawdown applies each year while under age 65.`);}
+     if(s.abp){const a=s.abp;const num=v=>parseFloat(String(v||'').replace(/[^0-9.]/g,''))||0;
+       if(a.tbc)L.push(`      Commence up to the maximum Transfer Balance Cap (currently $2,100,000 each).`);
+       if(a.mode==='min'&&num(a.bal)&&num(a.pct)){const ann=num(a.bal)*num(a.pct)/100;L.push(`      Minimum pension ${a.pct}%: $${Math.round(ann/12).toLocaleString('en-AU')} per month ($${Math.round(ann).toLocaleString('en-AU')} p.a.)`);}
+       if(a.mode==='amt'&&num(a.amt)){const mo=num(a.amt);L.push(`      Drawdown: $${mo.toLocaleString('en-AU')} per month ($${Math.round(mo*12).toLocaleString('en-AU')} p.a.)`);}
+       if(a.cond)L.push(`      Condition of release: ${a.cond}`);
+       if(a.mode==='min')L.push(`      Note: We recommend consulting with your accountant each financial year to confirm the minimum pension payment requirements and ensure compliance with superannuation legislation.`);}
+     if(s.est){const e=s.est;if(e.product)L.push(`      Type: ${e.product}`);if(e.initial)L.push(`      ${e.initial} - Initial${e.initialFreq&&e.initialFreq!=='one-off'?' '+e.initialFreq:''}${e.initialSource?' (From '+e.initialSource+')':''}`);if(e.ongoing)L.push(`      ${e.ongoing} - Ongoing${e.ongoingFreq?' '+e.ongoingFreq:''}${e.ongoingSource?' (From '+e.ongoingSource+')':''}`);}})}
+   if(a.isContrib&&o.contributions.length){L.push('  Contributions');o.contributions.forEach(c=>L.push(`    • ${c.who||''} ${c.type}${c.acct?' → '+c.acct:''}${c.fy?' ('+c.fy+')':''}${c.amt?' '+c.amt+(c.freq?' '+c.freq:''):''}`))}
+   if(a.isContrib&&o.superDcaMethod&&!/^no\b/i.test(o.superDcaMethod)){L.push('  Lump-sum DCA: '+o.superDcaMethod)}
+   if(a.isCash){const cc=o.cashCosts;const fmtCost=v=>{const n=parseFloat(String(v||'').replace(/[^0-9.]/g,''));if(!n)return v;if((cc.freq||'per week')==='per week')return '$'+n.toLocaleString('en-AU')+' per week ($'+Math.round(n*52/12).toLocaleString('en-AU')+' per month)';return '$'+n.toLocaleString('en-AU')+' '+(cc.freq||'');};
+     const parts=[];if(cc.ins)parts.push('insurance '+fmtCost(cc.ins));if(cc.inv)parts.push('investments '+fmtCost(cc.inv));if(cc.adv)parts.push('advice fee '+fmtCost(cc.adv));(cc.others||[]).forEach(x=>{if(x.label||x.amt)parts.push((x.label||'other')+' '+fmtCost(x.amt))});
+     if(parts.length){L.push('  Ongoing plan costs to MCMA'+(cc.freq?' ('+cc.freq+')':'')+':');parts.forEach(p=>L.push('    • '+p))}
+     if(o.cashflow.length){L.push('  Costs paid from');o.cashflow.forEach(c=>L.push(`    • ${c.src||''}${c.owner&&c.owner!='Personal'?' ('+c.owner+')':''} - ${c.amt||''}${c.freq?' '+c.freq:''}${c.note?' ['+c.note+']':''}`))}
+     const cp=o.cashPos,cpl=[];if(cp.before)cpl.push('before $'+cp.before);if(cp.after)cpl.push('after $'+cp.after);if(cpl.length)L.push('  Cash position: '+cpl.join(', '));if(cp.note)L.push('  Note: '+cp.note);{const sb=Array.isArray(o.savingsBenefit)?o.savingsBenefit:(o.savingsBenefit?[o.savingsBenefit]:[]);sb.forEach(x=>L.push('  Benefit of saving: '+x))}}
+   if(o.superProducts[area]&&o.superProducts[area].length){L.push('  Super Accounts & Rollovers');o.superProducts[area].forEach((p,j)=>{
+       const nm=(p.label&&p.label.trim())?p.label.trim():('Account '+String.fromCharCode(65+(j%26)));const disp=p.disposition||'';let act='';
+       if(/^Retain partial/.test(disp))act=`retain ${p.retainAmt?('$'+p.retainAmt):'the minimum'}${p.retainReason?' ('+p.retainReason+')':''}, rollover the remainder to ${p.rolloverTo||'?'}`;
+       else if(/^Close/.test(disp))act=`close & full rollover to ${p.rolloverTo||'?'}`;
+       else if(/^Retain as-is/.test(disp))act='retain as-is (no change)';
+       else if(/^Receive/.test(disp))act='retain — receives rollover / contributions';
+       else if(/^Establish/.test(disp))act='establish (new fund)';
+       const bal=p.balance?` [bal $${p.balance}]`:'';
+       L.push(`    • ${nm} — ${p.nature||'Existing'} ${p.acct||''}${p.owner&&p.owner!=='Personal'?' ('+p.owner+')':''}: ${p.product||'—'}${bal}`);
+       if(act)L.push(`        Action: ${act}`);})}
+   else if(o.insProducts[area]&&o.insProducts[area].length){L.push('  Product Recommendations');o.insProducts[area].forEach(p=>L.push(`    • ${p.owner&&p.owner!='Personal'?p.owner+' — ':''}${p.action} ${p.insurer||''}`))}
+   if(a.insMulti){const ib=Array.isArray(o.insuranceBenefit)?o.insuranceBenefit:(o.insuranceBenefit?[o.insuranceBenefit]:[]);ib.forEach(x=>L.push('  Benefit of insurance: '+x))}
+   else if(o.bondProducts[area]&&o.bondProducts[area].length){L.push('  Product Recommendations');o.bondProducts[area].forEach(p=>L.push(`    • ${p.owner||''}${p.forwhom?' (for '+p.forwhom+')':''}: ${p.product||''}`))}
+   else if(o.invProducts[area]&&o.invProducts[area].length){L.push('  Product Recommendations');o.invProducts[area].forEach(p=>{const iSrc=p.initialSource?' from '+p.initialSource:'';const oSrc=p.ongoingSource?' from '+p.ongoingSource:'';const ini=p.initial?`initial ${p.initial}${p.initialFreq&&p.initialFreq!=='one-off'?' '+p.initialFreq:''}${iSrc}`:'';const ong=p.ongoing?`ongoing ${p.ongoing}${p.ongoingFreq?' '+p.ongoingFreq:''}${oSrc}`:'';const extra=[ini,ong].filter(Boolean).join(' + ');L.push(`    • ${p.owner||''}: ${p.product||''}${extra?' — '+extra:''}`)})}
+   else if(o.products[area]){L.push('  Product Recommendations');L.push('    '+o.products[area])}
+   if(o.paraplanning[area]){L.push('  Paraplanning note:');L.push('    '+o.paraplanning[area])}
+ });
+ if(o.care.length){L.push('');L.push('CARE Investment Philosophy — why recommended (feeds Outcomes / Super & Investment / Alternatives / Replacement Implications)');
+   o.care.forEach(c=>L.push(`    • [${c.applies}] ${c.owner?c.owner+': ':''}${c.name}`))}
+ L.push('');L.push('Advice Fees'+(o.fee.status?' — '+o.fee.status:'')+(o.fee.cashSource?' · cashflow fees from '+o.fee.cashSource:''));
+ if(o.fee.commitment)L.push('  Commitment: '+o.fee.commitment);
+ const FL={us:'Up·Super',uc:'Up·Cash',os:'Ong·Super',oc:'Ong·Cash'};
+ o.fee.rows.forEach(r=>{const parts=[];['us','uc','os','oc'].forEach(c=>{if(r.cells[c])parts.push(FL[c]+' '+r.cells[c])});
+   if(parts.length||r.total)L.push(`  ${r.name}: ${parts.join(' | ')}${(r.superBal||r.invBal)?' (bal super '+(r.superBal||'-')+' / inv '+(r.invBal||'-')+')':''}  → their total $${r.total.toLocaleString('en-AU',{maximumFractionDigits:2})}`)});
+ if(o.fee.grand)L.push(`  GRAND TOTAL (p.a.): $${o.fee.grand.toLocaleString('en-AU',{maximumFractionDigits:2})}`);
+ return L.join('\n')}
+function render(){const o=buildObj();const _out=document.getElementById('out');if(_out)_out.textContent=asText(o);const _picks=document.getElementById('picks');if(_picks)_picks.textContent=o.strategies.length+' strategies'+(o.care.length?' · '+o.care.length+' CARE':'');
+ DATA.forEach((a,ai)=>{const n=o.strategies.filter(s=>s.area==a.area).length;const e=document.getElementById('cnt_'+ai);if(e)e.textContent=n?'('+n+')':''});
+ const ct=document.getElementById('cTotal');if(ct){const cc=o.cashCosts;let tot=0;['ins','inv','adv'].forEach(k=>{tot+=parseFee(cc[k]).flat});(cc.others||[]).forEach(x=>{tot+=parseFee(x.amt).flat});ct.textContent=tot?('Total ongoing plan costs: $'+tot.toLocaleString('en-AU',{maximumFractionDigits:0})+' p.a.'):''}
+ {const col={us:0,uc:0,os:0,oc:0};let grand=0;const fmt=n=>'$'+n.toLocaleString('en-AU',{maximumFractionDigits:0});
+  feeRows().forEach(r=>{const k=feeKey(r);const rd=rowDollar(k);['us','uc','os','oc'].forEach(c=>col[c]+=rd.col[c]);const e=document.getElementById('rt_'+k);if(e)e.textContent=rd.rt?fmt(rd.rt):'';grand+=rd.rt});
+  ['us','uc','os','oc'].forEach(c=>{const e=document.getElementById('tt_'+c);if(e)e.textContent=col[c]?fmt(col[c]):''});const g=document.getElementById('tt_grand');if(g)g.textContent=grand?fmt(grand):''}
+ try{localStorage.setItem('mws_ar7',JSON.stringify(o))}catch(e){}}
+function copyOut(){navigator.clipboard.writeText(asText(buildObj()))}
+function dl(k){const c=JSON.stringify(buildObj(),null,2);const b=new Blob([c],{type:'text/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=arFileName('json');a.click();URL.revokeObjectURL(u)}
+function collectState(){
+ const q=(sel,attr)=>{const o={};document.querySelectorAll(sel).forEach(e=>{o[e.getAttribute(attr)]=(e.type==='checkbox')?e.checked:e.value});return o};
+ const strat=[];document.querySelectorAll('[data-strat]:checked').forEach(c=>strat.push(c.dataset.strat));
+ return {v:1,type:'mws_ar_state',F,ENT,PROD,INSPROD,BONDPROD,INVPROD,CONTRIB,CFLOW,COTH,FREE,RISK,CAREPICK,ESTINV,ABP,scopeOut:[...SCOPEOUT],
+   scopeIn:q('[data-scope]','data-scope'),strat,
+   owns:q('[data-own]','data-own'),slots:q('[data-slot]','data-slot'),picks:q('[data-pick]','data-pick'),frees:q('[data-free]','data-free'),freqs:q('[data-freq]','data-freq')};
+}
+function saveState(){const c=JSON.stringify(collectState(),null,2);const b=new Blob([c],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='advice_request_state.json';a.click();URL.revokeObjectURL(u)}
+function loadStateFile(inp){const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{applyState(JSON.parse(e.target.result))}catch(err){alert('Could not load file: '+err.message)}inp.value='';};r.readAsText(f)}
+// Prefill the builder from an EXPORTED advice request (the ".json output" from the "↓ .json" button):
+// convert the flat export back into the internal state shape, then reuse applyState() to populate the UI.
+function arExportToState(o){
+ const _aexact={}; DATA.forEach((a,i)=>{_aexact[a.area]=i;});
+ // Tolerant area match — an advice request exported by an OLDER builder can use a slightly different
+ // area label/number (e.g. "5 · Personal Superannuation" vs the current "5 · Personal Superannuation &
+ // Contributions", or "7 · Personal Protection" now numbered "6"). Match on the text after the number.
+ const AIX=name=>{ if(_aexact[name]!=null) return _aexact[name];
+   const strip=s=>String(s||'').replace(/^\s*\d+\s*[·.\-]\s*/,'').trim().toLowerCase();
+   const t=strip(name); if(!t) return null; let best=null;
+   DATA.forEach((a,i)=>{ const at=strip(a.area); if(at===t||at.indexOf(t)===0||t.indexOf(at)===0) best=i; });
+   return best; };
+ const F2=Object.assign({},F);   // start from current defaults, overlay the export
+ const names=String(o.clients||'').split(/\s*&\s*/).map(s=>s.trim()).filter(Boolean);
+ F2.ctype=o.ctype||'Single';
+ F2.c1name=names[0]||''; if(F2.ctype==='Couple') F2.c2name=names[1]||''; else F2.c2name='';
+ F2.adviser=o.adviser||''; F2.newex=o.status||'New';
+ F2.narr=o.narrative||''; F2.cursit=o.currentSituation||''; F2.keycons=o.keyConsiderations||''; F2.budnotes=o.notesBudget||'';
+ F2.rpexist=o.riskExisting||''; F2.scopeoth=o.scopeOther||'';
+ F2.savingsBenefit=Array.isArray(o.savingsBenefit)?o.savingsBenefit:[]; F2.insuranceBenefit=Array.isArray(o.insuranceBenefit)?o.insuranceBenefit:[];
+ F2.superDcaMethod=o.superDcaMethod||'';
+ const cc=o.cashCosts||{}; F2.cIns=cc.ins||''; F2.cInv=cc.inv||''; F2.cAdv=cc.adv||''; F2.cCostFreq=cc.freq||'per week';
+ const cp=o.cashPos||{}; F2.cashbefore=cp.before||''; F2.cashafter=cp.after||''; F2.leave=cp.leave||''; F2.cashnote=cp.note||'';
+ const fee=o.fee||{}; F2.feecommit=fee.commitment||''; F2.feestatus=fee.status||''; F2.feecashsrc=fee.cashSource||'';
+ (fee.rows||[]).forEach(r=>{ const k=String(r.name||'').replace(/[^a-z0-9]/gi,''); const c=r.cells||{};
+   F2['__fee_us_'+k]=c.us||''; F2['__fee_uc_'+k]=c.uc||''; F2['__fee_os_'+k]=c.os||''; F2['__fee_oc_'+k]=c.oc||'';
+   if(r.superBal) F2['__fbal_super_'+k]=r.superBal; if(r.invBal) F2['__fbal_inv_'+k]=r.invBal; });
+ if((fee.rows||[]).some(r=>r.superBal||r.invBal)) F2.wmfee='Yes';
+ Object.keys(o.paraplanning||{}).forEach(area=>{ {const _ix=AIX(area); if(_ix!=null) F2['para_'+_ix]=o.paraplanning[area]}; });
+ Object.keys(o.products||{}).forEach(area=>{ {const _ix=AIX(area); if(_ix!=null) F2['prod_'+_ix]=o.products[area]}; });
+ try{ if(o.soaType) SOA=o.soaType; }catch(_){}
+
+ const byArea=src=>{ const out={}; Object.keys(src||{}).forEach(area=>{ const _ix=AIX(area); if(_ix!=null) out[_ix]=src[area]; }); return out; };
+ const st={v:1, type:'mws_ar_state', F:F2};
+ st.ENT=Array.isArray(o.entities)?o.entities:[];
+ st.PROD=byArea(o.superProducts); st.INSPROD=byArea(o.insProducts); st.BONDPROD=byArea(o.bondProducts); st.INVPROD=byArea(o.invProducts);
+ st.CONTRIB=Array.isArray(o.contributions)?o.contributions:[];
+ st.CFLOW=Array.isArray(o.cashflow)?o.cashflow:[];
+ st.COTH=(o.cashCosts&&Array.isArray(o.cashCosts.others))?o.cashCosts.others:[];
+ st.RISK={}; Object.keys(o.risk||{}).forEach(party=>{ st.RISK[party.replace(/[^a-z0-9]/gi,'')]=o.risk[party]; });
+ st.CAREPICK={}; (o.care||[]).forEach(c=>{ const i=(typeof CARE!=='undefined')?CARE.findIndex(x=>x.name===c.name):-1; if(i>=0) st.CAREPICK[i]={on:true,owner:c.owner||'',applies:c.applies||''}; });
+ st.ESTINV={}; st.ABP={}; st.TTR={}; st.FREE={};
+ st.scopeOut=Array.isArray(o.scopeOut)?o.scopeOut:[];
+ st.scopeIn={}; DATA.forEach((a,i)=>{ st.scopeIn[i]=false; });   // explicitly un-tick every area first…
+ (o.scopeIn||[]).forEach(area=>{ const _ix=AIX(area); if(_ix!=null) st.scopeIn[_ix]=true; });   // …then tick the scoped-in ones
+ st.strat=[]; st.owns={}; st.slots={}; st.picks={}; st.frees={}; st.freqs={};
+ const splitAmt=amt=>{ let s=String(amt||'').replace(/\s*\(\$?[\d,\.]+\s*p\.?a\.?\)\s*$/i,'').trim(); s=s.replace(/^\$\s*/,'');
+   const m=s.match(/(per week|per fortnight|per month|per annum|per year|p\.?w\.?|p\.?m\.?|p\.?a\.?|one[- ]?off|ongoing)\s*$/i);
+   let freq=''; if(m){ freq=m[1]; s=s.slice(0,m.index).trim(); }
+   if(/week/i.test(freq)) freq='per week'; else if(/fortnight/i.test(freq)) freq='per fortnight'; else if(/month|p\.?m/i.test(freq)) freq='per month'; else if(/annum|year|p\.?a/i.test(freq)) freq='per annum';
+   return {val:s, freq}; };
+ (o.strategies||[]).forEach(s=>{ const ai=AIX(s.area); if(ai==null) return;
+   let si=DATA[ai].scen.findIndex(x=>x.name===s.name);
+   if(si<0){ const _n=t=>String(t||'').toLowerCase().replace(/[^a-z0-9]/g,''); const tn=_n(s.name); si=DATA[ai].scen.findIndex(x=>_n(x.name)===tn); }   // tolerant scenario-name match (punctuation drift)
+   if(si<0){ st.FREE[ai]=st.FREE[ai]||[]; st.FREE[ai].push({text:s.text||s.name||'', owner:s.owner||''}); return; }
+   const id=ai+'_'+si; st.strat.push(id);
+   if(s.owner) st.owns[id]=s.owner;
+   if(s.pick) st.picks[id]=s.pick;
+   (Array.isArray(s.amounts)?s.amounts:[]).forEach((amt,k)=>{ const sid=id+'_'+k; const pv=splitAmt(amt); st.slots[sid]=pv.val; if(pv.freq) st.freqs[sid]=pv.freq; });
+   if(s.est) st.ESTINV[id]=s.est;
+   if(s.ttr) st.TTR[id]=s.ttr;
+ });
+ return st;
+}
+function applyState(st){
+ if(!st||typeof st!=='object')return;
+ // An exported advice request (.json output) has strategies[]/scopeIn[] but no .F — accept it and
+ // prefill the builder from it (instead of rejecting it as "not a saved state").
+ if(st.strategies&&!st.F&&Array.isArray(st.scopeIn)){ try{ st=arExportToState(st); }catch(e){ alert('Could not read that advice request: '+(e&&e.message||e)); return; } }
+ if(st.strategies&&!st.F){alert('This looks like an exported advice-request (.json output), not a saved state. Use a file created with the Save button.');return;}
+ const replArr=(arr,src)=>{arr.length=0;(src||[]).forEach(x=>arr.push(x))};
+ const replObj=(obj,src)=>{Object.keys(obj).forEach(k=>delete obj[k]);Object.assign(obj,src||{})};
+ replObj(F,st.F);replArr(ENT,st.ENT);replArr(CONTRIB,st.CONTRIB);replArr(CFLOW,st.CFLOW);replArr(COTH,st.COTH);
+ replObj(PROD,st.PROD);replObj(INSPROD,st.INSPROD);replObj(BONDPROD,st.BONDPROD);replObj(INVPROD,st.INVPROD);replObj(FREE,st.FREE);replObj(RISK,st.RISK);replObj(CAREPICK,st.CAREPICK);replObj(ESTINV,st.ESTINV);replObj(ABP,st.ABP);replObj(TTR,st.TTR);
+ SCOPEOUT.clear();(st.scopeOut||[]).forEach(x=>SCOPEOUT.add(x));
+ document.querySelectorAll('[data-f]').forEach(e=>{const v=F[e.dataset.f];if(v!=null&&!Array.isArray(v))e.value=v;});
+ document.querySelectorAll('[data-fm]').forEach(e=>{const arr=F[e.dataset.fm];e.checked=Array.isArray(arr)&&arr.indexOf(e.value)>=0;});
+ document.querySelectorAll('details.multidrop').forEach(d=>{const n=[...d.querySelectorAll('[data-fm]')].filter(x=>x.checked).length;const s=d.querySelector('summary');if(s)s.textContent=n?n+' selected':'Select…';});
+ {const c2=document.getElementById('c2wrap');if(c2)c2.style.display=(F.ctype=='Couple')?'':'none';}
+ {const fo=document.getElementById('feeOngWrap');if(fo)fo.style.display=(F.newex=='Existing')?'flex':'none';}
+ {const fb=document.getElementById('feeBalWrap');if(fb)fb.style.display=(F.wmfee=='Yes')?'block':'none';}
+ const si=st.scopeIn||{};document.querySelectorAll('[data-scope]').forEach(e=>{if(si[e.dataset.scope]!=null){e.checked=si[e.dataset.scope];const card=document.getElementById('areacard_'+e.dataset.scope);if(card)card.classList.toggle('scopedout',!e.checked);}});
+ document.querySelectorAll('[data-sop]').forEach(e=>{e.checked=SCOPEOUT.has(e.dataset.sop);});
+ document.querySelectorAll('[data-so]').forEach(e=>{e.classList.toggle('on',SCOPEOUT.has(e.dataset.so));});
+ renderEnt();renderRisk();renderOwners();buildStrats();
+ DATA.forEach((a,ai)=>{if(a.superMulti)renderProd(ai);if(a.insMulti)renderInsProd(ai);if(a.bondMulti)renderBondProd(ai);if(a.invMulti)renderInvProd(ai);});
+ renderContrib();renderCflow();if(document.getElementById('cothList'))renderCoth();if(document.getElementById('careList'))renderCare();
+ (st.strat||[]).forEach(id=>{const c=document.querySelector('[data-strat="'+id+'"]');if(c){c.checked=true;const s=c.closest('.strat');if(s)s.classList.add('on');let el=c.closest('details');while(el){el.open=true;el=el.parentElement?el.parentElement.closest('details'):null;}}});
+ const app=(o,attr)=>{if(!o)return;Object.keys(o).forEach(k=>{const e=document.querySelector('['+attr+'="'+k.replace(/"/g,'\\"')+'"]');if(e)e.value=o[k];});};
+ app(st.owns,'data-own');app(st.slots,'data-slot');app(st.picks,'data-pick');app(st.frees,'data-free');app(st.freqs,'data-freq');
+ renderFee();render();
+}
+function dlWord(){const o=buildObj();const lines=asText(o).split('\n');
+ const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+ const SECT=new Set(['Risk Profile','Scope of Advice','Scope Out']);
+ let body='';let feeDone=false;
+ const fmt=n=>'$'+n.toLocaleString('en-AU',{maximumFractionDigits:2});
+ const feeTable=()=>{const fe=o.fee;let s='';if(fe.commitment||fe.status||fe.cashSource){s+='<p>'+esc('Commitment: '+(fe.commitment||'—')+(fe.status?'  ·  Ongoing: '+fe.status:'')+(fe.cashSource?'  ·  Cashflow fees from: '+fe.cashSource:''))+'</p>';}
+   s+='<table class="ft"><tr><th></th><th>Up·Super</th><th>Up·Cash</th><th>Ong·Super</th><th>Ong·Cash</th><th>Their total p.a.</th></tr>';
+   let col={us:0,uc:0,os:0,oc:0};
+   fe.rows.forEach(r=>{['us','uc','os','oc'].forEach(c=>{const v=parseFee(r.cells[c]);const sb=parseFee(r.superBal).flat,ib=parseFee(r.invBal).flat;col[c]+=v.flat+(v.pct?parseFloat(v.pct)/100*((c=='us'||c=='os')?sb:ib):0)});
+     s+='<tr><td>'+esc(r.name)+'</td>'+['us','uc','os','oc'].map(c=>'<td>'+esc(r.cells[c]||'')+'</td>').join('')+'<td>'+(r.total?fmt(r.total):'')+'</td></tr>';});
+   s+='<tr class="tot"><td>Total</td><td>'+(col.us?fmt(col.us):'')+'</td><td>'+(col.uc?fmt(col.uc):'')+'</td><td>'+(col.os?fmt(col.os):'')+'</td><td>'+(col.oc?fmt(col.oc):'')+'</td><td>'+(fe.grand?fmt(fe.grand):'')+'</td></tr></table>';
+   return s;};
+ lines.forEach((ln,idx)=>{if(feeDone)return;const t=ln.trim();
+   if(idx===0){body+=`<h1>${esc(t)}</h1>`;return}
+   if(/^Adviser:/.test(t)||/SOA ·/.test(t)||/^Entity:/.test(t)){body+=`<p class="sub">${esc(t)}</p>`;return}
+   if(t===''){body+='<div style="height:7px"></div>';return}
+   const lead=ln.length-ln.replace(/^\s+/,'').length;
+   if(t==='Hi Team,'){body+=`<p>${esc(t)}</p>`;return}
+   if(lead===0 && /^Advice Fees/.test(t)){body+=`<h2>Advice Fees</h2>`+feeTable();feeDone=true;return}
+   if(lead===0 && (/ Advice$/.test(t)||SECT.has(t)||/^CARE Investment Philosophy/.test(t))){body+=`<h2>${esc(t)}</h2>`;return}
+   if(t.startsWith('•')){body+=`<p class="bul">${esc(t)}</p>`;return}
+   if(lead<=2 && (/:$/.test(t)||/^(Strategy Recommendations|Product Recommendations|Super Accounts|Contributions|Costs paid from|Ongoing plan costs|Cash position|GRAND TOTAL|Commitment)/.test(t))){body+=`<p class="lbl">${esc(t)}</p>`;return}
+   body+=`<p${lead>=4?' class="ind"':''}>${esc(t)}</p>`;});
+ const css=`<style>@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+  body{font-family:'Nunito','ABC Arizona Sans',Calibri,sans-serif;color:#1A1A1A;font-size:11pt;margin:0}
+  .wrap{padding:26px 34px 30px}
+  h1{font-family:'Nunito',Georgia,serif;color:#2f6df0;font-size:24pt;font-weight:800;margin:0 0 4px}
+  h2{font-family:'Nunito',Georgia,serif;color:#2f6df0;font-size:15pt;font-weight:800;margin:18px 0 5px}
+  p{margin:3px 0}.sub{color:#1A1A1A;font-size:11pt}.lbl{font-weight:800;color:#2f6df0;margin-top:8px}.bul{margin-left:20px}.ind{margin-left:14px}
+  table.ft{border-collapse:collapse;width:100%;margin:6px 0;font-size:9.5pt}
+  table.ft th{background:#2f6df0;color:#fff;border:1px solid #2f6df0;padding:4px 6px;text-align:left;font-size:9pt}
+  table.ft td{border:1px solid #c9d4e2;padding:4px 6px}
+  table.ft tr.tot td{background:#eef2fb;font-weight:700}
+ </style>`;
+ // Embed the full advice-request JSON as an HTML comment so the SOA generator can read the
+ // structured data straight from the dropped .doc (falls back to text parsing if absent).
+ let arTag='';try{arTag='<!--MWS_AR_JSON_B64:'+btoa(unescape(encodeURIComponent(JSON.stringify(o))))+'-->';}catch(e){arTag='';}
+ const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8">${css}</head><body>${arTag}<div class="wrap">${body}</div></body></html>`;
+ const b=new Blob(['﻿'+html],{type:'application/msword'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=arFileName('doc');a.click();URL.revokeObjectURL(u)}
+/* Couple split: strategies in two per-client columns for Super/Contributions/Insurance */
+function clientList(){return (F.ctype=='Couple')?[(F.c1name||'Client 1'),(F.c2name||'Client 2')]:[(F.c1name||'Personal')]}
+const INS_GROUPS=[{t:'Core recommendation',open:true},{t:'Income Protection',open:false},{t:'TPD definition & sizing',open:false},{t:'Policy features & structure',open:false},{t:'Situational cover',open:false},{t:'Underwriting & occupation',open:false}];
+function insGroup(name){if(/pre-assessment/i.test(name))return 5;if(/income protection/i.test(name))return 1;if(/TPD/.test(name))return 2;if(/Premium structure|reinstatement|buy-back|Future insurability/i.test(name))return 3;if(/child cover|Employer-paid|Trauma payout|workforce absence/i.test(name))return 4;return 0;}
+function areaGroups(a){const A=a.area;
+ if(a.insMulti)return {keys:['core','ip','tpd','sit'],G:{core:'Core recommendation',ip:'Income Protection',tpd:'TPD definition & sizing',sit:'Situational & Underwriting factors'},open:{core:1}};
+ if(/Investment Plan/.test(A))return {keys:['core','existing','draw','cgt'],G:{core:'Core — establish & invest',existing:'Existing holdings',draw:'Drawdown & liquidity',cgt:'CGT'},open:{core:1}};
+ if(a.superMulti)return {keys:['setup','pension','smsf','tpd','cgt','concessional','ncc','notes'],G:{setup:'Fund setup & rollover',pension:'Pension & retirement',smsf:'SMSF',tpd:'TPD payout',cgt:'CGT',concessional:'Concessional contributions (before-tax)',ncc:'Non-concessional contributions (after-tax)',notes:'Contribution notes & thresholds'},open:{setup:1}};
+ if(/Debt Management/.test(A))return {G:['Core — cashflow to debt','Consolidation & loan structure','Gearing / equity release','Property & custom'],open:[1,0,0,0],f:n=>/GEARING|Term Loan|equity|debt recycling/i.test(n)?2:(/Consolidate|Refinance|interest only|principal & interest|\bP&I\b/i.test(n)?1:(/home sale|Custom/i.test(n)?3:0))};
+ if(/Investment Property/.test(A))return {G:['Acquire / restructure','Retain or sell existing'],open:[1,0],f:n=>/Retain an existing|Sell an existing/i.test(n)?1:0};
+ if(a.isContrib)return {G:['Concessional (before-tax)','Non-concessional (after-tax)','Notes & thresholds'],open:[1,0,0],f:n=>/Division|Work test/i.test(n)?2:(/Non-concessional|Bring-forward|Spouse|co-contribution|Downsizer|FHSSS|First Home/i.test(n)?1:0)};
+ if(a.isCash)return {G:['Cash hub & structure','Surplus & budgeting'],open:[1,0],f:n=>/surplus|tax savings|Budget/i.test(n)?1:0};
+ return null;}
+function renderStratList(a,ai,ci,list){const def=areaGroups(a);
+ if(!def)return list.map(({s,i})=>stratRow(a,s,i,ai,ci)).join('');
+ let buckets;
+ if(def.keys){buckets=def.keys.map(k=>({t:def.G[k],open:!!def.open[k],items:[],k}));
+   list.forEach(({s,i})=>{const b=buckets.find(x=>x.k===(s.g||def.keys[0]))||buckets[0];b.items.push({s,i});});
+ }else{buckets=def.G.map((tt,gi)=>({t:tt,open:!!def.open[gi],items:[]}));
+   list.forEach(({s,i})=>{let gi=def.f(s.name);if(gi==null||gi<0||gi>=buckets.length)gi=0;buckets[gi].items.push({s,i});});}
+ return buckets.filter(b=>b.items.length).map(b=>`<details class="stratgroup"${b.open?' open':''}><summary>${b.t} <span class="gcount">(${b.items.length})</span></summary>`+b.items.map(({s,i})=>stratRow(a,s,i,ai,ci)).join('')+`</details>`).join('');}
+function stratSplit(a){return F.ctype=='Couple' && (a.superMulti||a.insMulti||a.isContrib)}
+function stratRow(a,s,i,ai,ci){
+ const id=(ci==null)?ai+'_'+i:ai+'_'+i+'_c'+ci;
+ const tag=s.to=='accumulator'?'<span class="tg acc">ACC</span>':s.to=='retirement'?'<span class="tg ret">RET</span>':'';
+ const slotInputs=s.slots.map((sl,k)=>{const isFreq=/\bpm\b|\bpw\b|per month|per week|per annum|ongoing/i.test(sl);const ph=sl.replace(/\s*\bp\.?m\.?\b/i,'').replace(/\s*\bp\.?w\.?\b/i,'').trim();const df=/pm|month/i.test(sl)?'per month':(/pw|week/i.test(sl)?'per week':'');const fsel=isFreq?freqSelect(`class="freq" data-freq="${id}_${k}"`,df):'';return `<input class="sl" data-slot="${id}_${k}" placeholder="${ph}">${fsel}`;}).join('');
+ const pickSel=s.pick?`<select class="pk" data-pick="${id}">`+s.pick.map(o=>`<option>${o}</option>`).join('')+`</select>`:'';
+ const ownerSel=(ci==null)?`<select class="own" data-own="${id}">`+ownersFor(a).map(o=>`<option>${o}</option>`).join('')+`</select>`:'';
+ return `<label class="strat"><input type="checkbox" data-strat="${id}" data-name="${s.name.replace(/"/g,'&quot;')}" data-text="${(s.strat||'').replace(/"/g,'&quot;')}" data-custom="${s.custom?1:0}" data-estinv="${s.estInv?1:0}">`+
+   `<span class="lbl">${s.name}${tag}</span>`+
+   `<span class="opts">${ownerSel}${pickSel}${slotInputs}`+
+   (s.custom?`<input class="sl" style="flex:1 1 100%" data-free="${id}" placeholder="free-type wording">`:'')+
+   (s.estInv?estInvPanel(id):'')+(s.abp?abpPanel(id):'')+(s.ttr?ttrPanel(id):'')+(s.mcma?mcmaPanel():'')+`</span></label>`;
+}
+function buildStrats(){
+ DATA.forEach((a,ai)=>{const list=a.scen.map((s,i)=>({s,i}));const box=document.getElementById('strat_'+ai);if(!box)return;
+  if(stratSplit(a)){const cl=clientList();
+    const entityList=list.filter(x=>x.s.g==='smsf');const personalList=list.filter(x=>x.s.g!=='smsf');
+    let html=`<div class="splitcols">`+cl.map((nm,ci)=>`<div class="splitcol"><h4>${nm||('Client '+(ci+1))}</h4>`+renderStratList(a,ai,ci,personalList)+`</div>`).join('')+`</div>`;
+    if(entityList.length)html+=`<div class="muted" style="margin:6px 0 2px">SMSF strategies apply to the SMSF entity (assign the owner below), not an individual client.</div>`+renderStratList(a,ai,null,entityList);
+    box.innerHTML=html;
+  }else{box.innerHTML=renderStratList(a,ai,null,list);}
+ });
+ document.querySelectorAll('[data-strat]').forEach(c=>c.addEventListener('change',e=>{e.target.closest('.strat').classList.toggle('on',e.target.checked);render()}));
+ document.querySelectorAll('[data-own],[data-slot],[data-free],[data-pick],[data-freq]').forEach(i=>i.addEventListener('input',render));
+ document.querySelectorAll('.estpanel [data-est]').forEach(inp=>{
+   if(inp.type==='radio'){
+     inp.addEventListener('change',e=>{const[id,kind]=e.target.dataset.est.split('.');ESTINV[id][kind]=e.target.value;e.target.closest('.chips').querySelectorAll('.srcchip').forEach(c=>c.classList.remove('on'));e.target.closest('.srcchip').classList.add('on');render()});
+     inp.addEventListener('click',e=>{const[id,kind]=e.target.dataset.est.split('.');if(ESTINV[id][kind]===e.target.value){ESTINV[id][kind]='';e.target.checked=false;e.target.closest('.srcchip').classList.remove('on');render()}});
+   }else{
+     inp.addEventListener('input',e=>{const[id,kind]=e.target.dataset.est.split('.');ESTINV[id][kind]=e.target.value;render()});
+   }
+ });
+ document.querySelectorAll('.estpanel [data-fc]').forEach(inp=>inp.addEventListener('input',e=>{F[e.target.dataset.fc]=e.target.value;render()}));
+ if(document.getElementById('cothList'))renderCoth();
+ document.querySelectorAll('.estpanel [data-ttr]').forEach(inp=>{
+   const upd=(id)=>{const a=TTR[id];const num=v=>parseFloat(String(v||'').replace(/[^0-9.]/g,''))||0;const pct=a.mode==='min'?4:(a.mode==='pct'?num(a.pct):10);let calc='';
+     if(a.mode!=='amt'&&num(a.bal)&&pct){const ann=num(a.bal)*pct/100;calc=`= ${pct}% of $${num(a.bal).toLocaleString('en-AU')} → $${Math.round(ann).toLocaleString('en-AU')} per annum ($${Math.round(ann/12).toLocaleString('en-AU')} per month)`;}
+     if(a.mode==='amt'&&num(a.amt)){calc=`= $${num(a.amt).toLocaleString('en-AU')} per annum`;}
+     const el=document.querySelector(`[data-ttrcalc="${id}"]`);if(el)el.textContent=calc;};
+   if(inp.type==='radio'){
+     inp.addEventListener('change',e=>{const[id]=e.target.dataset.ttr.split('.');TTR[id].mode=e.target.value;buildStratsPreserve(id)});
+   }else{
+     inp.addEventListener('input',e=>{const[id,kind]=e.target.dataset.ttr.split('.');TTR[id][kind]=e.target.value;upd(id);render()});
+   }
+ });
+ document.querySelectorAll('.estpanel [data-abp]').forEach(inp=>{
+   const upd=(id)=>{const a=ABP[id];const num=v=>parseFloat(String(v||'').replace(/[^0-9.]/g,''))||0;let calc='';
+     if(a.mode==='min'){const ann=num(a.bal)*num(a.pct)/100;if(ann)calc=`= $${Math.round(ann/12).toLocaleString('en-AU')} per month ($${Math.round(ann).toLocaleString('en-AU')} p.a.)`;}
+     if(a.mode==='amt'){const mo=num(a.amt);if(mo)calc=`= $${mo.toLocaleString('en-AU')} per month ($${Math.round(mo*12).toLocaleString('en-AU')} p.a.)`;}
+     const el=document.querySelector(`[data-abpcalc="${id}"]`);if(el)el.textContent=calc;};
+   if(inp.type==='radio'){
+     inp.addEventListener('change',e=>{const[id]=e.target.dataset.abp.split('.');ABP[id].mode=e.target.value;buildStratsPreserve(id)});
+   }else if(inp.type==='checkbox'){
+     inp.addEventListener('change',e=>{const[id]=e.target.dataset.abp.split('.');ABP[id].tbc=e.target.checked;e.target.closest('.srcchip').classList.toggle('on',e.target.checked);render()});
+   }else{
+     inp.addEventListener('input',e=>{const[id,kind]=e.target.dataset.abp.split('.');ABP[id][kind]=e.target.value;upd(id);render()});
+   }
+ });
+ render();
+}
+function buildStratsPreserve(focusId){const checked=new Set([...document.querySelectorAll('[data-strat]:checked')].map(c=>c.dataset.strat));buildStrats();checked.forEach(id=>{const cb=document.querySelector(`[data-strat="${id}"]`);if(cb){cb.checked=true;cb.closest('.strat').classList.add('on');let el=cb.closest('details');while(el){el.open=true;el=el.parentElement?el.parentElement.closest('details'):null;}}});render()}
+function gather(){const out=[];const ins=scopeInIdx();document.querySelectorAll('[data-strat]:checked').forEach(c=>{const id=c.dataset.strat;const ai=+id.split('_')[0];if(!ins.includes(ai))return;
+  const cm=id.match(/_c(\d+)$/);let owner;
+  if(cm){owner=(clientList()[+cm[1]]||'')}else{const own=document.querySelector(`[data-own="${id}"]`);owner=own?own.value:''}
+  const free=document.querySelector(`[data-free="${id}"]`);
+  const sl=[...document.querySelectorAll(`[data-slot^="${id}_"]`)].map(x=>{let v=(x.value||'').trim();if(!v)return '';const ph=x.placeholder||'';const num=parseFloat(v.replace(/[^0-9.]/g,''));
+    if(/monthly/i.test(ph)&&num){return '$'+num.toLocaleString('en-AU')+' per month ($'+Math.round(num*12).toLocaleString('en-AU')+' p.a.)'}
+    if(/weekly/i.test(ph)&&num){return '$'+num.toLocaleString('en-AU')+' per week ($'+Math.round(num*52).toLocaleString('en-AU')+' p.a.)'}
+    if(/% upfront/i.test(ph)&&num){return num+'%'}
+    if(/% \(up to\)/i.test(ph)&&num){return num+'%'}
+    const fq=document.querySelector(`[data-freq="${x.dataset.slot}"]`);return v+(fq&&fq.value?' '+fq.value:'');}).filter(Boolean);
+  const pk=document.querySelector(`[data-pick="${id}"]`);
+  const est=(c.dataset.estinv=='1'&&ESTINV[id])?ESTINV[id]:null;
+  const abp=(ABP[id]&&(ABP[id].mode||ABP[id].tbc||ABP[id].cond))?ABP[id]:null;
+  const ttr=(TTR[id]&&(TTR[id].bal||TTR[id].amt))?TTR[id]:null;
+  out.push({area:DATA[ai].area,name:c.dataset.name,text:c.dataset.custom=='1'&&free&&free.value?free.value:c.dataset.text,owner,amounts:sl,pick:pk?pk.value:'',est,abp,ttr});});
+  Object.keys(FREE).forEach(ai=>{if(!ins.includes(+ai))return;(FREE[ai]||[]).forEach(f=>{if(f.text)out.push({area:DATA[ai].area,name:f.text,text:f.text,owner:f.owner,amounts:[]})})});return out}
+build();
+</script></body></html>
