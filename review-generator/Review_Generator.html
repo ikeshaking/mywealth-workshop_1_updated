@@ -279,6 +279,22 @@ textarea{resize:vertical;min-height:60px}
 .smartdrop .sd-types{font-size:11px;color:var(--text-dim);margin-top:8px}
 .smartdrop input{display:none}
 .sd-badge{display:inline-block;background:var(--green);color:#fff;border-radius:20px;padding:2px 11px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:9px}
+/* duplicate/conflict warning banner (SOA-style link warnings) */
+.conflict-card{border:1.5px solid #e6a23c;background:#fff8ec;border-left:5px solid #e6a23c}
+.conflict-head{font-weight:800;color:#a35b00;font-size:13.5px;letter-spacing:.01em}
+.conflict-sub{font-size:12px;color:#7a5a2e;margin:5px 0 12px;text-transform:none;letter-spacing:normal;line-height:1.5}
+.dup-item{border-top:1px solid #f0dcb8;padding:11px 0}
+.dup-item:first-of-type{border-top:0}
+.dup-q{font-weight:700;font-size:12.5px;color:#5a4326;text-transform:none;letter-spacing:normal;margin-bottom:6px}
+.dup-opts{display:flex;flex-direction:column;gap:4px;margin-bottom:9px}
+.dup-opt{display:flex;align-items:flex-start;gap:7px;font-size:12.5px;color:var(--text);text-transform:none;letter-spacing:normal;cursor:pointer;background:#fff;border:1px solid #eadcc0;border-radius:7px;padding:6px 9px}
+.dup-opt input{width:auto;margin:2px 0 0;flex:0 0 auto}
+.dup-act{display:flex;gap:8px;flex-wrap:wrap}
+@media (prefers-color-scheme:dark){
+  .conflict-card{background:#2e2410;border-color:#7a5a2e}
+  .conflict-head{color:#f0c069}.conflict-sub{color:#d6b483}.dup-q{color:#e6cfa4}
+  .dup-opt{background:#241c0c;border-color:#5a4a2a;color:#ead9be}
+}
 /* whole-window drag & drop overlay */
 #dropOverlay{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(12,46,63,.72);backdrop-filter:blur(2px)}
 #dropOverlay.show{display:flex}
@@ -1078,6 +1094,7 @@ async function importAnyPlatform(ev){
   renderContent();
   let msg = applied.length ? ("✓ Imported "+applied.length+" report(s): "+applied.join("   ·   ")) : "No platform reports recognised in those files.";
   if(failed.length) msg += "   |   Skipped "+failed.length+": "+failed.join("; ");
+  const cc=conflictCount(); if(cc) msg += "   |   ⚠ "+cc+" possible duplicate account"+(cc>1?"s":"")+" — see the ⚠ panel to link them.";
   toast(msg);
 }
 /* ============================================================
@@ -1350,6 +1367,122 @@ function findExistingAsset(list, cand){
   }
   return null;
 }
+
+/* ---------- Duplicate / conflict detection (SOA-style link warnings) ----------
+   After an import, two rows can end up describing the SAME account (e.g. a last
+   review's "Hub 24 Super" plus a freshly-imported "HUB24 (unconfirmed)"). These
+   helpers detect likely-duplicate rows so the UI can warn and let the RSO LINK
+   them into one, or keep them separate. Detection is conservative — different
+   super/investment sense or different account ids are treated as distinct. */
+function _dnorm(s){ return String(s||"").toLowerCase().replace(/[\s\-,.'/]/g,""); }
+function _ddig(s){ return String(s||"").replace(/\D/g,""); }
+function _isSuperRow(x){ return /super|pension|smsf|pens|retire/i.test((x.type||"")+" "+(x.name||"")); }
+function assetsLikelySame(a,b){
+  const ra=_ddig(a.ref), rb=_ddig(b.ref);
+  if(ra&&rb&&ra.length>=4&&rb.length>=4){ return (ra===rb||ra.includes(rb)||rb.includes(ra)); }
+  const na=_dnorm(a.name), nb=_dnorm(b.name);
+  if(!na||!nb) return false;
+  if(_isSuperRow(a)!==_isSuperRow(b)) return false;            // different sense → different accounts
+  if(na===nb) return true;
+  if((na.length>=5&&nb.includes(na))||(nb.length>=5&&na.includes(nb))) return true;
+  const ka=ASSET_KW.find(k=>na.includes(k)), kb=ASSET_KW.find(k=>nb.includes(k));
+  if(ka&&ka===kb) return true;                                 // same platform keyword + same sense
+  return false;
+}
+function insLikelySame(a,b){
+  const pa=_ddig(a.policy), pb=_ddig(b.policy);
+  if(pa&&pb&&pa.length>=5&&pa===pb) return true;
+  const ct=_dnorm(a.coverType), ci=_dnorm(a.insurer);
+  return !!(ct && ct===_dnorm(b.coverType) && ci && ci===_dnorm(b.insurer) && _dnorm(a.life)===_dnorm(b.life));
+}
+function dupGroups(list, cmp){
+  const n=(list||[]).length; if(n<2) return [];
+  const parent=Array.from({length:n},(_,i)=>i);
+  const find=x=>{ while(parent[x]!==x){ parent[x]=parent[parent[x]]; x=parent[x]; } return x; };
+  for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){ if(cmp(list[i],list[j])) parent[find(i)]=find(j); }
+  const g={}; for(let i=0;i<n;i++){ const r=find(i); (g[r]=g[r]||[]).push(i); }
+  return Object.values(g).filter(x=>x.length>1);
+}
+function _dupSig(rows, keyer){ return rows.map(keyer).sort().join("~~"); }
+function _bestKeeper(rows){
+  let best=0,bs=-1;
+  rows.forEach((r,k)=>{ let s=0;
+    if(r.name && !/unconfirmed|check figure/i.test(r.name)) s+=3;
+    if(_ddig(r.ref)) s+=2;
+    if(num(r.value)>0) s+=1;
+    s+=Math.min(2,String(r.name||"").length/12);
+    if(s>bs){ bs=s; best=k; } });
+  return best;
+}
+// Collect every duplicate group across assets + insurance (minus dismissed ones)
+function collectConflicts(){
+  if(!S._dismissDup) S._dismissDup=[];
+  const out=[];
+  [["nestegg","Nest egg asset"],["lifestyle","Lifestyle asset"]].forEach(([ln,label])=>{
+    const list=S[ln]||[];
+    dupGroups(list,assetsLikelySame).forEach(idxs=>{
+      const rows=idxs.map(i=>list[i]);
+      const sig=ln+"::"+_dupSig(rows,r=>_dnorm(r.name)+"|"+_ddig(r.ref));
+      if(!S._dismissDup.includes(sig)) out.push({kind:"asset", listName:ln, label, idxs, rows, sig});
+    });
+  });
+  [["client","insClient"],["partner","insPartner"]].forEach(([who,ln])=>{
+    const list=(S.insurance&&S.insurance[who])||[];
+    dupGroups(list,insLikelySame).forEach(idxs=>{
+      const rows=idxs.map(i=>list[i]);
+      const sig=ln+"::"+_dupSig(rows,r=>_dnorm(r.coverType)+_dnorm(r.insurer)+"|"+_ddig(r.policy));
+      if(!S._dismissDup.includes(sig)) out.push({kind:"ins", listName:ln, label:"Insurance cover", idxs, rows, sig});
+    });
+  });
+  return out;
+}
+function conflictCount(){ return collectConflicts().length; }
+let _dupRadioN=0;
+function renderConflictBanner(){
+  const conflicts=collectConflicts();
+  if(!conflicts.length) return "";
+  const cards=conflicts.map(c=>{
+    const rid="dupR"+(_dupRadioN++);
+    const keep=_bestKeeper(c.rows);
+    const opts=c.rows.map((r,k)=>{
+      const val=c.kind==="ins"
+        ? `${esc(r.coverType||"Cover")} · ${esc(r.insurer||"")}${r.amount?(" · "+esc(String(r.amount))):""}${r.policy?(" · #"+esc(String(r.policy))):""}`
+        : `${esc(r.name||r.type||"(unnamed)")} — ${money(num(r.value))}${num(r.debt)?(" / debt "+money(num(r.debt))):""}${r.ref?(" · ref "+esc(String(r.ref))):""}`;
+      return `<label class="dup-opt"><input type="radio" name="${rid}" value="${c.idxs[k]}" ${k===keep?"checked":""}> <span>${val}</span></label>`;
+    }).join("");
+    return `<div class="dup-item">
+      <div class="dup-q">${esc(c.label)}: ${c.idxs.length} rows look like the <b>same account</b> — link them?</div>
+      <div class="dup-opts">${opts}</div>
+      <div class="dup-act">
+        <button class="btn btn-primary btn-sm" onclick="linkDup('${c.listName}','${rid}')">🔗 Link — keep selected, merge the rest</button>
+        <button class="btn btn-ghost btn-sm" onclick="dismissDup('${encodeURIComponent(c.sig)}')">Keep separate</button>
+      </div></div>`;
+  }).join("");
+  return `<div class="card conflict-card">
+    <div class="conflict-head">⚠ ${conflicts.length} possible duplicate account${conflicts.length>1?"s":""} — from imports or the last review</div>
+    <div class="conflict-sub">A supporting document looks like it describes an account you already have. Pick the row to keep and <b>Link</b> to merge them, or <b>Keep separate</b> if they really are different.</div>
+    ${cards}</div>`;
+}
+function linkDup(listName, radioId){
+  const list=getArr(listName); if(!list) return;
+  const sel=document.querySelector(`input[name="${radioId}"]:checked`);
+  if(!sel){ toast("Pick which row to keep first."); return; }
+  const keepIdx=+sel.value;
+  const cmp=(listName==="insClient"||listName==="insPartner")?insLikelySame:assetsLikelySame;
+  const grp=dupGroups(list,cmp).find(g=>g.includes(keepIdx));
+  if(!grp){ renderContent(); return; }
+  const keeper=list[keepIdx];
+  grp.filter(i=>i!==keepIdx).forEach(i=>{ const o=list[i];
+    Object.keys(o).forEach(f=>{ if((keeper[f]==null||keeper[f]==="") && o[f]!=null && o[f]!=="") keeper[f]=o[f]; });
+    if(!num(keeper.value)&&num(o.value)) keeper.value=o.value;
+    if(!num(keeper.debt)&&num(o.debt)) keeper.debt=o.debt;
+  });
+  grp.filter(i=>i!==keepIdx).sort((a,b)=>b-a).forEach(i=>list.splice(i,1));
+  toast("Linked "+grp.length+" rows into one.");
+  renderContent();
+}
+function dismissDup(encSig){ const sig=decodeURIComponent(encSig); if(!S._dismissDup) S._dismissDup=[]; if(!S._dismissDup.includes(sig)) S._dismissDup.push(sig); renderContent(); }
+
 function applyHub24(r){
   const isSuper=/super/i.test(r.type);
   const who=whoFromName(r.name);
@@ -1606,22 +1739,37 @@ function applyBt(r){
 /* ---------- Macquarie CMA parser ---------- */
 function parseMacqText(text){
   const idm=text.match(/Account number\s*([0-9]+)/i);
-  const nmm=text.match(/Account name[^\n]*\n([^\n]+)/i);
-  let name=nmm?nmm[1].trim():"";
-  if(/^\$?[\d,]+\.\d{2}$/.test(name)||/^Active$/i.test(name)) name="";
-  // balance sits on its own line near the top (e.g. "$442.31"); fall back to a labelled match
-  const balm=text.match(/^\s*\$([\d,]+\.\d{2})\s*$/m) || text.match(/Balance\s*\$?([\d,]+\.\d{2})/i);
-  if(!balm) return null;
-  return {platform:"macq", id:idm?idm[1]:"", name, balance:parseFloat(balm[1].replace(/,/g,""))};
+  // "Account name" sits inline before the next field (Active / BSB / Product / Issued),
+  // not on its own line, so read up to the next field label.
+  let name="";
+  const nmm=text.match(/Account name\s+(.+?)\s+(?:Active|BSB|Account number|Product|Issued)\b/i) || text.match(/Account name[^\n]*\n([^\n]+)/i);
+  if(nmm) name=nmm[1].replace(/\s+/g," ").trim();
+  if(/^\$?[\d,]+\.\d{2}$/.test(name)||/^active$/i.test(name)) name="";
+  // prefer the labelled "Balance $x" (a bare "$x.xx" could be a transaction line)
+  const balm=text.match(/Balance\s*\$?\s*([\d,]+\.\d{2})/i) || text.match(/^\s*\$([\d,]+\.\d{2})\s*$/m);
+  if(!balm && !idm) return null;
+  const isTrust=/trust|pty ltd\b|atf|\bcompany\b/i.test(name);
+  const isSuper=/super|smsf|pension|retire/i.test(name+" "+text.slice(0,400));
+  return {platform:"macq", id:idm?idm[1]:"", name, isTrust, isSuper, balance:balm?parseFloat(balm[1].replace(/,/g,"")):0};
 }
 function applyMacq(r){
-  // update the MCMA / Macquarie CMA holding + nest-egg "MCMA" value
-  let acct=S.portfolios.client.find(a=>a.acct.includes(r.id)) || S.portfolios.client.find(a=>/macq/i.test(a.acct));
-  if(acct){ const h=acct.holdings.find(x=>/macquarie cma|cma/i.test(x.product))||acct.holdings[0]; if(h) h.value=r.balance; else acct.holdings.push({product:"Macquarie CMA",units:"",value:r.balance}); }
-  let asset=findExistingAsset(S.nestegg, {id:r.id, name:"Macquarie CMA", type:"Cash", isSuper:false})
-        || S.nestegg.find(a=>/mcma|macquarie/i.test(a.name));
-  if(!asset){ asset={name:"Macquarie CMA", value:0, debt:0, type:"Cash", owner:r.name||"Joint", ref:r.id}; S.nestegg.push(asset); }
-  asset.value=r.balance;
+  const digits=s=>String(s||"").replace(/\D/g,"");
+  const who=whoFromName(r.name||"");
+  // Portfolio (cash) account — match by account id first, else any Macquarie/CMA account
+  let acct=(S.portfolios[who]||[]).find(a=>r.id&&a.acct.includes(r.id))
+        || (S.portfolios.client||[]).find(a=>r.id&&a.acct.includes(r.id));
+  if(acct){ const h=acct.holdings.find(x=>/macquarie cma|cma|cash/i.test(x.product))||acct.holdings[0]; if(h) h.value=r.balance; else acct.holdings.push({product:"Macquarie CMA",units:"",value:r.balance}); }
+  // Nest-egg cash row. Match by account id/ref first; else a Macquarie/CMA row that
+  // isn't already claimed by a DIFFERENT account id (so a second MCMA — e.g. a trust
+  // CMA alongside a personal one — becomes its own row instead of overwriting).
+  let asset=(r.id && S.nestegg.find(a=>digits(a.ref)&&digits(a.ref)===digits(r.id)))
+         || S.nestegg.find(a=>/macquarie|mcma|cash management/i.test((a.name||"")+" "+(a.ref||"")) && !(digits(a.ref)&&r.id&&digits(a.ref)!==digits(r.id)));
+  if(!asset){
+    const label=r.isTrust?"Macquarie CMA (Trust)":(r.isSuper?"Macquarie CMA (Super)":"Macquarie CMA");
+    const owner=r.isTrust?"Trust":(firstName(who)||r.name||"Joint");
+    asset={name:label, value:0, debt:0, type:"Cash", owner, ref:r.id||""}; S.nestegg.push(asset);
+  }
+  asset.value=r.balance; if(r.id) asset.ref=r.id;
 }
 
 async function importPlatform(ev, kind){
@@ -1634,7 +1782,7 @@ async function importPlatform(ev, kind){
       else if(kind==="macq"){ const r=parseMacqText(text); if(r&&!done.find(d=>d.id===r.id)){ applyMacq(r); done.push({...r,label:`Macquarie CMA ${money(r.balance)}`}); } }
     }catch(e){ console.warn(kind+" parse fail",f.name,e); }
   }
-  if(done.length){ toast((kind==="bt"?"BT Panorama":"Macquarie")+" imported: "+done.map(d=>d.label).join(" · ")); renderContent(); }
+  if(done.length){ renderContent(); const cc=conflictCount(); toast((kind==="bt"?"BT Panorama":"Macquarie")+" imported: "+done.map(d=>d.label).join(" · ")+(cc?("   |   ⚠ "+cc+" possible duplicate — see the ⚠ panel to link them."):"")); }
   else { toast("Couldn't read a "+(kind==="bt"?"BT Panorama":"Macquarie")+" balance from those files."); }
 }
 // live preview into a canvas element (UI)
@@ -2302,6 +2450,7 @@ function renderImports(){
   const addOptions=undetected.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("");
   return `
   <div class="section-head"><h2>Inputs &amp; Imports</h2></div>
+  ${renderConflictBanner()}
   ${renderSnapshotLayer()}
 
   <div class="card">
@@ -2415,6 +2564,7 @@ function renderSituation(){
     {key:"type",label:"Type"},{key:"owner",label:"Owner",type:"select",options:OWNERS},{key:"ref",label:"Reference",type:"area"}];
   return `
   <div class="section-head"><h2>Current Situation</h2><p>Assets, liabilities, income and the net-worth summary.</p></div>
+  ${renderConflictBanner()}
   <div class="card"><div class="card-title"><span class="bar"></span>Lifestyle assets</div>
     ${tableEditor("lifestyle",assetCols,{blank:{name:"",value:0,debt:0,type:"",owner:"Joint",ref:""}})}
     <div class="totals"><div class="t">Lifestyle value<b>${money(lt)}</b></div><div class="t">Lifestyle debt<b>${money(ltd)}</b></div></div>
