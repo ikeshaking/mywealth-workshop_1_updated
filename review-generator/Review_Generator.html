@@ -330,6 +330,60 @@ textarea{resize:vertical;min-height:60px}
 .cl-cg-in{width:100%;font-size:12px;padding:4px 6px}
 .field{margin-bottom:2px}
 .grid{gap:10px}
+
+/* ============================================================
+   Lighter interface — Nunito everywhere, reduced font-weights.
+   Scoped to the app chrome only; the document previews
+   (.wrprev-page, .pv-*, .doc-page) and the generated .docx keep
+   their template fonts/weights and are intentionally NOT changed.
+   ============================================================ */
+body{font-weight:400}
+h1,h2,h3{font-family:'Nunito',-apple-system,sans-serif;font-weight:600;letter-spacing:-.005em}
+.topbar h1{font-weight:600}
+.section-head h2{font-weight:600;font-size:20px}
+.section-head p{font-weight:400}
+.card-title{font-weight:600;font-size:13.5px;letter-spacing:0;text-transform:none}
+.nav-group{font-weight:600;letter-spacing:.1em}
+.nav-item{font-weight:500}
+.nav-item .ni-num{font-weight:600}
+.topstat{font-weight:600}
+label{font-weight:600}
+.tbl th{font-weight:600}
+.btn{font-weight:600}
+.btn-sm{font-weight:600}
+.theme-toggle{font-weight:500}
+.dz h4{font-weight:600}
+.dz .badge{font-weight:700}
+.hint{font-weight:400}
+.pill{font-weight:600}
+.rating-sel{font-weight:600}
+.person-tag{font-family:'Nunito',-apple-system,sans-serif;font-weight:600}
+.toast{font-weight:500}
+.totals .t{font-weight:400}
+.totals .t b{font-family:'Nunito',-apple-system,sans-serif;font-weight:600}
+.tile .tk{font-weight:600}
+.tile .tv{font-family:'Nunito',-apple-system,sans-serif;font-weight:600}
+.tabbtn{font-weight:600}
+.smartdrop .sd-title{font-family:'Nunito',-apple-system,sans-serif;font-weight:600}
+.sd-badge{font-weight:700}
+.sd-sub,.sd-types{font-weight:400}
+.conflict-head{font-weight:600}
+.conflict-sub{font-weight:400}
+.dup-q{font-weight:600}
+.dup-opt{font-weight:400}
+.cl-side .cl-side-h{font-weight:600}
+.cl-sec-btn{font-weight:500}
+.cl-sec-btn .cl-prog{font-weight:600}
+.cl-item .cl-q{font-weight:600}
+.cl-item .cl-help{font-weight:400}
+.cl-perclient .cl-clabel{font-weight:600}
+.cl-subhead{font-weight:600}
+.cl-substep{font-weight:500}
+.cl-substep-n{font-weight:600}
+.cl-flag{font-weight:500}
+.cl-seg button{font-weight:600}
+.cl-note-add{font-weight:600}
+.cl-cg thead th,.cl-cg tbody th{font-weight:600}
 </style>
 </head>
 <body>
@@ -1286,43 +1340,43 @@ function renderSnapshotLayer(){
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px">
       <div>
-        <div style="font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);margin-bottom:6px">${chk("S._snapReview._inc.contact",inc.contact)}Contact &amp; address</div>
+        <div style="font-weight:600;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--blue);margin-bottom:6px">${chk("S._snapReview._inc.contact",inc.contact)}Contact &amp; address</div>
         <div style="display:grid;gap:6px">
           <label>Client name ${inp("S._snapReview.clientName",s.clientName)}</label>
           ${s.hasPartner?`<label>Partner name ${inp("S._snapReview.partnerName",s.partnerName)}</label>`:""}
           <label>Email ${inp("S._snapReview.email",s.email)}</label>
           <label>Address ${inp("S._snapReview.address",s.address)}</label>
         </div>
-        <div style="font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);margin:12px 0 6px">${chk("S._snapReview._inc.income",inc.income)}Income (annual, excl. super)</div>
+        <div style="font-weight:600;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--blue);margin:12px 0 6px">${chk("S._snapReview._inc.income",inc.income)}Income (annual, excl. super)</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
           <label>${e(s.clientName)||"Client 1"} ${inp("S._snapReview.income.c1",s.income.c1)}</label>
           ${s.hasPartner?`<label>${e(s.partnerName)||"Client 2"} ${inp("S._snapReview.income.c2",s.income.c2)}</label>`:""}
         </div>
-        <div style="font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);margin:12px 0 6px">${chk("S._snapReview._inc.employment",inc.employment)}Employment <span class="hint" style="margin:0">(off by default — often needs a tidy-up)</span></div>
+        <div style="font-weight:600;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--blue);margin:12px 0 6px">${chk("S._snapReview._inc.employment",inc.employment)}Employment <span class="hint" style="margin:0">(off by default — often needs a tidy-up)</span></div>
         <div style="display:grid;gap:6px">
           <label>Occupation ${inp("S._snapReview.occupation.c1",s.occupation.c1)}</label>
           <label>Employer ${inp("S._snapReview.employer.c1",s.employer.c1)}</label>
         </div>
-        <div style="font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);margin:12px 0 6px">${chk("S._snapReview._inc.estate",inc.estate)}Will / EPA</div>
+        <div style="font-weight:600;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--blue);margin:12px 0 6px">${chk("S._snapReview._inc.estate",inc.estate)}Will / EPA</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
           <label>Has Will/EPA ${inp("S._snapReview.will.has",s.will.has)}</label>
           <label>Last updated ${inp("S._snapReview.will.updated",s.will.updated)}</label>
         </div>
       </div>
       <div>
-        <div style="font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);margin-bottom:6px">Assets not managed by us → Current Situation</div>
+        <div style="font-weight:600;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--blue);margin-bottom:6px">Assets not managed by us → Current Situation</div>
         <div style="display:grid;gap:6px">
           ${s.assets.length?s.assets.map((a,i)=>`<div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;align-items:center">
             <span>${chk(`S._snapReview._inc.assets[${i}]`,inc.assets[i])}<b style="font-size:12px">${e(a.label)}</b></span>
             ${inp(`S._snapReview.assets[${i}].c1`,a.c1)}${s.hasPartner?inp(`S._snapReview.assets[${i}].c2`,a.c2):"<span></span>"}</div>`).join(""):`<span class="hint" style="margin:0">None provided.</span>`}
         </div>
-        <div style="font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);margin:12px 0 6px">Liabilities → Current Situation (debt)</div>
+        <div style="font-weight:600;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--blue);margin:12px 0 6px">Liabilities → Current Situation (debt)</div>
         <div style="display:grid;gap:6px">
           ${s.liabilities.length?s.liabilities.map((l,i)=>`<div style="display:grid;grid-template-columns:auto 2fr 1fr 1fr 1fr;gap:6px;align-items:center">
             <span>${chk(`S._snapReview._inc.liabilities[${i}]`,inc.liabilities[i])}</span>
             ${inp(`S._snapReview.liabilities[${i}].desc`,l.desc)}${inp(`S._snapReview.liabilities[${i}].owing`,l.owing)}${inp(`S._snapReview.liabilities[${i}].monthly`,l.monthly)}${inp(`S._snapReview.liabilities[${i}].rate`,l.rate)}</div>`).join(""):`<span class="hint" style="margin:0">None provided.</span>`}
         </div>
-        <div style="font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);margin:12px 0 6px">Discussion points → Action items &amp; Discussion Points</div>
+        <div style="font-weight:600;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--blue);margin:12px 0 6px">Discussion points → Action items &amp; Discussion Points</div>
         <div style="display:grid;gap:8px">
           ${disc.length?disc.map(([k,lbl,txt])=>`<div style="display:grid;grid-template-columns:22px 1fr;gap:6px;align-items:start">
             ${chk(`S._snapReview._inc.disc.${k}`,inc.disc[k])}<div><b style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:2px">${e(lbl)}</b><textarea rows="2" oninput="S._snapReview.${k}=this.value" style="width:100%;box-sizing:border-box">${e(txt)}</textarea></div></div>`).join(""):`<span class="hint" style="margin:0">No client-raised points.</span>`}
@@ -2537,7 +2591,7 @@ function renderImports(){
   </div>
 
   <details class="card">
-    <summary style="cursor:pointer;font-weight:800;color:var(--blue);font-size:11px;letter-spacing:.07em;text-transform:uppercase">Or upload individually / add a platform we don't auto-read</summary>
+    <summary style="cursor:pointer;font-weight:600;color:var(--blue);font-size:12.5px;letter-spacing:0">Or upload individually / add a platform we don't auto-read</summary>
     <div style="margin-top:12px" class="imports">
       <label class="dz"><span class="badge badge-ready">DOCX</span><h4>Last Wealth Review</h4><p>Prior review → details, assets, income, goals, tracking, actions.</p><input type="file" accept=".docx" onchange="importReviewDoc(event)"></label>
       <label class="dz"><span class="badge badge-ready">PDF · multi</span><h4>Platform reports</h4><p>HUB24 / BT / Macquarie auto-fill fully. Any other platform (CFS Edge, Netwealth…) → best-guess balance + full text captured to confirm.</p><input type="file" accept=".pdf" multiple onchange="importAnyPlatform(event)"></label>
