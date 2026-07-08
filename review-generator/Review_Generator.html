@@ -498,7 +498,7 @@ const CHECKLIST_SCHEMA=[
     CL.combo("gen_crp_c2","Client 2 — risk profile (CRP)",CRP_PROFILES,{showWhen:()=>twoClients()}),
     CL.combo("gen_crp_c2_status","Client 2 — is this CRP up to date?",CRP_STATUS,
       {showWhen:()=>twoClients(),todoWhen:(v)=>/outdat|updat/i.test(v),todo:"Update Client 2's risk profile (CRP) — recorded as outdated / needs updating"}),
-    CL.combo("gen_crp_joint","Joint — risk profile (CRP)",CRP_PROFILES,{showWhen:()=>twoClients()}),
+    CL.combo("gen_crp_joint","Joint (Non Super) — risk profile (CRP)",CRP_PROFILES,{showWhen:()=>twoClients()}),
     CL.combo("gen_crp_joint_status","Joint — is this CRP up to date?",CRP_STATUS,
       {showWhen:()=>twoClients(),todoWhen:(v)=>/outdat|updat/i.test(v),todo:"Update the joint risk profile (CRP) — recorded as outdated / needs updating"}),
     CL.yn("gen_crp_onfile","Does the recorded CRP match the CRP on file?",
