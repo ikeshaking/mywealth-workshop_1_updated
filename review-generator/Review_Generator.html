@@ -198,6 +198,7 @@ textarea{resize:vertical;min-height:60px}
 .pv-sub{color:#0C6AE1;font-weight:700;margin:0 0 22px}
 .pv-h2{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif;font-size:21px;color:#0C6AE1;margin:22px 0 8px;border-bottom:2px solid #0C6AE1;padding-bottom:3px}
 .pv-band{background:#0C2D3E;color:#fff;font-weight:700;font-size:12px;letter-spacing:.04em;padding:6px 12px;margin:14px 0 0;border-radius:3px}
+.pv-refnotes{background:#E3F2F4;color:#16242e;padding:10px 12px;white-space:pre-line;font-size:12px;line-height:1.6;min-height:64px}
 .pv-tbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
 .pv-tbl th{background:#0C6AE1;color:#fff;text-align:left;padding:6px 9px;font-weight:700;border:1px solid #fff}
 .pv-tbl.navy th{background:#0C2D3E}
@@ -381,6 +382,7 @@ const S = {
     partner:{life:"", tpd:"", trauma:"", ip:"", ipNotes:"", ref:""}
   },
   estate:{ willsC:"", willsP:"", poaC:"", poaP:"", superNomC:"", superNomP:"", insNomC:"", insNomP:"", notes:"" },
+  foundationsNotes:"",
   goals:[],
   fiGoals:{ targetToday:"", targetFuture:"", years:"", incomeLife:"", incomeNice:"", lumpToys:"", lumpFamily:"" },
   goalTracking:[],
@@ -1888,7 +1890,11 @@ function buildPreviewPages(){
     fRow("Super Death Nominations",e.superNomC,"",e.superNomP,""),
     fRow("Insurance Death Nominations",e.insNomC,"",e.insNomP,"")
   ];
-  P.push(`<div class="wrprev-page"><div class="pv-band">FOUNDATIONS</div>${pvTable(fHead,fRows,{lbl:true,empty:""})}${e.notes?`<div class="pv-band">REFERENCE &amp; NOTES</div><div class="pv-p" style="padding:6px 0">${esc(e.notes)}</div>`:""}</div>`);
+  const fAlign=hp?['r','c','c','c','c']:['r','c','c'];
+  const refNotes=[S.foundationsNotes,e.notes].filter(Boolean).join("\n");
+  P.push(`<div class="wrprev-page"><div class="pv-band">FOUNDATIONS</div>${pvTable(fHead,fRows,{lbl:true,align:fAlign,empty:""})}
+    <div class="pv-band" style="margin-top:10px">Reference &amp; Notes</div>
+    <div class="pv-refnotes">${refNotes?esc(refNotes):"&nbsp;"}</div></div>`);
 
   /* Goals + Financial Independence */
   const _go={"Short Term":0,"Medium Term":1,"Long Term":2};
@@ -2696,10 +2702,13 @@ function routeCLNote(route,text){
   const pre=route.prefix?route.prefix+" — ":"";
   switch(route.target){
     case "estate": S.estate.notes=(S.estate.notes?S.estate.notes+"\n":"")+pre+text; return 1;
-    case "adviser": S.adviserComments=(S.adviserComments?S.adviserComments+"\n":"")+pre+text; return 1;
+    case "refnotes": S.foundationsNotes=(S.foundationsNotes?S.foundationsNotes+"\n":"")+pre+text; return 1;   // → Reference & Notes band
+    // data-type notes (components, contributions, div293/296, strategies, cash, fees) live under Reference & Notes,
+    // NOT Adviser Comments (which is reserved for the adviser's own commentary in the meeting)
+    case "adviser": S.foundationsNotes=(S.foundationsNotes?S.foundationsNotes+"\n":"")+pre+text; return 1;
     case "foundations": S.foundations.client.ipNotes=(S.foundations.client.ipNotes?S.foundations.client.ipNotes+" ":"")+pre+text; return 1;
-    case "goaltrack": { const gt=S.goalTracking.find(g=>/investment/i.test(g.strategy)); if(gt) gt.actions=(gt.actions?gt.actions+" ":"")+pre+text; else S.adviserComments=(S.adviserComments?S.adviserComments+"\n":"")+pre+text; return 1; }
-    case "portfolio": S.adviserComments=(S.adviserComments?S.adviserComments+"\n":"")+pre+text; return 1;
+    case "goaltrack": { const gt=S.goalTracking.find(g=>/investment/i.test(g.strategy)); if(gt) gt.actions=(gt.actions?gt.actions+" ":"")+pre+text; else S.foundationsNotes=(S.foundationsNotes?S.foundationsNotes+"\n":"")+pre+text; return 1; }
+    case "portfolio": S.foundationsNotes=(S.foundationsNotes?S.foundationsNotes+"\n":"")+pre+text; return 1;
     case "anniv": if(!S.meta.anniversaryDate) S.meta.anniversaryDate=text; return 1;
     case "actions": return pushTodo(pre+text,"MWS","ROA");   // → Action items / ROA
     default: return 0;
@@ -2715,7 +2724,11 @@ function applyChecklistData(){
   if(!S.partner.riskProfile && c2) S.partner.riskProfile=c2;
   const crpFmt=(p,s)=>p?(p+(s&&!/up to date/i.test(s)?` (${s})`:"")):"";
   if(c1||c2||cj){ const parts=[c1?`Client 1: ${crpFmt(c1,c1s)}`:"",c2?`Client 2: ${crpFmt(c2,c2s)}`:"",cj?`Joint: ${crpFmt(cj,cjs)}`:""].filter(Boolean).join("; ");
-    S.adviserComments=(S.adviserComments?S.adviserComments+"\n":"")+"CRP — "+parts; }
+    S.foundationsNotes=(S.foundationsNotes?S.foundationsNotes+"\n":"")+"CRP — "+parts; }
+  // Super / Insurance death nominations → Foundations, from the checklist beneficiary answers
+  const beneHas=(id)=>{ const a=S.checklist.answers[id]; if(a==null) return false; const vals=(typeof a==="object")?Object.values(a):[a]; return vals.some(v=>String(v||"").trim() && !/^(no|none|nil|n\/?a)$/i.test(String(v).trim())); };
+  if(!S.estate.superNomC && ["retail_bene","held_bene","smsf_bene"].some(beneHas)) S.estate.superNomC="Yes";
+  if(!S.estate.insNomC && ["ins_bene","hins_bene"].some(beneHas)) S.estate.insNomC="Yes";
   // sync names / adviser from scope
   syncPreparedFor();
   if(getAns("scope_adviser") && !/add advisers/i.test(getAns("scope_adviser"))) S.meta.adviserName=getAns("scope_adviser");
@@ -3598,11 +3611,12 @@ async function generateDocx(){
   }
   // Blank "Reference & Notes" band under the Foundations table (matches the template)
   function refNotesTable(){
-    const cw=[Math.round(W/4),Math.round(W/4),Math.round(W/4),W-3*Math.round(W/4)];
-    const notes=(S.foundationsNotes||"")+"\n\n\n";
-    return new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},columnWidths:cw,rows:[
-      new TableRow({children:[cell("Reference & Notes",{w:W,shade:NAVY,bold:true,color:WHITE,font:DISP,size:20,columnSpan:4})]}),
-      new TableRow({children:[cell(notes,{w:cw[0],shade:LIGHT}),cell("",{w:cw[1],shade:LIGHT}),cell("",{w:cw[2],shade:LIGHT}),cell("",{w:cw[3],shade:LIGHT})]})
+    // pulls the checklist's Reference & Notes (data notes + CRP + beneficiary/estate detail)
+    const notes=[S.foundationsNotes, S.estate&&S.estate.notes].filter(Boolean).join("\n");
+    const body=notes?notes:"\n\n\n";
+    return new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},columnWidths:[W],rows:[
+      new TableRow({children:[cell("Reference & Notes",{w:W,shade:NAVY,bold:true,color:WHITE,font:DISP,size:20})]}),
+      new TableRow({children:[cell(body,{w:W,shade:LIGHT})]})
     ]});
   }
   function goalsTable(tw){
