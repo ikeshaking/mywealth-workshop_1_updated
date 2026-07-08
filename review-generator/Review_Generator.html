@@ -129,6 +129,12 @@ textarea{resize:vertical;min-height:60px}
 .cl-sec-btn:hover{background:var(--surface-2);color:var(--text)}
 .cl-sec-btn.active{background:var(--blue);color:#fff}
 .cl-sec-btn .cl-ico{width:20px;text-align:center;flex-shrink:0}
+/* SOA-style tick chip replacing the per-section glyph: green ✓ when the section is
+   complete, a subtle outline tick while it's scoped-in but not yet finished */
+.cl-sec-btn .cl-check{width:20px;height:20px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;background:var(--surface-2);color:var(--text-faint);border:1px solid var(--border)}
+.cl-sec-btn .cl-check.done{background:#34C759;color:#06331c;border-color:#34C759;font-weight:700}
+.cl-sec-btn.active .cl-check{background:rgba(255,255,255,.18);color:#fff;border-color:transparent}
+.cl-sec-btn.active .cl-check.done{background:#34C759;color:#06331c}
 .cl-sec-btn .cl-prog{margin-left:auto;font-size:10px;font-weight:800;color:var(--text-faint);background:var(--surface-2);border-radius:9px;padding:1px 7px}
 .cl-sec-btn.active .cl-prog{background:rgba(255,255,255,.22);color:#fff}
 .cl-sec-btn.done .cl-prog{background:var(--green-light);color:var(--green-dark)}
@@ -2982,7 +2988,7 @@ function renderChecklistForm(){
   const side=secs.map(s=>{
     const p=clSecProgress(s), done=p.total>0&&p.done>=p.total;
     return `<button class="cl-sec-btn ${s.id===active.id?'active':''} ${done?'done':''}" onclick="clGo('${s.id}')">
-      <span class="cl-ico">${s.icon||'•'}</span>${esc(s.title)}<span class="cl-prog">${p.done}/${p.total}</span></button>`;
+      <span class="cl-check ${done?'done':''}">✓</span>${esc(s.title)}<span class="cl-prog">${p.done}/${p.total}</span></button>`;
   }).join("");
 
   const totals=secs.reduce((a,s)=>{const p=clSecProgress(s);a.d+=p.done;a.t+=p.total;return a;},{d:0,t:0});
@@ -3026,7 +3032,7 @@ function renderChecklistForm(){
     </aside>
     <div class="cl-main">
       <div class="card">
-        <div class="card-title"><span class="bar"></span>${esc(active.icon||'')} ${esc(active.title)}</div>
+        <div class="card-title"><span class="bar"></span>${esc(active.title)}</div>
         ${subBar}
         <div class="cl-body">${body||'<div class="pv-empty">No items in this section.</div>'}</div>
         <div style="display:flex;justify-content:space-between;margin-top:14px">
