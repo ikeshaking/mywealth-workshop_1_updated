@@ -1788,20 +1788,26 @@ function applyInsuranceGeneric(gi){
 function parsePropertyValuation(text){
   if(!text) return null;
   const F=text.replace(/\s+/g,' ').trim();
-  if(!/(valuation|estimated value|corelogic|cotality|rp ?data|market value|automated valuation|AVM|property report)/i.test(F)) return null;
+  if(!/(valuation|estimated value|corelogic|cotality|intellival|rp ?data|market value|automated valuation|AVM|property report)/i.test(F)) return null;
   let val=0;
-  const em=F.match(/(?:Estimated Value|Value Estimate|Valuation Estimate|Mid[- ]?point|Market Value|Estimate)[^\$]{0,40}\$\s?([\d,]{5,})/i);
+  // AVM layout: "Estimated Value: … Estimated Price Range: $<estimate> $<low> - $<high>" —
+  // the estimate is the FIRST $ after the label cluster (not the top of the range).
+  let em=F.match(/Estimated (?:Value|Price Range)[^$]{0,120}\$\s?([\d,]{6,})/i)
+      || F.match(/(?:Value Estimate|Valuation Estimate|Mid[- ]?point|Market Value|Estimate)[^$]{0,40}\$\s?([\d,]{5,})/i);
   if(em) val=parseFloat(em[1].replace(/,/g,''));
   if(!val){ let m,re=/\$\s?([\d,]{5,})(?!\.\d)/g,best=0; while((m=re.exec(F))){ const v=parseFloat(m[1].replace(/,/g,'')); if(v>best)best=v; } val=best; }
-  const am=F.match(/\b(\d+[A-Za-z]?\/?\d*\s+[A-Z][A-Za-z]+\s+(?:St|Street|Rd|Road|Ave|Avenue|Dr|Drive|Ct|Court|Pl|Place|Way|Cres|Crescent|Lane|Ln|Tce|Terrace|Blvd|Parade|Pde)\b[^,]*(?:,?\s*[A-Z]{2,3}\s*\d{4})?)/);
-  const addr=am?am[1].trim():"";
+  // address ending at STATE + 4-digit postcode, so it stops before "Estimated Value:"
+  const am=F.match(/(\d+[A-Za-z]?\/?\d*\s+[A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,3}\s+(?:St|Street|Rd|Road|Ave|Avenue|Dr|Drive|Ct|Court|Pl|Place|Way|Cres|Crescent|Lane|Ln|Tce|Terrace|Blvd|Boulevard|Parade|Pde|Hwy|Highway|Close|Cl|Circuit|Cct)\b\s+[A-Za-z][A-Za-z ]*?\s+(?:QLD|NSW|VIC|WA|SA|NT|ACT|TAS)\s+\d{4})/i);
+  const addr=am?am[1].replace(/\s+/g,' ').trim():"";
   if(!val) return null;
   return {value:val, address:addr};
 }
 function applyPropertyValuation(pv){
-  // Override the existing property row if this valuation matches one; only add a
-  // new row when this property genuinely isn't already in the current situation.
+  // Investment properties live in Nest egg, the home in Lifestyle — search BOTH lists
+  // so the valuation overrides the right existing property instead of adding a
+  // duplicate. Only add a new row when the property genuinely isn't on file.
   let a = findExistingAsset(S.lifestyle, {name:pv.address, address:pv.address, type:"Property"});
+  if(!a){ a = findExistingAsset(S.nestegg, {name:pv.address, address:pv.address, type:"Property"}); }
   const isNew=!a;
   if(!a){ a={name:pv.address||"Property", value:0, debt:0, type:"Property", owner:"", ref:""}; S.lifestyle.push(a); }
   a.value=pv.value;
@@ -1879,11 +1885,17 @@ function applyMacq(r){
   let acct=(S.portfolios[who]||[]).find(a=>r.id&&a.acct.includes(r.id))
         || (S.portfolios.client||[]).find(a=>r.id&&a.acct.includes(r.id));
   if(acct){ const h=acct.holdings.find(x=>/macquarie cma|cma|cash/i.test(x.product))||acct.holdings[0]; if(h) h.value=r.balance; else acct.holdings.push({product:"Macquarie CMA",units:"",value:r.balance}); }
-  // Nest-egg cash row. Match by account id/ref first; else a Macquarie/CMA row that
-  // isn't already claimed by a DIFFERENT account id (so a second MCMA — e.g. a trust
-  // CMA alongside a personal one — becomes its own row instead of overwriting).
+  // Nest-egg cash row. Match by account id/ref first; then a Macquarie/CMA/MCMA row
+  // of the SAME trust/personal sense; then an unlabelled one. This keeps a personal
+  // MCMA and a trust MCMA on separate rows (a personal statement must not overwrite
+  // the "Trust MCMA" row, and vice versa).
+  const isMacqRow=a=>/macquarie|mcma|cash management/i.test((a.name||"")+" "+(a.ref||""));
+  const senseOf=a=>/trust/i.test((a.name||"")+" "+(a.owner||""))?"trust":(/personal/i.test(a.name||"")?"personal":"");
+  const claimed=a=>digits(a.ref)&&r.id&&digits(a.ref)!==digits(r.id);
+  const want=r.isTrust?"trust":"personal";
   let asset=(r.id && S.nestegg.find(a=>digits(a.ref)&&digits(a.ref)===digits(r.id)))
-         || S.nestegg.find(a=>/macquarie|mcma|cash management/i.test((a.name||"")+" "+(a.ref||"")) && !(digits(a.ref)&&r.id&&digits(a.ref)!==digits(r.id)));
+         || S.nestegg.find(a=>isMacqRow(a)&&senseOf(a)===want&&!claimed(a))
+         || S.nestegg.find(a=>isMacqRow(a)&&senseOf(a)===""&&!claimed(a));
   if(!asset){
     const label=r.isTrust?"Macquarie CMA (Trust)":(r.isSuper?"Macquarie CMA (Super)":"Macquarie CMA");
     const owner=r.isTrust?"Trust":(firstName(who)||r.name||"Joint");
@@ -3585,26 +3597,39 @@ async function importReviewDoc(ev){
       const life=[], nest=[];
       astTables.forEach(t=>{
         const hi=t.findIndex(r=>/value/i.test(r[1]||"")&&/debt/i.test(r[2]||""));
+        // Respect the SOURCE table's own grouping: a "LIFESTYLE TOTAL" row means the
+        // whole table is lifestyle, a "NEST EGG TOTAL" row means nest egg. Only fall
+        // back to type/name keywords when the table has no total-row label.
+        const flat=t.map(r=>r.join(" ")).join(" ").toLowerCase();
+        const tableGroup=/lifestyle total|lifestyle assets/.test(flat)?"life":(/nest egg total|nest egg assets/.test(flat)?"nest":"");
         t.slice(hi+1).forEach(r=>{
           const name=(r[0]||"").trim(); if(!name || /total/i.test(name)) return;
           const type=(r[3]||"").trim();
           const row={name, value:numv(r[1]), debt:numv(r[2]), type, owner:(r[4]||"").trim(), ref:(r[5]||"").trim()};
-          if(/residence|home|vehicle|motor|contents|lifestyle|boat|caravan|personal/i.test(type+" "+name)) life.push(row); else nest.push(row);
+          const grp = tableGroup ||
+            (/residence|home|vehicle|motor|contents|lifestyle|boat|caravan|furniture|jewel|artwork|collectible|personal use/i.test(type+" "+name) ? "life" : "nest");
+          (grp==="life"?life:nest).push(row);
         });
       });
       if(life.length) S.lifestyle=life;
       if(nest.length) S.nestegg=nest;
       if(life.length+nest.length) got.push((life.length+nest.length)+" assets/liabilities");
     }
-    // Income
+    // Income — skip the "INCOME TOTAL" row (importing it as a line item was double-
+    // counting it and inflating the generated total). If the source total differs
+    // from the sum of the lines, carry it as a manual total override so the doc
+    // still mirrors the last review's figure.
     const inc=tables.find(t=>/income/i.test((t[0]||[])[0]||"") && /annual/i.test((t[0]||[]).join(" ")));
     if(inc){
-      const items=inc.slice(1).filter(r=>(r[0]||"").trim()).map(r=>({
+      const items=inc.slice(1).filter(r=>{ const l=(r[0]||"").trim(); return l && !/total/i.test(l); }).map(r=>({
         label:(r[0]||"").trim(),
         amount:((String(r[1]||"").match(/[\d,]+(?:\.\d+)?/)||[""])[0]||"").replace(/,/g,""),
         owner:(r[2]||"").trim(), freq:(r[3]||"Yearly").trim()
       }));
       if(items.length){ S.income=items; got.push(items.length+" income lines"); }
+      const totRow=inc.find(r=>/income total/i.test((r[0]||"")));
+      if(totRow){ const tv=num(totRow[1]); const sum=items.reduce((a,r)=>a+num(r.amount),0);
+        if(tv>0 && Math.round(tv)!==Math.round(sum)){ S.totalsOverride.income=String(tv); S.totalsOverride.useOverride=true; } }
     }
     // Goals (table with Description / Owner / Timeframe / Notes). Read column
     // positions from the header so the goals mirror the last doc exactly,
@@ -3626,12 +3651,15 @@ async function importReviewDoc(ev){
     // Foundations & Estate (the combined table: Life / TPD / Trauma / IP + Wills /
     // POA / Super & Insurance death nominations). Columns: label, client value,
     // client ref, [partner value, partner ref]. Prefill so it mirrors the last doc.
-    const ftbl=tables.find(t=> t.some(r=>/life insurance/i.test(r[0]||"")) && t.some(r=>/wills/i.test(r[0]||"")) );
+    // Match the foundations/estate table by ANY of its rows — some reviews (e.g. a
+    // client with no insurance) have an estate-only table with just Wills / POA /
+    // death nominations and no Life/TPD/Trauma/IP rows.
+    const ftbl=tables.find(t=> t.some(r=>/\bwills\b|power of attorney|death nomination|life insurance|permanent disab/i.test(r[0]||"")) );
     if(ftbl){
       const val=(r,i)=>String((r&&r[i])||"").replace(/\s+/g," ").trim();
       const f=S.foundations, e=S.estate;
-      // detect couple layout (a value in col 3 across the insurance rows)
-      const couple=ftbl.some(r=>/life insurance|trauma/i.test(r[0]||"") && val(r,3));
+      // detect couple layout (a partner value in col 3 on any foundations/estate row)
+      const couple=ftbl.some(r=>/life insurance|trauma|wills|attorney|death nomination/i.test(r[0]||"") && val(r,3));
       const cV=1, cR=2, pV=couple?3:-1, pR=couple?4:-1;
       let n=0;
       ftbl.forEach(r=>{ const lab=(r[0]||"").toLowerCase(); if(!lab) return;
