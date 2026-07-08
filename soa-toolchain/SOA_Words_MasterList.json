@@ -2,10 +2,10 @@
  "meta": {
   "source": "SOA_Generator_v190_38_17.html (V200_WORD_BANK, rev v190_38r)",
   "syncedWith": "MWS Advice Request Builder (db626d61, auto-naming build) · SOA_Generator_v190_38_17.html (v190_38r)",
-  "totalModules": 163,
+  "totalModules": 164,
   "builderLinkedModules": 148,
   "lastSynced": "2026-07-07",
-  "syncNote": "Refreshed from the generator's live V200_WORD_BANK (rev v190_38r) so every module's recommendation/why/risks/alternatives/outcome matches the generator exactly, including the TTR module (new builder tick 'Commence a pension / transition to retirement (TTR)' with a min/max drawdown panel; added the 4% minimum-withdrawal note, the 'customised for your needs' rollover wording, and the 'short-term expenses' risk). Edit wording here (keep the .docx mirror in step) and drop this JSON onto the generator via smart-drop to push changes live. | 2026-07-07 enrichment: expanded the Account-Based Pension 'draw an income' module (Area 5) with a how-long / in-perpetuity outcomesLine plus fuller why (tax-free over 60, Reserves/sequencing risk) and risks (mandatory minimum drawdowns, sequencing/longevity risk, estimates-only). Trigger, builderTick, builderArea, triggerPhrases and figures unchanged. TTR withdrawal figure auto-fills in the generator engine (retDraw fields), not the word bank."
+  "syncNote": "Refreshed from the generator's live V200_WORD_BANK (rev v190_38r) so every module's recommendation/why/risks/alternatives/outcome matches the generator exactly, including the TTR module (new builder tick 'Commence a pension / transition to retirement (TTR)' with a min/max drawdown panel; added the 4% minimum-withdrawal note, the 'customised for your needs' rollover wording, and the 'short-term expenses' risk). Edit wording here (keep the .docx mirror in step) and drop this JSON onto the generator via smart-drop to push changes live. | 2026-07-07: added standing-rule goal (area 0) — when a TTR strategy is triggered from the advice request for an existing client on a retirement SOA, this goal is auto-added to the Goals & Objectives section. | 2026-07-08 MERGE: combined the other-chat edits (area-0 TTR review-meeting goal, builder v200 TTR/ABP auto-scope + tolerant super-area resolver) with the Account-Based Pension 'draw an income' enrichment (how-long/in-perpetuity outcome + why/risks). 164 modules."
  },
  "areas": [
   {
@@ -111,6 +111,27 @@
       "why": [
        "Standard scope-out wording — each item appears only when that area is being scoped out of the advice."
       ],
+      "risks": [],
+      "alternatives": [],
+      "outcomesLine": "—"
+     }
+    },
+    {
+     "trigger": "TTR goal — commence a TTR to supplement income (auto-added: existing client, retirement SOA)",
+     "builderTick": false,
+     "builderArea": "0 · Client framing & scope",
+     "triggerPhrases": [
+      "transition to retirement",
+      "ttr",
+      "supplement your income",
+      "commence a transition to retirement account"
+     ],
+     "mode": "Always-on (conditional)",
+     "scopeGate": "SOA = retirement AND existing client AND a TTR strategy is triggered from the advice request",
+     "figures": "",
+     "soa": {
+      "strategiesLine": "During your recent review meeting, you advised that you would like to commence a Transition to Retirement account to help supplement your income. You are seeking our advice on the most appropriate way to proceed with this request.",
+      "why": [],
       "risks": [],
       "alternatives": [],
       "outcomesLine": "—"
@@ -2032,7 +2053,7 @@
        "The projected income and how long your capital will last are estimates only — they depend on assumed investment returns, inflation and your drawdown level, and should be reviewed at least annually."
       ],
       "alternatives": [],
-      "outcomesLine": "Based on our projections, your capital is expected to sustain a pension income of $___ p.a. ($___ p.m.), drawn tax-free in perpetuity, with your capital projected to remain well beyond your life expectancy. Please refer to the How Long Projector in the Annexures."
+      "outcomesLine": "Based on our projections, your capital is expected to sustain a pension income of  p.a. ( p.m.), drawn tax-free in perpetuity, with your capital projected to remain well beyond your life expectancy. Please refer to the How Long Projector in the Annexures."
      }
     },
     {

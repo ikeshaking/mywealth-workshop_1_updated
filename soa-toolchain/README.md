@@ -7,7 +7,9 @@ Three synced artifacts produce a My Wealth Solutions Statement of Advice:
 | `SOA_Words_MasterList.json` | **Source of truth** for all tailored wording (the "word bank"). |
 | `SOA_Words_MasterList.docx` | Human‑readable mirror of the JSON (regenerated from it). |
 | `Advice_Request_Builder.html` | Builds the advice‑request JSON; each tick maps to a word‑bank module. |
-| `SOA_Generator_v191.html` | The SOA app. Holds a live copy of the word bank and the render engine. |
+| `SOA_Generator_v192.html` | The SOA app. Holds a live copy of the word bank and the render engine. |
+
+> **v192 is a merge of two independent edit streams** (see "Merge" below). Use `SOA_Generator_v192.html` — it is the only version that contains **both** the retirement‑projection engine and the TTR/ABP advice‑request engine.
 
 ## Governance / sync rules (unchanged)
 
@@ -29,6 +31,15 @@ Three synced artifacts produce a My Wealth Solutions Statement of Advice:
 - Accumulation SOAs are unaffected (rows/tail hidden).
 
 The "How Long Projector" annexure remains a spreadsheet‑snapshot placeholder (as in the sample SOAs) — no in‑app longevity compute engine.
+
+## Merge (v192)
+
+`SOA_Generator_v192.html` is a clean 3‑way merge of two edit streams that were made against the same base (`v190_38r`) and touch **disjoint** code:
+
+- **Retirement‑projection engine** (state + rendering, lines ~2045–13012): the `v191` figure auto‑fill, Reaching‑Your‑Targets income rows and Projected‑Outcomes longevity tail described above.
+- **TTR/ABP advice‑request engine** (v200 engine, lines ~20277–21912): a tolerant word‑bank resolver (`v200BankResolve` / `_v200BankAreasFor`) that copes with a merged "Personal Superannuation & Contributions" builder area, `v200BlockForStrategy` routing, and **auto scope‑in of TTR/ABP** plus **auto‑adding the TTR review‑meeting goal** for an existing client on a retirement SOA. The matching standing‑rule module lives in the masterlist as *area 0 · "TTR goal — commence a TTR to supplement income"*.
+
+The masterlist JSON now carries **both** changes (164 modules: the area‑0 TTR goal + the enriched ABP module) and the generator's word bank has been re‑synced to it (drop reports *1 added, 163 updated, 0 removed*). Verified with headless Chromium: both feature sets work; no page errors.
 
 ## Verifying a change
 
