@@ -1049,6 +1049,9 @@ async function importAnyPlatform(ev){
       if(h && (h.holdings.length||h.total)){ applyHub24(h); applied.push(`HUB24 · ${h.name} · ${money(h.total)}`); registerUpload(f.name,"Platform report"); done=true; }
       if(!done){ const b=parseBtText(text); if(b){ applyBt(b); applied.push(`BT Panorama · ${b.name} · ${money(b.total)}`); registerUpload(f.name,"Platform report"); done=true; } }
       if(!done){ const mq=parseMacqText(text); if(mq){ applyMacq(mq); applied.push(`Macquarie · ${mq.name||"CMA"} · ${money(mq.balance)}`); registerUpload(f.name,"Platform report"); done=true; } }
+      // best-effort insurance (any policy doc / CDM summary) & property valuation before the generic fallback
+      if(!done){ const gi=parseInsuranceGeneric(text); if(gi){ const n=applyInsuranceGeneric(gi); applied.push("Insurance (best-effort) · "+n+" cover(s) — verify amounts"); registerUpload(f.name,"Insurance (best-effort)"); done=true; } }
+      if(!done){ const pv=parsePropertyValuation(text); if(pv){ applyPropertyValuation(pv); applied.push("Property valuation (best-effort) · "+money(pv.value)); registerUpload(f.name,"Property valuation"); done=true; } }
       // not a wired platform → generic best-effort (grab headline balance + keep full text) rather than failing
       if(!done) applied.push(f.name+" · "+genericPlatformImport(text,f.name));
     }catch(e){ failed.push(f.name+" — "+e.message); }
@@ -1281,8 +1284,12 @@ function firstName(who){ return String((who==="partner"?S.partner.name:S.client.
 function applyHub24(r){
   const isSuper=/super/i.test(r.type);
   const who=whoFromName(r.name);
-  let acct=S.portfolios[who].find(a=>a.acct.includes(r.id));
-  if(!acct){ acct={acct:`${r.id} (HUB24) - ${r.name}`, holdings:[]}; (S.portfolios[who]=S.portfolios[who]||[]).push(acct); }
+  // match the portfolio account by id first, else an existing HUB24 account of the same
+  // super/investment sense (so a re-import overrides it instead of adding a new one)
+  S.portfolios[who]=S.portfolios[who]||[];
+  let acct=S.portfolios[who].find(a=>r.id&&a.acct.includes(r.id))
+        || S.portfolios[who].find(a=>/hub\s*24/i.test(a.acct) && (isSuper?/super|pension/i.test(a.acct):!/super|pension/i.test(a.acct)));
+  if(!acct){ acct={acct:`${r.id} (HUB24) - ${r.name}`, holdings:[]}; S.portfolios[who].push(acct); }
   acct.acct=`${r.id} (HUB24) - ${r.name}`;
   acct.holdings=r.holdings.slice();
   // Match an existing row so a re-import UPDATES it instead of adding a duplicate.
@@ -1413,6 +1420,72 @@ async function importDataCollection(ev){
     }catch(e){ toast(f.name+" — "+e.message); }
   }
   renderContent();
+}
+
+/* ---------- Generic best-effort insurance parser (any policy doc / CDM summary / OCR) ---------- */
+function parseInsuranceGeneric(text){
+  if(!text) return null;
+  const F=text.replace(/\s+/g,' ').trim();
+  const coverKW=/(Life Cover|Life Insurance|\bLife\b|Total (?:and|&) Permanent|\bTPD\b|Trauma|Critical Illness|Income Protection|Salary Continuance|Death Cover)/i;
+  if(!coverKW.test(F) || !/\$/.test(F)) return null;
+  if(!/(polic|premium|insured|sum insured|\bcover\b|benefit)/i.test(F)) return null;
+  const mon=x=>x?("$"+Number(String(x).replace(/[^\d.]/g,'')).toLocaleString(undefined,{maximumFractionDigits:2})):"";
+  const insurer=(F.match(/\b(NEOS|AIA Australia|AIA|TAL|Zurich|MLC Life|MLC|OnePath|MetLife|ClearView|Integrity Life|NobleOak|AMP|BT Life|Asteron|CommInsure|Encompass|Resolution Life|PPS Mutual)\b/i)||[])[1]||"";
+  const policies=[...new Set((F.match(/\b\d{7,12}\b/g)||[]))];
+  const insured=(F.match(/(?:Life Insured|Insured Person|Insured|Client|Member Name)[:\s]+([A-Z][a-z]+ [A-Z][a-z]+)/i)||[])[1]||"";
+  const COVERS=[
+    {t:"Life", re:/\bLife (?:Cover|Insurance)\b|\bLife\b(?!\s*(?:Insured|Protection))/i},
+    {t:"TPD", re:/Total (?:and|&) Permanent(?: Disablement)?|\bTPD\b/i},
+    {t:"Trauma", re:/Trauma|Critical Illness/i},
+    {t:"Income Protection", re:/Income Protection|Salary Continuance/i}
+  ];
+  const bigNear=idx=>{ const w=F.slice(Math.max(0,idx-40), idx+180); const m=w.match(/\$\s?([\d,]{4,})(?!\.\d)/); return m?m[1]:""; };
+  const premNear=idx=>{ const w=F.slice(idx, idx+180); const m=w.match(/\$\s?([\d,]*\.\d{2})/); return m?m[1]:""; };
+  const freqNear=idx=>{ const w=F.slice(idx, idx+180); return (w.match(/\b(Annually|Annual|Monthly|Fortnightly|Weekly)\b/i)||[])[1]||""; };
+  const rows=[]; const seen={};
+  COVERS.forEach(c=>{ const m=F.match(c.re); if(!m||seen[c.t]) return; seen[c.t]=1;
+    const sum=bigNear(m.index); if(!sum) return;
+    const struct=(F.slice(Math.max(0,m.index-40),m.index+180).match(/\b(Stepped|Level|Cover Reducing)\b/i)||[])[1]||"";
+    rows.push({ insurer, policy:policies[0]||"", owner:"", life:insured, coverType:c.t,
+      amount:mon(sum), structure:[struct,freqNear(m.index)].filter(Boolean).join(" · "), premium:premNear(m.index)?("$"+premNear(m.index)):"" });
+  });
+  if(!rows.length) return null;
+  const found={}; rows.forEach(r=>{ const k=r.coverType.toLowerCase(); found[/life/.test(k)?'life':/tpd/.test(k)?'tpd':/trauma/.test(k)?'trauma':'ip']=r.amount; });
+  return { generic:true, insurer, client:insured, rows, foundations:{life:found.life||"",tpd:found.tpd||"",trauma:found.trauma||"",ip:found.ip||"",ipNotes:"",ref:insurer} };
+}
+function applyInsuranceGeneric(gi){
+  const who=whoFromName(gi.client||"");
+  const norm=s=>String(s||'').toLowerCase().replace(/[\s\-]/g,'');
+  (gi.rows||[]).forEach(r=>{
+    let row=S.insurance[who].find(x=> (r.policy&&x.policy&&norm(x.policy)===norm(r.policy)&&norm(x.coverType)===norm(r.coverType))
+                                   || (!r.policy&&norm(x.coverType)===norm(r.coverType)&&norm(x.insurer)===norm(r.insurer||'')));
+    if(!row){ row={insurer:r.insurer,policy:r.policy,owner:r.owner,life:r.life,coverType:r.coverType,amount:"",structure:r.structure,premium:r.premium}; S.insurance[who].push(row); }
+    if(r.amount)row.amount=r.amount; if(r.premium&&!row.premium)row.premium=r.premium; if(r.structure&&!row.structure)row.structure=r.structure; if(r.insurer&&!row.insurer)row.insurer=r.insurer;
+  });
+  const f=S.foundations[who]||(S.foundations[who]={life:"",tpd:"",trauma:"",ip:"",ipNotes:"",ref:""});
+  const F=gi.foundations||{};
+  if(F.life&&!f.life)f.life=F.life; if(F.tpd&&!f.tpd)f.tpd=F.tpd; if(F.trauma&&!f.trauma)f.trauma=F.trauma; if(F.ip&&!f.ip)f.ip=F.ip; if(F.ref&&!f.ref)f.ref=F.ref;
+  return (gi.rows||[]).length;
+}
+/* ---------- Best-effort property valuation parser (AVM / Cotality / CoreLogic; text or OCR) ---------- */
+function parsePropertyValuation(text){
+  if(!text) return null;
+  const F=text.replace(/\s+/g,' ').trim();
+  if(!/(valuation|estimated value|corelogic|cotality|rp ?data|market value|automated valuation|AVM|property report)/i.test(F)) return null;
+  let val=0;
+  const em=F.match(/(?:Estimated Value|Value Estimate|Valuation Estimate|Mid[- ]?point|Market Value|Estimate)[^\$]{0,40}\$\s?([\d,]{5,})/i);
+  if(em) val=parseFloat(em[1].replace(/,/g,''));
+  if(!val){ let m,re=/\$\s?([\d,]{5,})(?!\.\d)/g,best=0; while((m=re.exec(F))){ const v=parseFloat(m[1].replace(/,/g,'')); if(v>best)best=v; } val=best; }
+  const am=F.match(/\b(\d+[A-Za-z]?\/?\d*\s+[A-Z][A-Za-z]+\s+(?:St|Street|Rd|Road|Ave|Avenue|Dr|Drive|Ct|Court|Pl|Place|Way|Cres|Crescent|Lane|Ln|Tce|Terrace|Blvd|Parade|Pde)\b[^,]*(?:,?\s*[A-Z]{2,3}\s*\d{4})?)/);
+  const addr=am?am[1].trim():"";
+  if(!val) return null;
+  return {value:val, address:addr};
+}
+function applyPropertyValuation(pv){
+  const norm=s=>String(s||'').toLowerCase().replace(/[\s,]/g,'');
+  let a = pv.address && S.lifestyle.find(x=>norm(x.name)&&norm(x.name).includes(norm(pv.address.split(' ').slice(0,2).join(' '))));
+  if(!a){ a={name:pv.address||"Property", value:0, debt:0, type:"Property", owner:"", ref:"Valuation "+(formatDate(S.meta.reviewDate)||"")}; S.lifestyle.push(a); }
+  a.value=pv.value; if(pv.address) a.name=pv.address;
 }
 
 /* ---------- BT Panorama parser ---------- */
@@ -1972,6 +2045,10 @@ function routeScannedText(text,name,kindLabel){
     try{ const mq=parseMacqText(text); if(mq){ applyMacq(mq); registerUpload(name,"Scanned report (OCR)",text); return `Macquarie · ${money(mq.balance)}`; } }catch(e){}
   }
   if(clean.length<3){ registerUpload(name,(kindLabel||"Image")+" — no text found",""); return "no readable text found"; }
+  // best-effort insurance & property valuation from OCR text before the generic platform fallback
+  try{ const sched=parseInsuranceSchedule(text); if(sched&&sched.rows.length){ applyInsuranceSchedule(sched); registerUpload(name,"Insurance Schedule (OCR)",text); return "Insurance Schedule (OCR) · "+sched.rows.length+" policy row(s)"; } }catch(e){}
+  try{ const gi=parseInsuranceGeneric(text); if(gi){ applyInsuranceGeneric(gi); registerUpload(name,"Insurance (OCR, best-effort)",text); return "Insurance (best-effort, OCR) · "+gi.rows.length+" cover(s) — verify amounts"; } }catch(e){}
+  try{ const pv=parsePropertyValuation(text); if(pv){ applyPropertyValuation(pv); registerUpload(name,"Property valuation (OCR)",text); return "Property valuation (best-effort, OCR) · "+money(pv.value); } }catch(e){}
   // generic best-effort: recognise which platform it looks like, grab a headline balance, keep the full text
   return genericPlatformImport(text,name,kindLabel);
 }
@@ -2094,9 +2171,9 @@ function renderImports(){
       <label class="dz"><span class="badge badge-ready">PDF · multi</span><h4>Platform reports</h4><p>HUB24 / BT / Macquarie auto-fill fully. Any other platform (CFS Edge, Netwealth…) → best-guess balance + full text captured to confirm.</p><input type="file" accept=".pdf" multiple onchange="importAnyPlatform(event)"></label>
       <label class="dz"><span class="badge badge-ready">XLSM</span><h4>Current Review PTW</h4><p>Projection → Financial Independence goals.</p><input type="file" accept=".xlsm,.xlsx" onchange="importPTW(event)"></label>
       <label class="dz"><span class="badge badge-ready">PDF</span><h4>Review Data Snapshot (Jotform)</h4><p>Client's pre-meeting update → <b>override layer</b>: income, assets, liabilities, estate + client-raised points into discussion items. Confirm before applying.</p><input type="file" accept=".pdf" multiple onchange="importSnapshot(event)"></label>
-      <label class="dz"><span class="badge badge-ready">PDF</span><h4>Insurance Schedule (existing insurances)</h4><p>The consolidated SOI insurance schedule → fills the Insurance Cover table (policy, owner, cover type, sum insured, premium) &amp; Foundations (Life / TPD / Trauma / IP).</p><input type="file" accept=".pdf" multiple onchange="importAnyPlatform(event)"></label>
+      <label class="dz"><span class="badge badge-ready">PDF</span><h4>Insurance (schedule / CDM / policy docs)</h4><p>Consolidated SOI/CDM summary → precise parse. Individual policy certificates (incl. scans, via OCR) → best-effort. Fills the Insurance Cover table &amp; Foundations (Life / TPD / Trauma / IP).</p><input type="file" accept=".pdf" multiple onchange="importAnyPlatform(event)"></label>
       <label class="dz"><span class="badge badge-ready">XLSX</span><h4>Data Collection (super fund)</h4><p>The fund data-collection template → super balance to Nest Egg, held cover to Insurance, tax components &amp; balance to the External Super checklist.</p><input type="file" accept=".xlsx,.xlsm,.xls" multiple onchange="importDataCollection(event)"></label>
-      <label class="dz"><span class="badge badge-soon">Sample needed</span><h4>Property valuations</h4><p>PPR / IP reports → assets.</p><input type="file" accept=".pdf" multiple onchange="stubImport('Property valuations')"></label>
+      <label class="dz"><span class="badge badge-ready">PDF</span><h4>Property valuation (Cotality / CoreLogic)</h4><p>Best-effort — pulls the estimated value (&amp; address) into your Lifestyle assets. Scans read via OCR. Verify the figure.</p><input type="file" accept=".pdf" multiple onchange="importAnyPlatform(event)"></label>
     </div>
     ${undetected.length?`<div style="margin:12px 0 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <label style="margin:0">Add a platform we don't auto-read yet:</label>
