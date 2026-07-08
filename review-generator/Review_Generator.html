@@ -1482,12 +1482,17 @@ function assetsLikelySame(a,b){
   const na=_dnorm(a.name), nb=_dnorm(b.name);
   if(!na||!nb) return false;
   if(_isSuperRow(a)!==_isSuperRow(b)) return false;            // different sense → different accounts
+  // A trust / company / SMSF account is NOT the same as a personal one, even on the
+  // same platform — e.g. "Personal MCMA" vs "Trust MCMA", or "HUB24 Investment" vs
+  // "HUB Investment - Trust" are genuinely separate accounts, not duplicates.
+  const isTrust=x=>/trust|ptyltd|atf|smsf|company|pension/.test(x);
+  if(isTrust(na+_dnorm(a.owner))!==isTrust(nb+_dnorm(b.owner))) return false;
   if(na===nb) return true;
   if((na.length>=5&&nb.includes(na))||(nb.length>=5&&na.includes(nb))) return true;
   const ka=ASSET_KW.find(k=>na.includes(k)), kb=ASSET_KW.find(k=>nb.includes(k));
   if(ka&&ka===kb) return true;                                 // same platform keyword + same sense
-  // looser shared tokens (same super/investment sense already required above):
-  // "HUB24 Investment" vs "HUB Investment - Trust"; "Personal MCMA" vs "Macquarie CMA"
+  // looser shared tokens (same super/investment sense + same trust/personal sense
+  // already required above): "HUB24 (unconfirmed)" vs "Hub 24 Super"; two personal MCMAs
   if(na.includes("hub")&&nb.includes("hub")) return true;
   const isMCMA=x=>x.includes("mcma")||x.includes("cashmanagement")||x.includes("macquariecma");
   if(isMCMA(na)&&isMCMA(nb)) return true;
