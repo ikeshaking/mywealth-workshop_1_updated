@@ -143,6 +143,15 @@ textarea{resize:vertical;min-height:60px}
 .cl-followup{margin-top:9px;padding:9px 11px;border-left:3px solid var(--blue);background:var(--blue-light);border-radius:0 8px 8px 0}
 .cl-subhead{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--blue);margin:16px 0 2px;padding-top:12px;border-top:1px solid var(--border-soft)}
 .cl-subhead:first-child{border-top:none;padding-top:0;margin-top:2px}
+.cl-substeps{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 14px;padding-bottom:12px;border-bottom:1px solid var(--border-soft)}
+.cl-substep{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--text-dim);font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:.12s}
+.cl-substep:hover{border-color:var(--blue);color:var(--text)}
+.cl-substep.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.cl-substep.done:not(.active){border-color:#3a9d5d;color:#7fce9a}
+.cl-substep-n{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:rgba(128,128,128,.28);font-size:10px;font-weight:800}
+.cl-substep.active .cl-substep-n{background:rgba(255,255,255,.28)}
+.cl-substep.done:not(.active) .cl-substep-n{background:rgba(58,157,93,.35);color:#bff0cf}
+.cl-substep-p{opacity:.75;font-weight:600;font-size:10.5px}
 .cl-flag{margin-top:8px;padding:8px 11px;border-radius:8px;font-size:12px;font-weight:600;line-height:1.5}
 .cl-flag.warn{background:var(--coral-light);color:var(--coral);border:1px solid var(--coral)}
 .cl-flag.ok{background:var(--green-light);color:var(--green-dark);border:1px solid var(--green)}
@@ -446,7 +455,7 @@ const CL={
   sel:(id,prompt,options,o={})=>Object.assign({id,prompt,type:"select",options},o),
   combo:(id,prompt,options,o={})=>Object.assign({id,prompt,type:"combo",options},o),   // dropdown suggestions + free type
   info:(id,compute)=>({id,type:"computed",compute}),
-  sub:(id,label)=>({id,type:"computed",compute:()=>`<div class="cl-subhead">${label}</div>`})
+  sub:(id,label)=>({id,type:"computed",isSub:true,subLabel:label,compute:()=>`<div class="cl-subhead">${label}</div>`})
 };
 const yesTrig=(v)=>String(v).trim().toLowerCase()==="yes";
 const held=(id)=>()=>yesTrig(getAns(id));   // section appliesWhen a "holds X" toggle is Yes
@@ -475,6 +484,7 @@ const CHECKLIST_SCHEMA=[
 
   /* ---- GENERAL ---- */
   {id:"general", title:"General", icon:"①", always:true, items:[
+    CL.sub("gen_h_id","Identification"),
     CL.yn("gen_id","Does the client hold valid ID on file?",{perClient:true,
       help:"Under the new ID requirements we cannot hold ID on file, so there is NO action by default. Only collect ID if it is needed to action something else (see the optional to-do)."}),
     CL.yn("gen_id_needed","Is ID required to action something in this review (e.g. a new account/rollover)?",
@@ -497,6 +507,7 @@ const CHECKLIST_SCHEMA=[
     CL.yn("gen_crp_inline","Are the client(s) invested in line with their risk profile?",
       {help:"Compare the current asset allocation against the target for their CRP. If not aligned, a rebalance to realign is flagged.",
        todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Rebalance / realign the portfolio to match the client's risk profile"}),
+    CL.sub("gen_h_admin","Admin & data"),
     CL.yn("gen_xeppo","Xeppo activities & projects checked — all outstanding tasks reallocated to current RSO?",
       {help:"Take full responsibility of the Xeppo profile: chase/complete old open projects, take over ad-hoc tasks from other RSOs. Use the note below to list any outstanding open items — they're added to the WR discussion points on Apply.",
        todoWhen:(v)=>String(v).trim().toLowerCase()==="no",
@@ -545,11 +556,13 @@ const CHECKLIST_SCHEMA=[
 
   /* ---- RETAIL SUPER ---- */
   {id:"retailSuper", title:"Retail Super", icon:"$", appliesWhen:held("has_retailSuper"), items:[
+    CL.sub("retail_h_cash","Cash & rebalancing"),
     CL.cur("retail_cash","Cash level within the super fund",{perClient:true,routeNote:{target:"portfolio",prefix:"Retail super cash"}}),
     CL.yn("retail_autobalance","Auto-rebalancing activated (if applicable as per SOP)?",
       {help:"Check cash levels and activate auto-rebalancing where the platform supports it.",
        todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Activate auto-rebalancing on the super account (if available)"}),
     CL.area("retail_components","Taxable / non-taxable components within the super fund",{perClient:true,routeNote:{target:"adviser",prefix:"Super components"}}),
+    CL.sub("retail_h_contrib","Contributions & thresholds"),
     CL.info("retail_contrib",()=>`<div class="cl-help"><b>Contributions</b> — last FY vs FY-to-date, concessional &amp; non-concessional. Check against the caps.</div>`+contribGrid("retail")),
     CL.area("retail_contrib_types","Contribution notes — salary sacrifice, member voluntary, government co-contribution, etc.",{routeNote:{target:"adviser",prefix:"Contributions"}}),
     CL.yn("retail_bringfwd","Has a non-concessional contribution triggered bring-forward?",{perClient:true,
@@ -563,12 +576,14 @@ const CHECKLIST_SCHEMA=[
     CL.yn("retail_div296","Is Div296 applicable?",{perClient:true,
       help:"Balance > $3m. Discussion item: strategy to manage, or payment of the extra tax when requested.",
       routeNote:{target:"adviser",prefix:"Div296"}}),
+    CL.sub("retail_h_pension","Pension & strategies"),
     CL.yn("retail_pension","Is the account in pension phase?",{perClient:true,
       followUps:[{when:yesTrig,items:[
         CL.sel("retail_pension_met","Minimum pension met / on track?",["","Met","On track","Behind"],{perClient:true})
       ]}],
       todo:"Check whether the client requires any adjustment to the pension amount (impacts rebalance & reserve allocation)"}),
     CL.area("retail_other","Other super strategies applicable (FHSS, spouse contributions, gov co-contribution)?",{routeNote:{target:"adviser",prefix:"Super strategies"}}),
+    CL.sub("retail_h_platform","Platform & holdings"),
     CL.yn("retail_bt","Is the client in BT Panorama?",
       {help:"If Yes, add a to-do for the adviser to consider whether BT is the most suitable platform (cost/strategy). Use the note to record if considering a menu switch (full → compact or focus) or a platform switch (e.g. to HUB24).",
        followUps:[{when:yesTrig,items:[CL.area("retail_bt_switch","Menu / platform switch note (e.g. full → compact or focus, or switch to HUB24)",{routeNote:{target:"adviser",prefix:"BT Panorama switch"}})]}],
@@ -583,6 +598,7 @@ const CHECKLIST_SCHEMA=[
     CL.yn("retail_mom","Is the client in MOM phase with an active entry-strategy task in Xeppo?",
       {showWhen:()=>true,todoWhen:(v)=>String(v).trim().toLowerCase()==="no",
        todo:"MOM phase — set up an active Xeppo task outlining the entry strategy"}),
+    CL.sub("retail_h_reporting","Beneficiaries & reporting"),
     CL.area("retail_bene","Beneficiaries — who is nominated and the type of nomination for each account",{perClient:true,routeNote:{target:"estate",prefix:"Retail super beneficiaries"}}),
     CL.yn("retail_reports","Super and Investment reports provided for: 12-month + since-inception performance reports + asset allocation?",
       {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Provide super & investment reports — 12-month and since-inception performance plus asset allocation — and save to the reports folder"})
@@ -590,15 +606,18 @@ const CHECKLIST_SCHEMA=[
 
   /* ---- SECOND / HELD SUPER ---- */
   {id:"heldSuper", title:"External Super", icon:"$", appliesWhen:held("has_heldSuper"), items:[
+    CL.sub("held_h_admin","Fund & contributions"),
     CL.yn("held_contact","Contact details match across all systems & this held fund?",{todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Update contact details on the held super fund to match"}),
     CL.info("held_contrib",()=>`<div class="cl-help"><b>Contributions</b> — last FY vs FY-to-date, concessional &amp; non-concessional.</div>`+contribGrid("held")),
     CL.area("held_contrib_types","Contribution notes — salary sacrifice, member voluntary, government co-contribution, etc.",{routeNote:{target:"adviser",prefix:"Held contributions"}}),
+    CL.sub("held_h_rollover","Splitting & rollover"),
     CL.yn("held_split","Is super splitting applicable?",{perClient:true,routeNote:{target:"adviser",prefix:"Held super splitting"}}),
     CL.cur("held_balance","Held account balance",{perClient:true,
       help:"After confirming splitting / claimable NC needs, consider a partial rollover. If the balance exceeds the required minimum ($6k or $10k), a rollover may be required (ROA)."}),
     CL.info("held_rollover_calc",()=>rolloverPanel()),
+    CL.sub("held_h_bene","Components & beneficiaries"),
     CL.area("held_components","Taxable / non-taxable components within the held fund",{perClient:true,routeNote:{target:"adviser",prefix:"Held super components"}}),
-    CL.area("held_bene","Beneficiaries — who is nominated and the type for each account",{routeNote:{target:"estate",prefix:"Held super beneficiaries"}})
+    CL.area("held_bene","Beneficiaries — who is nominated and the type for each account",{perClient:true,routeNote:{target:"estate",prefix:"Held super beneficiaries"}})
   ]},
 
   /* ---- SMSF (full SMSF Strategy Checklist) ---- */
@@ -2257,6 +2276,19 @@ function clFollowActive(it,fu){
   return vals.some(v=>v!=null && fu.when(v));
 }
 function clSecProgress(sec){ const items=clFlatItems(sec); const done=items.filter(clItemAnswered).length; return {done,total:items.length}; }
+// split a section into sub-groups at each CL.sub() marker → drives the in-section mini-wizard
+function clSubGroups(sec){
+  const items=sec.items||[]; if(!items.some(it=>it.isSub)) return null;
+  const groups=[]; let cur=null;
+  items.forEach(it=>{
+    if(it.isSub){ cur={id:it.id,label:it.subLabel,items:[]}; groups.push(cur); }
+    else { if(!cur){ cur={id:sec.id+"__intro",label:"Overview",items:[]}; groups.push(cur); } cur.items.push(it); }
+  });
+  const nonEmpty=groups.filter(g=>g.items.length);
+  return nonEmpty.length>1?nonEmpty:null;
+}
+function clGroupProgress(group){ let d=0,t=0; (group.items||[]).forEach(it=>{ if(it.type==="computed"||!clItemVisible(it)) return; t++; if(clItemAnswered(it)) d++; }); return {done:d,total:t}; }
+function clGoSub(secId,subId){ if(!S.checklist.subStep) S.checklist.subStep={}; S.checklist.subStep[secId]=subId; renderContent(); window.scrollTo(0,0); }
 
 /* ---------- render ---------- */
 function renderChecklistForm(){
@@ -2274,7 +2306,30 @@ function renderChecklistForm(){
   const totals=secs.reduce((a,s)=>{const p=clSecProgress(s);a.d+=p.done;a.t+=p.total;return a;},{d:0,t:0});
   const pct=totals.t?Math.round(totals.d/totals.t*100):0;
 
-  const body=(active.items||[]).map(it=>renderCLItem(it)).join("");
+  // in-section mini-wizard: if the section has CL.sub groups, step through them one at a time
+  const groups=clSubGroups(active);
+  let subBar="", body, backBtn, nextBtn;
+  const backSection=idx>0
+    ? `<button class="btn btn-ghost btn-sm" onclick="clGo('${secs[idx-1].id}')">← ${esc(secs[idx-1].title)}</button>`
+    : `<button class="btn btn-ghost btn-sm" disabled style="opacity:.4">← Back</button>`;
+  const nextSection=idx<secs.length-1
+    ? `<button class="btn btn-primary btn-sm" onclick="clGo('${secs[idx+1].id}')">Next: ${esc(secs[idx+1].title)} →</button>`
+    : `<button class="btn btn-primary btn-sm" onclick="applyChecklistData();switchTab('generate')">✓ Apply & generate wealth doc →</button>`;
+  if(groups){
+    if(!S.checklist.subStep) S.checklist.subStep={};
+    let curSub=S.checklist.subStep[active.id];
+    if(!curSub||!groups.find(g=>g.id===curSub)) curSub=groups[0].id;
+    const gi=groups.findIndex(g=>g.id===curSub), grp=groups[gi];
+    subBar=`<div class="cl-substeps">`+groups.map((g,i)=>{ const gp=clGroupProgress(g); const done=gp.total>0&&gp.done>=gp.total;
+      return `<button class="cl-substep ${g.id===curSub?'active':''} ${done?'done':''}" onclick="clGoSub('${active.id}','${g.id}')"><span class="cl-substep-n">${done&&g.id!==curSub?'✓':(i+1)}</span>${esc(g.label)}<span class="cl-substep-p">${gp.done}/${gp.total}</span></button>`;
+    }).join("")+`</div>`;
+    body=(grp.items||[]).map(it=>renderCLItem(it)).join("");
+    backBtn = gi>0 ? `<button class="btn btn-ghost btn-sm" onclick="clGoSub('${active.id}','${groups[gi-1].id}')">← ${esc(groups[gi-1].label)}</button>` : backSection;
+    nextBtn = gi<groups.length-1 ? `<button class="btn btn-primary btn-sm" onclick="clGoSub('${active.id}','${groups[gi+1].id}')">Next: ${esc(groups[gi+1].label)} →</button>` : nextSection;
+  } else {
+    body=(active.items||[]).map(it=>renderCLItem(it)).join("");
+    backBtn=backSection; nextBtn=nextSection;
+  }
 
   return `
   <div class="section-head"><h2>Pre-Review Checklist</h2><p>A guided, account-aware questionnaire. Only sections relevant to this client's holdings appear. Answers route into the wealth doc — action-type answers become <b>to-do items</b>, data answers feed the matching section (beneficiaries → estate, contributions → super notes, etc.). Step through with <b>Next</b> or jump to any section on the left.</p></div>
@@ -2290,12 +2345,11 @@ function renderChecklistForm(){
     <div class="cl-main">
       <div class="card">
         <div class="card-title"><span class="bar"></span>${esc(active.icon||'')} ${esc(active.title)}</div>
+        ${subBar}
         <div class="cl-body">${body||'<div class="pv-empty">No items in this section.</div>'}</div>
         <div style="display:flex;justify-content:space-between;margin-top:14px">
-          <button class="btn btn-ghost btn-sm" ${idx<=0?'disabled style=\"opacity:.4\"':''} onclick="clGo('${secs[Math.max(0,idx-1)].id}')">← Back</button>
-          ${idx<secs.length-1
-            ? `<button class="btn btn-primary btn-sm" onclick="clGo('${secs[idx+1].id}')">Next: ${esc(secs[idx+1].title)} →</button>`
-            : `<button class="btn btn-primary btn-sm" onclick="applyChecklistData();switchTab('generate')">✓ Apply & generate wealth doc →</button>`}
+          ${backBtn}
+          ${nextBtn}
         </div>
       </div>
       <div class="card" style="background:var(--blue-light);border-color:var(--blue)">
