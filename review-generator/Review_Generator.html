@@ -1658,12 +1658,15 @@ function applyHub24(r){
   const isTrust=(x)=>/trust|pty ?ltd|atf|smsf|company/i.test(x);
   const wantTrust=isTrust(r.name||"");
   const senseMatch=(a)=> isTrust((a.name||"")+" "+(a.owner||""))===wantTrust;
-  const claimed=(a)=> digits(a.ref) && r.id && digits(a.ref)!==digits(r.id);
+  // "claimed" = the existing row already carries a DIFFERENT real account number.
+  // A valuation-date/note ref ("Value as of 08/08/2025") is not an account number, so
+  // it must not block the update — otherwise the fresh report duplicates instead of overriding.
+  const claimed=(a)=> _acctRef(a.ref) && r.id && _acctRef(a.ref)!==digits(r.id);
   // for a COUPLE with a HUB super each, also match on the person so Jon's report
   // updates Jon's super and Marion's updates Marion's (instead of duplicating)
   const fn=firstName(who);
   const ownerMatch=(a)=> !fn || new RegExp("\\b"+fn.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"i").test(a.owner||"");
-  let asset = (r.id && S.nestegg.find(a=>digits(a.ref)&&digits(a.ref)===digits(r.id)))
+  let asset = (r.id && S.nestegg.find(a=>_acctRef(a.ref)&&_acctRef(a.ref)===digits(r.id)))
            || S.nestegg.find(a=>isHub(a)&&typeMatch(a)&&senseMatch(a)&&ownerMatch(a)&&!claimed(a))
            || S.nestegg.find(a=>isHub(a)&&typeMatch(a)&&senseMatch(a)&&!(a.owner||"").trim()&&!claimed(a));
   if(!asset){
@@ -1950,9 +1953,9 @@ function applyMacq(r){
   // the "Trust MCMA" row, and vice versa).
   const isMacqRow=a=>/macquarie|mcma|cash management/i.test((a.name||"")+" "+(a.ref||""));
   const senseOf=a=>/trust/i.test((a.name||"")+" "+(a.owner||""))?"trust":(/personal/i.test(a.name||"")?"personal":"");
-  const claimed=a=>digits(a.ref)&&r.id&&digits(a.ref)!==digits(r.id);
+  const claimed=a=>_acctRef(a.ref)&&r.id&&_acctRef(a.ref)!==digits(r.id);
   const want=r.isTrust?"trust":"personal";
-  let asset=(r.id && S.nestegg.find(a=>digits(a.ref)&&digits(a.ref)===digits(r.id)))
+  let asset=(r.id && S.nestegg.find(a=>_acctRef(a.ref)&&_acctRef(a.ref)===digits(r.id)))
          || S.nestegg.find(a=>isMacqRow(a)&&senseOf(a)===want&&!claimed(a))
          || S.nestegg.find(a=>isMacqRow(a)&&senseOf(a)===""&&!claimed(a));
   if(!asset){
