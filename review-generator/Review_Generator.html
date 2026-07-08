@@ -1282,10 +1282,18 @@ function applyHub24(r){
   if(!acct){ acct={acct:`${r.id} (HUB24) - ${r.name}`, holdings:[]}; (S.portfolios[who]=S.portfolios[who]||[]).push(acct); }
   acct.acct=`${r.id} (HUB24) - ${r.name}`;
   acct.holdings=r.holdings.slice();
-  const want=isSuper?/hub24.*super/i:/hub24.*invest/i;
-  let asset=S.nestegg.find(a=>want.test(a.name)) || S.nestegg.find(a=>/hub24/i.test(a.name)&&((isSuper&&/super/i.test(a.type))||(!isSuper&&!/super/i.test(a.type))));
+  // Match an existing row so a re-import UPDATES it instead of adding a duplicate.
+  // Tolerate name variants ("Hub 24 Super", "HUB24 Super", "Hub24") and match on the
+  // account id first (most reliable), then platform + super/investment type.
+  const norm=(s)=>String(s||"").toLowerCase().replace(/[\s\-]/g,"");
+  const isHub=(a)=>norm(a.name).includes("hub24");
+  const typeMatch=(a)=> isSuper ? (/super/i.test(a.type)||/super/i.test(a.name)) : (!/super/i.test(a.type)&&!/super/i.test(a.name));
+  let asset = (r.id && S.nestegg.find(a=>a.ref&&String(a.ref).replace(/\D/g,"")===String(r.id).replace(/\D/g,"")&&String(r.id).replace(/\D/g,"")!==""))
+           || S.nestegg.find(a=>isHub(a)&&typeMatch(a));
   if(!asset){ asset={name:isSuper?"HUB24 Super":"HUB24 Investment", value:0, debt:0, type:isSuper?"Super":"Investment", owner:firstName(who)||r.name, ref:r.id}; S.nestegg.push(asset); }
-  asset.value=r.total;
+  asset.value=r.total; if(r.id) asset.ref=r.id;
+  // clean up any leftover empty HUB24 placeholder rows of the same type from earlier mis-matches
+  S.nestegg=S.nestegg.filter(a=> a===asset || !(isHub(a)&&typeMatch(a)&&num(a.value)===0&&(!a.holdings||!a.holdings.length)));
   const fn=firstName(who);
   let gt=S.goalTracking.find(g=> isSuper ? (fn&&new RegExp(fn+".*super","i").test(g.strategy)) : /investment\b/i.test(g.strategy) );
   if(!gt){ gt={strategy:(isSuper?((fn||"Client")+" Super"):"Investment"), were:"",shouldBe:"",are:"",wantToBe:"",rating:"On Track",actions:""}; S.goalTracking.push(gt); }
