@@ -1300,6 +1300,56 @@ function whoFromName(name){
   return "client";
 }
 function firstName(who){ return String((who==="partner"?S.partner.name:S.client.name)||"").trim().split(/\s+/)[0]; }
+
+/* ---------- Shared asset/liability matcher ----------
+   Decides whether an imported asset/liability (a valuation, an updated balance,
+   a platform report) already exists in the client's current situation, so the
+   upload UPDATES the matching row instead of appending a duplicate. Only when
+   NOTHING matches should the caller add a genuinely new row.
+   `cand` fields (all optional): {id/ref, name, type, owner, address, isSuper}.
+   Match precedence: (1) account id / reference number; (2) normalised platform
+   or fund name sharing a distinctive token; (3) property address; (4) the sole
+   asset of the same kind (super/property/etc.) for that owner. */
+const ASSET_KW=["hub24","panorama","macquarie","macq","cfs","colonial","firstchoice","netwealth","northonline","north","expandwrap","expand","wrap","mlc","amp","australiansuper","awaresuper","aware","hostplus","rest","unisuper","qsuper","sunsuper","cbus","bt","vanguard","onepath","insignia","praemium","ioof","essuper","brightersuper","spirit"];
+function findExistingAsset(list, cand){
+  if(!Array.isArray(list)||!list.length) return null;
+  const norm=s=>String(s||"").toLowerCase().replace(/[\s\-,.'/]/g,"");
+  const digits=s=>String(s||"").replace(/\D/g,"");
+  const candRef=digits(cand.id||cand.ref);
+  const candName=norm(cand.name);
+  const isProp=/property|real ?estate|home|ppor|land|unit|apartment|house/i.test((cand.type||"")+" "+(cand.name||""));
+  const superSense=cand.isSuper!=null?!!cand.isSuper:/super|pension|smsf|pens|retire/i.test((cand.type||"")+" "+(cand.name||""));
+  const sense=a=>/super|pension|smsf|pens|retire/i.test((a.type||"")+" "+(a.name||""));
+  const senseOK=a=>cand.isSuper==null?true:sense(a)===superSense;
+  // 1) by account id / reference number (most reliable)
+  if(candRef && candRef.length>=4){
+    const byRef=list.find(a=>{ const r=digits(a.ref); return r&&r.length>=4&&(r===candRef||r.includes(candRef)||candRef.includes(r)); });
+    if(byRef) return byRef;
+  }
+  // 2) by normalised platform / fund name (containment either way, or shared keyword)
+  if(candName){
+    let byName=list.find(a=>{ const an=norm(a.name); return an&&senseOK(a)&&(an===candName||(an.length>=4&&candName.includes(an))||(candName.length>=4&&an.includes(candName))); });
+    if(byName) return byName;
+    const candKW=ASSET_KW.find(k=>candName.includes(k));
+    if(candKW){ byName=list.find(a=>norm(a.name).includes(candKW)&&senseOK(a)); if(byName) return byName; }
+  }
+  // 3) by property address (share the street number + first street word)
+  if(cand.address){
+    const parts=String(cand.address).split(",")[0].trim();
+    const key=norm(parts).slice(0,16);
+    if(key.length>=4){ const byAddr=list.find(a=>{ const an=norm(a.name); return an&&(an.includes(key)||key.includes(an.slice(0,16))); }); if(byAddr) return byAddr; }
+  }
+  // 4) fall back to the sole asset of the same kind for that owner — only for a
+  //    property or a super account (a single "sole non-super" match would be too
+  //    loose, so cash/investment imports must match on id/name/keyword above).
+  const ownerN=norm(cand.owner);
+  const kindOf=a=>isProp?/property|real ?estate|home|ppor|land/i.test((a.type||"")+" "+(a.name||"")):sense(a);
+  if(isProp || cand.isSuper===true){
+    const sameKind=list.filter(a=>{ if(!kindOf(a)) return false; if(ownerN){ return norm(a.owner).includes(ownerN)||ownerN.includes(norm(a.owner)); } return true; });
+    if(sameKind.length===1) return sameKind[0];
+  }
+  return null;
+}
 function applyHub24(r){
   const isSuper=/super/i.test(r.type);
   const who=whoFromName(r.name);
@@ -1501,10 +1551,11 @@ function parsePropertyValuation(text){
   return {value:val, address:addr};
 }
 function applyPropertyValuation(pv){
-  const norm=s=>String(s||'').toLowerCase().replace(/[\s,]/g,'');
-  let a = pv.address && S.lifestyle.find(x=>norm(x.name)&&norm(x.name).includes(norm(pv.address.split(' ').slice(0,2).join(' '))));
+  // Override the existing property row if this valuation matches one; only add a
+  // new row when this property genuinely isn't already in the current situation.
+  let a = findExistingAsset(S.lifestyle, {name:pv.address, address:pv.address, type:"Property"});
   if(!a){ a={name:pv.address||"Property", value:0, debt:0, type:"Property", owner:"", ref:"Valuation "+(formatDate(S.meta.reviewDate)||"")}; S.lifestyle.push(a); }
-  a.value=pv.value; if(pv.address) a.name=pv.address;
+  a.value=pv.value; if(pv.address && !/,/.test(a.name)) a.name=pv.address;
 }
 
 /* ---------- BT Panorama parser ---------- */
@@ -1542,8 +1593,10 @@ function applyBt(r){
   if(!acct){ acct={acct:`${r.id} (BT Panorama)`, holdings:[]}; (S.portfolios[who]=S.portfolios[who]||[]).push(acct); }
   acct.acct=`${r.id} (BT Panorama)`; acct.holdings=r.holdings.slice();
   const fn=firstName(who);
-  let asset=(fn&&S.nestegg.find(a=>/panorama\s*super/i.test(a.name)&&new RegExp(fn,"i").test(a.owner||""))) || S.nestegg.find(a=>/panorama\s*super/i.test(a.name));
+  let asset=findExistingAsset(S.nestegg, {id:r.id, name:"BT Panorama Super", owner:fn||r.name, type:"Super", isSuper:true})
+        || (fn&&S.nestegg.find(a=>/panorama\s*super/i.test(a.name)&&new RegExp(fn,"i").test(a.owner||""))) || S.nestegg.find(a=>/panorama\s*super/i.test(a.name));
   if(!asset){ asset={name:"BT Panorama Super", value:0, debt:0, type:"Super", owner:fn||r.name, ref:r.id}; S.nestegg.push(asset); }
+  if(r.id) asset.ref=r.id;
   asset.value=r.total;
   let gt=fn?S.goalTracking.find(g=>new RegExp(fn+".*super","i").test(g.strategy)):null;
   if(!gt){ gt={strategy:(fn||"Client")+" Super", were:"",shouldBe:"",are:"",wantToBe:"",rating:"On Track",actions:""}; S.goalTracking.push(gt); }
@@ -1565,7 +1618,8 @@ function applyMacq(r){
   // update the MCMA / Macquarie CMA holding + nest-egg "MCMA" value
   let acct=S.portfolios.client.find(a=>a.acct.includes(r.id)) || S.portfolios.client.find(a=>/macq/i.test(a.acct));
   if(acct){ const h=acct.holdings.find(x=>/macquarie cma|cma/i.test(x.product))||acct.holdings[0]; if(h) h.value=r.balance; else acct.holdings.push({product:"Macquarie CMA",units:"",value:r.balance}); }
-  let asset=S.nestegg.find(a=>/mcma|macquarie/i.test(a.name));
+  let asset=findExistingAsset(S.nestegg, {id:r.id, name:"Macquarie CMA", type:"Cash", isSuper:false})
+        || S.nestegg.find(a=>/mcma|macquarie/i.test(a.name));
   if(!asset){ asset={name:"Macquarie CMA", value:0, debt:0, type:"Cash", owner:r.name||"Joint", ref:r.id}; S.nestegg.push(asset); }
   asset.value=r.balance;
 }
@@ -1965,7 +2019,7 @@ function buildPreviewPages(){
     fRow("Insurance Death Nominations",e.insNomC,e.insNomRef||"",e.insNomP,e.insNomRefP||"")
   ];
   const fAlign=hp?['r','c','c','c','c']:['r','c','c'];
-  const refNotes=[S.foundationsNotes,e.notes].filter(Boolean).join("\n");
+  const refNotes=S.foundationsNotes||"";
   P.push(`<div class="wrprev-page"><div class="pv-band">Foundations</div>${pvTable(fHead,fRows,{lbl:true,align:fAlign,empty:""})}
     <div class="pv-band" style="margin-top:10px">Reference &amp; Notes</div>
     <div class="pv-refnotes">${refNotes?esc(refNotes):"&nbsp;"}</div></div>`);
@@ -2174,10 +2228,16 @@ function genericPlatformImport(text,name,kindLabel){
     const who="client";
     const isSuper=/super|pension|smsf/i.test(text);
     const label=plat+" (unconfirmed — check figure)";
-    let asset=S.nestegg.find(a=>a.name===label);
+    // Override an existing matching asset (same platform, same super/investment
+    // sense) instead of adding a duplicate; only create the "unconfirmed" row
+    // when this account genuinely isn't already in the current situation.
+    let asset=findExistingAsset(S.nestegg, {name:plat, type:isSuper?"Super":"Investment", isSuper})
+           || S.nestegg.find(a=>a.name===label);
     if(!asset){ asset={name:label, value:0, debt:0, type:isSuper?"Super":"Investment", owner:firstName(who)||"", ref:""}; S.nestegg.push(asset); }
     asset.value=value;
-    let acct=(S.portfolios[who]||[]).find(a=>a.acct===label);
+    const norm=s=>String(s||"").toLowerCase().replace(/[\s\-]/g,"");
+    let acct=(S.portfolios[who]||[]).find(a=>a.acct===label)
+          || (S.portfolios[who]||[]).find(a=>norm(a.acct).includes(norm(plat)));
     if(!acct){ acct={acct:label, holdings:[]}; (S.portfolios[who]=S.portfolios[who]||[]).push(acct); }
     acct.holdings=[{product:"Account balance (from "+plat+" report — confirm)", units:"", value:value}];
     return `${plat} · best-guess balance ${money(value)} — UNCONFIRMED, check figure (full text on the 🔍 chip)`;
@@ -3191,31 +3251,57 @@ async function importReviewDoc(ev){
     const got=[];
     // Prepared for
     const pf=raw.match(/Prepared for:?\s*([^\n]+)/i); if(pf){ S.meta.preparedFor=pf[1].trim(); got.push("client name"); }
-    // Details (table containing "Date of Birth")
+    // Your Details (table containing "Date of Birth"). The generated table lays
+    // fields out as a blue LABEL row above a teal VALUE row; a couple has the
+    // partner in the right half. Mirror EVERY field from the last doc — including
+    // Address, Investment Address(es), Dependants and Employment Status, which the
+    // old parser skipped — reading the label from each column and the value from
+    // the same column on the next row.
     const dt=tables.find(t=>t.some(r=>r.some(c=>/date of birth/i.test(c))));
     if(dt){
-      const labels={name:/^name$/i,dob:/date of birth/i,mobile:/^mobile$/i,marital:/marital/i,email:/email/i,estate:/estate/i,employer:/employer/i,riskProfile:/risk profile/i,jobTitle:/occupation|position|job title/i};
+      const detFields=[
+        {re:/^name$/i, set:(side,v)=>S[side].name=v},
+        {re:/date of birth/i, set:(side,v)=>S[side].dob=v},
+        {re:/^mobile$/i, set:(side,v)=>S[side].mobile=v},
+        {re:/marital/i, set:(side,v)=>S[side].marital=v},
+        {re:/email/i, set:(side,v)=>S[side].email=v},
+        {re:/estate/i, set:(side,v)=>S[side].estate=v},
+        {re:/employment status/i, set:(side,v)=>S[side].employment=v},
+        {re:/employer/i, set:(side,v)=>S[side].employer=v},
+        {re:/risk profile/i, set:(side,v)=>S[side].riskProfile=v},
+        {re:/occupation|position|job title/i, set:(side,v)=>S[side].jobTitle=v},
+        {re:/investment address/i, set:(side,v)=>S.investmentAddresses=v},
+        {re:/^address/i, set:(side,v)=>S.address=v},
+        {re:/dependa[nu]ts/i, set:(side,v)=>{ if(side==="partner") S.dependantsPartner=v; else S.dependantsClient=v; }}
+      ];
+      let filled=0;
       for(let i=0;i<dt.length-1;i++){
         const lab=dt[i], val=dt[i+1];
-        [[0,"client"],[1,"client"],[4,"partner"],[5,"partner"]].forEach(([ci,side])=>{
+        const nCols=Math.max(lab.length,val.length);
+        for(let ci=0;ci<nCols;ci++){
           const L=(lab[ci]||"").trim(), V=(val[ci]||"").trim();
-          if(!L||!V) return;
-          for(const [field,re] of Object.entries(labels)){ if(re.test(L) && !S[side][field]){ S[side][field]=V; } }
-        });
+          if(!L||!V) continue;
+          const side=(nCols>=3 && ci>=Math.ceil(nCols/2))?"partner":"client";
+          const fld=detFields.find(f=>f.re.test(L));
+          if(fld){ fld.set(side,V); filled++; }
+        }
       }
       if(S.partner.name) S.meta.hasPartner=true;
-      got.push("details");
+      if(filled) got.push("details");
     }
     // Goal tracking (table with WHERE YOU WERE)
     const gt=tables.find(t=>t.some(r=>/where you were/i.test(r.join(" "))));
     if(gt){
       const hi=gt.findIndex(r=>/where you were/i.test(r.join(" ")));
       const rows=gt.slice(hi+1), groups={}, order=[];
-      rows.forEach(r=>{ const s=(r[0]||"").trim(); if(!s||/^total/i.test(s)) return; if(!groups[s]){groups[s]=[];order.push(s);} groups[s].push(r); });
       const cur=v=>{ const m=String(v||"").match(/\$[\d,]+(?:\.\d+)?/); return m?m[0]:(String(v||"").trim()==="-"?"-":""); };
+      // capture the aggregate Totals row (Where You Were / Should Be / Are / Want To Be)
+      const totRow=rows.find(r=>/^total/i.test((r[0]||"").trim()));
+      rows.forEach(r=>{ const s=(r[0]||"").trim(); if(!s||/^total/i.test(s)) return; if(!groups[s]){groups[s]=[];order.push(s);} groups[s].push(r); });
       const out=order.map(s=>{ const g=groups[s], f=g[0], tick=g.some(r=>r.join(" ").includes("✔"));
-        return {strategy:s, were:cur(f[1]), shouldBe:cur(f[2]), are:cur(f[3]), wantToBe:cur(f[4]), rating:tick?"On Track":"N/A", actions:(f[f.length-1]||"").trim()}; });
+        return {strategy:s, were:cur(f[1]), shouldBe:cur(f[2]), are:cur(f[3]), wantToBe:cur(f[4]), rating:tick?"On Track":(cur(f[3])?"On Track":"N/A"), actions:(f[f.length-1]||"").trim()}; });
       if(out.length){ S.goalTracking=out; got.push(out.length+" goal-tracking rows"); }
+      if(totRow){ S.goalTrackingTotals={were:cur(totRow[1]),shouldBe:cur(totRow[2]),are:cur(totRow[3]),wantToBe:cur(totRow[4])}; got.push("goal-tracking totals"); }
     }
     // Action items (DESCRIPTION / WHO / WHEN)
     const at=tables.find(t=>{ const h=(t[0]||[]).join(" ").toLowerCase(); return h.includes("description")&&h.includes("who")&&h.includes("when"); });
@@ -3249,10 +3335,21 @@ async function importReviewDoc(ev){
       }));
       if(items.length){ S.income=items; got.push(items.length+" income lines"); }
     }
-    // Goals (table with Owner / Timeframe / Notes)
+    // Goals (table with Description / Owner / Timeframe / Notes). Read column
+    // positions from the header so the goals mirror the last doc exactly,
+    // including the Notes column (the old parser assumed a fixed order and
+    // dropped the notes).
     const gtbl=tables.find(t=>{ const h=(t[0]||[]).join(" ").toLowerCase(); return /timeframe/.test(h)&&/owner/.test(h); });
     if(gtbl){
-      const items=gtbl.slice(1).map(r=>({owner:(r[0]||"").trim(), timeframe:(r[1]||"").replace(/\s+/g," ").trim(), desc:(r[2]||"").trim(), notes:""})).filter(g=>g.desc);
+      const head=(gtbl[0]||[]).map(c=>String(c||"").toLowerCase());
+      const col=re=>head.findIndex(c=>re.test(c));
+      const di=col(/description|goal/), oi=col(/owner/), ti=col(/timeframe/), ni=col(/notes/);
+      const items=gtbl.slice(1).map(r=>({
+        desc:(r[di>=0?di:0]||"").trim(),
+        owner:(r[oi>=0?oi:1]||"").trim(),
+        timeframe:(r[ti>=0?ti:2]||"").replace(/\s+/g," ").trim(),
+        notes:(ni>=0?(r[ni]||""):"").trim()
+      })).filter(g=>g.desc && !/^description$/i.test(g.desc));
       if(items.length){ S.goals=items; got.push(items.length+" goals"); }
     }
     if(got.length){ registerUpload(f.name,"Last review"); toast("Imported from review: "+got.join(", ")+"."); renderContent(); }
@@ -3735,8 +3832,9 @@ async function generateDocx(){
   }
   // Blank "Reference & Notes" band under the Foundations table (matches the template)
   function refNotesTable(){
-    // pulls the checklist's Reference & Notes (data notes + CRP + beneficiary/estate detail)
-    const notes=[S.foundationsNotes, S.estate&&S.estate.notes].filter(Boolean).join("\n");
+    // Reference & Notes = the checklist data notes only (beneficiary/estate detail lives in the
+    // Foundations table's Reference column, not here).
+    const notes=S.foundationsNotes||"";
     const body=notes?notes:"\n\n\n";
     return new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},columnWidths:[W],rows:[
       new TableRow({children:[cell("Reference & Notes",{w:W,shade:NAVY,bold:true,color:WHITE,font:DISP,size:20})]}),
