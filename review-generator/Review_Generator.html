@@ -199,6 +199,9 @@ textarea{resize:vertical;min-height:60px}
 .pv-h2{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif;font-size:21px;color:#0C6AE1;margin:22px 0 8px;border-bottom:2px solid #0C6AE1;padding-bottom:3px}
 .pv-band{background:#0C2D3E;color:#fff;font-weight:700;font-size:12px;letter-spacing:.04em;padding:6px 12px;margin:14px 0 0;border-radius:3px}
 .pv-refnotes{background:#E3F2F4;color:#16242e;padding:10px 12px;white-space:pre-line;font-size:12px;line-height:1.6;min-height:64px}
+.pv-tbl td.pv-tl-blue{background:#0B6AE1;color:#fff;font-weight:800}
+.pv-tbl td.pv-tl-lblue{background:#5EA6FF;color:#fff;font-weight:800}
+.pv-tbl td.pv-tvbold{font-weight:800}
 .pv-tbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
 .pv-tbl th{background:#0C6AE1;color:#fff;text-align:left;padding:6px 9px;font-weight:700;border:1px solid #fff}
 .pv-tbl.navy th{background:#0C2D3E}
@@ -1804,8 +1807,11 @@ function pvTable(headers,rows,opts={}){
   const body=rows.map(r=>{
     const cls=r.__tot?' class="pv-tot"':'';
     const tds=r.cells.map((c,i)=>{
-      const cl=[acl(i), (lbl&&i===0&&!r.__tot)?'pv-lbl':'', (r.__tot&&i>0)?'pv-val':''].filter(Boolean).join(' ');
-      return `<td class="${cl}">${c.html||esc(c.v==null?'':c.v)}</td>`;
+      let cl=[acl(i)];
+      if(r.__totlbl){ cl.push(i===0?(r.__totlbl==='blue'?'pv-tl-blue':'pv-tl-lblue'):'pv-tvbold'); }
+      else { if(lbl&&i===0&&!r.__tot) cl.push('pv-lbl'); if(r.__tot&&i>0) cl.push('pv-val'); }
+      const span=c.colspan?` colspan="${c.colspan}"`:'';
+      return `<td class="${cl.filter(Boolean).join(' ')}"${span}>${c.html||esc(c.v==null?'':c.v)}</td>`;
     }).join("");
     return `<tr${cls}>${tds}</tr>`;
   }).join("");
@@ -1858,22 +1864,30 @@ function buildPreviewPages(){
       <div>${(hp&&S.partner.name)?pvTable([S.partner.name,""],detRows(S.partner)):''}</div>
     </div></div>`);
 
-  /* Current Situation */
-  const assetRows=(arr)=>arr.map(a=>({cells:[{v:a.name},{v:a.value?money(num(a.value)):""},{v:a.debt?money(num(a.debt)):""},{v:a.type},{v:a.owner}]}));
+  /* Current Situation — mirrors the generated doc (Reference column + per-table totals) */
+  const assetRows=(arr,totLabel)=>{
+    const rows=arr.map(a=>({cells:[{v:a.name},{v:a.value?money(num(a.value)):""},{v:a.debt?money(num(a.debt)):""},{v:a.type},{v:a.owner},{v:a.ref}]}));
+    rows.push({__totlbl:'lblue',cells:[{v:totLabel},{v:money(pvSum(arr,"value"))},{v:money(pvSum(arr,"debt"))},{v:""},{v:""},{v:""}]});
+    return rows;
+  };
   const o=S.totalsOverride;
   const la=pvSum(S.lifestyle,"value"), lad=pvSum(S.lifestyle,"debt"), na=pvSum(S.nestegg,"value"), nad=pvSum(S.nestegg,"debt");
   const assets=o.useOverride?num(o.assets):(la+na), debts=o.useOverride?num(o.debts):(lad+nad);
   const inc=o.useOverride?num(o.income):pvSum(S.income,"amount");
   const nw=o.useOverride?num(o.netWorth):(assets-debts), sp=o.useOverride?num(o.surplus):0;
   const incRows=S.income.map(r=>({cells:[{v:r.label},{v:r.amount?money(num(r.amount)):""},{v:r.owner},{v:r.freq}]}));
+  incRows.push({__totlbl:'lblue',cells:[{v:"INCOME TOTAL"},{v:money(pvSum(S.income,"amount"))},{v:""},{v:""}]});
+  const aAlign=[,, ,"c","c","c"];
   P.push(`<div class="wrprev-page">
     <div class="pv-h2">Current Situation</div>
-    <div class="pv-band">LIFESTYLE ASSETS</div>${pvTable(["Asset","Value","Debt","Type","Owner"],assetRows(S.lifestyle),{align:[,"r","r"],lbl:true,empty:"No lifestyle assets yet."})}
-    <div class="pv-band">NEST EGG ASSETS</div>${pvTable(["Asset","Value","Debt","Type","Owner"],assetRows(S.nestegg),{align:[,"r","r"],lbl:true,empty:"Upload platform reports or add assets."})}
-    <div class="pv-band">INCOME</div>${pvTable(["Income","Annual Amount","Owner","Frequency"],incRows,{align:[,"r"],lbl:true,empty:"No income entered."})}
+    <div class="pv-band">LIFESTYLE ASSETS</div>${pvTable(["","Value","Debt","Type","Owner","Reference"],assetRows(S.lifestyle,"LIFESTYLE TOTAL"),{align:aAlign,lbl:true,empty:"No lifestyle assets yet."})}
+    <div class="pv-band">NEST EGG ASSETS</div>${pvTable(["","Value","Debt","Type","Owner","Reference"],assetRows(S.nestegg,"NEST EGG TOTAL"),{align:aAlign,lbl:true,empty:"Upload platform reports or add assets."})}
+    <div class="pv-band">INCOME</div>${pvTable(["Income","Annual Amount","Owner","Frequency"],incRows,{align:[,,"c","c"],lbl:true,empty:"No income entered."})}
     <div class="pv-band">TOTAL NET WORTH CALCULATION</div>
-    ${pvTable(["","Assets","Debts","Income"],[{cells:[{v:"Total All Categories"},{v:money(assets)},{v:money(debts)},{v:money(inc)}],__tot:true}],{align:[,"r","r","r"]})}
-    ${pvTable(["Net Worth / Surplus","",""],[{cells:[{v:"NET WORTH / SURPLUS"},{v:money(nw)},{v:money(sp)}],__tot:true}],{align:[,"r","r"]})}
+    ${pvTable(["","Assets","Debts","Income"],[
+      {__totlbl:'blue',cells:[{v:"Total All Categories"},{v:money(assets)},{v:money(debts)},{v:money(inc)}]},
+      {__totlbl:'lblue',cells:[{v:"NET WORTH / SURPLUS"},{v:money(nw),colspan:2},{v:money(sp)}]}
+    ],{align:[,"c","c","c"]})}
   </div>`);
 
   /* Foundations (foundations + estate combined, per template) */
