@@ -343,7 +343,10 @@ h1,h2,h3{font-family:'ABC Arizona Flare','Playfair Display',serif;font-weight:50
 .topbar h1{font-weight:500}
 .section-head h2{font-family:'ABC Arizona Flare','Playfair Display',serif;font-weight:500;font-size:22px}
 .section-head p{font-weight:400}
-.card-title{font-family:'ABC Arizona Flare','Playfair Display',serif;font-weight:500;font-size:16px;letter-spacing:0;text-transform:none}
+/* SOA-style filled header bar across the top of each card */
+.card{overflow:hidden}
+.card-title{margin:-15px -16px 15px;padding:12px 17px;background:linear-gradient(95deg,#2b5c8f 0%,#3a6ea3 100%);color:#fff;border-radius:0;font-family:'ABC Arizona Flare','Playfair Display',serif;font-weight:500;font-size:16px;letter-spacing:0;text-transform:none}
+.card-title .bar{display:none}
 .nav-group{font-weight:600;letter-spacing:.1em}
 .nav-item{font-weight:500}
 .nav-item .ni-num{font-weight:600}
