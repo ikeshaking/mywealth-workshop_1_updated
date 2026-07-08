@@ -3956,7 +3956,22 @@ async function importChecklist(ev){
     const rd=labelVal("review date");
     if(rd!==""&&rd!=null){ let d = (rd instanceof Date)?rd : (typeof rd==="number"?new Date(Math.round((rd-25569)*86400000)) : new Date(rd)); if(!isNaN(d)) S.meta.reviewDate=d.toISOString().slice(0,10); }
     const rt=labelVal("review type"); if(rt) S.meta.reviewType=String(rt).trim();
-    const cl=labelVal("client"); if(cl){ S.meta.preparedFor=String(cl).trim(); if(!S.client.name){ S.client.name=String(cl).trim(); } clSet("scope_c1name",S.client.name,false); }
+    const cl=labelVal("client");
+    if(cl){
+      const raw=String(cl).trim(); S.meta.preparedFor=raw;
+      // a couple's checklist puts both names in one Client cell ("Jon Spencer and
+      // Marion Zavattaro") — split it so the review recognises 2 clients
+      const parts=raw.split(/\s+(?:and|&|\/)\s+/i).map(s=>s.trim()).filter(Boolean);
+      if(parts.length>=2){
+        if(!S.client.name) S.client.name=parts[0];
+        if(!S.partner.name) S.partner.name=parts[1];
+        S.meta.hasPartner=true;
+        clSet("scope_clients","2",false); clSet("scope_c1name",parts[0],false); clSet("scope_c2name",parts[1],false);
+      } else {
+        if(!S.client.name) S.client.name=raw;
+        clSet("scope_clients","1",false); clSet("scope_c1name",raw,false);
+      }
+    }
     const ad=labelVal("adviser"); if(ad){ S.meta.adviserName=String(ad).trim(); clSet("scope_adviser",S.meta.adviserName,false); }
     const headIdx=rows.findIndex(r=>/^item$/i.test(String(r[0]||"").trim()) && /action/i.test(String(r[1]||"")));
     const dataRows=headIdx>=0?rows.slice(headIdx+1):rows;
