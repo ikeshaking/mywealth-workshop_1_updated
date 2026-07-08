@@ -1951,7 +1951,7 @@ const SECTIONS=[
   {id:"tracking", num:"5", title:"Goal Tracking",       render:renderTracking},
   {id:"portfolio",num:"6", title:"Portfolio Valuation", render:renderPortfolio},
   {id:"alloc",    num:"7", title:"Asset Allocation",    render:renderAlloc},
-  {id:"insurance",num:"8", title:"Insurance Cover",     render:renderInsurance},
+  {id:"insurance",num:"8", title:"Insurance Cover",     render:renderInsurance, hidden:()=>insuranceEmpty()},
   {id:"actions",  num:"9", title:"Actions & Services",  render:renderActions},
   {id:"rebalance",num:"⇄", title:"Rebalance (draft)",   render:renderRebalance}
 ];
@@ -1969,7 +1969,7 @@ const TABS=[
       {id:"tracking", num:"4", title:"Goal Tracking",       render:renderTracking},
       {id:"portfolio",num:"5", title:"Portfolio Valuation", render:renderPortfolio},
       {id:"alloc",    num:"6", title:"Asset Allocation",    render:renderAlloc},
-      {id:"insurance",num:"7", title:"Insurance Cover",     render:renderInsurance},
+      {id:"insurance",num:"7", title:"Insurance Cover",     render:renderInsurance, hidden:()=>insuranceEmpty()},
       {id:"actions",  num:"8", title:"Actions & Services",  render:renderActions}
     ]},
   {id:"post", label:"④ Post Review", sub:"File note & ROA from the changes made",
@@ -1981,7 +1981,25 @@ const TABS=[
 ];
 let activeTab="checklist";
 let activeSection="checklist";
-function tabSections(){ return (TABS.find(t=>t.id===activeTab)||TABS[0]).sections; }
+// A section with a hidden() predicate is dropped from the nav / content / counter
+// when it returns true (e.g. Insurance Cover when the client has no cover).
+function tabSections(){
+  const secs=(TABS.find(t=>t.id===activeTab)||TABS[0]).sections;
+  return secs.filter(s=> !(typeof s.hidden==="function" && s.hidden()));
+}
+// Insurance Cover is empty/not-applicable when there are no cover rows AND the
+// checklist insurance toggles are ticked No/N/A (not Yes). Unanswered → keep it
+// visible so a fresh review still shows the section.
+function insuranceEmpty(){
+  if(((S.insurance&&S.insurance.client)||[]).length + ((S.insurance&&S.insurance.partner)||[]).length > 0) return false;
+  const has=id=>(typeof getAns==="function"?String(getAns(id)||""):"").trim().toLowerCase();
+  if((typeof yesTrig==="function") && (yesTrig(getAns("has_insurance"))||yesTrig(getAns("has_heldInsurance")))) return false;
+  const isNo=v=>v==="no"||v==="n/a";
+  // hide only when BOTH insurance toggles are explicitly No/N/A (a single No with the
+  // other left blank keeps the section visible — "unanswered → keep")
+  if(isNo(has("has_insurance")) && isNo(has("has_heldInsurance"))) return true;
+  return false;
+}
 
 function renderTabbar(){
   const tb=$("tabbar"); if(!tb)return;
@@ -2043,13 +2061,18 @@ function sectionComplete(id){
     default: return null; // neutral (no check) for imports/dashboard/changelog
   }
 }
-function navItemHTML(s){
+function navItemHTML(s,numMap){
   const done=sectionComplete(s.id)===true;
-  const chip=done?`<span class="ni-num done">✓</span>`:`<span class="ni-num">${s.num}</span>`;
+  const shownNum=(numMap&&numMap[s.id])||s.num;
+  const chip=done?`<span class="ni-num done">✓</span>`:`<span class="ni-num">${shownNum}</span>`;
   return `<div class="nav-item ${s.id===activeSection?'active':''}" onclick="go('${s.id}')">${chip}${esc(s.title)}</div>`;
 }
 function renderNav(){
   const secs=tabSections(), groups=NAV_GROUPS[activeTab];
+  // renumber the plain-numeric steps contiguously across the VISIBLE sections, so a
+  // hidden section (e.g. Insurance) doesn't leave a gap in the sequence
+  const numMap={}; let nseq=0;
+  secs.forEach(s=>{ if(/^\d+$/.test(String(s.num))) numMap[s.id]=String(++nseq); });
   let html="";
   if(groups){
     const used=new Set();
@@ -2057,11 +2080,11 @@ function renderNav(){
       const items=ids.map(id=>secs.find(s=>s.id===id)).filter(Boolean);
       if(!items.length) return;
       items.forEach(s=>used.add(s.id));
-      html+=`<div class="nav-group">${esc(label)}</div>`+items.map(navItemHTML).join("");
+      html+=`<div class="nav-group">${esc(label)}</div>`+items.map(s=>navItemHTML(s,numMap)).join("");
     });
-    secs.filter(s=>!used.has(s.id)).forEach(s=>{ html+=navItemHTML(s); });
+    secs.filter(s=>!used.has(s.id)).forEach(s=>{ html+=navItemHTML(s,numMap); });
   } else {
-    html=secs.map(navItemHTML).join("");
+    html=secs.map(s=>navItemHTML(s,numMap)).join("");
   }
   $("nav").innerHTML=html;
 }
@@ -2075,7 +2098,17 @@ function updateTopStat(){
 function go(id){activeSection=id;renderNav();renderContent();window.scrollTo(0,0);}
 function renderContent(){
   const secs=tabSections();
-  const s=secs.find(x=>x.id===activeSection)||secs[0];
+  let s=secs.find(x=>x.id===activeSection);
+  if(!s){
+    // the active section was just hidden — land on the nearest still-visible
+    // neighbour (prefer the next section, then the previous) rather than jumping home
+    const full=(TABS.find(t=>t.id===activeTab)||TABS[0]).sections;
+    const fi=full.findIndex(x=>x.id===activeSection);
+    if(fi>=0){ for(let d=1;d<full.length && !s;d++){ const nx=full[fi+d], pv=full[fi-d];
+      if(nx&&secs.includes(nx)) s=nx; else if(pv&&secs.includes(pv)) s=pv; } }
+    if(!s) s=secs[0];
+  }
+  activeSection=s.id;   // keep state consistent if the active section was just hidden
   $("topTitle").textContent=s.title;
   $("topSub").textContent=(TABS.find(t=>t.id===activeTab)||{}).sub||"";
   $("content").innerHTML=`<div class="section active">${s.render()}</div>`;
@@ -2845,7 +2878,10 @@ function renderInsurance(){
     {key:"life",label:"Life insured"},{key:"coverType",label:"Type",type:"area"},{key:"amount",label:"Amount",type:"area"},
     {key:"structure",label:"Structure"},{key:"premium",label:"Monthly premium*",type:"area"}];
   const bl={insurer:"",policy:"",owner:"",life:"",coverType:"",amount:"",structure:"",premium:""};
+  const noCover=((S.insurance.client||[]).length+(S.insurance.partner||[]).length)===0;
+  const omitHint=noCover?`<div class="hint" style="margin:0 0 12px">This page is omitted from the client document &amp; preview until at least one cover row is added. If the client has no insurance, mark <b>Retail insurance</b> and <b>Held insurance</b> as No/N/A in the checklist to remove this section from the navigation.</div>`:"";
   return `<div class="section-head"><h2>Insurance Cover</h2><p>Pulled from the policy renewal notice or CDM report once wired.</p></div>
+  ${omitHint}
   <div class="card"><div class="card-title"><span class="bar"></span>Insurance — ${esc(S.client.name)}</div>${tableEditor("insClient",cols,{blank:bl})}</div>
   ${S.meta.hasPartner?`<div class="card"><div class="card-title"><span class="bar"></span>Insurance — ${esc(S.partner.name)}</div>${tableEditor("insPartner",cols,{blank:bl})}</div>`:""}`;
 }
