@@ -278,7 +278,7 @@ textarea{resize:vertical;min-height:60px}
 .cl-note{margin-top:6px}
 .cl-note-add{background:none;border:none;color:var(--blue);font-size:11px;font-weight:700;cursor:pointer;padding:2px 0;text-transform:none}
 .cl-note-add:hover{text-decoration:underline}
-.cl-note-ta{width:100%;font-size:12px;min-height:34px;resize:vertical}
+.cl-note-ta{width:100%;font-size:12px;min-height:34px;max-height:150px;overflow-y:auto;resize:vertical;field-sizing:content;box-sizing:border-box}
 /* bundled contributions grid */
 .cl-cg-wrap{display:flex;gap:16px;flex-wrap:wrap;margin:6px 0 4px}
 .cl-cg{border-collapse:collapse;font-size:12px;min-width:290px;flex:1}
@@ -435,7 +435,8 @@ const CHECKLIST_ITEMS=[
    Each section: {id,title,icon,appliesWhen(S), items[]}
    Each item:    {id,prompt,type,perClient,help,options,followUps,todo,todoWhen,routeNote,compute}
    ============================================================ */
-const CRP_OPTIONS=["Updated","Up to Date","High Growth","Growth","Balanced","Moderately Conservative","Conservative"];
+const CRP_PROFILES=["High Growth","Growth","Balanced","Moderately Conservative","Conservative"];
+const CRP_STATUS=["Up to Date","Outdated","Needs Updating"];
 const CL={
   yn:(id,prompt,o={})=>Object.assign({id,prompt,type:"yesno"},o),
   cur:(id,prompt,o={})=>Object.assign({id,prompt,type:"currency"},o),
@@ -479,9 +480,23 @@ const CHECKLIST_SCHEMA=[
     CL.yn("gen_id_needed","Is ID required to action something in this review (e.g. a new account/rollover)?",
       {todo:"Collect valid ID from the client — only required to complete another action point this review",
        help:"If Yes, an optional 'collect ID' to-do is added to the wealth review for the adviser to action in-meeting."}),
-    CL.combo("gen_crp_c1","Client Risk Profile — Client 1",CRP_OPTIONS,{help:"Pick a profile or type your own. Note: one client may be High Growth and the other Growth, with a Growth joint CRP — all three are noted on the WR."}),
-    CL.combo("gen_crp_c2","Client Risk Profile — Client 2",CRP_OPTIONS,{showWhen:()=>twoClients()}),
-    CL.combo("gen_crp_joint","Joint CRP",CRP_OPTIONS,{showWhen:()=>twoClients()}),
+    CL.sub("gen_crp_head","Client Risk Profile (CRP)"),
+    CL.info("gen_crp_help",()=>`<div class="cl-help">For each CRP: record <b>what the profile is</b> (High Growth, Growth, Balanced, Moderately Conservative, Conservative), confirm <b>whether it's up to date</b>, check it against the <b>CRP on file</b>, and confirm the client is <b>invested in line</b> with it. One client may be High Growth and the other Growth, with a Growth joint CRP — all three are noted on the WR.</div>`),
+    CL.combo("gen_crp_c1","Client 1 — risk profile (CRP)",CRP_PROFILES,{help:"What is Client 1's current risk profile? Pick or type your own."}),
+    CL.combo("gen_crp_c1_status","Client 1 — is this CRP up to date?",CRP_STATUS,
+      {todoWhen:(v)=>/outdat|updat/i.test(v),todo:"Update Client 1's risk profile (CRP) — recorded as outdated / needs updating"}),
+    CL.combo("gen_crp_c2","Client 2 — risk profile (CRP)",CRP_PROFILES,{showWhen:()=>twoClients()}),
+    CL.combo("gen_crp_c2_status","Client 2 — is this CRP up to date?",CRP_STATUS,
+      {showWhen:()=>twoClients(),todoWhen:(v)=>/outdat|updat/i.test(v),todo:"Update Client 2's risk profile (CRP) — recorded as outdated / needs updating"}),
+    CL.combo("gen_crp_joint","Joint — risk profile (CRP)",CRP_PROFILES,{showWhen:()=>twoClients()}),
+    CL.combo("gen_crp_joint_status","Joint — is this CRP up to date?",CRP_STATUS,
+      {showWhen:()=>twoClients(),todoWhen:(v)=>/outdat|updat/i.test(v),todo:"Update the joint risk profile (CRP) — recorded as outdated / needs updating"}),
+    CL.yn("gen_crp_onfile","Does the recorded CRP match the CRP on file?",
+      {help:"Confirm each CRP above matches what's recorded on file (Xeppo / Adviser Centre / platform). If they differ, a to-do is added to reconcile.",
+       todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Reconcile the client's CRP with the CRP on file — update wherever they differ"}),
+    CL.yn("gen_crp_inline","Are the client(s) invested in line with their risk profile?",
+      {help:"Compare the current asset allocation against the target for their CRP. If not aligned, a rebalance to realign is flagged.",
+       todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Rebalance / realign the portfolio to match the client's risk profile"}),
     CL.yn("gen_xeppo","Xeppo activities & projects checked — all outstanding tasks reallocated to current RSO?",
       {help:"Take full responsibility of the Xeppo profile: chase/complete old open projects, take over ad-hoc tasks from other RSOs. Use the note below to list any outstanding open items — they're added to the WR discussion points on Apply.",
        todoWhen:(v)=>String(v).trim().toLowerCase()==="no",
@@ -502,7 +517,7 @@ const CHECKLIST_SCHEMA=[
       {showWhen:()=>getAns("gen_portal")==="Pro",
        todo:"Discuss My Wealth Portal usage — consider downgrade from Pro to Lite (no usage in 6+ months)"}),
     CL.yn("gen_snapshot","Checked the drive & correspondence for the client's Review Data Snapshot?",
-      {help:"The client completes a Jotform review data snapshot when booking through Calendly — use it to complete the review with the most current information.",
+      {help:"The client completes a Jotform review data snapshot when booking through Calendly — use it to complete the review with the most current information. Snapshot will need to be uploaded when generating the wealth doc.",
        todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Locate the client's Review Data Snapshot (drive / correspondence)"}),
     CL.yn("gen_handover","(If the SOA is new) checked the Implementation Handover folder for outstanding tasks?",
       {help:"New SOAs may leave implementation tasks (setting up investments, insurance changes, estate planning) to pick up or flag with the adviser.",
@@ -559,7 +574,8 @@ const CHECKLIST_SCHEMA=[
        followUps:[{when:yesTrig,items:[CL.area("retail_bt_switch","Menu / platform switch note (e.g. full → compact or focus, or switch to HUB24)",{routeNote:{target:"adviser",prefix:"BT Panorama switch"}})]}],
        todo:"Consider whether BT Panorama is the most suitable platform (cost & strategy) vs alternatives"}),
     CL.yn("retail_winton","Does the client hold the Winton Global Alpha fund?",
-      {todo:"Review the Winton Global Alpha fund holding"}),
+      {todo:"Review the Winton Global Alpha fund holding",
+       followUps:[{when:yesTrig,items:[CL.area("retail_winton_selldown","Does the Winton Global Alpha holding need to be sold down? If so, note it here — it's added to the ROA on Apply.",{routeNote:{target:"actions",prefix:"Winton Global Alpha sell-down"}})]}]}),
     CL.yn("retail_care","Balance $250k (or close to) — upgrade to full CARE?",
       {todo:"Consider upgrading the client's investment strategy to full CARE"}),
     CL.yn("retail_linked","Are the super/investment accounts linked for fee discounts?",
@@ -567,7 +583,7 @@ const CHECKLIST_SCHEMA=[
     CL.yn("retail_mom","Is the client in MOM phase with an active entry-strategy task in Xeppo?",
       {showWhen:()=>true,todoWhen:(v)=>String(v).trim().toLowerCase()==="no",
        todo:"MOM phase — set up an active Xeppo task outlining the entry strategy"}),
-    CL.area("retail_bene","Beneficiaries — who is nominated and the type of nomination for each account",{routeNote:{target:"estate",prefix:"Retail super beneficiaries"}}),
+    CL.area("retail_bene","Beneficiaries — who is nominated and the type of nomination for each account",{perClient:true,routeNote:{target:"estate",prefix:"Retail super beneficiaries"}}),
     CL.yn("retail_reports","Super and Investment reports provided for: 12-month + since-inception performance reports + asset allocation?",
       {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Provide super & investment reports — 12-month and since-inception performance plus asset allocation — and save to the reports folder"})
   ]},
@@ -1494,6 +1510,7 @@ function renderContent(){
   $("content").innerHTML=`<div class="section active">${s.render()}</div>`;
   renderNav(); updateTopStat();
   refreshPreviewRail();
+  if(typeof requestAnimationFrame==="function") requestAnimationFrame(clGrowAllNotes); else clGrowAllNotes();
 }
 function refreshPreviewRail(){ const b=$("previewRailBody"); if(b) b.innerHTML=buildPreviewPages(); }
 function togglePreviewRail(){ previewUserHidden=!previewUserHidden; applyLayout(); if(!previewUserHidden) refreshPreviewRail(); }
@@ -2202,6 +2219,9 @@ function clSetC(id,slot,v,rerender){ let a=S.checklist.answers[id]; if(!a||typeo
 const clNoteOpen=new Set();
 function clGetNote(id){ return (S.checklist.notes&&S.checklist.notes[id])||""; }
 function clSetNote(id,v){ if(!S.checklist.notes) S.checklist.notes={}; S.checklist.notes[id]=v; }
+// auto-grow a note textarea with its content up to the CSS max-height, then let it scroll
+function clGrowNote(el){ if(!el) return; el.style.height="auto"; el.style.height=Math.min(el.scrollHeight+2,150)+"px"; }
+function clGrowAllNotes(){ try{ document.querySelectorAll(".cl-note-ta").forEach(clGrowNote); }catch(e){} }
 function clToggleNote(id){ if(clNoteOpen.has(id)&&!clGetNote(id)) clNoteOpen.delete(id); else clNoteOpen.add(id); renderContent(); }
 const CL_ONCHANGE={
   scope_clients:(v)=>{ S.meta.hasPartner=(v==="2"); },
@@ -2308,7 +2328,7 @@ function renderCLItem(it){
   const noteVal=clGetNote(it.id);
   const noteShown=!!noteVal || clNoteOpen.has(it.id);
   const noteUI=`<div class="cl-note">${noteShown
-    ? `<textarea class="cl-note-ta" rows="1" placeholder="Note — added to the WR discussion points on Apply…" oninput="clSetNote('${it.id}',this.value)">${esc(noteVal)}</textarea>`
+    ? `<textarea class="cl-note-ta" rows="1" placeholder="Note — added to the WR discussion points on Apply…" oninput="clSetNote('${it.id}',this.value);clGrowNote(this)" onfocus="clGrowNote(this)" ref="clGrowNote">${esc(noteVal)}</textarea>`
     : `<button type="button" class="cl-note-add" onclick="clToggleNote('${it.id}')">＋ Add note</button>`}</div>`;
   return `<div class="cl-item"><div class="cl-q">${esc(it.prompt||"")}</div>${help}${control}${follow}${noteUI}</div>`;
 }
@@ -2424,17 +2444,20 @@ function routeCLNote(route,text){
     case "goaltrack": { const gt=S.goalTracking.find(g=>/investment/i.test(g.strategy)); if(gt) gt.actions=(gt.actions?gt.actions+" ":"")+pre+text; else S.adviserComments=(S.adviserComments?S.adviserComments+"\n":"")+pre+text; return 1; }
     case "portfolio": S.adviserComments=(S.adviserComments?S.adviserComments+"\n":"")+pre+text; return 1;
     case "anniv": if(!S.meta.anniversaryDate) S.meta.anniversaryDate=text; return 1;
+    case "actions": return pushTodo(pre+text,"MWS","ROA");   // → Action items / ROA
     default: return 0;
   }
 }
 function applyChecklistData(){
   let todos=0, routed=0;
-  // CRP → meta + adviser comments summary
+  // CRP → meta + adviser comments summary (profile + status per owner)
   const c1=getAns("gen_crp_c1"), c2=getAns("gen_crp_c2"), cj=getAns("gen_crp_joint");
+  const c1s=getAns("gen_crp_c1_status"), c2s=getAns("gen_crp_c2_status"), cjs=getAns("gen_crp_joint_status");
   if(c1){ S.meta.crp.c1=c1; } if(c2){ S.meta.crp.c2=c2; } if(cj){ S.meta.crp.joint=cj; }
   if(!S.client.riskProfile && c1) S.client.riskProfile=c1;
   if(!S.partner.riskProfile && c2) S.partner.riskProfile=c2;
-  if(c1||c2||cj){ const parts=[c1?`Client 1: ${c1}`:"",c2?`Client 2: ${c2}`:"",cj?`Joint: ${cj}`:""].filter(Boolean).join("; ");
+  const crpFmt=(p,s)=>p?(p+(s&&!/up to date/i.test(s)?` (${s})`:"")):"";
+  if(c1||c2||cj){ const parts=[c1?`Client 1: ${crpFmt(c1,c1s)}`:"",c2?`Client 2: ${crpFmt(c2,c2s)}`:"",cj?`Joint: ${crpFmt(cj,cjs)}`:""].filter(Boolean).join("; ");
     S.adviserComments=(S.adviserComments?S.adviserComments+"\n":"")+"CRP — "+parts; }
   // sync names / adviser from scope
   syncPreparedFor();
