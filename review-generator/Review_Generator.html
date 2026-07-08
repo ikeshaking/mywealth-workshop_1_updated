@@ -1967,6 +1967,26 @@ const num=(v)=>{const n=parseFloat(String(v).replace(/[^0-9.\-]/g,""));return is
 const money=(n)=>"$"+Math.round(num(n)).toLocaleString("en-AU",{maximumFractionDigits:0});
 // money with cents — used only where exact figures matter (Portfolio Valuation)
 const moneyc=(n)=>"$"+num(n).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2});
+// Split a run-together list of investment addresses onto one line each (the last
+// review often jams them together, e.g. "...QLD, 41657 RICHARDSON COURT...").
+function fmtAddresses(s){
+  return String(s||"")
+    .replace(/(\b(?:QLD|NSW|VIC|WA|SA|NT|ACT|TAS)\.?,?\s*\d{4})\s*(?=\S)/gi, "$1\n")
+    .replace(/\n{2,}/g,"\n").trim();
+}
+// Tidy a wall of concatenated note/beneficiary text so it breaks onto readable lines
+// (e.g. "Hub24 SuperCooper ... NLBJordan ..." → fund + one beneficiary per line).
+function tidyNotes(s){
+  return String(s||"")
+    .replace(/(N?LB)(?=[A-Z])/g, "$1\n")                    // "NLBJordan" → "NLB\nJordan"
+    .replace(/([a-z0-9%\)])([A-Z][a-z]{2,})/g, "$1\n$2")    // jammed name boundary → newline
+    .replace(/[ \t]{2,}/g," ").replace(/\n{2,}/g,"\n").trim();
+}
+// Drop junk "strategy" rows (a stray tick/ratings-legend cell) that shouldn't be tracked
+function realTracking(list){
+  return (list||[]).filter(t=>{ const s=String(t&&t.strategy||"").trim();
+    return s && /[A-Za-z]{3,}/.test(s) && !/^(ahead of projections|on track|needs work|no progress|n\/?a)$/i.test(s); });
+}
 function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200);}
 function setPath(path,val){const ks=path.split(".");let o=S;for(let i=0;i<ks.length-1;i++)o=o[ks[i]];o[ks[ks.length-1]]=val;}
 function bindRow(arr,idx,key,val){arr[idx][key]=val;}
@@ -2264,7 +2284,7 @@ function pvDetailsTable(noHeader){
   pair("Name","name","Date of Birth","dob");
   pair("Mobile","mobile","Marital Status","marital");
   pair("Email","email","Estate Planning","estate");
-  full("Address",S.address,"Investment Address(es)",S.investmentAddresses);
+  full("Address",S.address,"Investment Address(es)",fmtAddresses(S.investmentAddresses));
   full("Dependants",S.dependantsClient,"Dependants",S.dependantsPartner);
   pair("Job Title","jobTitle","Employer","employer");
   pair("Employment Status","employment","Risk Profile","riskProfile");
@@ -2373,8 +2393,8 @@ function buildPreviewPages(){
     fRow("Income Protection (month)",foundInsCell(ipC),"",foundInsCell(ipP),""),
     fRow("Up to Date Wills",e.willsC,"",e.willsP,""),
     fRow("Power of Attorney",e.poaC,"",e.poaP,""),
-    fRow("Super Death Nominations",e.superNomC,e.superNomRef||"",e.superNomP,e.superNomRefP||""),
-    fRow("Insurance Death Nominations",e.insNomC,e.insNomRef||"",e.insNomP,e.insNomRefP||"")
+    fRow("Super Death Nominations",e.superNomC,tidyNotes(e.superNomRef||""),e.superNomP,tidyNotes(e.superNomRefP||"")),
+    fRow("Insurance Death Nominations",e.insNomC,tidyNotes(e.insNomRef||""),e.insNomP,tidyNotes(e.insNomRefP||""))
   ];
   const fAlign=hp?['r','c','c','c','c']:['r','c','c'];
   const refNotes=S.foundationsNotes||"";
@@ -2411,7 +2431,7 @@ function buildPreviewPages(){
   const stripImg=(r)=>`<img src="data:image/png;base64,${ratingStripPNG(r)}" style="height:14px;vertical-align:middle">`;
   const sqImg=(r)=>`<img src="data:image/png;base64,${ratingSquarePNG(r,true)}" style="width:13px;height:13px;vertical-align:middle;margin-right:4px">`;
   const rt=(t)=>`<div style="text-align:right;font-weight:800">${esc(t==null?'':t)}</div>`;
-  const gtRows=S.goalTracking.map(g=>({cells:[
+  const gtRows=realTracking(S.goalTracking).map(g=>({cells:[
     {v:g.strategy},{v:g.were},{v:g.shouldBe},{v:g.are},{v:g.wantToBe},{html:stripImg(g.rating)},{v:g.actions}
   ]}));
   const T=S.goalTrackingTotals;
@@ -4216,7 +4236,7 @@ async function generateDocx(){
     pairRow("Name","name","Date of Birth","dob");
     pairRow("Mobile","mobile","Marital Status","marital");
     pairRow("Email","email","Estate Planning","estate");
-    fullRow("Address",S.address,"Investment Address(es)",S.investmentAddresses);
+    fullRow("Address",S.address,"Investment Address(es)",fmtAddresses(S.investmentAddresses));
     fullRow("Dependants",S.dependantsClient,"Dependants",S.dependantsPartner);
     pairRow("Job Title","jobTitle","Employer","employer");
     pairRow("Employment Status","employment","Risk Profile","riskProfile");
@@ -4269,8 +4289,8 @@ async function generateDocx(){
       rowF("Income Protection (month)",foundInsCell([f.client.ip,f.client.ipNotes].filter(Boolean).join("\n")),"",foundInsCell([f.partner.ip,f.partner.ipNotes].filter(Boolean).join("\n")),""),
       rowF("Up to Date Wills",e.willsC,"",e.willsP,""),
       rowF("Power of Attorney",e.poaC,"",e.poaP,""),
-      rowF("Super Death Nominations",e.superNomC,e.superNomRef||"",e.superNomP,e.superNomRefP||""),
-      rowF("Insurance Death Nominations",e.insNomC,e.insNomRef||"",e.insNomP,e.insNomRefP||"")
+      rowF("Super Death Nominations",e.superNomC,tidyNotes(e.superNomRef||""),e.superNomP,tidyNotes(e.superNomRefP||"")),
+      rowF("Insurance Death Nominations",e.insNomC,tidyNotes(e.insNomRef||""),e.insNomP,tidyNotes(e.insNomRefP||""))
     ]});
   }
   // Blank "Reference & Notes" band under the Foundations table (matches the template)
@@ -4323,7 +4343,7 @@ async function generateDocx(){
   function trackingTable(){
     const w=[2940,2000,2000,2000,2000,1600,2200];
     const rows=[headRow(["Strategy","Where You Were","Where You Should Be","Where You Are","Where You Want To Be","On Track Rating","Actions To Take"],w,NAVY)];
-    S.goalTracking.forEach(t=>{
+    realTracking(S.goalTracking).forEach(t=>{
       const iconCell=new TableCell({width:{size:w[5],type:WidthType.DXA},borders:cellBorder,verticalAlign:VerticalAlign.CENTER,shading:{type:ShadingType.CLEAR,fill:LIGHT,color:"auto"},
         children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new ImageRun({data:u8(ratingStripPNG(t.rating)),transformation:{width:104,height:15}})]})]});
       rows.push(new TableRow({children:[
