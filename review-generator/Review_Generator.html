@@ -196,12 +196,19 @@ textarea{resize:vertical;min-height:60px}
 .wrprev-page.cover img,.wrprev-page.back img{width:100%;height:100%;object-fit:cover;display:block}
 .pv-h1{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif;font-size:34px;color:#103143;margin:0 0 4px}
 .pv-sub{color:#0C6AE1;font-weight:700;margin:0 0 22px}
-.pv-h2{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif;font-size:21px;color:#0C6AE1;margin:22px 0 8px;border-bottom:2px solid #0C6AE1;padding-bottom:3px}
+.pv-h2{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif;font-size:26px;color:#0C6AE1;margin:6px 0 12px;font-weight:400}
+.wrprev-page::after{content:"PAGE";position:absolute;left:52px;bottom:20px;font-size:9px;font-weight:800;color:#0C2D3E;letter-spacing:.12em}
+.wrprev-page::before{content:"WEALTH REVIEW";position:absolute;right:52px;bottom:20px;font-size:9px;font-weight:800;color:#5EA6FF;letter-spacing:.12em}
+.wrprev-page.cover::after,.wrprev-page.cover::before,.wrprev-page.back::after,.wrprev-page.back::before{display:none}
 .pv-band{background:#0C2D3E;color:#fff;font-weight:700;font-size:12px;letter-spacing:.04em;padding:6px 12px;margin:14px 0 0;border-radius:3px}
 .pv-refnotes{background:#E3F2F4;color:#16242e;padding:10px 12px;white-space:pre-line;font-size:12px;line-height:1.6;min-height:64px}
 .pv-tbl td.pv-tl-blue{background:#0B6AE1;color:#fff;font-weight:800}
 .pv-tbl td.pv-tl-lblue{background:#5EA6FF;color:#fff;font-weight:800}
 .pv-tbl td.pv-tvbold{font-weight:800}
+.pv-tbl td.pv-fiwhite{background:#fff;color:#16242e}
+.pv-tbl td.pv-acct{background:#DEE1E3;color:#0B6AE1;font-weight:800}
+.pv-tbl td.pv-ptot{color:#0C6AE1;font-weight:800;text-align:right;background:#E3F2F4}
+.pv-subname{font-weight:800;color:#0C2D3E;font-size:13px;margin:0 0 8px}
 .pv-tbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
 .pv-tbl th{background:#0C6AE1;color:#fff;text-align:left;padding:6px 9px;font-weight:700;border:1px solid #fff}
 .pv-tbl.navy th{background:#0C2D3E}
@@ -217,12 +224,18 @@ textarea{resize:vertical;min-height:60px}
 .pv-2col-wide{gap:32px}
 .pv-empty{color:#9aa6b2;font-style:italic;font-size:12px;padding:8px 0}
 .pv-tbl td.c,.pv-tbl th.c{text-align:center}
-.wrprev-page .pv-h3{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif;font-size:15px;color:#0C6AE1;margin:2px 0 6px}
+.wrprev-page .pv-h3{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif;font-size:15px;color:#0C2D3E;font-weight:700;margin:2px 0 6px}
+.wrprev-page .pv-h3.blue{color:#0C6AE1;font-size:18px}
 .wrprev-page .pv-kv{font-size:12px;color:#222;margin:2px 0}
+.wrprev-page .pv-kv a,.wrprev-page .pv-link{color:#0C6AE1;text-decoration:none}
 .wrprev-page .pv-p{font-size:12px;color:#333;line-height:1.5;margin:5px 0}
 .wrprev-page .pv-ar{font-size:11px;color:#444;line-height:1.45;margin:4px 0}
-.wrprev-page .pv-foot{font-size:10.5px;color:#777;font-style:italic;margin-top:6px}
-.wrprev-page .pv-shade{background:#E3F2F4;border-radius:6px;padding:16px 18px}
+.wrprev-page .pv-foot{font-size:10.5px;color:#8a7a52;font-style:italic;margin-top:6px}
+.wrprev-page .pv-shade{padding:0}
+.pv-tbl td.pv-dethdr{background:#0C2D3E;color:#fff;font-weight:800;letter-spacing:.03em;font-size:12px}
+.pv-detmid{text-align:center;font-family:'ABC Arizona Flare',Georgia,serif;font-weight:800;color:#0C2D3E;font-size:15px;letter-spacing:.03em;margin:16px 0 8px}
+.pv-charts{display:flex;justify-content:space-around;gap:20px;margin:14px 0 22px}
+.pv-charts .cap{text-align:center;font-weight:800;color:#0C2D3E;font-size:13px;margin-bottom:6px}
 .wrprev-page .pv-shade p{font-size:12px;color:#333;line-height:1.5;margin:6px 0}
 .pv-fs{position:fixed;inset:0;z-index:9999;background:rgba(15,30,40,.92);display:none;flex-direction:column}
 .pv-fs.open{display:flex}
@@ -384,7 +397,7 @@ const S = {
     client:{life:"", tpd:"", trauma:"", ip:"", ipNotes:"", ref:""},
     partner:{life:"", tpd:"", trauma:"", ip:"", ipNotes:"", ref:""}
   },
-  estate:{ willsC:"", willsP:"", poaC:"", poaP:"", superNomC:"", superNomP:"", insNomC:"", insNomP:"", notes:"" },
+  estate:{ willsC:"", willsP:"", poaC:"", poaP:"", superNomC:"", superNomP:"", insNomC:"", insNomP:"", superNomRef:"", superNomRefP:"", insNomRef:"", insNomRefP:"", notes:"" },
   foundationsNotes:"",
   goals:[],
   fiGoals:{ targetToday:"", targetFuture:"", years:"", incomeLife:"", incomeNice:"", lumpToys:"", lumpFamily:"" },
@@ -602,7 +615,7 @@ const CHECKLIST_SCHEMA=[
       {showWhen:()=>true,todoWhen:(v)=>String(v).trim().toLowerCase()==="no",
        todo:"MOM phase — set up an active Xeppo task outlining the entry strategy"}),
     CL.sub("retail_h_reporting","Beneficiaries & reporting"),
-    CL.area("retail_bene","Beneficiaries — who is nominated and the type of nomination for each account",{perClient:true,routeNote:{target:"estate",prefix:"Retail super beneficiaries"}}),
+    CL.area("retail_bene","Beneficiaries — who is nominated and the type of nomination for each account",{perClient:true,help:"Feeds the Reference column of Super Death Nominations in Foundations."}),
     CL.yn("retail_reports","Super and Investment reports provided for: 12-month + since-inception performance reports + asset allocation?",
       {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Provide super & investment reports — 12-month and since-inception performance plus asset allocation — and save to the reports folder"})
   ]},
@@ -620,7 +633,7 @@ const CHECKLIST_SCHEMA=[
     CL.info("held_rollover_calc",()=>rolloverPanel()),
     CL.sub("held_h_bene","Components & beneficiaries"),
     CL.area("held_components","Taxable / non-taxable components within the held fund",{perClient:true,routeNote:{target:"adviser",prefix:"Held super components"}}),
-    CL.area("held_bene","Beneficiaries — who is nominated and the type for each account",{perClient:true,routeNote:{target:"estate",prefix:"Held super beneficiaries"}})
+    CL.area("held_bene","Beneficiaries — who is nominated and the type for each account",{perClient:true})
   ]},
 
   /* ---- SMSF (full SMSF Strategy Checklist) ---- */
@@ -680,7 +693,7 @@ const CHECKLIST_SCHEMA=[
         CL.yn("smsf_ep_reclimit","Contribution limit not exceeded?"),
         CL.area("smsf_ep_timing","Timing of re-contribution & pension consequences")
       ]}]}),
-    CL.area("smsf_bene","Beneficiaries — who is nominated and the type for each member",{routeNote:{target:"estate",prefix:"SMSF beneficiaries"}}),
+    CL.area("smsf_bene","Beneficiaries — who is nominated and the type for each member",{}),
 
     CL.sub("smsf_h_audit","Audit & Compliance"),
     CL.sel("smsf_audit","Most recent audit",["","Unqualified","Qualified"],{routeNote:{target:"adviser",prefix:"SMSF audit"}}),
@@ -795,7 +808,7 @@ const CHECKLIST_SCHEMA=[
     CL.yn("ins_optin","Client opted in for insurances (PMSL) — and low-balance opt-in (PMIF) where relevant?",
       {help:"PMSL (Protecting My Super): opt in for cover where insurances are held. PMIF (Protecting Members' Interests First): low-balance accounts need a low-balance opt-in.",
        todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Arrange insurance opt-in (PMSL) and low-balance opt-in (PMIF) where required"}),
-    CL.area("ins_bene","Beneficiaries — who is nominated and the type for each policy",{routeNote:{target:"estate",prefix:"Insurance beneficiaries"}}),
+    CL.area("ins_bene","Beneficiaries — who is nominated and the type for each policy",{help:"Feeds the Reference column of Insurance Death Nominations in Foundations."}),
     CL.yn("ins_premium_up","Have premiums increased since starting / last review?",
       {todo:"Premiums have increased — review and update MCMA transfers"}),
     CL.yn("ins_ip_agreed","Income Protection on an agreed-value / agreed-valuation basis?",
@@ -809,7 +822,7 @@ const CHECKLIST_SCHEMA=[
     CL.yn("hins_contact","Contact details match across all systems & the held policy?",{todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Update held-insurance contact details to match"}),
     CL.yn("hins_optin","Opted in for held insurances (PMSL) and low-balance (PMIF) where relevant?",
       {todoWhen:(v)=>String(v).trim().toLowerCase()==="no",todo:"Arrange held-insurance opt-in (PMSL / PMIF) where required"}),
-    CL.area("hins_bene","Beneficiaries — who is nominated and the type for each policy",{routeNote:{target:"estate",prefix:"Held insurance beneficiaries"}}),
+    CL.area("hins_bene","Beneficiaries — who is nominated and the type for each policy",{}),
     CL.yn("hins_ip_agreed","Income Protection agreed-value basis?",{todo:"Generate an in-force IP quote (agreed value → indemnity) for the held policy"}),
     CL.yn("hins_loadings","Any loadings / exclusions (incl. smoking) on the policies?"),
     CL.yn("hins_advisercode","Should the policies be moved to our adviser code? (retail cover only)",
@@ -1809,13 +1822,44 @@ function pvTable(headers,rows,opts={}){
     const tds=r.cells.map((c,i)=>{
       let cl=[acl(i)];
       if(r.__totlbl){ cl.push(i===0?(r.__totlbl==='blue'?'pv-tl-blue':'pv-tl-lblue'):'pv-tvbold'); }
-      else { if(lbl&&i===0&&!r.__tot) cl.push('pv-lbl'); if(r.__tot&&i>0) cl.push('pv-val'); }
+      else { if(lbl&&i===0&&!r.__tot&&!r.__nolbl) cl.push('pv-lbl'); if(r.__tot&&i>0) cl.push('pv-val'); }
       const span=c.colspan?` colspan="${c.colspan}"`:'';
       return `<td class="${cl.filter(Boolean).join(' ')}"${span}>${c.html||esc(c.v==null?'':c.v)}</td>`;
     }).join("");
     return `<tr${cls}>${tds}</tr>`;
   }).join("");
   return `<table class="pv-tbl${navy}"><thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;
+}
+// Your Details table for the preview — mirrors the Word doc detailsTable (blue labels, teal
+// values; single = 2 pairs per row; couple = two client blocks side by side).
+function pvDetailsTable(noHeader){
+  const c=S.client,p=S.partner,hp=S.meta.hasPartner;
+  const L=(t,span)=>`<td class="pv-lbl"${span?` colspan="${span}"`:''}>${esc(t)}</td>`;
+  const V=(t,span)=>`<td${span?` colspan="${span}"`:''}>${esc(t==null?'':t).replace(/\n/g,'<br>')}</td>`;
+  const SP=()=>`<td style="background:#fff;border:none;width:16px"></td>`;
+  const rows=[];
+  if(!noHeader) rows.push(`<tr><td class="pv-dethdr" colspan="${hp?5:2}">Your Details</td></tr>`);
+  const pair=(la,ka,lb,kb)=>{
+    if(hp){ rows.push(`<tr>${L(la)}${L(lb)}${SP()}${L(la)}${L(lb)}</tr>`); rows.push(`<tr>${V(c[ka])}${V(c[kb])}${SP()}${V(p[ka])}${V(p[kb])}</tr>`); }
+    else { rows.push(`<tr>${L(la)}${L(lb)}</tr>`); rows.push(`<tr>${V(c[ka])}${V(c[kb])}</tr>`); }
+  };
+  const full=(clab,cval,plab,pval)=>{
+    if(hp){ rows.push(`<tr>${L(clab,2)}${SP()}${L(plab,2)}</tr>`); rows.push(`<tr>${V(cval,2)}${SP()}${V(pval,2)}</tr>`); }
+    else { rows.push(`<tr>${L(clab)}${L(plab)}</tr>`); rows.push(`<tr>${V(cval)}${V(pval)}</tr>`); }
+  };
+  pair("Name","name","Date of Birth","dob");
+  pair("Mobile","mobile","Marital Status","marital");
+  pair("Email","email","Estate Planning","estate");
+  full("Address",S.address,"Investment Address(es)",S.investmentAddresses);
+  full("Dependants",S.dependantsClient,"Dependants",S.dependantsPartner);
+  pair("Job Title","jobTitle","Employer","employer");
+  pair("Employment Status","employment","Risk Profile","riskProfile");
+  return `<table class="pv-tbl">${rows.join("")}</table>`;
+}
+// Services Available table — wide label column, centred "Services Provided" header, dark tick.
+function pvTableSvc(rows){
+  const body=rows.map(r=>`<tr><td class="pv-lbl">${r.cells[0].v?esc(r.cells[0].v):(r.cells[0].html||'')}</td><td class="c">${r.cells[1].html||''}</td></tr>`).join("");
+  return `<table class="pv-tbl navy"><colgroup><col style="width:73%"><col style="width:27%"></colgroup><thead><tr><th>Services Available</th><th class="c">Services Provided</th></tr></thead><tbody>${body}</tbody></table>`;
 }
 // Live preview — mirrors the MWS FINAL Word template page-for-page.
 function buildPreviewPages(){
@@ -1825,48 +1869,60 @@ function buildPreviewPages(){
   /* Cover */
   if(typeof COVER_B64!=="undefined"&&COVER_B64) P.push(`<div class="wrprev-page cover"><img src="data:image/png;base64,${COVER_B64}"></div>`);
 
-  /* Cover-detail page: AR/compliance block + "what this covers" (matches template) */
-  const ar=(name)=>name?`<div class="pv-ar"><b>${esc(name)}</b> is an Authorised Representative of My Wealth Solutions, a Corporate Authorised Representative 441414 of GPS Wealth, Australian Financial Services Licence Number ${esc(l.afsl||"254 544")}, ABN 66 153 751 832.</div>`:"";
+  /* Cover-detail page: contact details (left) + "what this covers" + GPS Wealth (right) */
+  const adviserEmail=m.adviserEmail || ((m.adviserName||"").trim().split(/\s+/)[0].toLowerCase()+"@mywealthsolutions.com.au");
+  const ar=(name)=>name?`<div class="pv-ar"><b>${esc(name)}</b> is an Authorised Representative of My Wealth Solutions a Corporate Authorised Representative 441414 of GPS Wealth Australian Financial Services Licence Number ${esc(l.afsl||"254 544")}<br>ABN 66 153 751 832</div>`:"";
   P.push(`<div class="wrprev-page">
     <div class="pv-2col pv-2col-wide">
       <div>
-        <div class="pv-h1" style="font-size:26px">Your Wealth Review</div>
-        <div class="pv-kv"><b>Prepared for:</b> ${esc(m.preparedFor||"[Client name]")}</div>
+        <div class="pv-h1" style="font-size:30px;color:#0C6AE1">Your Wealth Review</div>
+        <div class="pv-kv"><b>Prepared for:</b>  ${esc(m.preparedFor||"[Client name]")}</div>
         <div class="pv-kv"><b>Financial Adviser:</b> ${esc(m.adviserName||"[Adviser]")}</div>
         ${m.insuranceAdviser?`<div class="pv-kv"><b>Insurance Specialist Adviser:</b> ${esc(m.insuranceAdviser)}</div>`:""}
         <div class="pv-kv"><b>Date:</b> ${esc(formatDate(m.reviewDate)||"[date]")}</div>
         <div class="pv-h3" style="margin-top:14px">Contact Details</div>
         ${ar(m.adviserName)}${ar(m.insuranceAdviser)}
-        <div class="pv-kv" style="margin-top:8px">Office Phone: ${esc(pr.phone)}</div>
-        <div class="pv-kv">Office Email: ${esc(pr.email)}</div>
+        <div class="pv-kv" style="margin-top:8px"><b>Office Phone:</b> ${esc(pr.phone)}</div>
+        <div class="pv-kv"><b>Office Email:</b> <span class="pv-link">${esc(pr.email)}</span></div>
+        <div class="pv-kv"><b>Adviser Email:</b> <span class="pv-link">${esc(adviserEmail)}</span></div>
+        <div class="pv-kv"><b>Street Address:</b> ${esc(pr.street)}</div>
+        <div class="pv-kv"><b>Postal Address:</b> ${esc(pr.postal)}</div>
+        <div class="pv-kv" style="margin-top:6px">You can also visit the GPS Wealth website at <b>${esc(l.website||"www.gpswealth.com.au")}</b></div>
       </div>
       <div class="pv-shade">
-        <div class="pv-h3">What does this document cover?</div>
-        <p>${esc(m.noChangeNote)}</p>
-        <p>Please make sure you read each section of the Wealth Review. If you feel any information is incorrect, please contact me directly using the details on this page.</p>
-        <p>This document reviews the progress of your Financial Plan and Portfolio over the last 12 months. It details your asset allocations, the products you are using, and the services provided.</p>
+        <div class="pv-h3 blue">What does this document cover?</div>
+        <p class="pv-p">${esc(m.noChangeNote)}</p>
+        <p class="pv-p">Please make sure you read each section of the Wealth Review. If you feel any information is incorrect, please contact me directly using the details below.</p>
+        <p class="pv-p">This document reviews the progress of your Financial Plan and Portfolio over the last 12 months. It details your asset allocations, the products you are using, and the services we have provided, along with any action items.</p>
+        <div class="pv-h3" style="margin-top:14px">GPS Wealth</div>
+        <div class="pv-kv">ABN ${esc(l.abn||"17 005 482 726")}</div>
+        <div class="pv-kv">Australian Financial Services Licence Number ${esc(l.afsl||"254 544")}</div>
+        <div class="pv-kv" style="margin-top:6px"><b>Address:</b> ${esc(l.address)}</div>
+        <div class="pv-kv"><b>Phone:</b> ${esc(l.phone)}</div>
+        <div class="pv-kv"><b>Fax:</b> ${esc(l.fax)}</div>
+        <div class="pv-kv"><b>Email:</b> <span class="pv-link">${esc(l.email)}</span></div>
+        <div class="pv-kv"><b>Website:</b> <span class="pv-link">${esc(l.website)}</span></div>
       </div>
     </div></div>`);
 
-  /* Your Wealth Review — intro + Your Details */
-  const det=(p)=>p&&p.name?[
-    ["Name",p.name],["Date of Birth",p.dob],["Mobile",p.mobile],["Marital Status",p.marital],["Email",p.email],
-    ["Estate Planning",p.estate],["Employment",[p.jobTitle,p.employer].filter(Boolean).join(", ")],["Risk Profile",p.riskProfile]
-  ].filter(x=>x[1]):[];
-  const detRows=(p)=>det(p).map(x=>({cells:[{v:x[0]},{v:x[1]}]}));
-  P.push(`<div class="wrprev-page">
-    <div class="pv-h2">Your Wealth Review</div>
-    <p class="pv-p">As life changes (such as your situation, legislation, goals and market performance) we are able to analyse the performance to adjust and realign the strategies to get you to your goals.</p>
-    <p class="pv-p">Please find your present situation below. If any values require updating, please let us know at your earliest convenience.</p>
-    <div class="pv-band">YOUR DETAILS</div>
-    <div class="pv-2col">
-      <div>${S.client.name?pvTable([hp?(S.client.name):"",""],detRows(S.client)):'<div class="pv-empty">Add the client in Cover &amp; Details.</div>'}</div>
-      <div>${(hp&&S.partner.name)?pvTable([S.partner.name,""],detRows(S.partner)):''}</div>
-    </div></div>`);
+  /* Your Wealth Review — intro letter + Your Details (single: side by side; couple: stacked) */
+  const introHTML=`
+    <p class="pv-p">As life changes (such as: your situation, legislation, goals and market performance) we are able to analyse the performance to adjust and realign the strategies to get you to your goals.</p>
+    <p class="pv-p">We recommend using this as a time to reflect on the financial challenges that brought you to My Wealth Solutions in the first place and how far you've come. We'd also like to use this moment to commend you again for taking continual, proactive steps to achieving financial freedom.</p>
+    <p class="pv-p">Please find you present situation in relation to Current Position, as we have on our records. If these values require updating, please let us know at your earliest convenience to allow us to accurately reflect your situation and continue to provide updated information.</p>
+    <p class="pv-p">If you wish to come in to our office or arrange an online review meeting, please don't hesitate to contact our Office on either;</p>
+    <p class="pv-p">Phone: ${esc(pr.phone)}; or Email: ${esc(pr.email)}</p>`;
+  if(hp){
+    P.push(`<div class="wrprev-page"><div class="pv-h2">Your Wealth Review</div>${introHTML}
+      <div class="pv-detmid">YOUR DETAILS</div>${pvDetailsTable(true)}</div>`);
+  } else {
+    P.push(`<div class="wrprev-page"><div class="pv-h2">Your Wealth Review</div>
+      <div class="pv-2col"><div>${introHTML}</div><div>${pvDetailsTable(false)}</div></div></div>`);
+  }
 
   /* Current Situation — mirrors the generated doc (Reference column + per-table totals) */
   const assetRows=(arr,totLabel)=>{
-    const rows=arr.map(a=>({cells:[{v:a.name},{v:a.value?money(num(a.value)):""},{v:a.debt?money(num(a.debt)):""},{v:a.type},{v:a.owner},{v:a.ref}]}));
+    const rows=arr.map(a=>({cells:[{v:a.name},{v:money(num(a.value))},{v:money(num(a.debt))},{v:a.type},{v:a.owner},{html:`<i>${esc(a.ref||'')}</i>`}]}));
     rows.push({__totlbl:'lblue',cells:[{v:totLabel},{v:money(pvSum(arr,"value"))},{v:money(pvSum(arr,"debt"))},{v:""},{v:""},{v:""}]});
     return rows;
   };
@@ -1875,15 +1931,15 @@ function buildPreviewPages(){
   const assets=o.useOverride?num(o.assets):(la+na), debts=o.useOverride?num(o.debts):(lad+nad);
   const inc=o.useOverride?num(o.income):pvSum(S.income,"amount");
   const nw=o.useOverride?num(o.netWorth):(assets-debts), sp=o.useOverride?num(o.surplus):0;
-  const incRows=S.income.map(r=>({cells:[{v:r.label},{v:r.amount?money(num(r.amount)):""},{v:r.owner},{v:r.freq}]}));
+  const incRows=S.income.map(r=>({cells:[{v:r.label},{v:money(num(r.amount))},{v:r.owner},{v:r.freq}]}));
   incRows.push({__totlbl:'lblue',cells:[{v:"INCOME TOTAL"},{v:money(pvSum(S.income,"amount"))},{v:""},{v:""}]});
   const aAlign=[,, ,"c","c","c"];
   P.push(`<div class="wrprev-page">
     <div class="pv-h2">Current Situation</div>
-    <div class="pv-band">LIFESTYLE ASSETS</div>${pvTable(["","Value","Debt","Type","Owner","Reference"],assetRows(S.lifestyle,"LIFESTYLE TOTAL"),{align:aAlign,lbl:true,empty:"No lifestyle assets yet."})}
-    <div class="pv-band">NEST EGG ASSETS</div>${pvTable(["","Value","Debt","Type","Owner","Reference"],assetRows(S.nestegg,"NEST EGG TOTAL"),{align:aAlign,lbl:true,empty:"Upload platform reports or add assets."})}
-    <div class="pv-band">INCOME</div>${pvTable(["Income","Annual Amount","Owner","Frequency"],incRows,{align:[,,"c","c"],lbl:true,empty:"No income entered."})}
-    <div class="pv-band">TOTAL NET WORTH CALCULATION</div>
+    <div class="pv-band">Lifestyle Assets</div>${pvTable(["","Value","Debt","Type","Owner","Reference"],assetRows(S.lifestyle,"LIFESTYLE TOTAL"),{align:aAlign,lbl:true,empty:"No lifestyle assets yet."})}
+    <div class="pv-band">Nest Egg Assets</div>${pvTable(["","Value","Debt","Type","Owner","Reference"],assetRows(S.nestegg,"NEST EGG TOTAL"),{align:aAlign,lbl:true,empty:"Upload platform reports or add assets."})}
+    <div class="pv-band">Income</div>${pvTable(["Income","Annual Amount","Owner","Frequency"],incRows,{align:[,,"c","c"],lbl:true,empty:"No income entered."})}
+    <div class="pv-band">Total Net Worth Calculation</div>
     ${pvTable(["","Assets","Debts","Income"],[
       {__totlbl:'blue',cells:[{v:"Total All Categories"},{v:money(assets)},{v:money(debts)},{v:money(inc)}]},
       {__totlbl:'lblue',cells:[{v:"NET WORTH / SURPLUS"},{v:money(nw),colspan:2},{v:money(sp)}]}
@@ -1892,80 +1948,99 @@ function buildPreviewPages(){
 
   /* Foundations (foundations + estate combined, per template) */
   const f=S.foundations, e=S.estate;
-  const fRow=(lab,cv,cr,pv2,pr2)=>({cells: hp?[{v:lab},{v:cv},{v:cr},{v:pv2},{v:pr2}]:[{v:lab},{v:cv},{v:cr}]});
-  const fHead=hp?["", (S.client.name||"Client"),"Reference",(S.partner.name||"Partner"),"Reference"]:["",(S.client.name||"Client"),"Reference"];
+  const fc=(t)=>({html:esc(t==null?'':t).replace(/\n/g,'<br>')});
+  const fRow=(lab,cv,cr,pv2,pr2)=>({cells: hp?[{v:lab},fc(cv),fc(cr),fc(pv2),fc(pr2)]:[{v:lab},fc(cv),fc(cr)]});
+  const ipC=[f.client.ip,f.client.ipNotes].filter(Boolean).join("\n"), ipP=[f.partner.ip,f.partner.ipNotes].filter(Boolean).join("\n");
+  const fHead=hp?["", (firstName("client")||"Client"),"Reference",(firstName("partner")||"Partner"),"Reference"]:["",(firstName("client")||"Client"),"Reference"];
   const fRows=[
     fRow("Life Insurance",f.client.life,f.client.ref,f.partner.life,f.partner.ref),
     fRow("Total & Permanent Disability",f.client.tpd,"",f.partner.tpd,""),
     fRow("Trauma Insurance",f.client.trauma,"",f.partner.trauma,""),
-    fRow("Income Protection (month)",[f.client.ip,f.client.ipNotes].filter(Boolean).join(" · "),"",[f.partner.ip,f.partner.ipNotes].filter(Boolean).join(" · "),""),
+    fRow("Income Protection (month)",ipC,"",ipP,""),
     fRow("Up to Date Wills",e.willsC,"",e.willsP,""),
     fRow("Power of Attorney",e.poaC,"",e.poaP,""),
-    fRow("Super Death Nominations",e.superNomC,"",e.superNomP,""),
-    fRow("Insurance Death Nominations",e.insNomC,"",e.insNomP,"")
+    fRow("Super Death Nominations",e.superNomC,e.superNomRef||"",e.superNomP,e.superNomRefP||""),
+    fRow("Insurance Death Nominations",e.insNomC,e.insNomRef||"",e.insNomP,e.insNomRefP||"")
   ];
   const fAlign=hp?['r','c','c','c','c']:['r','c','c'];
   const refNotes=[S.foundationsNotes,e.notes].filter(Boolean).join("\n");
-  P.push(`<div class="wrprev-page"><div class="pv-band">FOUNDATIONS</div>${pvTable(fHead,fRows,{lbl:true,align:fAlign,empty:""})}
+  P.push(`<div class="wrprev-page"><div class="pv-band">Foundations</div>${pvTable(fHead,fRows,{lbl:true,align:fAlign,empty:""})}
     <div class="pv-band" style="margin-top:10px">Reference &amp; Notes</div>
     <div class="pv-refnotes">${refNotes?esc(refNotes):"&nbsp;"}</div></div>`);
 
-  /* Goals + Financial Independence */
+  /* Goals (left) + Financial Independence Goals (right), side by side */
   const _go={"Short Term":0,"Medium Term":1,"Long Term":2};
-  const goalRows=[...S.goals].sort((a,b)=>String(a.owner||"").localeCompare(String(b.owner||""))||((_go[a.timeframe]??9)-(_go[b.timeframe]??9))).map(g=>({cells:[{v:g.owner},{v:g.timeframe},{v:g.desc||g.notes}]}));
-  const fi=S.fiGoals, fiRows=[
+  const goalRows=[...S.goals].sort((a,b)=>String(a.owner||"").localeCompare(String(b.owner||""))||((_go[a.timeframe]??9)-(_go[b.timeframe]??9)))
+    .map(g=>({cells:[{v:g.desc||g.category||""},{v:g.owner},{v:g.timeframe},{v:g.notes||(g.desc?"":g.desc)}]}));
+  const fi=S.fiGoals, fiData=[
     ["Target",fi.targetToday,"In today's values"],["Which is",fi.targetFuture,"In "+(fi.years||"…")+" years"],
     ["Estimated Income",fi.incomeLife,"pa to pay for life"],["Estimated Income",fi.incomeNice,"pa for nice things"],
     ["Estimated Lump Sum",fi.lumpToys,"one-off for toys"],["Estimated Lump Sum",fi.lumpFamily,"one-off family/charity"]
-  ].filter(x=>x[1]).map(x=>({cells:[{v:x[0]},{v:x[1]},{v:x[2]}]}));
+  ].filter(x=>x[1]);
+  const fiHTML=fiData.length?`<table class="pv-tbl"><tbody>${fiData.map(r=>`<tr><td class="pv-fiwhite" style="text-align:right;font-weight:800">${esc(r[0])}</td><td>${esc(r[1])}</td><td class="pv-fiwhite">${esc(r[2])}</td></tr>`).join("")}</tbody></table>`:'<div class="pv-empty">Upload the Review PTW to populate these.</div>';
   P.push(`<div class="wrprev-page">
-    <div class="pv-h2">Your Goals</div>${pvTable(["Owner","Timeframe","Goal"],goalRows,{head:"navy",lbl:true,empty:"No goals entered yet."})}
-    <div class="pv-band">FINANCIAL INDEPENDENCE GOALS</div>${pvTable(["","",""],fiRows,{lbl:true,empty:"Upload the Review PTW to populate these."})}</div>`);
+    <div class="pv-h2">Your Goals</div>
+    <div class="pv-2col" style="align-items:flex-start"><div style="flex:1.35">
+      ${pvTable(["Description","Owner","Timeframe","Notes"],goalRows,{head:"navy",lbl:true,align:['c','c','c'],empty:"No goals entered yet."})}
+    </div><div style="flex:1">
+      <div class="pv-band" style="margin-top:0">Financial Independence Goals</div>${fiHTML}
+    </div></div></div>`);
 
   /* Goal Tracking */
+  const stripImg=(r)=>`<img src="data:image/png;base64,${ratingStripPNG(r)}" style="height:14px;vertical-align:middle">`;
+  const sqImg=(r)=>`<img src="data:image/png;base64,${ratingSquarePNG(r,true)}" style="width:13px;height:13px;vertical-align:middle;margin-right:4px">`;
+  const rt=(t)=>`<div style="text-align:right;font-weight:800">${esc(t==null?'':t)}</div>`;
   const gtRows=S.goalTracking.map(g=>({cells:[
-    {v:g.strategy},{v:g.were},{v:g.shouldBe},{v:g.are},{v:g.wantToBe},{html:dot(g.rating)+esc(g.rating||"")},{v:g.actions}
+    {v:g.strategy},{v:g.were},{v:g.shouldBe},{v:g.are},{v:g.wantToBe},{html:stripImg(g.rating)},{v:g.actions}
   ]}));
   const T=S.goalTrackingTotals;
-  if(gtRows.length) gtRows.push({cells:[{v:"TOTALS"},{v:T.were},{v:T.shouldBe},{v:T.are},{v:T.wantToBe},{v:""},{v:""}],__tot:true});
-  const legend=RATINGS.map(r=>`<span class="l">${dot(r)}${esc(r)}</span>`).join("");
+  if(gtRows.length) gtRows.push({__nolbl:true,cells:[{html:`<div style="text-align:right;color:#0C6AE1;font-weight:800">Totals</div>`},{html:rt(T.were)},{html:rt(T.shouldBe)},{html:rt(T.are)},{html:rt(T.wantToBe)},{v:""},{v:""}]});
+  const legend=RATINGS.map(r=>`<span class="l">${sqImg(r)}${esc(r)}</span>`).join("");
   P.push(`<div class="wrprev-page">
     <div class="pv-h2">Goal Tracking</div>
     <div class="pv-legend">${legend}</div>
-    ${pvTable(["Strategy","Where You Were","Where You Should Be","Where You Are","Where You Want To Be","On Track","Actions To Take"],gtRows,{head:"navy",lbl:true,empty:"Upload platform reports / PTW to populate goal tracking."})}
-    <div style="margin-top:10px;font-weight:700">OVERALL STRATEGY ON TRACK RATING: ${dot(S.overallRating)} ${esc(S.overallRating)}</div>
-    ${S.adviserComments?`<div class="pv-band">ADVISER COMMENTS</div><div class="pv-p" style="padding:6px 0">${esc(S.adviserComments)}</div>`:""}</div>`);
+    ${pvTable(["Strategy","Where You Were","Where You Should Be","Where You Are","Where You Want To Be","On Track Rating","Actions To Take"],gtRows,{head:"navy",lbl:true,align:['c','c','c','c','c','c'],empty:"Upload platform reports / PTW to populate goal tracking."})}
+    <div style="margin-top:10px;font-weight:800;color:#0C6AE1">OVERALL STRATEGY ON TRACK RATING: ${stripImg(S.overallRating)}</div>
+    <div class="pv-band" style="text-align:center;margin-top:12px">ADVISER COMMENTS</div><div class="pv-refnotes">${S.adviserComments?esc(S.adviserComments):"&nbsp;"}</div></div>`);
 
   /* Portfolio Valuation + Asset Allocation, per person */
   ["client","partner"].forEach(side=>{
     if(side==="partner" && !hp) return;
     const name=side==="client"?S.client.name:S.partner.name; if(!name) return;
+    const sub=firstName(side)||name;
     const accts=S.portfolios[side]||[]; let grand=0;
-    const blocks=accts.map(acct=>{
-      const rows=(acct.holdings||[]).map(h=>({cells:[{v:h.product},{v:h.units},{v:h.value?money(num(h.value)):""}]}));
+    const body=accts.map(acct=>{
+      const holds=(acct.holdings||[]).map(h=>`<tr><td class="pv-lbl">${esc(h.product)}</td><td class="r">${esc(h.units)}</td><td class="r">${h.value?money(num(h.value)):""}</td></tr>`).join("");
       const tot=pvSum(acct.holdings,"value"); grand+=tot;
-      if(rows.length) rows.push({cells:[{v:"Total for "+(acct.acct||"account")},{v:""},{v:money(tot)}],__tot:true});
-      return `<div class="pv-band">${esc(acct.acct||"Account")}</div>${pvTable(["Products","Units","Value"],rows,{align:[,,"r"],head:"navy",lbl:true,empty:"No holdings."})}`;
+      return `<tr><td class="pv-acct" colspan="3">${esc(acct.acct||"Account")}</td></tr>${holds}<tr><td class="pv-ptot" colspan="2">Total for ${esc(acct.acct||"account")}</td><td class="pv-ptot">${money(tot)}</td></tr>`;
     }).join("");
-    P.push(`<div class="wrprev-page"><div class="pv-h2">Portfolio Valuation — ${esc(name)}</div>${blocks||'<div class="pv-empty">Upload platform reports to populate holdings.</div>'}${accts.length?`<div style="text-align:right;font-weight:700;margin-top:8px">Total for ${esc(name)}: ${money(grand)}</div>`:""}</div>`);
+    const portTable=accts.length
+      ? `<table class="pv-tbl navy"><thead><tr><th>Products</th><th>Units</th><th>Value</th></tr></thead><tbody>${body}<tr><td class="pv-ptot" colspan="2">Total for ${esc(name)}</td><td class="pv-ptot">${money(grand)}</td></tr></tbody></table>`
+      : '<div class="pv-empty">Upload platform reports to populate holdings.</div>';
+    P.push(`<div class="wrprev-page"><div class="pv-h2">Portfolio Valuation</div><div class="pv-subname">${esc(sub)}</div>${portTable}</div>`);
+    // Asset allocation with the actual donut charts (same generator as the doc)
+    let charts="";
+    try{ const cur=allocChartPNG(S.assetAlloc[side],"cur","Current Asset Allocation"), tgt=allocChartPNG(S.assetAlloc[side],"tgt","Target Risk Profile");
+      charts=`<div class="pv-charts"><img src="data:image/png;base64,${cur}" style="width:300px;height:auto"><img src="data:image/png;base64,${tgt}" style="width:300px;height:auto"></div>`;
+    }catch(e){ charts=""; }
     const aaRows=(S.assetAlloc[side]||[]).map(a=>({cells:[{v:a.cls},{v:a.cur},{v:a.tgt},{v:a.varc}]}));
-    P.push(`<div class="wrprev-page"><div class="pv-h2">Portfolio Asset Allocation — ${esc(name)}</div>${pvTable(["Asset Class","Current Weight","Target Risk Profile Weight","Variance"],aaRows,{align:[,"c","c","c"],head:"navy",empty:"Enter or import the asset allocation."})}</div>`);
+    P.push(`<div class="wrprev-page"><div class="pv-h2">Portfolio Asset Allocation</div><div class="pv-subname">${esc(sub)}</div>${charts}${pvTable(["Asset Class","Current Weight","Target Risk Profile Weight","Variance"],aaRows,{align:['','c','c','c'],head:"navy",empty:"Enter or import the asset allocation."})}</div>`);
   });
 
   /* Insurance Cover (8 columns, per template) */
+  const ctr8=['c','c','c','c','c','c','c','c'];
   ["client","partner"].forEach(side=>{
     if(side==="partner" && !hp) return;
     const name=side==="client"?S.client.name:S.partner.name; if(!name) return;
     const rows=(S.insurance[side]||[]).map(i=>({cells:[{v:i.insurer},{v:i.policy},{v:i.owner},{v:i.life},{v:i.coverType},{v:i.amount},{v:i.structure},{v:i.premium}]}));
-    P.push(`<div class="wrprev-page"><div class="pv-h2">Insurance Cover — ${esc(name)}</div>${pvTable(["Insurer - Product","Policy #","Owner","Life Insured","Type of Cover","Amount of Cover","Premium Structure","Monthly Premium*"],rows,{head:"navy",empty:"Insurance not entered yet."})}<div class="pv-foot">* The monthly premium is an estimate after-tax figure based on the data available at the time of producing this document.</div></div>`);
+    P.push(`<div class="wrprev-page"><div class="pv-h2">Insurance Cover</div><div class="pv-subname">${esc(firstName(side)||name)}</div>${pvTable(["Insurer - Product","Policy Number","Policy Owner","Life Insured","Type of Cover","Amount of Cover","Premium Structure","Monthly Premium*"],rows,{head:"navy",align:ctr8,empty:"Insurance not entered yet."})}<div class="pv-foot">* The monthly premium is an estimate after-tax figure based on the data available at the time of producing this document. Further detail available on request.</div></div>`);
   });
 
-  /* Action items + Services */
+  /* Action items (own page) + Services Available (own page) */
   const actRows=S.actionItems.map(a=>({cells:[{v:a.desc},{v:a.who},{v:a.when}]}));
-  const svcRows=S.services.map(s=>({cells:[{v:s.label},{html:s.provided?'<b style="color:#0C6AE1">✔</b>':''}]}));
-  P.push(`<div class="wrprev-page">
-    <div class="pv-h2">Action items and Discussion Points</div>${pvTable(["Description","Who","When"],actRows,{head:"navy",align:[,"c","c"],empty:"No action items yet."})}
-    <div class="pv-h2" style="margin-top:16px">Services Available</div>${pvTable(["Services Available","Services Provided"],svcRows,{head:"navy",lbl:true,align:[,"c"],empty:""})}</div>`);
+  P.push(`<div class="wrprev-page"><div class="pv-h2">Action items and Discussion Points</div>${pvTable(["Description","Who","When"],actRows,{head:"navy",align:[,"c","c"],empty:"No action items yet."})}</div>`);
+  const svcRows=S.services.map(s=>({cells:[{v:s.label},{html:s.provided?'<b style="color:#2E3132;font-size:15px">✔</b>':''}]}));
+  P.push(`<div class="wrprev-page"><div class="pv-h2">Services Available</div>${pvTableSvc(svcRows)}</div>`);
 
   /* Back cover */
   if(typeof BACK_B64!=="undefined"&&BACK_B64) P.push(`<div class="wrprev-page back"><img src="data:image/jpeg;base64,${BACK_B64}"></div>`);
@@ -2739,10 +2814,18 @@ function applyChecklistData(){
   const crpFmt=(p,s)=>p?(p+(s&&!/up to date/i.test(s)?` (${s})`:"")):"";
   if(c1||c2||cj){ const parts=[c1?`Client 1: ${crpFmt(c1,c1s)}`:"",c2?`Client 2: ${crpFmt(c2,c2s)}`:"",cj?`Joint: ${crpFmt(cj,cjs)}`:""].filter(Boolean).join("; ");
     S.foundationsNotes=(S.foundationsNotes?S.foundationsNotes+"\n":"")+"CRP — "+parts; }
-  // Super / Insurance death nominations → Foundations, from the checklist beneficiary answers
-  const beneHas=(id)=>{ const a=S.checklist.answers[id]; if(a==null) return false; const vals=(typeof a==="object")?Object.values(a):[a]; return vals.some(v=>String(v||"").trim() && !/^(no|none|nil|n\/?a)$/i.test(String(v).trim())); };
-  if(!S.estate.superNomC && ["retail_bene","held_bene","smsf_bene"].some(beneHas)) S.estate.superNomC="Yes";
-  if(!S.estate.insNomC && ["ins_bene","hins_bene"].some(beneHas)) S.estate.insNomC="Yes";
+  // Super / Insurance death nominations → Foundations: value = "Yes", Reference column = the
+  // beneficiary detail captured in the checklist (per client for a couple).
+  const beneFor=(ids,slot)=>{ const out=[]; ids.forEach(id=>{ const a=S.checklist.answers[id]; if(a==null) return;
+      let v = (typeof a==="object") ? a[slot] : (slot==="c1"?a:undefined);
+      v=String(v==null?"":v).trim(); if(v && !/^(no|none|nil|n\/?a)$/i.test(v)) out.push(v); });
+    return out.join("\n"); };
+  const superIds=["retail_bene","held_bene","smsf_bene"], insIds=["ins_bene","hins_bene"];
+  const sc1=beneFor(superIds,"c1"), sc2=beneFor(superIds,"c2"), ic1=beneFor(insIds,"c1"), ic2=beneFor(insIds,"c2");
+  if(sc1){ S.estate.superNomRef=sc1; if(!S.estate.superNomC) S.estate.superNomC="Yes"; }
+  if(sc2){ S.estate.superNomRefP=sc2; if(!S.estate.superNomP) S.estate.superNomP="Yes"; }
+  if(ic1){ S.estate.insNomRef=ic1; if(!S.estate.insNomC) S.estate.insNomC="Yes"; }
+  if(ic2){ S.estate.insNomRefP=ic2; if(!S.estate.insNomP) S.estate.insNomP="Yes"; }
   // sync names / adviser from scope
   syncPreparedFor();
   if(getAns("scope_adviser") && !/add advisers/i.test(getAns("scope_adviser"))) S.meta.adviserName=getAns("scope_adviser");
@@ -3619,8 +3702,8 @@ async function generateDocx(){
       rowF("Income Protection (month)",[f.client.ip,f.client.ipNotes].filter(Boolean).join("\n"),"",[f.partner.ip,f.partner.ipNotes].filter(Boolean).join("\n"),""),
       rowF("Up to Date Wills",e.willsC,"",e.willsP,""),
       rowF("Power of Attorney",e.poaC,"",e.poaP,""),
-      rowF("Super Death Nominations",e.superNomC,"",e.superNomP,""),
-      rowF("Insurance Death Nominations",e.insNomC,"",e.insNomP,"")
+      rowF("Super Death Nominations",e.superNomC,e.superNomRef||"",e.superNomP,e.superNomRefP||""),
+      rowF("Insurance Death Nominations",e.insNomC,e.insNomRef||"",e.insNomP,e.insNomRefP||"")
     ]});
   }
   // Blank "Reference & Notes" band under the Foundations table (matches the template)
