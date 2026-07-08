@@ -1040,6 +1040,9 @@ async function importAnyPlatform(ev){
       // Review Data Snapshot (Jotform) → stage it as an override layer over the last-review base
       const snap=parseReviewSnapshot(text);
       if(snap){ stageSnapshotLayer(snap,f.name); applied.push("Review Data Snapshot · "+(snap.clientName||f.name)+" → staged as override layer"); registerUpload(f.name,"Review Data Snapshot"); continue; }
+      // Insurance Schedule (SOI / existing insurances) → Insurance Cover table + Foundations
+      const sched=parseInsuranceSchedule(text);
+      if(sched && sched.rows.length){ applyInsuranceSchedule(sched); applied.push("Insurance Schedule · "+(sched.client||f.name)+" → "+sched.rows.length+" policy row(s) + Foundations"); registerUpload(f.name,"Insurance Schedule"); continue; }
       // try each wired parser; the guards inside each return null for non-matching formats
       let done=false;
       const h=parseHub24Text(text);
@@ -1298,6 +1301,56 @@ function applyHub24(r){
   let gt=S.goalTracking.find(g=> isSuper ? (fn&&new RegExp(fn+".*super","i").test(g.strategy)) : /investment\b/i.test(g.strategy) );
   if(!gt){ gt={strategy:(isSuper?((fn||"Client")+" Super"):"Investment"), were:"",shouldBe:"",are:"",wantToBe:"",rating:"On Track",actions:""}; S.goalTracking.push(gt); }
   gt.are=money(r.total);
+}
+
+/* ---------- Insurance Schedule (SOI / existing insurances) parser ---------- */
+function parseInsuranceSchedule(raw){
+  if(!raw || !/INSURANCE SCHEDULE/i.test(raw)) return null;
+  const F=raw.replace(/\s+/g,' ').trim();
+  const clean=s=>String(s||'').replace(/\s+/g,' ').trim();
+  const mon=x=>x?("$"+Number(String(x).replace(/[^\d.]/g,'')).toLocaleString(undefined,{maximumFractionDigits:2})):"";
+  const out={ client:"", rows:[], foundations:{life:"",tpd:"",trauma:"",ip:"",ipNotes:"",ref:""} };
+  let m;
+  if((m=F.match(/Client:\s*(.+?)\s+Date of Birth/i))) out.client=clean(m[1]);
+  const insurer=(F.match(/\b(NEOS|AIA Australia|AIA|TAL|Zurich|MLC|OnePath|MetLife|ClearView|Integrity|NobleOak)\b/i)||[])[1]||"NEOS";
+  out.foundations.ref=insurer;
+  const sumRow=kw=>{ const mm=F.match(new RegExp(kw+"[\\s\\S]*?\\$([\\d,]+)\\s+\\$([\\d,.]+)\\s+\\$([\\d,.]+)","i")); return mm?{sum:mm[1],viaSuper:parseFloat(mm[2].replace(/,/g,''))||0,personal:parseFloat(mm[3].replace(/,/g,''))||0}:null; };
+  const SUM={ life:sumRow("LIFE INSURANCE"), tpd:sumRow("PERMANENT DISABLEMENT"), trauma:sumRow("TRAUMA INSURANCE"), ip:sumRow("INCOME PROTECTION INSURANCE") };
+  if(SUM.life) out.foundations.life=mon(SUM.life.sum);
+  if(SUM.tpd) out.foundations.tpd=mon(SUM.tpd.sum);
+  if(SUM.trauma) out.foundations.trauma=mon(SUM.trauma.sum);
+  if(SUM.ip){ out.foundations.ip=mon(SUM.ip.sum);
+    out.foundations.ipNotes=[/indemnity/i.test(F)?"Indemnity":(/agreed/i.test(F)?"Agreed value":""),(F.match(/(\d+ Days? Waiting)/i)||[])[1],(F.match(/To Age \d+/i)||[])[0]].filter(Boolean).join(", "); }
+  const sumFor=k=>SUM[k];
+  const premFor=k=>{ const s=SUM[k]; return s?mon(s.viaSuper+s.personal):""; };
+  const COVER="Life|Total & Permanent Disability|TPD|Trauma|Critical Illness|Income Protection|Death";
+  const re=new RegExp("(\\d{6,})\\s+([A-Z][a-z]+(?: [A-Z][a-z]+)+)\\s+\\d{2}\\/\\d{2}\\/\\d{4}\\s+(.+?)\\s+("+COVER+")\\b","g");
+  const hits=[]; let r;
+  while((r=re.exec(F))){ hits.push({idx:r.index,end:re.lastIndex,policy:r[1],insured:clean(r[2]),owner:clean(r[3]),coverType:clean(r[4])}); }
+  const keyOf=t=>/life/i.test(t)?'life':/tpd|permanent/i.test(t)?'tpd':/trauma|critical/i.test(t)?'trauma':/income prot/i.test(t)?'ip':'';
+  const used={};
+  hits.forEach((h,i)=>{
+    const block=F.slice(h.end, i+1<hits.length?hits[i+1].idx:h.end+240);
+    const key=keyOf(h.coverType), s=sumFor(key);
+    const bigM=block.match(/\$\s?([\d,]{4,})(?!\.\d)/), decM=block.match(/\$\s?([\d,]*\.\d{2})/);
+    let amount=(key&&s&&!used[key])?mon(s.sum):(bigM?mon(bigM[1]):"");
+    let premium=(key&&s&&!used[key])?premFor(key):(decM?("$"+decM[1]):"");
+    if(key) used[key]=1;
+    const freq=(block.match(/\b(Annual|Monthly|Fortnightly|Weekly)\b/i)||[])[1]||"";
+    const struct=(block.match(/\b(Stepped|Level|Cover Reducing)\b/i)||[])[1]||"Stepped";
+    out.rows.push({ insurer, policy:h.policy, owner:h.owner, life:h.insured,
+      coverType:h.coverType.replace(/Total & Permanent Disability/i,"TPD"),
+      amount, structure:struct+(freq?(" · "+freq):""), premium });
+  });
+  return out;
+}
+function applyInsuranceSchedule(sched){
+  const who=whoFromName(sched.client||"");
+  S.insurance[who]=sched.rows.map(r=>({insurer:r.insurer,policy:r.policy,owner:r.owner,life:r.life||sched.client,coverType:r.coverType,amount:r.amount,structure:r.structure,premium:r.premium}));
+  const f=S.foundations[who]||(S.foundations[who]={life:"",tpd:"",trauma:"",ip:"",ipNotes:"",ref:""});
+  const F=sched.foundations;
+  if(F.life)f.life=F.life; if(F.tpd)f.tpd=F.tpd; if(F.trauma)f.trauma=F.trauma;
+  if(F.ip)f.ip=F.ip; if(F.ipNotes)f.ipNotes=F.ipNotes; if(F.ref&&!f.ref)f.ref=F.ref;
 }
 
 /* ---------- BT Panorama parser ---------- */
@@ -1977,7 +2030,7 @@ function renderImports(){
       <label class="dz"><span class="badge badge-ready">PDF · multi</span><h4>Platform reports</h4><p>HUB24 / BT / Macquarie auto-fill fully. Any other platform (CFS Edge, Netwealth…) → best-guess balance + full text captured to confirm.</p><input type="file" accept=".pdf" multiple onchange="importAnyPlatform(event)"></label>
       <label class="dz"><span class="badge badge-ready">XLSM</span><h4>Current Review PTW</h4><p>Projection → Financial Independence goals.</p><input type="file" accept=".xlsm,.xlsx" onchange="importPTW(event)"></label>
       <label class="dz"><span class="badge badge-ready">PDF</span><h4>Review Data Snapshot (Jotform)</h4><p>Client's pre-meeting update → <b>override layer</b>: income, assets, liabilities, estate + client-raised points into discussion items. Confirm before applying.</p><input type="file" accept=".pdf" multiple onchange="importSnapshot(event)"></label>
-      <label class="dz"><span class="badge badge-soon">Sample needed</span><h4>Insurance (CDM / renewal)</h4><p>Policy data → Insurance + Foundations.</p><input type="file" accept=".pdf,.docx" multiple onchange="stubImport('Insurance reports')"></label>
+      <label class="dz"><span class="badge badge-ready">PDF</span><h4>Insurance Schedule (existing insurances)</h4><p>The consolidated SOI insurance schedule → fills the Insurance Cover table (policy, owner, cover type, sum insured, premium) &amp; Foundations (Life / TPD / Trauma / IP).</p><input type="file" accept=".pdf" multiple onchange="importAnyPlatform(event)"></label>
       <label class="dz"><span class="badge badge-soon">Sample needed</span><h4>Property valuations</h4><p>PPR / IP reports → assets.</p><input type="file" accept=".pdf" multiple onchange="stubImport('Property valuations')"></label>
     </div>
     ${undetected.length?`<div style="margin:12px 0 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
