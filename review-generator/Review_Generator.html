@@ -1050,7 +1050,35 @@ function parseHub24Text(text){
   if(!total) total=holdings.reduce((a,h)=>a+h.value,0);
   if(!holdings.length && total){ holdings.push({product:/super/i.test(type)?"Superannuation":"Account balance", units:"", value:total}); }
   if(!holdings.length && !total) return null;
-  return {id,name,type,asOf,holdings,total};
+  const alloc=parseHub24Allocation(text);
+  return {id,name,type,asOf,holdings,total,alloc};
+}
+// Parse the HUB24 "Asset Allocation Summary Report" table (Category / Value / %),
+// e.g. "Shares - Australian 407,910.55 34.16%". Returns [{cls,cur,val}].
+function parseHub24Allocation(text){
+  const F=String(text||"").replace(/\s+/g," ");
+  const si=F.search(/Asset allocation\s*:/i);
+  const block=si>=0?F.slice(si,si+1600):F;
+  const re=/([A-Za-z][A-Za-z \-\/&]+?)\s+([\d,]+\.\d{2})\s+(\d+\.\d{2})\s*%/g;
+  const rows=[]; let m;
+  while((m=re.exec(block))){
+    const cls=m[1].replace(/\s+/g," ").trim();
+    if(/^total$/i.test(cls) || /portfolio value|asset allocation|category/i.test(cls)) continue;
+    rows.push({cls, cur:m[3]+"%", tgt:"", varc:"", val:parseFloat(m[2].replace(/,/g,""))});
+  }
+  return rows.length?rows:null;
+}
+// Merge a report's asset allocation into the person's overall allocation. Each
+// account (super, investment) contributes a "part"; parts are $-summed by category
+// so a client with both a super and an investment account gets one combined,
+// correctly-weighted allocation. Re-importing an account replaces its own part.
+function applyHub24Alloc(who, id, rows){
+  if(!rows||!rows.length) return;
+  S._allocParts=S._allocParts||{}; S._allocParts[who]=S._allocParts[who]||{};
+  S._allocParts[who][id||("acct"+Object.keys(S._allocParts[who]).length)]=rows;
+  const agg={}, order=[]; let total=0;
+  Object.values(S._allocParts[who]).forEach(part=>part.forEach(r=>{ const v=num(r.val); if(!(r.cls in agg)){agg[r.cls]=0;order.push(r.cls);} agg[r.cls]+=v; total+=v; }));
+  S.assetAlloc[who]=order.map(cls=>({cls, cur:(total?(agg[cls]/total*100).toFixed(2):"0.00")+"%", tgt:"", varc:""}));
 }
 async function importHub24(ev){
   return importAnyPlatform(ev);
@@ -1540,6 +1568,8 @@ function applyHub24(r){
   let gt=S.goalTracking.find(g=> isSuper ? (fn&&new RegExp(fn+".*super","i").test(g.strategy)) : /investment\b/i.test(g.strategy) );
   if(!gt){ gt={strategy:(isSuper?((fn||"Client")+" Super"):"Investment"), were:"",shouldBe:"",are:"",wantToBe:"",rating:"On Track",actions:""}; S.goalTracking.push(gt); }
   gt.are=money(r.total);
+  // pull the platform report's asset allocation into the person's allocation
+  applyHub24Alloc(who, r.id, r.alloc);
 }
 
 /* ---------- Insurance Schedule (SOI / existing insurances) parser ---------- */
