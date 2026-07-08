@@ -1967,18 +1967,26 @@ const num=(v)=>{const n=parseFloat(String(v).replace(/[^0-9.\-]/g,""));return is
 const money=(n)=>"$"+Math.round(num(n)).toLocaleString("en-AU",{maximumFractionDigits:0});
 // money with cents — used only where exact figures matter (Portfolio Valuation)
 const moneyc=(n)=>"$"+num(n).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2});
+// Title-case a word but keep AU state codes upper-case
+function _titleWord(w){ return /^(QLD|NSW|VIC|WA|SA|NT|ACT|TAS)$/i.test(w)?w.toUpperCase():(w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()); }
 // Split a run-together list of investment addresses onto one line each (the last
-// review often jams them together, e.g. "...QLD, 41657 RICHARDSON COURT...").
+// review often jams them together, e.g. "...QLD, 41657 RICHARDSON COURT...") and
+// convert THE ALL-CAPS text to Title Case (states stay upper-case).
 function fmtAddresses(s){
   return String(s||"")
+    .replace(/\b(Street|Road|Avenue|Court|Drive|Place|Lane|Crescent|Terrace|Parade|Highway|Close|Circuit|Boulevard)(?=[A-Za-z])/gi, "$1 ")   // "AvenueKogarah" → "Avenue Kogarah"
     .replace(/(\b(?:QLD|NSW|VIC|WA|SA|NT|ACT|TAS)\.?,?\s*\d{4})\s*(?=\S)/gi, "$1\n")
-    .replace(/\n{2,}/g,"\n").trim();
+    .replace(/,(?=\S)/g, ", ")                                   // "Landing,QLD" → "Landing, QLD"
+    .replace(/[A-Za-z]{2,}/g, _titleWord)
+    .replace(/[ \t]{2,}/g," ").replace(/\n{2,}/g,"\n").trim();
 }
 // Tidy a wall of concatenated note/beneficiary text so it breaks onto readable lines
-// (e.g. "Hub24 SuperCooper ... NLBJordan ..." → fund + one beneficiary per line).
+// (e.g. "Hub24 SuperCooper ... NLBJordan ..." or "50% Non-lapsing Binding to Cooper
+// 50% Non-lapsing Binding to Jordan" → one beneficiary per line).
 function tidyNotes(s){
   return String(s||"")
     .replace(/(N?LB)(?=[A-Z])/g, "$1\n")                    // "NLBJordan" → "NLB\nJordan"
+    .replace(/\s+(?=\d{1,3}\s*%?\s*(?:Non-?lapsing|Lapsing|Binding))/gi, "\n")   // before "50% Non-lapsing…"
     .replace(/([a-z0-9%\)])([A-Z][a-z]{2,})/g, "$1\n$2")    // jammed name boundary → newline
     .replace(/[ \t]{2,}/g," ").replace(/\n{2,}/g,"\n").trim();
 }
@@ -2284,7 +2292,7 @@ function pvDetailsTable(noHeader){
   pair("Name","name","Date of Birth","dob");
   pair("Mobile","mobile","Marital Status","marital");
   pair("Email","email","Estate Planning","estate");
-  full("Address",S.address,"Investment Address(es)",fmtAddresses(S.investmentAddresses));
+  full("Address",fmtAddresses(S.address),"Investment Address(es)",fmtAddresses(S.investmentAddresses));
   full("Dependants",S.dependantsClient,"Dependants",S.dependantsPartner);
   pair("Job Title","jobTitle","Employer","employer");
   pair("Employment Status","employment","Risk Profile","riskProfile");
@@ -3685,7 +3693,9 @@ async function importReviewDoc(ev){
     if(gt){
       const hi=gt.findIndex(r=>/where you were/i.test(r.join(" ")));
       const rows=gt.slice(hi+1), groups={}, order=[];
-      const cur=v=>{ const m=String(v||"").match(/\$[\d,]+(?:\.\d+)?/); return m?m[0]:(String(v||"").trim()==="-"?"-":""); };
+      // keep the value AND any parenthetical debt the last review shows, e.g.
+      // "$650,000($560,000)" (value + mortgage) — dropping the (…) lost the debt
+      const cur=v=>{ const m=String(v||"").match(/\$[\d,]+(?:\.\d+)?(?:\s*\(\$?[\d,]+(?:\.\d+)?\))?/); return m?m[0]:(String(v||"").trim()==="-"?"-":""); };
       // capture the aggregate Totals row (Where You Were / Should Be / Are / Want To Be)
       const totRow=rows.find(r=>/^total/i.test((r[0]||"").trim()));
       // ignore junk "strategy" cells — the ratings legend and stray tick/icon rows
@@ -3730,13 +3740,20 @@ async function importReviewDoc(ev){
     // counting it and inflating the generated total). If the source total differs
     // from the sum of the lines, carry it as a manual total override so the doc
     // still mirrors the last review's figure.
-    const inc=tables.find(t=>/income/i.test((t[0]||[])[0]||"") && /annual/i.test((t[0]||[]).join(" ")));
+    // The income table's header first cell is often blank (not "Income"), e.g.
+    // [_, ANNUAL AMOUNT, OWNER, FREQUENCY] — match on the header keywords instead.
+    const inc=tables.find(t=>{ const h=(t[0]||[]).join(" ").toLowerCase(); return /annual/.test(h) && /(owner|frequenc|amount)/.test(h); });
     if(inc){
-      const items=inc.slice(1).filter(r=>{ const l=(r[0]||"").trim(); return l && !/total/i.test(l); }).map(r=>({
-        label:(r[0]||"").trim(),
-        amount:((String(r[1]||"").match(/[\d,]+(?:\.\d+)?/)||[""])[0]||"").replace(/,/g,""),
-        owner:(r[2]||"").trim(), freq:(r[3]||"Yearly").trim()
-      }));
+      const items=inc.slice(1).filter(r=>{ const l=(r[0]||"").trim(); return l && !/total/i.test(l); }).map(r=>{
+        const amtCell=String(r[1]||"");
+        // keep an "+ X% SG/Super" note that sits in the amount cell alongside the figure
+        const extra=(amtCell.match(/\+\s*[\d.]+\s*%[^,|]*/)||[""])[0].trim().replace(/\s+/g," ");
+        return {
+          label:((r[0]||"").trim()+(extra?" "+extra:"")).trim(),
+          amount:((amtCell.match(/[\d,]+(?:\.\d+)?/)||[""])[0]||"").replace(/,/g,""),
+          owner:(r[2]||"").trim(), freq:(r[3]||"Yearly").trim()
+        };
+      });
       if(items.length){ S.income=items; got.push(items.length+" income lines"); }
       // Note: the "INCOME TOTAL" row is intentionally NOT imported as a line and NOT
       // forced as a manual override — the Net Worth table auto-totals Assets, Debts and
@@ -3756,12 +3773,17 @@ async function importReviewDoc(ev){
       // back to fixed positions when the columns aren't distinct.
       const distinct=new Set([di,oi,ti,ni].filter(x=>x>=0));
       if(head.length<4 || distinct.size<3){ di=0; oi=1; ti=2; ni=3; }
-      const items=gtbl.slice(1).map(r=>({
-        desc:(r[di>=0?di:0]||"").trim(),
-        owner:(r[oi>=0?oi:1]||"").trim(),
-        timeframe:(r[ti>=0?ti:2]||"").replace(/\s+/g," ").trim(),
-        notes:(ni>=0?(r[ni]||""):"").trim()
-      })).filter(g=> g.desc && !/^description$/i.test(g.desc)
+      const items=gtbl.slice(1).map(row=>{
+        // some exports prepend an empty column to the DATA rows only, shifting every
+        // value one to the right — strip leading empty cells so the columns line up
+        let r=row; while(r.length>head.length && (r[0]==null||String(r[0]).trim()==="")) r=r.slice(1);
+        return {
+          desc:(r[di>=0?di:0]||"").trim(),
+          owner:(r[oi>=0?oi:1]||"").trim(),
+          timeframe:(r[ti>=0?ti:2]||"").replace(/\s+/g," ").trim(),
+          notes:(ni>=0?(r[ni]||""):"").trim()
+        };
+      }).filter(g=> g.desc && !/^description$/i.test(g.desc)
         // exclude Financial Independence rows that can sit in the same table
         && !/^(target|which is|estimated income|estimated lump sum|financial independence goals?)$/i.test(g.desc));
       if(items.length){ S.goals=items; got.push(items.length+" goals"); }
@@ -3812,6 +3834,20 @@ async function importReviewDoc(ev){
       if(inc.length){ if(inc[0]) fg.incomeLife=inc[0]; if(inc[1]!=null) fg.incomeNice=inc[1]; fn++; }
       if(lump.length){ if(lump[0]!=null) fg.lumpToys=lump[0]; if(lump[1]!=null) fg.lumpFamily=lump[1]; }
       if(fn) got.push("financial independence goals");
+    }
+    // Insurance Cover policy table (Insurer / Policy / Owner / Life / Type / Amount /
+    // Structure / Premium) — pull the full policy rows through, per life insured.
+    const instbl=tables.find(t=>{ const h=(t[0]||[]).join(" ").toLowerCase(); return /insurer/.test(h)&&/polic/.test(h)&&/cover/.test(h); });
+    if(instbl){
+      const iv=(r,i)=>String((r&&r[i])||"").replace(/\s+/g," ").trim();
+      let insN=0;
+      instbl.slice(1).forEach(r=>{ const insurer=iv(r,0); if(!insurer||/total/i.test(insurer)) return;
+        const life=iv(r,3), who=whoFromName(life||"");
+        S.insurance[who]=S.insurance[who]||[];
+        S.insurance[who].push({ insurer, policy:iv(r,1), owner:iv(r,2), life, coverType:iv(r,4), amount:iv(r,5), structure:iv(r,6), premium:tidyNotes(iv(r,7)) });
+        insN++;
+      });
+      if(insN) got.push(insN+" insurance cover");
     }
     if(got.length){ registerUpload(f.name,"Last review"); toast("Imported from review: "+got.join(", ")+"."); renderContent(); }
     else { toast("Read the file but couldn't find the expected review tables."); }
@@ -4236,7 +4272,7 @@ async function generateDocx(){
     pairRow("Name","name","Date of Birth","dob");
     pairRow("Mobile","mobile","Marital Status","marital");
     pairRow("Email","email","Estate Planning","estate");
-    fullRow("Address",S.address,"Investment Address(es)",fmtAddresses(S.investmentAddresses));
+    fullRow("Address",fmtAddresses(S.address),"Investment Address(es)",fmtAddresses(S.investmentAddresses));
     fullRow("Dependants",S.dependantsClient,"Dependants",S.dependantsPartner);
     pairRow("Job Title","jobTitle","Employer","employer");
     pairRow("Employment Status","employment","Risk Profile","riskProfile");
