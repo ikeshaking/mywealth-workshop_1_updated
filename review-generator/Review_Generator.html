@@ -1327,7 +1327,7 @@ function firstName(who){ return String((who==="partner"?S.partner.name:S.client.
    Match precedence: (1) account id / reference number; (2) normalised platform
    or fund name sharing a distinctive token; (3) property address; (4) the sole
    asset of the same kind (super/property/etc.) for that owner. */
-const ASSET_KW=["hub24","panorama","macquarie","macq","cfs","colonial","firstchoice","netwealth","northonline","north","expandwrap","expand","wrap","mlc","amp","australiansuper","awaresuper","aware","hostplus","rest","unisuper","qsuper","sunsuper","cbus","bt","vanguard","onepath","insignia","praemium","ioof","essuper","brightersuper","spirit"];
+const ASSET_KW=["hub24","panorama","macquarie","macq","mcma","cfs","colonial","firstchoice","netwealth","northonline","north","expandwrap","expand","wrap","mlc","amp","australiansuper","awaresuper","aware","hostplus","rest","unisuper","qsuper","sunsuper","cbus","bt","vanguard","onepath","insignia","praemium","ioof","essuper","brightersuper","spirit"];
 function findExistingAsset(list, cand){
   if(!Array.isArray(list)||!list.length) return null;
   const norm=s=>String(s||"").toLowerCase().replace(/[\s\-,.'/]/g,"");
@@ -1350,11 +1350,18 @@ function findExistingAsset(list, cand){
     const candKW=ASSET_KW.find(k=>candName.includes(k));
     if(candKW){ byName=list.find(a=>norm(a.name).includes(candKW)&&senseOK(a)); if(byName) return byName; }
   }
-  // 3) by property address (share the street number + first street word)
+  // 3) by property address — match on a shared distinctive street/suburb token, so a
+  //    valuation for "32 Raffles Street Mount Gravatt East" overrides an existing
+  //    "Investment Property - Mount Gravatt" (and a Bulimba valuation the PPOR).
   if(cand.address){
-    const parts=String(cand.address).split(",")[0].trim();
-    const key=norm(parts).slice(0,16);
-    if(key.length>=4){ const byAddr=list.find(a=>{ const an=norm(a.name); return an&&(an.includes(key)||key.includes(an.slice(0,16))); }); if(byAddr) return byAddr; }
+    const stop=/^(street|st|road|rd|ave|avenue|dr|drive|ct|court|pl|place|way|cres|crescent|lane|ln|tce|terrace|blvd|boulevard|parade|pde|hwy|highway|unit|apt|apartment|flat|qld|nsw|vic|wa|sa|nt|act|tas|australia|estimated|value|property|residence|primary|investment)$/i;
+    const toks=String(cand.address).toLowerCase().split(/[^a-z0-9]+/).filter(w=>w.length>=4 && !/^\d+$/.test(w) && !stop.test(w));
+    if(toks.length){
+      const propRows=list.filter(a=>/propert|residence|home|land|ppor|house|unit|apartment|dwelling/i.test((a.type||"")+" "+(a.name||"")));
+      const pool=propRows.length?propRows:list;
+      const byTok=pool.find(a=>{ const an=String(a.name||"").toLowerCase(); return toks.some(t=>an.includes(t)); });
+      if(byTok) return byTok;
+    }
   }
   // 4) fall back to the sole asset of the same kind for that owner — only for a
   //    property or a super account (a single "sole non-super" match would be too
@@ -1387,6 +1394,11 @@ function assetsLikelySame(a,b){
   if((na.length>=5&&nb.includes(na))||(nb.length>=5&&na.includes(nb))) return true;
   const ka=ASSET_KW.find(k=>na.includes(k)), kb=ASSET_KW.find(k=>nb.includes(k));
   if(ka&&ka===kb) return true;                                 // same platform keyword + same sense
+  // looser shared tokens (same super/investment sense already required above):
+  // "HUB24 Investment" vs "HUB Investment - Trust"; "Personal MCMA" vs "Macquarie CMA"
+  if(na.includes("hub")&&nb.includes("hub")) return true;
+  const isMCMA=x=>x.includes("mcma")||x.includes("cashmanagement")||x.includes("macquariecma");
+  if(isMCMA(na)&&isMCMA(nb)) return true;
   return false;
 }
 function insLikelySame(a,b){
@@ -1414,24 +1426,40 @@ function _bestKeeper(rows){
     if(s>bs){ bs=s; best=k; } });
   return best;
 }
-// Collect every duplicate group across assets + insurance (minus dismissed ones)
+const _LISTLABEL={nestegg:"Nest egg",lifestyle:"Lifestyle",insClient:"Insurance",insPartner:"Insurance (partner)"};
+function _listRef(ln){ return ln==="nestegg"?S.nestegg:ln==="lifestyle"?S.lifestyle:ln==="insClient"?(S.insurance&&S.insurance.client):ln==="insPartner"?(S.insurance&&S.insurance.partner):getArr(ln); }
+// keeper scoring across mixed-list members; bias toward the nest-egg row for assets
+function _bestKeeperM(members){
+  let best=0,bs=-1;
+  members.forEach((m,k)=>{ const r=m.row; let s=0;
+    if(r.name && !/unconfirmed|check figure/i.test(r.name)) s+=3;
+    if(_ddig(r.ref)||_ddig(r.policy)) s+=2;
+    if(num(r.value)>0) s+=1;
+    if(m.list==="nestegg") s+=1;                 // "already in nest egg" → prefer it
+    s+=Math.min(2,String(r.name||r.coverType||"").length/12);
+    if(s>bs){ bs=s; best=k; } });
+  return best;
+}
+// Collect duplicate groups. Assets are compared ACROSS nest-egg + lifestyle so the
+// "same account sitting in the wrong list" case (e.g. an MCMA in Lifestyle that's
+// already in Nest egg) is caught, not just within-list doubles.
 function collectConflicts(){
   if(!S._dismissDup) S._dismissDup=[];
   const out=[];
-  [["nestegg","Nest egg asset"],["lifestyle","Lifestyle asset"]].forEach(([ln,label])=>{
-    const list=S[ln]||[];
-    dupGroups(list,assetsLikelySame).forEach(idxs=>{
-      const rows=idxs.map(i=>list[i]);
-      const sig=ln+"::"+_dupSig(rows,r=>_dnorm(r.name)+"|"+_ddig(r.ref));
-      if(!S._dismissDup.includes(sig)) out.push({kind:"asset", listName:ln, label, idxs, rows, sig});
-    });
+  const assetMembers=[];
+  (S.nestegg||[]).forEach((r,i)=>assetMembers.push({list:"nestegg",idx:i,row:r}));
+  (S.lifestyle||[]).forEach((r,i)=>assetMembers.push({list:"lifestyle",idx:i,row:r}));
+  dupGroups(assetMembers.map(m=>m.row), assetsLikelySame).forEach(idxs=>{
+    const members=idxs.map(i=>assetMembers[i]);
+    const sig="asset::"+_dupSig(members.map(m=>m.row), r=>_dnorm(r.name)+"|"+_ddig(r.ref));
+    if(!S._dismissDup.includes(sig)) out.push({kind:"asset", label:"Asset / account", members, sig});
   });
   [["client","insClient"],["partner","insPartner"]].forEach(([who,ln])=>{
     const list=(S.insurance&&S.insurance[who])||[];
     dupGroups(list,insLikelySame).forEach(idxs=>{
-      const rows=idxs.map(i=>list[i]);
-      const sig=ln+"::"+_dupSig(rows,r=>_dnorm(r.coverType)+_dnorm(r.insurer)+"|"+_ddig(r.policy));
-      if(!S._dismissDup.includes(sig)) out.push({kind:"ins", listName:ln, label:"Insurance cover", idxs, rows, sig});
+      const members=idxs.map(i=>({list:ln,idx:i,row:list[i]}));
+      const sig=ln+"::"+_dupSig(members.map(m=>m.row), r=>_dnorm(r.coverType)+_dnorm(r.insurer)+"|"+_ddig(r.policy));
+      if(!S._dismissDup.includes(sig)) out.push({kind:"ins", label:"Insurance cover", members, sig});
     });
   });
   return out;
@@ -1443,42 +1471,44 @@ function renderConflictBanner(){
   if(!conflicts.length) return "";
   const cards=conflicts.map(c=>{
     const rid="dupR"+(_dupRadioN++);
-    const keep=_bestKeeper(c.rows);
-    const opts=c.rows.map((r,k)=>{
-      const val=c.kind==="ins"
+    const keep=_bestKeeperM(c.members);
+    const opts=c.members.map((m,k)=>{
+      const r=m.row;
+      const desc=c.kind==="ins"
         ? `${esc(r.coverType||"Cover")} · ${esc(r.insurer||"")}${r.amount?(" · "+esc(String(r.amount))):""}${r.policy?(" · #"+esc(String(r.policy))):""}`
-        : `${esc(r.name||r.type||"(unnamed)")} — ${money(num(r.value))}${num(r.debt)?(" / debt "+money(num(r.debt))):""}${r.ref?(" · ref "+esc(String(r.ref))):""}`;
-      return `<label class="dup-opt"><input type="radio" name="${rid}" value="${c.idxs[k]}" ${k===keep?"checked":""}> <span>${val}</span></label>`;
+        : `<b>${esc(_LISTLABEL[m.list]||m.list)}</b> · ${esc(r.name||r.type||"(unnamed)")} — ${money(num(r.value))}${num(r.debt)?(" / debt "+money(num(r.debt))):""}${r.ref?(" · ref "+esc(String(r.ref))):""}`;
+      return `<label class="dup-opt"><input type="radio" name="${rid}" value="${m.list}:${m.idx}" ${k===keep?"checked":""}> <span>${desc}</span></label>`;
     }).join("");
     return `<div class="dup-item">
-      <div class="dup-q">${esc(c.label)}: ${c.idxs.length} rows look like the <b>same account</b> — link them?</div>
+      <div class="dup-q">${esc(c.label)}: ${c.members.length} rows look like the <b>same ${c.kind==="ins"?"policy":"account"}</b> — link them?</div>
       <div class="dup-opts">${opts}</div>
       <div class="dup-act">
-        <button class="btn btn-primary btn-sm" onclick="linkDup('${c.listName}','${rid}')">🔗 Link — keep selected, merge the rest</button>
+        <button class="btn btn-primary btn-sm" onclick="linkConflict('${rid}')">🔗 Link — keep selected, merge the rest</button>
         <button class="btn btn-ghost btn-sm" onclick="dismissDup('${encodeURIComponent(c.sig)}')">Keep separate</button>
       </div></div>`;
   }).join("");
   return `<div class="card conflict-card">
-    <div class="conflict-head">⚠ ${conflicts.length} possible duplicate account${conflicts.length>1?"s":""} — from imports or the last review</div>
+    <div class="conflict-head">⚠ ${conflicts.length} possible duplicate${conflicts.length>1?"s":""} — from imports or the last review</div>
     <div class="conflict-sub">A supporting document looks like it describes an account you already have. Pick the row to keep and <b>Link</b> to merge them, or <b>Keep separate</b> if they really are different.</div>
     ${cards}</div>`;
 }
-function linkDup(listName, radioId){
-  const list=getArr(listName); if(!list) return;
+function linkConflict(radioId){
   const sel=document.querySelector(`input[name="${radioId}"]:checked`);
   if(!sel){ toast("Pick which row to keep first."); return; }
-  const keepIdx=+sel.value;
-  const cmp=(listName==="insClient"||listName==="insPartner")?insLikelySame:assetsLikelySame;
-  const grp=dupGroups(list,cmp).find(g=>g.includes(keepIdx));
-  if(!grp){ renderContent(); return; }
-  const keeper=list[keepIdx];
-  grp.filter(i=>i!==keepIdx).forEach(i=>{ const o=list[i];
+  const [kl,ki]=sel.value.split(":"); const keepIdx=+ki;
+  const conflict=collectConflicts().find(c=>c.members.some(m=>m.list===kl&&m.idx===keepIdx));
+  if(!conflict){ renderContent(); return; }
+  const keeper=_listRef(kl)[keepIdx];
+  const others=conflict.members.filter(m=>!(m.list===kl&&m.idx===keepIdx));
+  others.forEach(m=>{ const o=m.row;
     Object.keys(o).forEach(f=>{ if((keeper[f]==null||keeper[f]==="") && o[f]!=null && o[f]!=="") keeper[f]=o[f]; });
     if(!num(keeper.value)&&num(o.value)) keeper.value=o.value;
     if(!num(keeper.debt)&&num(o.debt)) keeper.debt=o.debt;
   });
-  grp.filter(i=>i!==keepIdx).sort((a,b)=>b-a).forEach(i=>list.splice(i,1));
-  toast("Linked "+grp.length+" rows into one.");
+  // remove the merged rows, descending idx within each source list
+  const byList={}; others.forEach(m=>{ (byList[m.list]=byList[m.list]||[]).push(m.idx); });
+  Object.entries(byList).forEach(([ln,idxs])=>{ const L=_listRef(ln); if(L) idxs.sort((a,b)=>b-a).forEach(i=>L.splice(i,1)); });
+  toast("Linked "+conflict.members.length+" rows into one.");
   renderContent();
 }
 function dismissDup(encSig){ const sig=decodeURIComponent(encSig); if(!S._dismissDup) S._dismissDup=[]; if(!S._dismissDup.includes(sig)) S._dismissDup.push(sig); renderContent(); }
@@ -1687,8 +1717,13 @@ function applyPropertyValuation(pv){
   // Override the existing property row if this valuation matches one; only add a
   // new row when this property genuinely isn't already in the current situation.
   let a = findExistingAsset(S.lifestyle, {name:pv.address, address:pv.address, type:"Property"});
-  if(!a){ a={name:pv.address||"Property", value:0, debt:0, type:"Property", owner:"", ref:"Valuation "+(formatDate(S.meta.reviewDate)||"")}; S.lifestyle.push(a); }
-  a.value=pv.value; if(pv.address && !/,/.test(a.name)) a.name=pv.address;
+  const isNew=!a;
+  if(!a){ a={name:pv.address||"Property", value:0, debt:0, type:"Property", owner:"", ref:""}; S.lifestyle.push(a); }
+  a.value=pv.value;
+  // keep the existing friendly label (e.g. "Investment Property - Mount Gravatt");
+  // only name a brand-new row from the address. Note the valuation in the reference.
+  if(isNew && pv.address) a.name=pv.address;
+  a.ref="Valuation "+(formatDate(S.meta.reviewDate)||"as uploaded");
 }
 
 /* ---------- BT Panorama parser ---------- */
@@ -2236,6 +2271,7 @@ function buildPreviewPages(){
   ["client","partner"].forEach(side=>{
     if(side==="partner" && !hp) return;
     const name=side==="client"?S.client.name:S.partner.name; if(!name) return;
+    if(!(S.insurance[side]||[]).length) return;   // no cover → omit the page (matches the doc)
     const rows=(S.insurance[side]||[]).map(i=>({cells:[{v:i.insurer},{v:i.policy},{v:i.owner},{v:i.life},{v:i.coverType},{v:i.amount},{v:i.structure},{v:i.premium}]}));
     P.push(`<div class="wrprev-page"><div class="pv-h2">Insurance Cover</div><div class="pv-subname">${esc(firstName(side)||name)}</div>${pvTable(["Insurer - Product","Policy Number","Policy Owner","Life Insured","Type of Cover","Amount of Cover","Premium Structure","Monthly Premium*"],rows,{head:"navy",align:ctr8,empty:"Insurance not entered yet."})}<div class="pv-foot">* The monthly premium is an estimate after-tax figure based on the data available at the time of producing this document. Further detail available on request.</div></div>`);
   });
@@ -3502,6 +3538,30 @@ async function importReviewDoc(ev){
       })).filter(g=>g.desc && !/^description$/i.test(g.desc));
       if(items.length){ S.goals=items; got.push(items.length+" goals"); }
     }
+    // Foundations & Estate (the combined table: Life / TPD / Trauma / IP + Wills /
+    // POA / Super & Insurance death nominations). Columns: label, client value,
+    // client ref, [partner value, partner ref]. Prefill so it mirrors the last doc.
+    const ftbl=tables.find(t=> t.some(r=>/life insurance/i.test(r[0]||"")) && t.some(r=>/wills/i.test(r[0]||"")) );
+    if(ftbl){
+      const val=(r,i)=>String((r&&r[i])||"").replace(/\s+/g," ").trim();
+      const f=S.foundations, e=S.estate;
+      // detect couple layout (a value in col 3 across the insurance rows)
+      const couple=ftbl.some(r=>/life insurance|trauma/i.test(r[0]||"") && val(r,3));
+      const cV=1, cR=2, pV=couple?3:-1, pR=couple?4:-1;
+      let n=0;
+      ftbl.forEach(r=>{ const lab=(r[0]||"").toLowerCase(); if(!lab) return;
+        const set=(o,k,i)=>{ if(i>=0){ const v=val(r,i); if(v){ o[k]=v; n++; } } };
+        if(/life insurance/.test(lab)){ set(f.client,"life",cV); set(f.client,"ref",cR); if(couple){ set(f.partner,"life",pV); set(f.partner,"ref",pR);} }
+        else if(/permanent|tpd/.test(lab)){ set(f.client,"tpd",cV); if(couple) set(f.partner,"tpd",pV); }
+        else if(/trauma/.test(lab)){ set(f.client,"trauma",cV); if(couple) set(f.partner,"trauma",pV); }
+        else if(/income protection/.test(lab)){ const v=val(r,cV); if(v){ const parts=v.split("\n"); f.client.ip=parts[0]; if(parts[1]) f.client.ipNotes=parts.slice(1).join(" "); n++; } if(couple){ const pv=val(r,pV); if(pv){ const pp=pv.split("\n"); f.partner.ip=pp[0]; if(pp[1]) f.partner.ipNotes=pp.slice(1).join(" "); } } }
+        else if(/wills/.test(lab)){ set(e,"willsC",cV); if(couple) set(e,"willsP",pV); }
+        else if(/power of attorney/.test(lab)){ set(e,"poaC",cV); if(couple) set(e,"poaP",pV); }
+        else if(/super death/.test(lab)){ set(e,"superNomC",cV); set(e,"superNomRef",cR); if(couple){ set(e,"superNomP",pV); set(e,"superNomRefP",pR);} }
+        else if(/insurance death/.test(lab)){ set(e,"insNomC",cV); set(e,"insNomRef",cR); if(couple){ set(e,"insNomP",pV); set(e,"insNomRefP",pR);} }
+      });
+      if(n) got.push("foundations & estate");
+    }
     if(got.length){ registerUpload(f.name,"Last review"); toast("Imported from review: "+got.join(", ")+"."); renderContent(); }
     else { toast("Read the file but couldn't find the expected review tables."); }
   }catch(e){ toast("Couldn't read the review doc: "+e.message); }
@@ -3879,8 +3939,10 @@ async function generateDocx(){
   /* ===== Portfolio + Allocation + Insurance ===== */
   portfolioPages(ch,"client",S.client.name);
   if(m.hasPartner) portfolioPages(ch,"partner",S.partner.name);
-  insurancePage(ch,"client",S.client.name);
-  if(m.hasPartner) insurancePage(ch,"partner",S.partner.name);
+  // Only include the Insurance Cover page when there is cover to show (comment: if
+  // there's no insurance cover, remove this section).
+  if((S.insurance.client||[]).length) insurancePage(ch,"client",S.client.name);
+  if(m.hasPartner && (S.insurance.partner||[]).length) insurancePage(ch,"partner",S.partner.name);
 
   /* ===== Actions & Services ===== */
   ch.push(H2("Action items and Discussion Points"));
