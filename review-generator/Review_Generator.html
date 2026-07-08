@@ -3931,6 +3931,21 @@ function findSchemaItem(id){
     for(const fu of (it.followUps||[])) for(const f of (fu.items||[])) if(f.id===id) return f; } }
   return null;
 }
+// Split a checklist comment tagged per-client with "(J)" / "(M)" (or "(Joint)")
+// into { c1, c2, joint } segments, so a couple's values route to the right client.
+function splitJM(text){
+  const s=String(text||"");
+  if(!/\(\s*(?:J|M|Joint|Both|1|2)\s*\)/i.test(s)) return null;
+  const out={c1:"",c2:"",joint:""};
+  const push=(tag,txt)=>{ txt=String(txt||"").trim(); if(!txt) return;
+    if(/^(J|1)$/i.test(tag)) out.c1=(out.c1?out.c1+"\n":"")+txt;
+    else if(/^(M|2)$/i.test(tag)) out.c2=(out.c2?out.c2+"\n":"")+txt;
+    else out.joint=(out.joint?out.joint+"\n":"")+txt; };
+  const re=/\(\s*(J|M|Joint|Both|1|2)\s*\)/gi; let m, last=null, lastIdx=0;
+  while((m=re.exec(s))){ if(last!==null) push(last, s.slice(lastIdx,m.index)); last=m[1]; lastIdx=re.lastIndex; }
+  if(last!==null) push(last, s.slice(lastIdx));
+  return out;
+}
 function deriveChecklistAnswer(item,comment){
   const c=String(comment||"").trim(); const t=item?item.type:"text";
   if(!c) return null;
@@ -3995,8 +4010,16 @@ async function importChecklist(ev){
       if(map){
         if(map.account && comment && !/^n\/?a/i.test(comment) && getAns(map.account)!=="Yes") clSet(map.account,"Yes",false);
         const si=findSchemaItem(map.id);
-        const val=deriveChecklistAnswer(si,comment);
-        if(val!=null){ if(si&&si.perClient) clSetC(map.id, map.slot||"c1", val, false); else clSet(map.id, val, false); prefilled++; }
+        if(si&&si.perClient){
+          // for a couple, split "(J) … (M) …" so each client's value lands in its slot
+          const jm=twoClients()?splitJM(comment):null;
+          if(jm&&(jm.c1||jm.c2)){
+            let any=false;
+            if(jm.c1){ const v1=deriveChecklistAnswer(si,jm.c1); if(v1!=null){ clSetC(map.id,"c1",v1,false); any=true; } }
+            if(jm.c2){ const v2=deriveChecklistAnswer(si,jm.c2); if(v2!=null){ clSetC(map.id,"c2",v2,false); any=true; } }
+            if(any) prefilled++;
+          } else { const val=deriveChecklistAnswer(si,comment); if(val!=null){ clSetC(map.id, map.slot||"c1", val, false); prefilled++; } }
+        } else { const val=deriveChecklistAnswer(si,comment); if(val!=null){ clSet(map.id, val, false); prefilled++; } }
       }
       // ACTION column → to-do
       if(action && action.replace(/[^a-z]/gi,"").length>=8){
@@ -4007,7 +4030,15 @@ async function importChecklist(ev){
       // rich COMMENT → route to the matching WR section
       if(comment && !/^(yes|no|n\/?a|done|completed?|uploaded|downloaded|updated|expired|required|valid)\b/i.test(comment)){
         const it=item.toLowerCase();
-        if(/beneficiar|nomination|nominee/.test(it)){ S.estate.notes=(S.estate.notes?S.estate.notes+"\n":"")+"Beneficiaries — "+comment; routed++; }
+        if(/beneficiar|nomination|nominee/.test(it)){
+          // route each client's beneficiary detail to their Foundations reference
+          const jm=twoClients()?splitJM(comment):null;
+          if(jm&&(jm.c1||jm.c2)){
+            if(jm.c1){ S.estate.superNomRef=(S.estate.superNomRef?S.estate.superNomRef+"\n":"")+jm.c1; if(!S.estate.superNomC)S.estate.superNomC="Yes"; }
+            if(jm.c2){ S.estate.superNomRefP=(S.estate.superNomRefP?S.estate.superNomRefP+"\n":"")+jm.c2; if(!S.estate.superNomP)S.estate.superNomP="Yes"; }
+          } else { S.estate.superNomRef=(S.estate.superNomRef?S.estate.superNomRef+"\n":"")+comment; if(!S.estate.superNomC)S.estate.superNomC="Yes"; }
+          routed++;
+        }
         else if(/fee/.test(it)){ /* fees are intentionally NOT dumped into the doc — kept in the checklist only */ }
         else if(/income protection|\bip\b/.test(it)){ S.foundations.client.ipNotes=(S.foundations.client.ipNotes?S.foundations.client.ipNotes+" ":"")+comment; routed++; }
       }
