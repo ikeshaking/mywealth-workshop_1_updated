@@ -1997,6 +1997,16 @@ function tidyNotes(s){
     .replace(/([a-z0-9%\)])([A-Z][a-z]{2,})/g, "$1\n$2")    // jammed name boundary → newline
     .replace(/[ \t]{2,}/g," ").replace(/^\n+/,"").replace(/\n{2,}/g,"\n").trim();
 }
+// Split two run-together insurer / super-fund names (e.g. "AIAHESTA Super" →
+// "AIA" + "HESTA Super", where AIA is the insurer and HESTA the fund). Uses a name
+// dictionary so genuine single names (e.g. "ClearView") are left alone.
+const INS_FUND_NAMES=["AIA","TAL","AMP","MLC Life","MLC","NEOS","Zurich","MetLife","OnePath","Asteron","ClearView","Integrity Life","NobleOak","Resolution Life","PPS Mutual","CommInsure","BT Life","BT","HESTA","HostPlus","AustralianSuper","Aware Super","AwareSuper","Cbus","UniSuper","REST","Rest Super","Sunsuper","QSuper","Australian Retirement Trust","Colonial First State","CFS","Netwealth","Hub24","Vanguard","Spirit Super","Brighter Super"];
+function deJamRef(s){
+  let out=String(s||"");
+  INS_FUND_NAMES.forEach(tok=>{ const pat=tok.replace(/[.*+?^${}()|[\]\\]/g,"\\$&").replace(/ /g,"\\s?");
+    out=out.replace(new RegExp("([A-Za-z])(?="+pat+"\\b)","g"), "$1\n"); });
+  return out.replace(/\n{2,}/g,"\n").trim();
+}
 // Drop junk "strategy" rows (a stray tick/ratings-legend cell) that shouldn't be tracked
 function realTracking(list){
   return (list||[]).filter(t=>{ const s=String(t&&t.strategy||"").trim();
@@ -2402,7 +2412,7 @@ function buildPreviewPages(){
   const ipC=[f.client.ip,f.client.ipNotes].filter(Boolean).join("\n"), ipP=[f.partner.ip,f.partner.ipNotes].filter(Boolean).join("\n");
   const fHead=hp?["", (firstName("client")||"Client"),"Reference",(firstName("partner")||"Partner"),"Reference"]:["",(firstName("client")||"Client"),"Reference"];
   const fRows=[
-    fRow("Life Insurance",foundInsCell(tidyNotes(f.client.life)),f.client.ref,foundInsCell(tidyNotes(f.partner.life)),f.partner.ref),
+    fRow("Life Insurance",foundInsCell(tidyNotes(f.client.life)),deJamRef(f.client.ref),foundInsCell(tidyNotes(f.partner.life)),deJamRef(f.partner.ref)),
     fRow("Total & Permanent Disability",foundInsCell(tidyNotes(f.client.tpd)),"",foundInsCell(tidyNotes(f.partner.tpd)),""),
     fRow("Trauma Insurance",foundInsCell(tidyNotes(f.client.trauma)),"",foundInsCell(tidyNotes(f.partner.trauma)),""),
     fRow("Income Protection (month)",foundInsCell(tidyNotes(ipC)),"",foundInsCell(tidyNotes(ipP)),""),
@@ -4340,7 +4350,7 @@ async function generateDocx(){
       ? new TableRow({children:[cell("",{w:w[0],shade:BLUE}),cell((firstName("client")||S.client.name||"Client"),{w:w[1],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Reference",{w:w[2],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell((firstName("partner")||S.partner.name||"Partner"),{w:w[3],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Reference",{w:w[4],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER})]})
       : new TableRow({children:[cell("",{w:w[0],shade:BLUE}),cell((firstName("client")||S.client.name||"Client"),{w:w[1],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER}),cell("Reference",{w:w[2],shade:BLUE,bold:true,color:WHITE,align:AlignmentType.CENTER})]});
     return new Table({layout:TableLayoutType.FIXED,width:{size:W,type:WidthType.DXA},rows:[head,
-      rowF("Life Insurance",foundInsCell(tidyNotes(f.client.life)),f.client.ref,foundInsCell(tidyNotes(f.partner.life)),f.partner.ref),
+      rowF("Life Insurance",foundInsCell(tidyNotes(f.client.life)),deJamRef(f.client.ref),foundInsCell(tidyNotes(f.partner.life)),deJamRef(f.partner.ref)),
       rowF("Total & Permanent Disability",foundInsCell(tidyNotes(f.client.tpd)),"",foundInsCell(tidyNotes(f.partner.tpd)),""),
       rowF("Trauma Insurance",foundInsCell(tidyNotes(f.client.trauma)),"",foundInsCell(tidyNotes(f.partner.trauma)),""),
       rowF("Income Protection (month)",foundInsCell(tidyNotes([f.client.ip,f.client.ipNotes].filter(Boolean).join("\n"))),"",foundInsCell(tidyNotes([f.partner.ip,f.partner.ipNotes].filter(Boolean).join("\n"))),""),
