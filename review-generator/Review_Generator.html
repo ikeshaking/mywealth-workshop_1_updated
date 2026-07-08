@@ -813,10 +813,12 @@ const CHECKLIST_SCHEMA=[
 
   /* ---- ADVISER FEES ---- */
   {id:"fees", title:"Adviser Fees", icon:"%", always:true, items:[
+    CL.sub("fee_h_charged","Fees charged"),
     CL.cur("fee_soa","SOA fee"),
     CL.cur("fee_osa","Last OSA fee"),
     CL.info("fee_matrix",()=>`<div class="cl-help"><b>Actual fees charged</b> — split super vs cashflow by owner (Client 1 / 2 / Joint / Entity), and record where each is paid from.</div>`+feesGrid()),
     CL.info("fee_calc",()=>feePanel()),
+    CL.sub("fee_h_changes","Changes & compliance"),
     CL.yn("fee_split_change","Adviser wants to change the fee split / structure / amounts?",
       {help:"If yes, an OSAV is required along with fee forms (the reference date remains unchanged in these cases).",
        todo:"Prepare an OSA variation and fee forms for the fee split/structure change (reference date unchanged)"}),
