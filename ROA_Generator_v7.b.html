@@ -1115,7 +1115,7 @@ function insurerBrand(name){
   if(INSURER_PRODUCT_TO_BRAND[v]) return INSURER_PRODUCT_TO_BRAND[v];
   return v;
 }
-const COVER_TYPES=["Life (Linked)","TPD (Linked & Any-Occupation)","TPD (Linked & Own-Occupation)","TPD (Standalone & Any-Occupation)","TPD (Standalone & Own-Occupation)","TPD (Any-Occupation)","TPD (Own-Occupation)","Income Protection","Income Protection — Indemnity","Trauma","Trauma (Standalone)","Child Cover","Other"];
+const COVER_TYPES=["Life (Linked)","TPD (Linked & Any-Occupation)","TPD (Linked & Own-Occupation)","TPD (Standalone & Any-Occupation)","TPD (Standalone & Own-Occupation)","TPD (Any-Occupation)","TPD (Own-Occupation)","Income Protection","Income Protection — Indemnity","IP (Indemnity & Standard Contract)","Trauma","Trauma (Standalone)","Child Cover","Other"];
 const PREM_STRUCT=["Stepped / Age-based","Stepped","Level","Hybrid","Variable Age-Stepped"];
 const OWNERS=["Super","Flexi-Linked Super","Linked Super"];
 // The policy-owner dropdown shows: Super, the client's first name (personally owned),
@@ -9757,6 +9757,8 @@ function mkInsurance(){
     provider:"",coverType:"",lifeInsured:"",owner:"",status:"Recommend",
     benefitAmount:"",premiumStructure:"",monthlyPremium:"",monthlyPremiumAfterTax:"",premiumNote:"",
     waitingPeriod:"",benefitPeriod:"",exclusions:"",
+    // IP only — prints as "plus $X pm Super Contribution Option" after the benefit
+    superContribution:"",
     // When true, this row's premium is part of a combined/linked policy with the row
     // immediately above (e.g. linked Life + TPD paid as one premium). The premium cell
     // then vertical-merges up into the previous row so the shared premium shows once.
@@ -11547,7 +11549,7 @@ function ex_normCoverType(raw){
     return "Trauma";
   }
   if(/\bip\b|\bi\.?p\.?\b|income protection|income prot|incorne/.test(s)){
-    if(/indemnit/.test(s)) return "Income Protection — Indemnity";
+    if(/indemnit/.test(s)) return "IP (Indemnity & Standard Contract)";
     return "Income Protection";
   }
   if(/\btpd\b|\bt\.?p\.?d\.?\b|total and permanent|total & permanent|permanent disab/.test(s)){
@@ -11881,20 +11883,28 @@ function ex_scanCoverLines(text){
     if(!ct) continue;
     const dollars = money(line);
     if(!dollars.length || dollars[0].n < 1000) continue;   // needs a benefit-sized amount
-    const isIP = /income protection/i.test(ct);
-    const benefit = dollars[0].raw + (isIP && /\/?\s*(month|pm\b)/i.test(line) ? ' per month' : '');
-    // Monthly premium on the same line: the smallest $ tagged per month/pm/monthly
-    // that isn't the benefit amount itself (IP benefits are also "per month").
-    let premium = '';
-    const pmAmts = [];
-    const pmRe = /\$\s*([\d,]+(?:\.\d+)?)(?=\s*(?:per\s*month|\/\s*month|p\.?m\.?\b|monthly))/gi;
-    let pmM;
-    while((pmM = pmRe.exec(line))) pmAmts.push(parseFloat(pmM[1].replace(/,/g,'')));
-    const cand = pmAmts.filter(n => n !== dollars[0].n).sort((a,b)=>a-b);
-    if(cand.length) premium = '$' + (Number.isInteger(cand[0]) ? String(cand[0]) : cand[0].toFixed(2)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' pm';
-    const wait = line.match(/(\d+)\s*[- ]?day/i);
+    const isIP = /income protection|^ip\b/i.test(ct);
+    const benefit = dollars[0].raw + (isIP && /\/?\s*(month|pm\b)/i.test(line) ? ' pm' : '');
+    // Super Contribution Option (the firm's SOA table prints it after the IP benefit).
+    const scoM = line.match(/plus\s*\$\s*([\d,]+)\s*pm\s*super\s*contribution/i);
+    const scoAmt = scoM ? parseFloat(scoM[1].replace(/,/g,'')) : null;
+    // Before/after-tax premiums when tagged (the firm's own table style)…
+    const btM = line.match(/\$\s*([\d,]+(?:\.\d+)?)\s*pm\s*\(before tax\)/i);
+    const atM = line.match(/\$\s*([\d,]+(?:\.\d+)?)\s*pm\s*\(after tax\)/i);
+    // …otherwise the smallest $ tagged per month/pm that isn't the benefit or SCO.
+    let premium = btM ? '$' + btM[1] + ' pm (before tax)' : '';
+    if(!premium){
+      const pmAmts = [];
+      const pmRe = /\$\s*([\d,]+(?:\.\d+)?)(?=\s*(?:per\s*month|\/\s*month|p\.?m\.?\b|monthly))/gi;
+      let pmM;
+      while((pmM = pmRe.exec(line))) pmAmts.push(parseFloat(pmM[1].replace(/,/g,'')));
+      const atAmt = atM ? parseFloat(atM[1].replace(/,/g,'')) : null;
+      const cand = pmAmts.filter(n => n !== dollars[0].n && n !== scoAmt && n !== atAmt).sort((a,b)=>a-b);
+      if(cand.length) premium = '$' + (Number.isInteger(cand[0]) ? String(cand[0]) : cand[0].toFixed(2)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' pm';
+    }
+    const wait = line.match(/(\d+)\s*[- ]?(days?|weeks?)\b/i);
     const bper = line.match(/(?:to|until)\s*age\s*(\d{2})/i) || line.match(/(\d+)\s*year(?:s)?\s*benefit/i);
-    const struct = /variable\s*age|stepped|level|hybrid/i.exec(line);
+    const struct = /variable\s*age[- ]?stepped|variable\s*age|stepped|level|hybrid/i.exec(line);
     const key = ct + '|' + dollars[0].n;
     if(seen.has(key)) continue;
     seen.add(key);
@@ -11902,11 +11912,14 @@ function ex_scanCoverLines(text){
       provider: provOn(line) || docProvider,
       coverType: ct,
       benefitAmount: benefit,
-      waitingPeriod: wait ? wait[1] + ' days' : '',
+      waitingPeriod: wait ? wait[1] + ' ' + wait[2].toLowerCase().replace(/s?$/, 's') : '',
       benefitPeriod: bper ? (/age/i.test(bper[0]) ? 'Until Age ' + bper[1] : bper[1] + ' years') : '',
       premiumStructure: struct ? ex_normPremStruct(struct[0]) : '',
       premiumNote: premium,
-      owner: /(?:inside|via|within|through)\s+super|super\s*owned/i.test(line) ? 'Super' : ''
+      monthlyPremiumAfterTax: atM ? '$' + atM[1] + ' pm (after tax)' : '',
+      superContribution: scoM ? '$' + scoM[1] + ' pm' : '',
+      owner: /flexi[- ]?linked/i.test(line) ? 'Flexi-Linked Super'
+        : (/(?:inside|via|within|through)\s+super|super\s*owned|\bsuper\s+(?:recommend|retain|in force)/i.test(line) ? 'Super' : '')
     });
     if(rows.length >= 15) break;
   }
@@ -11986,52 +11999,217 @@ function cdmParseBenefitsReport(text){
   });
   if(!parsed.length) return null;
 
-  // Life + TPD on the SAME policy number are a linked package.
-  const lifePolicies = {};
-  parsed.forEach(p => { if(/\b(life|death)\b/i.test(p.benefitText) && !/tpd/i.test(p.benefitText)) lifePolicies[p.policy] = true; });
   const mapCover = p => {
     const s = (p.benefitText + ' ' + p.body + ' ' + p.extra).toLowerCase();
     if(/income protection|salary continuance/.test(s) || (/\bincome\b/.test(s) && /\bprotection\b/.test(s))){
-      return /indemnit/.test(s) ? 'Income Protection — Indemnity' : 'Income Protection';
+      return /indemnit/.test(s) ? 'IP (Indemnity & Standard Contract)' : 'Income Protection';
     }
     if(/trauma|living plus|critical/.test(s)) return 'Trauma';
     if(/tpd|total (and|&) permanent/.test(s)){
-      const own = /\bown\b/.test(s);
-      if(lifePolicies[p.policy]) return own ? 'TPD (Linked & Own-Occupation)' : 'TPD (Linked & Any-Occupation)';
-      return own ? 'TPD (Own-Occupation)' : 'TPD (Any-Occupation)';
+      // TPD is assumed LINKED to the Life cover (the firm's standard structure);
+      // the premium cell's Unlink control splits it when it genuinely isn't.
+      return /\bown\b/.test(s) ? 'TPD (Linked & Own-Occupation)' : 'TPD (Linked & Any-Occupation)';
     }
     if(/\b(life|death)\b/.test(s)) return 'Life (Linked)';
     return '';
   };
 
-  // Second pass — one cover line per report row, exactly as the report shows
-  // them. A benefit split between stepped and level premiums stays as TWO
-  // lines (one per premium structure), matching the CDM layout.
+  // Second pass — one line per COVER, shaped like the firm's table:
+  //  • stepped/level premium components of a benefit combine into one line
+  //    (structure shows Hybrid when both are present)
+  //  • ALL TPD components (any-occ base + own-occ booster) fold into ONE
+  //    linked TPD line labelled Own-Occupation when a booster exists
+  //  • when Life and TPD both exist they share ONE combined premium — held on
+  //    the Life row, tagged (before tax), with the super/cashflow funding
+  //    split — and the TPD row merges up (Unlink to split)
   const firstName = full => (full||'').trim().split(/\s+/)[0] || '';
-  const rows = parsed.map(p => {
+  const groups = [];
+  const byKey = {};
+  parsed.forEach(p => {
     const ct = mapCover(p);
-    if(!ct) return null;
-    const isIP = /income protection/i.test(ct);
-    const structure = p.struct || '';
-    const note = fmt$(p.premMonthly) + ' pm';
+    if(!ct) return;
+    const isTpd = /^tpd/i.test(ct);
+    const key = isTpd ? 'tpd' : (p.policy + '|' + ct + '|' + p.sum.n);
+    if(!byKey[key]){ byKey[key] = {ct, isTpd, parts: [], first: p}; groups.push(byKey[key]); }
+    byKey[key].parts.push(p);
+    if(isTpd && /own/i.test(ct)) byKey[key].own = true;
+  });
+
+  const roundD = n => Math.round(n);
+  groups.forEach(g => {
+    if(g.isTpd) g.ct = g.own ? 'TPD (Linked & Own-Occupation)' : 'TPD (Linked & Any-Occupation)';
+    g.superAmt = roundD(g.parts.filter(x => /super|smsf/i.test(x.ownerRaw)).reduce((a, x) => a + x.premMonthly, 0));
+    g.cashAmt = roundD(g.parts.filter(x => !/super|smsf/i.test(x.ownerRaw)).reduce((a, x) => a + x.premMonthly, 0));
+    g.structs = [...new Set(g.parts.map(x => x.struct).filter(Boolean))];
+  });
+  const fundingNote = (sup, cash) => (sup && cash) ? ' / (' + fmt$(sup) + ' from super and ' + fmt$(cash) + ' from personal cashflow)' : '';
+
+  const lifeIdx = groups.findIndex(g => /^life/i.test(g.ct));
+  const tpdIdx = groups.findIndex(g => g.isTpd);
+  const linkedPair = lifeIdx >= 0 && tpdIdx >= 0;
+
+  const rows = groups.map((g, gi) => {
+    const p = g.first;
+    const isIP = /income protection|^ip\b/i.test(g.ct);
+    const isTrauma = /trauma/i.test(g.ct);
+    const fn = firstName(p.client);
     const terms = p.body + ' ' + p.extra;
     const waitM = terms.match(/(\d+)\s*days?\b/i) || terms.match(/indemnity\s*(\d+)/i);
     const bpM = terms.match(/to\s*age\s*(\d+)/i);
-    const fn = firstName(p.client);
+
+    let structure = g.structs.length > 1 ? 'Hybrid' : (g.structs[0] || '');
+    let note = '';
+    let shared = false;
+    if(linkedPair && gi === lifeIdx){
+      // Life row carries the combined Life + TPD premium.
+      const t = groups[tpdIdx];
+      const sup = g.superAmt + t.superAmt, cash = g.cashAmt + t.cashAmt;
+      note = fmt$(sup + cash) + ' pm (before tax)' + fundingNote(sup, cash);
+      const allStructs = [...new Set(g.structs.concat(t.structs))];
+      structure = allStructs.length > 1 ? 'Hybrid' : (allStructs[0] || '');
+    } else if(linkedPair && gi === tpdIdx){
+      shared = true; structure = ''; note = '';
+    } else {
+      const total = g.superAmt + g.cashAmt;
+      note = total ? (fmt$(total) + ' pm' + (isTrauma ? '' : ' (before tax)') + fundingNote(g.superAmt, g.cashAmt)) : '';
+    }
+
     return {
       provider: p.provider,
-      coverType: ct,
+      coverType: g.ct,
       lifeInsured: fn,
-      owner: /super|smsf/i.test(p.ownerRaw) ? (/smsf/i.test(p.ownerRaw) ? 'SMSF' : 'Super') : fn,
+      owner: g.superAmt > 0 ? 'Super' : fn,
       benefitAmount: p.sum.raw + (isIP ? ' pm' : ''),
       waitingPeriod: isIP && waitM ? waitM[1] + ' days' : '',
       benefitPeriod: isIP && bpM ? 'To Age ' + bpM[1] : '',
       premiumStructure: structure,
       premiumNote: note,
+      sharedPremiumWithPrev: shared,
       exclusions: ''
     };
-  }).filter(Boolean);
+  });
+  // The shared-premium merge needs the TPD row directly beneath the Life row.
+  if(linkedPair && tpdIdx !== lifeIdx + 1){
+    const t = rows.splice(tpdIdx, 1)[0];
+    rows.splice(rows.findIndex(r => /^life/i.test(r.coverType)) + 1, 0, t);
+  }
   return rows.length ? {rows, client: parsed[0].client} : null;
+}
+
+// ── ClearView "Amended Terms Agreement" (revised-terms letter) parser ──────
+// Not a table — a letter listing Benefit type(s), Person insured, Policy owner
+// and the amended-terms monthly premium, plus any exclusion applied. Produces
+// one row per listed benefit; the exclusion lands on the cover it names, and
+// the policy premium sits on the first listed cover.
+function parseAmendedTermsAgreement(text){
+  if(!/amended terms agreement/i.test(text) && !(/amended terms/i.test(text) && /benefit type/i.test(text))) return null;
+  // This letter's text layer splits capitals from their word ("T rauma",
+  // "ClearV iew") — stitch those back together before parsing.
+  const t = text.replace(/\t/g, '  ').replace(/\b([A-Z])\s+(?=[a-z]{2})/g, '$1');
+  const grabLine = label => {
+    const m = t.match(new RegExp(label + '\\s*[:\\s]\\s*([^\\n]+)', 'i'));
+    return m ? m[1].trim() : '';
+  };
+  const benefitsRaw = grabLine('Benefit type\\(s\\)') || grabLine('Benefit types?');
+  if(!benefitsRaw) return null;
+  const person = grabLine('Person insured\\(s\\)') || grabLine('Person insured');
+  const ownerLine = grabLine('Policy owner\\(s\\)') || grabLine('Policy owner');
+  const firstName = (person||'').trim().split(/\s+/)[0] || '';
+  // A trustee / fund policy owner means the cover sits inside super.
+  const inSuper = /trustee|nominees|superannuation|\bsuper\b|smsf/i.test(ownerLine) && ownerLine.toLowerCase() !== (person||'').toLowerCase();
+  const premM = t.match(/(monthly|annual|yearly)\s+premium under these terms[^$\n]*\$\s*([\d,]+(?:\.\d+)?)/i);
+  let premium = '';
+  if(premM){
+    let n = parseFloat(premM[2].replace(/,/g, ''));
+    if(/annual|yearly/i.test(premM[1])) n = n / 12;
+    premium = '$' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' pm (before tax)';
+  }
+  // Which cover does the exclusion apply to, and a short summary of it.
+  const exclTargetM = t.match(/exclusion will apply to the person insured'?s\s+([^.\n]+)/i);
+  const exclTarget = exclTargetM ? exclTargetM[1].trim() : '';
+  let exclSummary = '';
+  if(/mental health|adjustment disorder/i.test(t)) exclSummary = 'Mental health & adjustment disorders exclusion';
+  else if(exclTargetM) exclSummary = 'Exclusion applies — see amended terms letter';
+  const provider = /clearview/i.test(t) ? 'ClearView ClearChoice' : '';
+
+  const kindOf = s2 => {
+    const k = (s2||'').toLowerCase();
+    if(/income protection|\bip\b/.test(k)) return 'ip';
+    if(/trauma|critical/.test(k)) return 'trauma';
+    if(/tpd|total (and|&) permanent/.test(k)) return 'tpd';
+    if(/life|death/.test(k)) return 'life';
+    return 'other';
+  };
+  const rows = benefitsRaw.split(/,\s*/).map((bt, i) => {
+    const ct = ex_normCoverType(bt) || bt.trim();
+    if(!ct) return null;
+    return {
+      provider,
+      coverType: ct,
+      lifeInsured: firstName,
+      owner: inSuper ? 'Super' : firstName,
+      benefitAmount: '',
+      waitingPeriod: '', benefitPeriod: '',
+      premiumStructure: '',
+      // The letter quotes ONE premium for the policy — it sits on the first
+      // listed cover (edit/split in the grid if needed).
+      premiumNote: i === 0 ? premium : '',
+      exclusions: (exclSummary && exclTarget.split(/\s*(?:,|\band\b)\s*/).some(tg => tg && kindOf(tg) === kindOf(bt) && kindOf(bt) !== 'other')) ? exclSummary : '',
+      exclusions_isFromLetter: undefined
+    };
+  }).filter(Boolean);
+  if(!rows.length) return null;
+  // If the exclusion target didn't match any listed benefit, keep it visible on
+  // the first row rather than dropping it.
+  if(exclSummary && !rows.some(r => r.exclusions)) rows[0].exclusions = exclSummary;
+  rows.forEach(r => { delete r.exclusions_isFromLetter; });
+  return { rows, client: person || '' };
+}
+
+// ── OCR (screenshots & scanned PDFs) ───────────────────────────────────────
+// Screenshots and image-only PDFs have no text layer, so they're read with
+// tesseract.js (loaded on demand from the CDN the first time it's needed).
+function loadTesseract(onProgress){
+  if(typeof Tesseract !== 'undefined') return Promise.resolve();
+  onProgress && onProgress('Loading the OCR engine (first time only)…');
+  return new Promise((res, rej) => {
+    const sc = document.createElement('script');
+    sc.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    sc.onload = () => res();
+    sc.onerror = () => rej(new Error('Could not load the OCR engine — check your internet connection and try again.'));
+    document.head.appendChild(sc);
+  });
+}
+async function ocrImageOrPdf(file, onProgress){
+  await loadTesseract(onProgress);
+  onProgress && onProgress('Reading with OCR — this can take ~10-20 seconds…');
+  const worker = await Tesseract.createWorker('eng');
+  const texts = [];
+  try{
+    if((file.type||'').startsWith('image/') || /\.(png|jpe?g|gif|bmp|webp)$/i.test(file.name)){
+      const { data } = await worker.recognize(file);
+      texts.push(data.text || '');
+    } else {
+      // Image-only PDF — render each page and OCR the bitmap.
+      if(typeof pdfjsLib === 'undefined') throw new Error('PDF.js failed to load — check your internet connection.');
+      const buf = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+      const maxPages = Math.min(pdf.numPages, 6);
+      for(let i = 1; i <= maxPages; i++){
+        onProgress && onProgress('OCR — page ' + i + ' of ' + maxPages + '…');
+        const page = await pdf.getPage(i);
+        const vp = page.getViewport({scale: 2});
+        const canvas = document.createElement('canvas');
+        canvas.width = vp.width; canvas.height = vp.height;
+        await page.render({canvasContext: canvas.getContext('2d'), viewport: vp}).promise;
+        const { data } = await worker.recognize(canvas);
+        texts.push(data.text || '');
+      }
+    }
+  } finally {
+    try{ await worker.terminate(); } catch(_){}
+  }
+  return texts.join('\n\n');
 }
 
 // ── Insurer "Policy Alteration Illustration" quote parser (TAL-style) ──────
@@ -12079,9 +12257,9 @@ function parseAlterationQuote(text){
     const secM = chunk.match(/\b(INCOME PROTECTION|LIFE|DEATH|TPD|TOTAL\s*(?:AND|&)\s*PERMANENT|TRAUMA|CRITICAL ILLNESS)[A-Z &]*DETAILS/i);
     const sec = secM ? secM[1].toLowerCase() : (monthlyBenefit ? 'income protection' : '');
     let ct = '';
-    if(/income/.test(sec)) ct = /indemnit/i.test(btype || chunk) ? 'Income Protection — Indemnity' : 'Income Protection';
+    if(/income/.test(sec)) ct = /indemnit/i.test(btype || chunk) ? 'IP (Indemnity & Standard Contract)' : 'Income Protection';
     else if(/trauma|critical/.test(sec)) ct = 'Trauma';
-    else if(/tpd|permanent/.test(sec)) ct = /\bown\b/i.test(chunk) ? 'TPD (Own-Occupation)' : 'TPD (Any-Occupation)';
+    else if(/tpd|permanent/.test(sec)) ct = /\bown\b/i.test(chunk) ? 'TPD (Linked & Own-Occupation)' : 'TPD (Linked & Any-Occupation)';
     else if(/life|death/.test(sec)) ct = 'Life (Linked)';
     if(!ct) return;
     const isIP = /income/.test(sec);
@@ -12102,7 +12280,7 @@ function parseAlterationQuote(text){
         waitingPeriod: waiting.toLowerCase(),
         benefitPeriod: bper ? bper.replace(/^until\s*/i, 'To ').replace(/^to\s*/i, 'To ') : '',
         premiumStructure: structure,
-        premiumNote: premN ? fmtR(monthly) + ' pm' : '',
+        premiumNote: premN ? fmtR(monthly) + ' pm (before tax)' : '',
         exclusions: ''
       }
     });
@@ -12147,17 +12325,30 @@ async function importInsuranceFileToTable(file, fKey){
     const ext = (file.name.split('.').pop()||'').toLowerCase();
     showImportStatus('Reading ' + file.name + '…');
     let text;
-    if(ext === 'docx' || (file.type||'').includes('wordprocessingml')){
+    const isImage = (file.type||'').startsWith('image/') || ['png','jpg','jpeg','gif','bmp','webp'].includes(ext);
+    if(isImage){
+      text = await ocrImageOrPdf(file, showImportStatus);
+    } else if(ext === 'docx' || (file.type||'').includes('wordprocessingml')){
       text = await readDocxTabbedText(file, showImportStatus);
     } else {
       text = await extractTextFromFile(file, showImportStatus);
+      // A scanned/screenshot PDF has no text layer — fall back to OCR.
+      if(ext === 'pdf' && text.replace(/\s+/g, '').length < 40){
+        text = await ocrImageOrPdf(file, showImportStatus);
+      }
     }
     hideImportStatus();
 
+    // 0) ClearView Amended Terms Agreement (revised-terms letter).
+    let rows = [], source = '', cdmClient = '';
+    const amended = parseAmendedTermsAgreement(text);
+    if(amended && amended.rows.length){
+      rows = amended.rows; cdmClient = amended.client || '';
+      source = 'the amended terms agreement';
+    }
     // 1) Insurer alteration-quote illustration (CURRENT vs QUOTE columns) — one
     //    option per quote page; the adviser picks which quote to apply.
-    let rows = [], source = '', cdmClient = '';
-    const alt = parseAlterationQuote(text);
+    const alt = rows.length ? null : parseAlterationQuote(text);
     if(alt){
       let opt = alt.options[0];
       if(alt.options.length > 1){
@@ -12237,7 +12428,8 @@ async function importInsuranceFileToTable(file, fKey){
     rows.forEach(r => {
       summary += '• ' + (r.coverType||'?') + ' — ' + (r.benefitAmount||'no amount')
         + (r.provider ? ' · ' + r.provider : '')
-        + (r.premiumNote ? ' · ' + r.premiumNote : '') + '\n';
+        + (r.premiumNote ? ' · ' + r.premiumNote : '')
+        + (r.exclusions ? ' · EXCLUSION: ' + r.exclusions : '') + '\n';
     });
     if(cdmClient && !(F.client1Name||'').trim()){
       summary += '\nClient 1 name will be pre-filled as "' + cdmClient + '" (currently blank).\n';
@@ -12271,7 +12463,7 @@ async function importInsuranceFileToTable(file, fKey){
         if(ti >= 0){
           used.add(ti);
           const er = existing[ti];
-          ['benefitAmount','waitingPeriod','benefitPeriod','premiumStructure','premiumNote','lifeInsured'].forEach(f => {
+          ['benefitAmount','waitingPeriod','benefitPeriod','premiumStructure','premiumNote','lifeInsured','exclusions','superContribution'].forEach(f => {
             if((nr[f]||'').trim()) er[f] = nr[f];
           });
           // New before-tax premium invalidates the old after-tax figure and any
@@ -16355,7 +16547,7 @@ function renderInsuranceTable(title, key, mirrorSourceKey){
     ? `<button class="btn btn-xs" onclick="mirrorInsuranceTable('${mirrorSourceKey}','${key}')" title="Copy every row and group default from the ${e(srcLabel)} table into this one. Existing rows will be replaced.">⇄ Mirror from ${e(srcLabel)}</button>`
     : '';
   const importBtn = `<label class="btn btn-xs" style="cursor:pointer;margin:0" title="Prefill this table from an uploaded document — e.g. the CDM insurance summary for current cover, or the new insurance quote for recommended cover. Reads the cover lines and replaces the rows below (works like the CARE doc import for the super table). You can also just drag the file onto this table.">📥 Import / drop document
-    <input type="file" accept=".pdf,.docx,.txt" style="display:none" onchange="handleInsuranceTableImport(this,'${key}')">
+    <input type="file" accept=".pdf,.docx,.txt,.png,.jpg,.jpeg" style="display:none" onchange="handleInsuranceTableImport(this,'${key}')">
   </label>`;
   let h = `<div class="card ins-drop" ondragover="insImportDragOver(event)" ondragleave="insImportDragLeave(event)" ondrop="insImportDrop(event,'${key}')">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -16454,6 +16646,7 @@ function renderInsuranceTable(title, key, mirrorSourceKey){
         <input ${fk('wp')} value="${e(r.waitingPeriod)}" onchange="F['${key}'][${i}].waitingPeriod=this.value" placeholder="${isIP ? '30 days' : 'Wait: n/a'}" title="Waiting period — shows in brackets under the benefit amount">
         <input ${fk('bp')} value="${e(r.benefitPeriod)}" onchange="F['${key}'][${i}].benefitPeriod=this.value" placeholder="${isIP ? 'Until Age 65' : 'Benefit: n/a'}" title="Benefit period — shows in brackets under the benefit amount">
       </div>
+      ${isIP ? `<input class="ins-mini-full" ${fk('sco')} value="${e(r.superContribution||'')}" onchange="F['${key}'][${i}].superContribution=this.value" placeholder="Super Contribution Option, e.g. $686 pm (optional)" title="Prints after the benefit as: plus $686 pm Super Contribution Option. CDM reports don't include it — type it here.">` : ''}
     </td>`;
 
     // Premium Structure + Monthly Premium — a row whose premium is combined with
@@ -17474,7 +17667,9 @@ function renderInsurancePreviewTable(rows, defsKey){
       const premiumHtml = premLines.map((s, idx) => `<div${idx < premLines.length - 1 ? ' style="margin-bottom:6px"' : ''}>${e(s)}</div>`).join('');
       // Benefit cell: main amount on line 1, waiting/benefit period on line 2.
       const periodBits = insPeriodsDisplay(r);
-      const benefitHtml = e(r.benefitAmount||'') + (periodBits ? `<br>(${e(periodBits)})` : '');
+      const scoTxt = (r.superContribution||'').trim();
+      const benefitMain = (r.benefitAmount||'') + (scoTxt ? ' plus ' + scoTxt + ' Super Contribution Option' : '');
+      const benefitHtml = e(benefitMain) + (periodBits ? `<br>(${e(periodBits)})` : '');
 
       h += `<tr>`;
       h += td(e(r.coverType));
@@ -17795,7 +17990,7 @@ async function exportNAADocx(){
   }
   const D = docx;
   const { Document, Packer, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType,
-    BorderStyle, ShadingType, PageOrientation, LevelFormat, convertInchesToTwip, Header, Footer, ImageRun,
+    BorderStyle, ShadingType, PageOrientation, LevelFormat, convertInchesToTwip, HeightRule, Header, Footer, ImageRun,
     HorizontalPositionAlign, VerticalPositionAlign, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom, TextWrappingType } = D;
 
   const NY = "0C2E3F";
@@ -17989,7 +18184,7 @@ async function exportNAADocx(){
   // Signature tables
   const sigW = [4500, 3000, 2450];
   const sigHeader = () => headerRow(["Name","Signature","Date"], sigW);
-  const sigRow = (name) => new TableRow({children:[cellTxt(name, {w:sigW[0]}), cellTxt("", {w:sigW[1]}), cellTxt("", {w:sigW[2]})]});
+  const sigRow = (name) => new TableRow({height:{value:800, rule:HeightRule.ATLEAST}, children:[cellTxt(name, {w:sigW[0], bold:true, shade:"E4F3F5"}), cellTxt("", {w:sigW[1], shade:"E4F3F5"}), cellTxt("", {w:sigW[2], shade:"E4F3F5"})]});
 
   // Client signatures
   const clientRows = [sigHeader()];
@@ -19171,13 +19366,14 @@ async function exportDocx(){
   const sigW = [4000, 3500, 2450];
   const sigRows = [headerRow(["Name","Signature","Date"], sigW)];
   if(F.clientType==='joint'){
-    sigRows.push(new TableRow({height:{value:800, rule:HeightRule.ATLEAST}, children:[cellTxt(F.client1Name||"[Client 1]",{w:sigW[0],bold:true}),cellTxt("",{w:sigW[1]}),cellTxt("",{w:sigW[2]})]}));
-    sigRows.push(new TableRow({height:{value:800, rule:HeightRule.ATLEAST}, children:[cellTxt(F.client2Name||"[Client 2]",{w:sigW[0],bold:true}),cellTxt("",{w:sigW[1]}),cellTxt("",{w:sigW[2]})]}));
+    sigRows.push(new TableRow({height:{value:800, rule:HeightRule.ATLEAST}, children:[cellTxt(F.client1Name||"[Client 1]",{w:sigW[0],bold:true,shade:"E4F3F5"}),cellTxt("",{w:sigW[1],shade:"E4F3F5"}),cellTxt("",{w:sigW[2],shade:"E4F3F5"})]}));
+    sigRows.push(new TableRow({height:{value:800, rule:HeightRule.ATLEAST}, children:[cellTxt(F.client2Name||"[Client 2]",{w:sigW[0],bold:true,shade:"E4F3F5"}),cellTxt("",{w:sigW[1],shade:"E4F3F5"}),cellTxt("",{w:sigW[2],shade:"E4F3F5"})]}));
   } else if(F.clientType==='entity'){
     const sigText = (F.client1Name||'[Signatory]') + (F.client1Role?'\n'+F.client1Role:'') + '\n'+(F.entityName||'');
     sigRows.push(new TableRow({height:{value:1100, rule:HeightRule.ATLEAST}, children:[
       new TableCell({
         width:{size:sigW[0],type:WidthType.DXA},
+        shading:{type:ShadingType.CLEAR, fill:"E4F3F5", color:"auto"},
         margins:{top:90,bottom:90,left:140,right:140},
         borders:{top:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4},bottom:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4},left:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4},right:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4}},
         children:[
@@ -19186,12 +19382,12 @@ async function exportDocx(){
           new Paragraph({children:[new TextRun({text:F.entityName||"",font:"Nunito",size:17,italics:true,color:"1a1a1a"})]}),
         ]
       }),
-      cellTxt("",{w:sigW[1]}),cellTxt("",{w:sigW[2]})
+      cellTxt("",{w:sigW[1],shade:"E4F3F5"}),cellTxt("",{w:sigW[2],shade:"E4F3F5"})
     ]}));
   } else if(F.clientType==='joint_entity'){
-    jointEntitySignatories().forEach(nm => sigRows.push(new TableRow({height:{value:800, rule:HeightRule.ATLEAST}, children:[cellTxt(nm,{w:sigW[0],bold:true}),cellTxt("",{w:sigW[1]}),cellTxt("",{w:sigW[2]})]})));
+    jointEntitySignatories().forEach(nm => sigRows.push(new TableRow({height:{value:800, rule:HeightRule.ATLEAST}, children:[cellTxt(nm,{w:sigW[0],bold:true,shade:"E4F3F5"}),cellTxt("",{w:sigW[1],shade:"E4F3F5"}),cellTxt("",{w:sigW[2],shade:"E4F3F5"})]})));
   } else {
-    sigRows.push(new TableRow({height:{value:800, rule:HeightRule.ATLEAST}, children:[cellTxt(cn,{w:sigW[0],bold:true}),cellTxt("",{w:sigW[1]}),cellTxt("",{w:sigW[2]})]}));
+    sigRows.push(new TableRow({height:{value:800, rule:HeightRule.ATLEAST}, children:[cellTxt(cn,{w:sigW[0],bold:true,shade:"E4F3F5"}),cellTxt("",{w:sigW[1],shade:"E4F3F5"}),cellTxt("",{w:sigW[2],shade:"E4F3F5"})]}));
   }
   children.push(new Table({columnWidths:sigW, width:{size:9950,type:WidthType.DXA}, rows:sigRows}));
   children.push(P(""));
@@ -19202,7 +19398,7 @@ async function exportDocx(){
     columnWidths:advW, width:{size:9950,type:WidthType.DXA},
     rows:[
       headerRow(["Adviser","Signature","Date"], advW),
-      new TableRow({height:{value:800, rule:HeightRule.ATLEAST}, children:[cellTxt(F.adviserName||"[Adviser]",{w:advW[0],bold:true}),cellTxt("",{w:advW[1]}),cellTxt("",{w:advW[2]})]})
+      new TableRow({height:{value:800, rule:HeightRule.ATLEAST}, children:[cellTxt(F.adviserName||"[Adviser]",{w:advW[0],bold:true,shade:"E4F3F5"}),cellTxt("",{w:advW[1],shade:"E4F3F5"}),cellTxt("",{w:advW[2],shade:"E4F3F5"})]})
     ]
   }));
   children.push(P(""));
@@ -19490,7 +19686,8 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
     g.rows.forEach((r, i) => {
       const premiumLines = splitPremiumDisplayLines(coverKind(r.coverType)==='trauma' ? [r.monthlyPremium, r.premiumNote] : [r.monthlyPremium, r.premiumNote, r.monthlyPremiumAfterTax]);
       const periodBits = insPeriodsDisplay(r);
-      const benefitLines = [r.benefitAmount||""];
+      const scoTxt = (r.superContribution||'').trim();
+      const benefitLines = [(r.benefitAmount||"") + (scoTxt ? " plus " + scoTxt + " Super Contribution Option" : "")];
       if(periodBits) benefitLines.push(`(${periodBits})`);
       const shade = INS_CELL;
 
