@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wealth Review Generator — Standard Operating Procedure</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#0C2E3F;--blue:#0C6AE1;--teal:#E3F2F4;--ink:#16242e;--muted:#5c6b78;--line:#d9e2ec}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Nunito',-apple-system,Segoe UI,sans-serif;color:var(--ink);background:#eef2f6;line-height:1.6;font-size:15px}
+  h1,h2,h3,h4{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif;color:var(--navy);font-weight:700;line-height:1.2}
+  .banner{background:var(--navy);color:#fff;padding:34px 40px}
+  .banner .logo{font-family:'ABC Arizona Flare','Playfair Display',serif;font-size:30px;font-weight:700;color:#fff;letter-spacing:-.4px}
+  .banner .logo-sub{font-size:11px;letter-spacing:.44em;text-transform:uppercase;color:#e6eef5;margin-top:2px}
+  .banner h1{color:#fff;font-size:28px;margin-top:18px}
+  .banner .meta{color:#a9c4d6;font-size:13px;margin-top:6px}
+  .wrap{max-width:920px;margin:26px auto 60px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 30px rgba(12,46,63,.10);overflow:hidden}
+  .body{padding:34px 44px 48px}
+  h2{font-size:21px;color:var(--blue);margin:26px 0 8px;padding-top:20px;border-top:2px solid var(--teal)}
+  h2:first-of-type{border-top:none;padding-top:0;margin-top:4px}
+  h3{font-size:16px;margin:18px 0 6px}
+  p{margin:8px 0}
+  ol,ul{margin:8px 0 10px 22px}li{margin:5px 0}
+  ol ul,ul ul{margin:4px 0 4px 4px}
+  code{background:#f1f5fa;border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:13px;font-family:ui-monospace,Menlo,monospace}
+  strong{color:var(--navy)}
+  .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--teal);border-radius:10px;padding:14px 16px;margin:12px 0 4px;font-weight:800;color:var(--navy);font-size:14px}
+  .flow .arw{color:var(--blue)}
+  .stage{background:var(--blue);color:#fff;border-radius:8px;padding:3px 12px;font-size:13px;font-weight:800;white-space:nowrap}
+  .callout{background:var(--teal);border-left:4px solid var(--blue);border-radius:0 8px 8px 0;padding:12px 16px;margin:14px 0;font-size:14px}
+  .note{font-size:13px;color:var(--muted);font-style:italic}
+  @media(max-width:640px){.body,.banner{padding-left:20px;padding-right:20px}.wrap{margin:0;border-radius:0}}
+  @media print{body{background:#fff}.wrap{box-shadow:none;border:none;margin:0}}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="logo">MyWealth</div>
+  <div class="logo-sub">Solutions</div>
+  <h1>Wealth Review Generator — Standard Operating Procedure</h1>
+  <div class="meta">Audience: Review Support Officers &amp; Advisers · Tool: <code style="color:#cfe0ec;background:transparent;border:none">review-generator/Review_Generator.html</code></div>
+</div>
+<div class="wrap"><div class="body">
+
+<p><strong>Purpose:</strong> produce a client Wealth Review, run the meeting, and generate the file
+note / ROA — with all client data kept on your machine (nothing is uploaded anywhere).</p>
+<div class="callout">Open the file in a normal browser tab (Chrome/Edge). If Export Word / uploads do
+nothing, you are viewing it inside a preview pane — save the <code>.html</code> and open it in a real
+browser tab.</div>
+
+<h2>The four stages</h2>
+<div class="flow"><span class="stage">① Pre-Review Checklist</span><span class="arw">→</span><span class="stage">② Generate Wealth Doc</span><span class="arw">→</span><span class="stage">③ Review Meeting</span><span class="arw">→</span><span class="stage">④ Post Review</span></div>
+<p class="note">Work left to right. The left sidebar shows the sections of the active stage with a
+green ✓ when a section has data; the top shows "X/Y sections complete".</p>
+
+<h2>Stage ① — Pre-Review Checklist <span class="note">(RSO, before the meeting)</span></h2>
+<ol>
+  <li><strong>Scope &amp; Accounts</strong> — set the number of clients (1 or 2), enter the client
+  name(s), pick the adviser, and tick every account/product type the client holds. Only the relevant
+  sections then appear.</li>
+  <li><strong>Work through each section</strong> (General, Compliance, Retail/Held Super, SMSF, MCMA,
+  Investment, Investment Bonds, Property, Loans, Insurance, Held Insurance, Adviser Fees). Use
+  <strong>Next</strong>/<strong>Back</strong> or jump from the sidebar.
+    <ul>
+      <li><strong>Per-client questions</strong> show a field for each client.</li>
+      <li><strong>Computed flags</strong> appear automatically — e.g. an SG shortfall, a
+      partial-rollover threshold, or a fee discrepancy.</li>
+    </ul>
+  </li>
+  <li>Click <strong>Apply &amp; generate wealth doc →</strong>. Action-type answers become
+  <strong>to-do items</strong>; data answers feed the matching section (beneficiaries → estate,
+  contributions → super notes, etc.).</li>
+</ol>
+<p class="note">You can also upload a completed legacy <code>.xlsx</code> checklist — it adds to-dos and
+notes, but won't repopulate the questionnaire.</p>
+
+<h2>Stage ② — Generate Wealth Doc <span class="note">(RSO)</span></h2>
+<ol>
+  <li><strong>Inputs &amp; Imports:</strong>
+    <ul>
+      <li><strong>Start:</strong> load a saved <code>.json</code> draft, start a new blank client, or
+      roll a client forward to a new review year. <strong>Reset</strong> clears everything.</li>
+      <li><strong>Last review = base:</strong> drop last year's Wealth Review (<code>.docx</code>) — it
+      pulls details, assets, income, goals, goal tracking and actions through as the base.</li>
+      <li><strong>This year's figures = overrides:</strong> drop the current platform PDFs (HUB24 / BT
+      Panorama / Macquarie auto-detect and route themselves), the PTW (<code>.xlsm</code>), and
+      supporting docs. Uploaded files show as chips — click ✕ to remove one.</li>
+    </ul>
+  </li>
+  <li><strong>Cover &amp; Details:</strong> confirm client/partner details; pick the licensee/practice
+  from the dropdown (prefills ABN/AFSL/address); set adviser + insurance specialist, review type and
+  date.</li>
+  <li><strong>Work through the sections</strong> (Current Situation, Foundations &amp; Estate, Goals,
+  Goal Tracking, Portfolio, Asset Allocation, Insurance, Actions &amp; Services, Rebalance). The
+  Actions section carries the checklist to-dos plus a one-click <strong>standard review to-do</strong>
+  set.</li>
+  <li><strong>Rebalance (draft):</strong> upload the CARE rebalance spreadsheet(s) — this feeds the
+  rebalance ROA.</li>
+  <li>Use the <strong>live preview</strong> on the right (toggle with the <strong>Preview</strong>
+  button) to see the Word document as you build it; <strong>Export Word</strong> downloads the
+  <code>.docx</code>.</li>
+</ol>
+
+<h2>Stage ③ — Review Meeting <span class="note">(Adviser, live with the client)</span></h2>
+<ol>
+  <li>Open the <strong>Dashboard</strong> — net position, open action items, tracked changes, rebalance
+  status, rating, beside the live document preview (use <strong>Hide / show preview</strong>;
+  <strong>Present preview</strong> for full screen).</li>
+  <li><strong>Edit live</strong> — update assets/liabilities, notes and figures on any page. A baseline
+  is locked when you enter this tab, so only your in-meeting changes are tracked.</li>
+  <li>Everything you change flows automatically into the file note and ROA.</li>
+</ol>
+
+<h2>Stage ④ — Post Review <span class="note">(RSO/Adviser, after the meeting)</span></h2>
+<ol>
+  <li><strong>Changes Made</strong> — review the tracked changes since the baseline.</li>
+  <li><strong>Review File Note</strong> — auto-drafted in the After-Review-Summary format; edit on the
+  left and watch the live document preview on the right. <strong>Word</strong> downloads it;
+  <strong>Copy</strong> copies the text.</li>
+  <li><strong>Review ROA</strong> — choose <strong>No-change ROA</strong> or <strong>Rebalance
+  ROA</strong>, edit, and download as Word (adds the branded header) or copy.</li>
+  <li><strong>Copy review summary + to-dos</strong> — paste into the client email flow (Donna) and bcc
+  Xeppo for file-noting.</li>
+  <li><strong>Save draft</strong> (<code>.json</code>) to resume later.</li>
+</ol>
+
+<h2>Good practice</h2>
+<ul>
+  <li>Save a draft before a big change or before <strong>Reset</strong>.</li>
+  <li>Complete the checklist first — it does most of the data-routing for you.</li>
+  <li>Confirm all three CRPs (Client 1, Client 2, Joint) are recorded.</li>
+  <li>Treat computed flags (SG, rollover, fees) as prompts to check, not final figures.</li>
+  <li>Client data never leaves the browser; drafts are files you control.</li>
+</ul>
+
+<h2>Troubleshooting</h2>
+<ul>
+  <li><strong>Export Word / uploads do nothing</strong> → open the saved <code>.html</code> in a real
+  browser tab (not a preview pane); ensure internet on first use (the Word/PDF engines load from a
+  CDN).</li>
+  <li><strong>A report didn't auto-fill</strong> → that format isn't wired yet; enter the figures
+  manually and send a sample so it can be added.</li>
+  <li><strong>Preview looks empty</strong> → add the client in Cover &amp; Details / import a report;
+  the preview reflects the current data.</li>
+</ul>
+
+</div></div>
+</body>
+</html>
