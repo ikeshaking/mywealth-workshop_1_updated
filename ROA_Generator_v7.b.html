@@ -12014,85 +12014,67 @@ function cdmParseBenefitsReport(text){
     return '';
   };
 
-  // Second pass — one line per COVER, shaped like the firm's table:
-  //  • stepped/level premium components of a benefit combine into one line
-  //    (structure shows Hybrid when both are present)
-  //  • ALL TPD components (any-occ base + own-occ booster) fold into ONE
-  //    linked TPD line labelled Own-Occupation when a booster exists
-  //  • when Life and TPD both exist they share ONE combined premium — held on
-  //    the Life row, tagged (before tax), with the super/cashflow funding
-  //    split — and the TPD row merges up (Unlink to split)
+  // Second pass — the firm's presentation of a CDM report:
+  //  • stepped and level premium components stay as SEPARATE rows (one row per
+  //    benefit per premium structure), e.g. Life — Stepped and Life — Level
+  //  • the TPD any-occ base and its own-occ booster COMBINE per structure into
+  //    one linked TPD line ("TPD (Linked & Own-Occupation)" when a booster
+  //    exists), with the super/personal funding split shown on the premium
   const firstName = full => (full||'').trim().split(/\s+/)[0] || '';
+  const tpdRecords = [];
   const groups = [];
   const byKey = {};
   parsed.forEach(p => {
     const ct = mapCover(p);
     if(!ct) return;
     const isTpd = /^tpd/i.test(ct);
-    const key = isTpd ? 'tpd' : (p.policy + '|' + ct + '|' + p.sum.n);
-    if(!byKey[key]){ byKey[key] = {ct, isTpd, parts: [], first: p}; groups.push(byKey[key]); }
+    if(isTpd) tpdRecords.push(ct);
+    // TPD combines across any/own per structure; everything else stays per
+    // benefit per structure.
+    const key = isTpd ? ('tpd|' + p.struct) : (p.policy + '|' + ct + '|' + p.sum.n + '|' + p.struct);
+    if(!byKey[key]){ byKey[key] = {ct, isTpd, struct: p.struct, parts: [], first: p}; groups.push(byKey[key]); }
     byKey[key].parts.push(p);
-    if(isTpd && /own/i.test(ct)) byKey[key].own = true;
   });
+  const anyTpdOwn = tpdRecords.some(ct => /own/i.test(ct));
 
   const roundD = n => Math.round(n);
-  groups.forEach(g => {
-    if(g.isTpd) g.ct = g.own ? 'TPD (Linked & Own-Occupation)' : 'TPD (Linked & Any-Occupation)';
-    g.superAmt = roundD(g.parts.filter(x => /super|smsf/i.test(x.ownerRaw)).reduce((a, x) => a + x.premMonthly, 0));
-    g.cashAmt = roundD(g.parts.filter(x => !/super|smsf/i.test(x.ownerRaw)).reduce((a, x) => a + x.premMonthly, 0));
-    g.structs = [...new Set(g.parts.map(x => x.struct).filter(Boolean))];
-  });
   const fundingNote = (sup, cash) => (sup && cash) ? ' / (' + fmt$(sup) + ' from super and ' + fmt$(cash) + ' from personal cashflow)' : '';
 
-  const lifeIdx = groups.findIndex(g => /^life/i.test(g.ct));
-  const tpdIdx = groups.findIndex(g => g.isTpd);
-  const linkedPair = lifeIdx >= 0 && tpdIdx >= 0;
-
-  const rows = groups.map((g, gi) => {
+  const rows = groups.map(g => {
     const p = g.first;
+    if(g.isTpd) g.ct = anyTpdOwn ? 'TPD (Linked & Own-Occupation)' : 'TPD (Linked & Any-Occupation)';
     const isIP = /income protection|^ip\b/i.test(g.ct);
     const isTrauma = /trauma/i.test(g.ct);
     const fn = firstName(p.client);
     const terms = p.body + ' ' + p.extra;
     const waitM = terms.match(/(\d+)\s*days?\b/i) || terms.match(/indemnity\s*(\d+)/i);
     const bpM = terms.match(/to\s*age\s*(\d+)/i);
-
-    let structure = g.structs.length > 1 ? 'Hybrid' : (g.structs[0] || '');
-    let note = '';
-    let shared = false;
-    if(linkedPair && gi === lifeIdx){
-      // Life row carries the combined Life + TPD premium.
-      const t = groups[tpdIdx];
-      const sup = g.superAmt + t.superAmt, cash = g.cashAmt + t.cashAmt;
-      note = fmt$(sup + cash) + ' pm (before tax)' + fundingNote(sup, cash);
-      const allStructs = [...new Set(g.structs.concat(t.structs))];
-      structure = allStructs.length > 1 ? 'Hybrid' : (allStructs[0] || '');
-    } else if(linkedPair && gi === tpdIdx){
-      shared = true; structure = ''; note = '';
-    } else {
-      const total = g.superAmt + g.cashAmt;
-      note = total ? (fmt$(total) + ' pm' + (isTrauma ? '' : ' (before tax)') + fundingNote(g.superAmt, g.cashAmt)) : '';
-    }
-
+    const sup = roundD(g.parts.filter(x => /super|smsf/i.test(x.ownerRaw)).reduce((a, x) => a + x.premMonthly, 0));
+    const cash = roundD(g.parts.filter(x => !/super|smsf/i.test(x.ownerRaw)).reduce((a, x) => a + x.premMonthly, 0));
+    const total = sup + cash;
+    const note = total ? (fmt$(total) + ' pm' + (isTrauma ? '' : ' (before tax)') + fundingNote(sup, cash)) : '';
     return {
       provider: p.provider,
       coverType: g.ct,
       lifeInsured: fn,
-      owner: g.superAmt > 0 ? 'Super' : fn,
+      owner: sup > 0 ? 'Super' : fn,
       benefitAmount: p.sum.raw + (isIP ? ' pm' : ''),
       waitingPeriod: isIP && waitM ? waitM[1] + ' days' : '',
       benefitPeriod: isIP && bpM ? 'To Age ' + bpM[1] : '',
-      premiumStructure: structure,
+      premiumStructure: g.struct || '',
       premiumNote: note,
-      sharedPremiumWithPrev: shared,
       exclusions: ''
     };
   });
-  // The shared-premium merge needs the TPD row directly beneath the Life row.
-  if(linkedPair && tpdIdx !== lifeIdx + 1){
-    const t = rows.splice(tpdIdx, 1)[0];
-    rows.splice(rows.findIndex(r => /^life/i.test(r.coverType)) + 1, 0, t);
-  }
+  // Keep the pairs reading Stepped before Level within each cover, Life first.
+  const orderOf = r => (/^life/i.test(r.coverType) ? 0 : /^tpd/i.test(r.coverType) ? 1 : 2);
+  const structOrder = r => /stepped/i.test(r.premiumStructure) ? 0 : 1;
+  rows.sort((a, b) => {
+    const d = orderOf(a) - orderOf(b);
+    if(d) return d;
+    if(orderOf(a) < 2) return structOrder(a) - structOrder(b);
+    return 0;
+  });
   return rows.length ? {rows, client: parsed[0].client} : null;
 }
 
