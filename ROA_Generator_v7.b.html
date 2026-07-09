@@ -821,14 +821,21 @@ details.collapse-card > div{margin-top:8px;padding-top:8px;border-top:1px solid 
 .preview-doc td{padding:4px 7px;border:1px solid #D4E2EE;color:#1a1a1a;text-align:center}
 .preview-doc td:first-child{text-align:left}
 .preview-doc tr td{background:#E5F4F6}
-/* Allocation + variation tables (super/investment/pension) — matched to the
-   firm's real ROA: uniform teal body rows, black hairline borders, italic
-   navy fund names (bold unless a fee line), upright values. */
+/* Allocation tables (super/investment/pension) — matched to the SOA generator's
+   product tables: navy header, full-width blue Platform Name row, light-blue
+   label column, teal values, light steel borders, and the full-width
+   Dollar Cost Average/Lump Sum band with its white content row. */
 .preview-doc table.alloc-doc td,.preview-doc table.alloc-doc th,
-.preview-doc table.var-doc td,.preview-doc table.var-doc th{border-color:#000}
-.preview-doc tr.total-row td{background:#0C2E3F!important;color:#fff;font-weight:700;font-style:normal}
-.preview-doc tr.fee-row td{font-style:italic}
-.preview-doc tr.platform-row td{background:#0D6BE0!important;color:#fff!important;font-weight:700;font-family:'Nunito Sans',sans-serif!important}
+.preview-doc table.var-doc td,.preview-doc table.var-doc th{border-color:#B5CBD8}
+.preview-doc table.alloc-doc td{text-align:left}
+.preview-doc table.alloc-doc td.lbl{background:#5EA6FF!important;color:#fff!important;font-weight:700}
+.preview-doc table.alloc-doc tr.alloc-total td{font-weight:700}
+.preview-doc table.alloc-doc tr.dca-band td{background:#5EA6FF!important;color:#fff!important;font-weight:700}
+.preview-doc table.alloc-doc tr.dca-body td{background:#fff!important}
+/* Variation table — blue column-header and Total rows, as in the firm's ROAs */
+.preview-doc table.var-doc thead tr:nth-child(2) th{background:#0E6BE0}
+.preview-doc tr.total-row td{background:#0E6BE0!important;color:#fff;font-weight:700;font-style:normal}
+.preview-doc tr.platform-row td{background:#0E6BE0!important;color:#fff!important;font-weight:700;text-align:left;font-family:'Nunito Sans',sans-serif!important}
 .preview-doc tr.insurance-provider-row td{background:#5EA6FF!important;color:#fff!important;font-weight:700;font-size:11px;padding:6px 9px;font-family:'Nunito Sans',sans-serif!important;text-align:left;border-color:#5EA6FF!important;border-bottom:1px solid #5EA6FF!important}
 .preview-doc tr.insurance-provider-row td strong{color:#fff!important}
 /* Insurance body rows: vertical alignment on top so visually-merged cells with rowspan align with text */
@@ -875,6 +882,7 @@ details.collapse-card > div{margin-top:8px;padding-top:8px;border-top:1px solid 
 [data-theme="night"] .preview-doc table.insurance-table td.alt,
 [data-theme="night"] .preview-doc table.insurance-table td.alt2{background:#E4F3F5!important;color:#1a1a1a!important}
 [data-theme="night"] .preview-doc th{background:#0a2433!important;color:#fff!important}
+[data-theme="night"] .preview-doc table.var-doc thead tr:nth-child(2) th{background:#0E6BE0!important}
 [data-theme="night"] .preview-doc th strong{color:#fff!important}
 [data-theme="night"] .preview-doc tr.insurance-provider-row td,
 [data-theme="night"] .preview-doc table.insurance-table tr.insurance-provider-row td{background:#5EA6FF!important;color:#fff!important;border-color:#5EA6FF!important}
@@ -890,7 +898,9 @@ details.collapse-card > div{margin-top:8px;padding-top:8px;border-top:1px solid 
 [data-theme="night"] .preview-doc td,
 [data-theme="night"] .preview-doc th{border-color:#c4d0dc!important}
 [data-theme="night"] .preview-doc table.alloc-doc td,[data-theme="night"] .preview-doc table.alloc-doc th,
-[data-theme="night"] .preview-doc table.var-doc td,[data-theme="night"] .preview-doc table.var-doc th{border-color:#000!important}
+[data-theme="night"] .preview-doc table.var-doc td,[data-theme="night"] .preview-doc table.var-doc th{border-color:#B5CBD8!important}
+[data-theme="night"] .preview-doc table.alloc-doc td.lbl,
+[data-theme="night"] .preview-doc table.alloc-doc tr.dca-band td{color:#fff!important}
 
 .paper-doc{background:#fff;color:#1a1a1a}
 [data-theme="night"] .paper-doc{background:#fff;color:#1a1a1a}
@@ -10026,6 +10036,11 @@ function mkPortfolio(label, platform, contextLabel){
     assetSet: F.assetAllocationSet || 'CARE',   // per-portfolio asset set, defaults to global
     rows: cloneCare(),
     totalLabel: "Complete Portfolio",
+    // SOA product-table extras — an optional "Ongoing Regular Investment" row and
+    // the "Dollar Cost Average/Lump Sum" band printed under the cost rows.
+    ongoingInvestment: "",
+    dcaShow: false,
+    dcaText: "",
     totalValue: "",
     feePercent: "",
     feeDollar: "",
@@ -16223,6 +16238,36 @@ function renderStrategyRecs(p, pi){
   return h;
 }
 
+// The firm's standard Dollar Cost Average/Lump Sum wordings (from the SOA generator).
+const DCA_LUMP_SUM_TEXT = "100% of your funds will be lump sum invested.";
+const DCA_STAGED_TEXT = "XX% of your funds will be lump sum invested and XX% will be Dollar Cost Averaged over XX months.\n\nAs per the Money on the Move framework, for every 5% drop in the market we may bring forward 1 month's Dollar Cost Averaging to ensure your funds are invested as efficiently as possible.\n\nThe above initial and ongoing DCA investment amounts will also be subject to change based on current market valuations and our Money on the Move framework to ensure your funds are invested as effectively as possible.";
+const DCA_SUPER_TEXT = "100% of CARE funds will be lump sum invested upon rollover. XX% of your funds will be contributions and XX% will be Dollar Cost Averaged over XX months.\n\nAs per the Money on the Move framework, for every 5% drop in the market we may bring forward 1 month's Dollar Cost Averaging to ensure your funds are invested as efficiently as possible.";
+// Ongoing Regular Investment + DCA band controls, shared by both portfolio editors.
+function renderDcaControls(p, pi){
+  return `<div style="margin-top:10px;padding:10px 12px;background:var(--blue-light);border:1px solid var(--blue-soft);border-radius:11px">
+    <div style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">SOA product-table extras</div>
+    <div class="grid-2">
+      <div class="field" style="margin:0"><label>Ongoing Regular Investment (optional)</label>
+        <input value="${e(p.ongoingInvestment||'')}" onchange="F.portfolios[${pi}].ongoingInvestment=this.value" placeholder="$2,000 per month">
+        <div class="helper" style="font-size:10px">Adds an "Ongoing Regular Investment" row under the total, exactly as the SOA product table prints it. Leave blank to omit.</div>
+      </div>
+      <div class="field" style="margin:0">
+        <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0">
+          <input type="checkbox" ${p.dcaShow?'checked':''} onchange="F.portfolios[${pi}].dcaShow=this.checked;if(this.checked&&!(F.portfolios[${pi}].dcaText||'').trim())F.portfolios[${pi}].dcaText=DCA_LUMP_SUM_TEXT;render()">
+          Include "Dollar Cost Average/Lump Sum" row
+        </label>
+        ${p.dcaShow ? `
+        <textarea style="min-height:70px;margin-top:4px" onchange="F.portfolios[${pi}].dcaText=this.value">${e(p.dcaText||'')}</textarea>
+        <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">
+          <button class="btn btn-xs" onclick="F.portfolios[${pi}].dcaText=DCA_LUMP_SUM_TEXT;render()" title="100% lump sum invested.">Lump sum wording</button>
+          <button class="btn btn-xs" onclick="F.portfolios[${pi}].dcaText=DCA_STAGED_TEXT;render()" title="XX% lump sum / XX% DCA over XX months + Money on the Move paragraphs.">Staged DCA wording</button>
+          <button class="btn btn-xs" onclick="F.portfolios[${pi}].dcaText=DCA_SUPER_TEXT;render()" title="Super rollover variant — 100% of CARE funds lump sum upon rollover.">Super rollover wording</button>
+        </div>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
 function renderPortfolioAllocation(p, pi){
   // Inline-render just the trades + allocation table of the portfolio (no heading chrome)
   let h = `<div class="strategy-sub">`;
@@ -16297,8 +16342,9 @@ function renderPortfolioAllocation(p, pi){
   h += `</tbody></table></div>
     <button class="btn btn-xs" style="margin-top:6px" onclick="F.portfolios[${pi}].rows.push({n:'',a:'',icr:''});render()">+ Add row</button>
     <button class="btn btn-xs" style="margin-left:4px" onclick="F.portfolios[${pi}].rows=cloneCareFor(${pi});render()">↻ Reset to defaults</button>
-    <button class="btn btn-xs btn-danger" style="margin-left:4px;float:right" onclick="if(confirm('Remove this portfolio?'))F.portfolios.splice(${pi},1);render()">Remove Portfolio</button>
-  </div>`;
+    <button class="btn btn-xs btn-danger" style="margin-left:4px;float:right" onclick="if(confirm('Remove this portfolio?'))F.portfolios.splice(${pi},1);render()">Remove Portfolio</button>`;
+  h += renderDcaControls(p, pi);
+  h += `</div>`;
   return h;
 }
 
@@ -16578,6 +16624,7 @@ function renderPortfolio(p, pi){
   h += `</tbody></table></div>
     <div class="flex mt-sm">
       <button class="btn btn-xs" onclick="F.portfolios[${pi}].rows.push({n:'',a:'',icr:''});render()">+ Add row</button>
+      ${renderDcaControls(p, pi)}
       <button class="btn btn-xs" onclick="F.portfolios[${pi}].rows=cloneCare();render()">↻ Reset to CARE defaults</button>
     </div>
     <div class="field" style="margin-top:10px"><label>Portfolio Note (italic, shown below table)</label>
@@ -17495,13 +17542,20 @@ function renderPreview(){
     }
     // Portfolio table
     const productHeader = (p.contextLabel ? e(p.contextLabel)+' - ' : '')+'Investment Product';
-    h += `<table class="alloc-doc"><thead><tr><th>${productHeader}</th><th>Recommended Allocation $</th><th>Fees (ICR)</th></tr>
-      <tr class="platform-row"><td><strong>Platform Name</strong></td><td colspan="2" style="text-align:left"><strong>${e(p.platform)}</strong></td></tr></thead><tbody>`;
+    h += `<table class="alloc-doc"><thead><tr><th>${productHeader}</th><th>Recommended Allocation $</th><th>Fund Manager's Fee (ICR)</th></tr>
+      <tr class="platform-row"><td>Platform Name</td><td colspan="2">${e(p.platform)}</td></tr></thead><tbody>`;
     p.rows.forEach(r => {
       if(!r.n) return;
-      h += `<tr class="${r.isFee?'fee-row':''}"><td>${r.isFee?`<em>${e(r.n)}</em>`:`<strong style="color:#0C2E3F"><em>${e(r.n)}</em></strong>`}</td><td>${e(r.a)||'&nbsp;'}</td><td>${e(r.icr)||'&nbsp;'}</td></tr>`;
+      h += `<tr><td class="lbl">${e(r.n)}</td><td>${e(r.a)||'&nbsp;'}</td><td>${e(r.icr)||'&nbsp;'}</td></tr>`;
     });
-    h += `<tr class="total-row"><td><strong>${e(p.totalLabel)}</strong></td><td><strong>${e(p.totalValue)||'&nbsp;'}</strong></td><td><strong>${e(p.feePercent)}${p.feeDollar?' / '+e(p.feeDollar):''}</strong></td></tr>`;
+    h += `<tr class="alloc-total"><td class="lbl">${e(p.totalLabel)}</td><td>${e(p.totalValue)||'&nbsp;'}</td><td>${e(p.feePercent)}${p.feeDollar?' / '+e(p.feeDollar):''}</td></tr>`;
+    if((p.ongoingInvestment||'').trim()){
+      h += `<tr><td class="lbl">Ongoing Regular Investment</td><td>${e(p.ongoingInvestment)}</td><td>&nbsp;</td></tr>`;
+    }
+    if(p.dcaShow && (p.dcaText||'').trim()){
+      h += `<tr class="dca-band"><td colspan="3">Dollar Cost Average/Lump Sum</td></tr>`;
+      h += `<tr class="dca-body"><td colspan="3">${p.dcaText.split(/\n+/).filter(x=>x.trim()).map(l=>`<p style="margin:3px 0">${e(l.trim())}</p>`).join('')}</td></tr>`;
+    }
     h += `</tbody></table>`;
     if(p.note) h += `<p style="font-size:10.5px;color:#444"><em><strong>Note:</strong> ${e(p.note)}</em></p>`;
 
@@ -19141,63 +19195,95 @@ async function exportDocx(){
       children.push(P("The recommended portfolio allocation following this rebalance is outlined below."));
     }
 
-    // Portfolio allocation table (3 cols: Product | $ | ICR) — Dobos-matched styling
+    // Portfolio allocation table (3 cols: Product | $ | ICR) — matched to the SOA
+    // generator's product tables (v13BuildProductTable): navy serif header, a
+    // full-width 0E6BE0 "Platform Name" row, 5EA6FF white-bold label column,
+    // E5F4F6 value cells, cost rows bold-on-teal, B5CBD8 hairline borders, and
+    // the optional Ongoing Regular Investment + Dollar Cost Average rows.
     const colW = [5100, 2650, 2200];
+    const LBL = "5EA6FF", PB = "0E6BE0", SBORD = "B5CBD8";
     const rows = [];
-    // Header row — navy with white text
     const productHeader = (p.contextLabel ? p.contextLabel+' - ' : '')+'Investment Product';
     rows.push(new TableRow({
       tableHeader:true,
       children:[
-        cellTxt(productHeader, {shade:NY, color:"FFFFFF", bold:true, size:18, w:colW[0], font:"ABC Arizona Flare", bord:"auto"}),
-        cellTxt("Recommended Allocation $", {shade:NY, color:"FFFFFF", bold:true, size:18, w:colW[1], font:"ABC Arizona Flare", bord:"auto"}),
-        cellTxt("Fees (ICR)", {shade:NY, color:"FFFFFF", bold:true, size:18, w:colW[2], font:"ABC Arizona Flare", bord:"auto"}),
+        cellTxt(productHeader, {shade:NY, color:"FFFFFF", bold:true, size:19, w:colW[0], font:"ABC Arizona Flare", bord:SBORD}),
+        cellTxt("Recommended Allocation $", {shade:NY, color:"FFFFFF", bold:true, size:19, w:colW[1], font:"ABC Arizona Flare", bord:SBORD}),
+        cellTxt("Fund Manager's Fee (ICR)", {shade:NY, color:"FFFFFF", bold:true, size:19, w:colW[2], font:"ABC Arizona Flare", bord:SBORD}),
       ]
     }));
-    // Platform row — blue band spanning columns 2+3 with the platform name
+    // Platform Name — a full-width brand-blue row, the value spanning columns 2+3
     rows.push(new TableRow({
       children:[
-        cellTxt("Platform Name", {shade:BL, color:"FFFFFF", bold:true, w:colW[0], bord:"auto"}),
+        cellTxt("Platform Name", {shade:PB, color:"FFFFFF", bold:true, size:19, w:colW[0], bord:SBORD}),
         new TableCell({
           columnSpan:2,
           width:{size:colW[1]+colW[2], type:WidthType.DXA},
-          shading:{type:ShadingType.CLEAR, fill:BL, color:"auto"},
-          margins:{top:100, bottom:100, left:160, right:160},
+          shading:{type:ShadingType.CLEAR, fill:PB, color:"auto"},
+          margins:{top:60, bottom:60, left:110, right:110},
           borders:{
-            top:{color:"auto", space:0, style:BorderStyle.SINGLE, size:4},
-            bottom:{color:"auto", space:0, style:BorderStyle.SINGLE, size:4},
-            left:{color:"auto", space:0, style:BorderStyle.SINGLE, size:4},
-            right:{color:"auto", space:0, style:BorderStyle.SINGLE, size:4}
+            top:{color:SBORD, space:0, style:BorderStyle.SINGLE, size:6},
+            bottom:{color:SBORD, space:0, style:BorderStyle.SINGLE, size:6},
+            left:{color:SBORD, space:0, style:BorderStyle.SINGLE, size:6},
+            right:{color:SBORD, space:0, style:BorderStyle.SINGLE, size:6}
           },
           children:[new Paragraph({
             spacing:{before:0, after:0},
-            children:[new TextRun({text:p.platform||"[Platform]", font:"Nunito", size:18, color:"FFFFFF", bold:true})]
+            children:[new TextRun({text:p.platform||"[Platform]", font:"Nunito", size:19, color:"FFFFFF", bold:true})]
           })]
         }),
       ]
     }));
-    // Data rows — matched to the firm's real ROA: every body row (fee lines
-    // included) sits on the same teal; fund names are italic navy and bold
-    // unless a fee line; the $ and ICR values stay upright.
+    // Data rows — light-blue white-bold label cell, teal value cells
     p.rows.forEach(r => {
       if(!r.n) return;
-      const isFee = r.isFee;
       rows.push(new TableRow({
         children:[
-          cellTxt(r.n, {shade:TL, italic:true, bold:!isFee, color:NY, w:colW[0], bord:"auto"}),
-          cellTxt(r.a||"", {shade:TL, w:colW[1], bord:"auto"}),
-          cellTxt(r.icr||"", {shade:TL, w:colW[2], bord:"auto"}),
+          cellTxt(r.n, {shade:LBL, color:"FFFFFF", bold:true, size:19, w:colW[0], bord:SBORD}),
+          cellTxt(r.a||"", {shade:TL, size:19, w:colW[1], bord:SBORD}),
+          cellTxt(r.icr||"", {shade:TL, size:19, w:colW[2], bord:SBORD}),
         ]
       }));
     });
-    // Total row — navy with white bold
+    // Total/cost row — label like the other rows, values bold on teal (SOA style)
     rows.push(new TableRow({
       children:[
-        cellTxt(p.totalLabel, {shade:NY, color:"FFFFFF", bold:true, w:colW[0], bord:"auto"}),
-        cellTxt(p.totalValue||"", {shade:NY, color:"FFFFFF", bold:true, w:colW[1], bord:"auto"}),
-        cellTxt(p.feePercent + (p.feeDollar?" / "+p.feeDollar:""), {shade:NY, color:"FFFFFF", bold:true, w:colW[2], bord:"auto"}),
+        cellTxt(p.totalLabel, {shade:LBL, color:"FFFFFF", bold:true, size:19, w:colW[0], bord:SBORD}),
+        cellTxt(p.totalValue||"", {shade:TL, bold:true, size:19, w:colW[1], bord:SBORD}),
+        cellTxt(p.feePercent + (p.feeDollar?" / "+p.feeDollar:""), {shade:TL, bold:true, size:19, w:colW[2], bord:SBORD}),
       ]
     }));
+    if((p.ongoingInvestment||'').trim()){
+      rows.push(new TableRow({
+        children:[
+          cellTxt("Ongoing Regular Investment", {shade:LBL, color:"FFFFFF", bold:true, size:19, w:colW[0], bord:SBORD}),
+          cellTxt(p.ongoingInvestment, {shade:TL, size:19, w:colW[1], bord:SBORD}),
+          cellTxt("", {shade:TL, size:19, w:colW[2], bord:SBORD}),
+        ]
+      }));
+    }
+    if(p.dcaShow && (p.dcaText||'').trim()){
+      const dcaBorders = {
+        top:{color:SBORD, space:0, style:BorderStyle.SINGLE, size:6},
+        bottom:{color:SBORD, space:0, style:BorderStyle.SINGLE, size:6},
+        left:{color:SBORD, space:0, style:BorderStyle.SINGLE, size:6},
+        right:{color:SBORD, space:0, style:BorderStyle.SINGLE, size:6}
+      };
+      // Full-width light-blue band…
+      rows.push(new TableRow({children:[new TableCell({
+        columnSpan:3, width:{size:9950, type:WidthType.DXA},
+        shading:{type:ShadingType.CLEAR, fill:LBL, color:"auto"},
+        margins:{top:60, bottom:60, left:110, right:110}, borders:dcaBorders,
+        children:[new Paragraph({spacing:{before:0,after:0}, children:[new TextRun({text:"Dollar Cost Average/Lump Sum", font:"Nunito", size:19, color:"FFFFFF", bold:true})]})]
+      })]}));
+      // …with the wording in a full-width white row beneath it (one paragraph per line)
+      rows.push(new TableRow({children:[new TableCell({
+        columnSpan:3, width:{size:9950, type:WidthType.DXA},
+        margins:{top:60, bottom:60, left:110, right:110}, borders:dcaBorders,
+        children:p.dcaText.split(/\n/).map(l=>l.trim()).filter(Boolean).map(ln =>
+          new Paragraph({spacing:{before:30, after:30}, children:[new TextRun({text:ln, font:"Nunito", size:19, color:"1a1a1a"})]}))
+      })]}));
+    }
 
     children.push(new Table({
       columnWidths:colW,
@@ -19226,26 +19312,37 @@ async function exportDocx(){
             shading:{type:ShadingType.CLEAR, fill:NY, color:"auto"},
             margins:{top:80,bottom:80,left:140,right:140},
             borders:{
-              top:{color:"auto",space:0,style:BorderStyle.SINGLE,size:4},
-              bottom:{color:"auto",space:0,style:BorderStyle.SINGLE,size:4},
-              left:{color:"auto",space:0,style:BorderStyle.SINGLE,size:4},
-              right:{color:"auto",space:0,style:BorderStyle.SINGLE,size:4}
+              top:{color:SBORD,space:0,style:BorderStyle.SINGLE,size:6},
+              bottom:{color:SBORD,space:0,style:BorderStyle.SINGLE,size:6},
+              left:{color:SBORD,space:0,style:BorderStyle.SINGLE,size:6},
+              right:{color:SBORD,space:0,style:BorderStyle.SINGLE,size:6}
             },
-            children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:(p.contextLabel?p.contextLabel+' - ':'')+p.platform, font:"ABC Arizona Flare", size:18, color:"FFFFFF", bold:true})]})]
+            children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:(p.contextLabel?p.contextLabel+' - ':'')+p.platform, font:"ABC Arizona Flare", size:19, color:"FFFFFF", bold:true})]})]
           })
         ]
       }));
-      compRows.push(headerRow(["Portfolio name","Current %","Proposed %","Variance"], compW, {bord:"auto"}));
+      // Column headers on the brand blue (per the firm's ROAs), value columns centred
+      compRows.push(new TableRow({tableHeader:true, children:[
+        cellTxt("Portfolio name", {shade:PB, color:"FFFFFF", bold:true, size:19, w:compW[0], bord:SBORD}),
+        cellTxt("Current %", {shade:PB, color:"FFFFFF", bold:true, size:19, w:compW[1], bord:SBORD, align:AlignmentType.CENTER}),
+        cellTxt("Proposed %", {shade:PB, color:"FFFFFF", bold:true, size:19, w:compW[2], bord:SBORD, align:AlignmentType.CENTER}),
+        cellTxt("Variance", {shade:PB, color:"FFFFFF", bold:true, size:19, w:compW[3], bord:SBORD, align:AlignmentType.CENTER}),
+      ]}));
       p.allocComparison.rows.filter(r => r.name).forEach(r => {
-        compRows.push(dataRow([r.name, r.current, r.proposed, r.variance], compW, {shade:TL, bord:"auto"}));
+        compRows.push(new TableRow({children:[
+          cellTxt(r.name, {shade:TL, size:19, w:compW[0], bord:SBORD}),
+          cellTxt(r.current, {shade:TL, size:19, w:compW[1], bord:SBORD, align:AlignmentType.CENTER}),
+          cellTxt(r.proposed, {shade:TL, size:19, w:compW[2], bord:SBORD, align:AlignmentType.CENTER}),
+          cellTxt(r.variance, {shade:TL, size:19, w:compW[3], bord:SBORD, align:AlignmentType.CENTER}),
+        ]}));
       });
-      // Optional total row (navy-shaded like the allocation table total)
+      // Optional total row — brand blue with white text
       if(p.allocComparison.showTotal){
         compRows.push(new TableRow({children:[
-          cellTxt("Total", {shade:NY, color:"FFFFFF", w:compW[0], bord:"auto"}),
-          cellTxt(p.allocComparison.totalCurrent||"", {shade:NY, color:"FFFFFF", w:compW[1], bord:"auto"}),
-          cellTxt(p.allocComparison.totalProposed||"", {shade:NY, color:"FFFFFF", w:compW[2], bord:"auto"}),
-          cellTxt(p.allocComparison.totalVariance||"", {shade:NY, color:"FFFFFF", w:compW[3], bord:"auto"}),
+          cellTxt("Total", {shade:PB, color:"FFFFFF", bold:true, size:19, w:compW[0], bord:SBORD}),
+          cellTxt(p.allocComparison.totalCurrent||"", {shade:PB, color:"FFFFFF", size:19, w:compW[1], bord:SBORD, align:AlignmentType.CENTER}),
+          cellTxt(p.allocComparison.totalProposed||"", {shade:PB, color:"FFFFFF", size:19, w:compW[2], bord:SBORD, align:AlignmentType.CENTER}),
+          cellTxt(p.allocComparison.totalVariance||"", {shade:PB, color:"FFFFFF", size:19, w:compW[3], bord:SBORD, align:AlignmentType.CENTER}),
         ]}));
       }
       children.push(new Table({
