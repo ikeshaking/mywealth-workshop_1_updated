@@ -12004,34 +12004,16 @@ function cdmParseBenefitsReport(text){
     return '';
   };
 
-  // Second pass — merge stepped/level splits of the same benefit into one line.
-  const out = [];
-  const byKey = {};
-  parsed.forEach(p => {
-    const ct = mapCover(p);
-    if(!ct) return;
-    const key = p.policy + '|' + ct + '|' + p.sum.n;
-    if(byKey[key]){ byKey[key].parts.push(p); return; }
-    byKey[key] = {p, ct, parts: [p]};
-    out.push(byKey[key]);
-  });
-
+  // Second pass — one cover line per report row, exactly as the report shows
+  // them. A benefit split between stepped and level premiums stays as TWO
+  // lines (one per premium structure), matching the CDM layout.
   const firstName = full => (full||'').trim().split(/\s+/)[0] || '';
-  const rows = out.map(g => {
-    const p = g.p, ct = g.ct;
+  const rows = parsed.map(p => {
+    const ct = mapCover(p);
+    if(!ct) return null;
     const isIP = /income protection/i.test(ct);
-    const total = g.parts.reduce((a, x) => a + x.premMonthly, 0);
-    const structs = [...new Set(g.parts.map(x => x.struct).filter(Boolean))];
-    let structure, note;
-    if(structs.length > 1){
-      // Cover split between stepped and level premiums — one line, Hybrid. The "/"
-      // puts the split note on its own line in the table (before-tax on top).
-      structure = 'Hybrid';
-      note = fmt$(total) + ' pm (before tax) / (' + g.parts.map(x => fmt$(x.premMonthly) + ' pm ' + x.struct.toLowerCase()).join(' + ') + ')';
-    } else {
-      structure = structs[0] || '';
-      note = fmt$(total) + ' pm';
-    }
+    const structure = p.struct || '';
+    const note = fmt$(p.premMonthly) + ' pm';
     const terms = p.body + ' ' + p.extra;
     const waitM = terms.match(/(\d+)\s*days?\b/i) || terms.match(/indemnity\s*(\d+)/i);
     const bpM = terms.match(/to\s*age\s*(\d+)/i);
@@ -12048,7 +12030,7 @@ function cdmParseBenefitsReport(text){
       premiumNote: note,
       exclusions: ''
     };
-  });
+  }).filter(Boolean);
   return rows.length ? {rows, client: parsed[0].client} : null;
 }
 
