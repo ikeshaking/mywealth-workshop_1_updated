@@ -824,15 +824,15 @@ details.collapse-card > div{margin-top:8px;padding-top:8px;border-top:1px solid 
 .preview-doc tr.total-row td{background:#0C2E3F!important;color:#fff;font-weight:700}
 .preview-doc tr.fee-row td{background:#FEF6E0!important;font-style:italic}
 .preview-doc tr.platform-row td{background:#0D6BE0!important;color:#fff!important;font-weight:700;font-family:'Nunito Sans',sans-serif!important}
-.preview-doc tr.insurance-provider-row td{background:#0D6BE0!important;color:#fff!important;font-weight:700;font-size:11px;padding:6px 9px;font-family:'Nunito Sans',sans-serif!important;text-align:left;border-color:#0D6BE0!important;border-bottom:1px solid #0D6BE0!important}
+.preview-doc tr.insurance-provider-row td{background:#5B9BD5!important;color:#fff!important;font-weight:700;font-size:11px;padding:6px 9px;font-family:'Nunito Sans',sans-serif!important;text-align:left;border-color:#5B9BD5!important;border-bottom:1px solid #5B9BD5!important}
 .preview-doc tr.insurance-provider-row td strong{color:#fff!important}
 /* Insurance body rows: vertical alignment on top so visually-merged cells with rowspan align with text */
 .preview-doc h3.cat-head{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif;font-size:17px;color:#0C2E3F;font-weight:700;margin:26px 0 10px}
 .preview-doc p.bnr-head{margin-top:18px}
 .preview-doc table.insurance-table td{vertical-align:top;overflow-wrap:break-word;word-break:normal}
-.preview-doc table.insurance-table tr td{background:#E5F4F6}
-.preview-doc table.insurance-table td.alt{background:#E5F4F6}
-.preview-doc table.insurance-table td.alt2{background:#E5F4F6}
+.preview-doc table.insurance-table tr td{background:#DEEBF7}
+.preview-doc table.insurance-table td.alt{background:#DEEBF7}
+.preview-doc table.insurance-table td.alt2{background:#DEEBF7}
 .preview-doc .circumstance-note{background:#F0F7FB;border:1px solid #E5F4F6;padding:7px 11px;border-radius:7px;font-style:italic;color:#333;margin:8px 0;font-size:10.5px}
 .preview-doc .footer-note{font-size:9px;color:#666;text-align:center;margin-top:28px;padding-top:7px;border-top:2px solid #0C2E3F}
 .preview-doc .cover-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:0;border:1px solid #D4E2EE;margin-bottom:14px;border-radius:7px;overflow:hidden}
@@ -868,11 +868,11 @@ details.collapse-card > div{margin-top:8px;padding-top:8px;border-top:1px solid 
    read correctly on the white page. */
 [data-theme="night"] .preview-doc table.insurance-table tr td,
 [data-theme="night"] .preview-doc table.insurance-table td.alt,
-[data-theme="night"] .preview-doc table.insurance-table td.alt2{background:#f5f8fb!important;color:#1a1a1a!important}
+[data-theme="night"] .preview-doc table.insurance-table td.alt2{background:#DEEBF7!important;color:#1a1a1a!important}
 [data-theme="night"] .preview-doc th{background:#0a2433!important;color:#fff!important}
 [data-theme="night"] .preview-doc th strong{color:#fff!important}
 [data-theme="night"] .preview-doc tr.insurance-provider-row td,
-[data-theme="night"] .preview-doc table.insurance-table tr.insurance-provider-row td{background:#2B6FD6!important;color:#fff!important;border-color:#2B6FD6!important}
+[data-theme="night"] .preview-doc table.insurance-table tr.insurance-provider-row td{background:#5B9BD5!important;color:#fff!important;border-color:#5B9BD5!important}
 [data-theme="night"] .preview-doc tr.insurance-provider-row td strong{color:#fff!important}
 [data-theme="night"] .preview-doc .roa-type-table td.head{background:#0a2433!important;color:#fff!important}
 [data-theme="night"] .preview-doc .roa-type-table td.head strong{color:#fff!important}
@@ -1028,7 +1028,8 @@ tr.drag-over-bottom > td{border-bottom:2px solid var(--blue)!important}
 [data-theme="night"] .ins-grid tr.ins-grid-provider td{background:linear-gradient(180deg,#2A5D8A 0%,#23547F 100%);border-color:#23547F}
 [data-theme="night"] .scenario-card.selected::after{background:#3171ac}
 [data-theme="night"] .floating-preview-btn:hover{background:#3a85c8}
-[data-theme="night"] .badge.lime{color:#16304a}
+[data-theme="night"] .badge.lime{background:var(--lime);color:#16304a}
+[data-theme="night"] .hero .badge.lime{background:var(--lime);color:#16304a}
 [data-theme="night"] .strategy-block-badge{color:#16304a}
 [data-theme="night"] .picker-selected-chip{color:#16304a;background:var(--lime);border-color:var(--lime)}
 /* Soft vertical card gradients like the SOA night cards */
@@ -9884,6 +9885,23 @@ function mirrorInsuranceTable(sourceKey, destKey){
     alert('Mirrored across in full. Also updated for this advice:\n\n• ' + prompts.join('\n• '));
   }
 }
+// The "(30 days wait, until Age 65)" line under an IP benefit amount — shared by
+// the preview and the Word export so both match the firm's template wording.
+function insPeriodsDisplay(r){
+  const bits = [];
+  let w = (r.waitingPeriod||'').trim();
+  if(w && !/^n\/?a$/i.test(w)){
+    if(!/wait/i.test(w)) w += ' wait';
+    bits.push(w);
+  }
+  let b = (r.benefitPeriod||'').trim();
+  if(b && !/^n\/?a$/i.test(b)){
+    b = b.replace(/^(?:to|until)\s*age/i, 'until Age');
+    bits.push(b);
+  }
+  return bits.join(', ');
+}
+
 // Resolve a cover row against the group defaults - row values take priority if present
 function resolveInsuranceRow(row, defsKey){
   const d = F.insuranceDefaults?.[defsKey] || {};
@@ -12009,9 +12027,10 @@ function cdmParseBenefitsReport(text){
     const structs = [...new Set(g.parts.map(x => x.struct).filter(Boolean))];
     let structure, note;
     if(structs.length > 1){
-      // Cover split between stepped and level premiums — one line, Hybrid.
+      // Cover split between stepped and level premiums — one line, Hybrid. The "/"
+      // puts the split note on its own line in the table (before-tax on top).
       structure = 'Hybrid';
-      note = fmt$(total) + ' pm (' + g.parts.map(x => fmt$(x.premMonthly) + ' pm ' + x.struct.toLowerCase()).join(' + ') + ')';
+      note = fmt$(total) + ' pm (before tax) / (' + g.parts.map(x => fmt$(x.premMonthly) + ' pm ' + x.struct.toLowerCase()).join(' + ') + ')';
     } else {
       structure = structs[0] || '';
       note = fmt$(total) + ' pm';
@@ -12025,7 +12044,7 @@ function cdmParseBenefitsReport(text){
       coverType: ct,
       lifeInsured: fn,
       owner: /super|smsf/i.test(p.ownerRaw) ? (/smsf/i.test(p.ownerRaw) ? 'SMSF' : 'Super') : fn,
-      benefitAmount: p.sum.raw + (isIP ? ' per month' : ''),
+      benefitAmount: p.sum.raw + (isIP ? ' pm' : ''),
       waitingPeriod: isIP && waitM ? waitM[1] + ' days' : '',
       benefitPeriod: isIP && bpM ? 'To Age ' + bpM[1] : '',
       premiumStructure: structure,
@@ -17336,7 +17355,7 @@ function renderInsurancePreviewTable(rows, defsKey){
       const premLines = splitPremiumDisplayLines(coverKind(r.coverType)==='trauma' ? [r.monthlyPremium, r.premiumNote] : [r.monthlyPremium, r.premiumNote, r.monthlyPremiumAfterTax]);
       const premiumHtml = premLines.map((s, idx) => `<div${idx < premLines.length - 1 ? ' style="margin-bottom:6px"' : ''}>${e(s)}</div>`).join('');
       // Benefit cell: main amount on line 1, waiting/benefit period on line 2.
-      const periodBits = [r.waitingPeriod, r.benefitPeriod].filter(Boolean).join(', ');
+      const periodBits = insPeriodsDisplay(r);
       const benefitHtml = e(r.benefitAmount||'') + (periodBits ? `<br>(${e(periodBits)})` : '');
 
       h += `<tr>`;
@@ -19173,6 +19192,10 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
   const { BL, TL, BORD, cellTxt, headerRow } = ctx;
   const NY = "0C2E3F"; // navy — used by multiCell to decide white-on-navy text; must be in local scope
   const LB = "EAF4FB"; // light blue (brand) — alternating data-cell fill instead of white
+  // Insurance-table palette (matches the firm's template): lighter blue provider
+  // band, pale-blue data cells — distinct from the teal used by other tables.
+  const INS_BAND = "5B9BD5";
+  const INS_CELL = "DEEBF7";
   const D = docx;
   const { Table, TableRow, TableCell, WidthType, Paragraph, TextRun, ShadingType, BorderStyle, AlignmentType, VerticalMergeType } = D;
 
@@ -19210,7 +19233,9 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
     if(!valid.length) valid.push("");
     const runs = [];
     valid.forEach((ln, idx) => {
-      if(idx > 0) runs.push(new TextRun({text:"", break:1, font:"Nunito", size:opts.size||18}));
+      // opts.gap leaves a blank line between the entries (used by the premium
+      // cell so before-tax / funding-split / after-tax read as separate blocks).
+      if(idx > 0) runs.push(new TextRun({text:"", break: opts.gap ? 2 : 1, font:"Nunito", size:opts.size||18}));
       runs.push(new TextRun({
         text: ln,
         font:"Nunito", size:opts.size||18,
@@ -19333,23 +19358,23 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
       new TableCell({
         columnSpan:7,
         width:{size:9950, type:WidthType.DXA},
-        shading:{type:ShadingType.CLEAR, fill: BL, color:"auto"},
+        shading:{type:ShadingType.CLEAR, fill: INS_BAND, color:"auto"},
         margins:{top:80,bottom:80,left:140,right:140},
         borders:{
-          top:{color:BL,space:0,style:BorderStyle.SINGLE,size:4},
-          bottom:{color:BL,space:0,style:BorderStyle.SINGLE,size:4},
-          left:{color:BL,space:0,style:BorderStyle.SINGLE,size:4},
-          right:{color:BL,space:0,style:BorderStyle.SINGLE,size:4}
+          top:{color:INS_BAND,space:0,style:BorderStyle.SINGLE,size:4},
+          bottom:{color:INS_BAND,space:0,style:BorderStyle.SINGLE,size:4},
+          left:{color:INS_BAND,space:0,style:BorderStyle.SINGLE,size:4},
+          right:{color:INS_BAND,space:0,style:BorderStyle.SINGLE,size:4}
         },
         children:[new Paragraph({children:[new TextRun({text:g.label||g.prov, font:"Nunito", size:18, bold:true, color:"FFFFFF"})]})]
       })
     ]}));
     g.rows.forEach((r, i) => {
       const premiumLines = splitPremiumDisplayLines(coverKind(r.coverType)==='trauma' ? [r.monthlyPremium, r.premiumNote] : [r.monthlyPremium, r.premiumNote, r.monthlyPremiumAfterTax]);
-      const periodBits = [r.waitingPeriod, r.benefitPeriod].filter(Boolean).join(', ');
+      const periodBits = insPeriodsDisplay(r);
       const benefitLines = [r.benefitAmount||""];
       if(periodBits) benefitLines.push(`(${periodBits})`);
-      const shade = TL;
+      const shade = INS_CELL;
 
       // First column (cover type) left-aligned; all other columns centred.
       const C = AlignmentType.CENTER;
@@ -19367,10 +19392,10 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
         premiumCell = multiCell([""], {w:colW[6], shade, align:C, verticalMerge: VM_CONTINUE});
         premStructCell = mergedCellTxt("", {w:colW[5], shade, align:C, verticalMerge: VM_CONTINUE});
       } else if(pm === 'restart'){
-        premiumCell = multiCell(premiumLines, {w:colW[6], shade, align:C, verticalMerge: VM_RESTART});
+        premiumCell = multiCell(premiumLines, {w:colW[6], shade, align:C, gap:true, verticalMerge: VM_RESTART});
         premStructCell = mergedCellTxt(r.premiumStructure||"", {w:colW[5], shade, align:C, verticalMerge: VM_RESTART});
       } else {
-        premiumCell = multiCell(premiumLines, {w:colW[6], shade, align:C});
+        premiumCell = multiCell(premiumLines, {w:colW[6], shade, align:C, gap:true});
         premStructCell = mergedCellTxt(r.premiumStructure||"", {w:colW[5], shade, align:C});
       }
 
