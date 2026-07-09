@@ -77,15 +77,15 @@ if(typeof pdfjsLib !== 'undefined'){
   /* Midnight-navy theme matched to the SOA Paraplanner: deep navy-blue page,
      slightly lighter card surfaces, bright-blue section headings, plain light
      field text. High contrast for easy reading. */
-  --bg:#0a1626;
-  --surface:#131f33;
-  --surface-2:#182842;
-  --row-alt:#1a2b46;
-  --input-bg:#0c1930;
-  --border:#263c58;
-  --border-strong:#3a5478;
-  --chrome:#0c1728;
-  --chrome-deep:#1d3049;
+  --bg:#17283f;
+  --surface:#1c304c;
+  --surface-2:#223a5a;
+  --row-alt:#243d5e;
+  --input-bg:#132136;
+  --border:#31496b;
+  --border-strong:#45638c;
+  --chrome:#0c1524;
+  --chrome-deep:#233a56;
   /* Header band + section accents use a vivid blue (matches the design target). */
   --navy:#3b82e6;
   --navy-deep:#2f6fd0;
@@ -102,9 +102,9 @@ if(typeof pdfjsLib !== 'undefined'){
   --lime-soft:#5e7235;
   --field-value:#eef3f8;
   --text:#eef3f8;
-  --text-dim:#c4d0db;
-  --text-muted:#8a9aa8;
-  --text-faint:#637484;
+  --text-dim:#c9d5e2;
+  --text-muted:#96a9c0;
+  --text-faint:#7189a5;
   --green:#4ade80;
   --green-light:#14361f;
   --green-dark:#7ee2a0;
@@ -114,11 +114,11 @@ if(typeof pdfjsLib !== 'undefined'){
   --amber-light:#3a2f10;
   --purple:#a78bfa;
   --purple-light:#2e1f52;
-  --teal:#16242e;
-  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
-  --shadow:0 2px 6px rgba(0,0,0,.5);
-  --shadow-md:0 4px 12px rgba(0,0,0,.55);
-  --shadow-lg:0 8px 24px rgba(0,0,0,.65);
+  --teal:#1c304c;
+  --shadow-sm:0 1px 2px rgba(4,10,20,.3);
+  --shadow:0 2px 6px rgba(4,10,20,.35);
+  --shadow-md:0 4px 12px rgba(4,10,20,.4);
+  --shadow-lg:0 8px 24px rgba(4,10,20,.5);
 }
 
 *{margin:0;padding:0;box-sizing:border-box}
@@ -11025,10 +11025,27 @@ async function readPdfText(file, onProgress){
     content.items.forEach(it => {
       const y = Math.round(it.transform[5]);
       if(!lines[y]) lines[y] = [];
-      lines[y].push({x: it.transform[4], str: it.str});
+      lines[y].push({x: it.transform[4], w: it.width || 0, str: it.str});
     });
     const sortedY = Object.keys(lines).map(Number).sort((a,b)=>b-a);
-    const pageText = sortedY.map(y => lines[y].sort((a,b)=>a.x-b.x).map(x => x.str).join(' ').trim()).filter(Boolean).join('\n');
+    // Join the items on each visual line, inserting a TAB where there's a big
+    // horizontal gap — that's a column boundary in a table (CDM summaries,
+    // insurer quotes, prior ROAs), which lets the table extractors see cells.
+    const pageText = sortedY.map(y => {
+      const items = lines[y].sort((a,b)=>a.x-b.x);
+      let s = '', prevRight = null;
+      items.forEach(it => {
+        // Whitespace-only runs just span the gap between columns — skip them and
+        // measure the distance from the last real text to the next.
+        if(it.str.trim() === '') return;
+        if(prevRight !== null){
+          s += (it.x - prevRight > 10) ? '\t' : ' ';
+        }
+        s += it.str;
+        prevRight = it.x + it.w;
+      });
+      return s.trim();
+    }).filter(Boolean).join('\n');
     fullText += pageText + '\n\n';
   }
   return fullText;
@@ -11571,6 +11588,11 @@ function ex_parseBenefitCell(raw){
     if(wait) out.waitingPeriod = wait[1].trim();
     const bp = inside.match(/(until age \d+|to age \d+|\d+\s*years?|age \d+)/i);
     if(bp) out.benefitPeriod = bp[1].trim();
+    // Bare "(30 days, Age 65)" style — the days figure is the waiting period.
+    if(!out.waitingPeriod){
+      const w2 = inside.match(/(\d+)\s*days?\b/i);
+      if(w2 && !(out.benefitPeriod||'').includes(w2[1])) out.waitingPeriod = w2[1] + ' days';
+    }
     if(!out.waitingPeriod && !out.benefitPeriod) out.benefitPeriod = inside.trim();
   } else {
     out.benefitAmount = s;
@@ -11715,6 +11737,206 @@ function extractRoaTables(text){
     commission: ex_extractCommission(text),
     superAllocation: ex_extractSuperAllocation(text)
   };
+}
+
+// ═══════════════════════════════════════════════════════════
+// PER-TABLE INSURANCE IMPORT (CDM summary / insurer quote)
+// ───────────────────────────────────────────────────────────
+// Each insurance table has an "Import from document" button — upload the CDM
+// insurance summary on the Current table and it prefills the current cover;
+// upload the new quote on the Recommended table and it prefills that. Works
+// like the CARE doc import for the super table. Reads Word tables as real
+// tables, PDFs with column-gap detection, and falls back to a keyword scan of
+// the text for quote layouts without a recognisable table.
+// ═══════════════════════════════════════════════════════════
+
+// Word reader that PRESERVES tables: each table row becomes one tab-separated
+// line (the format the ex_ table extractors expect); everything else becomes a
+// plain line. mammoth.extractRawText flattens tables, so we go via HTML.
+async function readDocxTabbedText(file, onProgress){
+  if(typeof mammoth === 'undefined') throw new Error('The Word reader (mammoth) failed to load — check your internet connection.');
+  onProgress && onProgress('Reading Word document…');
+  const buf = await file.arrayBuffer();
+  const res = await mammoth.convertToHtml({arrayBuffer: buf});
+  const doc = new DOMParser().parseFromString(res.value, 'text/html');
+  const out = [];
+  const clean = s => (s||'').replace(/\s+/g,' ').trim();
+  const walk = node => {
+    Array.from(node.children || []).forEach(ch => {
+      const tag = ch.tagName.toLowerCase();
+      if(tag === 'table'){
+        ch.querySelectorAll('tr').forEach(tr => {
+          const cells = Array.from(tr.querySelectorAll('th,td')).map(td => clean(td.textContent));
+          if(cells.some(Boolean)) out.push(cells.join('\t'));
+        });
+        out.push('');
+      } else if(/^(p|h1|h2|h3|h4|h5|h6|li)$/.test(tag)){
+        out.push(clean(ch.textContent));
+      } else {
+        walk(ch);
+      }
+    });
+  };
+  walk(doc.body);
+  return out.join('\n');
+}
+
+// Best-effort scan for cover lines in free text — for insurer quotes and CDM
+// summaries whose layout doesn't survive as a recognisable table. A line is a
+// cover line when it names a cover type AND carries a $ amount. Provider,
+// premium, waiting/benefit period and structure are read off the same line
+// where present; the provider falls back to the first insurer named anywhere.
+function ex_scanCoverLines(text){
+  const lines = text.split('\n').map(l => l.replace(/\t/g, '  ').trim());
+  const provNames = INSURERS.filter(x => x !== 'Other');
+  const provOn = s => {
+    const low = s.toLowerCase();
+    // Prefer the longest match ("NEOS Protect" over "NEOS").
+    let best = '';
+    provNames.forEach(p => { if(low.includes(p.toLowerCase()) && p.length > best.length) best = p; });
+    return best;
+  };
+  let docProvider = '';
+  for(const l of lines){ const p = provOn(l); if(p){ docProvider = p; break; } }
+
+  const money = s => {
+    // All $ figures on the line, largest first (benefit is the big one).
+    const out = [];
+    const re = /\$\s*([\d,]+(?:\.\d+)?)/g; let m;
+    while((m = re.exec(s))) out.push({raw:'$' + m[1], n: parseFloat(m[1].replace(/,/g,''))});
+    return out.sort((a,b)=>b.n-a.n);
+  };
+  const rows = [];
+  const seen = new Set();
+  for(const line of lines){
+    if(line.length < 8 || line.length > 220) continue;
+    // Skip obvious non-cover lines even if they mention "life" (headers, totals).
+    if(/life insured|policy number|total (monthly |annual )?premium|premium total|commission|adviser|policy fee/i.test(line)) continue;
+    const ct = ex_normCoverType(line);
+    if(!ct) continue;
+    const dollars = money(line);
+    if(!dollars.length || dollars[0].n < 1000) continue;   // needs a benefit-sized amount
+    const isIP = /income protection/i.test(ct);
+    const benefit = dollars[0].raw + (isIP && /\/?\s*(month|pm\b)/i.test(line) ? ' per month' : '');
+    // Monthly premium on the same line: the smallest $ tagged per month/pm/monthly
+    // that isn't the benefit amount itself (IP benefits are also "per month").
+    let premium = '';
+    const pmAmts = [];
+    const pmRe = /\$\s*([\d,]+(?:\.\d+)?)(?=\s*(?:per\s*month|\/\s*month|p\.?m\.?\b|monthly))/gi;
+    let pmM;
+    while((pmM = pmRe.exec(line))) pmAmts.push(parseFloat(pmM[1].replace(/,/g,'')));
+    const cand = pmAmts.filter(n => n !== dollars[0].n).sort((a,b)=>a-b);
+    if(cand.length) premium = '$' + (Number.isInteger(cand[0]) ? String(cand[0]) : cand[0].toFixed(2)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' pm';
+    const wait = line.match(/(\d+)\s*[- ]?day/i);
+    const bper = line.match(/(?:to|until)\s*age\s*(\d{2})/i) || line.match(/(\d+)\s*year(?:s)?\s*benefit/i);
+    const struct = /variable\s*age|stepped|level|hybrid/i.exec(line);
+    const key = ct + '|' + dollars[0].n;
+    if(seen.has(key)) continue;
+    seen.add(key);
+    rows.push({
+      provider: provOn(line) || docProvider,
+      coverType: ct,
+      benefitAmount: benefit,
+      waitingPeriod: wait ? wait[1] + ' days' : '',
+      benefitPeriod: bper ? (/age/i.test(bper[0]) ? 'Until Age ' + bper[1] : bper[1] + ' years') : '',
+      premiumStructure: struct ? ex_normPremStruct(struct[0]) : '',
+      premiumNote: premium,
+      owner: /(?:inside|via|within|through)\s+super|super\s*owned/i.test(line) ? 'Super' : ''
+    });
+    if(rows.length >= 15) break;
+  }
+  return rows;
+}
+
+// Import a CDM insurance summary / insurer quote / prior advice doc into ONE
+// insurance table (the one whose 📥 button was clicked).
+async function handleInsuranceTableImport(inp, fKey){
+  const file = inp.files[0]; if(!file) return;
+  const dkMap = {insuranceCurrent:'current', insuranceRecommended:'recommended', insuranceOriginal:'original', insuranceAltered:'altered', insuranceAlternative:'alternative', insuranceOption1:'option1', insuranceOption2:'option2'};
+  const dk = dkMap[fKey] || 'current';
+  const tableNice = {current:'Current Cover', recommended:'Recommended Cover', original:'Original Recommendations', altered:'Altered Recommendations', alternative:'Alternative Option', option1:'Option 1', option2:'Option 2'}[dk];
+  try{
+    const ext = (file.name.split('.').pop()||'').toLowerCase();
+    showImportStatus('Reading ' + file.name + '…');
+    let text;
+    if(ext === 'docx' || (file.type||'').includes('wordprocessingml')){
+      text = await readDocxTabbedText(file, showImportStatus);
+    } else {
+      text = await extractTextFromFile(file, showImportStatus);
+    }
+    hideImportStatus();
+
+    // 1) Structured cover tables (Word tables, column-aligned PDFs).
+    const found = ex_extractInsuranceTables(text);
+    let rows = [], source = '';
+    if(found.length){
+      const match = found.find(t => t.section === dk);
+      if(match){ rows = match.rows.slice(); source = 'the "' + tableNice + '" table in the document'; }
+      else { rows = found.reduce((a,t)=>a.concat(t.rows), []); source = found.length + ' cover table(s) in the document'; }
+    }
+    // 2) Fallback — keyword scan of the raw text (quote / summary layouts).
+    if(!rows.length){
+      rows = ex_scanCoverLines(text);
+      source = 'a best-effort scan of the document text';
+    }
+    if(!rows.length){
+      alert('No insurance cover lines were found in this document.\n\nTips:\n• Word (.docx) versions read best — tables are read cell-by-cell.\n• PDFs are read by layout; text-based PDFs work, scanned images don\'t.\n• Cover lines are detected by a cover type (Life / TPD / IP / Trauma) plus a $ amount.');
+      inp.value = ''; return;
+    }
+
+    // Table-appropriate defaults and clean-up.
+    const defStatus = dk === 'current' ? 'In Force' : 'Recommend';
+    rows = rows.map(r => Object.assign(mkInsurance(), r));
+    rows.forEach(r => {
+      if(!(r.status||'').trim()) r.status = defStatus;
+      if(r.owner === 'Super (inside super)') r.owner = 'Super';
+      // The grid's premium cell edits premiumNote — fold a table-extracted
+      // monthlyPremium into it so the figure is visible and editable.
+      if(!(r.premiumNote||'').trim() && (r.monthlyPremium||'').trim()){
+        r.premiumNote = r.monthlyPremium; r.monthlyPremium = '';
+      }
+      // Match the Premium Structure dropdown's casing ("stepped" → "Stepped").
+      if(r.premiumStructure) r.premiumStructure = r.premiumStructure.charAt(0).toUpperCase() + r.premiumStructure.slice(1);
+    });
+    // Adjacent Life + TPD with one premium on the Life row → linked policy with
+    // a combined premium (merges in the grid and the document, as usual).
+    rows.forEach((r,i) => {
+      if(i > 0 && /tpd/i.test(r.coverType||'') && /life/i.test(rows[i-1].coverType||'')
+         && !(r.premiumNote||'').trim() && (rows[i-1].premiumNote||'').trim()
+         && (r.provider||'') === (rows[i-1].provider||'')){
+        r.sharedPremiumWithPrev = true;
+      }
+    });
+
+    let summary = 'Found ' + rows.length + ' cover line(s) via ' + source + ':\n\n';
+    rows.forEach(r => {
+      summary += '• ' + (r.coverType||'?') + ' — ' + (r.benefitAmount||'no amount')
+        + (r.provider ? ' · ' + r.provider : '')
+        + (r.premiumNote ? ' · ' + r.premiumNote : '') + '\n';
+    });
+    summary += '\nPrefill the ' + tableNice + ' table with these? Its existing rows will be replaced (you can still edit every cell afterwards).';
+    if(!confirm(summary)){ inp.value = ''; return; }
+
+    F[fKey] = rows;
+    // Seed this table's common values from the most frequent imported values so
+    // blank rows added later inherit them. Provider stays on the rows so
+    // multi-insurer imports band correctly.
+    if(F.insuranceDefaults && F.insuranceDefaults[dk]){
+      const common = field => {
+        const c = {}; rows.forEach(r => { const v = (r[field]||'').trim(); if(v) c[v] = (c[v]||0)+1; });
+        let best = '', n = 0; Object.entries(c).forEach(([v,k]) => { if(k > n){ best = v; n = k; } });
+        return best;
+      };
+      const d = F.insuranceDefaults[dk];
+      d.lifeInsured = common('lifeInsured') || d.lifeInsured;
+      d.premiumStructure = common('premiumStructure') || d.premiumStructure;
+    }
+    render();
+  } catch(ex){
+    hideImportStatus();
+    alert('Import failed: ' + (ex && ex.message ? ex.message : ex));
+  }
+  inp.value = '';
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -12361,31 +12583,7 @@ function renderPicker(){
   const isROA = docType === "ROA";
   const isNAA = docType === "NAA";
   const isStrategy = docType === "Strategy";
-  let heroTitle, heroTag;
-  if(isROA){
-    heroTitle = 'Record of Advice <em>Generator</em>';
-    heroTag = "Pick one or more scenarios. They'll combine into a single consolidated ROA with merged objectives, recommendations, benefits and risks.";
-  } else if(isStrategy){
-    heroTitle = 'Strategy Paper <em>Generator</em>';
-    heroTag = "Select strategy paper topics. The output is a higher-level strategy document rather than a compliant ROA.";
-  } else {
-    heroTitle = 'No Advice Acknowledgement <em>Generator</em>';
-    heroTag = "Execution-only acknowledgement — the client has instructed a transaction and explicitly declined advice. No scenarios to pick; click below to start the builder.";
-  }
   let h = `<main class="main">`;
-  h += `<section class="hero">
-    <div class="hero-inner">
-      <div class="hero-left">
-        <div class="hero-sub">Step 1 of ${isNAA ? '2' : '3'} · ${isNAA ? 'Start Builder' : 'Scenario Selection'}</div>
-        <h1>${heroTitle}</h1>
-        <div class="hero-tag">${heroTag}</div>
-      </div>
-      <div class="hero-right">
-        <button class="hero-btn" onclick="goToBuilder()">${isNAA ? 'Start NAA Builder →' : 'Continue to Builder →'}</button>
-        ${selectedScenarios.length ? `<button class="hero-btn ghost" onclick="selectedScenarios=[];render()">Clear selection</button>` : ''}
-      </div>
-    </div>
-  </section>`;
 
   // Document-type tabs (dashboard)
   h += `<div class="doctype-tabs">
@@ -12409,8 +12607,8 @@ function renderPicker(){
       <div class="picker-intro-text">
         <h3>NAA — Execution-Only Acknowledgement</h3>
         <p>An NAA is used when a client has instructed a specific transaction (e.g. an investment switch or insurance change) and has <strong>declined</strong> your offer of advice. There are no scenarios to pick — every NAA is essentially the same structure: client details, the transaction the client instructed, and an acknowledgement section.</p>
-        <p>Click <strong>Start NAA Builder →</strong> above to fill in the details.</p>
       </div>
+      <button class="btn btn-blue" onclick="goToBuilder()">Start NAA Builder →</button>
     </div></main>`;
     return h;
   }
@@ -15661,7 +15859,8 @@ function renderInsuranceSection(){
 
   let h = `<div class="card">
     <h2>Insurance Cover</h2>
-    <div class="card-sub">Each table below is an editable copy of the exact table that prints in the ROA — same columns, provider bands and merged premium cells. Use Status to show Recommend/Retain/Cancel etc.</div>
+    <div class="card-sub">Each table below is an editable copy of the exact table that prints in the ROA — same columns, provider bands and merged premium cells. Use Status to show Recommend/Retain/Cancel etc.<br>
+    <strong>Prefill from documents:</strong> use 📥 <strong>Import from document</strong> on each table — upload the CDM insurance summary on the <em>Current</em> table and the new insurance quote on the <em>Recommended</em> table, and the cover rows prefill (like the CARE doc import for the super table). Word (.docx) reads best; text-based PDFs also work.</div>
   </div>`;
 
   // Render tables based on needs
@@ -15762,12 +15961,18 @@ function renderInsuranceTable(title, key, mirrorSourceKey){
   };
   const srcLabel = mirrorSourceKey ? sourceLabels[mirrorSourceKey] : '';
   const mirrorBtn = mirrorSourceKey
-    ? `<button class="btn btn-xs" style="margin-left:auto" onclick="mirrorInsuranceTable('${mirrorSourceKey}','${key}')" title="Copy every row and group default from the ${e(srcLabel)} table into this one. Existing rows will be replaced.">⇄ Mirror from ${e(srcLabel)}</button>`
+    ? `<button class="btn btn-xs" onclick="mirrorInsuranceTable('${mirrorSourceKey}','${key}')" title="Copy every row and group default from the ${e(srcLabel)} table into this one. Existing rows will be replaced.">⇄ Mirror from ${e(srcLabel)}</button>`
     : '';
+  const importBtn = `<label class="btn btn-xs" style="cursor:pointer;margin:0" title="Prefill this table from an uploaded document — e.g. the CDM insurance summary for current cover, or the new insurance quote for recommended cover. Reads the cover lines and replaces the rows below (works like the CARE doc import for the super table).">📥 Import from document
+    <input type="file" accept=".pdf,.docx,.txt" style="display:none" onchange="handleInsuranceTableImport(this,'${key}')">
+  </label>`;
   let h = `<div class="card">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <h3 style="margin:0">${e(title)}</h3>
-      ${mirrorBtn}
+      <span style="margin-left:auto;display:inline-flex;gap:6px;flex-wrap:wrap;align-items:center">
+        ${importBtn}
+        ${mirrorBtn}
+      </span>
     </div>
     <div class="card-sub" style="margin-top:6px">Laid out exactly like the table in the ROA document — same columns, blue provider bands and merged premium cells. Click any cell to edit it. Set the provider on the blue band; it applies to every cover row beneath it.</div>
     <div style="background:var(--blue-light);border:1px solid var(--blue-soft);border-radius:10px;padding:10px;margin-bottom:10px">
