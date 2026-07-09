@@ -9904,6 +9904,23 @@ function insPeriodsDisplay(r){
   return bits.join(', ');
 }
 
+// The SOA-style premium summary shown beneath each cover table:
+//   Annual Premium Super / Annual Premium Cash Flow / Total Annual Premium
+// Built from the table's stored MONTHLY totals; returns [label, value] rows.
+function insTotalsSummary(tot){
+  const parse = v => { const m = String(v||'').match(/\$\s*([\d,]+(?:\.\d+)?)/); return m ? parseFloat(m[1].replace(/,/g, '')) : null; };
+  const fmt = n => '$' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const sup = (tot.super||'').trim() ? parse(tot.super) : null;
+  const cash = (tot.cashflow||'').trim() ? parse(tot.cashflow) : null;
+  const line = m => fmt(m * 12) + ' pa (' + fmt(m) + ' pm)';
+  const rows = [];
+  if((tot.super||'').trim()) rows.push(['Annual Premium Super', sup != null ? line(sup) : String(tot.super).trim()]);
+  if((tot.cashflow||'').trim()) rows.push(['Annual Premium Cash Flow', cash != null ? line(cash) : String(tot.cashflow).trim()]);
+  const total = (sup||0) + (cash||0);
+  if(total && (sup != null || cash != null)) rows.push(['Total Annual Premium', line(total)]);
+  return rows;
+}
+
 // Resolve a cover row against the group defaults - row values take priority if present
 function resolveInsuranceRow(row, defsKey){
   const d = F.insuranceDefaults?.[defsKey] || {};
@@ -12066,14 +12083,22 @@ function cdmParseBenefitsReport(text){
       exclusions: ''
     };
   });
-  // Keep the pairs reading Stepped before Level within each cover, Life first.
-  const orderOf = r => (/^life/i.test(r.coverType) ? 0 : /^tpd/i.test(r.coverType) ? 1 : 2);
+  // Cover order matches the firm's table: Life, TPD, Income Protection,
+  // Trauma, Child Cover — with Stepped before Level within each cover.
+  const orderOf = r => {
+    const ct = r.coverType || '';
+    if(/^life/i.test(ct)) return 0;
+    if(/^tpd/i.test(ct)) return 1;
+    if(/income protection|^ip\b/i.test(ct)) return 2;
+    if(/trauma|critical/i.test(ct)) return 3;
+    if(/child/i.test(ct)) return 4;
+    return 5;
+  };
   const structOrder = r => /stepped/i.test(r.premiumStructure) ? 0 : 1;
   rows.sort((a, b) => {
     const d = orderOf(a) - orderOf(b);
     if(d) return d;
-    if(orderOf(a) < 2) return structOrder(a) - structOrder(b);
-    return 0;
+    return structOrder(a) - structOrder(b);
   });
   return rows.length ? {rows, client: parsed[0].client} : null;
 }
@@ -16699,7 +16724,7 @@ function renderInsuranceTable(title, key, mirrorSourceKey){
       <div class="field" style="margin:0"><label>Super-Funded Premium Total</label><input value="${e(tot.super||'')}" onchange="setInsTableTotal('${key}','super',this.value)" placeholder="$X pm"></div>
       <div class="field" style="margin:0"><label>Cashflow-Funded Premium Total</label><input value="${e(tot.cashflow||'')}" onchange="setInsTableTotal('${key}','cashflow',this.value)" placeholder="$X pm"></div>
     </div>
-    <div class="helper" style="margin:5px 0 0">Leave blank to omit. Shows as "Total Cost: $X pm (Super) plus $Y pm (Cashflow)" beneath this table.</div>
+    <div class="helper" style="margin:5px 0 0">Leave blank to omit. Shows as the SOA-style premium summary beneath this table — Annual Premium Super / Annual Premium Cash Flow / Total Annual Premium (with the monthly figure in brackets).</div>
   </div>`;
   h += `</div>`;
   return h;
@@ -17689,10 +17714,15 @@ function renderInsurancePreviewTable(rows, defsKey){
   const fKeyForDefs = {current:'insuranceCurrent', recommended:'insuranceRecommended', original:'insuranceOriginal', altered:'insuranceAltered', alternative:'insuranceAlternative', option1:'insuranceOption1', option2:'insuranceOption2'}[defsKey];
   const tot = (fKeyForDefs && F.insuranceTotals && F.insuranceTotals[fKeyForDefs]) || null;
   if(tot && ((tot.super||'').trim() || (tot.cashflow||'').trim())){
-    const parts = [];
-    if((tot.super||'').trim()) parts.push(e(tot.super.trim()) + ' (Super)');
-    if((tot.cashflow||'').trim()) parts.push(e(tot.cashflow.trim()) + ' (Cashflow)');
-    h += `<p><strong>Total Cost: ${parts.join(' plus ')}</strong></p>`;
+    // SOA-style premium summary beneath the cover table.
+    const trows = insTotalsSummary(tot);
+    if(trows.length){
+      h += `<table class="insurance-table" style="width:62%;min-width:330px;margin-top:8px"><tbody>` +
+        trows.map((r, i) => {
+          const bold = i === trows.length - 1 ? 'font-weight:700;' : 'font-weight:600;';
+          return `<tr><td class="alt" style="${bold}text-align:left">${e(r[0])}</td><td class="alt" style="${i === trows.length - 1 ? 'font-weight:700' : ''}">${e(r[1])}</td></tr>`;
+        }).join('') + `</tbody></table>`;
+    }
   }
   return h;
 }
@@ -19716,16 +19746,18 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
   const fKeyForDefs = {current:'insuranceCurrent', recommended:'insuranceRecommended', original:'insuranceOriginal', altered:'insuranceAltered', alternative:'insuranceAlternative', option1:'insuranceOption1', option2:'insuranceOption2'}[defsKey];
   const tot = (fKeyForDefs && F.insuranceTotals && F.insuranceTotals[fKeyForDefs]) || null;
   if(tot && ((tot.super||'').trim() || (tot.cashflow||'').trim())){
-    const parts = [];
-    if((tot.super||'').trim()) parts.push((tot.super||'').trim() + " (Super)");
-    if((tot.cashflow||'').trim()) parts.push((tot.cashflow||'').trim() + " (Cashflow)");
-    children.push(new Paragraph({
-      spacing:{before:120, after:160},
-      children:[
-        new TextRun({text:"Total Cost: ", font:"Nunito", size:19, bold:true, color:NY}),
-        new TextRun({text:parts.join(" plus "), font:"Nunito", size:19, bold:true, color:"1a1a1a"})
-      ]
-    }));
+    // SOA-style premium summary table (Annual Premium Super / Cash Flow / Total).
+    const trows = insTotalsSummary(tot);
+    if(trows.length){
+      children.push(new Paragraph({spacing:{before:100, after:40}, children:[new TextRun({text:"", size:2})]}));
+      const sumW = [3600, 2900];
+      children.push(new Table({columnWidths: sumW, width:{size:6500, type:WidthType.DXA}, rows:
+        trows.map((r, i) => new TableRow({children:[
+          cellTxt(r[0], {w:sumW[0], shade:INS_CELL, bold:true}),
+          cellTxt(r[1], {w:sumW[1], shade:INS_CELL, bold: i === trows.length - 1, align:AlignmentType.CENTER})
+        ]}))
+      }));
+    }
   }
   // Trailing spacer so the next section/heading doesn't sit hard against the table.
   children.push(new Paragraph({spacing:{before:0, after:120}, children:[new TextRun({text:"", font:"Nunito", size:8})]}));
