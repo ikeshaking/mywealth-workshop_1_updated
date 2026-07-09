@@ -9856,23 +9856,14 @@ function mirrorInsuranceTable(sourceKey, destKey){
     F.insuranceDefaults[destDk] = Object.assign({}, F.insuranceDefaults[srcDk]);
   }
 
-  // After mirroring into a "recommended/altered" table, the figures that CHANGE between
-  // the current and recommended position should be cleared or updated so the adviser is
-  // prompted to enter the new values rather than silently keeping the old ones.
+  // Mirroring copies EVERY value across verbatim (premiums and amounts included).
+  // On a recommended/altered destination the statuses flip to "Recommend", and the
+  // waiting/benefit-period scenarios update the IP terms to the new values.
   const isRecommendedDest = (destKey === 'insuranceRecommended' || destKey === 'insuranceAltered');
   const prompts = [];
   if(isRecommendedDest){
     const isIP = ct => /income protection|^ip\b/i.test(ct||'');
-    // Premiums almost always change between current and recommended — clear them so the
-    // empty (red "req") fields prompt re-entry.
-    let clearedPrem = 0;
-    F[destKey].forEach(r => {
-      if((r.premiumNote||'').trim() || (r.monthlyPremiumAfterTax||'').trim()){
-        r.premiumNote = ''; r.monthlyPremiumAfterTax = ''; clearedPrem++;
-      }
-      r.status = 'Recommend';
-    });
-    if(clearedPrem) prompts.push('the premiums (cleared so you re-enter the new amounts)');
+    F[destKey].forEach(r => { r.status = 'Recommend'; });
 
     // Waiting-period scenario → set the recommended IP waiting period to the "To" value.
     if(selectedScenarios.includes('ins_waiting_period') && (F.waitingTo||'').trim()){
@@ -9886,17 +9877,11 @@ function mirrorInsuranceTable(sourceKey, destKey){
       F[destKey].forEach(r => { if(isIP(r.coverType)){ r.benefitPeriod = F.benefitTo; n++; } });
       if(n) prompts.push('the income-protection benefit period (set to "' + F.benefitTo + '")');
     }
-    // Increase / decrease cover → benefit amounts change; clear them to prompt re-entry.
-    if(selectedScenarios.some(id => /ins_(alter_increase|alter_decrease|ip_increase|ip_reduction)/.test(id))){
-      let n = 0;
-      F[destKey].forEach(r => { if((r.benefitAmount||'').trim()){ r.benefitAmount = ''; n++; } });
-      if(n) prompts.push('the benefit amounts (cleared so you enter the new sums insured)');
-    }
   }
 
   render();
   if(prompts.length){
-    alert('Mirrored across. Now update for this advice:\n\n• ' + prompts.join('\n• ') + '\n\nFields left blank are marked "req" — fill them in before exporting.');
+    alert('Mirrored across in full. Also updated for this advice:\n\n• ' + prompts.join('\n• '));
   }
 }
 // Resolve a cover row against the group defaults - row values take priority if present
@@ -9914,7 +9899,9 @@ function resolveInsuranceRow(row, defsKey){
   return {
     ...row,
     provider: row.provider || d.provider || "",
-    lifeInsured: row.lifeInsured || d.lifeInsured || "",
+    // A blank Life Insured automatically uses the client's first name (Client 1
+    // for joint clients — type over the cell for the partner's covers).
+    lifeInsured: row.lifeInsured || d.lifeInsured || (F.client1Name || '').trim().split(/\s+/)[0] || "",
     owner,
     premiumStructure: row.premiumStructure || d.premiumStructure || "",
   };
@@ -9983,20 +9970,6 @@ function toggleInsRowDetails(tableKey, i){
   render();
 }
 
-// Set a per-table group default AND auto-fill it into the actual cells of every row
-// in that table that is either empty OR still holds the previous default value (i.e.
-// the adviser hadn't customised it). Rows the adviser has typed their own value into
-// are left untouched. This makes the default visibly populate each row, and the adviser
-// simply types over a cell to override it.
-function setInsGroupDefault(tableKey, dk, field, value){
-  const prev = (F.insuranceDefaults[dk] && F.insuranceDefaults[dk][field]) || "";
-  F.insuranceDefaults[dk][field] = value;
-  (F[tableKey]||[]).forEach(r => {
-    const cur = (r[field]||"");
-    if(cur === "" || cur === prev){ r[field] = value; }
-  });
-  render();
-}
 // Map an F key (e.g. "insuranceRecommended") to a defaults key ("recommended")
 function insKeyToDefsKey(key){
   const m = {insuranceCurrent:'current', insuranceRecommended:'recommended', insuranceAlternative:'alternative', insuranceOriginal:'original', insuranceAltered:'altered'};
@@ -10244,9 +10217,7 @@ function resetState(){
       bdbn: true,
       benefitsGeneral: true,
       projection: true,
-      // Fees starts hidden — most ROAs don't change the fee position. Click
-      // "+ Show" on the Fees section (sidebar) to include it.
-      fees: false,
+      fees: true,
       disclosures: true,
       ack: true,
     },
@@ -10442,9 +10413,9 @@ function consolidateScenarios(){
   const anyInsForProj = scns.some(s => s.needs?.insurance || s.needs?.insuranceTable);
   F.showProjection = !anyInsForProj;
 
-  // Fees auto
+  // Fees section always shows, but "fees have changed" starts UNTICKED — the
+  // adviser opts in when the fee position actually changes.
   const anyIns = scns.some(s => s.needs?.insurance);
-  F.feesChanged = anyIns;
 
   // Re-scope the pre-filled insurance starter rows to suit the selected scenarios.
   // Single-purpose scenarios (e.g. IP waiting-period change) only need the IP rows;
@@ -11846,7 +11817,24 @@ async function readDocxTabbedText(file, onProgress){
 // premium, waiting/benefit period and structure are read off the same line
 // where present; the provider falls back to the first insurer named anywhere.
 function ex_scanCoverLines(text){
-  const lines = text.split('\n').map(l => l.replace(/\t/g, '  ').trim());
+  const rawScanLines = text.split('\n').map(l => l.replace(/\t/g, '  ').trim());
+  // Join wrapped quote layouts: a cover-type line with NO $ amount takes the
+  // figures from the following line or two (many quotes print "Income Protection"
+  // with the benefit / premium / periods on the lines underneath).
+  const lines = [];
+  for(let i = 0; i < rawScanLines.length; i++){
+    let l = rawScanLines[i];
+    if(l && ex_normCoverType(l) && !/\$/.test(l)){
+      let taken = 0;
+      while(taken < 2 && i + 1 < rawScanLines.length && rawScanLines[i+1]
+            && !ex_normCoverType(rawScanLines[i+1])
+            && /\$|\bdays?\b|\bage\b|stepped|level|hybrid|per month|\bpm\b/i.test(rawScanLines[i+1])){
+        l += ' ' + rawScanLines[++i];
+        taken++;
+      }
+    }
+    lines.push(l);
+  }
   const provNames = INSURERS.filter(x => x !== 'Other');
   const provOn = s => {
     const low = s.toLowerCase();
@@ -12142,6 +12130,15 @@ async function importInsuranceFileToTable(file, fKey){
       }
     });
 
+    // If the table already holds REAL rows (not the untouched starters), offer to
+    // ADD underneath instead of replacing — so multiple quotes (e.g. a super quote
+    // plus a non-super quote) can be dropped in one after the other.
+    const existing = (F[fKey]||[]).filter(r => r && (r.coverType || r.provider));
+    let mode = 'replace';
+    if(existing.length && !insuranceTableIsPristine(F[fKey])){
+      mode = confirm('The ' + tableNice + ' table already has ' + existing.length + ' cover line(s).\n\nOK — KEEP them and ADD the imported lines underneath (use this when dropping a second quote, e.g. super + non-super).\nCancel — REPLACE them with the imported lines.') ? 'append' : 'replace';
+    }
+
     let summary = 'Found ' + rows.length + ' cover line(s) via ' + source + ':\n\n';
     rows.forEach(r => {
       summary += '• ' + (r.coverType||'?') + ' — ' + (r.benefitAmount||'no amount')
@@ -12151,11 +12148,13 @@ async function importInsuranceFileToTable(file, fKey){
     if(cdmClient && !(F.client1Name||'').trim()){
       summary += '\nClient 1 name will be pre-filled as "' + cdmClient + '" (currently blank).\n';
     }
-    summary += '\nPrefill the ' + tableNice + ' table with these? Its existing rows will be replaced (you can still edit every cell afterwards).';
+    summary += '\n' + (mode === 'append'
+      ? 'ADD these below the existing rows in the ' + tableNice + ' table?'
+      : 'Prefill the ' + tableNice + ' table with these? Its existing rows will be replaced') + ' (you can still edit every cell afterwards).';
     if(!confirm(summary)){ return; }
 
     if(cdmClient && !(F.client1Name||'').trim()) F.client1Name = cdmClient;
-    F[fKey] = rows;
+    F[fKey] = mode === 'append' ? existing.concat(rows) : rows;
     // Seed this table's common values from the most frequent imported values so
     // blank rows added later inherit them. Provider stays on the rows so
     // multi-insurer imports band correctly.
@@ -16227,16 +16226,7 @@ function renderInsuranceTable(title, key, mirrorSourceKey){
         ${mirrorBtn}
       </span>
     </div>
-    <div class="card-sub" style="margin-top:6px">Laid out exactly like the table in the ROA document — same columns, blue provider bands and merged premium cells. Click any cell to edit it. Set the provider on the blue band; it applies to every cover row beneath it.</div>
-    <div style="background:var(--blue-light);border:1px solid var(--blue-soft);border-radius:10px;padding:10px;margin-bottom:10px">
-      <div style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Common values for this table (auto-fill into every row)</div>
-      <div class="grid-3">
-        <div class="field" style="margin:0"><label>Life Insured</label><input value="${e(defs.lifeInsured)}" onchange="setInsGroupDefault('${key}','${dk}','lifeInsured',this.value)" placeholder="[Client name]"></div>
-        <div class="field" style="margin:0"><label>Owner</label><select onchange="setInsGroupDefault('${key}','${dk}','owner',this.value)">${opts(ownerOptionList(), defs.owner)}</select></div>
-        <div class="field" style="margin:0"><label>Premium Structure</label><select onchange="setInsGroupDefault('${key}','${dk}','premiumStructure',this.value)">${opts(PREM_STRUCT, defs.premiumStructure)}</select></div>
-      </div>
-      <div class="helper" style="margin:6px 0 0">Changing one of these updates every row that still uses the old value. Rows you've already typed your own value into are left as-is.</div>
-    </div>`;
+    <div class="card-sub" style="margin-top:6px">Laid out exactly like the table in the ROA document — same columns, blue provider bands and merged premium cells. Click any cell to edit it. Set the provider on the blue band (it applies to every cover row beneath it); a blank Life Insured automatically uses the client's first name.</div>`;
   // ─────────────────────────────────────────────────────────
   // THE GRID — an editable copy of the exact table the ROA
   // document produces: same 7 columns, blue provider band rows,
@@ -16313,7 +16303,7 @@ function renderInsuranceTable(title, key, mirrorSourceKey){
       <input class="ins-mini-full" ${fk('ex')} value="${e(r.exclusions)}" onchange="F['${key}'][${i}].exclusions=this.value" placeholder="Exclusions (optional)" title="Exclusions — e.g. Lower back">
     </td>`;
 
-    h += `<td><input ${fk('li')} value="${e(r.lifeInsured)}" onchange="F['${key}'][${i}].lifeInsured=this.value" placeholder="${e(defs.lifeInsured||'[Client first name]')}"></td>`;
+    h += `<td><input ${fk('li')} value="${e(r.lifeInsured)}" onchange="F['${key}'][${i}].lifeInsured=this.value" placeholder="${e(defs.lifeInsured || (F.client1Name||'').trim().split(/\s+/)[0] || '[Client first name]')}" title="Blank = the client's first name, automatically"></td>`;
     h += `<td><select ${fk('ow')} onchange="F['${key}'][${i}].owner=this.value;render()">${opts(ownerOptionList(), r.owner)}</select></td>`;
     h += `<td><select ${fk('st')} onchange="F['${key}'][${i}].status=this.value">${opts(STATUSES, r.status)}</select></td>`;
 
