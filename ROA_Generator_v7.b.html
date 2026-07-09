@@ -824,15 +824,15 @@ details.collapse-card > div{margin-top:8px;padding-top:8px;border-top:1px solid 
 .preview-doc tr.total-row td{background:#0C2E3F!important;color:#fff;font-weight:700}
 .preview-doc tr.fee-row td{background:#FEF6E0!important;font-style:italic}
 .preview-doc tr.platform-row td{background:#0D6BE0!important;color:#fff!important;font-weight:700;font-family:'Nunito Sans',sans-serif!important}
-.preview-doc tr.insurance-provider-row td{background:#5B9BD5!important;color:#fff!important;font-weight:700;font-size:11px;padding:6px 9px;font-family:'Nunito Sans',sans-serif!important;text-align:left;border-color:#5B9BD5!important;border-bottom:1px solid #5B9BD5!important}
+.preview-doc tr.insurance-provider-row td{background:#5EA6FF!important;color:#fff!important;font-weight:700;font-size:11px;padding:6px 9px;font-family:'Nunito Sans',sans-serif!important;text-align:left;border-color:#5EA6FF!important;border-bottom:1px solid #5EA6FF!important}
 .preview-doc tr.insurance-provider-row td strong{color:#fff!important}
 /* Insurance body rows: vertical alignment on top so visually-merged cells with rowspan align with text */
 .preview-doc h3.cat-head{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif;font-size:17px;color:#0C2E3F;font-weight:700;margin:26px 0 10px}
 .preview-doc p.bnr-head{margin-top:18px}
 .preview-doc table.insurance-table td{vertical-align:top;overflow-wrap:break-word;word-break:normal}
-.preview-doc table.insurance-table tr td{background:#DEEBF7}
-.preview-doc table.insurance-table td.alt{background:#DEEBF7}
-.preview-doc table.insurance-table td.alt2{background:#DEEBF7}
+.preview-doc table.insurance-table tr td{background:#E4F3F5}
+.preview-doc table.insurance-table td.alt{background:#E4F3F5}
+.preview-doc table.insurance-table td.alt2{background:#E4F3F5}
 .preview-doc .circumstance-note{background:#F0F7FB;border:1px solid #E5F4F6;padding:7px 11px;border-radius:7px;font-style:italic;color:#333;margin:8px 0;font-size:10.5px}
 .preview-doc .footer-note{font-size:9px;color:#666;text-align:center;margin-top:28px;padding-top:7px;border-top:2px solid #0C2E3F}
 .preview-doc .cover-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:0;border:1px solid #D4E2EE;margin-bottom:14px;border-radius:7px;overflow:hidden}
@@ -868,11 +868,11 @@ details.collapse-card > div{margin-top:8px;padding-top:8px;border-top:1px solid 
    read correctly on the white page. */
 [data-theme="night"] .preview-doc table.insurance-table tr td,
 [data-theme="night"] .preview-doc table.insurance-table td.alt,
-[data-theme="night"] .preview-doc table.insurance-table td.alt2{background:#DEEBF7!important;color:#1a1a1a!important}
+[data-theme="night"] .preview-doc table.insurance-table td.alt2{background:#E4F3F5!important;color:#1a1a1a!important}
 [data-theme="night"] .preview-doc th{background:#0a2433!important;color:#fff!important}
 [data-theme="night"] .preview-doc th strong{color:#fff!important}
 [data-theme="night"] .preview-doc tr.insurance-provider-row td,
-[data-theme="night"] .preview-doc table.insurance-table tr.insurance-provider-row td{background:#5B9BD5!important;color:#fff!important;border-color:#5B9BD5!important}
+[data-theme="night"] .preview-doc table.insurance-table tr.insurance-provider-row td{background:#5EA6FF!important;color:#fff!important;border-color:#5EA6FF!important}
 [data-theme="night"] .preview-doc tr.insurance-provider-row td strong{color:#fff!important}
 [data-theme="night"] .preview-doc .roa-type-table td.head{background:#0a2433!important;color:#fff!important}
 [data-theme="night"] .preview-doc .roa-type-table td.head strong{color:#fff!important}
@@ -11947,11 +11947,8 @@ function cdmParseBenefitsReport(text){
     if(/week/.test(s)) return 52/12;
     return 1/12; // CDM premiums default to annualised
   };
-  const fmt$ = n => {
-    const r = Math.round(n * 100) / 100;
-    const s = Number.isInteger(r) ? String(r) : r.toFixed(2);
-    return '$' + s.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  };
+  // Premiums round to the nearest whole dollar (house style for the tables).
+  const fmt$ = n => '$' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
   // First pass — one parsed entry per benefit line.
   const parsed = [];
@@ -12055,6 +12052,83 @@ function cdmParseBenefitsReport(text){
   return rows.length ? {rows, client: parsed[0].client} : null;
 }
 
+// ── Insurer "Policy Alteration Illustration" quote parser (TAL-style) ──────
+// Key/value rows with a CURRENT DETAILS column and one QUOTE column per page:
+// Monthly Benefit / Waiting Period / Benefit Period / Premium Type / Total
+// Premium etc. Returns one option per quote page — the import asks which
+// quote to apply, then UPDATES the matching cover row in the table.
+function parseAlterationQuote(text){
+  if(!/policy alteration illustration/i.test(text) &&
+     !(/current details/i.test(text) && /quote\s*\d/i.test(text))) return null;
+  const t = text.replace(/\t/g, '  ');
+  const tc = s => (s||'').toLowerCase().replace(/(^|[\s'-])\S/g, c => c.toUpperCase()).trim();
+  const liM = t.match(/Life Insured:?\s+((?:MR|MRS|MS|DR|MISS)?\s*[A-Z][A-Z'’\- ]+)/i);
+  const lifeName = liM ? tc(liM[1].replace(/^(MR|MRS|MS|DR|MISS)\s+/i, '').replace(/\s+/g, ' ')) : '';
+  const firstName = (lifeName.split(/\s+/)[0] || '');
+  const provNames = INSURERS.filter(x => x !== 'Other').sort((a, b) => b.length - a.length);
+  const esc = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const provider = provNames.find(pn => new RegExp('\\b' + esc(pn) + '\\b', 'i').test(t)) || '';
+  const fmtR = n => '$' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+  // One chunk per quote page (the notes pages have no QUOTE column).
+  const chunks = t.split(/Policy Alteration Illustration/i)
+    .filter(c => /QUOTE\s*\d/i.test(c) && /total premium/i.test(c));
+  const options = [];
+  chunks.forEach(chunk => {
+    // Cut the boilerplate notes off the tail of the last page — their wording
+    // ("rollover from an eligible superannuation fund") pollutes the heuristics.
+    chunk = chunk.split(/Things you should know|Important notes/i)[0];
+    const qn = (chunk.match(/QUOTE\s*(\d+)/i) || [,'?'])[1];
+    // On each label line the LAST value is the quote column (current sits first).
+    const grab = (label, valRe) => {
+      const line = (chunk.match(new RegExp(label + '[^\\n]*', 'i')) || [''])[0];
+      const vals = [...line.matchAll(valRe)].map(m => (m[1] !== undefined ? m[1] : m[0]));
+      return vals.length ? vals[vals.length - 1].trim() : '';
+    };
+    const monthlyBenefit = grab('Monthly Benefit', /\$\s*[\d,]+(?:\.\d+)?/g);
+    const sumInsured = grab('(?:Sum Insured|Benefit Amount|Cover Amount|Death Benefit)', /\$\s*[\d,]+(?:\.\d+)?/g);
+    const totalPremium = grab('Total Premium', /\$\s*[\d,]+(?:\.\d+)?/g);
+    const waiting = grab('Waiting Period', /\d+\s*Days?/gi);
+    const bper = grab('Benefit Period', /(?:To|Until)\s*Age\s*\d+|\d+\s*Years?/gi);
+    const ptype = grab('Premium Type', /Variable Age[- ]?Stepped|Stepped|Level(?:\s*\d+)?|Hybrid/gi);
+    const btype = grab('Benefit Type', /Indemnity|Agreed Value/gi);
+    const freqTxt = grab('Premium Frequency', /Monthly|Annual(?:ly)?|Fortnightly|Quarterly/gi);
+    if(!totalPremium && !monthlyBenefit && !sumInsured) return;
+    const secM = chunk.match(/\b(INCOME PROTECTION|LIFE|DEATH|TPD|TOTAL\s*(?:AND|&)\s*PERMANENT|TRAUMA|CRITICAL ILLNESS)[A-Z &]*DETAILS/i);
+    const sec = secM ? secM[1].toLowerCase() : (monthlyBenefit ? 'income protection' : '');
+    let ct = '';
+    if(/income/.test(sec)) ct = /indemnit/i.test(btype || chunk) ? 'Income Protection — Indemnity' : 'Income Protection';
+    else if(/trauma|critical/.test(sec)) ct = 'Trauma';
+    else if(/tpd|permanent/.test(sec)) ct = /\bown\b/i.test(chunk) ? 'TPD (Own-Occupation)' : 'TPD (Any-Occupation)';
+    else if(/life|death/.test(sec)) ct = 'Life (Linked)';
+    if(!ct) return;
+    const isIP = /income/.test(sec);
+    const premN = totalPremium ? parseFloat(totalPremium.replace(/[$,\s]/g, '')) : 0;
+    const monthly = /annual/i.test(freqTxt || '') ? premN / 12 : premN;
+    const strip00 = v => (v || '').replace(/\.00$/, '');
+    const structure = ptype ? ex_normPremStruct(ptype.replace(/\s*\d+\s*$/, '')) : '';
+    const benefit = isIP ? (strip00(monthlyBenefit) + ' pm') : strip00(sumInsured || monthlyBenefit);
+    options.push({
+      quote: qn,
+      label: 'Quote ' + qn + ': ' + ct + ' — ' + benefit + (structure ? ', ' + structure : '') + ', ' + fmtR(monthly) + ' pm',
+      row: {
+        provider,
+        coverType: ct,
+        lifeInsured: firstName,
+        owner: /rollover/i.test(chunk) ? 'Super' : firstName,
+        benefitAmount: benefit,
+        waitingPeriod: waiting.toLowerCase(),
+        benefitPeriod: bper ? bper.replace(/^until\s*/i, 'To ').replace(/^to\s*/i, 'To ') : '',
+        premiumStructure: structure,
+        premiumNote: premN ? fmtR(monthly) + ' pm' : '',
+        exclusions: ''
+      }
+    });
+  });
+  if(!options.length) return null;
+  return { options, client: lifeName };
+}
+
 // Import a CDM insurance summary / insurer quote / prior advice doc into ONE
 // insurance table — via the 📥 button's file picker…
 async function handleInsuranceTableImport(inp, fKey){
@@ -12098,15 +12172,33 @@ async function importInsuranceFileToTable(file, fKey){
     }
     hideImportStatus();
 
-    // 1) CDM "Benefits Report" layout (dedicated parser — handles wrapped rows,
-    //    annualised premiums and stepped/level split benefits).
+    // 1) Insurer alteration-quote illustration (CURRENT vs QUOTE columns) — one
+    //    option per quote page; the adviser picks which quote to apply.
     let rows = [], source = '', cdmClient = '';
-    const cdm = cdmParseBenefitsReport(text);
-    if(cdm && cdm.rows.length){
-      rows = cdm.rows; cdmClient = cdm.client || '';
-      source = 'the CDM benefits report';
+    const alt = parseAlterationQuote(text);
+    if(alt){
+      let opt = alt.options[0];
+      if(alt.options.length > 1){
+        const useFirst = confirm('This alteration illustration has ' + alt.options.length + ' quote options:\n\n'
+          + alt.options.map(o => '• ' + o.label).join('\n')
+          + '\n\nOK — apply ' + alt.options[0].label.split(':')[0]
+          + '\nCancel — apply ' + alt.options[1].label.split(':')[0]);
+        opt = useFirst ? alt.options[0] : alt.options[1];
+      }
+      rows = [Object.assign({}, opt.row)];
+      cdmClient = alt.client || '';
+      source = 'the alteration quote (' + opt.label.split(':')[0] + ')';
     }
-    // 2) Structured cover tables (Word tables, column-aligned PDFs).
+    // 2) CDM "Benefits Report" layout (dedicated parser — handles wrapped rows,
+    //    annualised premiums and stepped/level split benefits).
+    if(!rows.length){
+      const cdm = cdmParseBenefitsReport(text);
+      if(cdm && cdm.rows.length){
+        rows = cdm.rows; cdmClient = cdm.client || '';
+        source = 'the CDM benefits report';
+      }
+    }
+    // 3) Structured cover tables (Word tables, column-aligned PDFs).
     if(!rows.length){
       const found = ex_extractInsuranceTables(text);
       if(found.length){
@@ -12115,7 +12207,7 @@ async function importInsuranceFileToTable(file, fKey){
         else { rows = found.reduce((a,t)=>a.concat(t.rows), []); source = found.length + ' cover table(s) in the document'; }
       }
     }
-    // 3) Fallback — keyword scan of the raw text (quote / summary layouts).
+    // 4) Fallback — keyword scan of the raw text (quote / summary layouts).
     if(!rows.length){
       rows = ex_scanCoverLines(text);
       source = 'a best-effort scan of the document text';
@@ -12149,13 +12241,14 @@ async function importInsuranceFileToTable(file, fKey){
       }
     });
 
-    // If the table already holds REAL rows (not the untouched starters), offer to
-    // ADD underneath instead of replacing — so multiple quotes (e.g. a super quote
-    // plus a non-super quote) can be dropped in one after the other.
+    // If the table already holds REAL rows (e.g. mirrored from Current), the import
+    // UPDATES the matching covers in place (an IP alteration quote overrides the IP
+    // row's figures) and adds covers the table doesn't have yet — so a second quote
+    // (super + non-super) drops in cleanly too. Cancel = wipe and replace instead.
     const existing = (F[fKey]||[]).filter(r => r && (r.coverType || r.provider));
     let mode = 'replace';
     if(existing.length && !insuranceTableIsPristine(F[fKey])){
-      mode = confirm('The ' + tableNice + ' table already has ' + existing.length + ' cover line(s).\n\nOK — KEEP them and ADD the imported lines underneath (use this when dropping a second quote, e.g. super + non-super).\nCancel — REPLACE them with the imported lines.') ? 'append' : 'replace';
+      mode = confirm('The ' + tableNice + ' table already has ' + existing.length + ' cover line(s).\n\nOK — UPDATE the matching covers with the imported figures (covers not in the table yet are added underneath).\nCancel — REPLACE the whole table with the imported lines.') ? 'update' : 'replace';
     }
 
     let summary = 'Found ' + rows.length + ' cover line(s) via ' + source + ':\n\n';
@@ -12167,13 +12260,58 @@ async function importInsuranceFileToTable(file, fKey){
     if(cdmClient && !(F.client1Name||'').trim()){
       summary += '\nClient 1 name will be pre-filled as "' + cdmClient + '" (currently blank).\n';
     }
-    summary += '\n' + (mode === 'append'
-      ? 'ADD these below the existing rows in the ' + tableNice + ' table?'
+    summary += '\n' + (mode === 'update'
+      ? 'UPDATE the matching covers in the ' + tableNice + ' table with these?'
       : 'Prefill the ' + tableNice + ' table with these? Its existing rows will be replaced') + ' (you can still edit every cell afterwards).';
     if(!confirm(summary)){ return; }
 
     if(cdmClient && !(F.client1Name||'').trim()) F.client1Name = cdmClient;
-    F[fKey] = mode === 'append' ? existing.concat(rows) : rows;
+    if(mode === 'update'){
+      // Match each imported line to an existing cover of the same kind and lift
+      // the imported figures onto it; unmatched lines are appended.
+      const kindOf = ct => {
+        const k = (ct||'').toLowerCase();
+        if(/income protection|\bip\b/.test(k)) return 'ip';
+        if(/trauma|critical/.test(k)) return 'trauma';
+        if(/child/.test(k)) return 'child';
+        if(/tpd|total (and|&) permanent/.test(k)) return 'tpd';
+        if(/life|death/.test(k)) return 'life';
+        return 'other';
+      };
+      const variantOf = ct => /own/i.test(ct||'') ? 'own' : (/any/i.test(ct||'') ? 'any' : '');
+      const used = new Set();
+      rows.forEach(nr => {
+        const k = kindOf(nr.coverType);
+        // Prefer an exact TPD own/any variant match, then any row of the same kind.
+        let ti = existing.findIndex((er, ei) => !used.has(ei) && kindOf(er.coverType) === k
+          && (k !== 'tpd' || !variantOf(nr.coverType) || variantOf(er.coverType) === variantOf(nr.coverType)));
+        if(ti < 0 && k === 'tpd') ti = existing.findIndex((er, ei) => !used.has(ei) && kindOf(er.coverType) === 'tpd');
+        if(ti >= 0){
+          used.add(ti);
+          const er = existing[ti];
+          ['benefitAmount','waitingPeriod','benefitPeriod','premiumStructure','premiumNote','lifeInsured'].forEach(f => {
+            if((nr[f]||'').trim()) er[f] = nr[f];
+          });
+          // New before-tax premium invalidates the old after-tax figure and any
+          // shared-premium link on this row.
+          if((nr.premiumNote||'').trim()){
+            er.monthlyPremiumAfterTax = (nr.monthlyPremiumAfterTax||'').trim();
+            er.sharedPremiumWithPrev = false;
+            const nxt = existing[ti + 1];
+            if(nxt && nxt.sharedPremiumWithPrev) nxt.sharedPremiumWithPrev = false;
+          }
+          // Provider only changes when it's a genuinely different insurer (not
+          // "TAL" vs "TAL (BT)").
+          const np = (nr.provider||'').trim();
+          if(np && !(er.provider||'').toLowerCase().includes(np.toLowerCase())) er.provider = np;
+        } else {
+          existing.push(Object.assign(mkInsurance(), nr, {status: defStatus}));
+        }
+      });
+      F[fKey] = existing;
+    } else {
+      F[fKey] = rows;
+    }
     // Seed this table's common values from the most frequent imported values so
     // blank rows added later inherit them. Provider stays on the rows so
     // multi-insurer imports band correctly.
@@ -16490,9 +16628,8 @@ function computeInsTableTotals(tableKey){
   });
   const fmt = n => {
     if(!n) return '';
-    // Whole numbers show without decimals; otherwise 2 dp.
-    const s = Number.isInteger(n) ? String(n) : n.toFixed(2);
-    return '$' + s.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' pm';
+    // Rounded to the nearest whole dollar (house style for premium figures).
+    return '$' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' pm';
   };
   return { super: fmt(superTot), cashflow: fmt(cashTot) };
 }
@@ -16582,8 +16719,7 @@ function autoAfterTax(tableKey, i){
     after = before; // unknown cover type — no assumption
   }
 
-  const round = n => Math.round(n * 100) / 100;
-  const fmt = n => '$' + (Number.isInteger(round(n)) ? String(round(n)) : round(n).toFixed(2)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' pm (after tax)';
+  const fmt = n => '$' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' pm (after tax)';
   r.monthlyPremiumAfterTax = fmt(after);
   render();
 }
@@ -19194,8 +19330,8 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
   const LB = "EAF4FB"; // light blue (brand) — alternating data-cell fill instead of white
   // Insurance-table palette (matches the firm's template): lighter blue provider
   // band, pale-blue data cells — distinct from the teal used by other tables.
-  const INS_BAND = "5B9BD5";
-  const INS_CELL = "DEEBF7";
+  const INS_BAND = "5EA6FF";
+  const INS_CELL = "E4F3F5";
   const D = docx;
   const { Table, TableRow, TableCell, WidthType, Paragraph, TextRun, ShadingType, BorderStyle, AlignmentType, VerticalMergeType } = D;
 
