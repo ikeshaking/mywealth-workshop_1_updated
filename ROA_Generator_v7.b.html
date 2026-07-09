@@ -820,8 +820,12 @@ details.collapse-card > div{margin-top:8px;padding-top:8px;border-top:1px solid 
 .preview-doc th:first-child{text-align:left}
 .preview-doc td{padding:4px 7px;border:1px solid #D4E2EE;color:#1a1a1a;text-align:center}
 .preview-doc td:first-child{text-align:left}
-.preview-doc tr td{background:#E5F4F6}
-.preview-doc tr.total-row td{background:#0C2E3F!important;color:#fff;font-weight:700}
+.preview-doc tr td{background:#E4F3F5}
+/* Allocation tables (super/investment/pension) — SOA styling: italic body cells,
+   teal rows alternating with a soft grey, cream fee rows, navy total. */
+.preview-doc table.alloc-doc td{font-style:italic}
+.preview-doc table.alloc-doc tbody tr:nth-child(even):not(.fee-row):not(.total-row) td{background:#EFEFEF}
+.preview-doc tr.total-row td{background:#0C2E3F!important;color:#fff;font-weight:700;font-style:normal}
 .preview-doc tr.fee-row td{background:#FEF6E0!important;font-style:italic}
 .preview-doc tr.platform-row td{background:#0D6BE0!important;color:#fff!important;font-weight:700;font-family:'Nunito Sans',sans-serif!important}
 .preview-doc tr.insurance-provider-row td{background:#5EA6FF!important;color:#fff!important;font-weight:700;font-size:11px;padding:6px 9px;font-family:'Nunito Sans',sans-serif!important;text-align:left;border-color:#5EA6FF!important;border-bottom:1px solid #5EA6FF!important}
@@ -833,11 +837,11 @@ details.collapse-card > div{margin-top:8px;padding-top:8px;border-top:1px solid 
 .preview-doc table.insurance-table tr td{background:#E4F3F5}
 .preview-doc table.insurance-table td.alt{background:#E4F3F5}
 .preview-doc table.insurance-table td.alt2{background:#E4F3F5}
-.preview-doc .circumstance-note{background:#F0F7FB;border:1px solid #E5F4F6;padding:7px 11px;border-radius:7px;font-style:italic;color:#333;margin:8px 0;font-size:10.5px}
+.preview-doc .circumstance-note{background:#F0F7FB;border:1px solid #E4F3F5;padding:7px 11px;border-radius:7px;font-style:italic;color:#333;margin:8px 0;font-size:10.5px}
 .preview-doc .footer-note{font-size:9px;color:#666;text-align:center;margin-top:28px;padding-top:7px;border-top:2px solid #0C2E3F}
 .preview-doc .cover-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:0;border:1px solid #D4E2EE;margin-bottom:14px;border-radius:7px;overflow:hidden}
 .preview-doc .cover-left{padding:12px 16px;border-right:1px solid #D4E2EE;font-size:11px;line-height:1.65}
-.preview-doc .cover-right{padding:12px 16px;background:#E5F4F6;font-size:11px;line-height:1.65}
+.preview-doc .cover-right{padding:12px 16px;background:#E4F3F5;font-size:11px;line-height:1.65}
 .preview-doc .roa-type-table td{padding:6px 9px}
 .preview-doc .roa-type-table td.head{background:#0C2E3F;font-weight:700;color:#fff;font-family:'ABC Arizona Flare','ABC Arizona Serif','Playfair Display',Georgia,serif!important}
 .preview-doc .logo-slot{display:block;margin-bottom:12px;max-width:240px}
@@ -874,6 +878,11 @@ details.collapse-card > div{margin-top:8px;padding-top:8px;border-top:1px solid 
 [data-theme="night"] .preview-doc tr.insurance-provider-row td,
 [data-theme="night"] .preview-doc table.insurance-table tr.insurance-provider-row td{background:#5EA6FF!important;color:#fff!important;border-color:#5EA6FF!important}
 [data-theme="night"] .preview-doc tr.insurance-provider-row td strong{color:#fff!important}
+[data-theme="night"] .preview-doc tr.total-row td,
+[data-theme="night"] .preview-doc tr.total-row td strong,
+[data-theme="night"] .preview-doc tr.platform-row td,
+[data-theme="night"] .preview-doc tr.platform-row td strong,
+[data-theme="night"] .preview-doc tr.platform-row td em{color:#fff!important}
 [data-theme="night"] .preview-doc .roa-type-table td.head{background:#0a2433!important;color:#fff!important}
 [data-theme="night"] .preview-doc .roa-type-table td.head strong{color:#fff!important}
 [data-theme="night"] .preview-doc table,
@@ -9979,6 +9988,16 @@ function setInsProviderRun(tableKey, start, end, value){
   for(let i = start; i <= end && i < rows.length; i++){ rows[i].provider = value; }
   render();
 }
+// Insert a blank cover line directly below row i (so a new row can be added
+// inside a provider band, not just at the bottom). If the row that used to sit
+// below shared its premium upward, that link would now point at the blank row —
+// break it so the merge doesn't swallow the new line.
+function insInsertRow(tableKey, i){
+  const rows = F[tableKey]||[];
+  rows.splice(i + 1, 0, mkInsurance());
+  if(rows[i + 2] && rows[i + 2].sharedPremiumWithPrev) rows[i + 2].sharedPremiumWithPrev = false;
+  render();
+}
 // Per-row "⋯ options" open state, keyed on the row OBJECT (WeakSet) so it
 // survives re-renders, drags and deletes without being serialised into saves.
 const INS_ROW_DETAILS_OPEN = (typeof WeakSet !== 'undefined') ? new WeakSet() : null;
@@ -12325,6 +12344,175 @@ function insImportDrop(ev, fKey){
   ev.currentTarget.classList.remove('ins-drop-hot');
   importInsuranceFileToTable(files[0], fKey);
 }
+// ── The firm's own "Insurance Products" table, from a screenshot (OCR) ──────
+// A screenshot of the printed ROA/SOA table loses its columns once OCR'd: cell
+// fragments from one visual row interleave in reading order, and a merged
+// premium cell arrives split across several lines with other columns' text in
+// between. So this parser doesn't read lines — it anchors on the cover types,
+// splits the text into per-cover bands, and matches premiums / benefits /
+// periods with gap-tolerant patterns that ride over the interleaved fragments.
+function parseRoaTableOcr(text){
+  const headerHits = [/insurance\s*pro(v|y)ider/i, /life\s*insured/i, /benefit\s*amount/i, /premium\s*structure/i, /monthly\s*premium/i, /insurance\s*products/i].filter(re => re.test(text)).length;
+  // OCR often scrambles the header row itself (column fragments interleave), so
+  // the distinctive "Insurance Products" heading plus one more header phrase is
+  // enough; without the heading we want three phrase hits before claiming it.
+  if(headerHits < 3 && !(headerHits >= 2 && /insurance\s*products/i.test(text))) return null;
+  const flat = ' ' + text.replace(/[\t\r]/g, ' ').replace(/\n/g, ' ').replace(/\s{2,}/g, ' ') + ' ';
+
+  // Cover-type anchors, most specific first. OCR duplicates of the same cell
+  // ("TPD" wrapped over two lines) collapse via the 60-char same-kind window;
+  // genuinely separate rows of the same kind (super + personal IP) survive.
+  const anchorDefs = [
+    {kind:'ip',     re:/\bip\b|income\s*pro[tf]ection|salary\s*continuance|\bindemnity\s*(?:&|and)\s*standard/gi},
+    {kind:'trauma', re:/\btrauma\b|critical\s*illness/gi},
+    {kind:'child',  re:/\bchild\s*cover\b/gi},
+    {kind:'tpd',    re:/\btpd\b/gi},
+    {kind:'life',   re:/\blife\b(?!\s*insured)/gi}
+  ];
+  let anchors = [];
+  anchorDefs.forEach(a => { let m; while((m = a.re.exec(flat))) anchors.push({kind: a.kind, at: m.index}); });
+  anchors.sort((a, b) => a.at - b.at);
+  anchors = anchors.filter((a, i) => !anchors.slice(0, i).some(b => b.kind === a.kind && a.at - b.at < 60));
+  if(!anchors.length) return null;
+  const segOf = i => flat.slice(anchors[i].at, i + 1 < anchors.length ? anchors[i + 1].at : flat.length);
+
+  const num = s => parseFloat(String(s).replace(/,/g, ''));
+  const fmtC = n => '$' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const inSeg = (tok, i) => tok.at >= anchors[i].at && (i + 1 >= anchors.length || tok.at < anchors[i + 1].at);
+
+  // Money tokens, highest-priority first; each $ position is consumed once so
+  // e.g. the SCO's "$805 pm" can't be re-read as a premium.
+  const consumed = [];
+  const inConsumed = at => consumed.some(c => at >= c[0] && at < c[1]);
+  const scan = (re, fn) => { let m; while((m = re.exec(flat))){ if(inConsumed(m.index)) continue; consumed.push([m.index, m.index + m[0].length]); fn(m); } };
+  const combos = [], bts = [], ats = [], splits = [], bigs = [], pms = [];
+  // "$6,708 pm plus $805 pm [Super Contribution Option]" — IP benefit + SCO.
+  scan(/\$\s*([\d,]+(?:\.\d+)?)\s*pm\s*plus\s*\$\s*([\d,]+(?:\.\d+)?)\s*pm/gi, m => combos.push({at: m.index, benefit: num(m[1]), sco: num(m[2])}));
+  scan(/\$\s*([\d,]+(?:\.\d+)?)\s*pm[^$]{0,45}?\(\s*before[\s-]*tax\s*\)/gi, m => bts.push({at: m.index, amt: num(m[1])}));
+  scan(/\$\s*([\d,]+(?:\.\d+)?)\s*pm[^$]{0,45}?\(\s*after[\s-]*tax\s*\)/gi, m => ats.push({at: m.index, amt: num(m[1])}));
+  scan(/\$\s*([\d,]+(?:\.\d+)?)\s*from([^$]{0,45}?)\$\s*([\d,]+(?:\.\d+)?)\s*from/gi, m => {
+    const firstIsSuper = /super|smsf/i.test(m[2]) || !/personal|cash/i.test(m[2]);
+    splits.push({at: m.index, sup: num(firstIsSuper ? m[1] : m[3]), cash: num(firstIsSuper ? m[3] : m[1])});
+  });
+  scan(/\$\s*([\d,]{6,}|\d{5,})(?!\s*(?:pm\b|per\s*month|\/))/g, m => bigs.push({at: m.index, amt: num(m[1]), raw: '$' + m[1]}));
+  scan(/\$\s*([\d,]+(?:\.\d+)?)\s*pm\b/gi, m => pms.push({at: m.index, amt: num(m[1])}));
+
+  // Provider band nearest above each cover (longest insurer match wins).
+  const provMentions = [];
+  INSURERS.filter(p => p !== 'Other').forEach(p => {
+    const low = flat.toLowerCase(), pl = p.toLowerCase();
+    let idx = 0;
+    while((idx = low.indexOf(pl, idx)) !== -1){ provMentions.push({at: idx, name: p}); idx += p.length; }
+  });
+  provMentions.sort((a, b) => a.at - b.at || b.name.length - a.name.length);
+  const provAt = at => {
+    let best = null;
+    provMentions.forEach(pm => { if(pm.at < at && (!best || pm.at >= best.at)) { if(!best || pm.at > best.at || pm.name.length > best.name.length) best = pm; } });
+    return best ? best.name : (provMentions[0] ? provMentions[0].name : '');
+  };
+
+  // The life insured: the most frequent capitalised word that isn't table vocab.
+  const VOCAB = new Set(('insurance products provider life insured owner status benefit amount premium structure monthly protection protect linked own any occupation recommend recommended retain cancel force super flexi variable age stepped level hybrid indemnity standard contract contribution option wait waiting until weeks week days day trauma plus reinstatement from personal cashflow and the before after tax income total permanent disability cover child critical illness period').split(' '));
+  INSURERS.forEach(p => p.split(/\s+/).forEach(w => VOCAB.add(w.toLowerCase())));
+  const nameCount = {};
+  (flat.match(/\b[A-Z][a-z]{2,}\b/g) || []).forEach(w => { if(!VOCAB.has(w.toLowerCase())) nameCount[w] = (nameCount[w] || 0) + 1; });
+  const lifeInsured = Object.keys(nameCount).sort((a, b) => nameCount[b] - nameCount[a])[0] || '';
+
+  const structOf = s => /variable/i.test(s) ? 'Variable Age-Stepped' : /stepped/i.test(s) ? 'Stepped' : /\blevel\b/i.test(s) ? 'Level' : /hybrid/i.test(s) ? 'Hybrid' : '';
+  const rows = anchors.map((a, i) => {
+    const seg = segOf(i);
+    const segNoSup = seg.replace(/super\s*contribution(\s*option)?/gi, ' ').replace(/from[^$]{0,20}?super/gi, ' ');
+    const kind = a.kind;
+    let ct = '';
+    if(kind === 'life') ct = 'Life (Linked)';
+    else if(kind === 'tpd') ct = /\bany\b/i.test(seg) && !/\bown\b/i.test(seg) ? 'TPD (Linked & Any-Occupation)' : 'TPD (Linked & Own-Occupation)';
+    else if(kind === 'ip') ct = /indemnity/i.test(seg) ? 'IP (Indemnity & Standard Contract)' : 'Income Protection';
+    else if(kind === 'trauma') ct = /reinstatement/i.test(seg) ? 'Trauma (Linked, Plus & Reinstatement)' : 'Trauma';
+    else ct = 'Child Cover';
+    // The IP benefit + SCO pair ("$6,708 pm plus $805 pm") often drifts into the
+    // PREVIOUS cover's band in the OCR stream (the cell starts above the row's
+    // label), so an IP row may also claim the nearest unclaimed pair behind it.
+    const combo = kind === 'ip'
+      ? (combos.find(t => !t._used && inSeg(t, i))
+         || combos.filter(t => !t._used && t.at < a.at && a.at - t.at < 250).sort((x, y) => y.at - x.at)[0]
+         || null)
+      : null;
+    if(combo) combo._used = true;
+    const big = bigs.find(t => inSeg(t, i));
+    const bt = bts.find(t => inSeg(t, i));
+    const at = ats.find(t => inSeg(t, i));
+    const segPms = pms.filter(t => inSeg(t, i));
+    let benefitAmount = '', superContribution = '';
+    if(combo){ benefitAmount = fmtC(combo.benefit) + ' pm'; superContribution = fmtC(combo.sco) + ' pm'; }
+    else if(big){ benefitAmount = big.raw; }
+    else if(kind === 'ip' && segPms.length){ const b = segPms.reduce((x, y) => y.amt > x.amt ? y : x); if(b.amt > 1000){ benefitAmount = fmtC(b.amt) + ' pm'; segPms.splice(segPms.indexOf(b), 1); } }
+    const waitM = seg.match(/(\d+)\s*(days?|weeks?)\b/i);
+    const ageM = seg.match(/(?:until|to)\s*age\s*(\d{2})/i);
+    const statM = seg.match(/\b(recommend(?:ed)?|retain(?:ed)?|cancel(?:led)?|in\s*force)\b/i);
+    return {
+      kind, at: a.at,
+      provider: provAt(a.at),
+      coverType: ct,
+      lifeInsured,
+      owner: /flexi[- ]?linked/i.test(seg) ? 'Flexi-Linked Super' : (/\bsuper\b/i.test(segNoSup) ? 'Super' : lifeInsured),
+      status: statM ? (/recommend/i.test(statM[1]) ? 'Recommend' : /retain/i.test(statM[1]) ? 'Retain' : /cancel/i.test(statM[1]) ? 'Cancel' : 'In Force') : '',
+      benefitAmount,
+      superContribution,
+      waitingPeriod: kind === 'ip' && waitM ? waitM[1] + ' ' + waitM[2].toLowerCase().replace(/s?$/, 's') : '',
+      benefitPeriod: kind === 'ip' && ageM ? 'Until Age ' + ageM[1] : '',
+      premiumStructure: structOf(seg),
+      premiumNote: '',
+      monthlyPremiumAfterTax: '',
+      _bt: bt || null, _at: at || null, _pm: segPms.length ? segPms.reduce((x, y) => y.amt < x.amt ? y : x) : null,
+      sharedPremiumWithPrev: false
+    };
+  }).filter(r => r.coverType);
+  if(!rows.length) return null;
+
+  // Premiums. Life/TPD runs with ONE before-tax figure between them share it as
+  // a combined linked-policy premium (merged cell in the printed table); the
+  // funding split and after-tax figure ride on the lead row. Everything else
+  // takes its own segment's figures; an untagged "$14 pm" (Trauma) stays plain.
+  const noteOf = (r, btTok, splitTok) =>
+    fmtC(btTok.amt) + ' pm (before tax)' + (splitTok ? ' / (' + fmtC(splitTok.sup) + ' from super and ' + fmtC(splitTok.cash) + ' from personal cashflow)' : '');
+  let i0 = 0;
+  while(i0 < rows.length){
+    if(rows[i0].kind !== 'life' && rows[i0].kind !== 'tpd'){ i0++; continue; }
+    let i1 = i0;
+    while(i1 + 1 < rows.length && (rows[i1 + 1].kind === 'life' || rows[i1 + 1].kind === 'tpd')) i1++;
+    const run = rows.slice(i0, i1 + 1);
+    const runBts = run.map(r => r._bt).filter(Boolean);
+    const runEnd = i1 + 1 < rows.length ? rows[i1 + 1].at : flat.length;
+    const runSplit = splits.find(t => t.at >= rows[i0].at && t.at < runEnd) || null;
+    const runAt = run.map(r => r._at).filter(Boolean)[0] || null;
+    if(run.length > 1 && runBts.length === 1){
+      run.forEach((r, k) => {
+        if(k === 0){ r.premiumNote = noteOf(r, runBts[0], runSplit); r.monthlyPremiumAfterTax = runAt ? fmtC(runAt.amt) + ' pm (after tax)' : ''; }
+        else { r.premiumNote = ''; r.sharedPremiumWithPrev = true; }
+      });
+    } else {
+      run.forEach(r => {
+        if(r._bt){ r.premiumNote = noteOf(r, r._bt, runSplit && run.length === 1 ? runSplit : null); r.monthlyPremiumAfterTax = r._at ? fmtC(r._at.amt) + ' pm (after tax)' : ''; }
+        else if(r._pm){ r.premiumNote = fmtC(r._pm.amt) + ' pm'; }
+      });
+    }
+    i0 = i1 + 1;
+  }
+  rows.forEach(r => {
+    if(r.premiumNote || r.sharedPremiumWithPrev) return;
+    if(r._bt){ r.premiumNote = fmtC(r._bt.amt) + ' pm (before tax)'; r.monthlyPremiumAfterTax = r._at ? fmtC(r._at.amt) + ' pm (after tax)' : ''; }
+    else if(r._pm){ r.premiumNote = fmtC(r._pm.amt) + ' pm'; }
+  });
+  // A structure printed once for a merged Life+TPD run applies to the whole run.
+  rows.forEach((r, i) => { if(!r.premiumStructure && r.sharedPremiumWithPrev && i > 0) r.premiumStructure = rows[i - 1].premiumStructure; });
+  for(let j = rows.length - 2; j >= 0; j--){ if(!rows[j].premiumStructure && rows[j + 1].sharedPremiumWithPrev) rows[j].premiumStructure = rows[j + 1].premiumStructure; }
+  rows.forEach(r => { delete r._bt; delete r._at; delete r._pm; delete r.kind; delete r.at; });
+
+  // Only claim the document if we actually read figures out of it.
+  if(!rows.some(r => r.benefitAmount || r.premiumNote)) return null;
+  return { rows, client: lifeInsured };
+}
+
 async function importInsuranceFileToTable(file, fKey){
   if(!file) return;
   const dkMap = {insuranceCurrent:'current', insuranceRecommended:'recommended', insuranceOriginal:'original', insuranceAltered:'altered', insuranceAlternative:'alternative', insuranceOption1:'option1', insuranceOption2:'option2'};
@@ -12387,6 +12575,15 @@ async function importInsuranceFileToTable(file, fKey){
         const match = found.find(t => t.section === dk);
         if(match){ rows = match.rows.slice(); source = 'the "' + tableNice + '" table in the document'; }
         else { rows = found.reduce((a,t)=>a.concat(t.rows), []); source = found.length + ' cover table(s) in the document'; }
+      }
+    }
+    // 3.5) A screenshot (or scanned PDF) of the firm's own "Insurance Products"
+    //      table — OCR text with the columns jumbled; parsed by cover anchors.
+    if(!rows.length){
+      const shot = parseRoaTableOcr(text);
+      if(shot && shot.rows.length){
+        rows = shot.rows; cdmClient = shot.client || cdmClient;
+        source = 'the Insurance Products table (read from the image)';
       }
     }
     // 4) Fallback — keyword scan of the raw text (quote / summary layouts).
@@ -14984,7 +15181,7 @@ async function exportStrategyPaperDocx(){
 
   const NY = "0C2E3F";
   const BL = "0D6BE0";
-  const TL = "E5F4F6";
+  const TL = "E4F3F5";
   const BORD = "D4E2EE";
 
   const cn = getFullClientName() || '[Client]';
@@ -16691,6 +16888,7 @@ function renderInsuranceTable(title, key, mirrorSourceKey){
     h += `<td class="ins-actions">
       ${dragHandle()}
       <button class="ins-icon-btn ins-more" onclick="toggleInsRowDetails('${key}',${i})" title="Row options — give just this row a different provider">⋯</button>
+      <button class="ins-icon-btn" onclick="insInsertRow('${key}',${i})" title="Add a new cover line below this one">＋</button>
       <button class="ins-icon-btn" onclick="F['${key}'].splice(${i},1);if(!F['${key}'].length)F['${key}']=[mkInsurance()];render()" title="Delete this cover line">✕</button>
     </td>`;
     h += `</tr>`;
@@ -17294,7 +17492,7 @@ function renderPreview(){
     }
     // Portfolio table
     const productHeader = (p.contextLabel ? e(p.contextLabel)+' - ' : '')+'Investment Product';
-    h += `<table><thead><tr><th>${productHeader}</th><th>Recommended Allocation $</th><th>Fund Manager's Fee (ICR)</th></tr>
+    h += `<table class="alloc-doc"><thead><tr><th>${productHeader}</th><th>Recommended Allocation $</th><th>Fund Manager's Fee (ICR)</th></tr>
       <tr class="platform-row"><td><strong>Platform Name</strong></td><td colspan="2"><em>${e(p.platform)}</em></td></tr></thead><tbody>`;
     p.rows.forEach(r => {
       if(!r.n) return;
@@ -18024,7 +18222,7 @@ async function exportNAADocx(){
     HorizontalPositionAlign, VerticalPositionAlign, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom, TextWrappingType } = D;
 
   const NY = "0C2E3F";
-  const TL = "E5F4F6";
+  const TL = "E4F3F5";
   const BORD = "D4E2EE";
 
   const cn = getFullClientName();
@@ -18644,7 +18842,7 @@ async function exportDocx(){
   // Brand colors
   const NY = "0C2E3F";       // navy
   const BL = "0D6BE0";       // blue
-  const TL = "E5F4F6";       // teal
+  const TL = "E4F3F5";       // teal
   const LB = "EAF4FB";       // light blue (brand) — used for alternating data cells instead of white
   const AMBER = "FEF6E0";
   const BORD = "D4E2EE";
@@ -18970,23 +19168,25 @@ async function exportDocx(){
             right:{color:BORD, space:0, style:BorderStyle.SINGLE, size:4}
           },
           children:[new Paragraph({
+            alignment:AlignmentType.CENTER,
             spacing:{before:0, after:0},
-            children:[new TextRun({text:p.platform||"[Platform]", font:"Nunito", size:18, color:"FFFFFF", bold:true})]
+            children:[new TextRun({text:p.platform||"[Platform]", font:"Nunito", size:18, color:"FFFFFF", bold:true, italics:true})]
           })]
         }),
       ]
     }));
-    // Data rows — italic fund names, alternating teal/white (fee rows use amber)
+    // Data rows — SOA styling: italic cells throughout, teal rows alternating
+    // with a soft grey, fee rows in cream. (Matches the SOA generator's tables.)
     let toggle = 0;
     p.rows.forEach(r => {
       if(!r.n) return;
       const isFee = r.isFee;
-      const shade = isFee ? AMBER : TL;
+      const shade = isFee ? AMBER : (toggle % 2 ? "EFEFEF" : TL);
       rows.push(new TableRow({
         children:[
-          cellTxt(r.n, {shade, italic:true, bold:!isFee, color:NY, w:colW[0]}),
-          cellTxt(r.a||"", {shade, w:colW[1]}),
-          cellTxt(r.icr||"", {shade, w:colW[2]}),
+          cellTxt(r.n, {shade, italic:true, color:NY, w:colW[0]}),
+          cellTxt(r.a||"", {shade, italic:true, w:colW[1]}),
+          cellTxt(r.icr||"", {shade, italic:true, w:colW[2]}),
         ]
       }));
       toggle++;
