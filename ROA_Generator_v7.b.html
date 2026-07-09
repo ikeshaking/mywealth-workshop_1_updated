@@ -9904,23 +9904,6 @@ function insPeriodsDisplay(r){
   return bits.join(', ');
 }
 
-// The SOA-style premium summary shown beneath each cover table:
-//   Annual Premium Super / Annual Premium Cash Flow / Total Annual Premium
-// Built from the table's stored MONTHLY totals; returns [label, value] rows.
-function insTotalsSummary(tot){
-  const parse = v => { const m = String(v||'').match(/\$\s*([\d,]+(?:\.\d+)?)/); return m ? parseFloat(m[1].replace(/,/g, '')) : null; };
-  const fmt = n => '$' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  const sup = (tot.super||'').trim() ? parse(tot.super) : null;
-  const cash = (tot.cashflow||'').trim() ? parse(tot.cashflow) : null;
-  const line = m => fmt(m * 12) + ' pa (' + fmt(m) + ' pm)';
-  const rows = [];
-  if((tot.super||'').trim()) rows.push(['Annual Premium Super', sup != null ? line(sup) : String(tot.super).trim()]);
-  if((tot.cashflow||'').trim()) rows.push(['Annual Premium Cash Flow', cash != null ? line(cash) : String(tot.cashflow).trim()]);
-  const total = (sup||0) + (cash||0);
-  if(total && (sup != null || cash != null)) rows.push(['Total Annual Premium', line(total)]);
-  return rows;
-}
-
 // Resolve a cover row against the group defaults - row values take priority if present
 function resolveInsuranceRow(row, defsKey){
   const d = F.insuranceDefaults?.[defsKey] || {};
@@ -12080,7 +12063,8 @@ function cdmParseBenefitsReport(text){
       benefitPeriod: isIP && bpM ? 'To Age ' + bpM[1] : '',
       premiumStructure: g.struct || '',
       premiumNote: note,
-      exclusions: ''
+      exclusions: '',
+      _sup: sup, _cash: cash
     };
   });
   // Cover order matches the firm's table: Life, TPD, Income Protection,
@@ -12100,6 +12084,24 @@ function cdmParseBenefitsReport(text){
     if(d) return d;
     return structOrder(a) - structOrder(b);
   });
+  // Life & TPD are a linked package — ONE combined premium (all structures and
+  // funding sources) sits on the first row of the pair, tagged before tax with
+  // the super/personal split; the rows beneath merge up (Unlink to split).
+  const ltRows = rows.filter(r => /^(life|tpd)/i.test(r.coverType));
+  if(ltRows.length > 1 && rows.some(r => /^life/i.test(r.coverType)) && rows.some(r => /^tpd/i.test(r.coverType))){
+    const supT = ltRows.reduce((a, r) => a + (r._sup || 0), 0);
+    const cashT = ltRows.reduce((a, r) => a + (r._cash || 0), 0);
+    ltRows.forEach((r, i) => {
+      if(i === 0){
+        r.premiumNote = fmt$(supT + cashT) + ' pm (before tax)' + fundingNote(supT, cashT);
+        r.sharedPremiumWithPrev = false;
+      } else {
+        r.premiumNote = '';
+        r.sharedPremiumWithPrev = true;
+      }
+    });
+  }
+  rows.forEach(r => { delete r._sup; delete r._cash; });
   return rows.length ? {rows, client: parsed[0].client} : null;
 }
 
@@ -16657,11 +16659,22 @@ function renderInsuranceTable(title, key, mirrorSourceKey){
     </td>`;
 
     // Premium Structure + Monthly Premium — a row whose premium is combined with
-    // the cover above contributes no cells here; the lead row's cells span down
-    // over it (rowspan), exactly like the merged cells in the document.
+    // the cover above contributes no premium cell here; the lead row's cell spans
+    // down over it (rowspan), exactly like the merged cells in the document. The
+    // STRUCTURE cell only joins the merge when the whole run shares one structure —
+    // a combined premium across mixed Stepped/Level rows keeps per-row structure.
+    let leadIdx2 = i; while(leadIdx2 > 0 && rows[leadIdx2].sharedPremiumWithPrev) leadIdx2--;
+    let runEnd2 = leadIdx2; while(runEnd2 + 1 < rows.length && rows[runEnd2 + 1].sharedPremiumWithPrev) runEnd2++;
+    const runStructs2 = new Set(); for(let j2 = leadIdx2; j2 <= runEnd2; j2++) runStructs2.add((rows[j2].premiumStructure||'').trim());
+    const runMixed = runEnd2 > leadIdx2 && runStructs2.size > 1;
+    const ownStructCell = `<td><select ${fk('ps')} onchange="F['${key}'][${i}].premiumStructure=this.value">${opts(PREM_STRUCT, r.premiumStructure)}</select></td>`;
+    if(shared && runMixed){
+      h += ownStructCell; // premium column is still spanned from the lead row
+    }
     if(!shared){
       const spanAttr = spanTrs > 1 ? ` rowspan="${spanTrs}" class="ins-cell-merged"` : '';
-      h += `<td${spanAttr}><select ${fk('ps')} onchange="F['${key}'][${i}].premiumStructure=this.value">${opts(PREM_STRUCT, r.premiumStructure)}</select></td>`;
+      if(runMixed) h += ownStructCell;
+      else h += `<td${spanAttr}><select ${fk('ps')} onchange="F['${key}'][${i}].premiumStructure=this.value">${opts(PREM_STRUCT, r.premiumStructure)}</select></td>`;
       h += `<td${spanAttr}>
         <input ${fk('pn')} value="${e(r.premiumNote)}" onchange="F['${key}'][${i}].premiumNote=this.value" placeholder="${isTrauma ? 'e.g. $14 pm' : 'e.g. $91 pm (before tax) / ($76 from super and $15 from cashflow)'}">
         ${isTrauma
@@ -16689,7 +16702,7 @@ function renderInsuranceTable(title, key, mirrorSourceKey){
     if(insRowDetailsOpen(r)){
       const nextShared = i + 1 < rows.length && rows[i+1].sharedPremiumWithPrev;
       const insideSpan = (!shared && span > 1) || (shared && nextShared);
-      const detailCells = insideSpan ? `<td colspan="5">` : `<td colspan="8">`;
+      const detailCells = insideSpan ? `<td colspan="${runMixed ? 6 : 5}">` : `<td colspan="8">`;
       h += `<tr class="ins-detail-row">${detailCells}
         <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap">
           <div class="field" style="margin:0;min-width:230px"><label>Provider for this row only</label>
@@ -16724,7 +16737,7 @@ function renderInsuranceTable(title, key, mirrorSourceKey){
       <div class="field" style="margin:0"><label>Super-Funded Premium Total</label><input value="${e(tot.super||'')}" onchange="setInsTableTotal('${key}','super',this.value)" placeholder="$X pm"></div>
       <div class="field" style="margin:0"><label>Cashflow-Funded Premium Total</label><input value="${e(tot.cashflow||'')}" onchange="setInsTableTotal('${key}','cashflow',this.value)" placeholder="$X pm"></div>
     </div>
-    <div class="helper" style="margin:5px 0 0">Leave blank to omit. Shows as the SOA-style premium summary beneath this table — Annual Premium Super / Annual Premium Cash Flow / Total Annual Premium (with the monthly figure in brackets).</div>
+    <div class="helper" style="margin:5px 0 0">Leave blank to omit. Shows as "Total Cost: $X pm (Super) plus $Y pm (Cashflow)" beneath this table.</div>
   </div>`;
   h += `</div>`;
   return h;
@@ -17640,6 +17653,10 @@ function renderInsurancePreviewTable(rows, defsKey){
     // Premium-cell merge from sharedPremiumWithPrev flag (rowspan in the preview).
     // Only linked Life/TPD cover may merge — the flag is ignored on any other cover type.
     g.premMerge = g.rows.map(() => null);
+    // The Premium Structure column only merges with the premium when the whole
+    // shared run uses ONE structure — a combined premium over mixed Stepped and
+    // Level components keeps a per-row structure cell.
+    g.structMerge = g.rows.map(() => null);
     let pmi = 0;
     while(pmi < g.rows.length){
       let pmj = pmi + 1;
@@ -17647,6 +17664,12 @@ function renderInsurancePreviewTable(rows, defsKey){
       if(pmj - pmi > 1){
         g.premMerge[pmi] = {start:true, span: pmj - pmi};
         for(let k = pmi + 1; k < pmj; k++) g.premMerge[k] = {continue:true};
+        const runStructs = new Set();
+        for(let k = pmi; k < pmj; k++) runStructs.add((g.rows[k].premiumStructure||'').trim());
+        if(runStructs.size <= 1){
+          g.structMerge[pmi] = {start:true, span: pmj - pmi};
+          for(let k = pmi + 1; k < pmj; k++) g.structMerge[k] = {continue:true};
+        }
       }
       pmi = pmj;
     }
@@ -17694,9 +17717,9 @@ function renderInsurancePreviewTable(rows, defsKey){
       h += td(e(r.status||''));
       // Benefit (always per-row, multi-line)
       h += td(benefitHtml);
-      // Premium Structure — vertical-merge across shared/combined-premium rows
-      // (linked Life + TPD share the same premium structure as well as the premium).
-      const mPremStruct = g.premMerge[i];
+      // Premium Structure — merges with the premium only when the whole run
+      // shares one structure; mixed Stepped/Level runs keep per-row cells.
+      const mPremStruct = g.structMerge[i];
       if(mPremStruct && mPremStruct.continue) { /* skip — merged into the row above */ }
       else if(mPremStruct && mPremStruct.start) h += `<td class="${shade}" rowspan="${mPremStruct.span}" style="vertical-align:middle">${e(r.premiumStructure||'')}</td>`;
       else h += td(e(r.premiumStructure||''));
@@ -17714,15 +17737,10 @@ function renderInsurancePreviewTable(rows, defsKey){
   const fKeyForDefs = {current:'insuranceCurrent', recommended:'insuranceRecommended', original:'insuranceOriginal', altered:'insuranceAltered', alternative:'insuranceAlternative', option1:'insuranceOption1', option2:'insuranceOption2'}[defsKey];
   const tot = (fKeyForDefs && F.insuranceTotals && F.insuranceTotals[fKeyForDefs]) || null;
   if(tot && ((tot.super||'').trim() || (tot.cashflow||'').trim())){
-    // SOA-style premium summary beneath the cover table.
-    const trows = insTotalsSummary(tot);
-    if(trows.length){
-      h += `<table class="insurance-table" style="width:62%;min-width:330px;margin-top:8px"><tbody>` +
-        trows.map((r, i) => {
-          const bold = i === trows.length - 1 ? 'font-weight:700;' : 'font-weight:600;';
-          return `<tr><td class="alt" style="${bold}text-align:left">${e(r[0])}</td><td class="alt" style="${i === trows.length - 1 ? 'font-weight:700' : ''}">${e(r[1])}</td></tr>`;
-        }).join('') + `</tbody></table>`;
-    }
+    const parts = [];
+    if((tot.super||'').trim()) parts.push(e(tot.super.trim()) + ' (Super)');
+    if((tot.cashflow||'').trim()) parts.push(e(tot.cashflow.trim()) + ' (Cashflow)');
+    h += `<p><strong>Total Cost: ${parts.join(' plus ')}</strong></p>`;
   }
   return h;
 }
@@ -19665,6 +19683,9 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
     // UP into the previous row (combined/linked policy paid as one premium). Only linked
     // Life/TPD cover may merge — the flag is ignored on any other cover type.
     g.premMerge = g.rows.map(() => null);
+    // Structure column merges with the premium only when the whole run shares
+    // one structure (mixed Stepped/Level runs keep per-row structure cells).
+    g.structMerge = g.rows.map(() => null);
     let pmi = 0;
     while(pmi < g.rows.length){
       let pmj = pmi + 1;
@@ -19672,6 +19693,12 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
       if(pmj - pmi > 1){
         g.premMerge[pmi] = 'restart';
         for(let k = pmi + 1; k < pmj; k++) g.premMerge[k] = 'continue';
+        const runStructs = new Set();
+        for(let k = pmi; k < pmj; k++) runStructs.add((g.rows[k].premiumStructure||'').trim());
+        if(runStructs.size <= 1){
+          g.structMerge[pmi] = 'restart';
+          for(let k = pmi + 1; k < pmj; k++) g.structMerge[k] = 'continue';
+        }
       }
       pmi = pmj;
     }
@@ -19713,18 +19740,16 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
       };
 
       // Premium cell — vertical-merge across rows that share a combined premium.
+      // The structure cell only joins the merge when the run shares one structure.
       const pm = g.premMerge[i];
+      const sm = g.structMerge[i];
       let premiumCell, premStructCell;
-      if(pm === 'continue'){
-        premiumCell = multiCell([""], {w:colW[6], shade, align:C, verticalMerge: VM_CONTINUE});
-        premStructCell = mergedCellTxt("", {w:colW[5], shade, align:C, verticalMerge: VM_CONTINUE});
-      } else if(pm === 'restart'){
-        premiumCell = multiCell(premiumLines, {w:colW[6], shade, align:C, gap:true, verticalMerge: VM_RESTART});
-        premStructCell = mergedCellTxt(r.premiumStructure||"", {w:colW[5], shade, align:C, verticalMerge: VM_RESTART});
-      } else {
-        premiumCell = multiCell(premiumLines, {w:colW[6], shade, align:C, gap:true});
-        premStructCell = mergedCellTxt(r.premiumStructure||"", {w:colW[5], shade, align:C});
-      }
+      if(pm === 'continue') premiumCell = multiCell([""], {w:colW[6], shade, align:C, verticalMerge: VM_CONTINUE});
+      else if(pm === 'restart') premiumCell = multiCell(premiumLines, {w:colW[6], shade, align:C, gap:true, verticalMerge: VM_RESTART});
+      else premiumCell = multiCell(premiumLines, {w:colW[6], shade, align:C, gap:true});
+      if(sm === 'continue') premStructCell = mergedCellTxt("", {w:colW[5], shade, align:C, verticalMerge: VM_CONTINUE});
+      else if(sm === 'restart') premStructCell = mergedCellTxt(r.premiumStructure||"", {w:colW[5], shade, align:C, verticalMerge: VM_RESTART});
+      else premStructCell = mergedCellTxt(r.premiumStructure||"", {w:colW[5], shade, align:C});
 
       drows.push(new TableRow({children:[
         cellTxt(r.coverType, {w:colW[0], shade}),
@@ -19746,18 +19771,16 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
   const fKeyForDefs = {current:'insuranceCurrent', recommended:'insuranceRecommended', original:'insuranceOriginal', altered:'insuranceAltered', alternative:'insuranceAlternative', option1:'insuranceOption1', option2:'insuranceOption2'}[defsKey];
   const tot = (fKeyForDefs && F.insuranceTotals && F.insuranceTotals[fKeyForDefs]) || null;
   if(tot && ((tot.super||'').trim() || (tot.cashflow||'').trim())){
-    // SOA-style premium summary table (Annual Premium Super / Cash Flow / Total).
-    const trows = insTotalsSummary(tot);
-    if(trows.length){
-      children.push(new Paragraph({spacing:{before:100, after:40}, children:[new TextRun({text:"", size:2})]}));
-      const sumW = [3600, 2900];
-      children.push(new Table({columnWidths: sumW, width:{size:6500, type:WidthType.DXA}, rows:
-        trows.map((r, i) => new TableRow({children:[
-          cellTxt(r[0], {w:sumW[0], shade:INS_CELL, bold:true}),
-          cellTxt(r[1], {w:sumW[1], shade:INS_CELL, bold: i === trows.length - 1, align:AlignmentType.CENTER})
-        ]}))
-      }));
-    }
+    const parts = [];
+    if((tot.super||'').trim()) parts.push((tot.super||'').trim() + " (Super)");
+    if((tot.cashflow||'').trim()) parts.push((tot.cashflow||'').trim() + " (Cashflow)");
+    children.push(new Paragraph({
+      spacing:{before:120, after:160},
+      children:[
+        new TextRun({text:"Total Cost: ", font:"Nunito", size:19, bold:true, color:NY}),
+        new TextRun({text:parts.join(" plus "), font:"Nunito", size:19, bold:true, color:"1a1a1a"})
+      ]
+    }));
   }
   // Trailing spacer so the next section/heading doesn't sit hard against the table.
   children.push(new Paragraph({spacing:{before:0, after:120}, children:[new TextRun({text:"", font:"Nunito", size:8})]}));
