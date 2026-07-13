@@ -9829,6 +9829,16 @@ function setBuilderView(v){
   render();
   window.scrollTo(0,0);
 }
+// Top-bar ♻ Reset — always confirms before clearing anything.
+function confirmResetAll(){
+  if(!confirm('Start a brand-new ROA?\n\nAll current work in this tab will be cleared — use 💾 Save copy or Save (JSON) first if you want to keep it.')) return;
+  resetState();
+  selectedScenarios.length = 0;
+  page = 'picker';
+  wizardStep = 0;
+  render();
+  window.scrollTo(0,0);
+}
 // Soft completeness check per builder section — drives the wizard stepper ticks
 // and the "still to do" hint on each step. Never blocks navigation; it only flags.
 function builderSectionStatus(s){
@@ -13306,7 +13316,7 @@ function renderTopbar(){
       </label>
       <button class="btn btn-sm btn-ghost" onclick="downloadHTMLSave()" title="Download a copy of this tool with all your work saved inside it">💾 Save copy</button>
       <button class="btn btn-sm btn-blue" onclick="topbarExport()" title="Export the Word document">⬇ Export Word</button>
-      <button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="if(confirm('Start a brand-new ROA?\n\nAll current work in this tab will be cleared — use 💾 Save copy or Save (JSON) first if you want to keep it.')){resetState();selectedScenarios.length=0;page='picker';wizardStep=0;render();window.scrollTo(0,0);}" title="Clear everything and start a brand-new ROA">♻ Reset</button>
+      <button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="confirmResetAll()" title="Clear everything and start a brand-new ROA">♻ Reset</button>
     </div>
   </div>`;
 }
