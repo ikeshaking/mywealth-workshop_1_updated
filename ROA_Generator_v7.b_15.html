@@ -422,25 +422,45 @@ details.row-override[open] > summary::before{transform:rotate(90deg)}
 /* =======================================================
    BUILDER — SIDEBAR + MAIN COLUMN (v1.0 STYLE)
    ======================================================= */
-/* ── Builder wizard view — one section per step + progress stepper ── */
-.wizard-wrap{max-width:1080px;margin:0 auto;padding:14px 14px 70px}
-.wizard-stepper{display:flex;align-items:center;gap:2px;overflow-x:auto;padding:10px 2px 14px;-webkit-overflow-scrolling:touch}
-.wizard-step{display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);border-radius:999px;
-  padding:6px 12px 6px 7px;cursor:pointer;white-space:nowrap;font-size:12px;color:var(--text-dim);flex:0 0 auto;font-family:var(--bf)}
+/* ── Builder wizard view — left step nav + editor + live preview panel ── */
+.wizard-wrap{max-width:1240px;margin:0 auto;padding:14px 14px 70px;
+  display:grid;grid-template-columns:225px minmax(0,1fr);gap:16px;align-items:start}
+.wizard-wrap.with-preview{max-width:1900px;grid-template-columns:225px minmax(0,1fr) minmax(330px,44%)}
+.wizard-side{position:sticky;top:66px;background:var(--surface);border:1px solid var(--border-soft);border-radius:14px;
+  padding:10px 8px;box-shadow:0 1px 3px rgba(0,0,0,.04);max-height:calc(100vh - 86px);overflow:auto}
+.wizard-steps-v{display:flex;flex-direction:column;gap:4px}
+.wizard-step{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:transparent;border:1px solid transparent;
+  border-radius:10px;padding:7px 9px;cursor:pointer;font-size:12px;color:var(--text-dim);font-family:var(--bf)}
 .wizard-step .ws-dot{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
   background:var(--surface-2);border:1px solid var(--border-strong);font-size:10.5px;font-weight:700;color:var(--text-dim);flex:0 0 auto}
+.wizard-step .ws-label{white-space:normal;line-height:1.25}
 .wizard-step.done .ws-dot{background:var(--green-light);border-color:var(--green);color:var(--green-dark)}
 .wizard-step.todo .ws-dot{background:var(--amber-light);border-color:var(--amber);color:var(--amber)}
 .wizard-step.current{border-color:var(--blue);background:var(--blue-light);color:var(--heading);font-weight:700}
 .wizard-step.current .ws-dot{background:var(--blue);border-color:var(--blue);color:#fff}
 .wizard-step.skipped{opacity:.45}
 .wizard-step:hover{border-color:var(--blue-soft)}
-.ws-line{flex:0 0 12px;height:1px;background:var(--border-strong)}
 .wizard-hint{background:var(--amber-light);border:1px solid var(--amber);color:var(--amber);border-radius:10px;
   padding:9px 13px;font-size:12.5px;font-weight:600;margin:0 0 12px}
 .wizard-nav{display:flex;align-items:center;gap:12px;margin-top:18px;padding:12px 14px;background:var(--surface);
   border:1px solid var(--border);border-radius:14px;position:sticky;bottom:10px;box-shadow:0 6px 22px rgba(0,0,0,.12);z-index:5}
 .wizard-nav .wizard-nav-mid{flex:1;text-align:center;font-size:12px;color:var(--text-muted)}
+.wizard-preview{position:sticky;top:66px;display:flex;flex-direction:column;background:var(--surface-2);
+  border:1px solid var(--border);border-radius:14px;overflow:hidden;max-height:calc(100vh - 86px)}
+.wizard-preview-head{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface);
+  border-bottom:1px solid var(--border-soft);color:var(--heading)}
+.wizard-preview-scroll{overflow:auto;padding:14px;flex:1}
+.wizard-preview-doc{zoom:.68;padding:26px 30px;min-height:200px}
+@media(max-width:1400px){
+  .wizard-wrap.with-preview{grid-template-columns:225px minmax(0,1fr)}
+  .wizard-preview{display:none}
+}
+@media(max-width:900px){
+  .wizard-wrap{grid-template-columns:1fr}
+  .wizard-side{position:static;max-height:none}
+  .wizard-steps-v{flex-direction:row;flex-wrap:wrap}
+  .wizard-step{width:auto}
+}
 
 .builder-with-sidebar{
   max-width:1180px;margin:0 auto;padding:16px 14px 60px;
@@ -1136,7 +1156,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_14";
+const APP_VERSION = "v7.b_15";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -9794,6 +9814,13 @@ let activeSection = "client"; // sidebar nav
 // classic single-page layout with the sidebar. Choice is remembered per device.
 let builderView = (typeof localStorage !== 'undefined' && localStorage.getItem('roa_builder_view')) || 'wizard';
 let wizardStep = 0;
+// Live document preview panel in the wizard (hideable; remembered per device).
+let livePreviewOn = (typeof localStorage !== 'undefined' ? (localStorage.getItem('roa_live_preview') || 'on') : 'on') === 'on';
+function toggleLivePreview(){
+  livePreviewOn = !livePreviewOn;
+  try{ localStorage.setItem('roa_live_preview', livePreviewOn ? 'on' : 'off'); }catch(_){}
+  render();
+}
 function setBuilderView(v){
   builderView = v;
   try{ localStorage.setItem('roa_builder_view', v); }catch(_){}
@@ -12554,6 +12581,225 @@ function parseAlterationQuote(text){
   return { options, client: lifeName };
 }
 
+// ── NEOS quote (ported from the SOA generator) ─────────────────────────────
+// "Cover Life Cover / Attached TPD Cover / Split TPD Cover / Income Support
+// Cover / Critical Illness Cover" blocks with labelled fields. Produces the
+// firm-style rows: flexi-linked Life+TPD share ONE combined premium with the
+// super/personal split, IP carries the Super Contribution Option.
+function parseNeosQuoteRoa(text){
+  const t = String(text||'').replace(/\r/g,'');
+  if(!/NEOS/i.test(t)) return null;
+  const re = /Cover\s+(Income Support Cover|Life Cover|Attached TPD Cover|Split TPD Cover|Linked Critical Illness Cover|Critical Illness Cover|Trauma Cover)/gi;
+  const heads = []; let m; while((m = re.exec(t))) heads.push({idx:m.index, name:m[1]});
+  if(!heads.length) return null;
+  const num = s => parseFloat(String(s||'').replace(/[$,\s]/g,''))||0;
+  const fmt = n => '$'+String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const field = (b,label)=>{ const mm=b.match(new RegExp(label+'\\s*\\$?\\s*([0-9][0-9,]*(?:\\.[0-9]+)?)','i')); return mm?mm[1].replace(/,/g,''):''; };
+  const ftext = (b,label)=>{ const mm=b.match(new RegExp(label+'\\s*([^\\n]+)','i')); return mm?mm[1].trim():''; };
+  const covers = {};
+  heads.forEach((h,i)=>{
+    const body = t.slice(h.idx, i+1<heads.length?heads[i+1].idx:t.length);
+    const nm = h.name.toLowerCase();
+    const ckey = /income support/.test(nm)?'ip':/attached tpd/.test(nm)?'tpd':/split tpd/.test(nm)?'split':/life/.test(nm)?'life':'trauma';
+    const yearly = field(body,'Yearly premium'), monthly = field(body,'Monthly premium');
+    const mo = monthly?num(monthly):(yearly?num(yearly)/12:0);
+    let owner = (ftext(body,'Ownership')||'').replace(/\b(Premium|Cover|TPD|Optional|Linked|Occupation|Loadings).*$/i,'').trim();
+    let struct = ftext(body,'Premium type');
+    struct = /variable\s*age[\s-]*stepped/i.test(struct)?'Variable age-stepped'
+          : /\blevel\b/i.test(struct)?'Level'
+          : /\bstepped\b/i.test(struct)?'Stepped':'Variable age-stepped';
+    covers[ckey] = { sum:field(body,'Sum insured'), monthly:mo, ownership:owner, structure:struct,
+      scOption:field(body,'Superannuation contribution option amount'),
+      waiting:(ftext(body,'Waiting period')||'').replace(/\b(Benefit|Optional|Cover).*$/i,'').trim(),
+      benefitPd:(ftext(body,'Benefit period')||'').replace(/\b(Optional|Linked|Occupation).*$/i,'').trim() };
+  });
+  const liM = t.match(/(?:Life insured|Client name|Prepared for)[:\s]+([A-Z][a-zA-Z'’\-]+(?:\s+[A-Z][a-zA-Z'’\-]+)*)/i);
+  const client = liM ? liM[1].trim() : '';
+  const fn = client.split(/\s+/)[0] || '';
+  const rows = [];
+  const superM = (covers.life?covers.life.monthly:0) + (covers.tpd?covers.tpd.monthly:0);
+  const splitM = covers.split?covers.split.monthly:0;
+  const linkedTotal = superM + splitM;
+  if(covers.life){
+    rows.push({provider:'NEOS', coverType:'Life (Linked)', lifeInsured:fn,
+      owner: splitM ? 'Flexi-Linked Super' : (/super/i.test(covers.life.ownership||'super')?'Super':(fn||'Self-Owned')),
+      benefitAmount: covers.life.sum?fmt(num(covers.life.sum)):'', premiumStructure: covers.life.structure,
+      premiumNote: linkedTotal ? fmt(linkedTotal)+' pm (before tax)'+(splitM?' ('+fmt(superM)+' from super and '+fmt(splitM)+' from personal cashflow)':'') : ''});
+  }
+  if(covers.tpd || covers.split){
+    const src = covers.tpd || covers.split;
+    const own = !/TPD definition[^\n]*\bany\b/i.test(t);
+    rows.push({provider:'NEOS', coverType: own?'TPD (Linked & Own-Occupation)':'TPD (Linked & Any-Occupation)',
+      lifeInsured:fn, owner: splitM ? 'Flexi-Linked Super' : 'Super',
+      benefitAmount: src.sum?fmt(num(src.sum)):'', premiumStructure: src.structure||'Variable age-stepped',
+      premiumNote:'', sharedPremiumWithPrev: !!covers.life});
+  }
+  if(covers.ip){
+    rows.push({provider:'NEOS', coverType:'IP (Indemnity & Standard Contract)', lifeInsured:fn,
+      owner:/self|ordinary|personal/i.test(covers.ip.ownership||'')?(fn||'Self-Owned'):'Super',
+      benefitAmount: covers.ip.sum?fmt(num(covers.ip.sum))+' pm':'',
+      superContribution: covers.ip.scOption?fmt(num(covers.ip.scOption))+' pm':'',
+      waitingPeriod:(covers.ip.waiting||'').toLowerCase(), benefitPeriod: covers.ip.benefitPd||'',
+      premiumStructure: covers.ip.structure,
+      premiumNote: covers.ip.monthly?fmt(covers.ip.monthly)+' pm (before tax)':''});
+  }
+  if(covers.trauma){
+    rows.push({provider:'NEOS', coverType:'Trauma', lifeInsured:fn, owner:fn||'Self-Owned',
+      benefitAmount: covers.trauma.sum?fmt(num(covers.trauma.sum)):'', premiumStructure: covers.trauma.structure,
+      premiumNote: covers.trauma.monthly?fmt(covers.trauma.monthly)+' pm':''});
+  }
+  return rows.length ? {rows, client} : null;
+}
+
+// ── ClearView quote (ported from the SOA generator) ────────────────────────
+// Cover lines carry "$benefit $monthly $annual Y/N" (Y = inside super); split
+// flexi lines of the same cover merge into one row with the funding split.
+function parseClearViewQuoteRoa(text){
+  if(!/clear\s*view|clearchoice/i.test(text)) return null;
+  const L = text.split('\n').map(s=>s.replace(/\t/g,' ').replace(/\s+/g,' ').trim()).filter(Boolean);
+  const COVER_KW = /(income protection|income support|salary continuance|trauma|critical|tpd|total\s*&?\s*permanent|life|child)/i;
+  const VAL_RE = /\$([\d,]+(?:\.\d{2})?)\s+\$([\d,]+\.\d{2})\s+\$([\d,]+\.\d{2})\s+([YN])\b/;
+  const STRUCT_RE = /(variable age-stepped|age-stepped|stepped|level|hybrid)/i;
+  const num = s => Number(String(s||'').replace(/[^0-9.]/g,''))||0;
+  const fmt = n => '$'+String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const names=[], structs=[], vals=[];
+  L.forEach(line=>{
+    const vm = line.match(VAL_RE);
+    if(vm){
+      const pre = line.slice(0,vm.index).replace(/^[\s\-–•]+/,'').replace(/\bpremium\b\s*$/i,'').trim();
+      vals.push({benefit:num(vm[1]), monthly:num(vm[2]), annual:num(vm[3]), inSuper:(vm[4]==='Y'), inlineName:(COVER_KW.test(pre)?pre:'')});
+      return;
+    }
+    if(COVER_KW.test(line) && !/total quote premium|quote break ?down|premium indexation/i.test(line)){
+      names.push(line.replace(/^[\s\-–•]+/,'').replace(/\bpremium\b\s*$/i,'').trim());
+      return;
+    }
+    if(STRUCT_RE.test(line) && line.length<40) structs.push(line.trim());
+  });
+  if(vals.length < 2) return null;   // a real quote lists several cover lines
+  const haveAllInline = vals.every(v=>v.inlineName);
+  let covers = vals.map((v,i)=>({
+    rawName:(haveAllInline?v.inlineName:(names[i]||v.inlineName||'')).replace(/\s+/g,' ').trim(),
+    benefit:v.benefit, monthly:v.monthly, inSuper:v.inSuper,
+    superMonthly:v.inSuper?v.monthly:0, cashMonthly:v.inSuper?0:v.monthly,
+    structure:(structs.length===vals.length?structs[i]:'')||'Variable age-stepped'
+  })).filter(c=>c.rawName);
+  // Merge split/flexi lines of the same cover + benefit into one display row.
+  const merged=[], byK={};
+  covers.forEach(c=>{
+    const k = ex_normCoverType(c.rawName)+'|'+c.benefit;
+    const prev = byK[k];
+    if(prev && ex_normCoverType(c.rawName)){
+      prev.monthly = +(prev.monthly+c.monthly).toFixed(2);
+      prev.superMonthly = +(prev.superMonthly+c.superMonthly).toFixed(2);
+      prev.cashMonthly = +(prev.cashMonthly+c.cashMonthly).toFixed(2);
+      if(prev.inSuper !== c.inSuper){ prev.flexiSplit = true; prev.inSuper = true; }
+    } else { byK[k]=c; merged.push(c); }
+  });
+  covers = merged;
+  const T = '\n'+L.join('\n')+'\n';
+  const wm = T.match(/waiting period:?\s*(\d+\s*days?|\d+\s*weeks?)/i);
+  const bm = T.match(/benefit period:?\s*(to age \d+|age \d+|\d+\s*(?:years?|yrs?))/i);
+  const _td = T.match(/TPD Definition:?\s*([^\n]+)/i);
+  const tpdAny = _td ? /non[\s-]*occupational/i.test(_td[1]) : false;
+  const liM = T.match(/(?:Life insured|Client name|Prepared for)[:\s]+([A-Z][a-zA-Z'’\-]+(?:\s+[A-Z][a-zA-Z'’\-]+)*)/i);
+  const client = liM ? liM[1].trim() : '';
+  const fn = client.split(/\s+/)[0] || '';
+  const rows = covers.map(c=>{
+    let ct = ex_normCoverType(c.rawName);
+    if(!ct) return null;
+    if(/^tpd/i.test(ct) && tpdAny) ct = ct.replace(/Own-Occupation/i,'Any-Occupation');
+    const isIP = /income|^ip\b/i.test(ct);
+    return { provider:'ClearView', coverType:ct, lifeInsured:fn,
+      owner: c.flexiSplit ? 'Flexi-Linked Super' : (c.inSuper ? 'Super' : (fn||'Self-Owned')),
+      benefitAmount: c.benefit ? fmt(c.benefit)+(isIP?' pm':'') : '',
+      waitingPeriod: isIP && wm ? wm[1].toLowerCase() : '',
+      benefitPeriod: isIP && bm ? bm[1].replace(/^to age/i,'To Age') : '',
+      premiumStructure: c.structure,
+      premiumNote: c.monthly ? fmt(c.monthly)+' pm (before tax)'+(c.flexiSplit?' ('+fmt(c.superMonthly)+' from super and '+fmt(c.cashMonthly)+' from personal cashflow)':'') : ''};
+  }).filter(Boolean);
+  return rows.length ? {rows, client} : null;
+}
+
+// ── CDM / adviser "INSURANCE SCHEDULE" (existing cover summary PDF) ────────
+// Wrapped multi-line records: each policy's provider, premium, structure and
+// flags scatter across the lines around a "policy-number + insured + DOB"
+// anchor line. Records are re-assembled by cutting at each provider-name line.
+function parseInsuranceScheduleRoa(text){
+  if(!/INSURANCE\s+SCHEDULE/i.test(text) || !/POLICY\s*NO/i.test(text)) return null;
+  const clientM = text.match(/Client:\s*([A-Za-z'’\- ]+)/);
+  const client = clientM ? clientM[1].trim() : '';
+  const fn = client.split(/\s+/)[0] || '';
+  const fmt = n => '$'+String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  // The schedule table ends where the boilerplate notes begin.
+  const body = text.split(/Please note in respect|IMPORTANT\s*[-—]|Insurance type\s+Sum Insured/i)[0];
+  const lines = body.split('\n');
+  const anchorRe = /\b\d{6,}\b[\s\S]*?\b\d{2}\/\d{2}\/\d{4}\b/;
+  const anchors = [];
+  lines.forEach((l,i)=>{ if(anchorRe.test(l)) anchors.push(i); });
+  if(!anchors.length) return null;
+  const esc = x => x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const provRe = new RegExp('\\b('+INSURERS.filter(x=>x!=='Other').map(esc).join('|')+')\\b','i');
+  // Record boundaries: each record starts at the provider line ahead of its anchor.
+  const bounds = [];
+  anchors.forEach((ai,k)=>{
+    let cut = k===0 ? 0 : ai;
+    const from = k===0 ? 0 : anchors[k-1]+1;
+    for(let i=from;i<ai;i++){ if(provRe.test(lines[i])){ cut = i; break; } }
+    bounds.push(cut);
+  });
+  bounds.push(lines.length);
+  const rows = [];
+  const usedBens = [];
+  anchors.forEach((ai,k)=>{
+    const chunk = lines.slice(bounds[k], bounds[k+1]).join('\n');
+    const prov = (chunk.match(provRe)||[])[1] || '';
+    const insM = chunk.match(/([A-Z][a-zA-Z'’\-]+(?:\s+[A-Z][a-zA-Z'’\-]+)+)\s+\d{2}\/\d{2}\/\d{4}/);
+    const insured = insM ? insM[1].trim() : client;
+    const inSuper = /\(Super\)|Nominees/i.test(chunk);
+    const isIP = /income protection/i.test(chunk);
+    const isTrauma = !isIP && /trauma/i.test(chunk);
+    const isTPD = !isIP && !isTrauma && /\bTPD\b/i.test(chunk);
+    const isLife = !isIP && !isTrauma && !isTPD && /\bLife\b/i.test(chunk);
+    if(!(isIP||isTrauma||isTPD||isLife)) return;
+    const linked = /linked/i.test(chunk);
+    const ct = isIP ? (/indemnity/i.test(chunk)?'IP (Indemnity & Standard Contract)':'Income Protection')
+      : isTrauma ? (linked?'Trauma':'Trauma (Standalone)')
+      : isTPD ? (linked?'TPD (Linked & Own-Occupation)':'TPD (Standalone & Own-Occupation)')
+      : 'Life (Linked)';
+    // Whole money tokens only — matching digits-with-optional-decimals up front
+    // stops "$1,400.76" backtracking into a bogus "$1,40" lump-sum match.
+    const bigs = [...chunk.matchAll(/\$\s*([\d,]+(?:\.\d+)?)/g)]
+      .filter(x=>!x[1].includes('.')).map(x=>parseFloat(x[1].replace(/,/g,'')))
+      .filter(n=>n>=1000).sort((a,b)=>b-a);
+    const prems = [...chunk.matchAll(/\$([\d,]+\.\d{2})/g)].map(x=>parseFloat(x[1].replace(/,/g,'')));
+    const annual = /annual/i.test(chunk);
+    const pm = prems.length ? (annual ? prems[0]/12 : prems[0]) : 0;
+    let benN = isIP ? (bigs.find(n=>n<60000)||0) : (bigs[0]||0);
+    if(benN) usedBens.push(benN);
+    const wait = (chunk.match(/(\d+)\s*Days?\s*Waiting/i)||[])[1];
+    const bp = (chunk.match(/To\s*Age\s*(\d+)/i)||[])[1];
+    const struct = /variable\s*age[- ]?stepped/i.test(chunk)?'Variable age-stepped':((chunk.match(/\b(Stepped|Level|Hybrid)\b/i)||[])[1]||'');
+    rows.push({provider:prov, coverType:ct, lifeInsured: insured.split(/\s+/)[0], owner: inSuper?'Super':(insured.split(/\s+/)[0]||'Self-Owned'),
+      benefitAmount: benN?fmt(benN)+(isIP?' pm':''):'',
+      waitingPeriod: wait?wait+' days':'', benefitPeriod: bp?'To Age '+bp:'',
+      premiumStructure: struct, premiumNote: pm?fmt(pm)+' pm':'',
+      exclusions: /Exclusion:\s*Yes/i.test(chunk)?'Yes (see policy)':'',
+      status:'In Force'});
+  });
+  // Reading-order interleave: an IP monthly benefit can land in the previous
+  // record's window — recover it from the whole schedule if the IP row is bare.
+  rows.forEach(r=>{
+    if(/^ip|income/i.test(r.coverType) && !r.benefitAmount){
+      const all = [...body.matchAll(/\$\s*([\d,]+(?:\.\d+)?)/g)]
+        .filter(x=>!x[1].includes('.')).map(x=>parseFloat(x[1].replace(/,/g,'')));
+      const cand = all.filter(n=>n>=1000 && n<60000 && usedBens.indexOf(n)===-1).sort((a,b)=>b-a)[0];
+      if(cand) r.benefitAmount = fmt(cand)+' pm';
+    }
+  });
+  return rows.length ? {rows, client} : null;
+}
+
 // Import a CDM insurance summary / insurer quote / prior advice doc into ONE
 // insurance table — via the 📥 button's file picker…
 async function handleInsuranceTableImport(inp, fKey){
@@ -12796,6 +13042,21 @@ async function importInsuranceFileToTable(file, fKey){
       cdmClient = alt.client || '';
       source = 'the alteration quote (' + opt.label.split(':')[0] + ')';
     }
+    // 1.2) Insurer quotes, matching the SOA generator's readers — NEOS and
+    //      ClearView quote layouts → firm-style cover rows.
+    if(!rows.length){
+      const nq = parseNeosQuoteRoa(text);
+      if(nq && nq.rows.length){ rows = nq.rows; cdmClient = nq.client || ''; source = 'the NEOS quote'; }
+    }
+    if(!rows.length){
+      const cq = parseClearViewQuoteRoa(text);
+      if(cq && cq.rows.length){ rows = cq.rows; cdmClient = cq.client || ''; source = 'the ClearView quote'; }
+    }
+    // 1.5) CDM / adviser "INSURANCE SCHEDULE" existing-cover summary PDF.
+    if(!rows.length){
+      const sch = parseInsuranceScheduleRoa(text);
+      if(sch && sch.rows.length){ rows = sch.rows; cdmClient = sch.client || ''; source = 'the insurance schedule'; }
+    }
     // 2) CDM "Benefits Report" layout (dedicated parser — handles wrapped rows,
     //    annualised premiums and stepped/level split benefits).
     if(!rows.length){
@@ -12863,9 +13124,14 @@ async function importInsuranceFileToTable(file, fKey){
       if(!(r.status||'').trim()) r.status = defStatus;
       if(r.owner === 'Super (inside super)') r.owner = 'Super';
       // The grid's premium cell edits premiumNote — fold a table-extracted
-      // monthlyPremium into it so the figure is visible and editable.
-      if(!(r.premiumNote||'').trim() && (r.monthlyPremium||'').trim()){
-        r.premiumNote = r.monthlyPremium; r.monthlyPremium = '';
+      // monthlyPremium into it so the figure is visible and editable. When a
+      // funding-split note was also read (e.g. "($71 from super and $13 from
+      // personal cashflow)"), the before-tax figure goes in FRONT of it so
+      // nothing read from the document is hidden from the grid.
+      if((r.monthlyPremium||'').trim()){
+        const mp = r.monthlyPremium.trim().replace(/pm\(/, 'pm (');
+        r.premiumNote = ((r.premiumNote||'').trim() ? mp + ' ' + r.premiumNote.trim() : mp);
+        r.monthlyPremium = '';
       }
       // Match the Premium Structure dropdown's casing ("stepped" → "Stepped").
       if(r.premiumStructure) r.premiumStructure = r.premiumStructure.charAt(0).toUpperCase() + r.premiumStructure.slice(1);
@@ -13038,6 +13304,7 @@ function renderTopbar(){
       </label>
       <button class="btn btn-sm btn-ghost" onclick="downloadHTMLSave()" title="Download a copy of this tool with all your work saved inside it">💾 Save copy</button>
       <button class="btn btn-sm btn-blue" onclick="topbarExport()" title="Export the Word document">⬇ Export Word</button>
+      <button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="if(confirm('Start a brand-new ROA?\n\nAll current work in this tab will be cleared — use 💾 Save copy or Save (JSON) first if you want to keep it.')){resetState();selectedScenarios.length=0;page='picker';wizardStep=0;render();window.scrollTo(0,0);}" title="Clear everything and start a brand-new ROA">♻ Reset</button>
     </div>
   </div>`;
 }
@@ -15690,8 +15957,19 @@ function renderBuilder(){
   //   Page 3+: Section 3 per strategy, then Sections 4, 5, ack
   const sections = [];
   sections.push({k:'client',  l:'Client & Adviser Details', pageNum:1, pageLabel:'Cover Page', removable:false, preFilled:false, render:renderClientSection});
-  sections.push({k:'meta',    l:'Type of Record of Advice', pageNum:1, pageLabel:'Cover Page', removable:false, preFilled:false, render:renderMetaSection});
-  sections.push({k:'s1',      l:'Section 1: Where You Are Now (Prior Advice)', pageNum:2, pageLabel:'Sections 1 & 2', vis:'priorAdvice', removable:true, render:renderSection1});
+  // Type of ROA + Section 1 (prior advice) are one step — the prior-advice
+  // documents are edited in the Type-of-ROA card, so splitting them was noise.
+  // Section 1's output visibility is toggled inline inside the merged panel.
+  sections.push({k:'meta',    l:'Type of ROA & Prior Advice', pageNum:1, pageLabel:'Cover Page & Section 1', removable:false, preFilled:false, render:()=>{
+    const s1hidden = F.sectionVisible['priorAdvice'] === false;
+    return renderMetaSection() + `<div class="card" style="margin-top:12px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <h3 style="margin:0;flex:1">Section 1: Where You Are Now (Prior Advice)</h3>
+        <button class="btn btn-xs ${s1hidden?'btn-blue':''}" onclick="toggleSectionVisibility('priorAdvice')" title="${s1hidden?'Include Section 1 in the output':'Exclude Section 1 from the output'}">${s1hidden?'+ Include in output':'✕ Exclude from output'}</button>
+      </div>
+      ${s1hidden ? `<div class="card-sub" style="margin-top:8px;font-style:italic">Section 1 is currently excluded from the output.</div>` : renderSection1()}
+    </div>`;
+  }});
   sections.push({k:'s2',      l:'Section 2: What You Want To Achieve', pageNum:2, pageLabel:'Sections 1 & 2', vis:'objectives', removable:true, render:renderSection2});
   sections.push({k:'s3',      l:'Section 3: My Advice to You', pageNum:3, pageLabel:'Section 3: Advice', vis:'recommendations', removable:true, render:renderSection3ByStrategy});
   if(hasIns)  sections.push({k:'insurance', l:'Insurance Cover', pageNum:3, pageLabel:'Section 3: Advice', vis:'insurance', removable:true, render:renderInsuranceSection});
@@ -15713,9 +15991,11 @@ function renderBuilder(){
     const curVisFlag = cur.vis;
     const curHidden = curVisFlag && F.sectionVisible[curVisFlag] === false;
 
-    h += `<div class="wizard-wrap">`;
-    // Stepper
-    h += `<div class="wizard-stepper">`;
+    h += `<div class="wizard-wrap ${livePreviewOn ? 'with-preview' : ''}">`;
+
+    // Left navigation — vertical stepper with progress ticks
+    h += `<aside class="wizard-side"><div class="wizard-steps-v">
+      <div class="sidebar-page-heading" style="margin:2px 4px 6px">Wizard steps</div>`;
     sections.forEach((s, i) => {
       const sHidden = s.vis && F.sectionVisible[s.vis] === false;
       const st = builderSectionStatus(s);
@@ -15724,11 +16004,12 @@ function renderBuilder(){
         <span class="ws-dot">${sHidden ? '–' : (st.state === 'ok' ? '✓' : (st.state === 'warn' ? '!' : i + 1))}</span>
         <span class="ws-label">${e(s.l.replace(/^Section \d+: /, ''))}</span>
       </button>`;
-      if(i < sections.length - 1) h += `<span class="ws-line"></span>`;
     });
-    h += `</div>`;
+    h += `</div>
+      <button class="btn btn-sm" style="width:100%;margin-top:10px" onclick="toggleLivePreview()" title="${livePreviewOn ? 'Hide the live document preview panel' : 'Show a live preview of the document alongside the editor'}">${livePreviewOn ? '🙈 Hide preview' : '👁 Live preview'}</button>
+    </aside>`;
 
-    h += `<div class="builder-single-column" style="width:100%">`;
+    h += `<div class="builder-single-column wizard-main" style="width:100%">`;
     h += `<div class="page-separator">
       <span class="page-separator-num">Step ${wizardStep + 1} of ${sections.length}</span>
       <span class="page-separator-label">${e(cur.pageLabel)} — prints on page ${cur.pageNum} of the document</span>
@@ -15762,7 +16043,23 @@ function renderBuilder(){
         ? `<button class="btn btn-blue" onclick="wizardStep++;render();window.scrollTo(0,0)">Next: ${e(nextLabel)} →</button>`
         : `<button class="btn btn-green" onclick="page='preview';render();window.scrollTo(0,0)">Finish → Preview</button>`}
     </div>`;
-    h += `</div></div></main>`;
+    h += `</div>`; // end wizard-main
+
+    // Live document preview — the real document HTML, re-rendered on every
+    // change, scaled to fit the panel. Hide/show with the sidebar button.
+    if(livePreviewOn){
+      h += `<aside class="wizard-preview">
+        <div class="wizard-preview-head">
+          <span style="font-weight:700;font-size:12px">Live preview</span>
+          <span class="text-xs text-muted">updates as you type</span>
+          <span style="flex:1"></span>
+          <button class="btn btn-xs" onclick="page='preview';render()" title="Open the full-size preview page">⛶ Full</button>
+          <button class="btn btn-xs" onclick="toggleLivePreview()" title="Hide the preview panel">✕ Hide</button>
+        </div>
+        <div class="wizard-preview-scroll"><div class="preview-doc wizard-preview-doc">${renderRoaDocHTML()}</div></div>
+      </aside>`;
+    }
+    h += `</div></main>`;
     return h;
   }
 
@@ -17759,20 +18056,6 @@ function renderCustomSection(){
 // RENDER: PREVIEW
 // ═══════════════════════════════════════════════════════════
 function renderPreview(){
-  const cn = getFullClientName();
-  const fn = getFirstName();
-  const wP = isPluralClient();
-  const pron = wP ? "we" : "I";
-  const pron2 = wP ? "our" : "my";
-  const pron3 = wP ? "us" : "me";
-  const Pron = pron.charAt(0).toUpperCase() + pron.slice(1);
-  const Pron2 = pron2.charAt(0).toUpperCase() + pron2.slice(1);
-  const aT = F.roaAdviceType === "additional" ? "Additional Advice" : "Amendment of SoA";
-  const scns = scenariosForSection();
-  const anyIns = scns.some(s => s.needs?.insurance || s.needs?.insuranceTable);
-  const anyBdbn = scns.some(s => s.needs?.bdbn);
-  const hasOptions = F.hasOptions;
-
   let h = `<main class="main">`;
 
   h += `<section class="hero" style="min-height:90px;padding:16px 20px">
@@ -17793,6 +18076,28 @@ function renderPreview(){
   </section>`;
 
   h += `<div class="preview-wrap"><div class="preview-doc" id="preview-doc">`;
+  h += renderRoaDocHTML();
+  h += `</div></div></main>`;
+  return h;
+}
+
+// The whole document as HTML — used by the full Preview page above AND the
+// builder wizard's live-preview panel.
+function renderRoaDocHTML(){
+  const cn = getFullClientName();
+  const fn = getFirstName();
+  const wP = isPluralClient();
+  const pron = wP ? "we" : "I";
+  const pron2 = wP ? "our" : "my";
+  const pron3 = wP ? "us" : "me";
+  const Pron = pron.charAt(0).toUpperCase() + pron.slice(1);
+  const Pron2 = pron2.charAt(0).toUpperCase() + pron2.slice(1);
+  const aT = F.roaAdviceType === "additional" ? "Additional Advice" : "Amendment of SoA";
+  const scns = scenariosForSection();
+  const anyIns = scns.some(s => s.needs?.insurance || s.needs?.insuranceTable);
+  const anyBdbn = scns.some(s => s.needs?.bdbn);
+  const hasOptions = F.hasOptions;
+  let h = '';
 
   // Cover page
   h += `<img src="data:image/png;base64,${BRAND_HEADER_PNG_B64}" alt="My Wealth Solutions" style="display:block;width:100%;max-width:700px;margin:0 0 18px 0" />
@@ -18238,7 +18543,6 @@ function renderPreview(){
 
   h += `<img src="data:image/png;base64,${BRAND_FOOTER_PNG_B64}" alt="My Wealth Solutions — ABN 66 153 751 832" style="display:block;width:100%;margin:30px 0 0 0" />`;
 
-  h += `</div></div></main>`;
   return h;
 }
 
@@ -19125,11 +19429,19 @@ async function classifySmartImportFile(file){
     return {type:'insurance-recommended', label:'Insurer alteration quote', order:3};
   if(/amended terms/i.test(text) && /agree/i.test(text))
     return {type:'insurance-recommended', label:'Amended terms agreement', order:3};
+  if(/INSURANCE\s+SCHEDULE/i.test(text) && /POLICY\s*NO/i.test(text))
+    return {type:'insurance-current', label:'Insurance schedule (existing cover summary)', order:3};
+  if(/NEOS/i.test(text) && /Cover\s+(Life Cover|Income Support Cover|Attached TPD Cover)/i.test(text))
+    return {type:'insurance-recommended', label:'NEOS quote', order:3};
+  if(/clear\s*view|clearchoice/i.test(text) && /\$[\d,]+\.\d{2}\s+\$[\d,]+\.\d{2}\s+[YN]\b/.test(text))
+    return {type:'insurance-recommended', label:'ClearView quote', order:3};
   try{
     if(/benefits report/i.test(text)) return {type:'insurance-current', label:'CDM benefits report (current cover)', order:3};
     const cdm = (typeof cdmParseBenefitsReport === 'function') ? cdmParseBenefitsReport(text) : null;
     if(cdm && cdm.rows && cdm.rows.length) return {type:'insurance-current', label:'CDM benefits report (current cover)', order:3};
   }catch(_){}
+  if(/statement of advice/i.test(text) && /insurance provider/i.test(text))
+    return {type:'soa', label:'Prior SOA — original recommendations (client 1 & 2)', order:2};
   if(/record of advice|statement of advice/i.test(text))
     return {type:'roadoc', label:'Prior ROA/SOA document (client details + tables)', order:2};
   if(/\b(life|tpd|trauma|income protection)\b/i.test(text) && /\$\s*[\d,]{3,}/.test(text))
@@ -19166,6 +19478,13 @@ async function handleSmartImport(fileList){
       else if(t === 'care-pdf'){ alert(it.file.name + ' looks like a CARE/Hub24 rebalance document exported as PDF.\n\nA PDF export loses the table structure this importer relies on — please export it from CARE as Word (.docx) and drop that file instead.'); }
       else if(t === 'insurance-current'){ await importInsuranceFileToTable(it.file, 'insuranceCurrent'); }
       else if(t === 'insurance-recommended'){ await importInsuranceFileToTable(it.file, smartQuoteTargetKey()); }
+      else if(t === 'soa'){
+        // A prior SOA's Insurance Products tables (both clients) → the Original
+        // Recommendations table on a revised-terms ROA, else Current Cover.
+        let soaKey = 'insuranceCurrent';
+        try{ if(typeof isRevisedTermsRoa === 'function' && isRevisedTermsRoa()) soaKey = 'insuranceOriginal'; }catch(_){}
+        await importInsuranceFileToTable(it.file, soaKey);
+      }
       else if(t === 'roadoc'){ await handleImport({files:[it.file], value:''}); }
       else { alert(it.file.name + ' could not be read: ' + (it.cls.error || 'unsupported file type')); }
     }catch(ex){
