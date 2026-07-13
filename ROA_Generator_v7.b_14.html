@@ -422,6 +422,26 @@ details.row-override[open] > summary::before{transform:rotate(90deg)}
 /* =======================================================
    BUILDER — SIDEBAR + MAIN COLUMN (v1.0 STYLE)
    ======================================================= */
+/* ── Builder wizard view — one section per step + progress stepper ── */
+.wizard-wrap{max-width:1080px;margin:0 auto;padding:14px 14px 70px}
+.wizard-stepper{display:flex;align-items:center;gap:2px;overflow-x:auto;padding:10px 2px 14px;-webkit-overflow-scrolling:touch}
+.wizard-step{display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);border-radius:999px;
+  padding:6px 12px 6px 7px;cursor:pointer;white-space:nowrap;font-size:12px;color:var(--text-dim);flex:0 0 auto;font-family:var(--bf)}
+.wizard-step .ws-dot{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+  background:var(--surface-2);border:1px solid var(--border-strong);font-size:10.5px;font-weight:700;color:var(--text-dim);flex:0 0 auto}
+.wizard-step.done .ws-dot{background:var(--green-light);border-color:var(--green);color:var(--green-dark)}
+.wizard-step.todo .ws-dot{background:var(--amber-light);border-color:var(--amber);color:var(--amber)}
+.wizard-step.current{border-color:var(--blue);background:var(--blue-light);color:var(--heading);font-weight:700}
+.wizard-step.current .ws-dot{background:var(--blue);border-color:var(--blue);color:#fff}
+.wizard-step.skipped{opacity:.45}
+.wizard-step:hover{border-color:var(--blue-soft)}
+.ws-line{flex:0 0 12px;height:1px;background:var(--border-strong)}
+.wizard-hint{background:var(--amber-light);border:1px solid var(--amber);color:var(--amber);border-radius:10px;
+  padding:9px 13px;font-size:12.5px;font-weight:600;margin:0 0 12px}
+.wizard-nav{display:flex;align-items:center;gap:12px;margin-top:18px;padding:12px 14px;background:var(--surface);
+  border:1px solid var(--border);border-radius:14px;position:sticky;bottom:10px;box-shadow:0 6px 22px rgba(0,0,0,.12);z-index:5}
+.wizard-nav .wizard-nav-mid{flex:1;text-align:center;font-size:12px;color:var(--text-muted)}
+
 .builder-with-sidebar{
   max-width:1180px;margin:0 auto;padding:16px 14px 60px;
   display:grid;grid-template-columns:220px 1fr;gap:18px;align-items:flex-start;
@@ -1116,7 +1136,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_13";
+const APP_VERSION = "v7.b_14";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -9769,6 +9789,67 @@ let docType = "ROA";          // ROA | Strategy — filters scenarios in picker
 let selectedScenarios = [];   // array of scenario ids
 let F = {};                   // form state
 let activeSection = "client"; // sidebar nav
+// Builder view: 'wizard' walks one section at a time with a progress stepper
+// and per-step completeness checks (so nothing gets missed); 'all' is the
+// classic single-page layout with the sidebar. Choice is remembered per device.
+let builderView = (typeof localStorage !== 'undefined' && localStorage.getItem('roa_builder_view')) || 'wizard';
+let wizardStep = 0;
+function setBuilderView(v){
+  builderView = v;
+  try{ localStorage.setItem('roa_builder_view', v); }catch(_){}
+  render();
+  window.scrollTo(0,0);
+}
+// Soft completeness check per builder section — drives the wizard stepper ticks
+// and the "still to do" hint on each step. Never blocks navigation; it only flags.
+function builderSectionStatus(s){
+  const blank = v => !(v||'').trim() || /^\[.*\]$/.test((v||'').trim());
+  try{
+    switch(s.k){
+      case 'client': {
+        if(blank(F.client1Name)) return {state:'todo', hint:'Client 1 name is blank.'};
+        if((F.clientType==='joint'||F.clientType==='joint_entity') && blank(F.client2Name)) return {state:'todo', hint:'Client 2 name is blank.'};
+        if(blank(F.adviserName)) return {state:'todo', hint:'Adviser has not been selected yet.'};
+        return {state:'ok'};
+      }
+      case 'meta': {
+        if(!(F.roaDate||'').trim()) return {state:'todo', hint:'ROA date is not set.'};
+        return {state:'ok'};
+      }
+      case 's2': {
+        if(!(F.objectivesText||'').trim()) return {state:'todo', hint:'Objectives are empty — press "Regenerate from scenarios".'};
+        if(/\[(amount|name|frequency)[^\]]*\]/i.test(F.objectivesText)) return {state:'warn', hint:'Objectives still contain [placeholders] — fill in the scenario amounts.'};
+        return {state:'ok'};
+      }
+      case 's3': {
+        const needPort = anyNeed('super') || anyNeed('inv') || anyNeed('pension');
+        if(needPort && !(F.portfolios||[]).length) return {state:'todo', hint:'No portfolios yet — import the CARE doc (or add a portfolio manually).'};
+        if(needPort){
+          const emptyPort = (F.portfolios||[]).find(p => !(p.rows||[]).some(r => r.n && (r.a||'').trim()));
+          if(emptyPort) return {state:'warn', hint:'"'+(emptyPort.label||'Portfolio')+'" has no allocation amounts yet — import the CARE doc or fill the table.'};
+        }
+        const anyRec = (F.portfolios||[]).some(p => (p.recommendations||[]).filter(Boolean).length || (p.trades||[]).some(t => t.amount))
+          || (F.recommendationBullets||[]).filter(Boolean).length;
+        if(!anyRec) return {state:'warn', hint:'No recommendations yet — press "Regenerate all from scenarios".'};
+        return {state:'ok'};
+      }
+      case 'insurance': {
+        const tables = new Set();
+        selectedScenarios.forEach(id => { const sc = SCENARIOS[id]; if(sc?.needs?.insuranceTable) tables.add(sc.needs.insuranceTable); });
+        const missing = [];
+        if((tables.has('current')||tables.has('alter')||tables.has('comparison')) && !insuranceTableHasContent(F.insuranceCurrent,'current')) missing.push('Current Cover');
+        if((tables.has('recommended')||tables.has('alter')) && !insuranceTableHasContent(F.insuranceRecommended,'recommended')) missing.push('Recommended Cover');
+        if(tables.has('revised')){
+          if(!insuranceTableHasContent(F.insuranceOriginal,'original')) missing.push('Original Recommendations');
+          if(!insuranceTableHasContent(F.insuranceAltered,'altered')) missing.push('Altered Recommendations');
+        }
+        if(missing.length) return {state:'todo', hint: missing.join(', ') + ' table' + (missing.length>1?'s are':' is') + ' still empty — drop the CDM report / quotes on it or fill manually.'};
+        return {state:'ok'};
+      }
+      default: return {state:'ok'};
+    }
+  }catch(_){ return {state:'ok'}; }
+}
 let scenarioSearch = "";      // live search term in the scenario picker
 let catOpenState = {};        // per-category expanded/collapsed state in the picker
 let templates = {};
@@ -10066,6 +10147,10 @@ function mkPortfolio(label, platform, contextLabel){
     benefits: [],
     risks: [],
     otherConsiderations: [],
+    // Category-level recommendation bullets (e.g. contribution advice) held on
+    // the FIRST portfolio of each category — printed once, after that
+    // category's tables and before its combined benefits & risks.
+    catRecs: [],
     // Risk profile for this portfolio (High Growth / Growth / Balanced / Conservative / Defensive)
     riskProfile: "",
     // #3 — Per-portfolio overrides so a multi-product ROA can carry a different amount and
@@ -10352,10 +10437,12 @@ function portfolioRenderGroups(){
 function categoryGroupContent(group){
   const pool = key => dedupe(group.items.reduce((a, it) => a.concat((it.p[key]||[]).filter(Boolean)), []));
   let benefits = pool('benefits'), risks = pool('risks'), other = pool('otherConsiderations');
-  let recs = [], usedCat = null;
+  let recs = pool('catRecs'), usedCat = null;
+  // Safety net for older saved ROAs: a general group of the same category that
+  // wasn't migrated onto the portfolios still folds in here.
   const gg = (Array.isArray(F.generalGroups) ? F.generalGroups : []).find(g => g.cat === group.cat);
   if(gg){
-    recs = (gg.recs||[]).filter(Boolean);
+    recs = dedupe(recs.concat((gg.recs||[]).filter(Boolean)));
     benefits = dedupe(benefits.concat((gg.benefits||[]).filter(Boolean)));
     risks = dedupe(risks.concat((gg.risks||[]).filter(Boolean)));
     other = dedupe(other.concat((gg.other||[]).filter(Boolean)));
@@ -10504,6 +10591,58 @@ function consolidateScenarios(){
       risks: dedupe(generalByCat[cat].risks),
       other: dedupe(generalByCat[cat].other)
     }));
+  // ── Category consolidation ──────────────────────────────────────────────
+  // Every category that has portfolio tables gets ONE wording bucket, held on
+  // the FIRST portfolio of that category: general scenario wording of the same
+  // category (e.g. salary sacrifice → Superannuation) and wording bound to any
+  // other portfolio of the category all migrate into it. The document then
+  // prints that category's tables followed by ONE combined recommendations /
+  // benefits / risks block — for EVERY combination of scenarios — and the
+  // builder edits exactly the arrays the document prints. Categories without
+  // portfolios (e.g. Insurance) stay in the general buckets below.
+  F.portfolios.forEach(p => { p.catRecs = []; });
+  const catFirst = {};
+  F.portfolios.forEach(p => { const c = portfolioAdviceCategory(p); if(!catFirst[c]) catFirst[c] = p; });
+  Object.keys(catFirst).forEach(cat => {
+    const head = catFirst[cat];
+    const peers = F.portfolios.filter(p => portfolioAdviceCategory(p) === cat);
+    let ben = [], risk = [], other = [];
+    peers.forEach(p => {
+      ben.push(...(p.benefits||[])); risk.push(...(p.risks||[])); other.push(...(p.otherConsiderations||[]));
+      if(p !== head){ p.benefits = []; p.risks = []; p.otherConsiderations = []; }
+    });
+    const gi = F.generalGroups.findIndex(g => g.cat === cat);
+    if(gi >= 0){
+      const g = F.generalGroups[gi];
+      head.catRecs = dedupe(g.recs||[]);
+      ben.push(...(g.benefits||[])); risk.push(...(g.risks||[])); other.push(...(g.other||[]));
+      F.generalGroups.splice(gi, 1);
+    }
+    head.benefits = dedupe(ben);
+    head.risks = dedupe(risk);
+    head.otherConsiderations = dedupe(other);
+    // A category whose table exists (e.g. from a CARE import) but has no
+    // scenario wording still needs its benefits & risks — seed them from the
+    // category's own rebalance scenario so nothing prints without wording.
+    if(!head.benefits.length && !head.risks.length){
+      const seedId = {Superannuation:'super_rebalance', Pension:'pension_rebalance', Investment:'inv_rebalance'}[cat];
+      const seed = seedId && SCENARIOS[seedId];
+      if(seed){
+        const pp2 = txt => fillForPortfolio(fill(txt, head), head).trim();
+        const w2 = scnWording(seedId, seed);
+        head.benefits = dedupe((w2.benefits||[]).map(pp2).filter(Boolean));
+        head.risks = dedupe((w2.risks||[]).map(pp2).filter(Boolean));
+        if(!head.otherConsiderations.length) head.otherConsiderations = dedupe((seed.otherConsiderations||[]).map(pp2).filter(Boolean));
+      }
+    }
+  });
+  // Rebuild the flat general buckets from the remaining (non-portfolio) groups
+  // so the builder's General editors and the document always match.
+  F.recommendationBullets = dedupe(F.generalGroups.reduce((a,g)=>a.concat(g.recs||[]),[]));
+  F.benefits = dedupe(F.generalGroups.reduce((a,g)=>a.concat(g.benefits||[]),[]));
+  F.risks = dedupe(F.generalGroups.reduce((a,g)=>a.concat(g.risks||[]),[]));
+  F.otherConsiderations = dedupe(F.generalGroups.reduce((a,g)=>a.concat(g.other||[]),[]));
+
   // Whether to show category sub-headings: only when there are 2+ general categories AND
   // no portfolio-led content competing (portfolios already carry their own headers).
   F.useCategoryHeadings = F.generalGroups.length >= 2;
@@ -11561,8 +11700,11 @@ async function handleCareImport(inp){
     showImportStatus('Reading CARE document…');
     const buf = await file.arrayBuffer();
     const res = await mammoth.convertToHtml({arrayBuffer:buf});
-    const accounts = extractCareDoc(res.value);
+    let accounts = extractCareDoc(res.value);
     hideImportStatus();
+    // A joint CARE doc for a single-client ROA: offer to import only the
+    // accounts belonging to this ROA's client (joint/entity accounts stay).
+    accounts = filterCareAccountsToRoaClients(accounts);
 
     if(!accounts.length){
       alert('No CARE accounts were found.\n\nThis importer reads two CARE/Hub24 layouts: a "Rebalance - <account name>" appendix, and a "CARE Portfolio Fact Sheet" (CARECalc) with an Account Name summary table and "CARE Essentials - <account>" breakdowns. If your document is laid out differently, let me know the heading wording and I can adjust the parser.');
@@ -11826,7 +11968,14 @@ function ex_extractInsuranceTables(text){
           const cells = L.split('\t');
           const get = (idx) => idx===undefined ? "" : (cells[idx]||'').trim();
           const cover = ex_normCoverType(get(coverIdx));
-          if(!cover){ j++; continue; }
+          if(!cover){
+            // Provider band row INSIDE the table (e.g. "NEOS Protection" in a
+            // merged full-width cell arrives as a row whose only content is the
+            // insurer name) — remember it for the cover rows underneath.
+            const nonEmpty = cells.map(c => c.trim()).filter(Boolean);
+            if(nonEmpty.length === 1 && ex_looksLikeProvider(nonEmpty[0])) currentProvider = nonEmpty[0];
+            j++; continue;
+          }
           const benefit = ex_parseBenefitCell(get(cols.benefit));
           const prem = ex_parsePremiumCell(get(cols.premium));
           let rowProvider = "";
@@ -12664,6 +12813,21 @@ async function importInsuranceFileToTable(file, fKey){
         if(match){ rows = match.rows.slice(); source = 'the "' + tableNice + '" table in the document'; }
         else { rows = found.reduce((a,t)=>a.concat(t.rows), []); source = found.length + ' cover table(s) in the document'; }
       }
+      // A PDF of the firm's own "Insurance Products" table splits its two-line
+      // header cells across text lines, so the column mapping comes out
+      // scrambled (rows without benefit amounts). When most rows read empty,
+      // try the anchor-based Insurance Products parser and keep whichever
+      // result recovered more complete cover lines.
+      if(rows.length){
+        const score = rs => rs.filter(r => (r.benefitAmount||'').trim()).length;
+        if(score(rows) < rows.length / 2){
+          const shot = parseRoaTableOcr(text);
+          if(shot && shot.rows && shot.rows.length && score(shot.rows) > score(rows)){
+            rows = shot.rows; cdmClient = shot.client || cdmClient;
+            source = 'the Insurance Products table (re-read by layout)';
+          }
+        }
+      }
     }
     // 3.5) A screenshot (or scanned PDF) of the firm's own "Insurance Products"
     //      table — OCR text with the columns jumbled; parsed by cover anchors.
@@ -12683,6 +12847,11 @@ async function importInsuranceFileToTable(file, fKey){
       alert('No insurance cover lines were found in this document.\n\nTips:\n• Word (.docx) versions read best — tables are read cell-by-cell.\n• PDFs are read by layout; text-based PDFs work, scanned images don\'t.\n• Cover lines are detected by a cover type (Life / TPD / IP / Trauma) plus a $ amount.');
       return;
     }
+
+    // A joint document for a single-client ROA: offer to keep only this ROA's
+    // client's cover lines (matched on the life-insured name).
+    rows = filterRowsToRoaClients(rows);
+    if(!rows.length) return;
 
     // Table-appropriate defaults and clean-up. Blank the mkInsurance status
     // default ("Recommend") first, so rows without an explicit status from the
@@ -13496,10 +13665,6 @@ function renderPicker(){
     <div><strong style="font-family:var(--hf);font-size:20px;color:var(--navy)">${selectedScenarios.length}</strong> <span class="text-sm text-muted">selected</span></div>
   </div>`;
 
-  // Smart import — drop the CARE doc / CDM report / quotes before or after
-  // picking scenarios; every file is identified and routed automatically.
-  if(isROA) h += renderSmartImportCard();
-
   // By category — filter by docType. For ROA we pull from SCENARIOS; for Strategy we combine STRATEGY_PAPERS (text templates) + MODELLING_SCENARIOS (calculation-driven) + PORTFOLIO_SCENARIOS (multi-property modelling).
   const source = docType === 'Strategy'
     ? Object.assign({}, STRATEGY_PAPERS, MODELLING_SCENARIOS, PORTFOLIO_SCENARIOS)
@@ -13613,6 +13778,7 @@ function switchDocType(t){
     initNAAState();
     page = 'builder';
     activeSection = 'client';
+  wizardStep = 0;
   }
   render();
 }
@@ -13622,6 +13788,7 @@ function goToBuilder(){
     initNAAState();
     page = 'builder';
     activeSection = 'client';
+  wizardStep = 0;
     render();
     return;
   }
@@ -13633,6 +13800,7 @@ function goToBuilder(){
   }
   page = 'builder';
   activeSection = 'client';
+  wizardStep = 0;
   render();
 }
 
@@ -15508,6 +15676,7 @@ function renderBuilder(){
         <div class="hero-tag">${selectedScenarios.map(id => `<span class="badge lime">${e(SCENARIOS[id]?.short || '')}</span>`).join(' ')}</div>
       </div>
       <div class="hero-right">
+        <button class="hero-btn ghost" onclick="setBuilderView('${builderView==='wizard'?'all':'wizard'}')" title="${builderView==='wizard'?'Show every section on one scrolling page':'Walk the sections one step at a time with progress ticks'}">${builderView==='wizard'?'⊞ All sections':'🧭 Wizard view'}</button>
         <button class="hero-btn" onclick="page='preview';render()">Preview →</button>
         <button class="hero-btn ghost" onclick="page='picker';render()">← Back to Scenarios</button>
       </div>
@@ -15531,6 +15700,71 @@ function renderBuilder(){
   sections.push({k:'custom',  l:'Custom Sections', pageNum:4, pageLabel:'Section 4, 5 & Ack', removable:false, preFilled:false, count:F.customSections.length, render:renderCustomSection});
   sections.push({k:'s5',      l:'Section 5: Fees', pageNum:4, pageLabel:'Section 4, 5 & Ack', vis:'fees', removable:true, render:renderFeesSection});
   sections.push({k:'ack',     l:'Acknowledgement', pageNum:4, pageLabel:'Section 4, 5 & Ack', vis:'ack', removable:true, render:renderAckSection});
+
+  // ── WIZARD VIEW — one section at a time with a progress stepper ──────────
+  // Each step shows exactly one section; the stepper's ticks come from
+  // builderSectionStatus (soft completeness checks), so it's obvious at a
+  // glance what still needs attention before exporting. The classic
+  // all-sections layout stays available via the "⊞ All sections" toggle.
+  if(builderView === 'wizard'){
+    if(wizardStep >= sections.length) wizardStep = sections.length - 1;
+    if(wizardStep < 0) wizardStep = 0;
+    const cur = sections[wizardStep];
+    const curVisFlag = cur.vis;
+    const curHidden = curVisFlag && F.sectionVisible[curVisFlag] === false;
+
+    h += `<div class="wizard-wrap">`;
+    // Stepper
+    h += `<div class="wizard-stepper">`;
+    sections.forEach((s, i) => {
+      const sHidden = s.vis && F.sectionVisible[s.vis] === false;
+      const st = builderSectionStatus(s);
+      const cls = i === wizardStep ? 'current' : (sHidden ? 'skipped' : (st.state === 'ok' ? 'done' : 'todo'));
+      h += `<button class="wizard-step ${cls}" onclick="wizardStep=${i};activeSection='${s.k}';render();window.scrollTo(0,0)" title="${e(s.l)}${sHidden ? ' — hidden from the output' : (st.hint ? ' — ' + e(st.hint) : '')}">
+        <span class="ws-dot">${sHidden ? '–' : (st.state === 'ok' ? '✓' : (st.state === 'warn' ? '!' : i + 1))}</span>
+        <span class="ws-label">${e(s.l.replace(/^Section \d+: /, ''))}</span>
+      </button>`;
+      if(i < sections.length - 1) h += `<span class="ws-line"></span>`;
+    });
+    h += `</div>`;
+
+    h += `<div class="builder-single-column" style="width:100%">`;
+    h += `<div class="page-separator">
+      <span class="page-separator-num">Step ${wizardStep + 1} of ${sections.length}</span>
+      <span class="page-separator-label">${e(cur.pageLabel)} — prints on page ${cur.pageNum} of the document</span>
+    </div>`;
+    const curStatus = builderSectionStatus(cur);
+    if(!curHidden && curStatus.state !== 'ok' && curStatus.hint){
+      h += `<div class="wizard-hint">⚠ Still to do: ${e(curStatus.hint)}</div>`;
+    }
+    h += `<div class="section-block" id="section-${cur.k}" data-section="${cur.k}">
+      <div class="section-block-head">
+        <div class="section-block-title"><span>${e(cur.l)}</span></div>
+        <div class="section-block-actions">
+          ${curHidden ? '<span class="badge coral">Hidden</span>' : (cur.preFilled !== false ? '<span class="pre-filled-badge">Pre-filled</span>' : '')}
+          ${cur.removable ? `<button class="section-hide-btn ${curHidden?'show':''}" onclick="toggleSectionVisibility('${curVisFlag}')" title="${curHidden ? 'Show this section' : 'Hide this section from the output'}">${curHidden ? '+ Show' : '✕'}</button>` : ''}
+        </div>
+      </div>
+      ${curHidden ? `<div class="section-block-body hidden-section-body">
+        <p class="text-sm text-muted" style="padding:10px 0;font-style:italic;margin:0">This section is hidden from the output — press Next to skip it, or "+ Show" to include it again.</p>
+      </div>` : `<div class="section-block-body">${cur.render()}</div>`}
+    </div>`;
+
+    // Prev / Next navigation (sticky at the bottom of the step)
+    const prevLabel = wizardStep > 0 ? sections[wizardStep - 1].l.replace(/^Section \d+: /, '') : '';
+    const nextLabel = wizardStep < sections.length - 1 ? sections[wizardStep + 1].l.replace(/^Section \d+: /, '') : '';
+    h += `<div class="wizard-nav">
+      ${wizardStep > 0
+        ? `<button class="btn" onclick="wizardStep--;render();window.scrollTo(0,0)">← ${e(prevLabel)}</button>`
+        : `<button class="btn" onclick="page='picker';render();window.scrollTo(0,0)">← Scenarios</button>`}
+      <span class="wizard-nav-mid">Step ${wizardStep + 1} of ${sections.length}</span>
+      ${wizardStep < sections.length - 1
+        ? `<button class="btn btn-blue" onclick="wizardStep++;render();window.scrollTo(0,0)">Next: ${e(nextLabel)} →</button>`
+        : `<button class="btn btn-green" onclick="page='preview';render();window.scrollTo(0,0)">Finish → Preview</button>`}
+    </div>`;
+    h += `</div></div></main>`;
+    return h;
+  }
 
   // Layout: left sidebar (sticky) + main stacked-cards column
   h += `<div class="builder-with-sidebar">
@@ -16234,37 +16468,58 @@ function renderSection3ByStrategy(){
   // Smart import — CDM reports, quotes and prior ROAs can be dropped here too.
   h += renderSmartImportCard();
 
-  // One "strategy block" per portfolio — recs + alloc + variation + benefits/risks
-  F.portfolios.forEach((p, pi) => {
-    const strategyTitle = `${p.label||('Portfolio '+(pi+1))}${p.contextLabel?' — '+p.contextLabel:''}`;
+  // Strategy blocks grouped by advice category, mirroring the document flow:
+  //   Superannuation tables (each portfolio: recs + allocation + variation)
+  //   → ONE Superannuation Benefits & Risks block
+  //   → Investment table(s) → ONE Investment Benefits & Risks block, etc.
+  // Each category's wording bucket lives on its FIRST portfolio (see
+  // consolidateScenarios) — that is what the editors below bind to.
+  let __stratNum = 0;
+  portfolioRenderGroups().forEach(group => {
+    h += `<div class="page-separator" style="margin-top:14px">
+      <span class="page-separator-num">${e(group.cat)}</span>
+      <span class="page-separator-label">table${group.items.length>1?'s':''} first, then this category's combined Benefits &amp; Risks — exactly how the document prints</span>
+    </div>`;
+    group.items.forEach(({p, pi}) => {
+      __stratNum++;
+      const strategyTitle = `${p.label||('Portfolio '+(pi+1))}${p.contextLabel?' — '+p.contextLabel:''}`;
+      h += `<div class="strategy-block">
+        <div class="strategy-block-head">
+          <span class="strategy-block-badge">Strategy ${__stratNum}</span>
+          <h3 class="strategy-block-title">${e(strategyTitle)}</h3>
+        </div>
+        <div class="strategy-block-body">`;
+
+      // 1. We recommend — per-portfolio recommendations
+      h += `<h4 class="strategy-step">1. We Recommend</h4>`;
+      h += renderStrategyRecs(p, pi);
+
+      // 2. Allocation table — reuse the existing portfolio render but trimmed
+      h += `<h4 class="strategy-step">2. Allocation Table &amp; Trades</h4>`;
+      h += renderPortfolioAllocation(p, pi);
+
+      // 3. Variation table
+      h += `<h4 class="strategy-step">3. Variation Table</h4>`;
+      h += renderPortfolioVariation(p, pi);
+
+      h += `</div></div>`;
+    });
+
+    // Category-level Benefits & Risks — one block per category, edited on the
+    // category's first portfolio (where consolidateScenarios pooled the wording).
+    const headP = group.items[0].p, headPi = group.items[0].pi;
     h += `<div class="strategy-block">
       <div class="strategy-block-head">
-        <span class="strategy-block-badge">Strategy ${pi+1}</span>
-        <h3 class="strategy-block-title">${e(strategyTitle)}</h3>
+        <span class="strategy-block-badge" style="background:var(--lime);color:var(--navy)">${e(group.cat)}</span>
+        <h3 class="strategy-block-title">${e(group.cat)} — Benefits &amp; Risks <span class="text-xs text-muted" style="font-weight:400">(prints once, after the ${e(group.cat)} table${group.items.length>1?'s':''})</span></h3>
       </div>
-      <div class="strategy-block-body">`;
-
-    // 1. We recommend — per-portfolio recommendations
-    h += `<h4 class="strategy-step">1. We Recommend</h4>`;
-    h += renderStrategyRecs(p, pi);
-
-    // 2. Allocation table — reuse the existing portfolio render but trimmed
-    h += `<h4 class="strategy-step">2. Allocation Table &amp; Trades</h4>`;
-    h += renderPortfolioAllocation(p, pi);
-
-    // 3. Variation table
-    h += `<h4 class="strategy-step">3. Variation Table</h4>`;
-    h += renderPortfolioVariation(p, pi);
-
-    // 4. Benefits & Risks
-    h += `<h4 class="strategy-step">4. Benefits &amp; Risks</h4>`;
-    const __catPeers = F.portfolios.filter(x => portfolioAdviceCategory(x) === portfolioAdviceCategory(p));
-    if(__catPeers.length > 1){
-      h += `<div class="helper" style="margin:0 0 8px;padding:8px 11px;background:var(--blue-light);border-radius:10px">In the document, Benefits &amp; Risks for all <strong>${e(portfolioAdviceCategory(p))}</strong> strategies print <strong>once, after the last ${e(portfolioAdviceCategory(p))} table</strong> (combined and de-duplicated) — not under each table.</div>`;
-    }
-    h += renderStrategyBenefitsRisks(p, pi);
-
-    h += `</div></div>`;
+      <div class="strategy-block-body">
+        <h4 class="strategy-step">1. Category Recommendations <span class="text-xs text-muted" style="text-transform:none;letter-spacing:0">(optional — e.g. contribution advice; prints after the tables, before the benefits)</span></h4>
+        ${renderCategoryRecs(headP, headPi)}
+        <h4 class="strategy-step">2. Benefits &amp; Risks</h4>
+        ${renderStrategyBenefitsRisks(headP, headPi)}
+      </div>
+    </div>`;
   });
 
   // General (non-portfolio) strategies: insurance, BDBN, MCAA, etc.
@@ -16297,6 +16552,31 @@ function renderSection3ByStrategy(){
   if(!F.portfolios.length && !nonPortfolioIds.length){
     h += `<div class="helper" style="padding:14px;background:var(--blue-light);border-radius:11px">Select some scenarios first — strategies will appear here grouped by portfolio.</div>`;
   }
+  return h;
+}
+
+// Category-level recommendation bullets (held on the category's first
+// portfolio) — printed once, after the category's tables, before its combined
+// benefits & risks. E.g. "enter into a salary sacrifice arrangement…".
+function renderCategoryRecs(p, pi){
+  if(!Array.isArray(p.catRecs)) p.catRecs = [];
+  const recsPath = `F.portfolios[${pi}].catRecs`;
+  const fn = getFirstName();
+  let h = `<div class="strategy-sub">`;
+  if(p.catRecs.length){
+    h += `<div class="rec-preview-note">
+      <strong>Output:</strong> ${fn ? e(fn)+', we recommend you:' : 'We recommend you:'} <span class="text-xs text-muted">(printed after the tables above)</span>
+    </div>`;
+  }
+  p.catRecs.forEach((r,i) => {
+    h += `<div class="inline-list-row drag-handle-row" ${dragAttrs(recsPath, i)}>
+      ${dragHandle()}
+      <div class="field" style="flex:1;margin-bottom:0"><textarea onchange="setAtPath('${recsPath}[${i}]', this.value)">${e(r)}</textarea></div>
+      <button class="btn btn-xs btn-danger" onclick="spliceAtPath('${recsPath}', ${i})">✕</button>
+    </div>`;
+  });
+  h += `<button class="add-inline" onclick="pushAtPath('${recsPath}','');">+ Add recommendation bullet</button>
+  </div>`;
   return h;
 }
 
@@ -18730,6 +19010,7 @@ function loadTemplate(name){
   consolidateScenarios();
   page = 'builder';
   activeSection = 'client';
+  wizardStep = 0;
   render();
 }
 
@@ -18737,6 +19018,72 @@ function loadTemplate(name){
 // IMPORT FROM PRIOR ROA
 // ═══════════════════════════════════════════════════════════
 // Lightweight status overlay shown during document import.
+// ═══════════════════════════════════════════════════════════
+// CLIENT-SCOPE FILTER — a joint document (CDM report, CARE doc, quotes)
+// often holds BOTH partners' information while the ROA is only for one of
+// them. These helpers match each imported line's person (life insured /
+// account owner) against the ROA's client name(s) and offer to leave the
+// other person's lines out. Fill in the client name(s) BEFORE importing
+// for this to engage — with no client name set, everything imports.
+// ───────────────────────────────────────────────────────────
+function nameMatchesClient(label, clientName){
+  if(!label || !clientName) return false;
+  const l = String(label).trim().toLowerCase();
+  const parts = String(clientName).trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if(!parts.length || !l) return false;
+  const first = parts[0], last = parts[parts.length - 1];
+  if(l === parts.join(' ')) return true;
+  const words = l.split(/[\s,]+/).filter(Boolean);
+  if(words.some(w => w === first || (parts.length > 1 && w === last))) return true;
+  // Single-initial owners ("R" for Robert) — common in CARE account names.
+  if(words.some(w => w.length === 1 && w === first[0])) return true;
+  return false;
+}
+function roaClientNames(){
+  const c = [(F.client1Name||'').trim()];
+  if(F.clientType === 'joint' || F.clientType === 'joint_entity') c.push((F.client2Name||'').trim());
+  return c.filter(Boolean);
+}
+// Insurance rows (lifeInsured per row) → keep only the ROA's client(s), with
+// a confirm that names exactly whose lines are being left out.
+function filterRowsToRoaClients(rows){
+  try{
+    const clients = roaClientNames();
+    if(!clients.length || !Array.isArray(rows) || rows.length < 2) return rows;
+    const names = [...new Set(rows.map(r => (r.lifeInsured||'').trim()).filter(Boolean))];
+    if(names.length < 2) return rows;                       // one person in the document
+    const match = n => clients.some(c => nameMatchesClient(n, c));
+    const keepNames = names.filter(match), dropNames = names.filter(n => !match(n));
+    if(!keepNames.length || !dropNames.length) return rows; // all match, or none do — keep everything
+    const kept = rows.filter(r => { const n = (r.lifeInsured||'').trim(); return !n || match(n); });
+    if(confirm('This document holds cover for ' + names.join(' and ') + ', but this ROA is for ' + clients.join(' & ') + '.\n\nOK — import only the cover for ' + keepNames.join(' & ') + ' (' + kept.length + ' line(s); ' + dropNames.join(' & ') + '’s lines are left out).\nCancel — import every line anyway.')){
+      return kept;
+    }
+    return rows;
+  }catch(_){ return rows; }
+}
+// CARE accounts (owner / account name per account) → same idea. Joint and
+// entity accounts always stay — they belong to the household, not one person.
+function filterCareAccountsToRoaClients(accounts){
+  try{
+    const clients = roaClientNames();
+    if(!clients.length || !Array.isArray(accounts) || accounts.length < 2) return accounts;
+    const belongs = a => {
+      const label = (a.owner || '').trim() || (a.accountName || '').trim();
+      if(/\bjoint\b|&/i.test(a.accountName || '')) return true;                    // joint account
+      if(typeof careLooksEntity === 'function' && careLooksEntity(a.accountName)) return true; // company/trust/SMSF
+      return clients.some(c => nameMatchesClient(label, c));
+    };
+    const kept = accounts.filter(belongs);
+    const dropped = accounts.filter(a => !belongs(a));
+    if(!kept.length || !dropped.length) return accounts;
+    if(confirm('This CARE document holds accounts for more than one person, but this ROA is for ' + clients.join(' & ') + '.\n\nOK — import only: ' + kept.map(a => a.accountName).join(', ') + '\n(leaving out: ' + dropped.map(a => a.accountName).join(', ') + ')\nCancel — import every account.')){
+      return kept;
+    }
+    return accounts;
+  }catch(_){ return accounts; }
+}
+
 // ═══════════════════════════════════════════════════════════
 // SMART DOCUMENT IMPORT — drop any supporting document and it is
 // identified and routed to the right importer (matching the SOA
