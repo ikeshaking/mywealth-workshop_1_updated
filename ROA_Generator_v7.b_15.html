@@ -11922,14 +11922,17 @@ function ex_parseBenefitCell(raw){
   if(paren){
     const inside = paren[1];
     out.benefitAmount = s.replace(paren[0],'').trim();
-    const wait = inside.match(/(\d+\s*days?\s*wait|\d+\s*day\s*waiting[^,]*)/i);
+    // Waiting periods come in days, weeks or months ("30 days wait",
+    // "4 weeks wait", "90 day waiting period").
+    const wait = inside.match(/(\d+\s*(?:days?|weeks?|months?)\s*wait(?:ing)?[^,)]*)/i);
     if(wait) out.waitingPeriod = wait[1].trim();
     const bp = inside.match(/(until age \d+|to age \d+|\d+\s*years?|age \d+)/i);
     if(bp) out.benefitPeriod = bp[1].trim();
-    // Bare "(30 days, Age 65)" style — the days figure is the waiting period.
+    // Bare "(30 days, Age 65)" / "(4 weeks, Age 65)" style — the duration
+    // figure is the waiting period.
     if(!out.waitingPeriod){
-      const w2 = inside.match(/(\d+)\s*days?\b/i);
-      if(w2 && !(out.benefitPeriod||'').includes(w2[1])) out.waitingPeriod = w2[1] + ' days';
+      const w2 = inside.match(/(\d+)\s*(days?|weeks?|months?)\b/i);
+      if(w2 && !(out.benefitPeriod||'').includes(w2[1])) out.waitingPeriod = w2[1] + ' ' + w2[2].toLowerCase();
     }
     if(!out.waitingPeriod && !out.benefitPeriod) out.benefitPeriod = inside.trim();
   } else {
@@ -17685,6 +17688,16 @@ function splitPremiumDisplayLines(fields){
   const out = [];
   (fields||[]).filter(Boolean).map(String).forEach(s => {
     s.split(/\s*\/\s*|\s*\|\s*|\n+/).map(x => x.trim()).filter(Boolean).forEach(part => {
+      // "$83 pm (before tax) ($71 from super and $13 from personal cashflow)"
+      // splits into the premium line and the funding-split line, so the cell
+      // prints them as separate spaced lines instead of one bracketed blob.
+      const fm = part.match(/\(([^()]*(?:from super|from cashflow|from personal|split)[^()]*)\)/i);
+      if(fm){
+        const rest = (part.slice(0, fm.index) + ' ' + part.slice(fm.index + fm[0].length)).replace(/\s+/g,' ').trim();
+        if(rest) out.push(rest);
+        out.push('(' + fm[1].trim() + ')');
+        return;
+      }
       // A split-funding line (mentions both super and cashflow/personal) is wrapped in
       // brackets for readability, e.g. "($150 pm from super and $50 from cashflow)" —
       // unless the adviser already wrapped it themselves.
