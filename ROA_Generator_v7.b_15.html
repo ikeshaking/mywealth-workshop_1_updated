@@ -423,9 +423,11 @@ details.row-override[open] > summary::before{transform:rotate(90deg)}
    BUILDER — SIDEBAR + MAIN COLUMN (v1.0 STYLE)
    ======================================================= */
 /* ── Builder wizard view — left step nav + editor + live preview panel ── */
-.wizard-wrap{max-width:1240px;margin:0 auto;padding:14px 14px 70px;
-  display:grid;grid-template-columns:225px minmax(0,1fr);gap:16px;align-items:start}
-.wizard-wrap.with-preview{max-width:1900px;grid-template-columns:225px minmax(0,1fr) minmax(330px,44%)}
+.main.builder-main-wide{max-width:none;padding:20px 26px}
+.wizard-wrap{margin:0 auto;padding:14px 0 70px;
+  display:grid;grid-template-columns:220px minmax(0,1fr);gap:18px;align-items:start}
+.wizard-wrap:not(.with-preview){max-width:1320px}
+.wizard-wrap.with-preview{max-width:none;grid-template-columns:220px minmax(440px,1fr) minmax(420px,47%)}
 .wizard-side{position:sticky;top:66px;background:var(--surface);border:1px solid var(--border-soft);border-radius:14px;
   padding:10px 8px;box-shadow:0 1px 3px rgba(0,0,0,.04);max-height:calc(100vh - 86px);overflow:auto}
 .wizard-steps-v{display:flex;flex-direction:column;gap:4px}
@@ -450,7 +452,7 @@ details.row-override[open] > summary::before{transform:rotate(90deg)}
 .wizard-preview-head{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface);
   border-bottom:1px solid var(--border-soft);color:var(--heading)}
 .wizard-preview-scroll{overflow:auto;padding:14px;flex:1}
-.wizard-preview-doc{zoom:.68;padding:26px 30px;min-height:200px}
+.wizard-preview-doc{zoom:.82;padding:26px 30px;min-height:200px}
 @media(max-width:1400px){
   .wizard-wrap.with-preview{grid-template-columns:225px minmax(0,1fr)}
   .wizard-preview{display:none}
@@ -15932,7 +15934,9 @@ function renderBuilder(){
   const hasIns = scns.some(s => s.needs?.insurance || s.needs?.insuranceTable);
   const hasBdbn = anyNeed('bdbn');
 
-  let h = `<main class="main">`;
+  // Wizard view runs edge-to-edge so the editor and the live preview get the
+  // full window width instead of the standard 1280px centre column.
+  let h = `<main class="main${builderView === 'wizard' ? ' builder-main-wide' : ''}">`;
 
   // Hero
   h += `<section class="hero" style="min-height:90px;padding:16px 20px">
