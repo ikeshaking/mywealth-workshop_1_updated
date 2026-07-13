@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_15";
+const APP_VERSION = "v7.b_16";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -10968,6 +10968,53 @@ function isPluralClient(){ return F.clientType==="joint" || F.clientType==="enti
 // YYYY-MM-DD. Using new Date().toISOString() returns UTC, which before ~10am AEST
 // is still the previous calendar day — that was the cause of the ROA date showing
 // yesterday in the morning. Build the string from local date parts instead.
+// ── Export file name, matching the firm's SOA convention ───────────────────
+//   YYMMDD;Surname;Initials;Type-ROA;DDMMYY        (dates in AEST)
+//   260713;Sharp;E;Insurance-ROA;130726            single client
+//   260713;Smith;A&C;Super&Inv-ROA;130726          couple, same surname
+//   260713;Hans&Barker;K&T;Inv-ROA;130726          couple, different surnames
+function roaExportFileName(){
+  // Date: the ROA date if set, else "today" in AEST (UTC+10, no DST).
+  let iso = (F.roaDate||'').trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso)){
+    iso = new Date(Date.now() + 10*3600*1000).toISOString().slice(0,10);
+  }
+  const Y = iso.slice(0,4), M = iso.slice(5,7), D = iso.slice(8,10);
+  const yymmdd = Y.slice(2)+M+D, ddmmyy = D+M+Y.slice(2);
+  // Names → surname component + initials component.
+  const parseName = full => {
+    const parts = String(full||'').trim().split(/\s+/).filter(Boolean);
+    return {first: parts[0]||'', last: parts.length>1 ? parts[parts.length-1] : (parts[0]||'')};
+  };
+  const clean = s => String(s||'').replace(/[^A-Za-z0-9&'\-]/g,'');
+  const c1 = parseName(F.client1Name), c2 = parseName(F.client2Name);
+  const joint = (F.clientType==='joint' || F.clientType==='joint_entity') && c2.first;
+  let surname, initials;
+  if(joint){
+    const sameLast = c1.last && c2.last && c1.last.toLowerCase() === c2.last.toLowerCase();
+    surname = sameLast ? c1.last : (c1.last + '&' + c2.last);
+    initials = (c1.first[0]||'').toUpperCase() + '&' + (c2.first[0]||'').toUpperCase();
+  } else if(F.clientType==='entity' && (F.entityName||'').trim()){
+    surname = F.entityName.trim(); initials = (c1.first[0]||'').toUpperCase();
+  } else {
+    surname = c1.last; initials = (c1.first[0]||'').toUpperCase();
+  }
+  surname = clean(surname) || 'Client';
+  initials = initials || 'X';
+  // Advice type from the areas this ROA touches, in a fixed order.
+  const scnList = selectedScenarios.map(id => SCENARIOS[id]).filter(Boolean);
+  const gcats = new Set(scnList.map(s => s.cat));
+  const hasPortCat = cat => (F.portfolios||[]).some(p => portfolioAdviceCategory(p) === cat);
+  const areas = [];
+  if(hasPortCat('Superannuation') || gcats.has('Superannuation')) areas.push('Super');
+  if(hasPortCat('Pension') || gcats.has('Pension')) areas.push('Pension');
+  if(hasPortCat('Investment') || gcats.has('Investment')) areas.push('Inv');
+  if(gcats.has('Insurance') || scnList.some(s => s.needs?.insurance || s.needs?.insuranceTable)) areas.push('Insurance');
+  if(gcats.has('Cashflow & Debt')) areas.push('Cashflow');
+  const type = (areas.length ? areas.join('&') : 'Advice') + '-ROA';
+  return `${yymmdd};${surname};${initials};${type};${ddmmyy}`;
+}
+
 function todayLocalISO(){
   const d = new Date();
   const y = d.getFullYear();
@@ -18302,6 +18349,23 @@ function renderRoaDocHTML(){
 
   // Insurance tables — only render if Recommendations section AND Insurance section both visible
   let __previewRecsRendered = false;
+  // On a two-option insurance ROA the benefits & risks print UNDER OPTION 1
+  // (right after its cover table), not after the Option 2 table.
+  let __pvInsBnrInline = false;
+  const pvInsBnrInline = () => {
+    if(__pvInsBnrInline) return '';
+    const grp = (Array.isArray(F.generalGroups) && F.generalGroups.length)
+      ? (F.generalGroups.find(g => g.cat === 'Insurance') || {})
+      : {benefits:F.benefits||[], risks:F.risks||[], other:F.otherConsiderations||[]};
+    const ben = (grp.benefits||[]).filter(Boolean), risk = (grp.risks||[]).filter(Boolean), other = (grp.other||[]).filter(Boolean);
+    if(!(ben.length || risk.length || other.length)) return '';
+    let s = '';
+    if(ben.length) s += `<p class="bnr-head"><strong>This will provide the following benefits and advantages:</strong></p><ul>` + ben.map(b=>`<li>${e(b)}</li>`).join('') + `</ul>`;
+    if(risk.length) s += `<p class="bnr-head"><strong>This will have the following risks and disadvantages:</strong></p><ul>` + risk.map(b=>`<li>${e(b)}</li>`).join('') + `</ul>`;
+    if(other.length) s += `<p class="bnr-head"><strong>Other considerations:</strong></p><ul>` + other.map(b=>`<li>${e(b)}</li>`).join('') + `</ul>`;
+    __pvInsBnrInline = true;
+    return s;
+  };
   const pvHasNonInsPortfolio = (F.sectionVisible?.portfolios !== false) &&
     F.portfolios.some(p => (p.recommendations||[]).filter(Boolean).length || (p.benefits||[]).filter(Boolean).length || (p.trades||[]).some(t=>t.amount));
   const pvHasNonInsGeneral = Array.isArray(F.generalGroups) && F.generalGroups.some(g => g.cat !== 'Insurance');
@@ -18346,6 +18410,9 @@ function renderRoaDocHTML(){
         h += `<h3>Altered Recommendations</h3>`;
         fill(altIntroTxt).split('\n').filter(Boolean).forEach(p => { h += `<p>${e(p)}</p>`; });
         h += renderInsurancePreviewTable(F.insuranceAltered, 'altered');
+        // Two-option ROA: benefits & risks belong to Option 1 — print them here,
+        // before the Option 2 (Alternative) section.
+        if(insuranceTableHasContent(F.insuranceAlternative, 'alternative')) h += pvInsBnrInline();
       }
     }
     if(tables.has('comparison')){
@@ -18367,6 +18434,8 @@ function renderRoaDocHTML(){
       const opt2Title = F.option2Title ? `Option 2: ${F.option2Title}` : 'Option 2';
       const opt2HasSummary = (F.option2Summary||[]).filter(Boolean).length > 0;
       const opt2HasTable = insuranceTableHasContent(F.insuranceOption2, 'option2');
+      // Benefits & risks belong to Option 1 — print them before Option 2 starts.
+      if(opt2HasSummary || opt2HasTable || F.option2Notes) h += pvInsBnrInline();
       if(opt2HasSummary || opt2HasTable || F.option2Notes){
         h += `<h3>${e(opt2Title)}</h3>`;
         if(F.option2Notes) h += `<p>${e(F.option2Notes)}</p>`;
@@ -18379,6 +18448,8 @@ function renderRoaDocHTML(){
       }
     }
   }
+
+  if(__pvInsBnrInline) __pvConsumedCats.add('Insurance');
 
   // BDBN
   if(anyBdbn && F.sectionVisible?.bdbn !== false){
@@ -20313,6 +20384,31 @@ async function exportDocx(){
   // Insurance tables
   let __superRenderedInline = false;
   let __altRenderedInline = false;
+  // On a two-option insurance ROA the benefits & risks print UNDER OPTION 1
+  // (right after its cover table), not after the Option 2 table — this helper
+  // emits them there and the trailing general section skips them.
+  let __insBnrInline = false;
+  const docxInsBnrInline = () => {
+    if(__insBnrInline) return;
+    const grp = (Array.isArray(F.generalGroups) && F.generalGroups.length)
+      ? (F.generalGroups.find(g => g.cat === 'Insurance') || {})
+      : {benefits:F.benefits||[], risks:F.risks||[], other:F.otherConsiderations||[]};
+    const ben = (grp.benefits||[]).filter(Boolean), risk = (grp.risks||[]).filter(Boolean), other = (grp.other||[]).filter(Boolean);
+    if(!(ben.length || risk.length || other.length)) return;
+    if(ben.length){
+      children.push(new Paragraph({spacing:{before:240, after:160}, children:[new TextRun({text:"This will provide the following benefits and advantages:", font:"Nunito", size:19, bold:true, color:NY})]}));
+      ben.forEach(b => children.push(Bul(b)));
+    }
+    if(risk.length){
+      children.push(new Paragraph({spacing:{before:240, after:160}, children:[new TextRun({text:"This will have the following risks and disadvantages:", font:"Nunito", size:19, bold:true, color:NY})]}));
+      risk.forEach(r => children.push(Bul(r)));
+    }
+    if(other.length){
+      children.push(new Paragraph({spacing:{before:240, after:160}, children:[new TextRun({text:"Other considerations:", font:"Nunito", size:19, bold:true, color:NY})]}));
+      other.forEach(r => children.push(Bul(r)));
+    }
+    __insBnrInline = true;
+  };
   // For insurance ROAs the "We recommend you:" bullets must appear BEFORE the cover
   // tables (the recommendation first, then the detail tables). Render them here and
   // mark done so the general block below doesn't repeat them.
@@ -20380,6 +20476,9 @@ async function exportDocx(){
         const altIntroTxt = (F.alteredIntro||'').trim() || "Based on the results of your insurance application we have changed the recommended insurance policies as follows.";
         fill(altIntroTxt).split("\n").filter(Boolean).forEach(p => children.push(P(p)));
         insuranceDocxTable(children, F.insuranceAltered, {BL, TL, BORD, cellTxt, headerRow}, 'altered');
+        // Two-option ROA: benefits & risks belong to Option 1 — print them here,
+        // before the Option 2 (Alternative) table.
+        if(insuranceTableHasContent(F.insuranceAlternative, 'alternative')) docxInsBnrInline();
       }
       // Super recommendation rendered inline here (between the recommended cover
       // and the alternative). It is skipped in the trailing custom-sections loop
@@ -20444,6 +20543,8 @@ async function exportDocx(){
       const opt2Title = F.option2Title ? `Option 2: ${F.option2Title}` : 'Option 2';
       const opt2Summary = (F.option2Summary||[]).filter(Boolean);
       const opt2HasTable = insuranceTableHasContent(F.insuranceOption2, 'option2');
+      // Benefits & risks belong to Option 1 — print them before Option 2 starts.
+      if(opt2Summary.length || opt2HasTable || F.option2Notes) docxInsBnrInline();
       if(opt2Summary.length || opt2HasTable || F.option2Notes){
         children.push(H3(opt2Title));
         if(F.option2Notes) children.push(P(F.option2Notes));
@@ -20452,6 +20553,7 @@ async function exportDocx(){
       }
     }
   }
+  if(__insBnrInline) __docxConsumedCats.add('Insurance');
 
   // BDBN
   if(anyBdbn && docxShowRecs && F.sectionVisible?.bdbn !== false){
@@ -20790,8 +20892,7 @@ async function exportDocx(){
 
   try{
     const blob = await Packer.toBlob(doc);
-    const clientSlug = cn.replace(/[^a-z0-9]+/gi,"_").slice(0,40);
-    saveAs(blob, `ROA_${clientSlug}_${F.roaDate}.docx`);
+    saveAs(blob, roaExportFileName() + '.docx');
   } catch(ex){
     console.error(ex);
     alert("Export failed: "+ex.message);
