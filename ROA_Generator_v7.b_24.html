@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_23";
+const APP_VERSION = "v7.b_24";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -10172,10 +10172,20 @@ function mkPortfolio(label, platform, contextLabel){
 // userAdded so provisionPortfolios preserves it. Defaults to the investment platform; the adviser
 // sets the label, platform, subject and context to suit (e.g. a second super account).
 function addManualPortfolio(){
-  const p = mkPortfolio('Additional Portfolio', F.invPlatform, contextFromClient());
+  // Default the platform to the kind of advice this ROA is about, so the new
+  // table lands in the category band the adviser is looking at (a super ROA
+  // gets a super platform; the category follows the platform if changed).
+  const wantSuper = (anyNeed('super') || anyNeed('pension')) && !anyNeed('inv');
+  const p = mkPortfolio('Additional Portfolio', wantSuper ? F.superPlatform : F.invPlatform, contextFromClient());
   p.userAdded = true;
   F.portfolios.push(p);
   render();
+  // Scroll the new block into view so the click visibly did something.
+  setTimeout(() => {
+    const blocks = [...document.querySelectorAll('.strategy-block')];
+    const mine = blocks.reverse().find(b => /Additional Portfolio/.test(b.textContent || ''));
+    if(mine) mine.scrollIntoView({behavior:'smooth', block:'center'});
+  }, 80);
 }
 
 function resetState(){
@@ -14227,7 +14237,7 @@ function renderTopbar(){
     <div class="topbar-mid">
       <div class="topnav">
         <a class="${page==='picker'?'active':''}" onclick="page='picker';render()">1 · Scenarios</a>
-        <a class="${page==='builder'?'active':''}" onclick="if(selectedScenarios.length){page='builder';render()}">2 · Build</a>
+        <a class="${page==='builder'?'active':''}" onclick="if(selectedScenarios.length){if(docType==='ROA')consolidateScenarios();page='builder';render()}">2 · Build</a>
         <a class="${page==='preview'?'active':''}" onclick="if(selectedScenarios.length){page='preview';render()}">3 · Preview</a>
       </div>
       ${status ? `<span class="topbar-status">${status}</span>` : ''}
@@ -14755,6 +14765,9 @@ function importRoaJson(inp){
       if(typeof docType !== 'undefined' && parsed.docType) docType = parsed.docType;
       if(parsed.activeSection) activeSection = parsed.activeSection;
       page = parsed.page || 'builder';
+      // Re-provision so files saved under an older build pick up any new
+      // tables/portfolios this build creates (edited wording is preserved).
+      try{ if(docType === 'ROA' && selectedScenarios.length) consolidateScenarios(); }catch(_){}
       render();
       alert('ROA loaded — you can keep working on it.');
     } catch(ex){ alert('Could not read ROA file: '+ex.message); }
@@ -22181,6 +22194,9 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
           selectedScenarios = Array.isArray(d.selectedScenarios) ? d.selectedScenarios : [];
           if(d.docType) docType = d.docType;
           page = d.page || 'picker';
+          // Re-provision so drafts saved under an older build pick up any new
+          // tables/portfolios this build creates (edited wording is preserved).
+          try{ if(docType === 'ROA' && selectedScenarios.length) consolidateScenarios(); }catch(_){}
         }
       }
     }
