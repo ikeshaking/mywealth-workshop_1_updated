@@ -1,0 +1,167 @@
+<meta charset="utf-8"><title>ROA Paraplanner — SOP v1.1</title><style>
+body{font-family:'Segoe UI',Calibri,Arial,sans-serif;max-width:860px;margin:0 auto;padding:36px 28px;color:#1a2733;line-height:1.55;font-size:14.5px}
+h1{color:#0C2E3F;border-bottom:3px solid #0D6BE0;padding-bottom:6px;margin-top:38px;font-size:24px}
+h2{color:#0D6BE0;margin-top:26px;font-size:18px}h3{color:#0C2E3F;margin-top:16px;font-size:15px}
+.title{font-size:30px;font-weight:800;color:#0C2E3F;margin:0}.sub{color:#667;margin:4px 0 20px}
+p.intro{font-size:15px}
+ul{margin:6px 0 10px 22px}li{margin:3px 0}
+.note{background:#eef4fb;border-left:4px solid #0D6BE0;padding:8px 12px;margin:8px 0;font-size:13px;border-radius:0 8px 8px 0}
+ol.steps{margin:6px 0 10px 22px}@media print{body{padding:0}}
+</style>
+<p class="title">ROA Paraplanner — Standard Operating Procedure</p>
+<p class="sub">My Wealth Solutions · Tool build v7.b_22 · SOP version 1.1 · July 2026</p>
+<p class="intro">Welcome! This guide walks you through building a Record of Advice with the ROA Paraplanner — from picking scenarios to exporting the finished Word document. You don't need to memorise any of it: the tool guides you as you go, warns you when something still needs attention, and nothing you do is irreversible. When in doubt, follow the wizard from top to bottom and you'll end up with a complete, compliant document.</p>
+<h1>Part A — The basics (every ROA)</h1>
+<h2>A1. Opening the tool</h2>
+<ul>
+<li>The tool is one HTML file. Save it to your computer and open it in a normal browser tab (Chrome or Edge work best). If a button won't open a file dialog, you're probably in a preview pane — open the saved file in a real browser tab instead.</li>
+<li>Check the version stamp in the top bar (e.g. v7.b_22). Everyone in the team should be on the same build — if your draft looks different to a colleague's, compare stamps first.</li>
+<li>You'll need internet the first time the tool loads, and whenever you import scanned or photographed documents (they're read with OCR).</li>
+</ul>
+<h2>A2. Your work is safe</h2>
+<ul>
+<li>Everything auto-saves to your browser a moment after every change. If you close the tab, the tool offers your draft back next time you open it — just click OK to continue where you left off.</li>
+<li>Made a mistake? ↶ Undo and ↷ Redo live in the top bar (or Ctrl/⌘+Z and Ctrl+Y). Imports, deletions and table changes can all be undone.</li>
+<li>Starting fresh: the red ♻ Reset button clears everything — it always asks first.</li>
+<li>Keeping a copy: 💾 Save copy downloads the whole tool with your work embedded (great for handovers), and Save (JSON) on the Preview page saves a small data file you can Load later.</li>
+</ul>
+<h2>A3. Step 1 — Pick your scenarios</h2>
+<ol class="steps">
+<li>Make sure you're on the ROA Generator tab.</li>
+<li>Tick every piece of advice this ROA covers. Scenarios are grouped into four sections — Superannuation &amp; Pension, Investment, Insurance, and Cashflow &amp; Debt — and the search box finds anything fast (try "rollover" or "waiting period").</li>
+<li>Your selections appear as chips up top. Drag their order with the ◀ ▶ arrows (this sets the order the advice appears in the document) and remove one with ×.</li>
+<li>Press 2 · Build. You can come back and change scenarios any time without losing work.</li>
+</ol>
+<div class="note">Scenarios drive everything: which tables appear, which wording generates, and what the wizard asks for. If a table you expect is missing, the matching scenario hasn't been ticked.</div>
+<h2>A4. Step 2 — The builder</h2>
+<ul>
+<li>The builder opens as a wizard: your steps down the left, the current step in the middle, and a live preview of the real document on the right — it updates as you type.</li>
+<li>The ticks tell you where you're up to: ✓ done, ! needs attention (the yellow banner spells out exactly what — e.g. "Client 2 name is blank"), a number means not started yet.</li>
+<li>Use Back / Next at the bottom, or click any step to jump. The last step takes you to Preview.</li>
+<li>Prefer everything on one page? ⊞ All sections switches to a single scrolling view; 🧭 Wizard view brings the wizard back. The preview panel hides and shows with one click too. Your preferences are remembered.</li>
+<li>Any section with an ✕ can be left out of the printed document — it stays editable and can be brought back.</li>
+</ul>
+<h2>A5. The steps every ROA shares</h2>
+<h3>Client &amp; Adviser Details</h3>
+<ul>
+<li>Pick the client type (Single / Joint / + Entity) and enter the client name(s) FIRST — the document importers use the names to put things in the right place.</li>
+<li>Start typing the adviser's name to pick them from the roster; their contact details fill in automatically.</li>
+</ul>
+<h3>Type of ROA &amp; Prior Advice</h3>
+<ul>
+<li>Set the ROA date (it also drives the export file name). Each scenario gets its own Additional Advice / Amendment of SoA toggle for the cover page, and the prior advice documents you list here print in Section 1.</li>
+</ul>
+<h3>What You Want To Achieve</h3>
+<ul>
+<li>The objectives paragraph writes itself from your scenarios. Polish it as you like — your edits stick. Just replace any [Amount]-style placeholders (the wizard reminds you while any remain).</li>
+</ul>
+<h3>Custom Sections · Fees · Acknowledgement</h3>
+<ul>
+<li>Add custom sections if the advice needs something bespoke. Fees defaults to "no changes" — switch it over and fill in the commission details when they do change. The Acknowledgement section rarely needs touching.</li>
+</ul>
+<h2>A6. How the wording works (worth 30 seconds)</h2>
+<ul>
+<li>All recommendations, benefits and risks generate from the firm's wording library — then they're yours to edit.</li>
+<li>Your edits are safe: renaming a client, adding a scenario or importing a document won't overwrite anything you've touched.</li>
+<li>The ↻ Regenerate buttons are the one exception — they deliberately rebuild that area from the library, discarding edits there. That's what they're for.</li>
+<li>Want to change the firm's default wording for everyone? That happens in ⚙ Admin, not in individual ROAs (see Part E).</li>
+</ul>
+<h2>A7. Smart Import — drop documents, get pre-filled tables</h2>
+<ul>
+<li>Find the dashed Smart import zone in Section 3. Drop one file or many — each is identified automatically and you confirm what it is before anything applies.</li>
+<li>It reads: CARE/Hub24 rebalance docs (.docx), WealthSolver comparisons (.docx), CDM reports and insurance schedules, insurer quotes and alteration quotes (PDF), prior SOAs/ROAs (.docx), screenshots of our cover tables, and saved .json files.</li>
+<li>Single-client ROA but a joint document? The tool offers to import only your client's accounts and covers — matched by name (initials like "R Super" count). Joint and entity accounts always come through.</li>
+<li>Two partners' quotes? Drop them one after the other — the second person's covers add underneath automatically.</li>
+<li>Every import shows a summary first, and every imported value stays editable. If an import ever surprises you, Ctrl/⌘+Z puts it back.</li>
+</ul>
+<h2>A8. Preview and export</h2>
+<ul>
+<li>Step 3 shows the document exactly as it prints. When you're happy, 📄 Export to Word.</li>
+<li>The file names itself to our convention (dates AEST, from the ROA date):</li>
+</ul>
+<div class="note">YYMMDD;Surname;Initials;Type-ROA;DDMMYY — e.g. 260713;Sharp;E;Insurance-ROA;130726 · 260713;Smith;A&amp;C;Super&amp;Inv-ROA;130726 · 260713;Hans&amp;Barker;K&amp;T;Inv-ROA;130726. The Type is built from the advice areas (Super, Pension, Inv, Insurance, Cashflow).</div>
+<h1>Part B — Super, Pension &amp; Investment ROAs</h1>
+<p class="intro">Use these for portfolio advice: contributions of every kind, rollovers, rebalances, menu switches, withdrawals, pension commencement and changes, reserves and DCA plans. Combining several in one ROA is normal — each becomes its own recommendation and the wording lands in the right place automatically.</p>
+<h2>B1. Getting the portfolio tables in</h2>
+<h3>CARE / Hub24 clients — 📥 Import CARE doc</h3>
+<ol class="steps">
+<li>In Section 3, click 📥 Import CARE doc and choose the CARE rebalance document as a WORD (.docx) file — a PDF loses the tables, so export the Word version from CARE if that's all you have.</li>
+<li>Review the summary (accounts, owners, totals, trades) and confirm. You get one portfolio per account with the allocation table, variation table and buy/sell trades pre-filled — supers first, then investments.</li>
+</ol>
+<h3>Everyone else — 📥 Import WealthSolver</h3>
+<ol class="steps">
+<li>Click 📥 Import WealthSolver and choose the comparison (.docx). The recommended platform's holdings build the allocation table, and Gross Ongoing Costs fill the fee cells — the confirmation shows you the current-vs-recommended cost change.</li>
+</ol>
+<h3>Manual</h3>
+<ul>
+<li>+ Add another portfolio gives you a blank one — set the label, platform, total and rows, and pick the CARE or Vanguard asset set to pre-fill standard funds. Optional extras: an Ongoing Regular Investment row and the DCA/Lump Sum band with our standard wordings.</li>
+</ul>
+<h2>B2. How Section 3 flows</h2>
+<ul>
+<li>The document always prints: all super tables (both partners on a couple) → one combined Superannuation benefits &amp; risks block → pension → investment table(s) → one Investment benefits &amp; risks block. The builder shows the same order, so what you see is what prints.</li>
+<li>Category recommendations (like contribution bullets) print after that category's tables, just before its benefits — edit them in the category's Benefits &amp; Risks block.</li>
+<li>If a table arrives without wording (say, a CARE import created an investment portfolio but no investment scenario was ticked), sensible rebalance benefits &amp; risks are seeded automatically — edit or delete freely.</li>
+</ul>
+<h2>B3. Quick checks before export</h2>
+<ul>
+<li>Allocation tables have amounts (the wizard flags empty ones) · variation percentages read correctly · risk profile is set when the advice mentions it · no [placeholders] remain.</li>
+</ul>
+<h1>Part C — Insurance ROAs</h1>
+<p class="intro">Insurance ROAs revolve around the cover tables, and the fastest way to fill them is to drop the source documents on the tool — it reads all our insurers' quotes and flags every change for you.</p>
+<h2>C1. Which scenario gives you which tables</h2>
+<ul>
+<li>Increase / decrease / cancel / waiting &amp; benefit period / premium structure / ownership changes → Current Cover + Recommended Cover.</li>
+<li>Revised terms after underwriting (retain &amp; alter, Hub24 takeover, insurer switch, accident-only) → Original Recommendations + Recommended (Altered) Cover + the Option 2 (Alternative) table with NOTES.</li>
+<li>Two-option comparisons → Option 1 and Option 2 tables with summary bullets.</li>
+<li>New cover / key person → Recommended Cover.</li>
+</ul>
+<div class="note">On any two-option ROA the benefits &amp; risks print under OPTION 1, before the Option 2 table — the tool handles this for you.</div>
+<h2>C2. Working with the cover tables</h2>
+<ul>
+<li>Rows carry: provider (grouped into coloured bands), life insured, owner, status, benefit amount, premium structure, monthly premium.</li>
+<li>Statuses tell the story at a glance: In Force · Recommend · Retain · Retain &amp; Alter · Reduce · Increase · Cancel · New.</li>
+<li>Linked Life + TPD share one combined premium (the cells merge — untick the share box to split them).</li>
+<li>Premium cells print as tidy separate lines: "$83 pm (before tax)" · "($71 from super and $13 from personal cashflow)" · "$73 pm (after tax)". IP rows carry the Super Contribution Option and "(4 weeks wait, until Age 65)".</li>
+<li>⇄ Mirror copies a whole table (Current → Recommended) so you only edit what changes.</li>
+<li>Insurance benefits &amp; risks live in the Insurance Cover section, after the tables — right where they print.</li>
+</ul>
+<h2>C3. Importing insurance documents</h2>
+<ul>
+<li>Use Smart Import, the 📥 button on any table, or drag a file onto a table.</li>
+<li>Existing cover → Current Cover: CDM Benefits Reports, insurance schedules, prior SOA/ROA tables, even screenshots of our own cover table.</li>
+<li>New-business quotes → Recommended Cover: NEOS, ClearView, Zurich (Active &amp; Wealth Protection), OnePath OneCare, MetLife Protect — each lands as proper firm-style rows with the funding split, SCO and periods.</li>
+<li>Alteration / in-force quotes fill BOTH tables in one drop: AIA, TAL-style illustrations, ClearView alterations &amp; amended terms, Zurich alterations, NEOS in-force emails, MetLife alteration emails. The existing side goes to Current (In Force); the proposed side arrives flagged per row — Retain &amp; Alter, Reduce, Cancel, New — so a reduction can never slip past unnoticed.</li>
+<li>Documents with multiple quote options (AIA, MetLife Quote 1/2, ClearView bundles) ask which option you want.</li>
+<li>A prior SOA imports BOTH clients' recommended tables — into Original Recommendations on a revised-terms ROA, otherwise Current Cover.</li>
+<li>Unknown insurer? The generic readers still recover the cover lines — just review the grid after. And send the file to have an exact reader added; it only takes one sample.</li>
+</ul>
+<h2>C4. Revised-terms (two-option) ROAs</h2>
+<ul>
+<li>Printed order: Original Recommendations → Recommended (Altered) Cover → benefits &amp; risks → Superannuation Recommendation (when retaining external super) → Option 2 (Alternative) → NOTES. The Option 2 intro and NOTES bullets are editable and come pre-filled with our standard wording.</li>
+</ul>
+<h2>C5. Commissions and final checks</h2>
+<ul>
+<li>If commissions change, flip Fees to "changed" and enter the Implementation and Renewal amounts.</li>
+<li>Before export: every needed table has content · life insured and owner set on each row · statuses match the advice (especially Cancel rows) · premium splits read correctly.</li>
+</ul>
+<h1>Part D — Cashflow &amp; Debt</h1>
+<ul>
+<li>These are general strategies — debt recycling and the Macquarie cash account setups. They print as their own recommendations + benefits &amp; risks block after the portfolio sections; no tables to fill.</li>
+</ul>
+<h1>Part E — Admin (back office)</h1>
+<ul>
+<li>⚙ Admin manages the adviser roster, licensee details and the firm's default wording per scenario (password protected).</li>
+<li>Changes become the default for future ROAs and Regenerates — documents in progress keep their current wording.</li>
+<li>To roll new defaults out to the team, use Export settings file — it bakes everything into a fresh copy of the tool to share.</li>
+</ul>
+<h1>Part F — If something's not right</h1>
+<ul>
+<li>Button won't open a file picker → open the saved HTML in a real browser tab.</li>
+<li>CARE import asks for the Word version → it needs .docx; PDF exports lose the tables.</li>
+<li>"No insurance cover lines were found" → make sure the file isn't a scan (or let OCR run — needs internet). New layout? Send it over to be added.</li>
+<li>Import went to the wrong table → Cancel the confirm, then use the 📥 button on the right table.</li>
+<li>Import replaced rows you wanted → Ctrl/⌘+Z, then choose UPDATE instead of REPLACE on re-import.</li>
+<li>Wording reverted → someone pressed ↻ Regenerate; ordinary edits never revert on their own.</li>
+<li>Closed the tab by accident → reopen the tool and restore the offered draft.</li>
+<li>Colleague's copy behaves differently → compare version stamps; everyone needs the same build.</li>
+</ul>

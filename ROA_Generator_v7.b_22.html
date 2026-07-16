@@ -427,7 +427,7 @@ details.row-override[open] > summary::before{transform:rotate(90deg)}
 .wizard-wrap{margin:0 auto;padding:14px 0 70px;
   display:grid;grid-template-columns:220px minmax(0,1fr);gap:18px;align-items:start}
 .wizard-wrap:not(.with-preview){max-width:1320px}
-.wizard-wrap.with-preview{max-width:none;grid-template-columns:220px minmax(440px,1fr) minmax(420px,47%)}
+.wizard-wrap.with-preview{max-width:none;grid-template-columns:220px minmax(440px,1fr) minmax(300px,32%)}
 .wizard-side{position:sticky;top:66px;background:var(--surface);border:1px solid var(--border-soft);border-radius:14px;
   padding:10px 8px;box-shadow:0 1px 3px rgba(0,0,0,.04);max-height:calc(100vh - 86px);overflow:auto}
 .wizard-steps-v{display:flex;flex-direction:column;gap:4px}
@@ -452,9 +452,9 @@ details.row-override[open] > summary::before{transform:rotate(90deg)}
 .wizard-preview-head{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface);
   border-bottom:1px solid var(--border-soft);color:var(--heading)}
 .wizard-preview-scroll{overflow:auto;padding:14px;flex:1}
-.wizard-preview-doc{zoom:.82;padding:26px 30px;min-height:200px}
-@media(max-width:1400px){
-  .wizard-wrap.with-preview{grid-template-columns:225px minmax(0,1fr)}
+.wizard-preview-doc{zoom:.6;padding:22px 24px;min-height:200px}
+@media(max-width:1120px){
+  .wizard-wrap.with-preview{grid-template-columns:220px minmax(0,1fr)}
   .wizard-preview{display:none}
 }
 @media(max-width:900px){
@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_21";
+const APP_VERSION = "v7.b_22";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -2421,7 +2421,7 @@ const SCENARIOS = {
 
   inv_bond: {
     cat:"Investment", type:"ROA", label:"Investment — Investment Bond", short:"Investment Bond",
-    desc:"Establish an investment bond for tax-effective long-term wealth building",
+    desc:"Establish an investment bond for tax-effective long-term wealth building (falls under small investment advice limit)",
     needs:{inv:true},
     pd:"Establishment of a new investment bond",
     obj:"{name}, during your review meeting, you mentioned that you would like to build wealth {withdrawalPurpose}. We discussed the option of establishing an investment bond and making both an initial and ongoing contribution to this investment. This Record of Advice outlines these new recommendations as previously discussed with you and any implications you should consider prior to making a decision.",
@@ -2570,7 +2570,7 @@ const SCENARIOS = {
 
   inv_open_account: {
     cat:"Investment", type:"ROA", label:"Investment — Open New Investment Account", short:"Open Investment",
-    desc:"Open a new investment account (personal, joint, SMSF, trust, company)",
+    desc:"Open a new investment account — personal, joint, SMSF, trust, company (falls under small investment advice limit)",
     needs:{inv:true},
     pd:"Establishment of a new investment account in the recommended ownership structure",
     obj:"{name}, during our recent meeting we discussed establishing a new {invPlatform} investment account in the recommended ownership structure to invest {amount} in line with your financial objectives.",
@@ -2895,33 +2895,6 @@ const SCENARIOS = {
     ]
   },
 
-  smsf_wind_up: {
-    cat:"Superannuation", type:"ROA", label:"Super — SMSF Wind-Up", short:"SMSF Wind-Up",
-    desc:"Wind up your SMSF and roll balances to retail/industry fund",
-    needs:{super:true},
-    pd:"Wind-up of your Self-Managed Super Fund and rollover to a retail/industry fund",
-    obj:"{name}, during our recent review we discussed winding up your SMSF and rolling your balance to your {superPlatform} account, given the ongoing administration costs and compliance obligations have become disproportionate to the benefits.",
-    rec:"wind up your SMSF in accordance with the trust deed and SIS Act requirements, dispose of the fund's investments, settle all liabilities, and rollover the proceeds to your {superPlatform} superannuation account.",
-    benefits:[
-      "Consolidating to a retail/industry fund reduces ongoing administration, audit, and compliance costs.",
-      "You no longer carry personal trustee obligations and compliance risk.",
-      "Access to institutional-grade investment management and the CARE managed portfolios.",
-      "Insurance arrangements (where needed) can be re-established within the new fund.",
-      "Simplified reporting and reduced administrative burden."
-    ],
-    risks:[
-      "Winding up an SMSF requires disposing of fund assets, potentially crystallising capital gains (taxed at up to 15%, or 10% after the one-year discount).",
-      "Transaction costs and disposal fees (brokerage, property sale costs) apply to the wind-down.",
-      "A final audit, tax return, and formal wind-up documentation must be completed.",
-      "Direct property or unique investments held by the SMSF may take time to sell, extending the wind-up period.",
-      "Any outstanding loans (e.g. LRBA) must be discharged before wind-up.",
-      "Beneficiary nominations, insurance policies, and reversionary arrangements must be re-established in the new fund."
-    ],
-    otherConsiderations:[
-      "Please engage your SMSF accountant to coordinate the wind-up process, final return, and audit.",
-      "Consider the timing of any asset sales to optimise tax and market conditions."
-    ]
-  },
 
   // ═══════════════════════════════════════════════════════════
   // INSURANCE — New / Alter / Revised Terms / Cancel
@@ -3324,32 +3297,6 @@ const SCENARIOS = {
   // ═══════════════════════════════════════════════════════════
   // SUPER — Additional scenarios
 
-  super_excess_release: {
-    cat:"Superannuation", type:"ROA", label:"Super — Excess Contributions Release", short:"Excess Release",
-    desc:"Action release authority for excess contributions",
-    needs:{super:true},
-    pd:"Response to an ATO excess contributions determination and release authority",
-    obj:"{name}, following the ATO's determination that you have exceeded your {amount} contribution cap in the previous financial year, we discussed the election to release the excess from your superannuation to avoid the excess being taxed inside super at penal rates.",
-    rec:"elect to release the excess contribution amount via the ATO release authority, direct to your {superPlatform} fund, to be paid to you personally with appropriate tax treatment.",
-    benefits:[
-      "Releasing excess concessional contributions means the excess is taxed at your marginal rate (with a 15% offset for contributions tax already paid), rather than being subject to an additional 15% Excess Concessional Contributions Charge if left inside super.",
-      "Releasing excess non-concessional contributions (and associated earnings) avoids the penal 47% tax that would otherwise apply to the excess amount remaining inside super.",
-      "The release preserves the integrity of your overall super position and resets your cap space for future contributions.",
-      "You receive the excess back personally (less applicable tax), restoring the funds to your personal cashflow.",
-      "The ATO release authority process is straightforward once the determination is issued."
-    ],
-    risks:[
-      "The release must be actioned within 60 days of the ATO release authority being issued — late action may result in the original penal treatment applying.",
-      "Associated earnings on the excess are included in your assessable income in the year of the excess contribution (not the year of release), subject to a 15% tax offset.",
-      "Excess concessional contributions remain counted towards your non-concessional cap if not released — creating a risk of also breaching the non-concessional cap.",
-      "Interest (Shortfall Interest Charge) is applied to the associated earnings component.",
-      "Future contributions should be monitored to avoid further breaches — this scenario should not recur."
-    ],
-    otherConsiderations:[
-      "Please engage your accountant to confirm the tax impact and ensure the amended assessment is processed correctly.",
-      "Review your contribution strategy to identify the root cause of the excess and prevent recurrence."
-    ]
-  },
 
 
   // ═══════════════════════════════════════════════════════════
@@ -3414,57 +3361,7 @@ const SCENARIOS = {
   // ═══════════════════════════════════════════════════════════
   // SMSF — Additional scenarios
 
-  bdbn_nomination: {
-    cat:"Superannuation", type:"ROA", label:"Super — Death Benefit Nomination (BDBN)", short:"BDBN",
-    desc:"Make or update a (non-lapsing) binding death benefit nomination",
-    needs:{bdbn:true},
-    pd:"Binding death benefit nomination for your superannuation",
-    obj:"{name}, during our recent review we discussed ensuring your superannuation death benefits are directed according to your wishes by putting a valid death benefit nomination in place on your superannuation account.",
-    rec:"complete a non-lapsing binding death benefit nomination for your superannuation account, in favour of the beneficiaries set out in the nomination table below.",
-    benefits:[
-      "A valid binding nomination gives you certainty — the trustee must pay your superannuation death benefit to the beneficiaries you have nominated, rather than exercising its own discretion.",
-      "Benefits paid directly to nominated beneficiaries generally bypass your estate, which can allow faster payment and may reduce exposure to estate disputes.",
-      "A non-lapsing nomination does not expire every three years, so your instruction remains in force until you change or revoke it."
-    ],
-    risks:[
-      "A nomination is only binding if it is validly completed, signed and witnessed in accordance with the fund's requirements — an invalid nomination reverts to trustee discretion.",
-      "Only eligible beneficiaries (your dependants or your legal personal representative) can be nominated; a nomination in favour of anyone else is invalid.",
-      "Superannuation death benefits paid to beneficiaries who are not dependants for tax purposes may be subject to tax.",
-      "You should review your nomination whenever your personal circumstances change (marriage, separation, children, death of a beneficiary)."
-    ],
-    otherConsiderations:[
-      "Ensure your Will and other estate planning documents remain consistent with this nomination — please review them with your solicitor."
-    ]
-  },
 
-  smsf_property_sale: {
-    cat:"Superannuation", type:"ROA", label:"Super — SMSF Property Sale", short:"SMSF Property Sale",
-    desc:"Sell property held within SMSF",
-    needs:{super:true},
-    pd:"Sale of property held within your SMSF",
-    obj:"{name}, during our recent meeting we discussed selling the property held within your SMSF, with consideration of the CGT impact, the repayment of any outstanding LRBA loan, and the reinvestment of the net proceeds within the fund's investment strategy.",
-    rec:"proceed with the sale of the property held within your SMSF, repay any outstanding LRBA loan from sale proceeds, and reinvest the net proceeds into the recommended investment allocation within the SMSF.",
-    benefits:[
-      "Capital gains tax on the sale is taxed at an effective 10% in accumulation phase (after 1/3 CGT discount) or 0% in pension phase, materially lower than outside-super tax.",
-      "Reinvesting proceeds into diversified managed portfolios reduces concentration risk and improves liquidity within the SMSF.",
-      "Removing property simplifies ongoing SMSF administration and compliance obligations.",
-      "Repaying the LRBA loan (if any) removes ongoing interest and complexity.",
-      "Greater portfolio liquidity supports pension payments and member benefits.",
-      "Frees up SMSF cashflow previously committed to loan servicing."
-    ],
-    risks:[
-      "Property sales attract selling costs (agent commission, marketing, legal fees, capital gains tax) that reduce net proceeds.",
-      "Market timing affects the sale price — a forced sale in a weak market can materially reduce retirement savings.",
-      "Capital gains are realised on sale — whether at 10% or 0% depends on the members' phase at time of sale.",
-      "Repaying the LRBA may trigger break costs or fees on the loan.",
-      "Property market conditions may differ significantly from the original acquisition — ensure the sale timing is considered against retirement timing.",
-      "GST may apply to commercial property sales — confirm with your accountant."
-    ],
-    otherConsiderations:[
-      "Please engage your SMSF accountant to confirm the CGT impact and coordinate the sale timing with any pension commencement plans to maximise CGT exemptions.",
-      "Coordinate with the existing lender on any loan payout requirements."
-    ]
-  },
 
   // ═══════════════════════════════════════════════════════════
   // INSURANCE — Additional scenarios
@@ -14962,8 +14859,21 @@ function renderPicker(){
     </div>
   </div>`;
 
-  catList.forEach(cat => {
-    const list = Object.entries(source).filter(([,s]) => s.cat===cat && (docType === 'Strategy' ? true : (s.type||'ROA')===docType));
+  // Picker groups — Superannuation & Pension share ONE section: most super
+  // strategies apply to pension members too, so the separate groups felt
+  // clunky. (Document-side categories are untouched: super and pension tables
+  // and wording still print as their own blocks.)
+  const groupDefs = (docType === 'Strategy')
+    ? catList.map(c => ({label:c, cats:[c]}))
+    : [
+        {label:'Superannuation & Pension', cats:['Superannuation','Pension']},
+        {label:'Investment', cats:['Investment']},
+        {label:'Insurance', cats:['Insurance']},
+        {label:'Cashflow & Debt', cats:['Cashflow & Debt']}
+      ];
+  groupDefs.forEach(gd => {
+    const cat = gd.label;
+    const list = Object.entries(source).filter(([,s]) => gd.cats.includes(s.cat) && (docType === 'Strategy' ? true : (s.type||'ROA')===docType));
     if(!list.length) return;
     const selCount = list.filter(([id]) => selectedScenarios.includes(id)).length;
     // Open if: a search term matches something in this category, OR this category has
