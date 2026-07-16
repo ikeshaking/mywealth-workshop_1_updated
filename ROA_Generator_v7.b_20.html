@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_19";
+const APP_VERSION = "v7.b_20";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -11967,6 +11967,111 @@ async function handleCareImport(inp){
 }
 
 // ═══════════════════════════════════════════════════════════
+// WEALTHSOLVER COMPARISON IMPORT (non-CARE portfolios)
+// ───────────────────────────────────────────────────────────
+// For clients whose portfolio is NOT on CARE/Hub24 yet, the WealthSolver
+// comparison document (like the SOA generator reads) carries a "Plans" table
+// (holdings per platform column) and a Fees table ("Gross Ongoing Costs").
+// This builds one portfolio from the recommended platform's column: holding
+// rows → allocation table, platform total → Complete Portfolio, gross
+// ongoing costs → the fee cells.
+async function importWealthSolverRoa(file){
+  if(!file) return;
+  if(typeof mammoth === 'undefined'){ alert('The Word reader (mammoth) failed to load — check your internet connection.'); return; }
+  showImportStatus('Reading WealthSolver document…');
+  const buf = await file.arrayBuffer();
+  const res = await mammoth.convertToHtml({arrayBuffer: buf});
+  const doc = new DOMParser().parseFromString(res.value, 'text/html');
+  const tables = Array.from(doc.querySelectorAll('table')).map(t =>
+    Array.from(t.rows||[]).map(tr => Array.from(tr.cells||[]).map(td => (td.textContent||'').replace(/\s+/g,' ').trim())));
+  hideImportStatus();
+  const feesT = tables.find(t => t.some(r => /gross ongoing costs/i.test(String(r[0]||''))));
+  const plansT = tables.find(t => t.slice(0,3).some(row => (row||[]).some(c => /plan review|rollover\/consolidate|joint proposal/i.test(String(c||'')))));
+  if(!feesT && !plansT){
+    alert('Could not find a WealthSolver Fees table ("Gross Ongoing Costs") or Plans table in this document.');
+    return;
+  }
+  const num = s => { const m = String(s==null?'':s).match(/\$?\s*(-?[\d,]+(?:\.\d+)?)/); return m ? parseFloat(m[1].replace(/,/g,'')) : null; };
+  const fmt = n => '$'+Number(n).toLocaleString('en-AU',{maximumFractionDigits:2});
+  // Providers from the plans header (first cell is the row-label column).
+  const header = (plansT && plansT[0]) ? plansT[0].filter(Boolean) : ((feesT && feesT[0]) ? feesT[0].filter(Boolean) : []);
+  const provNames = header.filter(c => !/^fees?$|^plans?$|^\s*$/i.test(c));
+  const isInvest = provNames.some(p => /joint proposal/i.test(p)) || /joint proposal/i.test(res.value);
+  // Recommended column: prefer Hub24, else the first non-Current platform.
+  const nonCurrent = provNames.map((p,i)=>({p,i})).filter(x => !/current|existing|plan review/i.test(x.p));
+  const chosen = nonCurrent.find(x => /hub\s*24/i.test(x.p)) || nonCurrent[0] || {p: provNames[0]||'Platform', i: 0};
+  const nP = provNames.length;
+  // Holdings for the chosen provider: holding rows run [name, %, $, %, $ …];
+  // account/fund rows run [name, $, $, …].
+  const rows = []; const fundNames = [];
+  let total = 0;
+  if(plansT){
+    plansT.slice(1).forEach(r => {
+      const name = String(r[0]||'').trim();
+      if(!name || /rollover\/consolidate|total/i.test(name)) return;
+      const isHolding = r.slice(1).some(c => /%/.test(String(c||'')));
+      if(isHolding && r.length >= 1 + 2*nP){
+        const amt = num(r[2 + 2*chosen.i]);
+        if(amt != null && amt !== 0){ rows.push({n:name, a:fmt(amt), icr:'', isFee:false}); total += amt; }
+      } else if(!isHolding){
+        const amt = num(r[1 + chosen.i]);
+        if(amt != null && amt !== 0) fundNames.push(name);
+      }
+    });
+  }
+  // Fees: the Gross Ongoing Costs row, one value per provider column.
+  let feeDollar = '', feePercent = '', curGross = null, recGross = null;
+  if(feesT){
+    const gRow = feesT.find(r => /gross ongoing costs/i.test(String(r[0]||'')));
+    if(gRow){
+      const vals = gRow.slice(1).map(num);
+      recGross = vals[chosen.i] != null ? vals[chosen.i] : null;
+      const curIdx = provNames.findIndex(p => /current|existing/i.test(p));
+      curGross = curIdx >= 0 && vals[curIdx] != null ? vals[curIdx] : null;
+      if(recGross != null){
+        feeDollar = fmt(recGross);
+        if(total > 0) feePercent = (recGross/total*100).toFixed(3) + '%';
+      }
+    }
+  }
+  const provClean = chosen.p.replace(/^[CP]\s+/i,'').replace(/rollover\/consolidate( to)?/i,'').replace(/plan review/i,'').trim() || 'Recommended platform';
+  const platform = /hub\s*24/i.test(provClean) ? (isInvest ? 'Hub24 Investment' : 'Hub24 Super') : provClean;
+  let summary = 'WealthSolver comparison read:\n\n';
+  summary += '• Platforms compared: ' + provNames.join(' · ') + '\n';
+  summary += '• Building the portfolio from: ' + chosen.p + (isInvest ? '  (investment comparison)' : '  (super comparison)') + '\n';
+  summary += '• ' + rows.length + ' holding line(s)' + (total ? ', total ' + fmt(total) : '') + (fundNames.length ? ' · funds: ' + fundNames.join(', ') : '') + '\n';
+  if(recGross != null) summary += '• Gross ongoing costs: ' + fmt(recGross) + ' p.a.' + (curGross != null ? ('  (current: ' + fmt(curGross) + ' p.a. — ' + (recGross <= curGross ? 'decrease' : 'increase') + ' of ' + fmt(Math.abs(recGross-curGross)) + ')') : '') + '\n';
+  summary += '\nAny previously WealthSolver-imported portfolio will be replaced. Proceed?';
+  if(!confirm(summary)) return;
+  F.portfolios = (F.portfolios||[]).filter(p => !p.wsImported);
+  const p = mkPortfolio(provClean + (isInvest ? ' Investment' : ' Super'), platform, contextFromClient());
+  p.careImported = true;        // survives scenario-driven rebuilds like a CARE import
+  p.wsImported = true;
+  p.careType = isInvest ? 'Investment' : 'Super';
+  if(rows.length){ p.rows = rows; }
+  if(total) p.totalValue = fmt(total);
+  if(feeDollar) p.feeDollar = feeDollar;
+  if(feePercent) p.feePercent = feePercent;
+  p.trades = [{action:'Buy', amount:'', product:''}];
+  p.allocComparison.show = false;
+  F.portfolios.push(p);
+  sortPortfoliosByCategory();
+  consolidateScenarios();
+  render();
+  alert('WealthSolver portfolio imported (' + platform + ').\n\nOpen Section 3 to review the allocation table and fees. ' + (curGross != null && recGross != null ? ('Cost comparison: ' + fmt(curGross) + ' → ' + fmt(recGross) + ' p.a.') : ''));
+}
+function handleWealthSolverImport(inp){
+  const file = inp.files[0];
+  inp.value = '';
+  if(!file) return;
+  importWealthSolverRoa(file).catch(ex => {
+    hideImportStatus();
+    console.error('WealthSolver import failed:', ex);
+    alert('WealthSolver import failed: ' + (ex && ex.message ? ex.message : ex));
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
 // INSURANCE & TABLE AUTO-EXTRACTION ENGINE
 // ───────────────────────────────────────────────────────────
 // Parses the raw text produced by mammoth.extractRawText (Word) or the PDF
@@ -17644,8 +17749,10 @@ function renderSection3ByStrategy(){
     <div class="mt-sm">
       <button class="btn btn-sm" onclick="regenerateWording()" title="Rebuild all recommendations, benefits and risks from the scenario library — any hand edits to the generated wording are discarded">↻ Regenerate all from scenarios</button>
       ${showAddPortfolio ? `<button class="btn btn-sm btn-blue" style="margin-left:6px" onclick="addManualPortfolio()">+ Add another portfolio</button>` : ''}
-      <button class="btn btn-sm btn-blue" style="margin-left:6px" onclick="document.getElementById('care-import-input').click()" title="Import a Hub24/CARE rebalance Word document. Creates one portfolio per account, with the allocation table, variation table and trades pre-filled. Super &amp; investment accounts are detected automatically.">📥 Import CARE doc</button>
+      ${(anyNeed('super') || anyNeed('inv') || anyNeed('pension')) ? `<button class="btn btn-sm btn-blue" style="margin-left:6px" onclick="document.getElementById('care-import-input').click()" title="Import a Hub24/CARE rebalance Word document. Creates one portfolio per account, with the allocation table, variation table and trades pre-filled. Super &amp; investment accounts are detected automatically.">📥 Import CARE doc</button>
       <input id="care-import-input" type="file" accept=".docx" style="display:none" onchange="handleCareImport(this)">
+      <button class="btn btn-sm btn-blue" style="margin-left:6px" onclick="document.getElementById('ws-import-input').click()" title="Import a WealthSolver comparison Word document (for clients NOT yet on CARE). Builds the portfolio from the recommended platform's holdings, with the total and gross ongoing costs pre-filled.">📥 Import WealthSolver</button>
+      <input id="ws-import-input" type="file" accept=".docx" style="display:none" onchange="handleWealthSolverImport(this)">` : ''}
     </div>
   </div>`;
   // Smart import — CDM reports, quotes and prior ROAs can be dropped here too.
@@ -20402,6 +20509,8 @@ async function classifySmartImportFile(file){
       const html = res.value || '';
       if(/Rebalance\s*[-–—]/i.test(html) || /CARE Portfolio Fact Sheet/i.test(html) || /CARE Essentials\s*[-–—]/i.test(html))
         return {type:'care', label:'CARE / Hub24 rebalance document', order:1};
+      if(/gross ongoing costs/i.test(html) && /plan review|rollover\/consolidate|joint proposal|wealthsolver/i.test(html))
+        return {type:'wealthsolver', label:'WealthSolver comparison (portfolio + fees)', order:1};
       text = html.replace(/<[^>]+>/g, '\n');
     } else {
       text = await extractTextFromFile(file);
@@ -20483,6 +20592,7 @@ async function handleSmartImport(fileList){
       if(t === 'json'){ importRoaJson({files:[it.file], value:''}); }
       else if(t === 'html'){ uploadHTMLSave({files:[it.file], value:''}); }
       else if(t === 'care'){ await handleCareImport({files:[it.file], value:''}); }
+      else if(t === 'wealthsolver'){ await importWealthSolverRoa(it.file); }
       else if(t === 'care-pdf'){ alert(it.file.name + ' looks like a CARE/Hub24 rebalance document exported as PDF.\n\nA PDF export loses the table structure this importer relies on — please export it from CARE as Word (.docx) and drop that file instead.'); }
       else if(t === 'insurance-current'){ await importInsuranceFileToTable(it.file, 'insuranceCurrent'); }
       else if(t === 'insurance-recommended'){ await importInsuranceFileToTable(it.file, smartQuoteTargetKey()); }
