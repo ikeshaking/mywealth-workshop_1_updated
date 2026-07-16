@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_24";
+const APP_VERSION = "v7.b_25";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -10954,6 +10954,10 @@ function provisionPortfolios(scns){
     if(!ret){
       ret = mkPortfolio("Retained Fund (Insurance)", (F.fromFund||'').trim() || "External Super Fund", "Retained");
       ret.careType = 'Super';   // always a super account, whatever the fund is called
+      // Print as the SECOND platform section of the main super table (SOA
+      // style): Portfolio (1) = destination, Portfolio (2) = retained fund
+      // "(Retain)", then a Complete Portfolio (1+2) combined total.
+      ret.combineWithPrev = true;
       ret.rows = [
         {n:"Existing investment option — retained minimum balance", a:"", icr:"", isFee:false},
         {n:"", a:"", icr:"", isFee:false}
@@ -16893,7 +16897,24 @@ async function exportStrategyPaperDocx(){
 // ═══════════════════════════════════════════════════════════
 // RENDER: BUILDER — single-page scrollable layout with sidebar jump-to
 // ═══════════════════════════════════════════════════════════
+// Self-heal check: true when a selected scenario's tables have not been
+// provisioned yet (stale draft, old saved file, or an unusual navigation
+// path). The builder then runs consolidateScenarios once — safe, because
+// edited wording is preserved by the snapshot mechanism.
+function builderNeedsReprovision(){
+  if(docType !== 'ROA' || !selectedScenarios.length) return false;
+  const scns = selectedScenarios.map(id => SCENARIOS[id]).filter(Boolean);
+  const ports = F.portfolios || [];
+  if(scns.some(s => s.needs?.super || s.needs?.inv || s.needs?.pension) && !ports.length) return true;
+  if(selectedScenarios.includes('super_rollover_partial') && !ports.some(p => p.label === 'Retained Fund (Insurance)')) return true;
+  const needS = scns.some(s => s.needs?.super), needP = scns.some(s => s.needs?.pension);
+  if(needS && needP && !ports.some(p => p.careImported) &&
+     (!ports.some(p => portfolioAdviceCategory(p) === 'Superannuation') || !ports.some(p => portfolioAdviceCategory(p) === 'Pension'))) return true;
+  return false;
+}
+
 function renderBuilder(){
+  if(builderNeedsReprovision()){ try{ consolidateScenarios(); }catch(_){} }
   const scns = scenariosForSection();
   const hasPort = scns.some(s => s.needs?.super || s.needs?.inv || s.needs?.pension);
   const hasIns = scns.some(s => s.needs?.insurance || s.needs?.insuranceTable);
@@ -19172,7 +19193,11 @@ function renderRoaDocHTML(){
   const __pvGroups = portfolioRenderGroups();
   __pvGroups.forEach(group => {
     if(F.multiCategory) h += `<h3 class="cat-head">${e(group.cat)}</h3>`;
-    group.items.forEach(({p}) => {
+    group.items.forEach(({p}, __gi) => {
+    // A combined companion (e.g. the retained fund on a partial rollover)
+    // prints inside the PREVIOUS portfolio's table — skip its own block.
+    if(p.combineWithPrev && __gi > 0) return;
+    const __mate = (group.items[__gi+1] && group.items[__gi+1].p.combineWithPrev) ? group.items[__gi+1].p : null;
     // Per-portfolio recommendations — "We recommend you..." intro followed by one bullet per scenario
     if((p.recommendations||[]).filter(Boolean).length){
       const _intro = (p.subject||'').trim() || fn;
@@ -19192,13 +19217,30 @@ function renderRoaDocHTML(){
     }
     // Portfolio table
     const productHeader = (p.contextLabel ? e(p.contextLabel)+' - ' : '')+'Investment Product';
-    h += `<table class="alloc-doc"><thead><tr><th>${productHeader}</th><th>Recommended Allocation $</th><th>Fund Manager's Fee (ICR)</th></tr>
+    h += `<table class="alloc-doc"><thead><tr><th>${productHeader}</th><th>Recommended Allocation $</th><th>${__mate ? 'Fees' : "Fund Manager's Fee (ICR)"}</th></tr>
       <tr class="platform-row"><td>Platform Name</td><td colspan="2">${e(p.platform)}</td></tr></thead><tbody>`;
     p.rows.forEach(r => {
       if(!r.n) return;
       h += `<tr><td class="lbl">${e(r.n)}</td><td>${e(r.a)||'&nbsp;'}</td><td>${e(r.icr)||'&nbsp;'}</td></tr>`;
     });
-    h += `<tr class="alloc-total"><td class="lbl">${e(p.totalLabel)}</td><td>${e(p.totalValue)||'&nbsp;'}</td><td>${e(p.feePercent)}${p.feeDollar?' / '+e(p.feeDollar):''}</td></tr>`;
+    h += `<tr class="alloc-total"><td class="lbl">${__mate ? 'Portfolio (1)' : e(p.totalLabel)}</td><td>${e(p.totalValue)||'&nbsp;'}</td><td>${e(p.feePercent)}${p.feeDollar?' / '+e(p.feeDollar):''}</td></tr>`;
+    if(__mate){
+      // SOA-style combined table: the retained/companion account prints as a
+      // second platform section, then a Complete Portfolio (1+2) total.
+      h += `<tr class="platform-row"><td>Platform Name</td><td colspan="2">${e(__mate.platform)} (Retain)</td></tr>`;
+      __mate.rows.forEach(r => {
+        if(!r.n) return;
+        h += `<tr><td class="lbl">${e(r.n)}</td><td>${e(r.a)||'&nbsp;'}</td><td>${e(r.icr)||'&nbsp;'}</td></tr>`;
+      });
+      h += `<tr class="alloc-total"><td class="lbl">Portfolio (2)</td><td>${e(__mate.totalValue)||'&nbsp;'}</td><td>${e(__mate.feePercent)}${__mate.feeDollar?' / '+e(__mate.feeDollar):''}</td></tr>`;
+      const __mN = s => { const n = parseFloat(String(s==null?'':s).replace(/[^0-9.\-]/g,'')); return isFinite(n)?n:0; };
+      const t1 = __mN(p.totalValue), t2 = __mN(__mate.totalValue), tt = t1+t2;
+      const f1 = __mN(p.feeDollar), f2 = __mN(__mate.feeDollar), ft = f1+f2;
+      const ttTxt = tt ? '$'+Math.round(tt).toLocaleString('en-AU') : '';
+      const pctTxt = (tt && ft) ? (ft/tt*100).toFixed(3)+'%' : '';
+      const ftTxt = ft ? '$'+ft.toFixed(2) : '';
+      h += `<tr class="alloc-total"><td class="lbl">Complete Portfolio (1+2)</td><td>${e(ttTxt)||'&nbsp;'}</td><td>${e(pctTxt)}${ftTxt?' / '+e(ftTxt):''}</td></tr>`;
+    }
     if((p.ongoingInvestment||'').trim()){
       h += `<tr><td class="lbl">Ongoing Regular Investment</td><td>${e(p.ongoingInvestment)}</td><td>&nbsp;</td></tr>`;
     }
@@ -19208,6 +19250,7 @@ function renderRoaDocHTML(){
     }
     h += `</tbody></table>`;
     if(p.note) h += `<p style="font-size:10.5px;color:#444"><em><strong>Note:</strong> ${e(p.note)}</em></p>`;
+    if(__mate && __mate.note) h += `<p style="font-size:10.5px;color:#444"><em><strong>Note:</strong> ${e(__mate.note)}</em></p>`;
 
     // Variation Table
     if(p.allocComparison.show && p.allocComparison.rows.some(r => r.name)){
@@ -21183,7 +21226,11 @@ async function exportDocx(){
   const __docxGroups = portfolioRenderGroups();
   __docxGroups.forEach(group => {
     if(F.multiCategory) children.push(CatH(group.cat));
-    group.items.forEach(({p}) => {
+    group.items.forEach(({p}, __gi) => {
+    // A combined companion (e.g. the retained fund on a partial rollover)
+    // prints inside the PREVIOUS portfolio's table — skip its own block.
+    if(p.combineWithPrev && __gi > 0) return;
+    const __mate = (group.items[__gi+1] && group.items[__gi+1].p.combineWithPrev) ? group.items[__gi+1].p : null;
 
     // Per-portfolio recommendations — "We recommend you..." intro + bullets
     if((p.recommendations||[]).filter(Boolean).length){
@@ -21217,11 +21264,11 @@ async function exportDocx(){
       children:[
         cellTxt(productHeader, {shade:NY, color:"FFFFFF", bold:true, size:19, w:colW[0], font:"ABC Arizona Flare", bord:SBORD}),
         cellTxt("Recommended Allocation $", {shade:NY, color:"FFFFFF", bold:true, size:19, w:colW[1], font:"ABC Arizona Flare", bord:SBORD}),
-        cellTxt("Fund Manager's Fee (ICR)", {shade:NY, color:"FFFFFF", bold:true, size:19, w:colW[2], font:"ABC Arizona Flare", bord:SBORD}),
+        cellTxt(__mate ? "Fees" : "Fund Manager's Fee (ICR)", {shade:NY, color:"FFFFFF", bold:true, size:19, w:colW[2], font:"ABC Arizona Flare", bord:SBORD}),
       ]
     }));
     // Platform Name — a full-width brand-blue row, the value spanning columns 2+3
-    rows.push(new TableRow({
+    const platformRow = txt => new TableRow({
       children:[
         cellTxt("Platform Name", {shade:PB, color:"FFFFFF", bold:true, size:19, w:colW[0], bord:SBORD}),
         new TableCell({
@@ -21237,30 +21284,44 @@ async function exportDocx(){
           },
           children:[new Paragraph({
             spacing:{before:0, after:0},
-            children:[new TextRun({text:p.platform||"[Platform]", font:"Nunito", size:19, color:"FFFFFF", bold:true})]
+            children:[new TextRun({text:txt||"[Platform]", font:"Nunito", size:19, color:"FFFFFF", bold:true})]
           })]
         }),
       ]
-    }));
-    // Data rows — light-blue white-bold label cell, teal value cells
-    p.rows.forEach(r => {
-      if(!r.n) return;
-      rows.push(new TableRow({
-        children:[
-          cellTxt(r.n, {shade:LBL, color:"FFFFFF", bold:true, size:19, w:colW[0], bord:SBORD}),
-          cellTxt(r.a||"", {shade:TL, size:19, w:colW[1], bord:SBORD}),
-          cellTxt(r.icr||"", {shade:TL, size:19, w:colW[2], bord:SBORD}),
-        ]
-      }));
     });
-    // Total/cost row — label like the other rows, values bold on teal (SOA style)
-    rows.push(new TableRow({
+    rows.push(platformRow(p.platform));
+    // Data rows — light-blue white-bold label cell, teal value cells
+    const dataRow = r => new TableRow({
       children:[
-        cellTxt(p.totalLabel, {shade:LBL, color:"FFFFFF", bold:true, size:19, w:colW[0], bord:SBORD}),
-        cellTxt(p.totalValue||"", {shade:TL, bold:true, size:19, w:colW[1], bord:SBORD}),
-        cellTxt(p.feePercent + (p.feeDollar?" / "+p.feeDollar:""), {shade:TL, bold:true, size:19, w:colW[2], bord:SBORD}),
+        cellTxt(r.n, {shade:LBL, color:"FFFFFF", bold:true, size:19, w:colW[0], bord:SBORD}),
+        cellTxt(r.a||"", {shade:TL, size:19, w:colW[1], bord:SBORD}),
+        cellTxt(r.icr||"", {shade:TL, size:19, w:colW[2], bord:SBORD}),
       ]
-    }));
+    });
+    p.rows.forEach(r => { if(r.n) rows.push(dataRow(r)); });
+    // Total/cost row — label like the other rows, values bold on teal (SOA style)
+    const totalRow = (label, val, fee) => new TableRow({
+      children:[
+        cellTxt(label, {shade:LBL, color:"FFFFFF", bold:true, size:19, w:colW[0], bord:SBORD}),
+        cellTxt(val||"", {shade:TL, bold:true, size:19, w:colW[1], bord:SBORD}),
+        cellTxt(fee||"", {shade:TL, bold:true, size:19, w:colW[2], bord:SBORD}),
+      ]
+    });
+    rows.push(totalRow(__mate ? "Portfolio (1)" : p.totalLabel, p.totalValue, p.feePercent + (p.feeDollar?" / "+p.feeDollar:"")));
+    if(__mate){
+      // SOA-style combined table: the retained/companion account prints as a
+      // second platform section, then a Complete Portfolio (1+2) total.
+      rows.push(platformRow((__mate.platform||"[Platform]") + " (Retain)"));
+      __mate.rows.forEach(r => { if(r.n) rows.push(dataRow(r)); });
+      rows.push(totalRow("Portfolio (2)", __mate.totalValue, __mate.feePercent + (__mate.feeDollar?" / "+__mate.feeDollar:"")));
+      const __mN = s => { const n = parseFloat(String(s==null?'':s).replace(/[^0-9.\-]/g,'')); return isFinite(n)?n:0; };
+      const t1 = __mN(p.totalValue), t2 = __mN(__mate.totalValue), tt = t1+t2;
+      const f1 = __mN(p.feeDollar), f2 = __mN(__mate.feeDollar), ft = f1+f2;
+      const ttTxt = tt ? '$'+Math.round(tt).toLocaleString('en-AU') : '';
+      const pctTxt = (tt && ft) ? (ft/tt*100).toFixed(3)+'%' : '';
+      const ftTxt = ft ? '$'+ft.toFixed(2) : '';
+      rows.push(totalRow("Complete Portfolio (1+2)", ttTxt, pctTxt + (ftTxt?' / '+ftTxt:'')));
+    }
     if((p.ongoingInvestment||'').trim()){
       rows.push(new TableRow({
         children:[
@@ -21302,6 +21363,10 @@ async function exportDocx(){
 
     if(p.note){
       children.push(Italic("Note: " + p.note));
+      children.push(P(""));
+    }
+    if(__mate && __mate.note){
+      children.push(Italic("Note: " + __mate.note));
       children.push(P(""));
     }
 
