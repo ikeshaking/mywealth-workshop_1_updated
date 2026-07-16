@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_25";
+const APP_VERSION = "v7.b_26";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -10127,10 +10127,10 @@ function mkPortfolio(label, platform, contextLabel){
     allocComparison: {
       show: true,  // Variation Table on by default for super/investment ROAs
       rows: [
-        {name:"Core High Growth", current:"", proposed:"", variance:""},
-        {name:"Active Portfolio", current:"", proposed:"", variance:""},
-        {name:"Cash Account", current:"", proposed:"", variance:""},
-        {name:"Reserves Portfolio", current:"", proposed:"", variance:""},
+        {name:"CARE Core High Growth Portfolio", current:"", proposed:"", variance:""},
+        {name:"CARE Active Portfolio", current:"", proposed:"", variance:""},
+        {name:"Cash", current:"", proposed:"", variance:""},
+        {name:"CARE Reserves Portfolio", current:"", proposed:"", variance:""},
       ],
       showTotal: true,
       totalCurrent: "100.00%",
@@ -11613,6 +11613,49 @@ function careLooksPersonal(name){
   if(n === n.toUpperCase() && n.replace(/\s/g,'').length <= 5) return false; // initials
   return true;
 }
+// CARE documents shorten the portfolio option names (e.g. "Core High Growth",
+// "Active", "International Equities"). Expand them to the firm's full wording —
+// "CARE Core High Growth Portfolio", "CARE Active Portfolio", "CARE Enhanced
+// International Equities Portfolio" — as they appear in the SOA product tables.
+// Unknown names pass through unchanged; a trailing footnote marker (*) is kept.
+function canonicalCareName(raw){
+  const src = String(raw==null?'':raw).trim();
+  if(!src) return src;
+  const star = /\*+$/.exec(src) ? /\*+$/.exec(src)[0] : '';
+  // Normalise: drop any existing CARE prefix / Portfolio suffix / footnote stars
+  const key = src
+    .replace(/\*+$/,'')
+    .replace(/^care\b[\s\-–—:]*/i,'')
+    .replace(/\bportfolios?\b/gi,' ')
+    .replace(/\s+/g,' ').trim().toLowerCase();
+  const MAP = {
+    'core growth':                       'CARE Core Growth Portfolio',
+    'high growth':                       'CARE High Growth Portfolio',
+    'core high growth':                  'CARE Core High Growth Portfolio',
+    'active':                            'CARE Active Portfolio',
+    'reserves':                          'CARE Reserves Portfolio',
+    'reserve':                           'CARE Reserves Portfolio',
+    'enhanced australian equities':      'CARE Enhanced Australian Equities Portfolio',
+    'australian equities':               'CARE Enhanced Australian Equities Portfolio',
+    'enhanced international equities':   'CARE Enhanced International Equities Portfolio',
+    'international equities':            'CARE Enhanced International Equities Portfolio',
+    'essentials high growth':            'CARE Essentials High Growth Portfolio',
+    'essentials growth':                 'CARE Essentials Growth Portfolio',
+    'essentials balanced':               'CARE Essentials Balanced Portfolio',
+    'essentials conservative':           'CARE Essentials Conservative Portfolio',
+    'management fee':                    'CARE Portfolio Management Fee',
+    'portfolio management fee':          'CARE Portfolio Management Fee',
+    'care management fee':               'CARE Portfolio Management Fee',
+    'admin':                             'Administration',
+    'admin fee':                         'Administration',
+    'administration':                    'Administration',
+    'administration fee':                'Administration',
+    'cash':                              'Cash',
+    'cash account':                      'Cash',
+  };
+  const full = MAP[key];
+  return full ? full + star : src;
+}
 function carePlatform(plat, type){
   let pl = (plat||'').trim();
   if(/^hub24$/i.test(pl)){
@@ -11812,7 +11855,7 @@ function careAccountsToPortfolios(accounts){
     // trades. Use them directly as the allocation table; there are no buy/sell trades or a
     // current-vs-proposed variation, so leave those empty and turn the Variation Table off.
     if(Array.isArray(a.allocations) && a.allocations.length){
-      p.rows = a.allocations.map(al => ({n:al.product, a:al.amount, icr:al.icr||'', isFee:false}));
+      p.rows = a.allocations.map(al => ({n:canonicalCareName(al.product), a:al.amount, icr:al.icr||'', isFee:/management fee|administration/i.test(canonicalCareName(al.product))}));
       if(a.feePercent) p.feePercent = a.feePercent;
       if(a.feeDollar)  p.feeDollar  = a.feeDollar;
       p.trades = [{action:'Buy', amount:'', product:''}];
@@ -11821,20 +11864,20 @@ function careAccountsToPortfolios(accounts){
     }
     // Allocation table = the proposed holdings (product + proposed $).
     if(a.trades.length){
-      p.rows = a.trades.map(t => ({n:t.product, a:t.proposed, icr:'', isFee:false}));
+      p.rows = a.trades.map(t => ({n:canonicalCareName(t.product), a:t.proposed, icr:'', isFee:false}));
       // Trades = the buy/sell changes.
       p.trades = a.trades.map(t => {
         const raw = (t.change||'').replace(/[^0-9.\-]/g,'');
         const isSell = /^-/.test(raw) || /^-/.test((t.change||'').trim());
         const amount = (t.change||'').replace(/^-/,'').trim();
-        return {action:isSell ? 'Sell' : 'Buy', amount, product:t.product||''};
+        return {action:isSell ? 'Sell' : 'Buy', amount, product:canonicalCareName(t.product)||''};
       });
     }
     // Variation table = the current / proposed / variance % comparison.
     if(a.comparison.length){
       p.allocComparison = {
         show:true,
-        rows: a.comparison.map(c => ({name:c.name, current:c.current, proposed:c.proposed, variance:c.variance})),
+        rows: a.comparison.map(c => ({name:canonicalCareName(c.name), current:c.current, proposed:c.proposed, variance:c.variance})),
         showTotal:true,
         totalCurrent: a.compTotal.current || '100.00%',
         totalProposed: a.compTotal.proposed || '100.00%',
@@ -11979,7 +12022,7 @@ async function importWealthSolverRoa(file){
       const isHolding = r.slice(1).some(c => /%/.test(String(c||'')));
       if(isHolding && r.length >= 1 + 2*nP){
         const amt = num(r[2 + 2*chosen.i]);
-        if(amt != null && amt !== 0){ rows.push({n:name, a:fmt(amt), icr:'', isFee:false}); total += amt; }
+        if(amt != null && amt !== 0){ rows.push({n:canonicalCareName(name), a:fmt(amt), icr:'', isFee:false}); total += amt; }
       } else if(!isHolding){
         const amt = num(r[1 + chosen.i]);
         if(amt != null && amt !== 0) fundNames.push(name);
