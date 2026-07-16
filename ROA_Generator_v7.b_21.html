@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_20";
+const APP_VERSION = "v7.b_21";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -3413,6 +3413,29 @@ const SCENARIOS = {
 
   // ═══════════════════════════════════════════════════════════
   // SMSF — Additional scenarios
+
+  bdbn_nomination: {
+    cat:"Superannuation", type:"ROA", label:"Super — Death Benefit Nomination (BDBN)", short:"BDBN",
+    desc:"Make or update a (non-lapsing) binding death benefit nomination",
+    needs:{bdbn:true},
+    pd:"Binding death benefit nomination for your superannuation",
+    obj:"{name}, during our recent review we discussed ensuring your superannuation death benefits are directed according to your wishes by putting a valid death benefit nomination in place on your superannuation account.",
+    rec:"complete a non-lapsing binding death benefit nomination for your superannuation account, in favour of the beneficiaries set out in the nomination table below.",
+    benefits:[
+      "A valid binding nomination gives you certainty — the trustee must pay your superannuation death benefit to the beneficiaries you have nominated, rather than exercising its own discretion.",
+      "Benefits paid directly to nominated beneficiaries generally bypass your estate, which can allow faster payment and may reduce exposure to estate disputes.",
+      "A non-lapsing nomination does not expire every three years, so your instruction remains in force until you change or revoke it."
+    ],
+    risks:[
+      "A nomination is only binding if it is validly completed, signed and witnessed in accordance with the fund's requirements — an invalid nomination reverts to trustee discretion.",
+      "Only eligible beneficiaries (your dependants or your legal personal representative) can be nominated; a nomination in favour of anyone else is invalid.",
+      "Superannuation death benefits paid to beneficiaries who are not dependants for tax purposes may be subject to tax.",
+      "You should review your nomination whenever your personal circumstances change (marriage, separation, children, death of a beneficiary)."
+    ],
+    otherConsiderations:[
+      "Ensure your Will and other estate planning documents remain consistent with this nomination — please review them with your solicitor."
+    ]
+  },
 
   smsf_property_sale: {
     cat:"Superannuation", type:"ROA", label:"Super — SMSF Property Sale", short:"SMSF Property Sale",
