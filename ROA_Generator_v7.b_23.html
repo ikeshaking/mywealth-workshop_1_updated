@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_22";
+const APP_VERSION = "v7.b_23";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -1961,7 +1961,7 @@ const SCENARIOS = {
   super_ttr_open: {
     cat:"Pension", type:"ROA", label:"Pension — Open Transition to Retirement (TTR)", short:"Open TTR",
     desc:"Commence a transition to retirement pension",
-    needs:{pension:true},
+    needs:{pension:true, super:true},
     pd:"Commencement of a transition to retirement (TTR) pension",
     obj:"{name}, having reached your preservation age of 60 and continuing to work, we discussed commencing a transition to retirement (TTR) pension of {amount} from your {superPlatform} superannuation account to supplement your income and/or enable additional salary sacrifice contributions.",
     rec:"commence a TTR pension of {amount} from your {pensionPlatform} account.",
@@ -10914,6 +10914,12 @@ function provisionPortfolios(scns){
       kept.push(recv);
     } else if(importedSuper.length){
       importedSuper.forEach(p => kept.push(p));
+    } else if(needSuper && needPension){
+      // Advice touching BOTH accounts (pension top-up from accumulation,
+      // recontribution, opening a TTR alongside accumulation) shows BOTH
+      // tables — one for the accumulation account, one for the pension.
+      kept.push(existingBy["Superannuation Portfolio"] || mkPortfolio("Superannuation Portfolio", F.superPlatform, contextFromClient()));
+      kept.push(existingBy["Pension Portfolio"] || mkPortfolio("Pension Portfolio", F.pensionPlatform, contextFromClient()));
     } else {
       const label = needPension ? "Pension Portfolio" : "Superannuation Portfolio";
       const platform = needPension ? F.pensionPlatform : F.superPlatform;
@@ -10927,6 +10933,33 @@ function provisionPortfolios(scns){
         kept.push(existingBy[label] || mkPortfolio(label, platform, contextFromClient()));
       }
     }
+  }
+
+  // Partial rollover retaining insurance — the RETAINED external fund gets its
+  // own small table automatically (labelled from the "from fund" field), so the
+  // two-account situation is always shown: the Hub24 destination table plus the
+  // retained fund holding the minimum balance for insurance.
+  if(selectedScenarios.includes('super_rollover_partial')){
+    let ret = existingBy["Retained Fund (Insurance)"];
+    if(!ret){
+      ret = mkPortfolio("Retained Fund (Insurance)", (F.fromFund||'').trim() || "External Super Fund", "Retained");
+      ret.careType = 'Super';   // always a super account, whatever the fund is called
+      ret.rows = [
+        {n:"Existing investment option — retained minimum balance", a:"", icr:"", isFee:false},
+        {n:"", a:"", icr:"", isFee:false}
+      ];
+      ret.totalLabel = "Retained Balance";
+      ret.allocComparison.show = false;
+      ret.note = "Minimum balance retained in this fund to maintain your existing insurance cover — review annually that it remains sufficient.";
+      ret._autoPlatform = ret.platform;
+    }
+    // Keep the platform in sync with the "from fund" field until the adviser
+    // types their own platform value.
+    const ff = (F.fromFund||'').trim();
+    if(ff && ret._autoPlatform !== undefined && ret.platform === ret._autoPlatform && ret.platform !== ff){
+      ret.platform = ff; ret._autoPlatform = ff;
+    }
+    if(kept.indexOf(ret) === -1) kept.push(ret);
   }
 
   // Always preserve any CARE-imported portfolio not already kept above, so an
