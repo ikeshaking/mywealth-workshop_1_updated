@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_17";
+const APP_VERSION = "v7.b_18";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -12953,6 +12953,99 @@ function parseClearViewQuoteRoa(text){
   return rows.length ? {rows, client} : null;
 }
 
+// ── Zurich Active quote (ported from the SOA generator) ────────────────────
+// "Death $sum $premium" + "Active health events $sum ..." + "Total premium"
+// summary rows. Produces Life (Linked) + Active health events rows with the
+// super/personal split on the AHE premium.
+function parseZurichActiveQuoteRoa(text){
+  const t = String(text||'').replace(/\r/g,'');
+  if(!/zurich active/i.test(t) || !/active health events/i.test(t)) return null;
+  const num = s => { const n = parseFloat(String(s==null?'':s).replace(/[^0-9.]/g,'')); return isFinite(n)?n:0; };
+  const fmt = n => '$'+String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const one = re => { const m = t.match(re); return m?num(m[1]):0; };
+  const death = t.match(/Death\s+\$([\d,]+)\s+\$([\d,]+\.\d{2})/i);
+  const ahe = t.match(/Active health events\s+\$([\d,]+)\s+\$([\d,]+\.\d{2})\s+\$([\d,]+\.\d{2})\s+\$([\d,]+\.\d{2})/i);
+  if(!death && !ahe) return null;
+  const stamp = one(/Stamp duty\s+\$([\d,]+\.\d{2})/i);
+  const liM = t.match(/(?:Life insured|Client name|Prepared for)[:\s]+([A-Z][a-zA-Z'’\-]+(?:\s+[A-Z][a-zA-Z'’\-]+)*)/i);
+  const client = liM ? liM[1].trim() : '';
+  const fn = client.split(/\s+/)[0] || '';
+  const rows = [];
+  if(death){
+    rows.push({provider:'Zurich', coverType:'Life (Linked)', lifeInsured:fn, owner:'Linked Super',
+      benefitAmount: fmt(num(death[1])), premiumStructure:'Variable age-stepped',
+      premiumNote: num(death[2]) ? fmt(num(death[2])/12)+' pm (before tax)' : ''});
+  }
+  if(ahe){
+    const sup = num(ahe[2]), cash = num(ahe[3]) + stamp;
+    rows.push({provider:'Zurich', coverType:'Active health events (Linked)', lifeInsured:fn, owner:'Linked Super',
+      benefitAmount: fmt(num(ahe[1])), premiumStructure:'Variable age-stepped',
+      premiumNote: (sup+cash) ? fmt((sup+cash)/12)+' pm (before tax)'+(cash ? ' ('+fmt(sup/12)+' from super and '+fmt(cash/12)+' from personal cashflow)' : '') : ''});
+  }
+  return rows.length ? {rows, client} : null;
+}
+
+// ── OnePath OneCare quote (ported from the SOA generator) ──────────────────
+// The adviser-facing "Product Illustration" layout: Policy 1 = super (ANNUAL
+// premiums: Life + TPD Any), "Policy 2 for … (SuperLink with Policy 1)" =
+// personal (MONTHLY: TPD Own companion + Trauma + Income Protection).
+function parseOnePathQuoteRoa(text){
+  const t = String(text||'').replace(/\r/g,' ');
+  if(!/one\s*care|onepath/i.test(t)) return null;
+  if(!/Non Super Premium|Income Secure(?:\s+Cover)?\s+Protection|Amount Insured\s+Super Premium/i.test(t)) return null;
+  const num = s => { const n = parseFloat(String(s==null?'':s).replace(/[$,\s]/g,'')); return isFinite(n)?n:0; };
+  const fmt = n => '$'+String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const w = t.replace(/\s+/g,' ');
+  const g = (str,re) => { const m = String(str).match(re); return m?num(m[1]):0; };
+  const idx = w.search(/Policy 2 for/i);
+  const p1 = idx>=0 ? w.slice(0,idx) : w, p2 = idx>=0 ? w.slice(idx) : w;
+  const lifeSuperAnnual = g(p1,/Amount Insured\s+Super Premium\s+\$([\d,]+\.\d{2})/i);
+  const tpdSuperAnnual  = g(p1,/TPD Cover SuperLink SIS Any\*?\s*\$[\d,]+\s+\$([\d,]+\.\d{2})/i);
+  const lifeNonSuperM   = g(p2,/Amount Insured\s+Non Super Premium\s+\$([\d,]+\.\d{2})/i);
+  const tpdOwnM         = g(p2,/TPD Cover SuperLink SIS Own\*?\s*\$[\d,]+\s+\$([\d,]+\.\d{2})/i);
+  const traumaM         = g(p2,/Trauma SuperLink Premier\*?\s*\$[\d,]+\s+\$([\d,]+\.\d{2})/i);
+  const ipMatch         = p2.match(/Income Secure (?:Cover\s+)?Protection\s+\$([\d,]+)\s+\$([\d,]+\.\d{2})/i);
+  const scMatch         = p2.match(/Super Contribution Option\s+\$([\d,]+)\s+\$([\d,]+\.\d{2})/i);
+  const stampM          = g(p2,/Stamp Duty\s+\$([\d,]+\.\d{2})/i);
+  const lifeSum         = g(w,/Life Cover\*?\s+\$([\d,]{6,})/i);
+  const tpdSum          = g(w,/TPD Cover SuperLink SIS (?:Any|Own)\*?\s*\$([\d,]+)/i);
+  const traumaSum       = g(w,/Trauma SuperLink Premier\*?\s+\$([\d,]+)/i);
+  if(!(lifeSuperAnnual || tpdSuperAnnual || ipMatch || traumaM)) return null;
+  const wait = ((w.match(/Waiting Period\s+(\d+)\s*days?/i)||[])[1]||'') ;
+  const ben  = (w.match(/Benefit Period\s+To age\s+(\d+)/i)||[])[1]||'';
+  const liM = t.match(/(?:Policy 1 for|Life insured|Prepared for)[:\s]+([A-Z][a-zA-Z'’\-]+(?:\s+[A-Z][a-zA-Z'’\-]+)*)/i);
+  const client = liM ? liM[1].trim() : '';
+  const fn = client.split(/\s+/)[0] || '';
+  const rows = [];
+  const superM = (lifeSuperAnnual + tpdSuperAnnual)/12;
+  const splitM = lifeNonSuperM + tpdOwnM;
+  if(lifeSum || lifeSuperAnnual){
+    rows.push({provider:'OnePath', coverType:'Life (Linked)', lifeInsured:fn, owner: splitM ? 'Flexi-Linked Super' : 'Super',
+      benefitAmount: lifeSum?fmt(lifeSum):'', premiumStructure:'Variable age-stepped',
+      premiumNote: (superM+splitM) ? fmt(superM+splitM)+' pm (before tax)'+(splitM?' ('+fmt(superM)+' from super and '+fmt(splitM)+' from personal cashflow)':'') : ''});
+  }
+  if(tpdSuperAnnual || tpdOwnM){
+    rows.push({provider:'OnePath', coverType:'TPD (Linked & Own-Occupation)', lifeInsured:fn, owner: splitM ? 'Flexi-Linked Super' : 'Super',
+      benefitAmount: (tpdSum||lifeSum)?fmt(tpdSum||lifeSum):'', premiumStructure:'Variable age-stepped',
+      premiumNote:'', sharedPremiumWithPrev: rows.length>0});
+  }
+  if(ipMatch){
+    const ipM = num(ipMatch[2]) + (scMatch?num(scMatch[2]):0) + stampM;
+    rows.push({provider:'OnePath', coverType:'IP (Indemnity & Standard Contract)', lifeInsured:fn, owner:'Super',
+      benefitAmount: fmt(num(ipMatch[1]))+' pm',
+      superContribution: scMatch ? fmt(num(scMatch[1]))+' pm' : '',
+      waitingPeriod: wait ? wait+' days' : '', benefitPeriod: ben ? 'To Age '+ben : '',
+      premiumStructure:'Variable age-stepped',
+      premiumNote: ipM ? fmt(ipM)+' pm (before tax)' : ''});
+  }
+  if(traumaM || traumaSum){
+    rows.push({provider:'OnePath', coverType:'Trauma', lifeInsured:fn, owner: fn||'Self-Owned',
+      benefitAmount: traumaSum?fmt(traumaSum):'', premiumStructure:'Variable age-stepped',
+      premiumNote: traumaM ? fmt(traumaM)+' pm' : ''});
+  }
+  return rows.length ? {rows, client} : null;
+}
+
 // ── CDM / adviser "INSURANCE SCHEDULE" (existing cover summary PDF) ────────
 // Wrapped multi-line records: each policy's provider, premium, structure and
 // flags scatter across the lines around a "policy-number + insured + DOB"
@@ -13296,6 +13389,14 @@ async function importInsuranceFileToTable(file, fKey){
     if(!rows.length){
       const cq = parseClearViewQuoteRoa(text);
       if(cq && cq.rows.length){ rows = cq.rows; cdmClient = cq.client || ''; source = 'the ClearView quote'; }
+    }
+    if(!rows.length){
+      const zq = parseZurichActiveQuoteRoa(text);
+      if(zq && zq.rows.length){ rows = zq.rows; cdmClient = zq.client || ''; source = 'the Zurich Active quote'; }
+    }
+    if(!rows.length){
+      const oq = parseOnePathQuoteRoa(text);
+      if(oq && oq.rows.length){ rows = oq.rows; cdmClient = oq.client || ''; source = 'the OnePath OneCare quote'; }
     }
     // 1.5) CDM / adviser "INSURANCE SCHEDULE" existing-cover summary PDF.
     if(!rows.length){
@@ -19803,6 +19904,10 @@ async function classifySmartImportFile(file){
     return {type:'insurance-recommended', label:'NEOS quote', order:3};
   if(/clear\s*view|clearchoice/i.test(text) && /\$[\d,]+\.\d{2}\s+\$[\d,]+\.\d{2}\s+[YN]\b/.test(text))
     return {type:'insurance-recommended', label:'ClearView quote', order:3};
+  if(/zurich active/i.test(text) && /active health events/i.test(text))
+    return {type:'insurance-recommended', label:'Zurich Active quote', order:3};
+  if(/one\s*care|onepath/i.test(text) && /Non Super Premium|Income Secure|Amount Insured\s+Super Premium/i.test(text))
+    return {type:'insurance-recommended', label:'OnePath OneCare quote', order:3};
   try{
     if(/benefits report/i.test(text)) return {type:'insurance-current', label:'CDM benefits report (current cover)', order:3};
     const cdm = (typeof cdmParseBenefitsReport === 'function') ? cdmParseBenefitsReport(text) : null;
