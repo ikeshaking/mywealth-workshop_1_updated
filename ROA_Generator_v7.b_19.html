@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_18";
+const APP_VERSION = "v7.b_19";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -12845,7 +12845,9 @@ function parseNeosQuoteRoa(text){
       waiting:(ftext(body,'Waiting period')||'').replace(/\b(Benefit|Optional|Cover).*$/i,'').trim(),
       benefitPd:(ftext(body,'Benefit period')||'').replace(/\b(Optional|Linked|Occupation).*$/i,'').trim() };
   });
-  const liM = t.match(/(?:Life insured|Client name|Prepared for)[:\s]+([A-Z][a-zA-Z'’\-]+(?:\s+[A-Z][a-zA-Z'’\-]+)*)/i);
+  // NEOS quotes carry the client under "Insured person details / Name  <name>".
+  const liM = t.match(/Insured person details[\s\S]{0,40}?Name\s*\t?\s*([A-Z][a-zA-Z'’\-]+(?:\s+[A-Z][a-zA-Z'’\-]+)+)/i)
+    || t.match(/(?:Life insured|Client name|Prepared for)[:\s]+([A-Z][a-zA-Z'’\-]+(?:\s+[A-Z][a-zA-Z'’\-]+)+)/i);
   const client = liM ? liM[1].trim() : '';
   const fn = client.split(/\s+/)[0] || '';
   const rows = [];
@@ -12934,7 +12936,10 @@ function parseClearViewQuoteRoa(text){
   const bm = T.match(/benefit period:?\s*(to age \d+|age \d+|\d+\s*(?:years?|yrs?))/i);
   const _td = T.match(/TPD Definition:?\s*([^\n]+)/i);
   const tpdAny = _td ? /non[\s-]*occupational/i.test(_td[1]) : false;
-  const liM = T.match(/(?:Life insured|Client name|Prepared for)[:\s]+([A-Z][a-zA-Z'’\-]+(?:\s+[A-Z][a-zA-Z'’\-]+)*)/i);
+  // "Prepared for:" arrives glyph-doubled in some ClearView PDFs ("Pr Prepar
+  // epared f ed for: or:"), so also take the name sitting above "Date of Birth".
+  const liM = T.match(/(?:Life insured|Client name|Prepared for)[:\s]+([A-Z][a-zA-Z'’\-]+(?:\s+[A-Z][a-zA-Z'’\-]+)*)/i)
+    || T.match(/\n([A-Z][a-zA-Z'’\-]+(?:\s+[A-Z][a-zA-Z'’\-]+)+)\s*\n[^\n]*Date of Birth/i);
   const client = liM ? liM[1].trim() : '';
   const fn = client.split(/\s+/)[0] || '';
   const rows = covers.map(c=>{
@@ -12985,65 +12990,526 @@ function parseZurichActiveQuoteRoa(text){
   return rows.length ? {rows, client} : null;
 }
 
-// ── OnePath OneCare quote (ported from the SOA generator) ──────────────────
-// The adviser-facing "Product Illustration" layout: Policy 1 = super (ANNUAL
-// premiums: Life + TPD Any), "Policy 2 for … (SuperLink with Policy 1)" =
-// personal (MONTHLY: TPD Own companion + Trauma + Income Protection).
+// ── OnePath OneCare Product Illustration (verified on the real layout) ─────
+// Policy sections ("Policy 1 for <name> (SuperLink with Policy 2)") carry an
+// Ownership Structure (OneCare Super / Non Super) and cover lines whose
+// premium can sit inline OR on the line above (PDF column interleave):
+//   $240.40 / Life Cover  $815,000 / Super TPD Any  $815,000  $906.96
+//   Trauma SuperLink Premier  $125,000  $15.21
+//   Income Secure Protection  $6,825  $162.13  (+ Waiting/Benefit period)
 function parseOnePathQuoteRoa(text){
-  const t = String(text||'').replace(/\r/g,' ');
+  const t = String(text||'');
   if(!/one\s*care|onepath/i.test(t)) return null;
-  if(!/Non Super Premium|Income Secure(?:\s+Cover)?\s+Protection|Amount Insured\s+Super Premium/i.test(t)) return null;
+  if(!/Policy 1 for/i.test(t)) return null;
   const num = s => { const n = parseFloat(String(s==null?'':s).replace(/[$,\s]/g,'')); return isFinite(n)?n:0; };
   const fmt = n => '$'+String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',');
-  const w = t.replace(/\s+/g,' ');
-  const g = (str,re) => { const m = String(str).match(re); return m?num(m[1]):0; };
-  const idx = w.search(/Policy 2 for/i);
-  const p1 = idx>=0 ? w.slice(0,idx) : w, p2 = idx>=0 ? w.slice(idx) : w;
-  const lifeSuperAnnual = g(p1,/Amount Insured\s+Super Premium\s+\$([\d,]+\.\d{2})/i);
-  const tpdSuperAnnual  = g(p1,/TPD Cover SuperLink SIS Any\*?\s*\$[\d,]+\s+\$([\d,]+\.\d{2})/i);
-  const lifeNonSuperM   = g(p2,/Amount Insured\s+Non Super Premium\s+\$([\d,]+\.\d{2})/i);
-  const tpdOwnM         = g(p2,/TPD Cover SuperLink SIS Own\*?\s*\$[\d,]+\s+\$([\d,]+\.\d{2})/i);
-  const traumaM         = g(p2,/Trauma SuperLink Premier\*?\s*\$[\d,]+\s+\$([\d,]+\.\d{2})/i);
-  const ipMatch         = p2.match(/Income Secure (?:Cover\s+)?Protection\s+\$([\d,]+)\s+\$([\d,]+\.\d{2})/i);
-  const scMatch         = p2.match(/Super Contribution Option\s+\$([\d,]+)\s+\$([\d,]+\.\d{2})/i);
-  const stampM          = g(p2,/Stamp Duty\s+\$([\d,]+\.\d{2})/i);
-  const lifeSum         = g(w,/Life Cover\*?\s+\$([\d,]{6,})/i);
-  const tpdSum          = g(w,/TPD Cover SuperLink SIS (?:Any|Own)\*?\s*\$([\d,]+)/i);
-  const traumaSum       = g(w,/Trauma SuperLink Premier\*?\s+\$([\d,]+)/i);
-  if(!(lifeSuperAnnual || tpdSuperAnnual || ipMatch || traumaM)) return null;
-  const wait = ((w.match(/Waiting Period\s+(\d+)\s*days?/i)||[])[1]||'') ;
-  const ben  = (w.match(/Benefit Period\s+To age\s+(\d+)/i)||[])[1]||'';
-  const liM = t.match(/(?:Policy 1 for|Life insured|Prepared for)[:\s]+([A-Z][a-zA-Z'’\-]+(?:\s+[A-Z][a-zA-Z'’\-]+)*)/i);
+  const liM = t.match(/Policy 1 for\s+([A-Z][a-zA-Z'’\-]+(?:\s+[A-Z][a-zA-Z'’\-]+)*)/);
   const client = liM ? liM[1].trim() : '';
   const fn = client.split(/\s+/)[0] || '';
+  const lines = t.split('\n').map(l => l.trim());
+  let inSuper = false, freqYearly = false, pendingPrem = 0;
+  const found = {};   // life / tpdAny / tpdOwn / trauma / ip
+  const put = (key, sum, prem, extra) => {
+    if(found[key]) return;   // first occurrence wins (later pages repeat options)
+    found[key] = Object.assign({sum, prem: freqYearly ? prem/12 : prem, inSuper}, extra||{});
+  };
+  for(let i = 0; i < lines.length; i++){
+    const l = lines[i];
+    if(/Ownership Structure\s*\t?\s*OneCare Super/i.test(l) || /^Super - Platform/i.test(l)) inSuper = true;
+    else if(/Ownership Structure\s*\t?\s*Non Super/i.test(l) || /^Non-super/i.test(l)) inSuper = false;
+    if(/Annual Premium\s*\t?\s*\$|Premium frequency\s*\t?\s*Yearly|Total Yearly Premium/i.test(l)) freqYearly = true;
+    if(/Monthly Premium\s*\t?\s*\$|Premium frequency\s*\t?\s*Monthly|Total Monthly Premium/i.test(l)) freqYearly = false;
+    const lone = l.match(/^\$([\d,]+\.\d{2})$/);
+    if(lone){ pendingPrem = num(lone[1]); continue; }
+    // "Income Secure Protection" often sits alone with "$6,825  $162.13" below.
+    if(/^Income Secure (?:Cover\s+)?Protection$/i.test(l) && !found.ip){
+      for(let j = i+1; j < Math.min(i+4, lines.length); j++){
+        const sm = lines[j].match(/^\$([\d,]+)\s*\t?\$([\d,]+\.\d{2})$/);
+        if(sm){
+          let wait = '', bp = '';
+          for(let k = j; k < Math.min(j+8, lines.length); k++){
+            const wm = lines[k].match(/(\d+)\s*days?\s*\t?\s*(?:(\d+)\s*years?|to age\s*(\d+))/i);
+            if(wm){ wait = wm[1]+' days'; bp = wm[2] ? wm[2]+' years' : 'To Age '+wm[3]; break; }
+          }
+          put('ip', num(sm[1]), num(sm[2]), {wait, bp, indemnity: /indemnity/i.test(t)});
+          break;
+        }
+      }
+      continue;
+    }
+    const cm = l.match(/^(Life Cover|Super TPD Any|TPD SuperLink|Trauma SuperLink Premier|Income Secure Protection)\*?\s*\t?\$([\d,]+)(?:\s*\t?\$([\d,]+\.\d{2}))?/i);
+    if(!cm) continue;
+    const name = cm[1].toLowerCase(), sum = num(cm[2]);
+    const prem = cm[3] ? num(cm[3]) : pendingPrem;
+    pendingPrem = 0;
+    if(/^life cover/.test(name)) put('life', sum, prem);
+    else if(/super tpd any/.test(name)) put('tpdAny', sum, prem);
+    else if(/tpd superlink/.test(name)) put('tpdOwn', sum, prem);
+    else if(/trauma superlink/.test(name)){ if(prem > 0 || !found.trauma) found.trauma = {sum, prem: freqYearly ? prem/12 : prem, inSuper}; }
+    else if(/income secure/.test(name)){
+      // WP/BP sit on the lines just below: "Waiting Period  Benefit Period" / "90 days  6 years"
+      let wait = '', bp = '';
+      for(let j = i; j < Math.min(i+8, lines.length); j++){
+        const wm = lines[j].match(/(\d+)\s*days?\s*\t?\s*(?:(\d+)\s*years?|to age\s*(\d+))/i);
+        if(wm){ wait = wm[1]+' days'; bp = wm[2] ? wm[2]+' years' : 'To Age '+wm[3]; break; }
+      }
+      put('ip', sum, prem, {wait, bp, indemnity: /indemnity/i.test(t)});
+    }
+  }
+  if(!Object.keys(found).length) return null;
   const rows = [];
-  const superM = (lifeSuperAnnual + tpdSuperAnnual)/12;
-  const splitM = lifeNonSuperM + tpdOwnM;
-  if(lifeSum || lifeSuperAnnual){
-    rows.push({provider:'OnePath', coverType:'Life (Linked)', lifeInsured:fn, owner: splitM ? 'Flexi-Linked Super' : 'Super',
-      benefitAmount: lifeSum?fmt(lifeSum):'', premiumStructure:'Variable age-stepped',
-      premiumNote: (superM+splitM) ? fmt(superM+splitM)+' pm (before tax)'+(splitM?' ('+fmt(superM)+' from super and '+fmt(splitM)+' from personal cashflow)':'') : ''});
+  const linkedSuper = (found.life ? found.life.prem : 0) + (found.tpdAny ? found.tpdAny.prem : 0);
+  const linkedCash = found.tpdOwn ? found.tpdOwn.prem : 0;
+  if(found.life){
+    rows.push({provider:'OnePath', coverType:'Life (Linked)', lifeInsured:fn,
+      owner: (found.tpdOwn || !found.life.inSuper===false) && found.tpdOwn ? 'Flexi-Linked Super' : (found.life.inSuper ? 'Super' : (fn||'Self-Owned')),
+      benefitAmount: fmt(found.life.sum), premiumStructure:'Variable age-stepped',
+      premiumNote: (linkedSuper+linkedCash) ? fmt(linkedSuper+linkedCash)+' pm (before tax)'+(linkedCash ? ' ('+fmt(linkedSuper)+' from super and '+fmt(linkedCash)+' from personal cashflow)' : '') : ''});
   }
-  if(tpdSuperAnnual || tpdOwnM){
-    rows.push({provider:'OnePath', coverType:'TPD (Linked & Own-Occupation)', lifeInsured:fn, owner: splitM ? 'Flexi-Linked Super' : 'Super',
-      benefitAmount: (tpdSum||lifeSum)?fmt(tpdSum||lifeSum):'', premiumStructure:'Variable age-stepped',
-      premiumNote:'', sharedPremiumWithPrev: rows.length>0});
+  if(found.tpdAny || found.tpdOwn){
+    const src = found.tpdAny || found.tpdOwn;
+    rows.push({provider:'OnePath',
+      coverType: found.tpdOwn ? 'TPD (Linked & Own-Occupation)' : 'TPD (Linked & Any-Occupation)',
+      lifeInsured:fn, owner: found.tpdOwn ? 'Flexi-Linked Super' : (src.inSuper ? 'Super' : (fn||'Self-Owned')),
+      benefitAmount: fmt(src.sum), premiumStructure:'Variable age-stepped',
+      premiumNote:'', sharedPremiumWithPrev: !!found.life});
   }
-  if(ipMatch){
-    const ipM = num(ipMatch[2]) + (scMatch?num(scMatch[2]):0) + stampM;
-    rows.push({provider:'OnePath', coverType:'IP (Indemnity & Standard Contract)', lifeInsured:fn, owner:'Super',
-      benefitAmount: fmt(num(ipMatch[1]))+' pm',
-      superContribution: scMatch ? fmt(num(scMatch[1]))+' pm' : '',
-      waitingPeriod: wait ? wait+' days' : '', benefitPeriod: ben ? 'To Age '+ben : '',
+  if(found.ip){
+    rows.push({provider:'OnePath', coverType: found.ip.indemnity ? 'IP (Indemnity & Standard Contract)' : 'Income Protection',
+      lifeInsured:fn, owner: found.ip.inSuper ? 'Super' : (fn||'Self-Owned'),
+      benefitAmount: fmt(found.ip.sum)+' pm',
+      waitingPeriod: found.ip.wait||'', benefitPeriod: found.ip.bp||'',
       premiumStructure:'Variable age-stepped',
-      premiumNote: ipM ? fmt(ipM)+' pm (before tax)' : ''});
+      premiumNote: found.ip.prem ? fmt(found.ip.prem)+' pm (before tax)' : ''});
   }
-  if(traumaM || traumaSum){
-    rows.push({provider:'OnePath', coverType:'Trauma', lifeInsured:fn, owner: fn||'Self-Owned',
-      benefitAmount: traumaSum?fmt(traumaSum):'', premiumStructure:'Variable age-stepped',
-      premiumNote: traumaM ? fmt(traumaM)+' pm' : ''});
+  if(found.trauma){
+    rows.push({provider:'OnePath', coverType:'Trauma', lifeInsured:fn,
+      owner: found.trauma.inSuper ? 'Super' : (fn||'Self-Owned'),
+      benefitAmount: fmt(found.trauma.sum), premiumStructure:'Variable age-stepped',
+      premiumNote: found.trauma.prem ? fmt(found.trauma.prem)+' pm' : ''});
   }
   return rows.length ? {rows, client} : null;
+}
+
+// ── MetLife Protect new-business quote ("Quote Illustration for …") ────────
+// Section blocks ("Section 1 . Non-Super policy structure") with per-cover
+// field lists: "Cover amount $X", "Total <cover> Premium $Y", WP/BP labels.
+function parseMetlifeQuoteRoa(text){
+  const t = String(text||'');
+  if(!/MetLife Protect/i.test(t) || !/Quote Illustration/i.test(t)) return null;
+  const num = s => { const n = parseFloat(String(s==null?'':s).replace(/[$,\s]/g,'')); return isFinite(n)?n:0; };
+  const fmt = n => '$'+String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const liM = t.match(/Quote Illustration for\s+(?:Mr|Mrs|Ms|Dr|Miss)?\s*([A-Z][a-zA-Z'’\-]+(?:\s+[A-Z][a-zA-Z'’\-]+)*)/);
+  const client = liM ? liM[1].trim() : '';
+  const fn = client.split(/\s+/)[0] || '';
+  const lines = t.split('\n').map(l => l.trim());
+  let inSuper = false, freqYearly = false;
+  let cur = null; const rows = [];
+  const flush = () => {
+    if(!cur) return;
+    const r = cur; cur = null;
+    if(!r.sum && !r.prem) return;
+    const pm = freqOfBlock(r) === 'yearly' ? r.prem/12 : r.prem;
+    const isIP = r.kind === 'ip';
+    rows.push({provider:'MetLife', coverType: r.ct, lifeInsured:fn,
+      owner: r.inSuper ? 'Super' : (fn||'Self-Owned'),
+      benefitAmount: r.sum ? fmt(r.sum)+(isIP?' pm':'') : '',
+      superContribution: r.sco ? fmt(r.sco)+' pm' : '',
+      waitingPeriod: r.wait||'', benefitPeriod: r.bp||'',
+      premiumStructure: r.struct||'Variable age-stepped',
+      premiumNote: pm ? fmt(pm)+' pm (before tax)' : ''});
+  };
+  const freqOfBlock = r => r.freqYearly ? 'yearly' : 'monthly';
+  for(const l of lines){
+    const sec = l.match(/^Section\s+\d+\s*\.\s*(Non-Super|Super) policy structure/i);
+    if(sec){ flush(); inSuper = /^super/i.test(sec[1]); continue; }
+    const fq = l.match(/Total policy premium:\s*\$[\d,.]+\s*\((Monthly|Yearly)\)/i);
+    if(fq){ freqYearly = /yearly/i.test(fq[1]); continue; }
+    // Cover block headers
+    if(/^Income Cover$/i.test(l)){ flush(); cur = {kind:'ip', ct:'', inSuper, freqYearly}; continue; }
+    if(/^Life Cover$/i.test(l)){ flush(); cur = {kind:'life', ct:'Life (Linked)', inSuper, freqYearly}; continue; }
+    if(/^TPD Cover(\s*\t?\s*Linked)?$/i.test(l)){ flush(); cur = {kind:'tpd', ct:'TPD (Linked & Any-Occupation)', inSuper, freqYearly}; continue; }
+    if(/^TPD (?:Cover\s*)?[-–]\s*Own Occupation/i.test(l)){ flush(); cur = {kind:'tpdOwn', ct:'TPD (Linked & Own-Occupation)', inSuper, freqYearly}; continue; }
+    if(/^Trauma Cover(\s*\t?\s*Linked)?$/i.test(l)){ flush(); cur = {kind:'trauma', ct:'Trauma', inSuper, freqYearly}; continue; }
+    if(!cur) continue;
+    let m;
+    if((m = l.match(/^(?:Monthly cover amount|Cover amount)\s*\t?\$([\d,]+(?:\.\d+)?)/i))) cur.sum = num(m[1]);
+    else if((m = l.match(/^Monthly superannuation contribution amount\s*\t?\$([\d,]+(?:\.\d+)?)/i))) cur.sco = num(m[1]);
+    else if((m = l.match(/^Income waiting period\s*\t?(\d+)\s*Days?/i))) cur.wait = m[1]+' days';
+    else if((m = l.match(/^Income benefit period\s*\t?(.+)$/i))) cur.bp = m[1].replace(/^To Age/i,'To Age').trim();
+    else if((m = l.match(/^Premium type\s*\t?(.+)$/i))) cur.struct = m[1].trim();
+    else if(/^Income cover definition\s*\t?Indemnity/i.test(l)) cur.ct = 'IP (Indemnity & Standard Contract)';
+    else if(!cur.prem && (m = l.match(/^Total .*?Premium\s*\t?\$([\d,]+(?:\.\d+)?)/i))) cur.prem = num(m[1]);
+  }
+  flush();
+  rows.forEach(r => { if(!r.coverType) r.coverType = 'Income Protection'; });
+  return rows.length ? {rows, client} : null;
+}
+
+// ── MetLife Protect alteration quote (the emailed "Policy Alteration Quote") ─
+// "Quote 1:" / "Quote 2:" blocks, each with per-policy PROPOSED COVERS tables:
+//   Life  $1,031,100.00  Stepped  $1,748.93   (frequency per policy block)
+// When two quotes are present the adviser picks which to apply.
+function parseMetlifeAlterationRoa(text){
+  const t = String(text||'');
+  if(!/MetLife/i.test(t) || !/PROPOSED COVERS/i.test(t)) return null;
+  const num = s => { const n = parseFloat(String(s==null?'':s).replace(/[$,\s]/g,'')); return isFinite(n)?n:0; };
+  const fmt = n => '$'+String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const liM = t.match(/Life Insured\s*\t?\s*([A-Z][a-zA-Z'’\-]+(?:\s+[A-Z][a-zA-Z'’\-]+)*)/);
+  const client = liM ? liM[1].trim() : '';
+  const fn = client.split(/\s+/)[0] || '';
+  const qSplit = t.split(/Quote\s*(\d+)\s*:/);
+  const options = [];
+  for(let qi = 1; qi < qSplit.length; qi += 2){
+    const qn = qSplit[qi], body = qSplit[qi+1] || '';
+    const lines = body.split('\n').map(l => l.trim());
+    const rows = []; let ipRow = null; let freqYearly = true; let pending = [];
+    // frequency markers appear AFTER each policy's table — resolve per segment
+    const segs = body.split(/Payment frequency\s*\t?\s*(Yearly|Monthly)/i);
+    for(let si = 0; si < segs.length; si += 2){
+      const segLines = segs[si].split('\n').map(l => l.trim());
+      const yearly = /yearly/i.test(segs[si+1]||'Yearly');
+      const conv = v => yearly ? v/12 : v;
+      for(let i = 0; i < segLines.length; i++){
+        const l = segLines[i];
+        let m;
+        if((m = l.match(/^Life\s*\t\$([\d,]+(?:\.\d+)?)\s*\t(\w[\w\s-]*?)\s*\t\$([\d,]+(?:\.\d+)?)/i))){
+          rows.push({provider:'MetLife', coverType:'Life (Linked)', lifeInsured:fn, owner:'Super',
+            benefitAmount: fmt(num(m[1])), premiumStructure: m[2].trim(),
+            premiumNote: fmt(conv(num(m[3])))+' pm (before tax)'});
+        } else if((m = l.match(/^TPD(?:\s*\(Linked\))?\s*\t\$([\d,]+(?:\.\d+)?)\s*\t(\w[\w\s-]*?)\s*\t\$([\d,]+(?:\.\d+)?)/i))){
+          rows.push({provider:'MetLife', coverType:'TPD (Linked & Own-Occupation)', lifeInsured:fn, owner:'Super',
+            benefitAmount: fmt(num(m[1])), premiumStructure: m[2].trim(),
+            premiumNote: fmt(conv(num(m[3])))+' pm (before tax)'});
+        } else if((m = l.match(/^Trauma(?:\s*\(Linked\))?\s*\t\$([\d,]+(?:\.\d+)?)\s*\t(\w[\w\s-]*?)\s*\t\$([\d,]+(?:\.\d+)?)/i))){
+          rows.push({provider:'MetLife', coverType:'Trauma', lifeInsured:fn, owner: fn||'Self-Owned',
+            benefitAmount: fmt(num(m[1])), premiumStructure: m[2].trim(),
+            premiumNote: fmt(conv(num(m[3])))+' pm'});
+        } else if(/^Income Cover/i.test(l)){
+          // "Income Cover (BP-5 Years , WP-90 Days )  $5,107.00  Stepped  $2,555.11"
+          // — possibly wrapped over two lines; stitch this + next line.
+          const joined = l + ' ' + (segLines[i+1]||'');
+          const im = joined.match(/Income Cover\s*\(([^)]*)\)?[^$]*\$([\d,]+(?:\.\d+)?)\s*\t?(\w[\w\s-]*?)?\s*\t?\$([\d,]+(?:\.\d+)?)/i);
+          if(im){
+            const terms = im[1]||'';
+            const bp = (terms.match(/BP\s*-?\s*([^,]+?)(?:,|$)/i)||[])[1]||'';
+            const wp = (terms.match(/WP\s*-?\s*(\d+)\s*Days?/i)||[])[1]||'';
+            ipRow = {provider:'MetLife', coverType:'IP (Indemnity & Standard Contract)', lifeInsured:fn, owner:'Super',
+              benefitAmount: fmt(num(im[2]))+' pm',
+              waitingPeriod: wp ? wp+' days' : '', benefitPeriod: bp.trim(),
+              premiumStructure: (im[3]||'Stepped').trim(),
+              premiumNote: fmt(conv(num(im[4])))+' pm (before tax)'};
+            rows.push(ipRow);
+          }
+        } else if(ipRow && (m = l.match(/^Superannuation\s*$/i))){
+          // "Superannuation / Contribution Option  $510.00  Stepped  $255.16" wraps
+          const jm = ((segLines[i+1]||'') ).match(/Contribution Option\s*\t\$([\d,]+(?:\.\d+)?)/i);
+          if(jm) ipRow.superContribution = fmt(num(jm[1]))+' pm';
+        } else if(ipRow && (m = l.match(/^Superannuation\s*\t?Contribution Option\s*\t\$([\d,]+(?:\.\d+)?)/i))){
+          ipRow.superContribution = fmt(num(m[1]))+' pm';
+        }
+      }
+    }
+    if(rows.length){
+      const label = 'Quote ' + qn + ' — ' + rows.length + ' cover(s)' +
+        (body.match(/Change Requested[\s\S]{0,120}?\n\s*([^\n]{5,90})/) ? '' : '');
+      options.push({quote:qn, label, rows});
+    }
+  }
+  if(!options.length) return null;
+  return {options, client};
+}
+
+// ── Zurich Wealth Protection new-business quote ────────────────────────────
+// "Zurich Wealth Protection" policy sections with Super/Non-super context and
+// cover lines: "Death cover  $342,000  $121.25", "TPD - Optimised Any …",
+// "Trauma - Plus …", "Income protection …". Yearly or monthly per section.
+function parseZurichWealthQuoteRoa(text){
+  const t = String(text||'');
+  if(!/Zurich Wealth Protection/i.test(t) || !/Policy \d/i.test(t)) return null;
+  const num = s => { const n = parseFloat(String(s==null?'':s).replace(/[$,\s]/g,'')); return isFinite(n)?n:0; };
+  const fmt = n => '$'+String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const liM = t.match(/Life insured\s*[-–]\s*([A-Z][a-zA-Z'’\-]+(?:\s+[A-Z][a-zA-Z'’\-]+)*)/);
+  const client = liM ? liM[1].trim() : '';
+  const fn = client.split(/\s+/)[0] || '';
+  const lines = t.split('\n').map(l => l.trim());
+  let inSuper = false, yearly = true;
+  const found = {};
+  for(const l of lines){
+    if(/^Super - |Ownership.*Super(?!\w)/i.test(l) && !/non.?super/i.test(l)) inSuper = true;
+    else if(/^Non-?super/i.test(l)) inSuper = false;
+    if(/Yearly premium|Premium frequency\s*\t?Yearly/i.test(l)) yearly = true;
+    if(/Monthly premium|Premium frequency\s*\t?Monthly/i.test(l)) yearly = false;
+    const m = l.match(/^(Death cover|TPD - Optimised (?:Any|Own)|TPD - (?:Any|Own)|Trauma(?: - Plus)?|Income protection)\s*\t?\$([\d,]+)(?:\s*p\/m)?((?:\s*\t\$[\d,]+\.\d{2})+)$/i);
+    if(!m) continue;
+    const name = m[1].toLowerCase(); const sum = num(m[2]);
+    // several premium columns can follow (super / personal / total) — the last is the total
+    const premCols = [...m[3].matchAll(/\$([\d,]+\.\d{2})/g)].map(x => num(x[1]));
+    const premRaw = premCols.length ? premCols[premCols.length-1] : 0;
+    const prem = yearly ? premRaw/12 : premRaw;
+    if(/^death/.test(name) && !found.life) found.life = {sum, prem, inSuper};
+    else if(/optimised any|- any/.test(name) && !found.tpdAny) found.tpdAny = {sum, prem, inSuper};
+    else if(/optimised own|- own/.test(name) && !found.tpdOwn) found.tpdOwn = {sum, prem, inSuper};
+    else if(/^trauma/.test(name) && !found.trauma) found.trauma = {sum, prem, inSuper};
+    else if(/^income/.test(name) && !found.ip) found.ip = {sum, prem, inSuper};
+  }
+  if(!Object.keys(found).length) return null;
+  const rows = [];
+  const superLinked = (found.life ? found.life.prem : 0) + (found.tpdAny ? found.tpdAny.prem : 0);
+  const cashLinked = found.tpdOwn ? found.tpdOwn.prem : 0;
+  if(found.life){
+    rows.push({provider:'Zurich', coverType:'Life (Linked)', lifeInsured:fn,
+      owner: cashLinked ? 'Flexi-Linked Super' : (found.life.inSuper ? 'Super' : (fn||'Self-Owned')),
+      benefitAmount: fmt(found.life.sum), premiumStructure:'Variable age-stepped',
+      premiumNote: (superLinked+cashLinked) ? fmt(superLinked+cashLinked)+' pm (before tax)'+(cashLinked ? ' ('+fmt(superLinked)+' from super and '+fmt(cashLinked)+' from personal cashflow)' : '') : ''});
+  }
+  if(found.tpdAny || found.tpdOwn){
+    const src = found.tpdAny || found.tpdOwn;
+    rows.push({provider:'Zurich',
+      coverType: found.tpdOwn ? 'TPD (Linked & Own-Occupation)' : 'TPD (Linked & Any-Occupation)',
+      lifeInsured:fn, owner: cashLinked ? 'Flexi-Linked Super' : (src.inSuper ? 'Super' : (fn||'Self-Owned')),
+      benefitAmount: fmt(src.sum), premiumStructure:'Variable age-stepped',
+      premiumNote:'', sharedPremiumWithPrev: !!found.life});
+  }
+  if(found.ip){
+    const wm = t.match(/WP\s*(\d+)|Waiting period:?\s*\t?(\d+)\s*days/i);
+    const bm = t.match(/BP\s*(\d+)|Benefit period:?\s*\t?(?:To Age\s*)?(\d+)/i);
+    rows.push({provider:'Zurich', coverType:'Income Protection', lifeInsured:fn,
+      owner: found.ip.inSuper ? 'Super' : (fn||'Self-Owned'),
+      benefitAmount: fmt(found.ip.sum)+' pm',
+      waitingPeriod: wm ? (wm[1]||wm[2])+' days' : '',
+      benefitPeriod: bm ? ((+(bm[1]||bm[2]) <= 40) ? (bm[1]||bm[2])+' years' : 'To Age '+(bm[1]||bm[2])) : '',
+      premiumStructure:'Variable age-stepped',
+      premiumNote: found.ip.prem ? fmt(found.ip.prem)+' pm (before tax)' : ''});
+  }
+  if(found.trauma){
+    rows.push({provider:'Zurich', coverType: /trauma - plus/i.test(t) ? 'Trauma' : 'Trauma', lifeInsured:fn,
+      owner: found.trauma.inSuper ? 'Super' : (fn||'Self-Owned'),
+      benefitAmount: fmt(found.trauma.sum), premiumStructure:'Variable age-stepped',
+      premiumNote: found.trauma.prem ? fmt(found.trauma.prem)+' pm' : ''});
+  }
+  return rows.length ? {rows, client} : null;
+}
+
+// ── Zurich alteration quotation (in-force change / reduction) ──────────────
+// "Existing cover summary" block(s) = current, "Quote summary" / "Quote - …"
+// block(s) = proposed. Cover lines: "<name>\t$sum\t$premium". Statuses on the
+// proposed side flag reductions and cancellations, like the AIA importer.
+function parseZurichAlterationRoa(text){
+  const t = String(text||'');
+  if(!/alteration quotation/i.test(t) || !/zurich/i.test(t)) return null;
+  const num = s => { const n = parseFloat(String(s==null?'':s).replace(/[$,\s]/g,'')); return isFinite(n)?n:0; };
+  const fmt = n => '$'+String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const liM = t.match(/Life insured\s*(?:details)?\s*(?:[-–]|Name:)\s*\t?([A-Z][a-zA-Z'’\- ]+)/i);
+  let client = liM ? liM[1].trim() : '';
+  client = client.toLowerCase().replace(/(^|[\s'-])\S/g, c => c.toUpperCase());
+  const fn = client.split(/\s+/)[0] || '';
+  const lines = t.split('\n').map(l => l.trim());
+  const cur = [], nw = [];
+  let bucket = null, inSuper = false;
+  const coverOf = (name) => {
+    const s = name.toLowerCase();
+    if(/^death/.test(s)) return 'Life (Linked)';
+    if(/tpd/.test(s)) return /optimised(?!.*any)|own/.test(s) ? 'TPD (Linked & Own-Occupation)' : 'TPD (Linked & Any-Occupation)';
+    if(/trauma/.test(s)) return 'Trauma';
+    if(/^income/.test(s)) return 'Income Protection';
+    if(/super contributions? option/.test(s)) return 'SCO';
+    return '';
+  };
+  for(const l of lines){
+    if(/\(super\)|- Super\b|Pay method\s*\t?Platform/i.test(l)) inSuper = true;
+    if(/non-?super|Pay method\s*\t?Direct Debit/i.test(l)) inSuper = false;
+    if(/^Existing cover summary/i.test(l)){ bucket = cur; continue; }
+    if(/^Quote summary|^Quote - /i.test(l)){ bucket = nw; continue; }
+    if(/^Policy totals|^AUTHORITY TO PROCEED|^Projections/i.test(l)){ bucket = null; continue; }
+    if(!bucket || /^Stamp duty|^Management fee|^Total premium|^Premium for all/i.test(l)) continue;
+    const m = l.match(/^(.+?)\s*\t\$([\d,]+)\s*\t\$([\d,]+\.\d{2})$/);
+    if(!m) continue;
+    const ct = coverOf(m[1]);
+    if(!ct) continue;
+    const entry = {ct, name: m[1], sum: num(m[2]), prem: num(m[3]), inSuper};
+    // IP terms ride on the name: "Income (variable age - stepped) (WP 90, BP 65)"
+    const wp = m[1].match(/WP\s*(\d+)/i), bp = m[1].match(/BP\s*(\d+)/i);
+    if(wp) entry.wait = wp[1]+' days';
+    if(bp) entry.bp = (+bp[1] <= 40) ? bp[1]+' years' : 'To Age '+bp[1];
+    if(ct === 'SCO'){
+      const host = bucket[bucket.length-1];
+      if(host && /^ip|income/i.test(host.ct)) host.sco = entry.sum;
+      continue;
+    }
+    bucket.push(entry);
+  }
+  if(!cur.length && !nw.length) return null;
+  const mkRow = (r, status) => ({
+    provider:'Zurich', coverType: r.ct, lifeInsured: fn,
+    owner: r.inSuper ? 'Super' : (fn||'Self-Owned'),
+    benefitAmount: fmt(r.sum) + (/income/i.test(r.ct) ? ' pm' : ''),
+    superContribution: r.sco ? fmt(r.sco)+' pm' : '',
+    waitingPeriod: r.wait||'', benefitPeriod: r.bp||'',
+    premiumStructure:'Variable age-stepped',
+    premiumNote: r.prem ? fmt(r.prem)+' pm' : '',
+    status
+  });
+  const used = new Set();
+  const proposed = nw.map(r => {
+    const mi = cur.findIndex((c,i) => !used.has(i) && c.ct === r.ct);
+    let status = 'New';
+    if(mi >= 0){ used.add(mi); status = (r.sum < cur[mi].sum - 0.5) ? 'Reduce' : 'Retain & Alter'; }
+    return mkRow(r, status);
+  });
+  cur.forEach((c,i) => { if(!used.has(i)) proposed.push(mkRow(c, 'Cancel')); });
+  return { current: cur.map(r => mkRow(r, 'In Force')), proposed, client };
+}
+
+// ── ClearView LifeSolutions alteration quotation ───────────────────────────
+// Per-policy "Current Cover | Current Premium | Amended Cover | Amended
+// Premium" blocks. The amounts line comes FIRST, the cover name underneath:
+//   $398,281  $561.68  $398,281  $286.27 / Life Cover / Premium: … Premium: …
+// "Benefit Removed" = cancelled; "No Existing Benefit" = added. A bundle with
+// several alternative quotes for the same policies becomes selectable options.
+function parseClearViewAlterationRoa(text){
+  const t = String(text||'');
+  if(!/ClearView (LifeSolutions|ClearChoice) Quotation/i.test(t) || !/Current Cover\s*\tCurrent Premium\s*\tAmended Cover/i.test(t)) return null;
+  const num = s => { const n = parseFloat(String(s==null?'':s).replace(/[$,\s]/g,'')); return isFinite(n)?n:0; };
+  const fmt = n => '$'+String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const blocks = t.split(/ClearView (?:LifeSolutions|ClearChoice) Quotation/i).slice(1)
+    .filter(b => /Current Cover\s*\tCurrent Premium/i.test(b));
+  if(!blocks.length) return null;
+  const coverOf = raw => {
+    const s = raw.toLowerCase();
+    if(/life cover/.test(s)) return 'Life (Linked)';
+    if(/tpd/.test(s)) return 'TPD (Linked & Own-Occupation)';
+    if(/income protection/.test(s)) return 'Income Protection';
+    if(/trauma/.test(s)) return 'Trauma';
+    return '';
+  };
+  const seen = {};          // policyNo → occurrence count = option index
+  const options = [];       // [{current:[], proposed:[]}]
+  let client = '';
+  blocks.forEach(b => {
+    const pol = (b.match(/Policy Number:\s*\t?(\d+)/i)||[])[1] || '?';
+    const liM = b.match(/Life Insured:\s*\t?(?:Mr|Mrs|Ms|Dr|Miss)?\s*([A-Z][a-zA-Z'’\- ]+)/);
+    if(liM && !client) client = liM[1].trim();
+    const fn = client.split(/\s+/)[0] || '';
+    const superOwned = /HTFS Nominees|Super/i.test((b.match(/Policy Owner:\s*\t?([^\n]+)/i)||['',''])[1]);
+    const optIdx = seen[pol] = (seen[pol]||0) + 1;
+    while(options.length < optIdx) options.push({current:[], proposed:[]});
+    const opt = options[optIdx-1];
+    const lines = b.split('\n').map(l=>l.trim());
+    let pend = null;   // buffered money line
+    for(let i=0;i<lines.length;i++){
+      const l = lines[i];
+      if(/^Total Quote Premium/i.test(l)){ pend = null; continue; }
+      const money = l.match(/^\$([\d,]+)\s*\t\$([\d,]+\.\d{2})(?:\s*\t\$([\d,]+)\s*\t\$([\d,]+\.\d{2}))?$/);
+      if(money){ pend = money; continue; }
+      const ct = coverOf(l);
+      if(!ct || !pend){ if(ct) pend = null; continue; }
+      const removed = /Benefit Removed/i.test(l) || /Benefit Removed/i.test(lines[i+1]||'');
+      const added = /No Existing Benefit/i.test(l) || /No Existing Benefit/i.test(lines[i+1]||'');
+      // structures from the "Premium: X  Premium: Y" line below
+      const structLine = (lines.slice(i+1, i+4).find(x => /^Premium:/i.test(x))||'');
+      const structs = structLine.split('\t').map(s => s.replace(/^Premium:\s*/i,'').trim());
+      // IP terms from nearby lines
+      const near = lines.slice(i, i+8).join(' ');
+      const wp = (near.match(/Waiting Period:\s*(\d+)\s*Days/i)||[])[1];
+      const bp = (near.match(/Benefit Period:\s*(To Age \d+|\d+ Years?)/i)||[])[1];
+      const isIP = /income/i.test(ct);
+      const base = {provider:'ClearView', coverType:ct, lifeInsured:fn,
+        owner: superOwned ? 'Super' : (fn||'Self-Owned'),
+        waitingPeriod: isIP && wp ? wp+' days' : '', benefitPeriod: isIP && bp ? bp : ''};
+      const curSum = num(pend[1]), curPrem = num(pend[2]);
+      const hasAmd = pend[3] !== undefined;
+      const amdSum = hasAmd ? num(pend[3]) : 0, amdPrem = hasAmd ? num(pend[4]) : 0;
+      if(added){
+        opt.proposed.push(Object.assign({}, base, {benefitAmount: fmt(curSum)+(isIP?' pm':''),
+          premiumStructure: structs[0]||'', premiumNote: fmt(curPrem/12)+' pm', status:'New'}));
+      } else if(removed){
+        opt.current.push(Object.assign({}, base, {benefitAmount: fmt(curSum)+(isIP?' pm':''),
+          premiumStructure: structs[0]||'', premiumNote: fmt(curPrem/12)+' pm', status:'In Force'}));
+        opt.proposed.push(Object.assign({}, base, {benefitAmount: fmt(curSum)+(isIP?' pm':''),
+          premiumStructure: structs[0]||'', premiumNote:'', status:'Cancel'}));
+      } else {
+        opt.current.push(Object.assign({}, base, {benefitAmount: fmt(curSum)+(isIP?' pm':''),
+          premiumStructure: structs[0]||'', premiumNote: fmt(curPrem/12)+' pm', status:'In Force'}));
+        if(hasAmd){
+          const status = amdSum < curSum - 0.5 ? 'Reduce' : 'Retain & Alter';
+          opt.proposed.push(Object.assign({}, base, {benefitAmount: fmt(amdSum)+(isIP?' pm':''),
+            premiumStructure: structs[1]||structs[0]||'', premiumNote: fmt(amdPrem/12)+' pm', status}));
+        }
+      }
+      pend = null;
+    }
+  });
+  const useful = options.filter(o => o.current.length || o.proposed.length);
+  if(!useful.length) return null;
+  return {options: useful, client};
+}
+
+// ── NEOS in-force / alteration quote (the emailed Current-vs-New table) ────
+// "Plan  Ownership  Customer Name  Cover  Issue Date  Sum Insured  Premium |
+//  Sum Insured  Premium" — one row per cover, Current and New side by side.
+function parseNeosInforceRoa(text){
+  const t = String(text||'');
+  if(!/NEOS/i.test(t)) return null;
+  if(!/Sum Insured\s*\tPremium\s*\tSum Insured\s*\tPremium/i.test(t)) return null;
+  const num = s => { const n = parseFloat(String(s==null?'':s).replace(/[$,\s()]/g,'')); return isFinite(n)?n:0; };
+  const fmt = n => '$'+String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const lines = t.split('\n').map(l => l.trim());
+  const COVER = /(Income Protection|Split TPD|Attached TPD|Linked Critical Illness|Critical Illness|Trauma|Life)\b/i;
+  const coverOf = s => {
+    const c = s.toLowerCase();
+    if(/income/.test(c)) return 'Income Protection';
+    if(/split tpd/.test(c)) return 'TPD (Linked & Own-Occupation)';
+    if(/attached tpd/.test(c)) return 'TPD (Linked & Own-Occupation)';
+    if(/critical|trauma/.test(c)) return 'Trauma';
+    if(/life/.test(c)) return 'Life (Linked)';
+    return '';
+  };
+  let client = '', ownership = '', pendingRows = [];
+  const cur = [], nw = [];
+  const flushFreq = yearly => {
+    pendingRows.forEach(r => {
+      if(r.curPrem) cur.push(Object.assign({}, r.base, {benefitAmount:r.curSum, superContribution:r.curSco,
+        premiumNote: fmt(yearly ? r.curPrem/12 : r.curPrem)+' pm', status:'In Force'}));
+      if(r.nwPrem){
+        let status = 'Retain';
+        if(!r.curPrem) status = 'New';
+        else if(r.nwSumN < r.curSumN - 0.5) status = 'Reduce';
+        else if(r.nwSumN > r.curSumN + 0.5) status = 'Increase';
+        else if(Math.abs(r.nwPrem - r.curPrem) > 0.01) status = 'Retain & Alter';
+        nw.push(Object.assign({}, r.base, {benefitAmount:r.nwSum, superContribution:r.nwSco,
+          premiumNote: fmt(yearly ? r.nwPrem/12 : r.nwPrem)+' pm', status}));
+      }
+    });
+    pendingRows = [];
+  };
+  for(const l of lines){
+    const polM = l.match(/^(\d{6,})\s*\t(Ordinary|Super)\s*\t([A-Z][a-zA-Z'’\- ]+?)\s*\t/);
+    if(polM){ ownership = polM[2]; if(!client) client = polM[3].trim(); }
+    if(/^Total monthly premium/i.test(l)){ flushFreq(false); continue; }
+    if(/^Total yearly premium/i.test(l)){ flushFreq(true); continue; }
+    const cm = l.match(COVER);
+    if(!cm) continue;
+    // cells after the cover name: date, curSum, curPrem, newSum, newPrem
+    const cells = l.split('\t').map(c => c.trim());
+    const ci = cells.findIndex(c => COVER.test(c));
+    const vals = cells.slice(ci+1).filter(c => c && !/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(c));
+    if(vals.length < 4) continue;
+    const [curSumRaw, curPremRaw, nwSumRaw, nwPremRaw] = vals;
+    const fn = client.split(/\s+/)[0] || '';
+    const ct = coverOf(cm[1]);
+    const scoOf = s => { const m = String(s).match(/SCO\s*\$([\d,]+)/i); return m ? fmt(num(m[1]))+' pm' : ''; };
+    const sumTxt = s => { const m = String(s).match(/\$([\d,]+)/); return m ? fmt(num(m[1]))+(/income/i.test(ct)?' pm':'') : ''; };
+    pendingRows.push({base:{provider:'NEOS', coverType:ct, lifeInsured:fn,
+        owner: /super/i.test(ownership) ? 'Super' : (fn||'Self-Owned'), premiumStructure:''},
+      curSum: sumTxt(curSumRaw), curSumN: num((String(curSumRaw).match(/\$([\d,]+)/)||[,'0'])[1]),
+      curPrem: /^[\d.,]+$/.test(curPremRaw) ? num(curPremRaw) : 0, curSco: scoOf(curSumRaw),
+      nwSum: sumTxt(nwSumRaw), nwSumN: num((String(nwSumRaw).match(/\$([\d,]+)/)||[,'0'])[1]),
+      nwPrem: /^[\d.,]+$/.test(nwPremRaw) ? num(nwPremRaw) : 0, nwSco: scoOf(nwSumRaw)});
+  }
+  flushFreq(false);
+  if(!cur.length && !nw.length) return null;
+  return {current: cur, proposed: nw, client};
 }
 
 // ── CDM / adviser "INSURANCE SCHEDULE" (existing cover summary PDF) ────────
@@ -13380,6 +13846,53 @@ async function importInsuranceFileToTable(file, fKey){
           : 'the AIA quote (New Quotation compared against the Current Plan — reduced and cancelled covers are flagged)';
       }
     }
+    // 1.15) Other insurers' alteration / in-force quote layouts, each with
+    //       explicit change statuses (Reduce / Cancel / New) on the proposed
+    //       side. Current table gets the existing cover, any other table gets
+    //       the proposed cover.
+    if(!rows.length){
+      const za = parseZurichAlterationRoa(text);
+      if(za){
+        rows = (dk === 'current') ? za.current : za.proposed;
+        cdmClient = za.client || '';
+        source = (dk === 'current') ? 'the Zurich alteration quote (existing cover)' : 'the Zurich alteration quote (proposed vs existing — changes flagged)';
+      }
+    }
+    if(!rows.length){
+      const cva = parseClearViewAlterationRoa(text);
+      if(cva && cva.options.length){
+        let opt = cva.options[0];
+        if(cva.options.length > 1){
+          const useFirst = confirm('This ClearView alteration bundle holds ' + cva.options.length + ' alternative quote sets for the same policies.\n\nOK — apply quote set 1\nCancel — apply quote set 2');
+          opt = useFirst ? cva.options[0] : cva.options[1];
+        }
+        rows = (dk === 'current') ? opt.current : opt.proposed;
+        cdmClient = cva.client || '';
+        source = (dk === 'current') ? 'the ClearView alteration quote (current cover)' : 'the ClearView alteration quote (amended vs current — changes flagged)';
+      }
+    }
+    if(!rows.length){
+      const ni = parseNeosInforceRoa(text);
+      if(ni){
+        rows = (dk === 'current') ? ni.current : ni.proposed;
+        cdmClient = ni.client || '';
+        source = (dk === 'current') ? 'the NEOS in-force quote (current)' : 'the NEOS in-force quote (new vs current — changes flagged)';
+      }
+    }
+    if(!rows.length){
+      const ma = parseMetlifeAlterationRoa(text);
+      if(ma && ma.options.length){
+        let opt = ma.options[0];
+        if(ma.options.length > 1){
+          const useFirst = confirm('This MetLife alteration quote holds ' + ma.options.length + ' quote options:\n\n'
+            + ma.options.map(o => '• ' + o.label).join('\n')
+            + '\n\nOK — apply Quote 1\nCancel — apply Quote 2');
+          opt = useFirst ? ma.options[0] : ma.options[1];
+        }
+        rows = opt.rows; cdmClient = ma.client || '';
+        source = 'the MetLife alteration quote (' + opt.label.split(' — ')[0] + ')';
+      }
+    }
     // 1.2) Insurer quotes, matching the SOA generator's readers — NEOS and
     //      ClearView quote layouts → firm-style cover rows.
     if(!rows.length){
@@ -13395,8 +13908,16 @@ async function importInsuranceFileToTable(file, fKey){
       if(zq && zq.rows.length){ rows = zq.rows; cdmClient = zq.client || ''; source = 'the Zurich Active quote'; }
     }
     if(!rows.length){
+      const zw = parseZurichWealthQuoteRoa(text);
+      if(zw && zw.rows.length){ rows = zw.rows; cdmClient = zw.client || ''; source = 'the Zurich Wealth Protection quote'; }
+    }
+    if(!rows.length){
       const oq = parseOnePathQuoteRoa(text);
       if(oq && oq.rows.length){ rows = oq.rows; cdmClient = oq.client || ''; source = 'the OnePath OneCare quote'; }
+    }
+    if(!rows.length){
+      const mq = parseMetlifeQuoteRoa(text);
+      if(mq && mq.rows.length){ rows = mq.rows; cdmClient = mq.client || ''; source = 'the MetLife Protect quote'; }
     }
     // 1.5) CDM / adviser "INSURANCE SCHEDULE" existing-cover summary PDF.
     if(!rows.length){
@@ -19894,8 +20415,6 @@ async function classifySmartImportFile(file){
   }
   if(/policy alteration illustration/i.test(text) || (/current details/i.test(text) && /quote\s*\d/i.test(text)))
     return {type:'insurance-recommended', label:'Insurer alteration quote', order:3};
-  if(/amended terms/i.test(text) && /agree/i.test(text))
-    return {type:'insurance-recommended', label:'Amended terms agreement', order:3};
   if(/INSURANCE\s+SCHEDULE/i.test(text) && /POLICY\s*NO/i.test(text))
     return {type:'insurance-current', label:'Insurance schedule (existing cover summary)', order:3};
   if(/\bAIA\b/i.test(text) && /Current Plan/i.test(text) && /New Quotation/i.test(text))
@@ -19906,8 +20425,24 @@ async function classifySmartImportFile(file){
     return {type:'insurance-recommended', label:'ClearView quote', order:3};
   if(/zurich active/i.test(text) && /active health events/i.test(text))
     return {type:'insurance-recommended', label:'Zurich Active quote', order:3};
-  if(/one\s*care|onepath/i.test(text) && /Non Super Premium|Income Secure|Amount Insured\s+Super Premium/i.test(text))
+  if(/alteration quotation/i.test(text) && /zurich/i.test(text))
+    return {type:'alt-dual', label:'Zurich alteration quote (existing + proposed)', order:3};
+  if(/Zurich Wealth Protection/i.test(text) && /Policy \d/i.test(text))
+    return {type:'insurance-recommended', label:'Zurich Wealth Protection quote', order:3};
+  if(/ClearView (LifeSolutions|ClearChoice) Quotation/i.test(text) && /Current Cover\s*\tCurrent Premium\s*\tAmended Cover/i.test(text))
+    return {type:'alt-dual', label:'ClearView alteration quote (current + amended)', order:3};
+  if(/NEOS/i.test(text) && /Sum Insured\s*\tPremium\s*\tSum Insured\s*\tPremium/i.test(text))
+    return {type:'alt-dual', label:'NEOS in-force quote (current + new)', order:3};
+  if(/MetLife/i.test(text) && /PROPOSED COVERS/i.test(text))
+    return {type:'insurance-recommended', label:'MetLife alteration quote', order:3};
+  if(/MetLife Protect/i.test(text) && /Quote Illustration/i.test(text))
+    return {type:'insurance-recommended', label:'MetLife Protect quote', order:3};
+  if(/one\s*care|onepath/i.test(text) && /Policy 1 for|Non Super Premium|Income Secure|Amount Insured\s+Super Premium/i.test(text))
     return {type:'insurance-recommended', label:'OnePath OneCare quote', order:3};
+  // (checked AFTER the insurer-specific layouts — many quote PDS boilerplates
+  // mention "amended terms" in passing)
+  if(/amended terms/i.test(text) && /agree/i.test(text))
+    return {type:'insurance-recommended', label:'Amended terms agreement', order:3};
   try{
     if(/benefits report/i.test(text)) return {type:'insurance-current', label:'CDM benefits report (current cover)', order:3};
     const cdm = (typeof cdmParseBenefitsReport === 'function') ? cdmParseBenefitsReport(text) : null;
@@ -19951,9 +20486,9 @@ async function handleSmartImport(fileList){
       else if(t === 'care-pdf'){ alert(it.file.name + ' looks like a CARE/Hub24 rebalance document exported as PDF.\n\nA PDF export loses the table structure this importer relies on — please export it from CARE as Word (.docx) and drop that file instead.'); }
       else if(t === 'insurance-current'){ await importInsuranceFileToTable(it.file, 'insuranceCurrent'); }
       else if(t === 'insurance-recommended'){ await importInsuranceFileToTable(it.file, smartQuoteTargetKey()); }
-      else if(t === 'aia'){
-        // Both sides of the AIA quote apply: current plan → Current Cover,
-        // new quotation (with Reduce/Cancel statuses) → the recommended table.
+      else if(t === 'aia' || t === 'alt-dual'){
+        // Both sides of an alteration quote apply: existing cover → Current
+        // Cover, proposed (with Reduce/Cancel statuses) → the recommended table.
         await importInsuranceFileToTable(it.file, 'insuranceCurrent');
         await importInsuranceFileToTable(it.file, smartQuoteTargetKey());
       }
