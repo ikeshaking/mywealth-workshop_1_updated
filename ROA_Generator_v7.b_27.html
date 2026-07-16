@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_26";
+const APP_VERSION = "v7.b_27";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -11656,6 +11656,17 @@ function canonicalCareName(raw){
   const full = MAP[key];
   return full ? full + star : src;
 }
+// Imported documents carry cents (e.g. "$25,331.60"); the ROA tables use clean
+// whole-dollar figures ("$25,332"). Rounds every dollar amount in the string to
+// the nearest whole number; percentages (e.g. "0.844%") pass through unchanged.
+function roundImportedMoney(v){
+  const s = String(v==null?'':v);
+  if(!s.trim()) return s;
+  return s.replace(/[\d,]+\.\d+(?!\d|\s*%)/g, num => {
+    const n = parseFloat(num.replace(/,/g,''));
+    return isFinite(n) ? Math.round(n).toLocaleString('en-AU') : num;
+  });
+}
 function carePlatform(plat, type){
   let pl = (plat||'').trim();
   if(/^hub24$/i.test(pl)){
@@ -11714,6 +11725,7 @@ function extractCareDoc(html){
     const trades = [];      // {product, proposed, change}
     const comparison = [];  // {name, current, proposed, variance}
     let compTotal = {current:'', proposed:'', variance:''};
+    let mgmtFeePct = '', adminFeePct = '', totalFeePct = '', totalFeeDollar = '';
 
     b.items.forEach(item => {
       if(item.tag === 'p'){
@@ -11727,6 +11739,25 @@ function extractCareDoc(html){
             platform = r[0].split(' - ').pop().trim();
           }
         });
+        // "Investment Fees" disclosure table — the CARE Portfolio Management Fee
+        // and Total Administration & Trustee Costs become the fee rows of the
+        // allocation table (as in the SOA), and Total Ongoing Costs becomes the
+        // portfolio's total fee % / $.
+        if(rows.some(r => /total ongoing costs/i.test((r[0]||'')))){
+          const pct3 = s => { const m = String(s==null?'':s).match(/-?[\d.]+/); return m ? parseFloat(m[0]).toFixed(3)+'%' : ''; };
+          const pctCell = r => { for(let i=r.length-1;i>0;i--){ if(/%/.test(r[i]||'')) return r[i]; } return ''; };
+          const dlrCell = r => { for(let i=1;i<r.length;i++){ if(/\$/.test(r[i]||'')) return r[i]; } return ''; };
+          rows.forEach(r => {
+            const lbl = (r[0]||'').trim().toLowerCase();
+            if(/^care portfolio management fee/.test(lbl) && !mgmtFeePct) mgmtFeePct = pct3(pctCell(r));
+            if(/^total administration and trustee costs/.test(lbl) && !adminFeePct) adminFeePct = pct3(pctCell(r));
+            if(/^total ongoing costs/.test(lbl)){
+              if(!totalFeePct) totalFeePct = pct3(pctCell(r));
+              if(!totalFeeDollar) totalFeeDollar = (dlrCell(r)||'').trim();
+            }
+          });
+          return;
+        }
         // Locate the header row and decide which kind of table this is.
         let hdr = -1, kind = null;
         for(let i=0;i<rows.length;i++){
@@ -11753,7 +11784,8 @@ function extractCareDoc(html){
 
     const type = careClassifyType(name);
     accounts.push({accountName:name, platform, type, owner:careOwnerOf(name),
-      riskProfile, totalValue, trades, comparison, compTotal});
+      riskProfile, totalValue, trades, comparison, compTotal,
+      mgmtFeePct, adminFeePct, feePercent: totalFeePct, feeDollar: totalFeeDollar});
   });
   // If this wasn't a "Rebalance" appendix, try the CARECalc "CARE Portfolio Fact Sheet"
   // layout (account summary table + per-account "CARE Essentials - X" breakdowns).
@@ -11850,12 +11882,12 @@ function careAccountsToPortfolios(accounts){
     p.careEntity = careLooksEntity(a.accountName);
     p.careEntityType = careEntityType(a.accountName);
     if(a.riskProfile) p.riskProfile = a.riskProfile;
-    if(a.totalValue) p.totalValue = a.totalValue;
+    if(a.totalValue) p.totalValue = roundImportedMoney(a.totalValue);
     // CARECalc fact-sheet accounts carry `allocations` (fund + $ + ICR) instead of rebalance
     // trades. Use them directly as the allocation table; there are no buy/sell trades or a
     // current-vs-proposed variation, so leave those empty and turn the Variation Table off.
     if(Array.isArray(a.allocations) && a.allocations.length){
-      p.rows = a.allocations.map(al => ({n:canonicalCareName(al.product), a:al.amount, icr:al.icr||'', isFee:/management fee|administration/i.test(canonicalCareName(al.product))}));
+      p.rows = a.allocations.map(al => ({n:canonicalCareName(al.product), a:roundImportedMoney(al.amount), icr:al.icr||'', isFee:/management fee|administration/i.test(canonicalCareName(al.product))}));
       if(a.feePercent) p.feePercent = a.feePercent;
       if(a.feeDollar)  p.feeDollar  = a.feeDollar;
       p.trades = [{action:'Buy', amount:'', product:''}];
@@ -11864,12 +11896,19 @@ function careAccountsToPortfolios(accounts){
     }
     // Allocation table = the proposed holdings (product + proposed $).
     if(a.trades.length){
-      p.rows = a.trades.map(t => ({n:canonicalCareName(t.product), a:t.proposed, icr:'', isFee:false}));
+      p.rows = a.trades.map(t => ({n:canonicalCareName(t.product), a:roundImportedMoney(t.proposed), icr:'', isFee:false}));
+      // Fee rows from the doc's "Investment Fees" disclosure table — the CARE
+      // management fee and admin/trustee costs always print (as in the SOA);
+      // per-option ICRs aren't in the CARE doc so those cells stay blank.
+      if(a.mgmtFeePct)  p.rows.push({n:'CARE Portfolio Management Fee', a:'-', icr:a.mgmtFeePct, isFee:true});
+      if(a.adminFeePct) p.rows.push({n:'Administration', a:'-', icr:a.adminFeePct, isFee:true});
+      if(a.feePercent) p.feePercent = a.feePercent;
+      if(a.feeDollar)  p.feeDollar  = a.feeDollar;
       // Trades = the buy/sell changes.
       p.trades = a.trades.map(t => {
         const raw = (t.change||'').replace(/[^0-9.\-]/g,'');
         const isSell = /^-/.test(raw) || /^-/.test((t.change||'').trim());
-        const amount = (t.change||'').replace(/^-/,'').trim();
+        const amount = roundImportedMoney((t.change||'').replace(/^-/,'').trim());
         return {action:isSell ? 'Sell' : 'Buy', amount, product:canonicalCareName(t.product)||''};
       });
     }
@@ -12003,6 +12042,8 @@ async function importWealthSolverRoa(file){
   }
   const num = s => { const m = String(s==null?'':s).match(/\$?\s*(-?[\d,]+(?:\.\d+)?)/); return m ? parseFloat(m[1].replace(/,/g,'')) : null; };
   const fmt = n => '$'+Number(n).toLocaleString('en-AU',{maximumFractionDigits:2});
+  // Allocation figures print as clean whole dollars; fees keep their cents.
+  const fmtW = n => '$'+Math.round(Number(n)).toLocaleString('en-AU');
   // Providers from the plans header (first cell is the row-label column).
   const header = (plansT && plansT[0]) ? plansT[0].filter(Boolean) : ((feesT && feesT[0]) ? feesT[0].filter(Boolean) : []);
   const provNames = header.filter(c => !/^fees?$|^plans?$|^\s*$/i.test(c));
@@ -12022,7 +12063,7 @@ async function importWealthSolverRoa(file){
       const isHolding = r.slice(1).some(c => /%/.test(String(c||'')));
       if(isHolding && r.length >= 1 + 2*nP){
         const amt = num(r[2 + 2*chosen.i]);
-        if(amt != null && amt !== 0){ rows.push({n:canonicalCareName(name), a:fmt(amt), icr:'', isFee:false}); total += amt; }
+        if(amt != null && amt !== 0){ rows.push({n:canonicalCareName(name), a:fmtW(amt), icr:'', isFee:false}); total += amt; }
       } else if(!isHolding){
         const amt = num(r[1 + chosen.i]);
         if(amt != null && amt !== 0) fundNames.push(name);
@@ -12059,7 +12100,7 @@ async function importWealthSolverRoa(file){
   p.wsImported = true;
   p.careType = isInvest ? 'Investment' : 'Super';
   if(rows.length){ p.rows = rows; }
-  if(total) p.totalValue = fmt(total);
+  if(total) p.totalValue = fmtW(total);
   if(feeDollar) p.feeDollar = feeDollar;
   if(feePercent) p.feePercent = feePercent;
   p.trades = [{action:'Buy', amount:'', product:''}];
