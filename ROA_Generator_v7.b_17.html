@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_16";
+const APP_VERSION = "v7.b_17";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -9829,6 +9829,41 @@ function setBuilderView(v){
   render();
   window.scrollTo(0,0);
 }
+// Live-preview scroll-sync: when the wizard changes step, scroll the preview
+// panel to the part of the document that step edits.
+function wizardScrollPreview(k){
+  setTimeout(() => {
+    const wrap = document.querySelector('.wizard-preview-scroll');
+    const doc = wrap && wrap.querySelector('.wizard-preview-doc');
+    if(!wrap || !doc) return;
+    const RES = {
+      client: null,
+      meta: /^Type of Record of Advice/i,
+      s1: /^Section 1/i, s2: /^Section 2/i, s3: /^Section 3/i,
+      insurance: /Insurance Cover|Current Policies|Original Recommendations|^Option 1/i,
+      bdbn: /Nomination/i,
+      s4: /Projection|Alternative Insurance Option/i,
+      custom: /^Section 4|Projection/i,
+      s5: /Fees/i, ack: /^Acknowledgement/i
+    };
+    const re = RES[k];
+    if(!re){ wrap.scrollTop = 0; return; }
+    const els = doc.querySelectorAll('h1,h2,h3,td,p');
+    for(const el of els){
+      if(re.test((el.textContent||'').trim().slice(0,60))){
+        const wr = wrap.getBoundingClientRect(), er = el.getBoundingClientRect();
+        wrap.scrollTop = wrap.scrollTop + (er.top - wr.top) - 14;
+        return;
+      }
+    }
+    wrap.scrollTop = 0;
+  }, 80);
+}
+function wizardScrollPreviewCurrent(){
+  const keys = window.__wizardKeys || [];
+  wizardScrollPreview(keys[wizardStep]);
+}
+
 // Top-bar ♻ Reset — always confirms before clearing anything.
 function confirmResetAll(){
   if(!confirm('Start a brand-new ROA?\n\nAll current work in this tab will be cleared — use 💾 Save copy or Save (JSON) first if you want to keep it.')) return;
@@ -9836,6 +9871,7 @@ function confirmResetAll(){
   selectedScenarios.length = 0;
   page = 'picker';
   wizardStep = 0;
+  try{ localStorage.removeItem('roa_draft_v1'); }catch(_){}
   render();
   window.scrollTo(0,0);
 }
@@ -10495,8 +10531,38 @@ function remainingGeneralGroups(consumedCats){
   return (Array.isArray(F.generalGroups) ? F.generalGroups : []).filter(g => !consumedCats.has(g.cat));
 }
 
+// Serialise the wording buckets so adviser edits can be detected and preserved
+// across scenario-driven rebuilds (see the tail of consolidateScenarios).
+function __wordingCapture(){
+  const cap = {
+    objectives: F.objectivesText || '',
+    general: JSON.stringify({r:F.recommendationBullets||[], b:F.benefits||[], k:F.risks||[], o:F.otherConsiderations||[], g:F.generalGroups||[]}),
+    portfolios: {}
+  };
+  (F.portfolios||[]).forEach(p => {
+    cap.portfolios[p.id] = JSON.stringify({r:p.recommendations||[], b:p.benefits||[], k:p.risks||[], o:p.otherConsiderations||[], c:p.catRecs||[]});
+  });
+  return cap;
+}
+// "Regenerate" buttons — the explicit way to throw away wording edits and
+// rebuild everything from the scenario library.
+function regenerateWording(){
+  F._wgen = null;
+  consolidateScenarios();
+  render();
+}
+
 function consolidateScenarios(){
   if(!selectedScenarios.length) return;
+  // ── Wording-edit preservation ────────────────────────────────────────────
+  // Everything below REGENERATES recommendations / objectives / benefits /
+  // risks from the scenario library. Any bucket the adviser has edited since
+  // the last generation (it differs from the stored snapshot) is restored
+  // after the rebuild, so a client-name change or table import never wipes
+  // hand-tuned wording. The "↻ Regenerate" buttons clear the snapshot first,
+  // which is the explicit way to rebuild from scratch.
+  const _snap = F._wgen || {objectives:undefined, general:undefined, portfolios:{}};
+  const _pre = __wordingCapture();
   const scns = selectedScenarios.map(id => SCENARIOS[id]).filter(Boolean);
 
   // Description
@@ -10797,6 +10863,43 @@ function consolidateScenarios(){
         ];
       }
     }
+  }
+
+  // ── Wording-edit preservation (tail) — see the note at the top ──────────
+  // _gen is what THIS run generated. Buckets whose pre-rebuild value differed
+  // from the LAST generated snapshot were adviser-edited: restore them, and
+  // keep their old snapshot so future runs still recognise the edit.
+  {
+    const _gen = __wordingCapture();
+    const editedObjectives = _snap.objectives !== undefined && _pre.objectives !== _snap.objectives;
+    const editedGeneral = _snap.general !== undefined && _pre.general !== _snap.general;
+    if(editedObjectives) F.objectivesText = _pre.objectives;
+    if(editedGeneral){
+      try{
+        const v = JSON.parse(_pre.general);
+        F.recommendationBullets = v.r; F.benefits = v.b; F.risks = v.k;
+        F.otherConsiderations = v.o; F.generalGroups = v.g;
+      }catch(_){}
+    }
+    const newPorts = {};
+    (F.portfolios||[]).forEach(p => {
+      const prev = _pre.portfolios[p.id];
+      const snap = _snap.portfolios ? _snap.portfolios[p.id] : undefined;
+      const edited = prev !== undefined && snap !== undefined && prev !== snap;
+      if(edited){
+        try{
+          const v = JSON.parse(prev);
+          p.recommendations = v.r; p.benefits = v.b; p.risks = v.k;
+          p.otherConsiderations = v.o; p.catRecs = v.c;
+        }catch(_){}
+      }
+      newPorts[p.id] = edited ? snap : _gen.portfolios[p.id];
+    });
+    F._wgen = {
+      objectives: editedObjectives ? _snap.objectives : _gen.objectives,
+      general: editedGeneral ? _snap.general : _gen.general,
+      portfolios: newPorts
+    };
   }
 }
 
@@ -12643,6 +12746,73 @@ function parseAlterationQuote(text){
   return { options, client: lifeName };
 }
 
+// ── AIA alteration quote ("Current Plan" vs "New Quotation") ───────────────
+// AIA quotes list the existing policy's benefits next to the proposed (often
+// REDUCED) benefit set. Both sets are returned: Current Plan rows go to the
+// Current Cover table (In Force), and the New Quotation rows carry explicit
+// change statuses — Retain & Alter / Reduce / New — with covers that
+// disappear from the new quote appended as Cancel rows, so a cover
+// reduction is impossible to miss in the table.
+function parseAiaQuote(text){
+  if(!/\bAIA\b/i.test(text) || !/Current Plan/i.test(text) || !/New Quotation/i.test(text)) return null;
+  let client = '';
+  { const m = text.match(/RE:[^\n]*?(?:MR|MRS|MS|DR|MISS)\s+([A-Z][A-Z'’\- ]+)/i);
+    if(m) client = m[1].trim().toLowerCase().replace(/(^|[\s'-])\S/g, c => c.toUpperCase()); }
+  const fn = client.split(/\s+/)[0] || '';
+  const num = s => parseFloat(String(s).replace(/[$,\s]/g,''))||0;
+  const fmt = n => '$'+String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const cur = [], nw = [];
+  let bucket = null;
+  text.split('\n').forEach(l => {
+    l = l.trim();
+    if(/^Current Plan/i.test(l)){ bucket = cur; return; }
+    if(/^New Quotation/i.test(l)){ bucket = nw; return; }
+    if(/^Total Yearly Payment/i.test(l)){ bucket = null; return; }
+    if(!bucket || /^Gross Premium|^Plus Stamp|^Including Policy/i.test(l)) return;
+    const m = l.match(/^(.+?)\t\$\s*([\d,]+(?:\.\d+)?)\t\$\s*([\d,]+(?:\.\d+)?)$/);
+    if(m) bucket.push({name: m[1].trim(), sum: num(m[2]), prem: num(m[3])});
+  });
+  if(!cur.length && !nw.length) return null;
+  // AIA benefit names → the firm's cover types; unmapped riders keep the AIA
+  // name (the grid's cover dropdown shows them as "Other" but prints them as-is).
+  const aiaCover = raw => {
+    const s = raw.toLowerCase();
+    if(/life cover/.test(s)) return 'Life (Linked)';
+    if(/total\s*&?\s*permanent|tpd/.test(s)) return /\(own\)|own occ/.test(s) ? 'TPD (Own-Occupation)' : 'TPD (Any-Occupation)';
+    if(/crisis recovery buy back/.test(s)) return 'Crisis Recovery Buy Back';
+    if(/crisis reinstatement/.test(s)) return 'Crisis Reinstatement';
+    if(/crisis/.test(s)) return /standalone|\(cr sa\)/.test(s) ? 'Trauma (Standalone)' : 'Trauma';
+    return raw;
+  };
+  // Match new-quote benefits back to current-plan benefits by base name (the
+  // "(CR SA)" / "Standalone" restructure markers are stripped for matching).
+  const keyOf = n => n.toLowerCase().replace(/\(.*?\)/g,'').replace(/\bstandalone\b|\bcr sa\b/g,'').replace(/\s+/g,' ').trim();
+  const mkRow = (r, status, withPrem) => ({
+    provider:'AIA', coverType: aiaCover(r.name), lifeInsured: fn, owner: fn || 'Self-Owned',
+    benefitAmount: fmt(r.sum),
+    premiumNote: withPrem && r.prem ? fmt(r.prem/12) + ' pm' : '',
+    status
+  });
+  const usedCur = new Set();
+  const proposed = nw.map(r => {
+    const k = keyOf(r.name);
+    const mi = cur.findIndex((c,i) => !usedCur.has(i) && keyOf(c.name) === k);
+    let status = 'New';
+    if(mi >= 0){
+      usedCur.add(mi);
+      status = (r.sum < cur[mi].sum - 0.5) ? 'Reduce' : 'Retain & Alter';
+    }
+    return mkRow(r, status, true);
+  });
+  // Covers present today but ABSENT from the new quotation — cancelled.
+  cur.forEach((c,i) => { if(!usedCur.has(i)) proposed.push(mkRow(c, 'Cancel', false)); });
+  return {
+    current: cur.map(r => mkRow(r, 'In Force', true)),
+    proposed,
+    client
+  };
+}
+
 // ── NEOS quote (ported from the SOA generator) ─────────────────────────────
 // "Cover Life Cover / Attached TPD Cover / Split TPD Cover / Income Support
 // Cover / Critical Illness Cover" blocks with labelled fields. Produces the
@@ -13104,6 +13274,19 @@ async function importInsuranceFileToTable(file, fKey){
       cdmClient = alt.client || '';
       source = 'the alteration quote (' + opt.label.split(':')[0] + ')';
     }
+    // 1.1) AIA alteration quote — "Current Plan" vs "New Quotation" side by
+    //      side. Current table gets the current plan; any other table gets the
+    //      new quotation with Reduce / Retain & Alter / Cancel statuses.
+    if(!rows.length){
+      const aia = parseAiaQuote(text);
+      if(aia){
+        rows = (dk === 'current') ? aia.current : aia.proposed;
+        cdmClient = aia.client || '';
+        source = (dk === 'current')
+          ? 'the AIA quote (Current Plan)'
+          : 'the AIA quote (New Quotation compared against the Current Plan — reduced and cancelled covers are flagged)';
+      }
+    }
     // 1.2) Insurer quotes, matching the SOA generator's readers — NEOS and
     //      ClearView quote layouts → firm-style cover rows.
     if(!rows.length){
@@ -13215,7 +13398,17 @@ async function importInsuranceFileToTable(file, fKey){
     const existing = (F[fKey]||[]).filter(r => r && (r.coverType || r.provider));
     let mode = 'replace';
     if(existing.length && !insuranceTableIsPristine(F[fKey])){
-      mode = confirm('The ' + tableNice + ' table already has ' + existing.length + ' cover line(s).\n\nOK — UPDATE the matching covers with the imported figures (covers not in the table yet are added underneath).\nCancel — REPLACE the whole table with the imported lines.') ? 'update' : 'replace';
+      // A different person's document (e.g. the partner's quote landing after
+      // client 1's) appends under the existing rows automatically — no
+      // update/replace question, both people end up in the one table.
+      const exNames = new Set(existing.map(r => (r.lifeInsured||'').trim().toLowerCase()).filter(Boolean));
+      const inNames = new Set(rows.map(r => (r.lifeInsured||'').trim().toLowerCase()).filter(Boolean));
+      const differentPerson = exNames.size && inNames.size && ![...inNames].some(n => exNames.has(n));
+      if(differentPerson){
+        mode = 'append';
+      } else {
+        mode = confirm('The ' + tableNice + ' table already has ' + existing.length + ' cover line(s).\n\nOK — UPDATE the matching covers with the imported figures (covers not in the table yet are added underneath).\nCancel — REPLACE the whole table with the imported lines.') ? 'update' : 'replace';
+      }
     }
 
     let summary = 'Found ' + rows.length + ' cover line(s) via ' + source + ':\n\n';
@@ -13230,6 +13423,8 @@ async function importInsuranceFileToTable(file, fKey){
     }
     summary += '\n' + (mode === 'update'
       ? 'UPDATE the matching covers in the ' + tableNice + ' table with these?'
+      : mode === 'append'
+      ? 'ADD these under the existing rows in the ' + tableNice + ' table? (A different person\'s cover — the existing rows are kept.)'
       : 'Prefill the ' + tableNice + ' table with these? Its existing rows will be replaced') + ' (you can still edit every cell afterwards).';
     if(!confirm(summary)){ return; }
 
@@ -13277,6 +13472,8 @@ async function importInsuranceFileToTable(file, fKey){
         }
       });
       F[fKey] = existing;
+    } else if(mode === 'append'){
+      F[fKey] = existing.concat(rows);
     } else {
       F[fKey] = rows;
     }
@@ -13366,6 +13563,8 @@ function renderTopbar(){
       </label>
       <button class="btn btn-sm btn-ghost" onclick="downloadHTMLSave()" title="Download a copy of this tool with all your work saved inside it">💾 Save copy</button>
       <button class="btn btn-sm btn-blue" onclick="topbarExport()" title="Export the Word document">⬇ Export Word</button>
+      <button class="btn btn-sm btn-ghost" onclick="undoAction()" title="Undo (Ctrl/⌘+Z)">↶</button>
+      <button class="btn btn-sm btn-ghost" onclick="redoAction()" title="Redo (Ctrl+Y / ⌘+Shift+Z)">↷</button>
       <button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="confirmResetAll()" title="Clear everything and start a brand-new ROA">♻ Reset</button>
     </div>
   </div>`;
@@ -16056,6 +16255,7 @@ function renderBuilder(){
     const curHidden = curVisFlag && F.sectionVisible[curVisFlag] === false;
 
     h += `<div class="wizard-wrap ${livePreviewOn ? 'with-preview' : ''}">`;
+    window.__wizardKeys = sections.map(s => s.k);
 
     // Left navigation — vertical stepper with progress ticks
     h += `<aside class="wizard-side"><div class="wizard-steps-v">
@@ -16064,7 +16264,7 @@ function renderBuilder(){
       const sHidden = s.vis && F.sectionVisible[s.vis] === false;
       const st = builderSectionStatus(s);
       const cls = i === wizardStep ? 'current' : (sHidden ? 'skipped' : (st.state === 'ok' ? 'done' : 'todo'));
-      h += `<button class="wizard-step ${cls}" onclick="wizardStep=${i};activeSection='${s.k}';render();window.scrollTo(0,0)" title="${e(s.l)}${sHidden ? ' — hidden from the output' : (st.hint ? ' — ' + e(st.hint) : '')}">
+      h += `<button class="wizard-step ${cls}" onclick="wizardStep=${i};activeSection='${s.k}';render();window.scrollTo(0,0);wizardScrollPreview('${s.k}')" title="${e(s.l)}${sHidden ? ' — hidden from the output' : (st.hint ? ' — ' + e(st.hint) : '')}">
         <span class="ws-dot">${sHidden ? '–' : (st.state === 'ok' ? '✓' : (st.state === 'warn' ? '!' : i + 1))}</span>
         <span class="ws-label">${e(s.l.replace(/^Section \d+: /, ''))}</span>
       </button>`;
@@ -16100,11 +16300,11 @@ function renderBuilder(){
     const nextLabel = wizardStep < sections.length - 1 ? sections[wizardStep + 1].l.replace(/^Section \d+: /, '') : '';
     h += `<div class="wizard-nav">
       ${wizardStep > 0
-        ? `<button class="btn" onclick="wizardStep--;render();window.scrollTo(0,0)">← ${e(prevLabel)}</button>`
+        ? `<button class="btn" onclick="wizardStep--;render();window.scrollTo(0,0);wizardScrollPreviewCurrent()">← ${e(prevLabel)}</button>`
         : `<button class="btn" onclick="page='picker';render();window.scrollTo(0,0)">← Scenarios</button>`}
       <span class="wizard-nav-mid">Step ${wizardStep + 1} of ${sections.length}</span>
       ${wizardStep < sections.length - 1
-        ? `<button class="btn btn-blue" onclick="wizardStep++;render();window.scrollTo(0,0)">Next: ${e(nextLabel)} →</button>`
+        ? `<button class="btn btn-blue" onclick="wizardStep++;render();window.scrollTo(0,0);wizardScrollPreviewCurrent()">Next: ${e(nextLabel)} →</button>`
         : `<button class="btn btn-green" onclick="page='preview';render();window.scrollTo(0,0)">Finish → Preview</button>`}
     </div>`;
     h += `</div>`; // end wizard-main
@@ -16775,7 +16975,7 @@ function renderObjectivesSection(){
     <div class="field">
       <textarea style="min-height:180px" onchange="F.objectivesText=this.value">${e(F.objectivesText)}</textarea>
     </div>
-    <button class="btn btn-sm" onclick="consolidateScenarios();render()">↻ Regenerate from scenarios</button>
+    <button class="btn btn-sm" onclick="regenerateWording()" title="Rebuild this wording from the scenario library — any hand edits to the generated wording are discarded">↻ Regenerate from scenarios</button>
   </div>`;
 }
 
@@ -16801,7 +17001,7 @@ function renderSection2(){
     <div class="field">
       <textarea style="min-height:180px" onchange="F.objectivesText=this.value">${e(F.objectivesText)}</textarea>
     </div>
-    <button class="btn btn-sm" onclick="consolidateScenarios();render()">↻ Regenerate from scenarios</button>
+    <button class="btn btn-sm" onclick="regenerateWording()" title="Rebuild this wording from the scenario library — any hand edits to the generated wording are discarded">↻ Regenerate from scenarios</button>
   </div>`;
 }
 
@@ -16820,7 +17020,7 @@ function renderSection3ByStrategy(){
   let h = `<div class="card">
     <div class="card-sub" style="margin-bottom:10px">For each strategy: the recommendations, allocation table, variation table and benefits &amp; risks are grouped together — matching exactly how the Word document will flow.</div>
     <div class="mt-sm">
-      <button class="btn btn-sm" onclick="consolidateScenarios();render()">↻ Regenerate all from scenarios</button>
+      <button class="btn btn-sm" onclick="regenerateWording()" title="Rebuild all recommendations, benefits and risks from the scenario library — any hand edits to the generated wording are discarded">↻ Regenerate all from scenarios</button>
       ${showAddPortfolio ? `<button class="btn btn-sm btn-blue" style="margin-left:6px" onclick="addManualPortfolio()">+ Add another portfolio</button>` : ''}
       <button class="btn btn-sm btn-blue" style="margin-left:6px" onclick="document.getElementById('care-import-input').click()" title="Import a Hub24/CARE rebalance Word document. Creates one portfolio per account, with the allocation table, variation table and trades pre-filled. Super &amp; investment accounts are detected automatically.">📥 Import CARE doc</button>
       <input id="care-import-input" type="file" accept=".docx" style="display:none" onchange="handleCareImport(this)">
@@ -17929,7 +18129,7 @@ function renderBenefitsSection(){
   let h = `<div class="card">
     <h2>Per-Strategy Content</h2>
     <div class="card-sub">Auto-populated per strategy from scenarios. Drag bullets to reorder within a strategy. Each portfolio has its own recommendations, benefits and risks shown with its allocation in the Word document. "General" is for insurance, BDBN and other non-portfolio items.</div>
-    <div class="mt-sm"><button class="btn btn-sm" onclick="consolidateScenarios();render()">↻ Regenerate all from scenarios</button></div>
+    <div class="mt-sm"><button class="btn btn-sm" onclick="regenerateWording()" title="Rebuild all recommendations, benefits and risks from the scenario library — any hand edits to the generated wording are discarded">↻ Regenerate all from scenarios</button></div>
   </div>`;
 
   // One card per portfolio
@@ -19345,7 +19545,75 @@ async function exportNAADocx(){
 // ═══════════════════════════════════════════════════════════
 // MAIN RENDER
 // ═══════════════════════════════════════════════════════════
+// ── UNDO / REDO ─────────────────────────────────────────────────────────────
+// Whole-state snapshots taken at every render (i.e. after every discrete
+// change). Ctrl/⌘+Z undoes, Ctrl+Y or Ctrl/⌘+Shift+Z redoes — except while
+// typing in a field, where the browser's own text undo applies.
+const __undo = {stack:[], redo:[], last:'', restoring:false, cap:40};
+function __stateSnapshot(){ try{ return JSON.stringify({F, selectedScenarios}); }catch(_){ return ''; } }
+function recordUndo(){
+  if(__undo.restoring) return;
+  const s = __stateSnapshot();
+  if(!s || s === __undo.last) return;
+  if(__undo.last){
+    __undo.stack.push(__undo.last);
+    if(__undo.stack.length > __undo.cap) __undo.stack.shift();
+    __undo.redo.length = 0;
+  }
+  __undo.last = s;
+}
+function __applyStateSnapshot(s){
+  __undo.restoring = true;
+  try{
+    const d = JSON.parse(s);
+    resetState();
+    F = Object.assign(F, d.F || {});
+    selectedScenarios = Array.isArray(d.selectedScenarios) ? d.selectedScenarios : [];
+    render();
+  }catch(_){ }
+  __undo.restoring = false;
+}
+function undoAction(){
+  if(!__undo.stack.length) return;
+  const prev = __undo.stack.pop();
+  __undo.redo.push(__undo.last);
+  __undo.last = prev;
+  __applyStateSnapshot(prev);
+}
+function redoAction(){
+  if(!__undo.redo.length) return;
+  const nxt = __undo.redo.pop();
+  __undo.stack.push(__undo.last);
+  __undo.last = nxt;
+  __applyStateSnapshot(nxt);
+}
+document.addEventListener('keydown', ev => {
+  const t = ev.target;
+  const tag = (t && t.tagName || '').toLowerCase();
+  if(tag === 'input' || tag === 'textarea' || tag === 'select' || (t && t.isContentEditable)) return;
+  const k = (ev.key || '').toLowerCase();
+  if((ev.ctrlKey || ev.metaKey) && !ev.shiftKey && k === 'z'){ ev.preventDefault(); undoAction(); }
+  else if(((ev.ctrlKey || ev.metaKey) && k === 'y') || ((ev.ctrlKey || ev.metaKey) && ev.shiftKey && k === 'z')){ ev.preventDefault(); redoAction(); }
+});
+
+// ── DRAFT AUTO-SAVE ─────────────────────────────────────────────────────────
+// The whole ROA state is saved to this browser shortly after every change, and
+// offered back on the next visit — closing the tab can no longer lose work.
+let __draftTimer = null;
+function saveDraftSoon(){
+  clearTimeout(__draftTimer);
+  __draftTimer = setTimeout(() => {
+    try{ localStorage.setItem('roa_draft_v1', JSON.stringify({F, selectedScenarios, docType, page, ts: Date.now()})); }catch(_){}
+  }, 600);
+}
+window.addEventListener('beforeunload', ev => {
+  const meaningful = (F && (F.client1Name||'').trim()) || (selectedScenarios && selectedScenarios.length);
+  if(meaningful){ ev.preventDefault(); ev.returnValue = ''; }
+});
+
 function render(){
+  recordUndo();
+  saveDraftSoon();
   const sy = window.scrollY;
   // Remember which field had focus (so adding a row / typing doesn't lose the cursor or jump).
   const ae = document.activeElement;
@@ -19529,6 +19797,8 @@ async function classifySmartImportFile(file){
     return {type:'insurance-recommended', label:'Amended terms agreement', order:3};
   if(/INSURANCE\s+SCHEDULE/i.test(text) && /POLICY\s*NO/i.test(text))
     return {type:'insurance-current', label:'Insurance schedule (existing cover summary)', order:3};
+  if(/\bAIA\b/i.test(text) && /Current Plan/i.test(text) && /New Quotation/i.test(text))
+    return {type:'aia', label:'AIA alteration quote (current plan + new quotation)', order:3};
   if(/NEOS/i.test(text) && /Cover\s+(Life Cover|Income Support Cover|Attached TPD Cover)/i.test(text))
     return {type:'insurance-recommended', label:'NEOS quote', order:3};
   if(/clear\s*view|clearchoice/i.test(text) && /\$[\d,]+\.\d{2}\s+\$[\d,]+\.\d{2}\s+[YN]\b/.test(text))
@@ -19576,6 +19846,12 @@ async function handleSmartImport(fileList){
       else if(t === 'care-pdf'){ alert(it.file.name + ' looks like a CARE/Hub24 rebalance document exported as PDF.\n\nA PDF export loses the table structure this importer relies on — please export it from CARE as Word (.docx) and drop that file instead.'); }
       else if(t === 'insurance-current'){ await importInsuranceFileToTable(it.file, 'insuranceCurrent'); }
       else if(t === 'insurance-recommended'){ await importInsuranceFileToTable(it.file, smartQuoteTargetKey()); }
+      else if(t === 'aia'){
+        // Both sides of the AIA quote apply: current plan → Current Cover,
+        // new quotation (with Reduce/Cancel statuses) → the recommended table.
+        await importInsuranceFileToTable(it.file, 'insuranceCurrent');
+        await importInsuranceFileToTable(it.file, smartQuoteTargetKey());
+      }
       else if(t === 'soa'){
         // A prior SOA's Insurance Products tables (both clients) → the Original
         // Recommendations table on a revised-terms ROA, else Current Cover.
@@ -21173,6 +21449,26 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
   // Also check localStorage for theme preference so it persists across sessions.
   // The user's saved choice beats the built-in default.
   try { const t = localStorage.getItem('roa_theme'); if(t === 'day' || t === 'night') F.theme = t; } catch(_){}
+  // Offer the auto-saved draft from this device — unless this HTML file
+  // already carries embedded work (a saved copy beats the draft).
+  try{
+    const hasEmbedded = (F.client1Name||'').trim() || selectedScenarios.length;
+    const raw = localStorage.getItem('roa_draft_v1');
+    if(!hasEmbedded && raw){
+      const d = JSON.parse(raw);
+      const meaningful = d && d.F && (((d.F.client1Name||'').trim()) || (d.selectedScenarios||[]).length);
+      if(meaningful){
+        const when = d.ts ? new Date(d.ts).toLocaleString() : 'earlier';
+        const who = (d.F.client1Name||'').trim() || 'an unnamed client';
+        if(confirm('An auto-saved draft was found on this device (' + who + ', saved ' + when + ').\n\nOK — restore the draft and keep working on it.\nCancel — start fresh (the draft stays until it is overwritten by new work or you press Reset).')){
+          F = Object.assign(F, d.F || {});
+          selectedScenarios = Array.isArray(d.selectedScenarios) ? d.selectedScenarios : [];
+          if(d.docType) docType = d.docType;
+          page = d.page || 'picker';
+        }
+      }
+    }
+  }catch(_){}
   applyTheme();
   render();
 })();
