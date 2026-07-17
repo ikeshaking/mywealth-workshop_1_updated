@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_28";
+const APP_VERSION = "v7.b_29";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -2376,7 +2376,7 @@ const SCENARIOS = {
     needs:{inv:true},
     pd:"One-off withdrawal from your investment account with portfolio rebalance",
     obj:"{name}, during our recent meeting you advised that you require {amount} from your {invPlatform} investment account to cover {withdrawalPurpose}. This ROA recommends a rebalance of your portfolio to ensure you have the necessary funds available for the withdrawal while maintaining alignment with your agreed risk profile and income needs.",
-    rec:"rebalance your {invPlatform} investment portfolio to release {amount} as a one-off withdrawal, as outlined in the trades and allocation table below. Withdraw {amount} from your {invPlatform} investment account.",
+    rec:"rebalance your {invPlatform} investment portfolio to release {amount} as a one-off withdrawal.",
     benefits:[
       "You will have the necessary funds to assist with the withdrawal for {withdrawalPurpose}.",
       "The rebalance will ensure that your portfolio, including reserves, continues to be in line with your risk profile and meet your income requirements.",
@@ -10856,17 +10856,22 @@ function portfolioForScenario(scenarioId, scenario){
   if(scenarioId === "super_menu_switch"){
     return F.portfolios.find(p => p.label === "Altered Superannuation Portfolio") || null;
   }
+  // Label match first; if a CARE/WealthSolver import renamed the portfolio
+  // (e.g. "Jaggermatic", "R Super"), fall back to the first portfolio of the
+  // matching advice category so the wording still prints ABOVE that table
+  // rather than dropping into the after-table general bucket.
+  const byCat = cat => F.portfolios.find(p => !p.combineWithPrev && portfolioAdviceCategory(p) === cat) || null;
   // Pension scenarios → pension portfolio
   if(n.pension){
-    return F.portfolios.find(p => p.label === "Pension Portfolio") || null;
+    return F.portfolios.find(p => p.label === "Pension Portfolio") || byCat('Pension');
   }
   // Super scenarios → super portfolio
   if(n.super){
-    return F.portfolios.find(p => p.label === "Superannuation Portfolio") || null;
+    return F.portfolios.find(p => p.label === "Superannuation Portfolio") || byCat('Superannuation');
   }
   // Investment scenarios → investment portfolio
   if(n.inv){
-    return F.portfolios.find(p => p.label === "Investment Portfolio") || null;
+    return F.portfolios.find(p => p.label === "Investment Portfolio") || byCat('Investment');
   }
   // Insurance / BDBN / MCAA etc → no portfolio, use general
   return null;
