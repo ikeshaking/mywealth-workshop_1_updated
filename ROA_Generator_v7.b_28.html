@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_27";
+const APP_VERSION = "v7.b_28";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -10985,6 +10985,26 @@ function provisionPortfolios(scns){
   F.portfolios.forEach(p => { if(p.userAdded && kept.indexOf(p) === -1) kept.push(p); });
 
   F.portfolios = kept;
+
+  // Lump-sum withdrawal ROAs always show an explicit Withdraw trade in the
+  // relevant table. The auto-added trade tracks the Amount (primary) field
+  // until the adviser edits it; a CARE import's own Withdraw trade wins.
+  const ensureWithdrawTrade = (cat) => {
+    const p = kept.find(x => !x.combineWithPrev && portfolioAdviceCategory(x) === cat) ||
+              kept.find(x => portfolioAdviceCategory(x) === cat);
+    if(!p) return;
+    p.trades = p.trades || [];
+    let t = p.trades.find(x => x.action === 'Withdraw');
+    const amt = (F.amount||'').trim();
+    if(!t){
+      p.trades.push({action:'Withdraw', amount:amt, product:'', _autoWdAmt:amt});
+    } else if(t._autoWdAmt !== undefined && t.amount === t._autoWdAmt && t.amount !== amt){
+      t.amount = amt; t._autoWdAmt = amt;
+    }
+  };
+  if(selectedScenarios.includes('super_withdrawal')) ensureWithdrawTrade('Superannuation');
+  if(selectedScenarios.includes('inv_one_off_withdrawal') || selectedScenarios.includes('inv_withdrawal_closure')) ensureWithdrawTrade('Investment');
+
   // Keep the document flow super → pension → investment regardless of the order
   // scenarios were selected or accounts appeared in an imported CARE document.
   sortPortfoliosByCategory();
@@ -11726,6 +11746,7 @@ function extractCareDoc(html){
     const comparison = [];  // {name, current, proposed, variance}
     let compTotal = {current:'', proposed:'', variance:''};
     let mgmtFeePct = '', adminFeePct = '', totalFeePct = '', totalFeeDollar = '';
+    let totalChange = '';   // Total row's Change column — a decrease = lump-sum withdrawal
 
     b.items.forEach(item => {
       if(item.tag === 'p'){
@@ -11772,7 +11793,7 @@ function extractCareDoc(html){
           const label = (r[0]||'').trim();
           const isTotal = /^total$/i.test(label);
           if(kind === 'rebalance'){
-            if(isTotal){ if(!totalValue) totalValue = (r[2]||'').trim(); continue; }
+            if(isTotal){ if(!totalValue){ totalValue = (r[2]||'').trim(); totalChange = (r[3]||'').trim(); } continue; }
             trades.push({product:label, proposed:(r[2]||'').trim(), change:(r[3]||'').trim()});
           } else if(kind === 'comparison'){
             if(isTotal){ compTotal = {current:(r[1]||'').trim(), proposed:(r[2]||'').trim(), variance:(r[3]||'').trim()}; continue; }
@@ -11784,7 +11805,7 @@ function extractCareDoc(html){
 
     const type = careClassifyType(name);
     accounts.push({accountName:name, platform, type, owner:careOwnerOf(name),
-      riskProfile, totalValue, trades, comparison, compTotal,
+      riskProfile, totalValue, totalChange, trades, comparison, compTotal,
       mgmtFeePct, adminFeePct, feePercent: totalFeePct, feeDollar: totalFeeDollar});
   });
   // If this wasn't a "Rebalance" appendix, try the CARECalc "CARE Portfolio Fact Sheet"
@@ -11888,6 +11909,10 @@ function careAccountsToPortfolios(accounts){
     // current-vs-proposed variation, so leave those empty and turn the Variation Table off.
     if(Array.isArray(a.allocations) && a.allocations.length){
       p.rows = a.allocations.map(al => ({n:canonicalCareName(al.product), a:roundImportedMoney(al.amount), icr:al.icr||'', isFee:/management fee|administration/i.test(canonicalCareName(al.product))}));
+      // SOA row order: investment options first, then Cash, then any fee rows.
+      p.rows = p.rows.filter(r => !r.isFee && !/^cash$/i.test((r.n||'').trim()))
+        .concat(p.rows.filter(r => !r.isFee && /^cash$/i.test((r.n||'').trim())))
+        .concat(p.rows.filter(r => r.isFee));
       if(a.feePercent) p.feePercent = a.feePercent;
       if(a.feeDollar)  p.feeDollar  = a.feeDollar;
       p.trades = [{action:'Buy', amount:'', product:''}];
@@ -11896,21 +11921,33 @@ function careAccountsToPortfolios(accounts){
     }
     // Allocation table = the proposed holdings (product + proposed $).
     if(a.trades.length){
+      const isCashName = s => /^cash$/i.test(String(s||'').trim());
       p.rows = a.trades.map(t => ({n:canonicalCareName(t.product), a:roundImportedMoney(t.proposed), icr:'', isFee:false}));
       // Fee rows from the doc's "Investment Fees" disclosure table — the CARE
       // management fee and admin/trustee costs always print (as in the SOA);
       // per-option ICRs aren't in the CARE doc so those cells stay blank.
       if(a.mgmtFeePct)  p.rows.push({n:'CARE Portfolio Management Fee', a:'-', icr:a.mgmtFeePct, isFee:true});
       if(a.adminFeePct) p.rows.push({n:'Administration', a:'-', icr:a.adminFeePct, isFee:true});
+      // SOA row order: investment options first, then Cash, then the fee rows.
+      p.rows = p.rows.filter(r => !r.isFee && !isCashName(r.n))
+        .concat(p.rows.filter(r => !r.isFee && isCashName(r.n)))
+        .concat(p.rows.filter(r => r.isFee));
       if(a.feePercent) p.feePercent = a.feePercent;
       if(a.feeDollar)  p.feeDollar  = a.feeDollar;
-      // Trades = the buy/sell changes.
-      p.trades = a.trades.map(t => {
+      // Trades = the buy/sell changes. "Sell/Buy Cash" lines are dropped — the
+      // cash movement is a by-product of the other trades, not an instruction.
+      p.trades = a.trades.filter(t => !isCashName(canonicalCareName(t.product))).map(t => {
         const raw = (t.change||'').replace(/[^0-9.\-]/g,'');
         const isSell = /^-/.test(raw) || /^-/.test((t.change||'').trim());
         const amount = roundImportedMoney((t.change||'').replace(/^-/,'').trim());
         return {action:isSell ? 'Sell' : 'Buy', amount, product:canonicalCareName(t.product)||''};
       });
+      // A decrease in the rebalance Total (e.g. -$300,000) is a lump-sum
+      // withdrawal — always show it as an explicit Withdraw trade.
+      const __chg = parseFloat(String(a.totalChange||'').replace(/[^0-9.\-]/g,''));
+      if(isFinite(__chg) && __chg < -0.5){
+        p.trades.push({action:'Withdraw', amount:'$'+Math.round(-__chg).toLocaleString('en-AU'), product:''});
+      }
     }
     // Variation table = the current / proposed / variance % comparison.
     if(a.comparison.length){
@@ -17550,7 +17587,8 @@ function renderMetaSection(){
   // "Scenario-Specific Fields" block so it doesn't show an empty header.
   const hasConditionalFields =
     selectedScenarios.includes('super_rollover') || selectedScenarios.includes('super_partial') ||
-    selectedScenarios.includes('inv_withdrawal') || selectedScenarios.includes('super_withdrawal') ||
+    selectedScenarios.includes('inv_one_off_withdrawal') || selectedScenarios.includes('inv_withdrawal_closure') ||
+    selectedScenarios.includes('super_withdrawal') ||
     selectedScenarios.includes('inv_regular_new') || selectedScenarios.includes('inv_regular_increase') ||
     selectedScenarios.includes('inv_menu_switch') || selectedScenarios.includes('super_menu_switch') ||
     selectedScenarios.includes('motm') ||
@@ -17632,7 +17670,7 @@ function renderMetaSection(){
   }
 
   // Withdrawals
-  if(selectedScenarios.includes('inv_withdrawal') || selectedScenarios.includes('super_withdrawal')){
+  if(selectedScenarios.includes('inv_one_off_withdrawal') || selectedScenarios.includes('inv_withdrawal_closure') || selectedScenarios.includes('super_withdrawal')){
     h += `<h4 style="margin-top:14px;margin-bottom:6px;font-size:11px;color:var(--navy);font-weight:700">Withdrawal Details</h4>
     <div class="field"><label>Withdrawal Purpose</label>
       <input value="${e(F.withdrawalPurpose)}" onchange="F.withdrawalPurpose=this.value;consolidateScenarios();render()" placeholder="e.g. fund your home renovations / stamp duty on investment property purchase">
@@ -18073,8 +18111,7 @@ function renderPortfolioAllocation(p, pi){
   h += `<tr class="total-row">
       <td><input value="${e(p.totalLabel)}" onchange="F.portfolios[${pi}].totalLabel=this.value" placeholder="Complete Portfolio"></td>
       <td><input value="${e(p.totalValue)}" onchange="F.portfolios[${pi}].totalValue=this.value" placeholder="$1,701,414"></td>
-      <td><input value="${e(p.feePercent)}" onchange="F.portfolios[${pi}].feePercent=this.value" placeholder="0.731%"></td>
-      <td></td>
+      <td colspan="2" style="white-space:nowrap"><input style="width:52%" value="${e(p.feePercent)}" onchange="F.portfolios[${pi}].feePercent=this.value" placeholder="0.731%"> / <input style="width:40%" value="${e(p.feeDollar)}" onchange="F.portfolios[${pi}].feeDollar=this.value" placeholder="$15,146"></td>
     </tr>`;
   h += `</tbody></table></div>
     <button class="btn btn-xs" style="margin-top:6px" onclick="F.portfolios[${pi}].rows.push({n:'',a:'',icr:''});render()">+ Add row</button>
