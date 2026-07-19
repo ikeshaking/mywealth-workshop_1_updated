@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_48";
+const APP_VERSION = "v7.b_49";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -14360,6 +14360,7 @@ function sectionStatusText(){
 function topbarExport(){
   if(docType === 'Strategy'){ exportStrategyPaperDocx(); return; }
   if(docType === 'NAA'){ exportNAADocx(); return; }
+  if(docType === 'NWF'){ exportNWFDocx(); return; }
   if(!selectedScenarios.length){ alert('Pick at least one scenario first — then you can export the Word document.'); return; }
   exportDocx();
 }
@@ -14369,6 +14370,7 @@ function renderTopbar(){
   let subtitle;
   if(docType === 'Strategy') subtitle = 'Strategy<br>Paper';
   else if(docType === 'NAA') subtitle = 'NAA<br>Paraplanner';
+  else if(docType === 'NWF') subtitle = 'Next Wealth<br>Focus';
   else subtitle = 'ROA &amp; Advice<br>Doc Generator';
   const status = sectionStatusText();
   return `<div class="topbar">
@@ -15209,6 +15211,14 @@ function switchDocType(t){
   render();
 }
 function goToBuilder(){
+  if(docType === 'NWF'){
+    if(!F.nwfType){ alert('Pick an NWF scenario card first.'); return; }
+    page = 'builder';
+    activeSection = 'client';
+    wizardStep = 0;
+    render();
+    return;
+  }
   if(docType === 'NAA'){
     if(!F.naaType) F.naaType = 'other';
     page = 'builder';
