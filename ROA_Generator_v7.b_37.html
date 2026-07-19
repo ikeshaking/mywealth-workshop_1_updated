@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_36";
+const APP_VERSION = "v7.b_37";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -12042,12 +12042,29 @@ async function importWealthSolverRoa(file){
     return;
   }
   const num = s => { const m = String(s==null?'':s).match(/\$?\s*(-?[\d,]+(?:\.\d+)?)/); return m ? parseFloat(m[1].replace(/,/g,'')) : null; };
+  // Ported from the SOA generator (v141): WealthSolver fee rows are ragged —
+  // some cells interleave a "%" token before each provider's "$" cell. Walk the
+  // tokens so each provider gets exactly one {amt} regardless of raggedness.
+  const wsFeeCells = (row, nProv) => {
+    const toks = [];
+    for(let i=1;i<row.length;i++){ const t = String(row[i]==null?'':row[i]).trim(); if(t) toks.push(t); }
+    const out = [];
+    toks.forEach(t => {
+      if(/\$/.test(t)){
+        const dm = t.match(/\$\s*(-?[\d,]+(?:\.\d+)?)/);
+        out.push(dm ? parseFloat(dm[1].replace(/,/g,'')) : null);
+      }
+    });
+    while(out.length < nProv) out.push(null);
+    return out.slice(0, nProv);
+  };
   const fmt = n => '$'+Number(n).toLocaleString('en-AU',{maximumFractionDigits:2});
   // Allocation figures print as clean whole dollars; fees keep their cents.
   const fmtW = n => '$'+Math.round(Number(n)).toLocaleString('en-AU');
   // Providers from the plans header (first cell is the row-label column).
   const header = (plansT && plansT[0]) ? plansT[0].filter(Boolean) : ((feesT && feesT[0]) ? feesT[0].filter(Boolean) : []);
-  const provNames = header.filter(c => !/^fees?$|^plans?$|^\s*$/i.test(c));
+  const provNames = header.filter(c => !/^fees?$|^plans?$|^\s*$/i.test(c))
+    .map(c => String(c).replace(/^\s*[CP]\s+(?=\S)/i, ''));   // "C HUB24" / "P SW" → person prefix stripped
   const isInvest = provNames.some(p => /joint proposal/i.test(p)) || /joint proposal/i.test(res.value);
   // Recommended column: prefer Hub24, else the first non-Current platform.
   const nonCurrent = provNames.map((p,i)=>({p,i})).filter(x => !/current|existing|plan review/i.test(x.p));
@@ -12076,7 +12093,7 @@ async function importWealthSolverRoa(file){
   if(feesT){
     const gRow = feesT.find(r => /gross ongoing costs/i.test(String(r[0]||'')));
     if(gRow){
-      const vals = gRow.slice(1).map(num);
+      const vals = wsFeeCells(gRow, provNames.length);
       recGross = vals[chosen.i] != null ? vals[chosen.i] : null;
       const curIdx = provNames.findIndex(p => /current|existing/i.test(p));
       curGross = curIdx >= 0 && vals[curIdx] != null ? vals[curIdx] : null;
@@ -12087,7 +12104,8 @@ async function importWealthSolverRoa(file){
     }
     const tRow = feesT.find(r => /total transactional costs|transaction(al)? costs/i.test(String(r[0]||'')));
     if(tRow){
-      const tv = num(tRow[1 + chosen.i]) != null ? num(tRow[1 + chosen.i]) : num(tRow[tRow.length-1]);
+      const tCells = wsFeeCells(tRow, provNames.length);
+      const tv = tCells[chosen.i] != null ? tCells[chosen.i] : num(tRow[tRow.length-1]);
       if(tv != null && tv > 0) wsTxnCost = fmt(tv);
     }
   }
