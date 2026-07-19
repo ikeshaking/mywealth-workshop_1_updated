@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_34";
+const APP_VERSION = "v7.b_35";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -1557,7 +1557,7 @@ const SCENARIOS = {
     desc:"Contribution from sale of principal home (age 55+)",
     needs:{super:true},
     pd:"Downsizer contribution to superannuation",
-    obj:"{name}, following the sale of your principal residence, we discussed making a downsizer contribution of {amount} into your superannuation to take advantage of the concessional treatment offered for eligible contributions from the sale of a main home.",
+    obj:"{name}, in your previous Statement of Advice we recommended making a downsizer contribution following the sale of your principal residence. The sale has now completed and you have advised that you wish to proceed. This Record of Advice confirms the downsizer contribution of {amount} into your superannuation, taking advantage of the concessional treatment offered for eligible contributions from the sale of a main home, in line with the strategy previously provided.",
     rec:"contribute {amount} as a downsizer contribution into your {superPlatform} superannuation account within 90 days of receiving the proceeds from the sale of your principal residence, and lodge the required downsizer contribution form with your super fund at or before the time of contribution.",
     benefits:[
       "Up to $300,000 per person (or $600,000 per couple) can be contributed from the sale of your principal residence, providing a substantial one-off boost to retirement savings.",
@@ -1574,6 +1574,9 @@ const SCENARIOS = {
       "Super is preserved until a condition of release is met.",
       "You can only make one downsizer contribution in your lifetime — the full amount needs to be contributed within the one financial event.",
       "Downsizer rules are subject to legislative change."
+    ],
+    otherConsiderations:[
+      "This Record of Advice implements a strategy previously recommended in your Statement of Advice. If your circumstances, goals or objectives have changed materially since that advice was provided, please let us know before proceeding, as updated advice may be required."
     ]
   },
 
@@ -1973,7 +1976,7 @@ const SCENARIOS = {
     desc:"Commence a transition to retirement pension",
     needs:{pension:true, super:true},
     pd:"Commencement of a transition to retirement (TTR) pension",
-    obj:"{name}, having reached your preservation age of 60 and continuing to work, we discussed commencing a transition to retirement (TTR) pension of {amount} from your {superPlatform} superannuation account to supplement your income and/or enable additional salary sacrifice contributions.",
+    obj:"{name}, in your previous Statement of Advice we recommended commencing a transition to retirement (TTR) pension once you reached your preservation age while continuing to work. Having now reached age 60, you have advised that you wish to proceed. This Record of Advice confirms the commencement of a TTR pension of {amount} from your {superPlatform} superannuation account to supplement your income and/or enable additional salary sacrifice, in line with the strategy previously provided.",
     rec:"commence a TTR pension of {amount} from your {pensionPlatform} account.",
     benefits:[
       "A TTR pension provides flexible retirement income while still working, allowing you to reduce work hours or supplement salary.",
@@ -1988,6 +1991,9 @@ const SCENARIOS = {
       "Drawing income while still contributing may erode the benefit if not carefully structured — the strategy is most effective when combined with salary sacrifice.",
       "Market movements affect the TTR balance.",
       "Legislation governing TTR pensions (including tax treatment of earnings) has changed historically and may change in future."
+    ],
+    otherConsiderations:[
+      "This Record of Advice implements a strategy previously recommended in your Statement of Advice. If your circumstances, goals or objectives have changed materially since that advice was provided, please let us know before proceeding, as updated advice may be required."
     ]
   },
 
@@ -1996,7 +2002,7 @@ const SCENARIOS = {
     desc:"Commence an account-based retirement pension",
     needs:{pension:true},
     pd:"Commencement of an account-based pension",
-    obj:"{name}, having satisfied a condition of release, we discussed commencing an account-based pension of {amount} from your {superPlatform} superannuation account to provide a tax-effective, regular income throughout retirement.",
+    obj:"{name}, in your previous Statement of Advice we recommended commencing an account-based pension upon satisfying a condition of release. You have now advised that you wish to proceed. This Record of Advice confirms the commencement of an account-based pension of {amount} from your {superPlatform} superannuation account to provide a tax-effective, regular income throughout retirement, in line with the strategy previously provided.",
     rec:"commence an account-based pension of {amount} from your {pensionPlatform} account by transferring the balance from accumulation into retirement phase.",
     benefits:[
       "Earnings on investments held in the pension account are tax-free, significantly enhancing after-tax returns compared to accumulation (15% tax) or investments held outside super.",
@@ -2014,6 +2020,9 @@ const SCENARIOS = {
       "Drawdown combined with poor market returns early in retirement can accelerate depletion (sequence-of-returns risk).",
       "Commencing a pension may affect Centrelink Age Pension entitlement under the assets and income tests.",
       "Superannuation and pension rules are subject to legislative change."
+    ],
+    otherConsiderations:[
+      "This Record of Advice implements a strategy previously recommended in your Statement of Advice. If your circumstances, goals or objectives have changed materially since that advice was provided, please let us know before proceeding, as updated advice may be required."
     ]
   },
 
@@ -2112,32 +2121,6 @@ const SCENARIOS = {
     ]
   },
 
-  pension_recontribution: {
-    cat:"Pension", type:"ROA", label:"Pension — Recontribution Strategy", short:"Recontribution",
-    desc:"Withdraw pension lump sum and recontribute as NCC",
-    needs:{pension:true, super:true},
-    pd:"Pension recontribution strategy to increase tax-free component",
-    obj:"{name}, during our recent meeting we discussed implementing a recontribution strategy by withdrawing {amount} from your pension account and recontributing it as a non-concessional contribution, with the objective of increasing the tax-free component of your superannuation for estate planning purposes.",
-    rec:"commute {amount} from your {pensionPlatform} pension account as a lump sum and recontribute the amount to a new superannuation accumulation account as a non-concessional contribution. Recommence the pension from the new (combined) balance.",
-    benefits:[
-      "The recontributed amount becomes entirely tax-free component within super, improving the tax outcome for non-dependant beneficiaries (e.g. adult children) on death.",
-      "Non-dependant beneficiaries receiving a death benefit pay 17% (15% plus Medicare) on the taxable component — increasing the tax-free component reduces this liability.",
-      "The strategy is particularly valuable for estate planning where death benefits will flow to adult non-dependent children.",
-      "After age 60, the lump sum withdrawal is generally tax-free, so there is no immediate tax cost to implementing the strategy.",
-      "The new contribution keeps the funds within the concessional tax super environment."
-    ],
-    risks:[
-      "The recontributed amount uses your non-concessional contribution cap ($120,000 annual, or up to $360,000 using the three-year bring-forward).",
-      "You must be under age 75 and meet the total super balance test at 30 June of the prior year to be eligible to make non-concessional contributions.",
-      "Commuting the pension creates a debit to your transfer balance account; recommencing creates a new credit.",
-      "Transaction costs and buy/sell spreads may apply on the sell-down and re-purchase.",
-      "There may be a short period where funds are in accumulation phase (15% earnings tax) rather than pension phase (0%).",
-      "Superannuation and estate rules are subject to legislative change."
-    ],
-    otherConsiderations:[
-      "Please consult your accountant to confirm the CGT, contribution and TBC implications prior to implementation."
-    ]
-  },
 
   // ═══════════════════════════════════════════════════════════
   // INVESTMENT — Contributions & Withdrawals
@@ -2732,7 +2715,7 @@ const SCENARIOS = {
     desc:"Use super to save tax-effectively for first home deposit",
     needs:{super:true},
     pd:"First Home Super Saver Scheme (FHSSS) contribution",
-    obj:"{name}, during our recent meeting we discussed utilising the First Home Super Saver Scheme (FHSSS) to save for your first home deposit by making voluntary contributions of {amount} into your {superPlatform} superannuation account.",
+    obj:"{name}, in your previous Statement of Advice we recommended utilising the First Home Super Saver Scheme (FHSSS) to save tax-effectively for your first home deposit. You have now advised that you wish to proceed. This Record of Advice confirms the voluntary contributions of {amount} into your {superPlatform} superannuation account under the scheme, in line with the strategy previously provided.",
     rec:"make voluntary contributions of {amount} into your {superPlatform} superannuation account under the FHSSS, with the intention of applying for release when ready to purchase your first home.",
     benefits:[
       "Voluntary concessional contributions benefit from the 15% contributions tax rate rather than your marginal rate, boosting effective savings.",
@@ -2749,6 +2732,9 @@ const SCENARIOS = {
       "Contributions count towards your concessional or non-concessional contribution cap.",
       "Investment returns before release are determined by the ATO's deemed rate, not your actual fund returns.",
       "Superannuation and FHSSS rules are subject to legislative change."
+    ],
+    otherConsiderations:[
+      "This Record of Advice implements a strategy previously recommended in your Statement of Advice. If your circumstances, goals or objectives have changed materially since that advice was provided, please let us know before proceeding, as updated advice may be required."
     ]
   },
 
@@ -2783,26 +2769,6 @@ const SCENARIOS = {
     ]
   },
 
-  pension_payment_change: {
-    cat:"Pension", type:"ROA", label:"Pension — Change Payment Amount", short:"Change Pension Payment",
-    desc:"Change pension payment amount within minimum/maximum",
-    needs:{pension:true},
-    pd:"Change to your pension payment amount",
-    obj:"{name}, during our recent meeting we discussed changing your pension payment amount to better match your current income needs.",
-    rec:"amend your {pensionPlatform} pension annual payment amount to {amount}, within the applicable minimum and (for TTR) maximum limits.",
-    benefits:[
-      "Your pension payment is adjusted to match your current cashflow requirements.",
-      "The change does not trigger any transfer balance cap event (payments above the minimum are not tracked).",
-      "Pension payments from age 60 continue to be tax-free in your hands.",
-      "Flexibility to revisit the payment amount annually provides ongoing alignment with your needs."
-    ],
-    risks:[
-      "For account-based pensions, the minimum annual payment must still be drawn based on age (4%–14% depending on age band).",
-      "For TTR pensions, payments cannot exceed 10% of the account balance per year.",
-      "Higher drawdowns accelerate depletion of capital; lower drawdowns may leave you cashflow-constrained.",
-      "Drawdowns combined with poor market returns can materially affect long-term pension sustainability (sequence-of-returns risk)."
-    ]
-  },
 
   ttr_to_abp: {
     cat:"Pension", type:"ROA", label:"Pension — Convert TTR to Account-Based Pension", short:"TTR → ABP",
@@ -2855,7 +2821,7 @@ const SCENARIOS = {
     desc:"Access super early under limited conditions of release",
     needs:{super:true},
     pd:"Early release of superannuation under a compassionate, severe financial hardship, or terminal illness ground",
-    obj:"{name}, during our recent meeting we discussed accessing {amount} from your superannuation under an early release provision, given the specific circumstances you are facing (severe financial hardship / compassionate grounds / terminal medical condition).",
+    obj:"{name}, your previous Statement of Advice contemplated your circumstances, including the potential need to access superannuation early. You have now advised that the relevant circumstances have arisen and that you wish to proceed. This Record of Advice confirms accessing {amount} from your superannuation under an early release provision (severe financial hardship / compassionate grounds / terminal medical condition), in line with the advice previously provided.",
     rec:"lodge an early release application with the ATO (compassionate grounds) or your super fund (severe financial hardship / terminal medical condition) to access {amount} from your {superPlatform} superannuation account.",
     benefits:[
       "Accessing super early under the relevant ground provides necessary funds to meet the specific compassionate, hardship or terminal illness circumstances.",
@@ -2873,37 +2839,12 @@ const SCENARIOS = {
       "Superannuation legislation governing early release is subject to legislative change."
     ],
     otherConsiderations:[
+      "This Record of Advice implements a strategy previously recommended in your Statement of Advice. If your circumstances, goals or objectives have changed materially since that advice was provided, please let us know before proceeding, as updated advice may be required.",
       "Please gather all required evidence (medical certification, outstanding invoices, income support documentation) before lodging to minimise delays.",
       "For terminal medical condition releases, two medical practitioners (one a specialist in the relevant area) must certify a life expectancy of less than 24 months."
     ]
   },
 
-  super_cgt_cap: {
-    cat:"Superannuation", type:"ROA", label:"Super — CGT Cap Contribution (Small Business)", short:"CGT Cap",
-    desc:"Contribute small business CGT concession proceeds into super",
-    needs:{super:true},
-    pd:"Contribution to superannuation using the CGT lifetime cap (small business concessions)",
-    obj:"{name}, following the sale of an active business asset qualifying for the small business 15-year exemption and/or the retirement exemption, we discussed contributing {amount} to your {superPlatform} superannuation account under the CGT lifetime cap, outside of your normal non-concessional contribution cap.",
-    rec:"contribute {amount} to your {superPlatform} superannuation account under the CGT lifetime cap, completing the required CGT Cap Election form at the time of contribution.",
-    benefits:[
-      "The CGT cap allows you to contribute up to your remaining CGT lifetime cap (indexed, currently $1.78 million for 2025–26) without using your non-concessional cap.",
-      "The contribution is effectively the after-CGT proceeds from a qualifying small business asset sale, boosting your retirement savings within the concessional super tax environment.",
-      "Earnings on the contribution are taxed at a maximum of 15% in accumulation (0% in pension phase), significantly lower than investing outside super.",
-      "This cap is separate from the non-concessional cap and total super balance cap rules — you can contribute even if your total super balance exceeds {totalSuperBalanceThreshold}.",
-      "The strategy is particularly valuable for business owners transitioning to retirement after selling their business."
-    ],
-    risks:[
-      "Strict eligibility rules apply — the asset must be an active business asset, you must satisfy the small business CGT concessions eligibility tests, and either the 15-year exemption or retirement exemption must apply.",
-      "The CGT Cap Election must be lodged with the fund at or before the time of contribution; failure to do so means the contribution is treated as non-concessional.",
-      "The retirement exemption is limited to $500,000 per person lifetime.",
-      "Funds contributed become preserved in super and are generally inaccessible until you meet a condition of release.",
-      "Superannuation and CGT small business concession rules are complex and subject to change — formal advice from your accountant is essential.",
-      "Investment returns within super are not guaranteed."
-    ],
-    otherConsiderations:[
-      "Please engage your accountant/tax adviser to confirm eligibility for the specific small business concession and prepare the required CGT cap election documentation."
-    ]
-  },
 
 
   // ═══════════════════════════════════════════════════════════
