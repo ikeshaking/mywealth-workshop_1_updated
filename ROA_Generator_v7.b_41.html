@@ -20186,18 +20186,23 @@ function renderNAADocHTML(){
     h += `<p style="margin:6px 0">On the ${e(instructionDate)} you requested via ${e(instructionMethod)} that you would like to ${e(scope)}.</p>`;
   }
   // Free-text body (split on blank lines into paragraphs)
-  if(F.naaTransactionDetails){
-    F.naaTransactionDetails.split(/\n\s*\n/).forEach(p => {
-      if(p.trim()) h += `<p style="margin:6px 0">${e(p.trim()).replace(/\n/g, '<br>')}</p>`;
+  // Details paragraphs, with the holdings-to-sell bullets inserted straight
+  // after the paragraph ending "…to be sold are:" (i.e. BEFORE Tax Considerations).
+  {
+    const __paras = F.naaTransactionDetails ? F.naaTransactionDetails.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean) : [];
+    const __rows = (F.naaType === 'selldown') ? (F.naaSellHoldings||[]).filter(r => r.desc) : [];
+    let __at = __paras.findIndex(p => /to be sold are:$/i.test(p));
+    if(__at < 0) __at = __paras.length ? 0 : -1;
+    const __bullets = () => {
+      h += `<ul style="margin:6px 0 6px 18px">`;
+      __rows.forEach(r => { h += `<li>${e(r.desc)}${r.value ? ' (currently valued at ' + e(r.value) + ')' : ''}</li>`; });
+      h += `</ul>`;
+    };
+    __paras.forEach((p, i) => {
+      h += `<p style="margin:6px 0">${e(p).replace(/\n/g, '<br>')}</p>`;
+      if(__rows.length && i === __at) __bullets();
     });
-  }
-  // Type-specific blocks — holdings to sell / post-withdrawal rebalance table
-  if(F.naaType === 'selldown' && (F.naaSellHoldings||[]).some(r => r.desc)){
-    h += `<ul style="margin:6px 0 6px 18px">`;
-    F.naaSellHoldings.filter(r => r.desc).forEach(r => {
-      h += `<li>${e(r.desc)}${r.value ? ' (currently valued at ' + e(r.value) + ')' : ''}</li>`;
-    });
-    h += `</ul>`;
+    if(__rows.length && __at === -1) __bullets();
   }
   if(F.naaType === 'pension_withdrawal' && F.naaRebalanceShow && (F.naaRebalanceRows||[]).some(r => r.name)){
     h += `<table style="margin:8px 0"><thead><tr><th>Asset / Fund name</th><th>Current Amount</th><th>Proposed Amount</th></tr></thead><tbody>`;
@@ -20516,28 +20521,32 @@ async function exportNAADocx(){
   if(!F.naaType || F.naaType === 'other'){
     tdParas.push(new Paragraph({spacing:{before:0, after:80}, children:[new TextRun({text:`On the ${instructionDate} you requested via ${instructionMethod} that you would like to ${scope}.`, font:"Nunito", size:19})]}));
   }
-  if(F.naaTransactionDetails){
-    F.naaTransactionDetails.split(/\n\s*\n/).forEach(p => {
-      const txt = p.trim();
-      if(!txt) return;
-      // Within a paragraph, preserve single newlines as soft breaks
-      const lines = txt.split(/\n/);
+  // Details paragraphs with the holdings-to-sell bullets inserted straight
+  // after "…to be sold are:" (before Tax Considerations).
+  {
+    const __paras = F.naaTransactionDetails ? F.naaTransactionDetails.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean) : [];
+    const __rows = (F.naaType === 'selldown') ? (F.naaSellHoldings||[]).filter(r => r.desc) : [];
+    let __at = __paras.findIndex(p => /to be sold are:$/i.test(p));
+    if(__at < 0) __at = __paras.length ? 0 : -1;
+    const __pushBullets = () => {
+      __rows.forEach(r => {
+        tdParas.push(new Paragraph({
+          numbering:{reference:"bullets", level:0}, spacing:{after:60},
+          children:[new TextRun({text: r.desc + (r.value ? ' (currently valued at ' + r.value + ')' : ''), font:"Nunito", size:19})]
+        }));
+      });
+    };
+    __paras.forEach((p, i) => {
+      const lines = p.split(/\n/);
       const runs = [];
       lines.forEach((ln, idx) => {
         if(idx > 0) runs.push(new TextRun({text:"", break:1, font:"Nunito", size:19}));
         runs.push(new TextRun({text: ln, font:"Nunito", size:19}));
       });
       tdParas.push(new Paragraph({spacing:{before:0, after:80}, children: runs}));
+      if(__rows.length && i === __at) __pushBullets();
     });
-  }
-  // Type-specific blocks — holdings to sell / post-withdrawal rebalance table
-  if(F.naaType === 'selldown' && (F.naaSellHoldings||[]).some(r => r.desc)){
-    F.naaSellHoldings.filter(r => r.desc).forEach(r => {
-      tdParas.push(new Paragraph({
-        numbering:{reference:"bullets", level:0}, spacing:{after:60},
-        children:[new TextRun({text: r.desc + (r.value ? ' (currently valued at ' + r.value + ')' : ''), font:"Nunito", size:19})]
-      }));
-    });
+    if(__rows.length && __at === -1) __pushBullets();
   }
   if(F.naaType === 'pension_withdrawal' && F.naaRebalanceShow && (F.naaRebalanceRows||[]).some(r => r.name)){
     const rbW = [4800, 2400, 2350];
