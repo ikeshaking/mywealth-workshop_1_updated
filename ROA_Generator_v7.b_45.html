@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_44";
+const APP_VERSION = "v7.b_45";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -20422,7 +20422,7 @@ function naaSyncType(){
     F.naaScopePhrase = `partially sell down your ${desc} held in ${acct} and withdraw ${amt}`;
     F.naaTransactionSummary = `Partial Selldown and Withdrawal`;
     F.naaLetterIntro = `You have advised us that you would like to partially sell down your ${desc} held within your ${acct} account and withdraw ${amt}${why ? ' for ' + why : ''}.`;
-    F.naaTransactionDetails = ctx + `to partially sell down your ${desc} held within your ${acct} account and withdraw ${amt}${why ? ' for ' + why : ''}. You have requested this to be actioned as soon as possible. The investments to be sold are:\n- [25,000 Units of Fund Name (currently valued at $X)]`
+    F.naaTransactionDetails = ctx + `to partially sell down your ${desc} held within your ${acct} account and withdraw ${amt}${why ? ' for ' + why : ''}. You have requested this to be actioned as soon as possible.`
       + `\n\nTax Considerations:\nAs part of this transaction, you may be liable for capital gains tax payable upon the sale of your investments. As at today we estimate you will crystallise capital gains of $XX and tax payable of $XX. We recommend that you seek confirmation from your accountant regarding the capital gains tax (CGT) implications associated with this transaction to determine your final tax position.`;
   } else if(t === 'selldown_full'){
     const acct = (F.naaSellAccount||'[platform]'), desc = (F.naaFullDesc||'portfolio').trim(), val = (F.naaFullValue||'').trim(), why = (F.naaSellPurpose||'').trim();
