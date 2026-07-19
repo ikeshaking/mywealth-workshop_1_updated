@@ -10258,7 +10258,7 @@ function resetState(){
     naaInstructionMethod:"email",  // how the instruction was received (email, phone, in person, etc.)
     naaScopePhrase:"alter your current investment allocation", // short phrase used in the auto-generated lead sentence
     naaAdditionalAck:[],            // extra ack bullets specific to this NAA (in addition to the standard ones)
-    naaSubjectArea:"insurance alterations", // appears in the standard ack bullets — usually "insurance alterations", "investment alterations", etc.
+    naaSubjectArea:"", // appears in the standard ack bullets — usually "insurance alterations", "investment alterations", etc.
     // Custom sections
     customSections:[],
     // Off by default — tick "Include Custom Sections in output" to use them.
@@ -15188,6 +15188,7 @@ function initNAAState(){
   F.naaWdAmount = ""; F.naaWdAccount = ""; F.naaWdSource = "reserves portfolio"; F.naaWdPurpose = "";
   F.naaRebalanceShow = false; F.naaRebalanceRows = [];
   F.naaAdditionalAck = [];
+  F.naaSubjectArea = "";
   // Keep client/adviser details intact across doc-type switches; the user will
   // typically be filling in the same client.
 }
@@ -19831,19 +19832,34 @@ function buildNAAAckBullets(){
   const pron = wP ? 'we' : 'I';
   const pron2 = wP ? 'our' : 'my';
   const Pron = pron.charAt(0).toUpperCase() + pron.slice(1);
-  const Pron2 = pron2.charAt(0).toUpperCase() + pron2.slice(1);
-  const subj = F.naaSubjectArea || 'insurance alterations';
-  return [
+  // Subject defaults per transaction type (exemplars: "investment alterations",
+  // "the transaction", "insurance alterations").
+  const subjDefault = {purchase:'investment alterations', selldown:'investment alterations', pension_withdrawal:'transaction'}[F.naaType] || 'insurance alterations';
+  const subj = F.naaSubjectArea || subjDefault;
+  const isIns = /insurance/i.test(subj);
+  const isWithdrawal = F.naaType === 'pension_withdrawal' || F.naaType === 'selldown';
+  const out = [
     `${Pron} only seek your assistance in arranging for the ${subj} to be implemented in accordance with ${pron2} instructions.`,
     `${Pron} have declined your offer of advice on the effect these ${subj} may have on ${pron2} personal circumstances. When deciding to undertake the transactions, ${pron} have not relied on any statements, recommendations, or opinions from you.`,
-    `${Pron} understand the ${subj} could have long-term consequences for ${pron2} financial situation and ${pron} may not have adequate levels of personal insurance cover.`,
+    isIns
+      ? `${Pron} understand the ${subj} could have long-term consequences for ${pron2} financial situation and ${pron} may not have adequate levels of personal insurance cover.`
+      : `${Pron} understand the ${subj} could have long-term consequences for ${pron2} financial situation.`,
+  ];
+  if(isWithdrawal) out.push(`${Pron} understand ${pron} could be selling ${pron2} investments as a capital loss.`);
+  out.push(
     `${Pron} understand that My Wealth Solutions and GPS Wealth will not be responsible:`,
     `\tfor any loss resulting from the ${subj}; or`,
-    `\tfor any expenses and/or loss of benefits from the ${subj}; or`,
-    `\tif the ${subj} are inappropriate to ${pron2} needs, objectives or financial situation.`,
-    `${Pron} believe that ${pron2} request could potentially endanger ${pron2} financial situation.`,
-    `${Pron} have been warned of the risks entering into a situation that is not in ${pron2} best interest and ${pron} may be undertaking risks to ${pron2} financial situation.`
-  ];
+    isWithdrawal ? `\tfor any expenses and/or loss of benefits from withdrawing the existing investment; or` : `\tfor any expenses and/or loss of benefits from the ${subj}; or`,
+    `\tif the ${subj} ${/s$/.test(subj)?'are':'is'} inappropriate to ${pron2} needs, objectives or financial situation.`,
+    `${Pron} believe that ${pron2} request could potentially endanger ${pron2} financial situation.`
+  );
+  if(isWithdrawal){
+    out.push(`${Pron} subsequently cease potential investment earnings on the funds being withdrawn.`);
+    out.push(`The short-term benefits might not outweigh the long-term losses from withdrawing from your investment account.`);
+    out.push(`Tax — ${pron} understand there may be capital gains payable upon the sale of the investment${F.naaType==='selldown' ? 's' : ' account'}.`);
+  }
+  out.push(`${Pron} have been warned of the risks entering into a situation that is not in ${pron2} best interest and ${pron} may be undertaking risks to ${pron2} financial situation.`);
+  return out;
 }
 
 function naaBlockClient(){
@@ -20276,13 +20292,26 @@ function selectNaaType(t){
 // McClymont selldowns, Derickx pension withdrawal). Re-seeds whenever a type
 // field changes; the free text stays editable afterwards.
 function naaInstructionContext(){
-  // "In a meeting with Hayden on the 3rd of July 2026, you have advised us that you would like "
-  // "You have recently advised us via email that you would like "
+  // Exemplar openings:
+  //   meeting    → "In a meeting with Hayden on the 3rd of July 2026, you have advised us that you would like "
+  //   email      → "In an email to My Wealth Solutions on the 20th February 2026, you advised us that you would like "
+  //   phone call → "On the 12th December 2023 you called us explaining that you would like "
   const m = (F.naaInstructionMethod||'').trim();
   const d = (F.naaInstructionDate||'').trim();
   const adv = (F.adviserName||'').trim().split(/\s+/)[0];
-  if(m === 'meeting' && d && adv) return `In a meeting with ${adv} on the ${d}, you have advised us that you would like `;
-  if(m && m !== 'meeting') return `You have recently advised us via ${m} that you would like `;
+  if(m === 'meeting'){
+    if(d && adv) return `In a meeting with ${adv} on the ${d}, you have advised us that you would like `;
+    return `In a recent meeting, you have advised us that you would like `;
+  }
+  if(m === 'email'){
+    if(d) return `In an email to My Wealth Solutions on the ${d}, you advised us that you would like `;
+    return `You have recently advised us via email that you would like `;
+  }
+  if(m === 'phone call'){
+    if(d) return `On the ${d} you called us explaining that you would like `;
+    return `You have recently called us explaining that you would like `;
+  }
+  if(m) return `You have recently advised us via ${m} that you would like `;
   return `You have advised us that you would like `;
 }
 function naaSyncType(){
@@ -20300,7 +20329,8 @@ function naaSyncType(){
     F.naaScopePhrase = `sell and withdraw investments from your ${acct} account`;
     F.naaTransactionSummary = `Investment Sale and Withdrawal`;
     F.naaLetterIntro = `You have advised us that you would like us to sell and withdraw the following investments held within your ${acct} account${why ? ' for ' + why : ''}.`;
-    F.naaTransactionDetails = ctx + `us to sell and withdraw the following investments held within your ${acct} account${why ? ' for ' + why : ''}:`;
+    F.naaTransactionDetails = ctx + `us to sell and withdraw the following investments held within your ${acct} account${why ? ' for ' + why : ''}:`
+      + `\n\nTax Considerations:\nAs part of this transaction, you may be liable for capital gains tax payable upon the sale of your investments. We recommend that you seek confirmation from your accountant regarding the capital gains tax (CGT) implications associated with this transaction to determine your final tax position.`;
   } else if(t === 'pension_withdrawal'){
     const amt = (F.naaWdAmount||'$[amount]'), acct = (F.naaWdAccount||'[platform] pension'), srcp = (F.naaWdSource||'').trim(), why = (F.naaWdPurpose||'').trim();
     F.naaScopePhrase = `withdraw ${amt} from your ${acct} account`;
