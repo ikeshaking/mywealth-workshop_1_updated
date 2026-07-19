@@ -14985,20 +14985,19 @@ function renderPicker(){
       ['pension_withdrawal', 'NAA — Pension / Super Withdrawal',       'Lump-sum withdrawal from a pension or super account, with optional post-withdrawal rebalance table'],
       ['other',              'NAA — Other Instruction',                'Any other execution-only instruction — free-form wording'],
     ];
-    h += `<div class="picker-intro" style="margin-top:18px">
-      <div class="picker-intro-text">
-        <h3>NAA — Execution-Only Acknowledgement</h3>
-        <p>An NAA records a transaction the client has instructed and has <strong>not sought advice on</strong>. Pick the type of instruction — the Section 1 wording and tables pre-fill from the firm's standard formats.</p>
-      </div>
-    </div>
-    <div class="scenario-grid" style="margin-top:14px">`;
+    h += `<details class="cat-group" open>
+      <summary>No Advice Acknowledgement
+        ${F.naaType ? `<span class="cat-sel">1 selected</span>` : ''}
+        <span class="cat-count">4</span>
+      </summary>
+      <div class="scenario-grid">`;
     NAA_TYPES.forEach(([v, label, desc]) => {
       h += `<div class="scenario-card ${F.naaType===v?'selected':''}" onclick="selectNaaType('${v}')">
-        <div class="scenario-card-title">${label}</div>
-        <div class="scenario-card-desc">${desc}</div>
+        <div class="sc-name">${label}</div>
+        <div class="sc-desc">${desc}</div>
       </div>`;
     });
-    h += `</div></main>`;
+    h += `</div></details></main>`;
     return h;
   }
 
