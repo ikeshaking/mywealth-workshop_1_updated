@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_45";
+const APP_VERSION = "v7.b_46";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -10254,7 +10254,7 @@ function resetState(){
     naaFullDesc:"", naaFullValue:"",
     naaSellHoldingsText:"",
     naaWdAmount:"", naaWdAccount:"", naaWdSource:"reserves portfolio", naaWdPurpose:"",
-    naaRebalanceShow:false, naaRebalanceRows:[], naaRebalanceTitle:"",
+    naaRebalanceShow:false, naaRebalanceRows:[], naaRebalanceTitle:"", naaRebalanceIntro:"",
     naaTransactionDetails:"",      // long-form text body of Section 1
     naaInstructionDate:"",         // the date the client gave the instruction (e.g. "19th of December")
     naaInstructionMethod:"email",  // how the instruction was received (email, phone, in person, etc.)
@@ -15191,7 +15191,7 @@ function initNAAState(){
   F.naaSellAccount = ""; F.naaSellPurpose = ""; F.naaSellHoldings = [];
   F.naaFullDesc = ""; F.naaFullValue = ""; F.naaSellHoldingsText = "";
   F.naaWdAmount = ""; F.naaWdAccount = ""; F.naaWdSource = "reserves portfolio"; F.naaWdPurpose = "";
-  F.naaRebalanceShow = false; F.naaRebalanceRows = []; F.naaRebalanceTitle = "";
+  F.naaRebalanceShow = false; F.naaRebalanceRows = []; F.naaRebalanceTitle = ""; F.naaRebalanceIntro = "";
   F.naaAdditionalAck = [];
   F.naaSubjectArea = "";
   // Keep client/adviser details intact across doc-type switches; the user will
@@ -19932,12 +19932,14 @@ function naaBlockType(){
       <input id="naa-care-input" type="file" accept=".docx" style="display:none" onchange="naaImportCareRebalance(this)">
     </div>`;
     h += `<label style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;font-weight:600;cursor:pointer">
-      <input type="checkbox" ${F.naaRebalanceShow?'checked':''} onchange="F.naaRebalanceShow=this.checked;naaSyncType()">
+      <input type="checkbox" ${F.naaRebalanceShow?'checked':''} onchange="F.naaRebalanceShow=this.checked;if(this.checked&&!F.naaRebalanceIntro)F.naaRebalanceIntro=NAA_REBAL_INTRO;naaSyncType()">
       Include post-withdrawal rebalance table (rebalance back to risk profile)
     </label>`;
     if(F.naaRebalanceShow){
-      h += `<div class="field" style="margin-top:8px"><label>Table title (banner row)</label>
-        <input value="${e(F.naaRebalanceTitle||'')}" onchange="F.naaRebalanceTitle=this.value;render()" placeholder="Johannes Derickx - Pension - Hub24"></div>
+      h += `<div class="field" style="margin-top:8px"><label>Intro sentence (printed above the table)</label>
+        <input value="${e(F.naaRebalanceIntro||'')}" onchange="F.naaRebalanceIntro=this.value;render()" placeholder="${e(NAA_REBAL_INTRO)}"></div>
+      <div class="field" style="margin-top:8px"><label>Table title (banner row)</label>
+        <input value="${e(F.naaRebalanceTitle||'')}" onchange="F.naaRebalanceTitle=this.value;render()" placeholder="Johannes Derickx - Pension - Hub24 Investment Choice"></div>
       <div style="margin-top:6px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:5px;font-size:10px;font-weight:700;color:var(--navy)"><span>ASSET / FUND NAME</span><span>CURRENT AMOUNT</span><span>PROPOSED AMOUNT</span><span>CHANGE (BUY/SELL)</span><span></span></div>`;
       (F.naaRebalanceRows||[]).forEach((r, ri) => {
         h += `<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:5px;margin-bottom:4px">
@@ -20240,13 +20242,14 @@ function renderNAADocHTML(){
   }
   if(F.naaRebalanceShow && (F.naaRebalanceRows||[]).some(r => r.name)){
     const __tot = naaRebalanceTotals();
-    h += `<table class="alloc-doc" style="margin:8px 0"><thead>`;
-    if((F.naaRebalanceTitle||'').trim()) h += `<tr class="platform-row"><td colspan="4" style="text-align:center">${e(F.naaRebalanceTitle)}</td></tr>`;
-    h += `<tr><th>Asset / Fund name</th><th>Current Amount</th><th>Proposed Amount</th><th>Change (Buy/Sell)</th></tr></thead><tbody>`;
+    if((F.naaRebalanceIntro||'').trim()) h += `<p>${e(F.naaRebalanceIntro)}</p>`;
+    h += `<table class="var-doc" style="margin:8px 0"><thead>`;
+    if((F.naaRebalanceTitle||'').trim()) h += `<tr><th colspan="4" style="text-align:center;font-family:'Nunito Sans',sans-serif!important">${e(F.naaRebalanceTitle)}</th></tr>`;
+    h += `<tr><th style="background:#0E6BE0;font-family:'Nunito Sans',sans-serif!important">Asset / Fund name</th><th style="background:#0E6BE0;font-family:'Nunito Sans',sans-serif!important">Current Amount</th><th style="background:#0E6BE0;font-family:'Nunito Sans',sans-serif!important">Proposed Amount</th><th style="background:#0E6BE0;font-family:'Nunito Sans',sans-serif!important">Change (Buy/Sell)</th></tr></thead><tbody>`;
     F.naaRebalanceRows.filter(r => r.name).forEach(r => {
-      h += `<tr><td class="lbl">${e(r.name)}</td><td>${e(r.current||'')}</td><td>${e(r.proposed||'')}</td><td>${e(r.change||'')}</td></tr>`;
+      h += `<tr><td>${e(r.name)}</td><td>${e(r.current||'')}</td><td>${e(r.proposed||'')}</td><td>${e(r.change||'')}</td></tr>`;
     });
-    h += `<tr class="alloc-total"><td class="lbl">Total</td><td>${e(__tot.current)}</td><td>${e(__tot.proposed)}</td><td>${e(__tot.change)}</td></tr>`;
+    h += `<tr class="total-row"><td>Total</td><td>${e(__tot.current)}</td><td>${e(__tot.proposed)}</td><td>${e(__tot.change)}</td></tr>`;
     h += `</tbody></table>`;
   }
   h += `</div>`;
@@ -20335,6 +20338,7 @@ function selectNaaType(t){
 // Smart-drop a CARE rebalance doc onto the NAA — fills the rebalance table
 // (Asset/Fund, Current, Proposed, Change) from the chosen account's trades,
 // with the ROA's canonical CARE names and whole-dollar rounding.
+const NAA_REBAL_INTRO = 'As part of the withdrawal of funds, we will rebalance your account in line with your risk profile as per the below table:';
 async function naaImportCareRebalance(inp){
   const file = inp.files[0]; inp.value = ''; if(!file) return;
   try{
@@ -20359,7 +20363,8 @@ async function naaImportCareRebalance(inp){
       proposed: roundImportedMoney(t.proposed||''),
       change: roundImportedMoney(t.change||'')
     }));
-    F.naaRebalanceTitle = `${getFullClientName()} - ${acct.type} - ${(acct.platform||'Hub24')}`;
+    F.naaRebalanceTitle = `${getFullClientName()} - ${acct.type} - ${carePlatform(acct.platform||'Hub24', acct.type)}`;
+    if(!F.naaRebalanceIntro) F.naaRebalanceIntro = NAA_REBAL_INTRO;
     if(F.naaType === 'pension_withdrawal' && !F.naaWdAccount && acct.platform) F.naaWdAccount = carePlatform(acct.platform, acct.type);
     naaSyncType();
   }catch(ex){ hideImportStatus(); alert('CARE import failed: ' + (ex && ex.message ? ex.message : ex)); }
@@ -20436,8 +20441,7 @@ function naaSyncType(){
     F.naaScopePhrase = `withdraw ${amt} from your ${acct} account`;
     F.naaTransactionSummary = `Pension Withdrawal`;
     F.naaLetterIntro = `You have advised us that you would like to withdraw ${amt} from your ${acct} account${why ? ' to help fund ' + why : ''}.`;
-    F.naaTransactionDetails = ctx + `to withdraw ${amt} of your ${acct} account${srcp ? ' using the ' + srcp : ''}. You have requested this to be immediately actioned.`
-      + (F.naaRebalanceShow ? `\n\nFollowing the withdrawal of funds from your pension account, we will rebalance your account in line with your risk profile as per the below table:` : '');
+    F.naaTransactionDetails = ctx + `to withdraw ${amt} of your ${acct} account${srcp ? ' using the ' + srcp : ''}. You have requested this to be immediately actioned.`;
   }
   render();
 }
@@ -20671,37 +20675,37 @@ async function exportNAADocx(){
   }
   if(F.naaRebalanceShow && (F.naaRebalanceRows||[]).some(r => r.name)){
     const rbW = [3550, 2000, 2000, 2000];
-    const LBL = "5EA6FF", PB = "0E6BE0";
+    const PB = "0E6BE0";
     const __tot = naaRebalanceTotals();
     const rbRows = [];
     if((F.naaRebalanceTitle||'').trim()){
       rbRows.push(new TableRow({children:[new TableCell({
         columnSpan:4, width:{size:9550, type:WidthType.DXA},
-        shading:{type:ShadingType.CLEAR, fill:PB, color:"auto"},
+        shading:{type:ShadingType.CLEAR, fill:NY, color:"auto"},
         margins:{top:80, bottom:80, left:140, right:140},
         borders:{top:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4},bottom:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4},left:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4},right:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4}},
         children:[new Paragraph({alignment:AlignmentType.CENTER, spacing:{before:0,after:0}, children:[new TextRun({text:F.naaRebalanceTitle.trim(), font:"Nunito", size:19, color:"FFFFFF", bold:true})]})]
       })]}));
     }
     rbRows.push(new TableRow({tableHeader:true, children:[
-      cellTxt("Asset / Fund name", {shade:NY, color:"FFFFFF", bold:true, size:19, w:rbW[0], font:"ABC Arizona Flare"}),
-      cellTxt("Current Amount", {shade:NY, color:"FFFFFF", bold:true, size:19, w:rbW[1], font:"ABC Arizona Flare"}),
-      cellTxt("Proposed Amount", {shade:NY, color:"FFFFFF", bold:true, size:19, w:rbW[2], font:"ABC Arizona Flare"}),
-      cellTxt("Change (Buy/Sell)", {shade:NY, color:"FFFFFF", bold:true, size:19, w:rbW[3], font:"ABC Arizona Flare"}),
+      cellTxt("Asset / Fund name", {shade:PB, color:"FFFFFF", bold:true, size:19, w:rbW[0]}),
+      cellTxt("Current Amount", {shade:PB, color:"FFFFFF", bold:true, size:19, w:rbW[1], align:AlignmentType.CENTER}),
+      cellTxt("Proposed Amount", {shade:PB, color:"FFFFFF", bold:true, size:19, w:rbW[2], align:AlignmentType.CENTER}),
+      cellTxt("Change (Buy/Sell)", {shade:PB, color:"FFFFFF", bold:true, size:19, w:rbW[3], align:AlignmentType.CENTER}),
     ]}));
     F.naaRebalanceRows.filter(r => r.name).forEach(r => {
       rbRows.push(new TableRow({children:[
-        cellTxt(r.name, {shade:LBL, color:"FFFFFF", bold:true, size:19, w:rbW[0]}),
-        cellTxt(r.current||"", {shade:TL, size:19, w:rbW[1]}),
-        cellTxt(r.proposed||"", {shade:TL, size:19, w:rbW[2]}),
-        cellTxt(r.change||"", {shade:TL, size:19, w:rbW[3]}),
+        cellTxt(r.name, {shade:TL, size:19, w:rbW[0]}),
+        cellTxt(r.current||"", {shade:TL, size:19, w:rbW[1], align:AlignmentType.CENTER}),
+        cellTxt(r.proposed||"", {shade:TL, size:19, w:rbW[2], align:AlignmentType.CENTER}),
+        cellTxt(r.change||"", {shade:TL, size:19, w:rbW[3], align:AlignmentType.CENTER}),
       ]}));
     });
     rbRows.push(new TableRow({children:[
-      cellTxt("Total", {shade:LBL, color:"FFFFFF", bold:true, size:19, w:rbW[0]}),
-      cellTxt(__tot.current, {shade:TL, bold:true, size:19, w:rbW[1]}),
-      cellTxt(__tot.proposed, {shade:TL, bold:true, size:19, w:rbW[2]}),
-      cellTxt(__tot.change, {shade:TL, bold:true, size:19, w:rbW[3]}),
+      cellTxt("Total", {shade:PB, color:"FFFFFF", bold:true, size:19, w:rbW[0]}),
+      cellTxt(__tot.current, {shade:PB, color:"FFFFFF", bold:true, size:19, w:rbW[1], align:AlignmentType.CENTER}),
+      cellTxt(__tot.proposed, {shade:PB, color:"FFFFFF", bold:true, size:19, w:rbW[2], align:AlignmentType.CENTER}),
+      cellTxt(__tot.change, {shade:PB, color:"FFFFFF", bold:true, size:19, w:rbW[3], align:AlignmentType.CENTER}),
     ]}));
     tdParas.push(new Paragraph({spacing:{before:60, after:60}, children:[new TextRun({text:"", font:"Nunito", size:19})]}));
     tdParas.__rebalanceTable = new Table({columnWidths:rbW, width:{size:9550, type:WidthType.DXA}, rows:rbRows});
@@ -20716,7 +20720,11 @@ async function exportNAADocx(){
       children: tdParas
     })]})]
   }));
-  if(tdParas.__rebalanceTable){ children.push(P("")); children.push(tdParas.__rebalanceTable); }
+  if(tdParas.__rebalanceTable){
+    children.push(P(""));
+    if((F.naaRebalanceIntro||'').trim()) children.push(P(F.naaRebalanceIntro.trim()));
+    children.push(tdParas.__rebalanceTable);
+  }
 
   // ─── Section 2: Acknowledgement ───
   children.push(H2New("Section 2: Acknowledgement"));
