@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_33";
+const APP_VERSION = "v7.b_34";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -1640,19 +1640,24 @@ const SCENARIOS = {
     obj:"{name}, during our recent review of your accounts, we discussed rolling over your {fromFund} superannuation balance of {amount} into your {superPlatform} superannuation account to align your investments with your agreed risk profile and our CARE investment approach, and simplify ongoing administration.",
     rec:"rollover {amount} from your {fromFund} account into your {superPlatform} superannuation account and rebalance the portfolio in line with your agreed risk profile as outlined below.",
     benefits:[
-      "Your superannuation will be invested in line with your agreed risk profile under our CARE investment approach, ensuring ongoing professional management.",
-      "Consolidating your superannuation into your {superPlatform} account simplifies ongoing administration, reporting and review.",
-      "The {superPlatform} platform provides a broader investment menu than many retail funds, allowing flexibility to adjust your portfolio as your circumstances change.",
-      "You will no longer pay duplicated administration and member fees across multiple funds.",
-      "Consolidation reduces the risk of losing track of superannuation accounts over time."
+      "Your superannuation will be invested in line with your risk profile and will help you achieve your goal of maximising your superannuation for retirement while being managed on your behalf.",
+      "Increased investment choice, which provides your adviser with the ability to tailor your investment portfolio to your long-term investment strategy.",
+      "You can fund your insurance premiums and adviser fees through your superannuation account as desired.",
+      "Seamless transfer from accumulation to pension (you are not required to sell down your assets to transfer into the pension phase). This can prevent unnecessary Capital Gains Tax consequences and/or sale costs.",
+      "Ease of administration — holding investments through a platform will simplify the administration of your portfolio through access to consolidated reporting and transacting.",
+      "You will no longer pay duplicated administration and member fees across multiple funds."
     ],
     risks:[
-      "Rolling over funds may result in loss of any insurance cover held within the {fromFund} account (e.g. death, TPD, income protection). Please review your existing cover before rolling over and ensure replacement cover is in place if required.",
-      "Rolling over may trigger exit fees or buy/sell spreads within the transferring fund.",
-      "Capital gains may crystallise within the transferring fund upon rollover, which will be reflected in the amount ultimately rolled over.",
+      "Rolling over funds may result in loss of any insurance cover held within the {fromFund} account (e.g. death, TPD, income protection). Please review your existing cover before proceeding.",
+      "The proposed investments may not perform as well as your current investments within your existing fund.",
+      "You will experience market volatility. This will change the value of your investment from day to day.",
+      "There may be transaction costs involved in establishing the strategy.",
+      "Generally, any money held within superannuation is not accessible until retirement.",
+      "Depending on the components that make up your superannuation benefits, withdrawing money from superannuation as a lump sum before you reach age 60 may result in lump sum tax being payable.",
+      "When you die, the proceeds from your superannuation fund may be subject to lump sum tax if they are paid as a lump sum to non-dependants, as defined for tax purposes.",
+      "The underlying investments within super are invested in investment funds. This involves some investment risk and does not guarantee your returns. The value of your investments might not increase as you would like and their value may even fall at times.",
       "Any employer contributions currently paid to the {fromFund} will need to be redirected — you will need to notify your employer of the new fund details.",
-      "There may be a short period during rollover where funds are out of the market, exposing you to market timing risk.",
-      "Features and fees of the new fund may differ from the previous fund."
+      "There may be a short period during rollover where funds are out of the market, exposing you to market timing risk."
     ],
     otherConsiderations:[
       "Please confirm with your employer the new fund details in writing to ensure future Superannuation Guarantee contributions are correctly directed."
@@ -3208,6 +3213,12 @@ const SCENARIOS = {
     ],
     risks:[
       "The total cost of your cover through {newInsurer} may differ from the quote originally provided for {originalInsurer}.",
+      "There may be restrictions in the new policy, or the cover may be accepted on different terms than the existing policy.",
+      "In replacing insurance policies, no two policies are exactly identical — there will invariably be situations where, depending on the circumstances of a claim, one contract may pay a benefit where the other may not.",
+      "The premium quoted for the recommended insurance product is a guide only — 'loading' of insurance premiums can occur following full underwriting assessment of your health, occupation and pastimes.",
+      "Suicide (temporary) — as the new policy replaces existing cover, you will not be covered in the event of suicide during the first 13 months of the new policy.",
+      "Some crisis recovery / critical illness conditions will not be covered during the first 90 days of a new policy, as disclosed in the relevant Product Disclosure Statement.",
+      "Where cover is held in a superannuation environment, any claim is subject to superannuation release laws — assessment and release of a claim can take some time, and tax may be payable on benefits paid from superannuation.",
       "As this is a new policy, any grandfathered features from your other policies will not transfer across.",
       "Please review the {newInsurer} Product Disclosure Statement (PDS) carefully for the policy terms, conditions and exclusions.",
       "Premiums are not guaranteed and may be changed by the insurer over time."
