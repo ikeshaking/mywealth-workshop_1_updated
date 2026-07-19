@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_38";
+const APP_VERSION = "v7.b_39";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -14977,15 +14977,28 @@ function renderPicker(){
     </button>
   </div>`;
 
-  // NAA has no scenario picker — show a friendly explainer and an early return.
+  // NAA — four scenario cards, one per transaction type (mirrors the ROA picker).
   if(isNAA){
+    const NAA_TYPES = [
+      ['purchase',           'NAA — Purchase (Execution Only)',        'Client-directed purchase of specific securities (e.g. $5,000 of Tesla shares via Hub24)'],
+      ['selldown',           'NAA — Sale / Selldown & Withdrawal',     'Sell specific holdings, a full portfolio or an SMSF investment and withdraw the proceeds'],
+      ['pension_withdrawal', 'NAA — Pension / Super Withdrawal',       'Lump-sum withdrawal from a pension or super account, with optional post-withdrawal rebalance table'],
+      ['other',              'NAA — Other Instruction',                'Any other execution-only instruction — free-form wording'],
+    ];
     h += `<div class="picker-intro" style="margin-top:18px">
       <div class="picker-intro-text">
         <h3>NAA — Execution-Only Acknowledgement</h3>
-        <p>An NAA is used when a client has instructed a specific transaction (e.g. an investment switch or insurance change) and has <strong>declined</strong> your offer of advice. There are no scenarios to pick — every NAA is essentially the same structure: client details, the transaction the client instructed, and an acknowledgement section.</p>
+        <p>An NAA records a transaction the client has instructed and has <strong>not sought advice on</strong>. Pick the type of instruction — the Section 1 wording and tables pre-fill from the firm's standard formats.</p>
       </div>
-      <button class="btn btn-blue" onclick="goToBuilder()">Start NAA Builder →</button>
-    </div></main>`;
+    </div>
+    <div class="scenario-grid" style="margin-top:14px">`;
+    NAA_TYPES.forEach(([v, label, desc]) => {
+      h += `<div class="scenario-card ${F.naaType===v?'selected':''}" onclick="selectNaaType('${v}')">
+        <div class="scenario-card-title">${label}</div>
+        <div class="scenario-card-desc">${desc}</div>
+      </div>`;
+    });
+    h += `</div></main>`;
     return h;
   }
 
@@ -15129,22 +15142,19 @@ function switchDocType(t){
   docType = t;
   selectedScenarios = [];
   F.scenarioPortfolioBinding = {};
-  // NAA has no scenarios to pick — jump straight into the builder
+  // NAA picks its transaction type from four scenario cards on the picker
   if(t === 'NAA'){
     initNAAState();
-    page = 'builder';
-    activeSection = 'client';
-  wizardStep = 0;
+    page = 'picker';
   }
   render();
 }
 function goToBuilder(){
   if(docType === 'NAA'){
-    // NAA bypasses scenario selection — there's nothing to select
-    initNAAState();
+    if(!F.naaType) F.naaType = 'other';
     page = 'builder';
     activeSection = 'client';
-  wizardStep = 0;
+    wizardStep = 0;
     render();
     return;
   }
@@ -15171,6 +15181,13 @@ function initNAAState(){
   F.hasOptions = false;
   F.feesChanged = false;
   F.showProjection = false;
+  // Reset the transaction-type fields so a new NAA starts clean.
+  F.naaType = ""; F.naaTransactionSummary = ""; F.naaScopePhrase = ""; F.naaTransactionDetails = "";
+  F.naaBuyAmount = ""; F.naaBuySecurity = ""; F.naaBuyAccount = "";
+  F.naaSellAccount = ""; F.naaSellPurpose = ""; F.naaSellHoldings = [];
+  F.naaWdAmount = ""; F.naaWdAccount = ""; F.naaWdSource = "reserves portfolio"; F.naaWdPurpose = "";
+  F.naaRebalanceShow = false; F.naaRebalanceRows = [];
+  F.naaAdditionalAck = [];
   // Keep client/adviser details intact across doc-type switches; the user will
   // typically be filling in the same client.
 }
@@ -17032,6 +17049,7 @@ function builderNeedsReprovision(){
 }
 
 function renderBuilder(){
+  if(builderView !== 'wizard') builderView = 'wizard';   // single view — the All-sections toggle was removed
   if(builderNeedsReprovision()){ try{ consolidateScenarios(); }catch(_){} }
   const scns = scenariosForSection();
   const hasPort = scns.some(s => s.needs?.super || s.needs?.inv || s.needs?.pension);
@@ -17051,7 +17069,7 @@ function renderBuilder(){
         <div class="hero-tag">${selectedScenarios.map(id => `<span class="badge lime">${e(SCENARIOS[id]?.short || '')}</span>`).join(' ')}</div>
       </div>
       <div class="hero-right">
-        <button class="hero-btn ghost" onclick="setBuilderView('${builderView==='wizard'?'all':'wizard'}')" title="${builderView==='wizard'?'Show every section on one scrolling page':'Walk the sections one step at a time with progress ticks'}">${builderView==='wizard'?'⊞ All sections':'🧭 Wizard view'}</button>
+        
         <button class="hero-btn" onclick="page='preview';render()">Preview →</button>
         <button class="hero-btn ghost" onclick="page='picker';render()">← Back to Scenarios</button>
       </div>
@@ -19828,25 +19846,8 @@ function buildNAAAckBullets(){
   ];
 }
 
-function renderNAABuilder(){
-  let h = `<main class="main">`;
-
-  // Hero
-  h += `<section class="hero" style="min-height:90px;padding:16px 20px">
-    <div class="hero-inner">
-      <div class="hero-left">
-        <div class="hero-sub">Step 2 of 2 · No Advice Acknowledgement · Build Content</div>
-        <h1>NAA Builder</h1>
-      </div>
-      <div class="hero-right">
-        <button class="hero-btn" onclick="page='preview';render()">Preview & Export →</button>
-        <button class="hero-btn ghost" onclick="page='picker';render()">← Back</button>
-      </div>
-    </div>
-  </section>`;
-
-  h += `<div class="builder-single-column" style="padding:20px;max-width:1100px;margin:0 auto">`;
-
+function naaBlockClient(){
+  let h = '';
   // ─── Client + adviser (reuse the standard client section UI) ───
   h += `<div class="section-block" id="section-client">
     <div class="section-block-head">
@@ -19856,6 +19857,10 @@ function renderNAABuilder(){
     <div class="section-block-body">${renderClientSection()}</div>
   </div>`;
 
+  return h;
+}
+function naaBlockType(){
+  let h = '';
   // ─── Transaction type picker — drives the Section 1 wording + table blocks ───
   h += `<div class="section-block">
     <div class="section-block-head">
@@ -19913,6 +19918,10 @@ function renderNAABuilder(){
   }
   h += `</div></div></div>`;
 
+  return h;
+}
+function naaBlockCover(){
+  let h = '';
   // ─── Cover-page type-of-document description ───
   h += `<div class="section-block">
     <div class="section-block-head">
@@ -19929,6 +19938,10 @@ function renderNAABuilder(){
     </div>
   </div>`;
 
+  return h;
+}
+function naaBlockS1(){
+  let h = '';
   // ─── Section 1: Your Instructions ───
   h += `<div class="section-block">
     <div class="section-block-head">
@@ -19958,6 +19971,10 @@ function renderNAABuilder(){
     </div>
   </div>`;
 
+  return h;
+}
+function naaBlockAck(){
+  let h = '';
   // ─── Section 2: Acknowledgement ───
   h += `<div class="section-block">
     <div class="section-block-head">
@@ -19985,6 +20002,10 @@ function renderNAABuilder(){
     </div>
   </div>`;
 
+  return h;
+}
+function naaBlockFsg(){
+  let h = '';
   // ─── FSG / Adviser Profile dates (used in ack lead-in sentence) ───
   h += `<div class="section-block">
     <div class="section-block-head">
@@ -20001,35 +20022,92 @@ function renderNAABuilder(){
     </div>
   </div>`;
 
-  h += `</div></main>`;
   return h;
 }
+function renderNAABuilder(){
+  const NAA_TYPE_LABELS = {purchase:'Purchase (Execution Only)', selldown:'Sale / Selldown & Withdrawal', pension_withdrawal:'Pension / Super Withdrawal', other:'Other Instruction'};
+  const steps = [
+    {k:'client', l:'Client & Adviser Details', render: naaBlockClient},
+    {k:'txn',    l:'Transaction Type & Instructions', render: () => naaBlockType() + naaBlockCover() + naaBlockS1()},
+    {k:'ack',    l:'Acknowledgement & Dates', render: () => naaBlockAck() + naaBlockFsg()},
+  ];
+  if(wizardStep >= steps.length) wizardStep = steps.length - 1;
+  if(wizardStep < 0) wizardStep = 0;
+  const cur = steps[wizardStep];
 
-function renderNAAPreview(){
-  const cn = getFullClientName();
-  const wP = isPluralClient();
-  const pron = wP ? 'we' : 'I';
-  const Pron = pron.charAt(0).toUpperCase() + pron.slice(1);
-
-  let h = `<main class="main">`;
+  let h = `<main class="main builder-main-wide">`;
   h += `<section class="hero" style="min-height:90px;padding:16px 20px">
     <div class="hero-inner">
       <div class="hero-left">
-        <div class="hero-sub">Step 2 of 2 · Preview &amp; Export</div>
-        <h1>Preview</h1>
+        <div class="hero-sub">Step 2 of 3 · No Advice Acknowledgement · Build Content</div>
+        <h1>${e(getFullClientName())}</h1>
+        <div class="hero-tag">${F.naaType ? `<span class="badge lime">NAA — ${e(NAA_TYPE_LABELS[F.naaType]||F.naaType)}</span>` : ''}</div>
       </div>
       <div class="hero-right">
-        <button class="hero-btn" onclick="exportNAADocx()">📄 Export to Word</button>
-        <button class="hero-btn ghost" onclick="page='builder';render()">← Back to Builder</button>
+        <button class="hero-btn" onclick="page='preview';render()">Preview →</button>
+        <button class="hero-btn ghost" onclick="page='picker';render()">← Back to NAA Types</button>
       </div>
     </div>
   </section>`;
 
-  h += `<div class="preview-wrap"><div class="preview-doc" id="preview-doc">`;
+  h += `<div class="wizard-wrap ${livePreviewOn ? 'with-preview' : ''}">`;
 
+  // Left navigation — vertical stepper (same chrome as the ROA wizard)
+  h += `<aside class="wizard-side"><div class="wizard-steps-v">
+    <div class="sidebar-page-heading" style="margin:2px 4px 6px">NAA steps</div>`;
+  steps.forEach((s, i) => {
+    h += `<button class="wizard-step ${i === wizardStep ? 'current' : 'todo'}" onclick="wizardStep=${i};render();window.scrollTo(0,0)">
+      <span class="ws-dot">${i + 1}</span>
+      <span class="ws-label">${e(s.l)}</span>
+    </button>`;
+  });
+  h += `</div>
+    <button class="btn btn-sm" style="width:100%;margin-top:10px" onclick="toggleLivePreview()">${livePreviewOn ? '✕ Hide live preview' : '👁 Show live preview'}</button>
+  </aside>`;
+
+  h += `<div class="builder-single-column wizard-main" style="width:100%">`;
+  h += `<div class="page-separator">
+    <span class="page-separator-num">Step ${wizardStep + 1} of ${steps.length}</span>
+    <span class="page-separator-label">${e(cur.l)}</span>
+  </div>`;
+  h += cur.render();
+  h += `<div class="wizard-nav">
+    ${wizardStep > 0
+      ? `<button class="btn" onclick="wizardStep--;render();window.scrollTo(0,0)">← ${e(steps[wizardStep - 1].l)}</button>`
+      : `<button class="btn" onclick="page='picker';render();window.scrollTo(0,0)">← NAA Types</button>`}
+    <span class="wizard-nav-mid">Step ${wizardStep + 1} of ${steps.length}</span>
+    ${wizardStep < steps.length - 1
+      ? `<button class="btn btn-blue" onclick="wizardStep++;render();window.scrollTo(0,0)">Next: ${e(steps[wizardStep + 1].l)}</button>`
+      : `<button class="btn btn-green" onclick="page='preview';render();window.scrollTo(0,0)">Finish → Preview</button>`}
+  </div>`;
+  h += `</div>`; // end wizard-main
+
+  // Live document preview — identical panel to the ROA wizard
+  if(livePreviewOn){
+    h += `<aside class="wizard-preview">
+      <div class="wizard-preview-head">
+        <span style="font-weight:700;font-size:12px">Live preview</span>
+        <span class="text-xs text-muted">updates as you type</span>
+        <span style="flex:1"></span>
+        <button class="btn btn-xs" onclick="page='preview';render()" title="Open the full-size preview page">⛶ Full</button>
+        <button class="btn btn-xs" onclick="toggleLivePreview()" title="Hide the preview panel">✕ Hide</button>
+      </div>
+      <div class="wizard-preview-scroll"><div class="preview-doc wizard-preview-doc">${renderNAADocHTML()}</div></div>
+    </aside>`;
+  }
+  h += `</div></main>`;
+  return h;
+}
+
+function renderNAADocHTML(){
+  const cn = getFullClientName();
+  const wP = isPluralClient();
+  const pron = wP ? 'we' : 'I';
+  const Pron = pron.charAt(0).toUpperCase() + pron.slice(1);
+  let h = '';
   // Cover page (mirrors the ROA cover but with NAA-specific titles)
   h += `<img src="data:image/png;base64,${BRAND_HEADER_PNG_B64}" alt="My Wealth Solutions" style="display:block;width:100%;max-width:700px;margin:0 0 18px 0" />
-    <h1>Record of Advice</h1>
+    <h1>No Advice Acknowledgement</h1>
     <div class="cover-grid">
       <div class="cover-left">
         Prepared for <strong>${e(cn)}</strong><br><br>
@@ -20135,7 +20213,24 @@ function renderNAAPreview(){
   // Footer image
   h += `<img src="data:image/png;base64,${BRAND_FOOTER_PNG_B64}" alt="My Wealth Solutions — ABN 66 153 751 832" style="display:block;width:100%;margin:30px 0 0 0" />`;
 
-  h += `</div></div></main>`;
+  return h;
+}
+function renderNAAPreview(){
+  let h = `<main class="main">`;
+  h += `<section class="hero" style="min-height:90px;padding:16px 20px">
+    <div class="hero-inner">
+      <div class="hero-left">
+        <div class="hero-sub">Step 2 of 2 · Preview &amp; Export</div>
+        <h1>Preview</h1>
+      </div>
+      <div class="hero-right">
+        <button class="hero-btn" onclick="exportNAADocx()">📄 Export to Word</button>
+        <button class="hero-btn ghost" onclick="page='builder';render()">← Back to Builder</button>
+      </div>
+    </div>
+  </section>`;
+
+  h += `<div class="preview-wrap"><div class="preview-doc" id="preview-doc">` + renderNAADocHTML() + `</div></div></main>`;
   return h;
 }
 
@@ -20144,6 +20239,16 @@ function renderNAAPreview(){
 // NAA transaction types — seed the summary / scope / details wording from the
 // firm's real examples. Re-seeding runs whenever a type field changes, so the
 // free-text stays in sync until the adviser edits it directly.
+function selectNaaType(t){
+  // Fresh start only when the type actually changes — re-clicking the same
+  // card returns to the builder with everything entered so far intact.
+  if(F.naaType !== t) initNAAState();
+  F.naaType = t;
+  page = 'builder';
+  activeSection = 'client';
+  wizardStep = 0;
+  if(t && t !== 'other'){ naaSyncType(); } else { render(); }
+}
 function naaSyncType(){
   const t = F.naaType;
   if(!t || t === 'other') { render(); return; }
