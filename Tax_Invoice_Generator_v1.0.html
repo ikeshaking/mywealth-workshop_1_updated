@@ -20477,6 +20477,16 @@ a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
 .cs-body h5{font-size:9.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-family:var(--bf)!important;margin-bottom:2px}
 .cs-legal{font-size:11px;color:var(--text-muted);line-height:1.7}
 
+/* =======================================================
+   HISTORY / REGISTER TABLE
+   ======================================================= */
+.reg-table{width:100%;border-collapse:collapse;font-size:11.5px}
+.reg-table th{background:var(--navy);color:#fff;text-align:left;padding:8px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap}
+.reg-table td{padding:7px 12px;border-bottom:1px solid var(--border-soft);color:var(--text-dim);vertical-align:middle}
+.reg-table tr:nth-child(even) td{background:var(--row-alt)}
+.reg-table tr:hover td{background:var(--blue-light)}
+.reg-table b{color:var(--heading)}
+
 /* toast */
 #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;
   padding:9px 20px;border-radius:999px;font-size:12px;font-weight:700;box-shadow:var(--shadow-lg);opacity:0;
@@ -20825,6 +20835,79 @@ function resetAll(){
   F = defaultState(); save(); wizardStep = 0; render();
 }
 
+/* =========================================================================
+   INVOICE REGISTER — every Word export is logged against its invoice
+   number (stored in this browser via localStorage), viewable on the
+   History tab and downloadable as CSV / JSON.
+   ========================================================================= */
+const REG_KEY = 'mws_tig_register', SEQ_KEY = 'mws_tig_invseq';
+let reexporting = false;
+function loadRegister(){ try{ return JSON.parse(localStorage.getItem(REG_KEY)) || []; }catch(e){ return []; } }
+function saveRegister(r){ try{ localStorage.setItem(REG_KEY, JSON.stringify(r)); }catch(e){} }
+function nextInvNum(){
+  const reg = loadRegister();
+  const seq = parseInt(localStorage.getItem(SEQ_KEY) || '1000', 10) || 1000;
+  const maxNum = reg.reduce((m,r)=>{ const v = parseInt(r.num,10); return isFinite(v) ? Math.max(m,v) : m; }, 1000);
+  const nxt = Math.max(seq, maxNum) + 1;
+  try{ localStorage.setItem(SEQ_KEY, String(nxt)); }catch(e){}
+  return String(nxt);
+}
+function logInvoice(){
+  const C = calc(); const R = displayRounding(C);
+  const reg = loadRegister();
+  const o = currentOffice();
+  const existing = reg.find(r => r.num === F.invNum);
+  const rec = {
+    num:F.invNum, ts:new Date().toISOString(), rev: existing ? (existing.rev||1)+1 : 1,
+    client1:F.c1, client2:F.c2, adviser:F.adviser, office:o?o.label:'',
+    feeType:F.feeType, fyStart:F.fyStart, fyEnd:F.fyEnd, layout:F.layout,
+    gross:R.gross, superF:R.superF, dedTotal:R.dedTotal, c1:R.c1, c2:R.c2,
+    snapshot: JSON.parse(JSON.stringify(F)),
+  };
+  if(existing) reg[reg.indexOf(existing)] = rec; else reg.push(rec);
+  saveRegister(reg);
+}
+function regLoad(num){
+  const rec = loadRegister().find(r => r.num === num); if(!rec) return;
+  if(!confirm(`Load invoice ${num} (${rec.client1||'no client'}) into the builder? Current unsaved work will be replaced.`)) return;
+  F = Object.assign(defaultState(), rec.snapshot);
+  save(); page = 'builder'; wizardStep = 0; render();
+  toast(`Invoice ${num} loaded`);
+}
+function regReExport(num){
+  const rec = loadRegister().find(r => r.num === num); if(!rec) return;
+  const cur = F;
+  F = Object.assign(defaultState(), rec.snapshot);
+  reexporting = true;
+  try{ exportDocx(); } finally { reexporting = false; F = cur; }
+}
+function regDelete(num){
+  if(!confirm(`Remove invoice ${num} from the register? This does not delete any exported Word files.`)) return;
+  saveRegister(loadRegister().filter(r => r.num !== num));
+  render();
+}
+function regClear(){
+  if(!confirm('Clear the entire invoice register? This cannot be undone.')) return;
+  saveRegister([]); render();
+}
+function regCSV(){
+  const reg = loadRegister();
+  if(!reg.length){ toast('Register is empty'); return; }
+  const head = ['Invoice No','Last exported','Rev','Client 1','Client 2','Adviser','Office','Fee type','FY start','FY end','Layout','Total fees','Via super','Deductible total','Deductible C1','Deductible C2'];
+  const esc = v => { v = String(v==null?'':v); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; };
+  const lines = [head.join(',')].concat(reg.map(r =>
+    [r.num, r.ts, r.rev, r.client1, r.client2, r.adviser, r.office, r.feeType, r.fyStart, r.fyEnd, r.layout,
+     r.gross, r.superF, r.dedTotal, r.c1, r.c2].map(esc).join(',')));
+  saveAs(new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8'}), 'MWS_Invoice_Register.csv');
+  toast('Register downloaded (CSV)');
+}
+function regJSON(){
+  const reg = loadRegister();
+  if(!reg.length){ toast('Register is empty'); return; }
+  saveAs(new Blob([JSON.stringify(reg, null, 2)], {type:'application/json'}), 'MWS_Invoice_Register.json');
+  toast('Register downloaded (JSON, incl. full snapshots)');
+}
+
 /* JSON save / load for client files */
 function saveJSON(){
   const blob = new Blob([JSON.stringify(F, null, 2)], {type:'application/json'});
@@ -20905,6 +20988,7 @@ function render(){
       <nav class="topnav">
         <a class="${page==='builder'?'active':''}" onclick="page='builder';render()">Builder</a>
         <a class="${page==='cheatsheet'?'active':''}" onclick="page='cheatsheet';render()">Cheat Sheet</a>
+        <a class="${page==='history'?'active':''}" onclick="page='history';render()">History${loadRegister().length?` (${loadRegister().length})`:''}</a>
         <a class="${page==='guide'?'active':''}" onclick="page='guide';render()">Guide</a>
       </nav>
     </div>
@@ -20919,6 +21003,7 @@ function render(){
 
   if(page === 'builder') h += renderBuilder();
   else if(page === 'cheatsheet') h += renderCheatSheet();
+  else if(page === 'history') h += renderHistory();
   else h += renderGuide();
 
   h += `</div>`;
@@ -21125,7 +21210,14 @@ function secFees(){
         <input type="date" value="${e(F.invDate)}" oninput="setF('invDate',this.value)" onblur="render()"></div>
     </div>
     <div class="grid2" style="margin-top:2px">
-      ${inputF('invNum','Invoice number (optional)',{ph:'e.g. 2043 — shown on the detailed addendum layout'})}
+      <div class="field"><label>Invoice number</label>
+        <div style="display:flex;gap:6px">
+          <input type="text" value="${e(F.invNum)}" placeholder="auto-generated at export if left blank"
+            oninput="setF('invNum', this.value)" onblur="render()" style="flex:1">
+          <button class="btn btn-sm" onclick="F.invNum=nextInvNum();save();render()" title="Assign the next number in the sequence">⚙ Auto</button>
+        </div>
+        <div class="helper">Each Word export is logged against this number in the History tab (register).</div>
+      </div>
       <div class="field"><label>Figures include GST?</label>
         <div class="seg"><button class="${F.gst?'on':''}" onclick="F.gst=true;save();render()">Yes — incl. GST</button><button class="${!F.gst?'on':''}" onclick="F.gst=false;save();render()">No</button></div>
       </div>
@@ -21417,7 +21509,7 @@ function invoiceHTML(){
     <div class="inv-body">
       <div class="inv-titlebar">
         <h1>${detailed ? 'TAX RECEIPT — ITEMISED ADDENDUM' : 'TAX RECEIPT'}</h1>
-        <div class="inv-date">${e(fmtDate(F.invDate))}${detailed && F.invNum ? `<br>Invoice No. ${e(F.invNum)}`:''}</div>
+        <div class="inv-date">${e(fmtDate(F.invDate))}${F.invNum ? `<br>Invoice No. ${e(F.invNum)}`:''}</div>
       </div>
       <div class="inv-lic">${e(F.licensee)}<br>
         <span class="abn">ABN: ${e(F.abn)}${F.afsl?` &nbsp;·&nbsp; AFSL No. ${e(F.afsl)}`:''}${corpRepLine()?`<br>${e(corpRepLine())}`:''}</span>
@@ -21572,6 +21664,70 @@ function renderCheatSheet(){
 }
 
 /* =========================================================================
+   HISTORY PAGE — invoice register
+   ========================================================================= */
+let regFilter = '';
+function renderHistory(){
+  const reg = loadRegister().slice().sort((a,b)=> (b.ts||'').localeCompare(a.ts||''));
+  const q = regFilter.trim().toLowerCase();
+  const list = q ? reg.filter(r => `${r.num} ${r.client1} ${r.client2} ${r.adviser} ${r.office}`.toLowerCase().includes(q)) : reg;
+  const fmtTs = ts => { if(!ts) return ''; const d = new Date(ts); return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
+  const feeLabel = t => t==='combined' ? 'Upfront + Ongoing' : t==='upfront' ? 'Upfront' : 'Ongoing';
+
+  let h = `<div style="max-width:1150px;margin:0 auto">
+  <div class="card card-accent">
+    <h2>Invoice history &amp; register</h2>
+    <div class="card-sub" style="margin-bottom:0">Every Word export is recorded here against its invoice number — re-exporting the same
+    number updates that record and bumps its revision. Records live in this browser (localStorage): download the register regularly as a
+    CSV (for your records/audit) or JSON (a full backup including every invoice's inputs).</div>
+  </div>
+  <div class="cs-toolbar">
+    <input placeholder="🔎 Search by invoice no, client, adviser…" value="${e(regFilter)}" oninput="regFilter=this.value;render()">
+    <button class="btn btn-sm btn-blue" onclick="regCSV()">⬇ Register (CSV)</button>
+    <button class="btn btn-sm" onclick="regJSON()">⬇ Full backup (JSON)</button>
+    ${reg.length?`<button class="btn btn-sm btn-danger" onclick="regClear()">🗑 Clear register</button>`:''}
+  </div>`;
+
+  if(!reg.length){
+    h += `<div class="card" style="text-align:center;padding:34px 20px;color:var(--text-muted)">
+      <div style="font-size:26px;margin-bottom:8px">🗂</div>
+      No invoices logged yet. Export a Word document from the Builder and it will appear here under its invoice number.
+    </div>`;
+  } else if(!list.length){
+    h += `<div class="card" style="text-align:center;color:var(--text-muted)">No records match your search.</div>`;
+  } else {
+    h += `<div class="card" style="padding:0;overflow-x:auto"><table class="reg-table">
+      <thead><tr><th>Invoice No.</th><th>Last exported</th><th>Rev</th><th>Client(s)</th><th>Adviser</th><th>FY</th><th>Fee type</th>
+      <th style="text-align:right">Total fees</th><th style="text-align:right">Deductible</th><th></th></tr></thead><tbody>`;
+    list.forEach(r=>{
+      const fy = (r.fyStart && r.fyEnd) ? `FY${String(r.fyEnd).slice(2,4)}` : '';
+      h += `<tr>
+        <td><b>${e(r.num)}</b></td>
+        <td>${e(fmtTs(r.ts))}</td>
+        <td>${r.rev||1}</td>
+        <td>${e(r.client1)}${r.client2?' & '+e(r.client2):''}</td>
+        <td>${e(r.adviser)}</td>
+        <td>${e(fy)}</td>
+        <td>${e(feeLabel(r.feeType))}</td>
+        <td style="text-align:right">${money(r.gross||0)}</td>
+        <td style="text-align:right;font-weight:700">${money(r.dedTotal||0)}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-xs" title="Re-download the Word document for this invoice" onclick="regReExport('${e(r.num).replace(/'/g,"\\'")}')">⬇ Word</button>
+          <button class="btn btn-xs" title="Load this invoice back into the builder" onclick="regLoad('${e(r.num).replace(/'/g,"\\'")}')">📂 Load</button>
+          <button class="btn btn-xs btn-danger" title="Remove from register" onclick="regDelete('${e(r.num).replace(/'/g,"\\'")}')">✕</button>
+        </td>
+      </tr>`;
+    });
+    h += `</tbody></table></div>`;
+  }
+  h += `<div class="card"><div class="cs-legal">The register is stored locally in this browser only — it is not shared between
+  computers or users. For a practice-wide record, download the CSV after each batch of invoices and save it to your document
+  management system. The JSON backup can be reloaded invoice-by-invoice via 📂 Load.</div></div>
+  </div>`;
+  return h;
+}
+
+/* =========================================================================
    GUIDE PAGE
    ========================================================================= */
 function renderGuide(){
@@ -21610,6 +21766,7 @@ function b64ToU8(b64){
 
 function exportDocx(){
   if(typeof docx === 'undefined'){ alert('The Word export library has not loaded yet — check your internet connection and refresh.'); return; }
+  if(!String(F.invNum||'').trim()){ F.invNum = nextInvNum(); if(!reexporting) save(); }
   const D = docx;
   const { Document, Packer, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType,
           BorderStyle, Header, Footer, ImageRun, HorizontalPositionAlign, VerticalPositionAlign,
@@ -21662,7 +21819,7 @@ function exportDocx(){
       ]}),
       new TableCell({borders:noBorder, width:{size:30,type:WidthType.PERCENTAGE}, children:[
         new Paragraph({alignment:AlignmentType.RIGHT, children:[T(fmtDate(F.invDate),{color:GREY})]}),
-        ...(detailed && F.invNum ? [new Paragraph({alignment:AlignmentType.RIGHT, children:[T('Invoice No. '+F.invNum,{color:GREY,size:18})]})] : []),
+        ...(F.invNum ? [new Paragraph({alignment:AlignmentType.RIGHT, children:[T('Invoice No. '+F.invNum,{color:GREY,size:18})]})] : []),
       ]}),
     ]}),
   ]}));
@@ -21760,11 +21917,15 @@ function exportDocx(){
     }],
   });
 
+  const fnClient = (F.c1||'Client').replace(/[^\w\- ]+/g,'').trim().replace(/ +/g,'_');
+  const fnFy = F.fyEnd ? 'FY'+String(new Date(F.fyEnd).getFullYear()).slice(2) : '';
+  const fname = `MWS_Tax_Receipt_${F.invNum}_${fnClient}_${fnFy}.docx`;
+  const invNumExported = F.invNum;
+  logInvoice();                       // record this export in the invoice register
+  if(!reexporting) render();          // refresh UI (invoice number / History count)
   Packer.toBlob(doc).then(blob=>{
-    const name = (F.c1||'Client').replace(/[^\w\- ]+/g,'').trim().replace(/ +/g,'_');
-    const fy = F.fyEnd ? 'FY'+String(new Date(F.fyEnd).getFullYear()).slice(2) : '';
-    saveAs(blob, `MWS_Tax_Receipt_${name}_${fy}.docx`);
-    toast('Word document exported');
+    saveAs(blob, fname);
+    toast(`Invoice ${invNumExported} exported & logged in History`);
   }).catch(err=>{ alert('Export failed: '+err.message); });
 }
 
