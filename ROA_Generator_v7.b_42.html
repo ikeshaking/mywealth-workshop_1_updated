@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_41";
+const APP_VERSION = "v7.b_42";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -20167,7 +20167,7 @@ function renderNAADocHTML(){
   // Type of NAA (single row, no scenario list)
   h += `<table class="roa-type-table"><tbody>
     <tr><td class="head" colspan="2"><strong>Type of No Advice Acknowledgement:</strong></td></tr>
-    <tr><td class="head" style="width:50%"><strong>No Advice Acknowledgement (execution only)</strong></td><td>${e(F.naaTransactionSummary || '[Transaction summary]')}</td></tr>
+    <tr><td style="width:50%"><strong>No Advice Acknowledgement (execution only)</strong></td><td>${e(F.naaTransactionSummary || '[Transaction summary]')}</td></tr>
   </tbody></table>`;
 
   // Section 1 — Your Instructions
@@ -20353,6 +20353,7 @@ async function exportNAADocx(){
     HorizontalPositionAlign, VerticalPositionAlign, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom, TextWrappingType , PageBreak } = D;
 
   const NY = "0C2E3F";
+  const BL = "2F6FE4";
   const TL = "E5F4F6";
   const BORD = "D4E2EE";
 
@@ -20369,13 +20370,15 @@ async function exportNAADocx(){
     children:[new TextRun({text:t, font:"ABC Arizona Flare", size:48, color:NY, bold:false})]
   });
   const H2 = t => new Paragraph({
-    spacing:{before:320, after:160},
-    children:[new TextRun({text:t, font:"Nunito", size:26, color:NY, bold:true})]
+    spacing:{before:480, after:240},
+    border:{bottom:{color:BL, space:4, style:BorderStyle.SINGLE, size:12}},
+    children:[new TextRun({text:t, font:"ABC Arizona Flare", size:32, color:NY, bold:false})]
   });
   const H2New = t => new Paragraph({
     pageBreakBefore:true,
-    spacing:{before:320, after:160},
-    children:[new TextRun({text:t, font:"Nunito", size:26, color:NY, bold:true})]
+    spacing:{before:240, after:240},
+    border:{bottom:{color:BL, space:4, style:BorderStyle.SINGLE, size:12}},
+    children:[new TextRun({text:t, font:"ABC Arizona Flare", size:32, color:NY, bold:false})]
   });
   const P = (t, opts={}) => new Paragraph({
     spacing:{before:0, after:160},
@@ -20464,18 +20467,24 @@ async function exportNAADocx(){
     [new TextRun({text: "", font:"Nunito", size:19, break:1})],
     [new TextRun({text:"Dated: ", font:"Nunito", size:19}), new TextRun({text: ordD(F.roaDate)||"[Date]", font:"Nunito", size:19, bold:true})]
   ].filter(Boolean);
+  const __coverBord = {
+    top:{color:BORD,space:0,style:BorderStyle.SINGLE,size:6},
+    bottom:{color:BORD,space:0,style:BorderStyle.SINGLE,size:6},
+    left:{color:BORD,space:0,style:BorderStyle.SINGLE,size:6},
+    right:{color:BORD,space:0,style:BorderStyle.SINGLE,size:6}
+  };
   const coverLeftCell = new TableCell({
     width:{size:coverColW[0], type:WidthType.DXA},
-    margins:{top:120, bottom:120, left:140, right:140},
-    borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE}},
+    margins:{top:180, bottom:180, left:200, right:200},
+    borders: __coverBord,
     children: coverLeftLines.map(runs => new Paragraph({spacing:{before:0, after:60}, children: runs}))
   });
   const coverRightLines = [
-    [new TextRun({text:"What this Document is About", font:"Nunito", size:19, bold:true})],
+    [new TextRun({text:"What this Document is About", font:"Nunito", size:20, bold:true, color:NY})],
     [new TextRun({text: "", font:"Nunito", size:19, break:1})],
     [new TextRun({text:"Please make sure you read each section of this No Advice Acknowledgement. If you feel any information is incorrect, please contact me directly, as it may affect the recommendations contained in this document.", font:"Nunito", size:19})],
     [new TextRun({text: "", font:"Nunito", size:19, break:1})],
-    [new TextRun({text:"My Contact Details", font:"Nunito", size:19, bold:true})],
+    [new TextRun({text:"My Contact Details", font:"Nunito", size:20, bold:true, color:NY})],
     [new TextRun({text:"You can contact me on: " + (F.adviserPhone||"[Phone]"), font:"Nunito", size:19})],
     [new TextRun({text:"My email address is: " + (F.adviserEmail||"[Email]"), font:"Nunito", size:19})],
     [new TextRun({text: "", font:"Nunito", size:19, break:1})],
@@ -20485,8 +20494,9 @@ async function exportNAADocx(){
   ];
   const coverRightCell = new TableCell({
     width:{size:coverColW[1], type:WidthType.DXA},
-    margins:{top:120, bottom:120, left:140, right:140},
-    borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE}},
+    shading:{type:ShadingType.CLEAR, fill:TL, color:"auto"},
+    margins:{top:180, bottom:180, left:200, right:200},
+    borders: __coverBord,
     children: coverRightLines.map(runs => new Paragraph({spacing:{before:0, after:60}, children: runs}))
   });
   children.push(new Table({columnWidths: coverColW, width:{size:9950, type:WidthType.DXA}, rows:[new TableRow({children:[coverLeftCell, coverRightCell]})]}));
@@ -20498,10 +20508,10 @@ async function exportNAADocx(){
     columnWidths: typeW, width:{size:9950, type:WidthType.DXA},
     rows:[
       new TableRow({children:[
-        new TableCell({columnSpan:2, width:{size:9950, type:WidthType.DXA}, shading:{type:ShadingType.CLEAR, fill:NY, color:"auto"}, margins:{top:80,bottom:80,left:140,right:140}, borders:{top:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4},bottom:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4},left:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4},right:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4}}, children:[new Paragraph({children:[new TextRun({text:"Type of No Advice Acknowledgement:", font:"Nunito", size:19, bold:true, color:"FFFFFF"})]})]})
+        new TableCell({columnSpan:2, width:{size:9950, type:WidthType.DXA}, shading:{type:ShadingType.CLEAR, fill:NY, color:"auto"}, margins:{top:80,bottom:80,left:140,right:140}, borders:{top:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4},bottom:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4},left:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4},right:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4}}, children:[new Paragraph({children:[new TextRun({text:"Type of No Advice Acknowledgement:", font:"ABC Arizona Flare", size:22, bold:true, color:"FFFFFF"})]})]})
       ]}),
       new TableRow({children:[
-        cellTxt("No Advice Acknowledgement (execution only)", {w:typeW[0], shade:TL, bold:true}),
+        cellTxt("No Advice Acknowledgement (execution only)", {w:typeW[0], bold:true}),
         cellTxt(F.naaTransactionSummary || "[Transaction summary]", {w:typeW[1]})
       ]})
     ]
