@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_31";
+const APP_VERSION = "v7.b_32";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -1284,17 +1284,17 @@ const DEFAULT_SETTINGS = {
   //    changes, without re-running the tool through Claude). Current as at the date
   //    shown; the "upcoming" fields note changes taking effect next financial year.
   legislation: {
-    asAtDate: "2026-05-27",
-    financialYear: "2025–26",
+    asAtDate: "2026-07-19",
+    financialYear: "2026–27",
     // Superannuation contribution caps & thresholds (current FY)
-    concessionalCap: "$30,000",
-    nonConcessionalCap: "$120,000",
-    bringForward3yr: "$360,000",
-    transferBalanceCap: "$2,000,000",
-    totalSuperBalanceThreshold: "$2,000,000",
+    concessionalCap: "$32,500",
+    nonConcessionalCap: "$130,000",
+    bringForward3yr: "$390,000",
+    transferBalanceCap: "$2,100,000",
+    totalSuperBalanceThreshold: "$2,100,000",
     superGuaranteeRate: "12%",
-    superGuaranteeMaxBase: "$62,500 per quarter",
-    cgtRetirementCap: "$1,865,000",
+    superGuaranteeMaxBase: "$270,830 per year (payday super)",
+    cgtRetirementCap: "$1,935,000",
     superLumpSumLowRateCap: "$260,000",
     downsizerAge: "55",
     downsizerCap: "$300,000 per person",
@@ -1303,17 +1303,17 @@ const DEFAULT_SETTINGS = {
     agePensionAge: "67",
     workTestAge: "67 to 74",
     // Age Pension means test (homeowner; review 3×/yr — update as needed)
-    agePensionAssetsFreeSingle: "$321,500",
-    agePensionAssetsFreeCouple: "$481,500",
-    agePensionAssetsCutoffSingle: "$722,000",
-    agePensionAssetsCutoffCouple: "$1,085,000",
+    agePensionAssetsFreeSingle: "$333,000",
+    agePensionAssetsFreeCouple: "$499,000",
+    agePensionAssetsCutoffSingle: "$733,500",
+    agePensionAssetsCutoffCouple: "$1,102,500",
     // Personal tax (resident, incl. Medicare levy where noted)
     taxFreeThreshold: "$18,200",
     div293Threshold: "$250,000",
     cgtDiscount: "50% (assets held >12 months)",
     // Upcoming changes (effective next financial year) — shown as a standing note.
-    upcomingEffectiveDate: "1 July 2026",
-    upcomingChanges: "From 1 July 2026: concessional contributions cap increases to $32,500; non-concessional cap to $130,000; 3-year bring-forward to $390,000 (2-year to $260,000); general transfer balance cap to $2.1 million. Note: unused concessional cap amounts from 2020/21 or earlier expire after 30 June 2026, and the current $360,000 bring-forward maximum closes on 30 June 2026.",
+    upcomingEffectiveDate: "1 July 2027",
+    upcomingChanges: "From 1 July 2027: the 15% marginal tax rate (income $18,201\u2013$45,000) is legislated to reduce to 14%. Bring-forward arrangements triggered before 1 July 2026 remain at the caps that applied when triggered ($360,000 maximum).",
     // Free-text notes the firm can use for any other assumptions/rulings.
     notes: ""
   },
@@ -1349,6 +1349,16 @@ let SETTINGS = (function(){
         merged.officeGroups = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.officeGroups));
         merged.advisers     = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.advisers));
         merged.rosterVersion = DEFAULT_SETTINGS.rosterVersion;
+        try { localStorage.setItem('roa_settings_v1', JSON.stringify(merged)); } catch(_){}
+      }
+      // Legislation refresh: when the built-in figures are newer (asAtDate) than
+      // the saved ones, replace them so cap/threshold updates baked into a new
+      // file version always show through. The firm's free-text notes survive.
+      const savedLeg = parsed.legislation || {};
+      if((savedLeg.asAtDate || '') < DEFAULT_SETTINGS.legislation.asAtDate){
+        const __legNotes = savedLeg.notes || '';
+        merged.legislation = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.legislation));
+        if(__legNotes) merged.legislation.notes = __legNotes;
         try { localStorage.setItem('roa_settings_v1', JSON.stringify(merged)); } catch(_){}
       }
       return merged;
@@ -1448,8 +1458,8 @@ const SCENARIOS = {
     ],
     risks:[
       "Superannuation is a preserved investment. Once contributed, these funds are generally not accessible until you satisfy a condition of release, typically at preservation age (60) combined with retirement, or age 65.",
-      "The annual non-concessional contribution cap is currently $120,000 per person (or up to $360,000 using the three-year bring-forward rule, subject to your total super balance being under $1.66 million at 30 June of the prior year). Exceeding the cap results in excess contributions tax.",
-      "Where your total super balance is $1.9 million or more at 30 June of the prior year, your non-concessional cap is nil. Please confirm your total super balance position before contributing.",
+      "The annual non-concessional contribution cap is currently {nonConcessionalCap} per person (or up to {bringForward3yr} using the three-year bring-forward rule, subject to your total super balance being under $1.84 million at 30 June of the prior year). Exceeding the cap results in excess contributions tax.",
+      "Where your total super balance is {totalSuperBalanceThreshold} or more at 30 June of the prior year, your non-concessional cap is nil. Please confirm your total super balance position before contributing.",
       "Superannuation legislation (including contribution caps, preservation rules and tax treatment) is subject to change.",
       "Investment returns within super are subject to market movements and are not guaranteed — the value of your account may rise or fall."
     ],
@@ -1474,8 +1484,8 @@ const SCENARIOS = {
       "Your retirement balance progressively increases, accelerating progress toward your financial freedom goal."
     ],
     risks:[
-      "Total annual non-concessional contributions must not exceed the annual cap of $120,000 per person (or up to $360,000 over three years using the bring-forward rule). Exceeding the cap triggers excess contributions tax at the top marginal rate plus Medicare.",
-      "Where your total super balance is $1.9 million or more at 30 June of the prior year, your non-concessional cap is nil. The cap tapers as your balance approaches $1.9m.",
+      "Total annual non-concessional contributions must not exceed the annual cap of {nonConcessionalCap} per person (or up to {bringForward3yr} over three years using the bring-forward rule). Exceeding the cap triggers excess contributions tax at the top marginal rate plus Medicare.",
+      "Where your total super balance is {totalSuperBalanceThreshold} or more at 30 June of the prior year, your non-concessional cap is nil. The cap tapers as your balance approaches that threshold.",
       "Superannuation is preserved — contributed funds are generally inaccessible until you satisfy a condition of release.",
       "The ongoing cashflow commitment must be sustainable; interruption may slow accumulation.",
       "Superannuation legislation (including contribution caps, preservation rules, and tax treatment) is subject to change.",
@@ -1502,7 +1512,7 @@ const SCENARIOS = {
       "Earnings on contributed amounts are taxed at a maximum of 15% in accumulation phase and 0% once in retirement phase."
     ],
     risks:[
-      "The annual concessional contribution cap is currently $30,000 per person (including employer SG). Exceeding the cap results in the excess being added to your assessable income and taxed at your marginal rate, plus an excess concessional contributions charge.",
+      "The annual concessional contribution cap is currently {concessionalCap} per person (including employer SG). Exceeding the cap results in the excess being added to your assessable income and taxed at your marginal rate, plus an excess concessional contributions charge.",
       "Where your income plus concessional contributions exceeds $250,000, Division 293 tax applies an additional 15% on the contributions, reducing the tax benefit.",
       "Salary sacrifice contributions are preserved within super until you meet a condition of release.",
       "Superannuation legislation including contribution caps is subject to change.",
@@ -1522,7 +1532,7 @@ const SCENARIOS = {
     obj:"{name}, during our recent meeting we discussed utilising your unused concessional contribution cap amounts from prior financial years to make a larger tax-deductible contribution of {amount} to your superannuation this financial year.",
     rec:"contribute {amount} into your {superPlatform} superannuation account and lodge a valid Notice of Intent to Claim a Tax Deduction with your super fund, utilising your available carry-forward unused concessional cap amounts.",
     benefits:[
-      "You can contribute {amount}, which exceeds the annual standard concessional cap of $30,000, by drawing on unused cap amounts carried forward from previous financial years.",
+      "You can contribute {amount}, which exceeds the annual standard concessional cap of {concessionalCap}, by drawing on unused cap amounts carried forward from previous financial years.",
       "The full contribution will be deductible at your marginal tax rate, generating a significant tax saving in the current financial year.",
       "Contributions tax of 15% applies within super, which is generally lower than your marginal rate — the difference between your marginal rate and 15% is your net tax saving.",
       "This strategy is particularly valuable in a higher-income year (e.g. bonus, redundancy, one-off capital gain) and helps compensate for years where you did not maximise contributions.",
@@ -1583,7 +1593,7 @@ const SCENARIOS = {
     ],
     risks:[
       "A valid and acknowledged Notice of Intent to Claim a Tax Deduction must be lodged with your super fund before you lodge your tax return or the contribution will be treated as non-concessional.",
-      "The contribution counts towards your concessional cap of $30,000 per annum (plus unused carry-forward amounts where eligible).",
+      "The contribution counts towards your concessional cap of {concessionalCap} per annum (plus unused carry-forward amounts where eligible).",
       "Division 293 tax (additional 15%) applies if your income plus concessional contributions exceed $250,000.",
       "Funds become preserved and are generally inaccessible until you satisfy a condition of release.",
       "Superannuation legislation including caps and tax treatment is subject to change."
@@ -1610,7 +1620,7 @@ const SCENARIOS = {
     ],
     risks:[
       "A valid and acknowledged Notice of Intent to Claim a Tax Deduction must be lodged with your super fund before you lodge your tax return, or the contribution will be treated as non-concessional.",
-      "The contribution counts towards your concessional cap of $30,000 per annum (plus unused carry-forward amounts where eligible).",
+      "The contribution counts towards your concessional cap of {concessionalCap} per annum (plus unused carry-forward amounts where eligible).",
       "Up to 85% of a financial year's concessional contributions can be split to your spouse, and a split application can generally only be made in the financial year after the contribution was made (or in the same year if the whole balance is being withdrawn or rolled over).",
       "You will continue to experience market volatility, which will change the value of your investment from day to day.",
       "Funds remain preserved within superannuation and are generally inaccessible until a condition of release is met.",
@@ -1683,14 +1693,14 @@ const SCENARIOS = {
     obj:"{name}, during our recent meeting we discussed making a larger non-concessional contribution of {amount} into your superannuation by using the three-year bring-forward rule to utilise future years' caps in one contribution.",
     rec:"contribute {amount} from your after-tax savings into your {superPlatform} superannuation account, triggering the three-year bring-forward provisions.",
     benefits:[
-      "You can contribute up to three times the annual non-concessional cap (currently up to $360,000) in one year, accelerating the accumulation of retirement savings.",
+      "You can contribute up to three times the annual non-concessional cap (currently up to {bringForward3yr}) in one year, accelerating the accumulation of retirement savings.",
       "The contribution will benefit from the concessionally taxed super environment, with earnings taxed at a maximum of 15% in accumulation phase (0% in retirement phase).",
       "This is particularly useful for windfalls such as inheritances, property sales, or large bonuses, allowing tax-effective investment within super.",
       "Once inside super, the funds compound in a low-tax environment over time.",
       "The bring-forward provisions are triggered automatically once you exceed the annual cap, provided you meet the eligibility rules."
     ],
     risks:[
-      "You must be under age 75 and your total superannuation balance at 30 June of the prior year must be below $1.66 million to access the full three-year bring-forward. The cap reduces as your balance approaches $1.9 million, and is nil at or above $1.9m.",
+      "You must be under age 75 and your total superannuation balance at 30 June of the prior year must be below $1.84 million to access the full three-year bring-forward. The cap reduces as your balance approaches {totalSuperBalanceThreshold}, and is nil at or above $1.9m.",
       "Triggering the bring-forward prevents any further non-concessional contributions during the three-year period.",
       "If you inadvertently exceed the cap, excess non-concessional contributions tax applies at the top marginal rate plus Medicare.",
       "Funds are preserved and generally inaccessible until you meet a condition of release.",
@@ -1997,7 +2007,7 @@ const SCENARIOS = {
       "The pension balance remains invested in line with your risk profile and continues to compound tax-free."
     ],
     risks:[
-      "The transfer to pension phase counts towards your personal transfer balance cap of $1.9 million. Exceeding this cap attracts excess transfer balance tax.",
+      "The transfer to pension phase counts towards your personal transfer balance cap (currently {transferBalanceCap} for new retirees). Exceeding this cap attracts excess transfer balance tax.",
       "Account-based pensions have minimum annual payment requirements which increase with age (4% at ages 60–64, 5% at 65–74, 6% at 75–79, 7% at 80–84, 9% at 85–89, 11% at 90–94, 14% at 95+).",
       "Once commenced, no further contributions can be made to the pension account — new contributions would need to go into a separate accumulation account.",
       "Market movements affect the pension balance; returns are not guaranteed.",
@@ -2879,7 +2889,7 @@ const SCENARIOS = {
       "The CGT cap allows you to contribute up to your remaining CGT lifetime cap (indexed, currently $1.78 million for 2025–26) without using your non-concessional cap.",
       "The contribution is effectively the after-CGT proceeds from a qualifying small business asset sale, boosting your retirement savings within the concessional super tax environment.",
       "Earnings on the contribution are taxed at a maximum of 15% in accumulation (0% in pension phase), significantly lower than investing outside super.",
-      "This cap is separate from the non-concessional cap and total super balance cap rules — you can contribute even if your total super balance exceeds $1.9 million.",
+      "This cap is separate from the non-concessional cap and total super balance cap rules — you can contribute even if your total super balance exceeds {totalSuperBalanceThreshold}.",
       "The strategy is particularly valuable for business owners transitioning to retirement after selling their business."
     ],
     risks:[
@@ -3878,7 +3888,7 @@ const STRATEGY_PAPERS = {
           "Contribution caps are subject to legislative change. Contributions above the cap trigger excess contributions tax.",
           "Division 293 tax (additional 15%) applies where income + concessional contributions exceed $250,000.",
           "Funds become preserved — not accessible until a condition of release is met.",
-          "If your total super balance reaches $1.9 million, your non-concessional cap reduces (nil at $1.9m+).",
+          "If your total super balance reaches {totalSuperBalanceThreshold}, your non-concessional cap reduces (nil at that threshold and above).",
           "Salary sacrifice arrangements must be set up in writing with your employer before the contribution period."
         ]
       }
