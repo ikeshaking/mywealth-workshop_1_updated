@@ -20524,6 +20524,34 @@ const CATS = {
   'Estate_Business_Planning':  {label:'Estate & Business',    color:'#c2410c', bg:'#ffedd5'},
 };
 
+/* ── Offices, advisers & corporate authorised representatives
+      (same roster as the ROA Generator) ── */
+const OFFICES = [
+  {id:"mws1", label:"MWS1 — Brisbane (Newstead)", phone:"07 3852 4114", address:"1/18 Masters Street, Newstead, Brisbane 4006",
+   corpRepName:"My Wealth Solutions Pty Ltd", corpRepNo:"414145", corpRepABN:"66 153 751 832", advisers:[
+    "Chris Runge","Nathan Bouris","Damien Guazzo","Cory Behrens","Hayden Boglary","Ben Budge","Josh Bareham","Hayden Wilson","Guy Freeman",
+  ]},
+  {id:"mws2", label:"MWS2 — Brisbane (Newstead)", phone:"07 3852 4114", address:"1/18 Masters Street, Newstead, Brisbane 4006",
+   corpRepName:"My Wealth Solutions No2 Pty Ltd T/A My Wealth Solutions", corpRepNo:"1289548", corpRepABN:"83 650 826 234", advisers:[
+    "Nikki Booth",
+  ]},
+  {id:"mws3", label:"MWS3 — Sydney", phone:"02 3813 8743", address:"Level 32, 200 George Street, Sydney NSW 2000",
+   corpRepName:"My Wealth Solutions No3 Pty Ltd T/A My Wealth Solutions", corpRepNo:"1289548", corpRepABN:"83 650 826 234", advisers:[
+    "Matthew Leech",
+  ]},
+  {id:"ewar", label:"EWAR — Gold Coast (Bundall)", phone:"07 5230 4198", address:"80-82 Upton Street, Bundall, QLD 4217",
+   corpRepName:"My Wealth Solutions", corpRepNo:"", corpRepABN:"", advisers:[
+    "Andrew McLauchlan","Ryan Tarr","Colby Atkinson",
+  ]},
+];
+function currentOffice(){ return OFFICES.find(o => o.id === F.officeId) || null; }
+/* "My Wealth Solutions Pty Ltd, Corporate Authorised Representative 414145 of GPS Wealth Ltd" */
+function corpRepLine(){
+  const o = currentOffice();
+  if(!o || !o.corpRepName) return '';
+  return o.corpRepName + (o.corpRepNo ? `, Corporate Authorised Representative ${o.corpRepNo}` : ', Corporate Authorised Representative') + ` of ${F.licensee || 'GPS Wealth Ltd'}`;
+}
+
 /* ── Standard "basis for relating to tax affairs" phrases (from the
       Fee Deductibility Calculator lists) ── */
 const BASIS_OPTIONS = [
@@ -20604,7 +20632,8 @@ let expandedRows = {};
 function defaultState(){
   return {
     c1:'', c2:'', addr:'',
-    adviser:'', licensee:'GPS Wealth Ltd', abn:'17 005 482 726', arOf:'', afsl:'254544',
+    officeId:'mws1', adviser:'',
+    licensee:'GPS Wealth Ltd', abn:'17 005 482 726', afsl:'254544',
     feeType:'ongoing',                 // ongoing | upfront | combined
     ongoingFee:0, ongoingSuper:0,
     upfrontFee:0, upfrontSuper:0,
@@ -20789,41 +20818,6 @@ function normaliseWeights(){
   });
   save(); render();
   toast('Weightings normalised to 100%');
-}
-
-/* Prefill matching the sample McGhee FY25 ongoing invoice */
-function loadExample(){
-  if(F.strategies.length && !confirm('Replace current data with the worked example?')) return;
-  F = Object.assign(defaultState(), {
-    c1:'Pamela-Sue McGhee', addr:'22 MCADAM STREET\nEVERTON PARK QLD 4053',
-    adviser:'Hayden Boglary', licensee:'GPS Wealth Ltd', abn:'17 005 482 726', afsl:'254544',
-    feeType:'ongoing', ongoingFee:7734.30, ongoingSuper:2176.75,
-    invDate:'2026-05-22', fyStart:'2024-07-01', fyEnd:'2025-06-30',
-  });
-  /* Deductible rows keep the exact weightings behind the FY25 McGhee receipt;
-     non-deductible rows are rebalanced so the total is 100% (the source
-     spreadsheet summed to 130%, which this tool treats as an error). */
-  const ex = [
-    ['Ongoing Superannuation & Pension Management', 8, 0,  'Non-Deductible', ''],
-    ['Review/Optimise Investment Strategy within Super', 8, 0, 'Non-Deductible', ''],
-    ['Ongoing Management of an Existing Investment Portfolio', 20, 100, 's8-1', 'Advice on managing an existing income-producing investment portfolio (s8-1)'],
-    ['Investment Portfolio Review & Rebalancing', 20, 100, 's8-1', 'Advice on strategies to enhance income from existing investments (s8-1)'],
-    ['Gearing Strategy Advice (Deductible Debt)', 15, 50, 's25-5 & s8-1', 'Advice on managing a deductible investment loan (Gearing) (s8-1)'],
-    ['Personal Life/TPD/Trauma Insurance Advice (outside super)', 1, 0, 'Non-Deductible', ''],
-    ['Super-owned Life/TPD Insurance Advice', 1, 0, 'Non-Deductible', ''],
-    ['Income Protection Insurance Application/Review', 2, 80, 's8-1', 'Premiums are tax-deductible as the policy secures assessable replacement income (e.g., Income Protection) (s8-1)'],
-    ['Paying down a Non-Deductible Debt (e.g., family home)', 5, 0, 'Non-Deductible', ''],
-    ['General Budgeting and Cash Flow Management', 4, 0, 'Non-Deductible', ''],
-    ['Debt Recycling Strategy', 15, 40, 's25-5 & s8-1', 'Advice on managing a deductible investment loan (Gearing) (s8-1)'],
-    ['Estate Planning Advice (e.g., Testamentary Trusts)', 0.5, 0, 'Non-Deductible', ''],
-    ['Advice on Death Benefit Nominations (Super)', 0.5, 0, 'Non-Deductible', ''],
-  ];
-  F.strategies = ex.map(([name,w,d,treat,basis])=>{
-    const lib = libByName(name);
-    return { id:uid(), libKey:name, name, cat: lib?lib.cat:'Investments', who:'Client 1', w, d, treat, basis };
-  });
-  save(); wizardStep = 0; render();
-  toast('Worked example loaded (McGhee FY25)');
 }
 
 function resetAll(){
@@ -21039,30 +21033,52 @@ function inputFNum(key, label, opts={}){
   </div>`;
 }
 
+function setOffice(id){
+  F.officeId = id;
+  const o = currentOffice();
+  if(o && !o.advisers.includes(F.adviser)) F.adviser = '';
+  save(); render();
+}
 function secClient(){
+  const office = currentOffice();
   return `
   <div class="card">
-    <div class="card-head"><div><h2>Client details</h2>
-      <div class="card-sub">Names appear on the tax receipt exactly as entered. Add Client 2 for couples so deductible amounts can be split per person.</div></div>
-      <button class="btn btn-sm btn-lime" onclick="loadExample()" title="Load the Pam McGhee FY25 worked example">✨ Load worked example</button>
-    </div>
+    <h2>Client details</h2>
+    <div class="card-sub">Names appear on the tax receipt exactly as entered. Add Client 2 for couples so deductible amounts can be split per person.</div>
     <div class="grid2">
-      ${inputF('c1','Client 1 name',{ph:'e.g. Pamela-Sue McGhee'})}
+      ${inputF('c1','Client 1 name')}
       ${inputF('c2','Client 2 name (couples — optional)',{ph:'leave blank for a single client'})}
     </div>
     <div class="field"><label>Postal address (as it should print)</label>
-      <textarea rows="2" oninput="setF('addr', this.value)" onblur="render()" placeholder="22 MCADAM STREET&#10;EVERTON PARK QLD 4053">${e(F.addr)}</textarea>
+      <textarea rows="2" oninput="setF('addr', this.value)" onblur="render()">${e(F.addr)}</textarea>
     </div>
   </div>
   <div class="card">
-    <h2>Adviser & licensee</h2>
-    <div class="card-sub">Shown in the receipt header — the entity that received the fees.</div>
+    <h2>Adviser & office</h2>
+    <div class="card-sub">Same roster as the ROA Generator — picking an office sets the corporate authorised representative details automatically.</div>
     <div class="grid2">
-      ${inputF('adviser','Adviser name',{ph:'e.g. Hayden Boglary'})}
-      ${inputF('licensee','Licensee / entity name (AFSL holder)',{ph:'e.g. GPS Wealth Ltd'})}
-      ${inputF('abn','ABN',{ph:'e.g. 17 005 482 726'})}
-      ${inputF('afsl','AFSL No.',{ph:'e.g. 254544'})}
-      ${inputF('arOf','Authorised rep of (optional)',{ph:'corporate authorised representative — if applicable'})}
+      <div class="field"><label>Office</label>
+        <select onchange="setOffice(this.value)">
+          ${OFFICES.map(o=>`<option value="${o.id}" ${F.officeId===o.id?'selected':''}>${e(o.label)}</option>`).join('')}
+        </select>
+        ${office?`<div class="helper">${e(office.address)} · ${e(office.phone)}</div>`:''}
+      </div>
+      <div class="field"><label>Adviser</label>
+        <select onchange="setF('adviser', this.value);render()">
+          <option value="">— Select adviser —</option>
+          ${(office?office.advisers:[]).map(a=>`<option ${F.adviser===a?'selected':''}>${e(a)}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    ${corpRepLine()?`<div class="helper" style="background:var(--blue-light);border-left:3px solid var(--blue);border-radius:8px;padding:8px 12px;margin-bottom:9px">${e(corpRepLine())}, ABN ${e(F.abn)}, Australian Financial Services Licence number: ${e(F.afsl)}</div>`:''}
+  </div>
+  <div class="card">
+    <h2>Licensee</h2>
+    <div class="card-sub">The AFSL holder shown in the receipt header.</div>
+    <div class="grid3">
+      ${inputF('licensee','Licensee (AFSL holder)')}
+      ${inputF('abn','Licensee ABN')}
+      ${inputF('afsl','AFSL No.')}
     </div>
   </div>`;
 }
@@ -21071,8 +21087,6 @@ function secClient(){
 function secFees(){
   const C = calc();
   const seg = (v,l) => `<button class="${F.feeType===v?'on':''}" onclick="F.feeType='${v}';save();render()">${l}</button>`;
-  const fyBtn = (sy) => `<button class="btn btn-xs" onclick="F.fyStart='${sy}-07-01';F.fyEnd='${sy+1}-06-30';save();render()">FY ${String(sy).slice(2)}/${String(sy+1).slice(2)}</button>`;
-  const yNow = new Date().getFullYear();
   let h = `
   <div class="card">
     <h2>What fees does this receipt cover?</h2>
@@ -21110,11 +21124,7 @@ function secFees(){
       <div class="field"><label>Invoice / receipt date</label>
         <input type="date" value="${e(F.invDate)}" oninput="setF('invDate',this.value)" onblur="render()"></div>
     </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-      <span class="helper" style="margin:0">Quick set:</span>
-      ${fyBtn(yNow-2)} ${fyBtn(yNow-1)} ${fyBtn(yNow)}
-    </div>
-    <div class="grid2" style="margin-top:10px">
+    <div class="grid2" style="margin-top:2px">
       ${inputF('invNum','Invoice number (optional)',{ph:'e.g. 2043 — shown on the detailed addendum layout'})}
       <div class="field"><label>Figures include GST?</label>
         <div class="seg"><button class="${F.gst?'on':''}" onclick="F.gst=true;save();render()">Yes — incl. GST</button><button class="${!F.gst?'on':''}" onclick="F.gst=false;save();render()">No</button></div>
@@ -21153,8 +21163,7 @@ function secStrategies(){
     h += `<div class="card" style="text-align:center;padding:34px 20px;color:var(--text-muted)">
       <div style="font-size:26px;margin-bottom:8px">🧩</div>
       No strategies yet. Click <b>＋ Add strategy</b> to pick from the cheat sheet — weighting, deductible % and the
-      invoice wording pre-fill from the house rules.<br>
-      <button class="btn btn-sm btn-lime" style="margin-top:12px" onclick="loadExample()">✨ Load worked example instead</button>
+      invoice wording pre-fill from the house rules.
     </div>`;
   }
 
@@ -21411,7 +21420,7 @@ function invoiceHTML(){
         <div class="inv-date">${e(fmtDate(F.invDate))}${detailed && F.invNum ? `<br>Invoice No. ${e(F.invNum)}`:''}</div>
       </div>
       <div class="inv-lic">${e(F.licensee)}<br>
-        <span class="abn">ABN: ${e(F.abn)}${F.afsl?` &nbsp;·&nbsp; AFSL No. ${e(F.afsl)}`:''}${F.arOf?`<br>Authorised Rep of ${e(F.arOf)}`:''}</span>
+        <span class="abn">ABN: ${e(F.abn)}${F.afsl?` &nbsp;·&nbsp; AFSL No. ${e(F.afsl)}`:''}${corpRepLine()?`<br>${e(corpRepLine())}`:''}</span>
       </div>
       <div class="inv-pc">Private and Confidential</div>
       <div class="inv-client">${e(clientLine)}${F.addr?'\n'+e(F.addr):''}</div>
@@ -21570,7 +21579,7 @@ function renderGuide(){
   <div class="card card-accent"><h2>How to use this tool</h2>
   <div class="card-sub" style="margin-bottom:0">Six steps, left to right — the preview on the right always shows exactly what will export.</div></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">1 · Client & Adviser</h3>
-    <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Enter the client (and partner for couples), postal address, adviser and licensee details. These print in the receipt header. Use <b>✨ Load worked example</b> to see a completed FY25 ongoing invoice.</p></div>
+    <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Enter the client (and partner for couples) and postal address, then pick the office and adviser — the corporate authorised representative and licensee details fill in automatically from the same roster as the ROA Generator. These print in the receipt header.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">2 · Fees & Period</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Choose whether the receipt covers <b>upfront</b>, <b>ongoing</b> or <b>both</b> fee types, then enter the gross amounts paid and how much was paid from super/pension products. The net fee to apportion is total minus super-paid — fees paid from super are never personally deductible. Set the financial year and receipt date.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">3 · Strategy Apportionment</h3>
@@ -21659,8 +21668,9 @@ function exportDocx(){
   ]}));
 
   kids.push(P(F.licensee,{bold:true, after:20}));
-  kids.push(P(`ABN: ${F.abn}${F.afsl ? '   ·   AFSL No. '+F.afsl : ''}`,{color:GREY, size:18, after:F.arOf?20:200}));
-  if(F.arOf) kids.push(P('Authorised Rep of '+F.arOf,{color:GREY, size:18, after:200}));
+  const crl = corpRepLine();
+  kids.push(P(`ABN: ${F.abn}${F.afsl ? '   ·   AFSL No. '+F.afsl : ''}`,{color:GREY, size:18, after:crl?20:200}));
+  if(crl) kids.push(P(crl,{color:GREY, size:18, after:200}));
 
   kids.push(P('Private and Confidential',{bold:true, color:NY, after:40}));
   kids.push(P(both ? `${F.c1} and ${F.c2}` : F.c1, {after: F.addr?20:200}));
