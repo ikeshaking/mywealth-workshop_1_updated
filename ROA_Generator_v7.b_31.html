@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_30";
+const APP_VERSION = "v7.b_31";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -1853,8 +1853,8 @@ const SCENARIOS = {
     rec:"top up your CARE Reserves Portfolio within your {superPlatform} superannuation account by rebalancing as outlined in the trades and allocation table below.",
     benefits:[
       "Topping up your Reserves portfolio will provide you with liquidity and low volatility, ensuring you shouldn't have to sell growth assets through necessity or bad decisions during downturns.",
-      "The rebalance will ensure that your portfolio, including reserves, continues to be in line with your risk profile and meet your pension income requirements.",
-      "You will hold approximately 3–4 years' worth of reserves to meet your liquidity requirements.",
+      "The rebalance will ensure that your portfolio, including reserves, continues to be in line with your {riskProfile} risk profile and meet your pension income requirements.",
+      "You will hold approximately {reservesYears} years' worth of reserves to meet your liquidity requirements.",
       "Reserves top-ups maintain the sequence-of-returns buffer through all market cycles."
     ],
     risks:[
@@ -2064,7 +2064,7 @@ const SCENARIOS = {
     obj:"{name}, during our recent review we discussed rebalancing your {pensionPlatform} pension portfolio to ensure your investments remain aligned with your agreed risk profile and meet your pension income requirements.",
     rec:"rebalance your {pensionPlatform} pension portfolio in line with your agreed risk profile as outlined in the rebalance trades and allocation table below.",
     benefits:[
-      "The rebalance will ensure that your portfolio, including reserves, continues to be in line with your risk profile and meet your pension income requirements.",
+      "The rebalance will ensure that your portfolio, including reserves, continues to be in line with your {riskProfile} risk profile and meet your pension income requirements.",
       "The maintained reserves allocation reduces the need to sell growth assets during market downturns, managing sequence-of-returns risk.",
       "You remain diversified across asset classes.",
       "Rebalancing within a pension account is tax-free as there is no CGT on earnings in retirement phase.",
@@ -2313,8 +2313,8 @@ const SCENARIOS = {
     rec:"rebalance your {invPlatform} investment portfolio to introduce a CARE Reserves allocation sufficient to hold approximately 3–4 years of planned drawdowns, as outlined in the trades and allocation table below.",
     benefits:[
       "Topping up your Reserves portfolio will provide you with liquidity and low volatility, ensuring you shouldn't have to sell growth assets through necessity or bad decisions during downturns.",
-      "You will hold approximately 3–4 years' worth of Reserves to meet your liquidity requirements, in line with your risk profile.",
-      "The rebalance will ensure that your portfolio, including reserves, continues to be in line with your risk profile and meet your income requirements.",
+      "You will hold approximately {reservesYears} years' worth of Reserves to meet your liquidity requirements, in line with your risk profile.",
+      "The rebalance will ensure that your portfolio, including reserves, continues to be in line with your {riskProfile} risk profile and meet your income requirements.",
       "The reserves bucket smooths cashflow and supports sustainable withdrawal rates."
     ],
     risks:[
@@ -2335,8 +2335,8 @@ const SCENARIOS = {
     rec:"top up your CARE Reserves Portfolio within your {invPlatform} investment account by rebalancing as outlined in the trades and allocation table below.",
     benefits:[
       "Topping up your Reserves portfolio will provide you with liquidity and low volatility, ensuring you shouldn't have to sell growth assets through necessity or bad decisions during downturns.",
-      "The rebalance will ensure that your portfolio, including reserves, continues to be in line with your risk profile and meet your income requirements.",
-      "You will maintain approximately 3–4 years' worth of Reserves to meet your liquidity requirements.",
+      "The rebalance will ensure that your portfolio, including reserves, continues to be in line with your {riskProfile} risk profile and meet your income requirements.",
+      "You will maintain approximately {reservesYears} years' worth of Reserves to meet your liquidity requirements.",
       "Topping up smooths cashflow through all market cycles and protects against sequence-of-returns risk."
     ],
     risks:[
@@ -2379,8 +2379,8 @@ const SCENARIOS = {
     rec:"rebalance your {invPlatform} investment portfolio to release {amount} as a one-off withdrawal.",
     benefits:[
       "You will have the necessary funds to assist with the withdrawal for {withdrawalPurpose}.",
-      "The rebalance will ensure that your portfolio, including reserves, continues to be in line with your risk profile and meet your income requirements.",
-      "You will hold approximately 3–4 years' worth of reserves to meet ongoing liquidity requirements.",
+      "The rebalance will ensure that your portfolio, including reserves, continues to be in line with your {riskProfile} risk profile and meet your income requirements.",
+      "You will hold approximately {reservesYears} years' worth of reserves to meet ongoing liquidity requirements.",
       "The portfolio fees will reduce due to having less funds under management."
     ],
     risks:[
@@ -2388,7 +2388,7 @@ const SCENARIOS = {
       "As at today, you will crystalise estimated capital gains through the selldown for your withdrawal. This will incur an estimated capital gains tax based on your maximum marginal tax rate. Please contact a qualified tax agent or accountant to confirm the accuracy of this estimate and final figures.",
       "Investment funds involve some investment risk and do not guarantee your returns. The value of your investments might not increase as you would like and their value may even fall at times.",
       "You will experience market volatility. This will change the value of your investment from day to day.",
-      "Based on my recommendations, you will incur transaction fees from this rebalance."
+      "Based on my recommendations, you will incur transaction fees{transactionFees} from this rebalance."
     ]
   },
 
@@ -2473,7 +2473,7 @@ const SCENARIOS = {
       "As a result of commencing the ongoing withdrawals and the potential for lower overall investment returns, there is a risk that your investment capital may be depleted more quickly over time.",
       "Investment funds involve some investment risk and do not guarantee your returns. The value of your investments might not increase as you would like and their value may even fall at times.",
       "You will experience market volatility. This will change the value of your investment from day to day.",
-      "You will incur transaction fees from this rebalance.",
+      "You will incur transaction fees{transactionFees} from this rebalance.",
       "Drawdowns combined with poor market returns early in the drawdown period can accelerate depletion (sequence-of-returns risk)."
     ]
   },
@@ -2487,7 +2487,7 @@ const SCENARIOS = {
     rec:"increase your ongoing withdrawals from {regularAmountFrom} per {regularFrequency} to {regularAmount} per {regularFrequency}. Top up your reserves by rebalancing your {invPlatform} investment portfolio as outlined below.",
     benefits:[
       "The increased withdrawal amount provides greater cashflow flexibility to meet your updated expense requirements.",
-      "The rebalance will ensure that your portfolio, including reserves, continues to be in line with your risk profile and meet your income requirements of {regularAmount} per {regularFrequency}.",
+      "The rebalance will ensure that your portfolio, including reserves, continues to be in line with your {riskProfile} risk profile and meet your income requirements of {regularAmount} per {regularFrequency}.",
       "You will hold approximately 4 years' worth of Reserves to meet your liquidity requirements.",
       "Topping up your Reserves portfolio will provide you with liquidity and low volatility, ensuring you shouldn't have to sell growth assets through necessity or bad decisions during downturns."
     ],
@@ -2496,7 +2496,7 @@ const SCENARIOS = {
       "As a result of increasing your ongoing withdrawals and the potential for lower overall investment returns, there is a risk that your investment capital may be depleted more quickly over time. Please refer to your updated Nestegg projection for detail.",
       "Investment funds involve some investment risk and do not guarantee your returns. The value of your investments might not increase as you would like and their value may even fall at times.",
       "You will experience market volatility. This will change the value of your investment from day to day.",
-      "You will incur transaction fees from this rebalance."
+      "You will incur transaction fees{transactionFees} from this rebalance."
     ]
   },
 
@@ -10197,6 +10197,7 @@ function resetState(){
     // personally-funded tax-deductible cover (e.g. Income Protection). Stored as a number
     // like 0.39 (= 39%). Blank/0 → no MTR saving applied.
     client1Mtr:"",
+    client2Mtr:"",
     client2Name:"", client2Role:"",
     entityName:"",
     adviserName:"",adviserOffice:"",adviserPhone:"",adviserEmail:"",adviserStreet:(SETTINGS.defaultStreet||"1/18 Masters Street, Newstead, Brisbane 4006"),
@@ -10331,7 +10332,7 @@ function resetState(){
     nominees:[{name:"",rel:"",pct:""}],
     nominationNote:"",
     // Projection
-    showProjection:true, projectionNote:"",
+    showProjection:false, projectionNote:"",
     // Fees
     feesChanged:false, feesDetail:"",
     commissionUpfront:"", commissionOngoing:"", commissionNote:"",
@@ -10704,10 +10705,11 @@ function consolidateScenarios(){
   const hasOptions = scns.some(s => s.needs?.hasOptions);
   F.hasOptions = hasOptions;
 
-  // Projection hidden for any ROA that involves insurance (not just insurance-only).
-  // Insurance ROAs don't use the "How Long" projection/annexure section.
+  // The Annexure section starts UNTICKED — the adviser opts in when there is
+  // genuinely an annexure to include. Insurance ROAs never use it, so any
+  // insurance involvement forces it off; otherwise the checkbox is respected.
   const anyInsForProj = scns.some(s => s.needs?.insurance || s.needs?.insuranceTable);
-  F.showProjection = !anyInsForProj;
+  if(anyInsForProj) F.showProjection = false;
 
   // Fees section always shows, but "fees have changed" starts UNTICKED — the
   // adviser opts in when the fee position actually changes.
@@ -11241,12 +11243,16 @@ function fillForPortfolio(str, portfolio){
   if(!str) return "";
   // Priority: per-portfolio override → global default → placeholder
   const rp = (portfolio && portfolio.riskProfile) || F.globalRiskProfile || "[Risk Profile]";
+  const reservesYears = /high growth/i.test(rp) ? "4" : (/\bgrowth\b/i.test(rp) ? "3" : "3–4");
+  const txnFees = (portfolio && (portfolio.transactionCosts||"").trim()) ? " of approximately " + portfolio.transactionCosts.trim() : "";
   const hasDraw = !!(portfolio && portfolio.hasDrawdownOrReserves);
   return String(str)
     // Conditional blocks — {IF_DRAWDOWN: content to include when drawing down}
     .replace(/\{IF_DRAWDOWN:([^}]*)\}/g, hasDraw ? '$1' : '')
     .replace(/\{IF_NO_DRAWDOWN:([^}]*)\}/g, hasDraw ? '' : '$1')
-    .replace(/\{riskProfile\}/g, rp);
+    .replace(/\{riskProfile\}/g, rp)
+    .replace(/\{reservesYears\}/g, reservesYears)
+    .replace(/\{transactionFees\}/g, txnFees);
 }
 function joinAnd(arr){
   arr = arr.filter(Boolean);
@@ -11684,7 +11690,15 @@ function canonicalCareName(raw){
     'cash account':                      'Cash',
   };
   const full = MAP[key];
-  return full ? full + star : src;
+  if(full) return full + star;
+  // Family rule — every CARE range (ESG, Genuine Edge, Essentials, and the
+  // plain risk-profile options) gets the full "CARE … Portfolio" wording.
+  if(/^(esg|genuine edge|essentials)( |$)/.test(key) ||
+     /^(growth|balanced|moderately defensive|defensive|conservative)$/.test(key)){
+    const body = key.split(' ').map(w => w === 'esg' ? 'ESG' : w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    return 'CARE ' + body + ' Portfolio' + star;
+  }
+  return src;
 }
 // Imported documents carry cents (e.g. "$25,331.60"); the ROA tables use clean
 // whole-dollar figures ("$25,332"). Rounds every dollar amount in the string to
@@ -11756,6 +11770,7 @@ function extractCareDoc(html){
     const comparison = [];  // {name, current, proposed, variance}
     let compTotal = {current:'', proposed:'', variance:''};
     let mgmtFeePct = '', adminFeePct = '', totalFeePct = '', totalFeeDollar = '';
+    let txnCostDollar = '';   // "Total Transactional Costs" — buy/sell + brokerage
     let totalChange = '';   // Total row's Change column — a decrease = lump-sum withdrawal
 
     b.items.forEach(item => {
@@ -11786,6 +11801,7 @@ function extractCareDoc(html){
               if(!totalFeePct) totalFeePct = pct3(pctCell(r));
               if(!totalFeeDollar) totalFeeDollar = (dlrCell(r)||'').trim();
             }
+            if(/^total transactional costs/.test(lbl) && !txnCostDollar) txnCostDollar = (dlrCell(r)||'').trim();
           });
           return;
         }
@@ -11816,7 +11832,8 @@ function extractCareDoc(html){
     const type = careClassifyType(name);
     accounts.push({accountName:name, platform, type, owner:careOwnerOf(name),
       riskProfile, totalValue, totalChange, trades, comparison, compTotal,
-      mgmtFeePct, adminFeePct, feePercent: totalFeePct, feeDollar: totalFeeDollar});
+      mgmtFeePct, adminFeePct, feePercent: totalFeePct, feeDollar: totalFeeDollar,
+      txnCostDollar});
   });
   // If this wasn't a "Rebalance" appendix, try the CARECalc "CARE Portfolio Fact Sheet"
   // layout (account summary table + per-account "CARE Essentials - X" breakdowns).
@@ -11944,6 +11961,7 @@ function careAccountsToPortfolios(accounts){
         .concat(p.rows.filter(r => r.isFee));
       if(a.feePercent) p.feePercent = a.feePercent;
       if(a.feeDollar)  p.feeDollar  = a.feeDollar;
+      if(a.txnCostDollar) p.transactionCosts = a.txnCostDollar;
       // Trades = the buy/sell changes. "Sell/Buy Cash" lines are dropped — the
       // cash movement is a by-product of the other trades, not an instruction.
       p.trades = a.trades.filter(t => !isCashName(canonicalCareName(t.product))).map(t => {
@@ -12126,7 +12144,7 @@ async function importWealthSolverRoa(file){
     });
   }
   // Fees: the Gross Ongoing Costs row, one value per provider column.
-  let feeDollar = '', feePercent = '', curGross = null, recGross = null;
+  let feeDollar = '', feePercent = '', curGross = null, recGross = null, wsTxnCost = '';
   if(feesT){
     const gRow = feesT.find(r => /gross ongoing costs/i.test(String(r[0]||'')));
     if(gRow){
@@ -12138,6 +12156,11 @@ async function importWealthSolverRoa(file){
         feeDollar = fmt(recGross);
         if(total > 0) feePercent = (recGross/total*100).toFixed(3) + '%';
       }
+    }
+    const tRow = feesT.find(r => /total transactional costs|transaction(al)? costs/i.test(String(r[0]||'')));
+    if(tRow){
+      const tv = num(tRow[1 + chosen.i]) != null ? num(tRow[1 + chosen.i]) : num(tRow[tRow.length-1]);
+      if(tv != null && tv > 0) wsTxnCost = fmt(tv);
     }
   }
   const provClean = chosen.p.replace(/^[CP]\s+/i,'').replace(/rollover\/consolidate( to)?/i,'').replace(/plan review/i,'').trim() || 'Recommended platform';
@@ -12158,6 +12181,7 @@ async function importWealthSolverRoa(file){
   if(total) p.totalValue = fmtW(total);
   if(feeDollar) p.feeDollar = feeDollar;
   if(feePercent) p.feePercent = feePercent;
+  if(wsTxnCost) p.transactionCosts = wsTxnCost;
   p.trades = [{action:'Buy', amount:'', product:''}];
   p.allocComparison.show = false;
   F.portfolios.push(p);
@@ -14345,7 +14369,7 @@ function sectionStatusText(){
   if(hasBdbn) flags.push('bdbn');
   if(!hasIns) flags.push('projection');
   flags.push('fees','ack');
-  const alwaysOn = 3; // Client & Adviser + Type of ROA + Custom Sections
+  const alwaysOn = 2; // Client & Adviser + Type of ROA
   const total = flags.length + alwaysOn;
   const visible = flags.filter(k => !F.sectionVisible || F.sectionVisible[k] !== false).length + alwaysOn;
   return `${visible}/${total} sections active`;
@@ -14641,6 +14665,32 @@ function renderAdmin(){
   </div>`;
 
   // ── Suggested wording editor ──
+  // Platform & Asset Allocation Defaults — moved off the ROA pages (a CARE /
+  // WealthSolver upload brings its own platform & holdings; these defaults only
+  // apply to manually-built portfolios and template wording without an import).
+  h += `<div class="card">
+    <h3 style="margin:0 0 6px">Platform &amp; Asset Allocation Defaults</h3>
+    <div class="card-sub" style="margin-top:0">Substituted into scenario wording and used for manually-built portfolios. A CARE / WealthSolver upload overrides these with the document's own platform and holdings.</div>
+    <div class="field">
+      <label>Asset Allocation Set</label>
+      <div class="tog">
+        <button class="${(F.assetAllocationSet||'CARE')==='CARE'?'on':'off'}" onclick="switchAssetAllocationSet('CARE')">CARE Portfolios (default)</button>
+        <button class="${F.assetAllocationSet==='Vanguard'?'on':'off'}" onclick="switchAssetAllocationSet('Vanguard')">Vanguard</button>
+      </div>
+      <div class="helper" style="margin-top:4px">Changes the default fund names in each portfolio's allocation table. Applies to new portfolios and can be re-applied to existing ones using the "&#8635; Reset to defaults" button on each portfolio.</div>
+    </div>
+    <div class="grid-3">
+      <div class="field"><label>Super Platform</label>
+        ${platformSelect('F.superPlatform', F.superPlatform, 'consolidateScenarios();')}
+      </div>
+      <div class="field"><label>Investment Platform</label>
+        ${platformSelect('F.invPlatform', F.invPlatform, 'consolidateScenarios();')}
+      </div>
+      <div class="field"><label>Pension Platform</label>
+        ${platformSelect('F.pensionPlatform', F.pensionPlatform, 'consolidateScenarios();')}
+      </div>
+    </div>
+  </div>`;
   h += renderAdminWording();
 
   // ── Export / reset ──
@@ -17108,8 +17158,7 @@ function renderBuilder(){
   sections.push({k:'s3',      l:'Section 3: My Advice to You', pageNum:3, pageLabel:'Section 3: Advice', vis:'recommendations', removable:true, render:renderSection3ByStrategy});
   if(hasIns)  sections.push({k:'insurance', l:'Insurance Cover', pageNum:3, pageLabel:'Section 3: Advice', vis:'insurance', removable:true, render:renderInsuranceSection});
   if(hasBdbn) sections.push({k:'bdbn',      l:'Death Benefit Nomination', pageNum:3, pageLabel:'Section 3: Advice', vis:'bdbn', removable:true, render:renderBdbnSection});
-  if(!hasIns) sections.push({k:'s4',      l:'Section 4: How Long Projection', pageNum:4, pageLabel:'Section 4, 5 & Ack', vis:'projection', removable:true, render:renderProjectionSection});
-  sections.push({k:'custom',  l:'Custom Sections', pageNum:4, pageLabel:'Section 4, 5 & Ack', removable:false, preFilled:false, count:F.customSections.length, render:renderCustomSection});
+  if(!hasIns) sections.push({k:'s4',      l:'Section 4: Annexure', pageNum:4, pageLabel:'Section 4, 5 & Ack', vis:'projection', removable:true, render:renderProjectionSection});
   sections.push({k:'s5',      l:'Section 5: Fees', pageNum:4, pageLabel:'Section 4, 5 & Ack', vis:'fees', removable:true, render:renderFeesSection});
   sections.push({k:'ack',     l:'Acknowledgement', pageNum:4, pageLabel:'Section 4, 5 & Ack', vis:'ack', removable:true, render:renderAckSection});
 
@@ -17339,13 +17388,35 @@ function renderClientSection(){
     }
   }
 
-  h += `<div class="field" style="max-width:340px"><label>Client Marginal Tax Rate (for IP after-tax calc)</label>
-    <select onchange="F.client1Mtr=this.value;render()">
-      ${[['','—'],['0.17','17% (15% + 2% Medicare)'],['0.32','32% (30% + 2% Medicare)'],['0.39','39% (37% + 2% Medicare)'],['0.47','47% (45% + 2% Medicare)']].map(([v,l])=>`<option value="${v}" ${String(F.client1Mtr)===v?'selected':''}>${l}</option>`).join('')}
-      ${String(F.client1Mtr)==='0.18' ? '<option value="0.18" selected>18% (16% + 2% Medicare — pre-July 2026 rate)</option>' : ''}
-    </select>
-    <div class="helper" style="margin:4px 0 0">2026–27 resident marginal rates — each option <strong>includes the 2% Medicare levy</strong>. Used only to estimate the after-tax cost of personally-funded Income Protection (which is tax-deductible). Optional.</div>
-  </div>
+  // Marginal tax rate — only relevant when the ROA prices insurance premiums
+  // (after-tax IP cost) or sells down investments (CGT estimate). Hidden for
+  // super-only and other ROAs. Joint ROAs ask once per client — the after-tax
+  // premium calculator picks the rate matching each cover's life insured.
+  const __mtrIns = selectedScenarios.some(id => { const s=SCENARIOS[id]||{}; return s.cat==='Insurance' || s.needs?.insurance || s.needs?.insuranceTable; });
+  const __mtrInv = selectedScenarios.some(id => (SCENARIOS[id]||{}).needs?.inv);
+  if(__mtrIns || __mtrInv){
+    const __mtrWhy = __mtrIns && __mtrInv ? 'premium after-tax & CGT calc' : (__mtrIns ? 'premium after-tax calc' : 'CGT calc');
+    const __mtrHelp = __mtrIns && __mtrInv
+      ? 'Used to estimate the after-tax cost of personally-funded Income Protection and capital gains tax on any selldown. Optional.'
+      : (__mtrIns
+        ? 'Used only to estimate the after-tax cost of personally-funded Income Protection (which is tax-deductible). Optional.'
+        : 'Used to estimate capital gains tax on the selldown. Optional.');
+    const __mtrSel = (field, val, label) => `<div class="field" style="max-width:340px"><label>${label} (for ${__mtrWhy})</label>
+      <select onchange="F.${field}=this.value;render()">
+        ${[['','—'],['0.17','17% (15% + 2% Medicare)'],['0.32','32% (30% + 2% Medicare)'],['0.39','39% (37% + 2% Medicare)'],['0.47','47% (45% + 2% Medicare)']].map(([v,l])=>`<option value="${v}" ${String(val)===v?'selected':''}>${l}</option>`).join('')}
+        ${String(val)==='0.18' ? '<option value="0.18" selected>18% (16% + 2% Medicare — pre-July 2026 rate)</option>' : ''}
+      </select></div>`;
+    const __joint = F.clientType==='joint' || F.clientType==='joint_entity';
+    const __n1 = (F.client1Name||'').trim().split(/\s+/)[0] || 'Client 1';
+    const __n2 = (F.client2Name||'').trim().split(/\s+/)[0] || 'Client 2';
+    if(__joint){
+      h += `<div class="grid-2" style="gap:12px">${__mtrSel('client1Mtr', F.client1Mtr, e(__n1)+"'s Marginal Tax Rate")}${__mtrSel('client2Mtr', F.client2Mtr, e(__n2)+"'s Marginal Tax Rate")}</div>`;
+    } else {
+      h += __mtrSel('client1Mtr', F.client1Mtr, 'Client Marginal Tax Rate');
+    }
+    h += `<div class="helper" style="margin:4px 0 10px;max-width:700px">2026–27 resident marginal rates — each option <strong>includes the 2% Medicare levy</strong>. ${__mtrHelp}</div>`;
+  }
+  h += `
 
   <div class="divider"></div>
     <h3 style="margin-bottom:8px">Adviser</h3>
@@ -17568,53 +17639,12 @@ function renderMetaSection(){
   });
   h += `<button class="add-inline" onclick="F.priorAdvice.push({type:'Statement of Advice',date:''});render()">+ Add prior advice</button>`;
 
-  // Platform & Asset Allocation defaults are only relevant when the ROA actually
-  // has a super / investment / pension portfolio. Pure insurance ROAs (alterations,
-  // cancellations, most revised-terms) don't, so we hide this whole block for them.
-  const needsPortfolio = anyNeed('super') || anyNeed('inv') || anyNeed('pension');
-  if(needsPortfolio){
-  h += `<div class="divider"></div>
-    <details ${F._platDefaultsOpen?'open':''} ontoggle="F._platDefaultsOpen=this.open">
-    <summary style="cursor:pointer"><h3 style="margin-bottom:6px;display:inline">Platform & Asset Allocation Defaults</h3>
-      <span class="card-sub" style="display:inline;margin-left:8px">(optional — a CARE / WealthSolver upload brings its own platform &amp; holdings; these only apply to manually-built portfolios)</span></summary>
-    <div class="card-sub">These are the platforms and investment menu that will be substituted in the scenario templates.</div>
-    <div class="field">
-      <label>Asset Allocation Set</label>
-      <div class="tog">
-        <button class="${(F.assetAllocationSet||'CARE')==='CARE'?'on':'off'}" onclick="switchAssetAllocationSet('CARE')">CARE Portfolios (default)</button>
-        <button class="${F.assetAllocationSet==='Vanguard'?'on':'off'}" onclick="switchAssetAllocationSet('Vanguard')">Vanguard</button>
-      </div>
-      <div class="helper" style="margin-top:4px">Changes the default fund names in each portfolio's allocation table. Applies to new portfolios and can be re-applied to existing ones using the "↻ Reset to defaults" button on each portfolio.</div>
-    </div>
-    <div class="grid-3">
-      <div class="field"><label>Super Platform</label>
-        ${platformSelect('F.superPlatform', F.superPlatform, 'consolidateScenarios();')}
-      </div>
-      <div class="field"><label>Investment Platform</label>
-        ${platformSelect('F.invPlatform', F.invPlatform, 'consolidateScenarios();')}
-      </div>
-      <div class="field"><label>Pension Platform</label>
-        ${platformSelect('F.pensionPlatform', F.pensionPlatform, 'consolidateScenarios();')}
-      </div>
-    </div>
-    </details>`;
-  }
 
-  // The generic Amount / Frequency fields only make sense if a selected scenario's
-  // wording actually uses the {amount} or {frequency} tokens. Hide otherwise (e.g.
-  // insurance ROAs, which capture amounts in the insurance table instead).
-  const usesAmountOrFreq = selectedScenarios.some(id => {
-    const s = SCENARIOS[id]; if(!s) return false;
-    const blob = [s.obj, s.rec].concat(s.benefits||[], s.risks||[]).join(' ');
-    return /\{amount\}|\{frequency\}/.test(blob);
-  });
   // Will any conditional sub-section (rollover, withdrawal, insurance details, etc.)
   // render below? If neither that nor amount/frequency applies, skip the whole
   // "Scenario-Specific Fields" block so it doesn't show an empty header.
   const hasConditionalFields =
-    selectedScenarios.includes('super_rollover') || selectedScenarios.includes('super_partial') ||
-    selectedScenarios.includes('inv_one_off_withdrawal') || selectedScenarios.includes('inv_withdrawal_closure') ||
-    selectedScenarios.includes('super_withdrawal') ||
+    selectedScenarios.includes('super_rollover') || selectedScenarios.includes('super_rollover_partial') ||
     selectedScenarios.includes('inv_regular_new') || selectedScenarios.includes('inv_regular_increase') ||
     selectedScenarios.includes('inv_menu_switch') || selectedScenarios.includes('super_menu_switch') ||
     selectedScenarios.includes('motm') ||
@@ -17623,53 +17653,17 @@ function renderMetaSection(){
     selectedScenarios.includes('ins_cancel') || selectedScenarios.includes('ins_waiting_period') ||
     selectedScenarios.includes('pension_abp') || selectedScenarios.includes('pension_ttr') || selectedScenarios.includes('pension_reb');
 
-  if(usesAmountOrFreq){
-  h += `<div class="divider"></div>
-    <h3 style="margin-bottom:6px">Scenario-Specific Fields</h3>
-    <div class="card-sub">Only the fields relevant to your selected scenarios appear here. Fill these and they substitute directly into the recommendation wording — no further editing needed.</div>
-    <div class="grid-3">
-      <div class="field"><label>Amount (primary)</label><input value="${e(F.amount)}" onchange="F.amount=this.value;consolidateScenarios();render()" placeholder="$150,000"></div>
-      <div class="field"><label>Frequency</label>
-        <select onchange="F.frequency=this.value;consolidateScenarios();render()">
-          ${["Monthly","Fortnightly","Weekly","Quarterly","Annually"].map(x=>`<option ${x===F.frequency?'selected':''}>${x}</option>`).join('')}
-        </select>
-      </div>
-    </div>`;
-    // #1 — Reference original advice. Offered for amount-bearing ROAs except pure-insurance
-    // ones (insurance cites its own Original/Altered tables). Injects a sentence into Section 2.
-    const _allInsurance = selectedScenarios.length>0 && selectedScenarios.every(id => (SCENARIOS[id]||{}).cat === 'Insurance');
-    if(!_allInsurance){
-      h += `<div class="field" style="margin-top:12px">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0">
-          <input type="checkbox" ${F.refOriginalAdvice?'checked':''} onchange="F.refOriginalAdvice=this.checked;consolidateScenarios();render()">
-          <span>Reference the original advice <span class="text-muted" style="font-weight:400">(cite what a prior SOA / RoA recommended, then the change)</span></span>
-        </label>
-      </div>`;
-      if(F.refOriginalAdvice){
-        h += `<div class="grid-3" style="margin-top:8px">
-          <div class="field"><label>Original advice document</label>
-            <select onchange="F.origAdviceDocType=this.value;consolidateScenarios();render()">
-              ${["Statement of Advice","Record of Advice"].map(x=>`<option ${x===(F.origAdviceDocType||'Statement of Advice')?'selected':''}>${x}</option>`).join('')}
-            </select>
-          </div>
-          <div class="field"><label>Original advice date</label><input value="${e(F.origAdviceDate||'')}" onchange="F.origAdviceDate=this.value;consolidateScenarios();render()" placeholder="e.g. 31st May 2021"></div>
-          <div class="field"><label>Originally recommended</label><input value="${e(F.origAmount||'')}" onchange="F.origAmount=this.value;consolidateScenarios();render()" placeholder="e.g. an investment of $25,000"></div>
-        </div>
-        <div class="field" style="margin-top:8px"><label>Reason for the change (optional)</label><input value="${e(F.origAdviceReason||'')}" onchange="F.origAdviceReason=this.value;consolidateScenarios();render()" placeholder="e.g. an increase in your available funds"></div>
-        <div class="helper" style="font-size:11px;margin-top:4px">Inserts a sentence into Section 2 — the new amount is taken from <strong>Amount (primary)</strong> above. Leave "Originally recommended" blank to hide it.</div>`;
-      }
-    }
-  } else if(hasConditionalFields){
-    // Header only — the relevant sub-section (e.g. Insurance Details) renders below.
+  if(hasConditionalFields){
+    // Header only — the relevant sub-section (e.g. Rollover / Insurance Details) renders below.
     h += `<div class="divider"></div>
     <h3 style="margin-bottom:6px">Scenario-Specific Fields</h3>
-    <div class="card-sub">Only the fields relevant to your selected scenarios appear here. Fill these and they substitute directly into the recommendation wording.</div>`;
+    <div class="card-sub">Only the fields relevant to your selected scenarios appear here. Fill these and they substitute directly into the recommendation wording — no further editing needed.</div>`;
   }
 
   // --- Scenario-specific conditional fields, shown only when their scenario is ticked ---
 
   // Rollovers (full or partial) → need From Fund (and for partial, amount and to-fund platform)
-  const hasRollover = selectedScenarios.includes('super_rollover') || selectedScenarios.includes('super_partial');
+  const hasRollover = selectedScenarios.includes('super_rollover') || selectedScenarios.includes('super_rollover_partial');
   if(hasRollover){
     h += `<h4 style="margin-top:14px;margin-bottom:6px;font-size:11px;color:var(--navy);font-weight:700">Rollover Details</h4>
     <div class="grid-2">
@@ -17680,7 +17674,7 @@ function renderMetaSection(){
         <input value="${e(F.toFund||F.superPlatform||'')}" onchange="F.toFund=this.value;consolidateScenarios();render()" placeholder="e.g. Hub24 Super Choice">
       </div>
     </div>`;
-    if(selectedScenarios.includes('super_partial')){
+    if(selectedScenarios.includes('super_rollover_partial')){
       h += `<div class="grid-2">
         <div class="field"><label>Partial Rollover Amount</label>
           <input value="${e(F.partialAmount)}" onchange="F.partialAmount=this.value;consolidateScenarios();render()" placeholder="$250,000">
@@ -17695,13 +17689,6 @@ function renderMetaSection(){
     }
   }
 
-  // Withdrawals
-  if(selectedScenarios.includes('inv_one_off_withdrawal') || selectedScenarios.includes('inv_withdrawal_closure') || selectedScenarios.includes('super_withdrawal')){
-    h += `<h4 style="margin-top:14px;margin-bottom:6px;font-size:11px;color:var(--navy);font-weight:700">Withdrawal Details</h4>
-    <div class="field"><label>Withdrawal Purpose</label>
-      <input value="${e(F.withdrawalPurpose)}" onchange="F.withdrawalPurpose=this.value;consolidateScenarios();render()" placeholder="e.g. fund your home renovations / stamp duty on investment property purchase">
-    </div>`;
-  }
 
   // #4 — Spouse contribution splitting
   if(selectedScenarios.includes('super_spouse_split')){
@@ -18044,7 +18031,7 @@ function renderDcaControls(p, pi){
     <div style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">SOA product-table extras</div>
     <div class="grid-2">
       <div class="field" style="margin:0"><label>Ongoing Regular Investment (optional)</label>
-        <input value="${e(p.ongoingInvestment||'')}" onchange="F.portfolios[${pi}].ongoingInvestment=this.value" placeholder="$2,000 per month">
+        <input value="${e(p.ongoingInvestment||'')}" onchange="F.portfolios[${pi}].ongoingInvestment=normalizeOngoingInvestment(this.value);render()" placeholder="$2,000 per month">
         <div class="helper" style="font-size:10px">Adds an "Ongoing Regular Investment" row under the total, exactly as the SOA product table prints it. Leave blank to omit.</div>
       </div>
       <div class="field" style="margin:0">
@@ -18073,31 +18060,29 @@ function renderPortfolioAllocation(p, pi){
     <div class="field"><label>Platform</label>${platformSelect(`F.portfolios[${pi}].platform`, p.platform)}</div>
     <div class="field"><label>Total Portfolio Value</label><input value="${e(p.totalValue)}" onchange="F.portfolios[${pi}].totalValue=this.value" placeholder="$1,701,414"></div>
   </div>`;
-  // Per-portfolio asset-allocation set (CARE or Vanguard)
-  const aset = p.assetSet || F.assetAllocationSet || 'CARE';
-  h += `<div class="grid-2" style="gap:12px">
+  // Compact meta line 2 — risk profile override + drawdown flag. Long
+  // explanations live in tooltips so the editor stays clean.
+  h += `<div class="grid-2" style="gap:12px;align-items:end">
     <div class="field">
-      <label>Risk Profile (optional — override)</label>
-      <input list="risk-profiles-dl" value="${e(p.riskProfile||'')}" placeholder="${e(F.globalRiskProfile||'Uses global risk profile')}" onchange="F.portfolios[${pi}].riskProfile=this.value;consolidateScenarios();render()">
-      <div class="helper" style="font-size:10px">Leave blank to use the global client risk profile set at the top. Only fill in if this portfolio has a different profile.</div>
+      <label>Risk Profile</label>
+      <input list="risk-profiles-dl" value="${e(p.riskProfile||'')}" placeholder="${e(F.globalRiskProfile||'Uses global risk profile')}" title="Leave blank to use the global client risk profile. Only fill in if this portfolio has a different profile." onchange="F.portfolios[${pi}].riskProfile=this.value;consolidateScenarios();render()">
     </div>
     <div class="field">
-      <label>Drawdown / Reserves Context</label>
-      <label style="display:flex;align-items:center;gap:6px;padding:6px 0;font-weight:500;font-size:12px;text-transform:none;letter-spacing:0;color:var(--text)">
-        <input type="checkbox" ${p.hasDrawdownOrReserves?'checked':''} onchange="F.portfolios[${pi}].hasDrawdownOrReserves=this.checked;consolidateScenarios();render()">
-        Client is currently drawing down or holding reserves on this portfolio
+      <label style="display:flex;align-items:center;gap:8px;padding:8px 0 6px;font-weight:500;font-size:12px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer" title="Tick if the client is already drawing an income from this portfolio or needs ongoing reserves — switches the Section 2 wording between 'maintain reserves to support income requirements' and 'align with your risk profile'.">
+        <input type="checkbox" ${p.hasDrawdownOrReserves?'checked':''} onchange="toggleDrawdownReserves(${pi}, this.checked)">
+        Drawing down / holding reserves on this portfolio
       </label>
-      <div class="helper" style="font-size:10px">Tick this if the client is already drawing an income from this portfolio or needs ongoing reserves. This toggles the Section 2 wording between "maintain reserves to support income requirements" vs "align with your risk profile".</div>
     </div>
-  </div>
-  <div class="field">
-    <label>Fund Set for this portfolio</label>
-    <div class="tog" style="margin-bottom:4px">
-      <button class="${aset==='CARE'?'on':'off'}" onclick="switchPortfolioAssetSet(${pi},'CARE')">CARE</button>
-      <button class="${aset==='Vanguard'?'on':'off'}" onclick="switchPortfolioAssetSet(${pi},'Vanguard')">Vanguard</button>
-    </div>
-    <div class="helper">You can mix — for example CARE on your Super portfolio and Vanguard on your Investment portfolio.</div>
   </div>`;
+  // Drawdown note — prints under the allocation table as "*Note: …" (the *
+  // matches the starred Cash / Reserves rows). Seeded with the firm's standard
+  // wording when the box is first ticked; edit the $ figures to suit.
+  if(p.hasDrawdownOrReserves){
+    h += `<div class="field">
+      <label>Drawdown note (prints under the allocation table)</label>
+      <textarea style="min-height:64px" onchange="F.portfolios[${pi}].drawdownNote=this.value">${e(p.drawdownNote||'')}</textarea>
+    </div>`;
+  }
   // Trades
   h += `<h5 style="margin-top:10px;margin-bottom:6px;font-family:var(--bf);font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px">Rebalance Trades</h5>
     <div class="trades-list">`;
@@ -18119,7 +18104,7 @@ function renderPortfolioAllocation(p, pi){
   // Allocation table
   h += `<h5 style="margin-top:10px;margin-bottom:6px;font-family:var(--bf);font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px">Allocation Table</h5>
     <div style="overflow-x:auto"><table class="ptable"><thead>
-      <tr><th>Investment Product</th><th style="width:140px">Allocation $</th><th style="width:110px">ICR</th><th style="width:28px"></th></tr>
+      <tr><th>Investment Product</th><th style="width:118px">Allocation $</th><th style="width:190px">ICR</th><th style="width:28px"></th></tr>
     </thead><tbody>`;
   (p.rows||[]).forEach((r, ri) => {
     h += `<tr class="${r.isFee?'fee-row':''}">
@@ -18293,6 +18278,32 @@ function renderGeneralBenefitsRisks(){
 }
 
 // Per-portfolio asset-set switch (CARE ⇄ Vanguard on a single portfolio)
+// Tick: seed the standard drawdown note (if empty) and star the Cash /
+// Reserves rows it refers to. Untick: unstar them; the note text is kept so
+// re-ticking restores any edits.
+const DRAWDOWN_NOTE_TEXT = "3 months of your current drawdown ($X,XXX per month) will be held in cash to meet short-term income needs. This has already been factored into the recommended trades above; however, the balances shown do not yet reflect this adjustment. After applying this, your Reserves Portfolio will be $XXX,XXX.";
+// "2000" → "$2,000 per month". Anything already carrying words (a frequency,
+// a note) is kept as typed; only a bare number is expanded.
+function normalizeOngoingInvestment(v){
+  const s = String(v==null?'':v).trim();
+  if(!s) return '';
+  if(/[a-z]/i.test(s)) return s;
+  const n = parseFloat(s.replace(/[^0-9.]/g,''));
+  if(!isFinite(n) || n <= 0) return s;
+  return '$' + Math.round(n).toLocaleString('en-AU') + ' per month';
+}
+function toggleDrawdownReserves(pi, on){
+  const p = F.portfolios[pi]; if(!p) return;
+  p.hasDrawdownOrReserves = on;
+  const isTarget = n => /reserves|^cash\b/i.test(String(n||'').trim());
+  (p.rows||[]).forEach(r => {
+    if(!r.n || r.isFee || !isTarget(r.n)) return;
+    if(on && !/\*$/.test(r.n)) r.n = r.n + '*';
+    if(!on) r.n = r.n.replace(/\*+$/,'');
+  });
+  if(on && !(p.drawdownNote||'').trim()) p.drawdownNote = DRAWDOWN_NOTE_TEXT;
+  consolidateScenarios(); render();
+}
 function switchPortfolioAssetSet(pi, setName){
   const p = F.portfolios[pi];
   if(!p) return;
@@ -18937,7 +18948,10 @@ function autoAfterTax(tableKey, i){
   const kind = coverKind(r.coverType);
   const ownerIsSuper = /super/i.test(r.owner||'');
   const before = dollars[0].amount;
-  const mtr = parseFloat(F.client1Mtr)||0;
+  // Joint ROA: use the rate belonging to this cover's life insured.
+  const __c2first = (F.client2Name||'').trim().split(/\s+/)[0];
+  const __forC2 = __c2first && (r.lifeInsured||'').trim() && (r.lifeInsured||'').trim().toLowerCase().startsWith(__c2first.toLowerCase());
+  const mtr = parseFloat(__forC2 ? F.client2Mtr : F.client1Mtr)||0;
 
   let after;
   if(kind === 'trauma'){
@@ -19066,7 +19080,7 @@ function renderStrategyCard(title, recsPath, benefitsPath, risksPath, recs, bene
 
 function renderProjectionSection(){
   return `<div class="card">
-    <h2>How Long Projection / Annexure</h2>
+    <h2>Annexure</h2>
     <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600">
       <input type="checkbox" ${F.showProjection?'checked':''} onchange="F.showProjection=this.checked;render()">
       Include Projection / Annexure section
@@ -19139,63 +19153,6 @@ function renderAckSection(){
   return h;
 }
 
-function renderCustomSection(){
-  let h = `<div class="card">
-    <h2>Custom Sections</h2>
-    <div class="card-sub">Add free-form sections (text, bullets or key-value tables) that don't fit the standard template. These render directly after the Projection / Annexure section.</div>
-    <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;margin-bottom:10px">
-      <input type="checkbox" ${F.includeCustomSections?'checked':''} onchange="F.includeCustomSections=this.checked;render()">
-      Include Custom Sections in output
-    </label>
-    ${F.includeCustomSections ? `<br><button class="btn btn-sm btn-blue" onclick="F.customSections.push({title:'New Section',blocks:[{id:Math.random().toString(36).slice(2,8),type:'text',text:'',bullets:[''],kvRows:[{k:'',v:''}]}]});render()">+ Add Custom Section</button>` : '<p class="text-sm text-muted mt-sm"><em>Custom Sections are currently disabled — tick the box above to include them in the output.</em></p>'}
-  </div>`;
-  if(!F.includeCustomSections) return h;
-  F.customSections.forEach((sec,si) => {
-    h += `<div class="card" ${dragAttrs('F.customSections', si)}>
-      <div class="card-head">
-        <div style="display:flex;align-items:center;gap:8px;flex:1">
-          ${dragHandle()}
-          <input style="background:transparent;border:none;border-bottom:1px dashed var(--blue);font-family:var(--hf);font-size:16px;font-weight:700;color:var(--text);padding:2px 0;flex:1;outline:none" value="${e(sec.title)}" onchange="F.customSections[${si}].title=this.value">
-        </div>
-        <button class="btn btn-xs btn-danger" onclick="F.customSections.splice(${si},1);render()">✕ Remove Section</button>
-      </div>`;
-    sec.blocks.forEach((b,bi) => {
-      h += `<div style="border:1px solid var(--border);border-radius:10px;padding:9px;margin-bottom:7px" ${dragAttrs(`F.customSections[${si}].blocks`, bi)}>
-        <div class="flex mb-sm" style="gap:6px;align-items:center">
-          ${dragHandle()}
-          <select onchange="F.customSections[${si}].blocks[${bi}].type=this.value;render()" style="padding:3px 6px;font-size:10px;border:1px solid var(--border);border-radius:7px">
-            ${[{v:'text',l:'Paragraph'},{v:'bullets',l:'Bullet List'},{v:'table',l:'Key-Value Table'}].map(o=>`<option value="${o.v}" ${b.type===o.v?'selected':''}>${o.l}</option>`).join('')}
-          </select>
-          <button class="btn btn-xs btn-danger" style="margin-left:auto" onclick="F.customSections[${si}].blocks.splice(${bi},1);render()">✕</button>
-        </div>`;
-      if(b.type==='text'){
-        h += `<textarea class="field" style="margin:0;width:100%" onchange="F.customSections[${si}].blocks[${bi}].text=this.value" placeholder="Paragraph text...">${e(b.text)}</textarea>`;
-      } else if(b.type==='bullets'){
-        b.bullets.forEach((bb,bbi) => {
-          h += `<div class="inline-list-row drag-handle-row" ${dragAttrs(`F.customSections[${si}].blocks[${bi}].bullets`, bbi)}>
-            ${dragHandle()}
-            <input class="field" style="margin:0;flex:1" value="${e(bb)}" onchange="F.customSections[${si}].blocks[${bi}].bullets[${bbi}]=this.value" placeholder="Bullet...">
-            <button class="btn btn-xs btn-danger" onclick="F.customSections[${si}].blocks[${bi}].bullets.splice(${bbi},1);if(!F.customSections[${si}].blocks[${bi}].bullets.length)F.customSections[${si}].blocks[${bi}].bullets=[''];render()">✕</button>
-          </div>`;
-        });
-        h += `<button class="add-inline" onclick="F.customSections[${si}].blocks[${bi}].bullets.push('');render()">+ Bullet</button>`;
-      } else {
-        b.kvRows.forEach((kv,ki) => {
-          h += `<div style="display:flex;gap:4px;margin-bottom:3px;align-items:center" ${dragAttrs(`F.customSections[${si}].blocks[${bi}].kvRows`, ki)}>
-            ${dragHandle()}
-            <input class="field" style="margin:0;flex:1;font-weight:600" value="${e(kv.k)}" onchange="F.customSections[${si}].blocks[${bi}].kvRows[${ki}].k=this.value" placeholder="Label">
-            <input class="field" style="margin:0;flex:1" value="${e(kv.v)}" onchange="F.customSections[${si}].blocks[${bi}].kvRows[${ki}].v=this.value" placeholder="Value">
-            <button class="btn btn-xs btn-danger" onclick="F.customSections[${si}].blocks[${bi}].kvRows.splice(${ki},1);if(!F.customSections[${si}].blocks[${bi}].kvRows.length)F.customSections[${si}].blocks[${bi}].kvRows=[{k:'',v:''}];render()">✕</button>
-          </div>`;
-        });
-        h += `<button class="add-inline" onclick="F.customSections[${si}].blocks[${bi}].kvRows.push({k:'',v:''});render()">+ Row</button>`;
-      }
-      h += `</div>`;
-    });
-    h += `<button class="add-inline" onclick="F.customSections[${si}].blocks.push({id:Math.random().toString(36).slice(2,8),type:'text',text:'',bullets:[''],kvRows:[{k:'',v:''}]});render()">+ Add block</button></div>`;
-  });
-  return h;
-}
 
 // ═══════════════════════════════════════════════════════════
 // RENDER: PREVIEW
@@ -19393,6 +19350,7 @@ function renderRoaDocHTML(){
     h += `</tbody></table>`;
     if(p.note) h += `<p style="font-size:10.5px;color:#444"><em><strong>Note:</strong> ${e(p.note)}</em></p>`;
     if(__mate && __mate.note) h += `<p style="font-size:10.5px;color:#444"><em><strong>Note:</strong> ${e(__mate.note)}</em></p>`;
+    if(p.hasDrawdownOrReserves && (p.drawdownNote||'').trim()) h += `<p style="font-size:10.5px"><strong>*Note:</strong> ${e(p.drawdownNote)}</p>`;
 
     // Variation Table
     if(p.allocComparison.show && p.allocComparison.rows.some(r => r.name)){
@@ -19638,7 +19596,7 @@ function renderRoaDocHTML(){
     }
     sectNum++;
   } else if(F.showProjection && F.sectionVisible?.projection !== false){
-    h += `<h2>Section ${sectNum}: How Long Projection / Annexure</h2>`;
+    h += `<h2>Section ${sectNum}: Annexure</h2>`;
     if(F.projectionNote) F.projectionNote.split('\n').filter(Boolean).forEach(p => { h += `<p>${e(p)}</p>`; });
     else h += `<p><em>[Projection / Annexure to be inserted]</em></p>`;
     sectNum++;
@@ -19646,7 +19604,9 @@ function renderRoaDocHTML(){
 
   // Custom sections — render immediately after projection
   if(F.includeCustomSections){
-    F.customSections.forEach(s => {
+    // Only the auto-generated Superannuation Recommendation (from a revised-terms
+    // super allocation import) prints — the free-form Custom Sections builder was removed.
+    F.customSections.filter(s => s && s.title === 'Superannuation Recommendation').forEach(s => {
       h += `<h2>${e(s.title)}</h2>`;
       s.blocks.forEach(b => {
         if(b.type==='text' && b.text) b.text.split('\n').filter(Boolean).forEach(p => { h += `<p>${e(p)}</p>`; });
@@ -21540,6 +21500,15 @@ async function exportDocx(){
       children.push(Italic("Note: " + __mate.note));
       children.push(P(""));
     }
+    if(p.hasDrawdownOrReserves && (p.drawdownNote||'').trim()){
+      children.push(new Paragraph({
+        spacing:{before:80, after:160},
+        children:[
+          new TextRun({text:"*Note: ", font:"Nunito", size:19, color:"1a1a1a", bold:true}),
+          new TextRun({text:p.drawdownNote.trim(), font:"Nunito", size:19, color:"1a1a1a"})
+        ]
+      }));
+    }
 
     // Variation Table
     if(p.allocComparison.show && p.allocComparison.rows.some(r => r.name)){
@@ -21910,7 +21879,7 @@ async function exportDocx(){
   } else if(isRevised && __altRenderedInline){
     // Already rendered inline in Section 3 as "Option 2 (Alternative)" — nothing to add.
   } else if(F.showProjection && F.sectionVisible?.projection !== false){
-    children.push(H2(`Section ${sectNum}: How Long Projection / Annexure`));
+    children.push(H2(`Section ${sectNum}: Annexure`));
     if(F.projectionNote) F.projectionNote.split("\n").filter(Boolean).forEach(p => children.push(P(p)));
     else children.push(Italic("[Projection / Annexure to be inserted manually from your modelling tool]"));
     sectNum++;
@@ -21918,7 +21887,7 @@ async function exportDocx(){
 
   // Custom sections — render immediately after projection
   if(F.includeCustomSections){
-    F.customSections.forEach(s => {
+    F.customSections.filter(s => s && s.title === 'Superannuation Recommendation').forEach(s => {
       // Skip the Superannuation Recommendation if it was already rendered inline
       // within the revised-terms insurance flow (so it isn't duplicated).
       if(__superRenderedInline && s && s.title === 'Superannuation Recommendation') return;
