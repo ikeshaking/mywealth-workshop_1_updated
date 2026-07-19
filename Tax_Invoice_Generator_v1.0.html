@@ -20630,10 +20630,9 @@ function load(){
    ========================================================================= */
 function e(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function n(v){ const x = parseFloat(v); return isFinite(x) ? x : 0; }
-function money(v, cents){
+function money(v){
   const neg = v < 0; v = Math.abs(v);
-  const s = cents ? v.toLocaleString('en-AU',{minimumFractionDigits:2, maximumFractionDigits:2})
-                  : Math.round(v).toLocaleString('en-AU');
+  const s = v.toLocaleString('en-AU',{minimumFractionDigits:2, maximumFractionDigits:2});
   return (neg?'-$':'$') + s;
 }
 function fmtDate(iso){
@@ -20667,7 +20666,7 @@ function setF(key, val){ F[key] = val; save(); calcAndSoftRender(); }
 function setFNum(key, val){ F[key] = n(val); save(); calcAndSoftRender(); }
 function setS(id, key, val){
   const s = F.strategies.find(x=>x.id===id); if(!s) return;
-  s[key] = (key==='w'||key==='d') ? n(val) : val;
+  s[key] = (key==='w'||key==='d') ? Math.min(100, Math.max(0, n(val))) : val;
   if(key==='treat' && val==='Non-Deductible'){ s.d = 0; }
   save(); calcAndSoftRender();
 }
@@ -20728,7 +20727,7 @@ function validate(C){
   if(!F.fyStart || !F.fyEnd) warns.push('Financial year start / end dates are not set.');
   if(F.strategies.length === 0) errs.push('No strategies have been added — the fee has nothing to be apportioned against.');
   if(F.strategies.length > 0 && Math.abs(C.wSum - 100) > 0.5)
-    errs.push(`Strategy weightings total ${C.wSum.toFixed(0)}% — they must total 100% of the advice provided.`);
+    errs.push(`Strategy weightings total ${parseFloat(C.wSum.toFixed(2))}% — they must total 100% of the advice provided.`);
   C.rows.forEach(r => {
     const lib = libByName(r.libKey || r.name);
     if(lib){
@@ -20785,8 +20784,8 @@ function normaliseWeights(){
   if(sum <= 0){ toast('Nothing to normalise'); return; }
   let acc = 0;
   F.strategies.forEach((s,i)=>{
-    if(i === F.strategies.length-1){ s.w = Math.round((100-acc)*10)/10; }
-    else { s.w = Math.round(n(s.w)/sum*1000)/10; acc += s.w; }
+    if(i === F.strategies.length-1){ s.w = Math.round((100-acc)*100)/100; }
+    else { s.w = Math.round(n(s.w)/sum*10000)/100; acc += s.w; }
   });
   save(); render();
   toast('Weightings normalised to 100%');
@@ -21005,7 +21004,7 @@ function renderSideSummary(){
     <div>Total fees <b>${money(C.gross)}</b></div>
     <div>Via super <b>${money(C.superF)}</b></div>
     <div>Net to apportion <b>${money(C.net)}</b></div>
-    <div>Weighting <b>${C.wSum.toFixed(0)}%</b></div>
+    <div>Weighting <b>${parseFloat(C.wSum.toFixed(2))}%</b></div>
     <div>Deductible <b class="pos">${money(C.dedTotal)}</b></div>`;
 }
 
@@ -21142,7 +21141,7 @@ function secStrategies(){
   </div>
 
   <div class="wtotal-bar">
-    <span class="wtotal-num">Weighting: ${C.wSum.toFixed(0)}%</span>
+    <span class="wtotal-num">Weighting: ${parseFloat(C.wSum.toFixed(2))}%</span>
     <div class="wtotal-track"><div class="wtotal-fill ${fillCls}" style="width:${pct}%"></div></div>
     <button class="btn btn-sm" onclick="normaliseWeights()" ${F.strategies.length?'':'disabled'}>⚖ Normalise to 100%</button>
     <button class="btn btn-sm btn-blue" onclick="pickerOpen=!pickerOpen;render()">＋ Add strategy</button>
@@ -21186,14 +21185,14 @@ function secStrategies(){
           <label>Weighting of strategy to advice</label>
           <div class="range-line">
             <input type="range" min="0" max="100" step="1" value="${n(s.w)}" oninput="setS('${s.id}','w',this.value)">
-            <input type="number" min="0" max="100" step="0.5" value="${n(s.w)}" oninput="setS('${s.id}','w',this.value)" onblur="render()">%
+            <input type="number" min="0" max="100" step="0.01" value="${n(s.w)}" oninput="setS('${s.id}','w',this.value)" onblur="render()">%
           </div>
           ${lib?`<span class="guide-chip ${wOut?'out':''}" title="MWS house-rule weighting guidance">guide ${lib.wLo}–${lib.wHi}%</span>`:''}
         </div>
         <div class="field">
           <label>Deductible portion of strategy</label>
           <div class="range-line">
-            <input type="number" min="0" max="100" step="1" value="${n(s.d)}" ${s.treat==='Non-Deductible'?'disabled':''} oninput="setS('${s.id}','d',this.value)" onblur="render()">%
+            <input type="number" min="0" max="100" step="0.01" value="${n(s.d)}" ${s.treat==='Non-Deductible'?'disabled':''} oninput="setS('${s.id}','d',this.value)" onblur="render()">%
           </div>
           ${lib?`<span class="guide-chip ${dOut?'out':''}" title="${e(lib.dGuide)}">guide ${e(lib.dGuide.length>22 ? lib.dLo+'–'+lib.dHi+'%*' : lib.dGuide)}</span>
           <span class="qchips">
@@ -21272,18 +21271,18 @@ function secReview(){
   let h = `
   <div class="card">
     <h2>Calculation summary</h2>
-    <div class="card-sub">Whole-dollar figures as they will print on the receipt.</div>
+    <div class="card-sub">Figures shown to the cent (2 decimals), exactly as they will print on the receipt.</div>
     <div class="sumgrid">
       <div class="sumtile"><div class="st-l">Total advice fees paid</div><div class="st-v">${money(R.gross)}</div></div>
       <div class="sumtile"><div class="st-l">Paid via superannuation</div><div class="st-v">${money(R.superF)}</div></div>
       <div class="sumtile"><div class="st-l">Not related to tax affairs</div><div class="st-v">${money(R.notRelated)}</div></div>
       <div class="sumtile hl"><div class="st-l">Related to tax affairs</div><div class="st-v">${money(R.dedTotal)}</div></div>
-      <div class="sumtile"><div class="st-l">s8-1 component</div><div class="st-v">${money(Math.round(C.s8Total))}</div></div>
-      <div class="sumtile"><div class="st-l">s25-5 component</div><div class="st-v">${money(Math.round(C.s25Total))}</div></div>
+      <div class="sumtile"><div class="st-l">s8-1 component</div><div class="st-v">${money(r2(C.s8Total))}</div></div>
+      <div class="sumtile"><div class="st-l">s25-5 component</div><div class="st-v">${money(r2(C.s25Total))}</div></div>
     </div>
     ${F.c2.trim() ? `<div class="sumgrid">
-      <div class="sumtile hl"><div class="st-l">Deductible — ${e(F.c1||'Client 1')}</div><div class="st-v">${money(Math.round(C.c1))}</div></div>
-      <div class="sumtile hl"><div class="st-l">Deductible — ${e(F.c2)}</div><div class="st-v">${money(Math.round(C.c2))}</div></div>
+      <div class="sumtile hl"><div class="st-l">Deductible — ${e(F.c1||'Client 1')}</div><div class="st-v">${money(r2(C.c1))}</div></div>
+      <div class="sumtile hl"><div class="st-l">Deductible — ${e(F.c2)}</div><div class="st-v">${money(r2(C.c2))}</div></div>
     </div>`:''}
   </div>
   <div class="card">
@@ -21375,16 +21374,18 @@ function secExport(){
 }
 
 /* =========================================================================
-   ROUNDING for display — whole dollars, internally consistent:
-   rows round to $; table total = Σ rounded rows; not-related = gross − super − total
+   ROUNDING for display — cents (2 decimals), internally consistent:
+   rows round to the cent; table total = Σ rounded rows;
+   not-related = gross − super − total
    ========================================================================= */
+function r2(x){ return Math.round(x*100)/100; }
 function displayRounding(C){
-  const rows = C.rows.map(r => ({...r, dedR: Math.round(r.ded)}));
-  const dedTotal = rows.reduce((a,r)=>a+r.dedR,0);
-  const gross = Math.round(C.gross);
-  const superF = Math.round(C.superF);
-  const notRelated = Math.max(0, gross - superF - dedTotal);
-  const c1 = Math.round(C.c1), c2 = Math.round(C.c2);
+  const rows = C.rows.map(r => ({...r, dedR: r2(r.ded)}));
+  const dedTotal = r2(rows.reduce((a,r)=>a+r.dedR,0));
+  const gross = r2(C.gross);
+  const superF = r2(C.superF);
+  const notRelated = Math.max(0, r2(gross - superF - dedTotal));
+  const c1 = r2(C.c1), c2 = r2(C.c2);
   return { rows, dedTotal, gross, superF, notRelated, c1, c2 };
 }
 
@@ -21420,8 +21421,8 @@ function invoiceHTML(){
 
       <table class="inv-sumtbl">
         ${C.useUp && C.useOn ? `
-        <tr><td>Upfront advice fees paid:</td><td class="v">${money(Math.round(n(F.upfrontFee)))}</td></tr>
-        <tr><td>Ongoing advice fees paid:</td><td class="v">${money(Math.round(n(F.ongoingFee)))}</td></tr>`:''}
+        <tr><td>Upfront advice fees paid:</td><td class="v">${money(r2(n(F.upfrontFee)))}</td></tr>
+        <tr><td>Ongoing advice fees paid:</td><td class="v">${money(r2(n(F.ongoingFee)))}</td></tr>`:''}
         <tr><td>Total advice fees paid:</td><td class="v">${money(R.gross)}</td></tr>
         <tr><td>Advice fees paid via superannuation:</td><td class="v">${money(R.superF)}</td></tr>
         <tr><td>Advice not related to tax affairs:</td><td class="v">${money(R.notRelated)}</td></tr>
@@ -21496,8 +21497,8 @@ function copySoaText(){
   const C = calc(); const R = displayRounding(C);
   const both = !!F.c2.trim();
   let t = `Tax deductibility of advice fees\n\nA portion of the fees you personally pay for financial advice may be tax-deductible, depending on the nature of the advice provided. Under s25-5 of the Income Tax Assessment Act 1997 (ITAA 1997), fees related to managing your tax affairs may be deductible, and under s8-1, fees incurred in producing assessable income may also be deductible. Any advice fees paid via superannuation or pension products are not eligible for a personal tax deduction.\n\nBased on our assessment of the advice provided, of the ${money(R.gross)} in advice fees paid in the ${F.fyStart?fmtDateLong(F.fyStart):''} to ${F.fyEnd?fmtDateLong(F.fyEnd):''} financial year (${money(R.superF)} of which was paid via superannuation), we estimate the following deductible portion:\n\n`;
-  t += `Estimated deductible portion for ${F.c1||'Client 1'}: ${money(both?R.c1:R.dedTotal)}${C.c1s8||C.c1s25?` (s8-1: ${money(Math.round(both?C.c1s8:C.s8Total))}, s25-5: ${money(Math.round(both?C.c1s25:C.s25Total))})`:''}\n`;
-  if(both) t += `Estimated deductible portion for ${F.c2}: ${money(R.c2)} (s8-1: ${money(Math.round(C.c2s8))}, s25-5: ${money(Math.round(C.c2s25))})\n`;
+  t += `Estimated deductible portion for ${F.c1||'Client 1'}: ${money(both?R.c1:R.dedTotal)}${C.c1s8||C.c1s25?` (s8-1: ${money(r2(both?C.c1s8:C.s8Total))}, s25-5: ${money(r2(both?C.c1s25:C.s25Total))})`:''}\n`;
+  if(both) t += `Estimated deductible portion for ${F.c2}: ${money(R.c2)} (s8-1: ${money(r2(C.c2s8))}, s25-5: ${money(r2(C.c2s25))})\n`;
   t += `\nThe attached invoice provides a detailed breakdown of the apportionment and the basis for this calculation. This guidance is based on our understanding of current tax laws and ATO guidance (TD 2024/7). Your eligibility to claim a deduction will depend on your individual circumstances — we recommend consulting a registered tax agent to confirm deductibility, and retaining this document with your records.`;
   copyText(t, 'SoA disclosure text copied');
 }
@@ -21684,8 +21685,8 @@ function exportDocx(){
   ]});
   const sumRows = [];
   if(C.useUp && C.useOn){
-    sumRows.push(sumRow('Upfront advice fees paid:', money(Math.round(n(F.upfrontFee)))));
-    sumRows.push(sumRow('Ongoing advice fees paid:', money(Math.round(n(F.ongoingFee)))));
+    sumRows.push(sumRow('Upfront advice fees paid:', money(r2(n(F.upfrontFee)))));
+    sumRows.push(sumRow('Ongoing advice fees paid:', money(r2(n(F.ongoingFee)))));
   }
   sumRows.push(sumRow('Total advice fees paid:', money(R.gross)));
   sumRows.push(sumRow('Advice fees paid via superannuation:', money(R.superF)));
