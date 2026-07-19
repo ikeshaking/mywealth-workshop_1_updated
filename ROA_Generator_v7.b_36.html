@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_35";
+const APP_VERSION = "v7.b_36";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -1956,46 +1956,21 @@ const SCENARIOS = {
     obj:"{name}, during our recent meeting we discussed establishing a new superannuation accumulation account with {superPlatform} to house your future contributions and investments.",
     rec:"establish a new {superPlatform} superannuation accumulation account and direct your future contributions to this account.",
     benefits:[
+      "Your superannuation will be invested in line with your risk profile and managed on your behalf under our CARE investment approach.",
       "The {superPlatform} platform provides access to a broad investment menu, including the CARE managed portfolios, direct shares, ETFs and managed funds.",
-      "Your investments will be managed in line with your agreed risk profile under our CARE investment approach.",
-      "Consolidated reporting across your accounts simplifies ongoing review.",
-      "Membership fees on the new platform are competitive for your expected balance.",
-      "The platform supports future advice activities including pension commencement, partial rollovers and insurance arrangement."
+      "Holding your investments through the platform simplifies the administration of your superannuation through consolidated reporting and transacting.",
+      "You can fund adviser fees and any insurance premiums through your superannuation account as desired."
     ],
     risks:[
       "There will be an application and establishment process required — funds will not be available for investment until the account is established and funded.",
       "Any existing insurance arrangements in your old fund will not automatically transfer.",
       "You will need to redirect your employer Superannuation Guarantee contributions to the new account.",
-      "Platform and administration fees apply — please review the PDS for full fee details.",
+      "Platform administration fees and investment costs apply — please refer to the Product Disclosure Statement (PDS) and your fee disclosure for full details.",
+      "The underlying investments within super involve investment risk and do not guarantee your returns. The value of your investments might not increase as you would like and their value may even fall at times.",
       "Superannuation legislation is subject to change."
     ]
   },
 
-  super_ttr_open: {
-    cat:"Pension", type:"ROA", label:"Pension — Open Transition to Retirement (TTR)", short:"Open TTR",
-    desc:"Commence a transition to retirement pension",
-    needs:{pension:true, super:true},
-    pd:"Commencement of a transition to retirement (TTR) pension",
-    obj:"{name}, in your previous Statement of Advice we recommended commencing a transition to retirement (TTR) pension once you reached your preservation age while continuing to work. Having now reached age 60, you have advised that you wish to proceed. This Record of Advice confirms the commencement of a TTR pension of {amount} from your {superPlatform} superannuation account to supplement your income and/or enable additional salary sacrifice, in line with the strategy previously provided.",
-    rec:"commence a TTR pension of {amount} from your {pensionPlatform} account.",
-    benefits:[
-      "A TTR pension provides flexible retirement income while still working, allowing you to reduce work hours or supplement salary.",
-      "Pension payments received from age 60 are tax-free in your hands.",
-      "The strategy can be combined with salary sacrifice contributions — using the TTR pension to fund lifestyle and sacrificing salary into super — creating an overall tax saving.",
-      "You retain access to lump sum commutations within annual limits for additional flexibility.",
-      "A TTR provides a bridge between full-time work and full retirement."
-    ],
-    risks:[
-      "A TTR pension has a minimum annual payment of 4% of the account balance and a maximum of 10% per annum.",
-      "Earnings within a TTR pension are taxed at 15% (the same as accumulation) — there is no tax-free earnings concession until you satisfy a full condition of release.",
-      "Drawing income while still contributing may erode the benefit if not carefully structured — the strategy is most effective when combined with salary sacrifice.",
-      "Market movements affect the TTR balance.",
-      "Legislation governing TTR pensions (including tax treatment of earnings) has changed historically and may change in future."
-    ],
-    otherConsiderations:[
-      "This Record of Advice implements a strategy previously recommended in your Statement of Advice. If your circumstances, goals or objectives have changed materially since that advice was provided, please let us know before proceeding, as updated advice may be required."
-    ]
-  },
 
   super_pension_open: {
     cat:"Pension", type:"ROA", label:"Pension — Open Account-Based Pension", short:"Open ABP",
@@ -2635,10 +2610,10 @@ const SCENARIOS = {
     desc:"Establish a Macquarie Cash Accelerator Account for cash management",
     needs:{},
     pd:"Establishment of a Macquarie Cash Accelerator Account (MCAA)",
-    obj:"{name}, during our recent meeting we discussed establishing a Macquarie Cash Accelerator Account (MCAA) to hold and manage your cash reserves more effectively, providing a competitive return on your savings while keeping the funds accessible.",
+    obj:"{name}, during our recent meeting we discussed establishing a Macquarie Cash Accelerator Account (MCAA) to hold and manage your cash reserves more effectively, providing a return on your savings while keeping the funds accessible.",
     rec:"establish a Macquarie Cash Accelerator Account (MCAA) and direct your nominated cash reserves into this account.",
     benefits:[
-      "The account provides a competitive interest rate on your cash holdings, improving the return on funds that would otherwise sit in a low-interest transaction account.",
+      "The account provides interest on your cash holdings, improving the return on funds that would otherwise sit in a low-interest transaction account.",
       "Your funds remain liquid and accessible, so you retain flexibility for emergencies, planned expenses or future investment opportunities.",
       "Consolidating your cash into one account makes your overall position easier to monitor and manage as part of your broader financial plan.",
       "There are no account-keeping fees on the account."
@@ -2660,7 +2635,7 @@ const SCENARIOS = {
     benefits:[
       "The account acts as a central hub linking your investments, super and pension, simplifying the flow of contributions, drawdowns, fees and income.",
       "It is widely integrated with platforms and adviser systems, making ongoing administration and reporting more efficient.",
-      "Your funds remain liquid and accessible while earning a competitive variable interest rate.",
+      "Your funds remain liquid and accessible while earning a variable interest rate.",
       "Consolidated transaction history makes record-keeping and annual reviews more straightforward."
     ],
     risks:[
@@ -2770,28 +2745,6 @@ const SCENARIOS = {
   },
 
 
-  ttr_to_abp: {
-    cat:"Pension", type:"ROA", label:"Pension — Convert TTR to Account-Based Pension", short:"TTR → ABP",
-    desc:"Convert TTR pension to full ABP on retirement",
-    needs:{pension:true},
-    pd:"Conversion of your TTR pension to an Account-Based Pension on meeting retirement condition of release",
-    obj:"{name}, having now met a full condition of release (retirement after preservation age / age 65), we discussed converting your existing TTR pension to a full account-based pension to access the 0% tax on earnings and full flexibility.",
-    rec:"commute your existing TTR pension and recommence an account-based pension from the same balance within your personal transfer balance cap.",
-    benefits:[
-      "Earnings on the pension balance move from 15% (TTR) to 0% (ABP) — this is a significant tax saving on investment returns within the account.",
-      "No maximum pension payment limit applies (TTRs are limited to 10% per year).",
-      "Full access to lump sum commutations (no 10% annual cap).",
-      "The pension continues to provide tax-free payments from age 60.",
-      "Simpler ongoing administration as the pension is now a standard account-based pension."
-    ],
-    risks:[
-      "Commuting the TTR and commencing the new ABP generates debit and credit entries against your transfer balance account.",
-      "The new ABP balance must be within your personal transfer balance cap of $1.9m — any excess must remain in accumulation.",
-      "Minimum pension payment requirements apply based on age (4% at 60–64, 5% at 65–74, 6% at 75–79, 7% at 80–84, 9% at 85–89, 11% at 90–94, 14% at 95+).",
-      "Some platforms require a new application, and there may be administrative downtime during the transition.",
-      "Eligibility to convert requires having met a full condition of release — please confirm with your fund."
-    ]
-  },
 
 
   hecs_voluntary: {
@@ -2821,7 +2774,7 @@ const SCENARIOS = {
     desc:"Access super early under limited conditions of release",
     needs:{super:true},
     pd:"Early release of superannuation under a compassionate, severe financial hardship, or terminal illness ground",
-    obj:"{name}, your previous Statement of Advice contemplated your circumstances, including the potential need to access superannuation early. You have now advised that the relevant circumstances have arisen and that you wish to proceed. This Record of Advice confirms accessing {amount} from your superannuation under an early release provision (severe financial hardship / compassionate grounds / terminal medical condition), in line with the advice previously provided.",
+    obj:"{name}, during our recent meeting we discussed accessing {amount} from your superannuation under an early release provision, given the specific circumstances you are facing (severe financial hardship / compassionate grounds / terminal medical condition).",
     rec:"lodge an early release application with the ATO (compassionate grounds) or your super fund (severe financial hardship / terminal medical condition) to access {amount} from your {superPlatform} superannuation account.",
     benefits:[
       "Accessing super early under the relevant ground provides necessary funds to meet the specific compassionate, hardship or terminal illness circumstances.",
@@ -2839,7 +2792,6 @@ const SCENARIOS = {
       "Superannuation legislation governing early release is subject to legislative change."
     ],
     otherConsiderations:[
-      "This Record of Advice implements a strategy previously recommended in your Statement of Advice. If your circumstances, goals or objectives have changed materially since that advice was provided, please let us know before proceeding, as updated advice may be required.",
       "Please gather all required evidence (medical certification, outstanding invoices, income support documentation) before lodging to minimise delays.",
       "For terminal medical condition releases, two medical practitioners (one a specialist in the relevant area) must certify a life expectancy of less than 24 months."
     ]
@@ -3269,7 +3221,7 @@ const SCENARIOS = {
       "Funds are held at-call, providing full liquidity for investment opportunities, contribution timing, or unexpected expenses.",
       "CMAs integrate with many investment platforms and SMSFs, improving administrative efficiency.",
       "Interest is paid monthly, allowing compound reinvestment over time.",
-      "Bank of England or similar deposit guarantees may apply depending on the provider (for ADIs, up to $250,000 per entity).",
+      "The Australian Government's Financial Claims Scheme guarantees deposits up to $250,000 per account holder per ADI — it applies only where the provider is an Authorised Deposit-taking Institution (ADI).",
       "Suitable as the operating account for an SMSF or investment trust."
     ],
     risks:[
