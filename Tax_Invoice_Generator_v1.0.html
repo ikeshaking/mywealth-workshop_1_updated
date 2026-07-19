@@ -20968,9 +20968,60 @@ function sectionStatus(k){
 }
 
 /* =========================================================================
+   UNDO / REDO — whole-state snapshots taken at every render (i.e. after
+   every discrete change), same engine as the ROA Generator. Ctrl/⌘+Z
+   undoes, Ctrl+Y or Ctrl/⌘+Shift+Z redoes — except while typing in a
+   field, where the browser's own text undo applies.
+   ========================================================================= */
+const __undo = {stack:[], redo:[], last:'', restoring:false, cap:40};
+function __stateSnapshot(){ try{ return JSON.stringify(F); }catch(_){ return ''; } }
+function recordUndo(){
+  if(__undo.restoring) return;
+  const s = __stateSnapshot();
+  if(!s || s === __undo.last) return;
+  if(__undo.last){
+    __undo.stack.push(__undo.last);
+    if(__undo.stack.length > __undo.cap) __undo.stack.shift();
+    __undo.redo.length = 0;
+  }
+  __undo.last = s;
+}
+function __applyStateSnapshot(s){
+  __undo.restoring = true;
+  try{
+    F = Object.assign(defaultState(), JSON.parse(s));
+    save(); render();
+  }catch(_){ }
+  __undo.restoring = false;
+}
+function undoAction(){
+  if(!__undo.stack.length) return;
+  const prev = __undo.stack.pop();
+  __undo.redo.push(__undo.last);
+  __undo.last = prev;
+  __applyStateSnapshot(prev);
+}
+function redoAction(){
+  if(!__undo.redo.length) return;
+  const nxt = __undo.redo.pop();
+  __undo.stack.push(__undo.last);
+  __undo.last = nxt;
+  __applyStateSnapshot(nxt);
+}
+document.addEventListener('keydown', ev => {
+  const t = ev.target;
+  const tag = (t && t.tagName || '').toLowerCase();
+  if(tag === 'input' || tag === 'textarea' || tag === 'select' || (t && t.isContentEditable)) return;
+  const k = (ev.key || '').toLowerCase();
+  if((ev.ctrlKey || ev.metaKey) && !ev.shiftKey && k === 'z'){ ev.preventDefault(); undoAction(); }
+  else if(((ev.ctrlKey || ev.metaKey) && k === 'y') || ((ev.ctrlKey || ev.metaKey) && ev.shiftKey && k === 'z')){ ev.preventDefault(); redoAction(); }
+});
+
+/* =========================================================================
    RENDER — app shell
    ========================================================================= */
 function render(){
+  recordUndo();
   const app = document.getElementById('app');
   let h = `
   <div class="topbar">
@@ -20997,6 +21048,9 @@ function render(){
       <button class="btn btn-sm btn-ghost" onclick="saveJSON()" title="Save the client data as a JSON file">💾 Save</button>
       <button class="btn btn-sm btn-ghost" onclick="loadJSON()" title="Load a saved client JSON file">📂 Load</button>
       <button class="btn btn-sm btn-coral" onclick="exportDocx()" title="Export the tax receipt as a Word document">⬇ Word</button>
+      <button class="btn btn-sm btn-ghost" onclick="undoAction()" title="Undo (Ctrl/⌘+Z)">↶</button>
+      <button class="btn btn-sm btn-ghost" onclick="redoAction()" title="Redo (Ctrl+Y / ⌘+Shift+Z)">↷</button>
+      <button class="btn btn-sm btn-ghost" style="color:var(--coral)" onclick="resetAll()" title="Clear everything and start a brand-new invoice">♻ Reset</button>
     </div>
   </div>
   <div class="main">`;
