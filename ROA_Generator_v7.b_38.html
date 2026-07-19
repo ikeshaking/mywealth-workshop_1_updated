@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_37";
+const APP_VERSION = "v7.b_38";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -10247,6 +10247,11 @@ function resetState(){
     hasOptions:false, option1Text:"", option2Text:"", additionalAck:[],
     // NAA (No Advice Acknowledgement) — top-level doc type
     naaTransactionSummary:"",      // appears in the type table on the cover page
+    naaType:"",                    // '' | purchase | selldown | pension_withdrawal | other
+    naaBuyAmount:"", naaBuySecurity:"", naaBuyAccount:"",
+    naaSellAccount:"", naaSellPurpose:"", naaSellHoldings:[],
+    naaWdAmount:"", naaWdAccount:"", naaWdSource:"reserves portfolio", naaWdPurpose:"",
+    naaRebalanceShow:false, naaRebalanceRows:[],
     naaTransactionDetails:"",      // long-form text body of Section 1
     naaInstructionDate:"",         // the date the client gave the instruction (e.g. "19th of December")
     naaInstructionMethod:"email",  // how the instruction was received (email, phone, in person, etc.)
@@ -19851,6 +19856,63 @@ function renderNAABuilder(){
     <div class="section-block-body">${renderClientSection()}</div>
   </div>`;
 
+  // ─── Transaction type picker — drives the Section 1 wording + table blocks ───
+  h += `<div class="section-block">
+    <div class="section-block-head">
+      <div class="section-block-title"><span>Transaction Type</span></div>
+    </div>
+    <div class="section-block-body"><div class="card">
+      <div class="card-sub">Pick the type of instruction — the summary, scope and Section 1 wording pre-fill from the firm's standard NAA formats, and the matching table block prints in the document. Editing the fields below re-seeds the wording; you can still fine-tune the free text afterwards.</div>
+      <div class="tog" style="flex-wrap:wrap">
+        ${[['purchase','Purchase (execution only)'],['selldown','Sale / Selldown & Withdrawal'],['pension_withdrawal','Pension / Super Withdrawal'],['other','Other instruction']].map(([v,l]) =>
+          `<button class="${F.naaType===v?'on':'off'}" onclick="F.naaType='${v}';naaSyncType()">${l}</button>`).join('')}
+      </div>`;
+  if(F.naaType === 'purchase'){
+    h += `<div class="grid-3" style="margin-top:10px">
+      <div class="field"><label>Amount</label><input value="${e(F.naaBuyAmount)}" onchange="F.naaBuyAmount=this.value;naaSyncType()" placeholder="$5,000"></div>
+      <div class="field"><label>Security / investment</label><input value="${e(F.naaBuySecurity)}" onchange="F.naaBuySecurity=this.value;naaSyncType()" placeholder="Tesla shares"></div>
+      <div class="field"><label>Account</label><input value="${e(F.naaBuyAccount)}" onchange="F.naaBuyAccount=this.value;naaSyncType()" placeholder="Hub24 investment"></div>
+    </div>`;
+  } else if(F.naaType === 'selldown'){
+    h += `<div class="grid-2" style="margin-top:10px">
+      <div class="field"><label>Account</label><input value="${e(F.naaSellAccount)}" onchange="F.naaSellAccount=this.value;naaSyncType()" placeholder="Netwealth Investment (WRAP042172)"></div>
+      <div class="field"><label>Purpose (optional)</label><input value="${e(F.naaSellPurpose)}" onchange="F.naaSellPurpose=this.value;naaSyncType()" placeholder="e.g. your home renovation"></div>
+    </div>
+    <h5 style="margin:8px 0 4px;font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase">Holdings to sell</h5>`;
+    (F.naaSellHoldings||[]).forEach((r, ri) => {
+      h += `<div style="display:grid;grid-template-columns:2fr 1fr auto;gap:5px;margin-bottom:4px">
+        <input class="field" style="margin:0" value="${e(r.desc)}" onchange="F.naaSellHoldings[${ri}].desc=this.value" placeholder="25,000 Units of Vanguard High Growth Index Fund / All Units of Block Inc">
+        <input class="field" style="margin:0" value="${e(r.value)}" onchange="F.naaSellHoldings[${ri}].value=this.value" placeholder="$46,400">
+        <button class="btn btn-xs btn-danger" onclick="F.naaSellHoldings.splice(${ri},1);render()">✕</button>
+      </div>`;
+    });
+    h += `<button class="add-inline" onclick="if(!Array.isArray(F.naaSellHoldings))F.naaSellHoldings=[];F.naaSellHoldings.push({desc:'',value:''});render()">+ Add holding</button>`;
+  } else if(F.naaType === 'pension_withdrawal'){
+    h += `<div class="grid-2" style="margin-top:10px">
+      <div class="field"><label>Withdrawal amount</label><input value="${e(F.naaWdAmount)}" onchange="F.naaWdAmount=this.value;naaSyncType()" placeholder="$30,000"></div>
+      <div class="field"><label>Account</label><input value="${e(F.naaWdAccount)}" onchange="F.naaWdAccount=this.value;naaSyncType()" placeholder="Hub24 Pension"></div>
+      <div class="field"><label>Funded from</label><input value="${e(F.naaWdSource)}" onchange="F.naaWdSource=this.value;naaSyncType()" placeholder="reserves portfolio"></div>
+      <div class="field"><label>Purpose (optional)</label><input value="${e(F.naaWdPurpose)}" onchange="F.naaWdPurpose=this.value;naaSyncType()" placeholder="an upcoming holiday in September"></div>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;font-weight:600;cursor:pointer">
+      <input type="checkbox" ${F.naaRebalanceShow?'checked':''} onchange="F.naaRebalanceShow=this.checked;naaSyncType()">
+      Include post-withdrawal rebalance table (rebalance back to risk profile)
+    </label>`;
+    if(F.naaRebalanceShow){
+      h += `<div style="margin-top:6px;display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:5px;font-size:10px;font-weight:700;color:var(--navy)"><span>ASSET / FUND NAME</span><span>CURRENT AMOUNT</span><span>PROPOSED AMOUNT</span><span></span></div>`;
+      (F.naaRebalanceRows||[]).forEach((r, ri) => {
+        h += `<div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:5px;margin-bottom:4px">
+          <input class="field" style="margin:0" value="${e(r.name)}" onchange="F.naaRebalanceRows[${ri}].name=this.value">
+          <input class="field" style="margin:0" value="${e(r.current)}" onchange="F.naaRebalanceRows[${ri}].current=this.value" placeholder="$0">
+          <input class="field" style="margin:0" value="${e(r.proposed)}" onchange="F.naaRebalanceRows[${ri}].proposed=this.value" placeholder="$0">
+          <button class="btn btn-xs btn-danger" onclick="F.naaRebalanceRows.splice(${ri},1);render()">✕</button>
+        </div>`;
+      });
+      h += `<button class="add-inline" onclick="if(!Array.isArray(F.naaRebalanceRows))F.naaRebalanceRows=[];F.naaRebalanceRows.push({name:'',current:'',proposed:''});render()">+ Add row</button>`;
+    }
+  }
+  h += `</div></div></div>`;
+
   // ─── Cover-page type-of-document description ───
   h += `<div class="section-block">
     <div class="section-block-head">
@@ -20017,6 +20079,21 @@ function renderNAAPreview(){
       if(p.trim()) h += `<p style="margin:6px 0">${e(p.trim()).replace(/\n/g, '<br>')}</p>`;
     });
   }
+  // Type-specific blocks — holdings to sell / post-withdrawal rebalance table
+  if(F.naaType === 'selldown' && (F.naaSellHoldings||[]).some(r => r.desc)){
+    h += `<ul style="margin:6px 0 6px 18px">`;
+    F.naaSellHoldings.filter(r => r.desc).forEach(r => {
+      h += `<li>${e(r.desc)}${r.value ? ' (currently valued at ' + e(r.value) + ')' : ''}</li>`;
+    });
+    h += `</ul>`;
+  }
+  if(F.naaType === 'pension_withdrawal' && F.naaRebalanceShow && (F.naaRebalanceRows||[]).some(r => r.name)){
+    h += `<table style="margin:8px 0"><thead><tr><th>Asset / Fund name</th><th>Current Amount</th><th>Proposed Amount</th></tr></thead><tbody>`;
+    F.naaRebalanceRows.filter(r => r.name).forEach(r => {
+      h += `<tr><td>${e(r.name)}</td><td>${e(r.current)}</td><td>${e(r.proposed)}</td></tr>`;
+    });
+    h += `</tbody></table>`;
+  }
   h += `</div>`;
 
   // Section 2 — Acknowledgement
@@ -20064,6 +20141,31 @@ function renderNAAPreview(){
 
 // DOCX export for NAA — reuses the same brand chrome (header/footer images, page setup,
 // fonts, table styles) as the ROA exporter but builds a much shorter children[] array.
+// NAA transaction types — seed the summary / scope / details wording from the
+// firm's real examples. Re-seeding runs whenever a type field changes, so the
+// free-text stays in sync until the adviser edits it directly.
+function naaSyncType(){
+  const t = F.naaType;
+  if(!t || t === 'other') { render(); return; }
+  if(t === 'purchase'){
+    const amt = (F.naaBuyAmount||'$[amount]'), sec = (F.naaBuySecurity||'[security]'), acct = (F.naaBuyAccount||'[platform] investment');
+    F.naaScopePhrase = `purchase ${amt} worth of ${sec} through your ${acct} account`;
+    F.naaTransactionSummary = `Client-directed purchase of ${sec}.`;
+    F.naaTransactionDetails = `You have advised us that you would like our assistance purchasing ${amt} worth of ${sec} through your ${acct} account. This transaction is to be completed on an execution-only basis — we have not provided, and you have not sought, personal advice in relation to this purchase.`;
+  } else if(t === 'selldown'){
+    const acct = (F.naaSellAccount||'[platform] investment'), why = (F.naaSellPurpose||'').trim();
+    F.naaScopePhrase = `sell down and withdraw investments from your ${acct} account`;
+    F.naaTransactionSummary = `Client-directed investment sale and withdrawal.`;
+    F.naaTransactionDetails = `You have advised us that you would like us to sell and withdraw the following investments held within your ${acct} account${why ? ' to fund ' + why : ''}:`;
+  } else if(t === 'pension_withdrawal'){
+    const amt = (F.naaWdAmount||'$[amount]'), acct = (F.naaWdAccount||'[platform] pension'), srcp = (F.naaWdSource||'').trim(), why = (F.naaWdPurpose||'').trim();
+    F.naaScopePhrase = `withdraw ${amt} from your ${acct} account`;
+    F.naaTransactionSummary = `Client-directed pension withdrawal.`;
+    F.naaTransactionDetails = `You have advised us that you would like to withdraw ${amt} from your ${acct} account${srcp ? ' using the ' + srcp : ''}${why ? ' to help fund ' + why : ''}.`
+      + (F.naaRebalanceShow ? `\n\nFollowing the withdrawal of funds from your pension account, we will rebalance your account in line with your risk profile as per the below table:` : '');
+  }
+  render();
+}
 async function exportNAADocx(){
   if(typeof docx === 'undefined'){
     alert('docx library not loaded. Please refresh the page.');
@@ -20235,6 +20337,32 @@ async function exportNAADocx(){
       tdParas.push(new Paragraph({spacing:{before:0, after:80}, children: runs}));
     });
   }
+  // Type-specific blocks — holdings to sell / post-withdrawal rebalance table
+  if(F.naaType === 'selldown' && (F.naaSellHoldings||[]).some(r => r.desc)){
+    F.naaSellHoldings.filter(r => r.desc).forEach(r => {
+      tdParas.push(new Paragraph({
+        numbering:{reference:"bullets", level:0}, spacing:{after:60},
+        children:[new TextRun({text: r.desc + (r.value ? ' (currently valued at ' + r.value + ')' : ''), font:"Nunito", size:19})]
+      }));
+    });
+  }
+  if(F.naaType === 'pension_withdrawal' && F.naaRebalanceShow && (F.naaRebalanceRows||[]).some(r => r.name)){
+    const rbW = [4800, 2400, 2350];
+    const rbRows = [new TableRow({tableHeader:true, children:[
+      cellTxt("Asset / Fund name", {shade:NY, color:"FFFFFF", bold:true, size:19, w:rbW[0], bord:BORD}),
+      cellTxt("Current Amount", {shade:NY, color:"FFFFFF", bold:true, size:19, w:rbW[1], bord:BORD}),
+      cellTxt("Proposed Amount", {shade:NY, color:"FFFFFF", bold:true, size:19, w:rbW[2], bord:BORD}),
+    ]})];
+    F.naaRebalanceRows.filter(r => r.name).forEach(r => {
+      rbRows.push(new TableRow({children:[
+        cellTxt(r.name, {w:rbW[0], bord:BORD}),
+        cellTxt(r.current||"", {w:rbW[1], bord:BORD}),
+        cellTxt(r.proposed||"", {w:rbW[2], bord:BORD}),
+      ]}));
+    });
+    tdParas.push(new Paragraph({spacing:{before:60, after:60}, children:[new TextRun({text:"", font:"Nunito", size:19})]}));
+    tdParas.__rebalanceTable = new Table({columnWidths:rbW, width:{size:9550, type:WidthType.DXA}, rows:rbRows});
+  }
   children.push(new Table({
     columnWidths:[9950], width:{size:9950, type:WidthType.DXA},
     rows:[new TableRow({children:[new TableCell({
@@ -20245,6 +20373,7 @@ async function exportNAADocx(){
       children: tdParas
     })]})]
   }));
+  if(tdParas.__rebalanceTable){ children.push(P("")); children.push(tdParas.__rebalanceTable); }
 
   // ─── Section 2: Acknowledgement ───
   children.push(H2("Section 2: Acknowledgement"));
