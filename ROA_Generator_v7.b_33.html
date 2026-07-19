@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_32";
+const APP_VERSION = "v7.b_33";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -2394,8 +2394,8 @@ const SCENARIOS = {
       "The portfolio fees will reduce due to having less funds under management."
     ],
     risks:[
-      "As a result of the withdrawal, your total {invPlatform} investment portfolio balance will reduce by {amount}.",
-      "As at today, you will crystalise estimated capital gains through the selldown for your withdrawal. This will incur an estimated capital gains tax based on your maximum marginal tax rate. Please contact a qualified tax agent or accountant to confirm the accuracy of this estimate and final figures.",
+      "As a result of withdrawing funds from your investment portfolio, the amount of capital remaining invested will be reduced, which may limit the future growth potential of your portfolio and reduce the benefits of compounding returns over time. We estimate your funds will last X years (after withdrawal) compared to Y years (before withdrawal).",
+      "As at today, you will crystalise an estimated capital gains of $XX through the selldown for your withdrawal. This will incur an estimated capital gains tax of $XX based on your marginal tax rate ({mtrPercent}). Please contact a qualified tax agent or accountant to confirm the accuracy of this estimate and final figures.",
       "Investment funds involve some investment risk and do not guarantee your returns. The value of your investments might not increase as you would like and their value may even fall at times.",
       "You will experience market volatility. This will change the value of your investment from day to day.",
       "Based on my recommendations, you will incur transaction fees{transactionFees} from this rebalance."
@@ -10208,6 +10208,7 @@ function resetState(){
     // like 0.39 (= 39%). Blank/0 → no MTR saving applied.
     client1Mtr:"",
     client2Mtr:"",
+    entityMtr:"",
     client2Name:"", client2Role:"",
     entityName:"",
     adviserName:"",adviserOffice:"",adviserPhone:"",adviserEmail:"",adviserStreet:(SETTINGS.defaultStreet||"1/18 Masters Street, Newstead, Brisbane 4006"),
@@ -11020,6 +11021,18 @@ function provisionPortfolios(scns){
       t.amount = amt; t._autoWdAmt = amt;
     }
   };
+  // Variation Table is only needed when the advice rebalances an EXISTING
+  // portfolio. Auto-untick it otherwise; a manual tick/untick always wins.
+  const __hasRebalance = selectedScenarios.some(id => {
+    const s = SCENARIOS[id]; if(!s) return false;
+    return /rebalance/i.test([s.label, s.pd, s.rec].filter(Boolean).join(' '));
+  });
+  kept.forEach(p => {
+    if(!p.allocComparison || p.allocComparison._manual) return;
+    if(!__hasRebalance && p.allocComparison.show){ p.allocComparison.show = false; p.allocComparison._autoHidden = true; }
+    else if(__hasRebalance && p.allocComparison._autoHidden && !p.allocComparison.show){ p.allocComparison.show = true; p.allocComparison._autoHidden = false; }
+  });
+
   if(selectedScenarios.includes('super_withdrawal')) ensureWithdrawTrade('Superannuation');
   if(selectedScenarios.includes('inv_one_off_withdrawal') || selectedScenarios.includes('inv_withdrawal_closure')) ensureWithdrawTrade('Investment');
 
@@ -11253,8 +11266,17 @@ function fillForPortfolio(str, portfolio){
   if(!str) return "";
   // Priority: per-portfolio override → global default → placeholder
   const rp = (portfolio && portfolio.riskProfile) || F.globalRiskProfile || "[Risk Profile]";
-  const reservesYears = /high growth/i.test(rp) ? "4" : (/\bgrowth\b/i.test(rp) ? "3" : "3–4");
+  const reservesYears = /high growth/i.test(rp) ? "4" : (/\bgrowth\b/i.test(rp) ? "3" : "X");
   const txnFees = (portfolio && (portfolio.transactionCosts||"").trim()) ? " of approximately " + portfolio.transactionCosts.trim() : "";
+  const mtrPercent = (() => {
+    const subj = String((portfolio && (portfolio.subject || portfolio.contextLabel)) || '').trim().toLowerCase();
+    const c2 = String(F.client2Name||'').trim().split(/\s+/)[0].toLowerCase();
+    let v = F.client1Mtr;
+    if(F.clientType === 'entity') v = F.entityMtr || F.client1Mtr;
+    else if(c2 && subj && subj.startsWith(c2)) v = F.client2Mtr || F.client1Mtr;
+    const n = parseFloat(v);
+    return (isFinite(n) && n > 0) ? Math.round(n*100) + '%' : 'X%';
+  })();
   const hasDraw = !!(portfolio && portfolio.hasDrawdownOrReserves);
   return String(str)
     // Conditional blocks — {IF_DRAWDOWN: content to include when drawing down}
@@ -11262,7 +11284,8 @@ function fillForPortfolio(str, portfolio){
     .replace(/\{IF_NO_DRAWDOWN:([^}]*)\}/g, hasDraw ? '' : '$1')
     .replace(/\{riskProfile\}/g, rp)
     .replace(/\{reservesYears\}/g, reservesYears)
-    .replace(/\{transactionFees\}/g, txnFees);
+    .replace(/\{transactionFees\}/g, txnFees)
+    .replace(/\{mtrPercent\}/g, mtrPercent);
 }
 function joinAnd(arr){
   arr = arr.filter(Boolean);
@@ -11722,11 +11745,13 @@ function roundImportedMoney(v){
   });
 }
 function carePlatform(plat, type){
+  // A bare "Hub24" in the CARE doc becomes the full platform + menu name the
+  // SOA uses (Admin > Platform Defaults), e.g. "Hub24 Investment Choice".
   let pl = (plat||'').trim();
-  if(/^hub24$/i.test(pl)){
-    if(type==='Super') return 'Hub24 Super';
-    if(type==='Pension') return 'Hub24 Pension';
-    return 'Hub24 Investment';
+  if(/^hub\s*24$/i.test(pl)){
+    if(type==='Super') return F.superPlatform || DEFAULT_SUPER_PLATFORM;
+    if(type==='Pension') return F.pensionPlatform || DEFAULT_PENSION_PLATFORM;
+    return F.invPlatform || DEFAULT_INV_PLATFORM;
   }
   return pl || DEFAULT_INV_PLATFORM;
 }
@@ -14675,32 +14700,6 @@ function renderAdmin(){
   </div>`;
 
   // ── Suggested wording editor ──
-  // Platform & Asset Allocation Defaults — moved off the ROA pages (a CARE /
-  // WealthSolver upload brings its own platform & holdings; these defaults only
-  // apply to manually-built portfolios and template wording without an import).
-  h += `<div class="card">
-    <h3 style="margin:0 0 6px">Platform &amp; Asset Allocation Defaults</h3>
-    <div class="card-sub" style="margin-top:0">Substituted into scenario wording and used for manually-built portfolios. A CARE / WealthSolver upload overrides these with the document's own platform and holdings.</div>
-    <div class="field">
-      <label>Asset Allocation Set</label>
-      <div class="tog">
-        <button class="${(F.assetAllocationSet||'CARE')==='CARE'?'on':'off'}" onclick="switchAssetAllocationSet('CARE')">CARE Portfolios (default)</button>
-        <button class="${F.assetAllocationSet==='Vanguard'?'on':'off'}" onclick="switchAssetAllocationSet('Vanguard')">Vanguard</button>
-      </div>
-      <div class="helper" style="margin-top:4px">Changes the default fund names in each portfolio's allocation table. Applies to new portfolios and can be re-applied to existing ones using the "&#8635; Reset to defaults" button on each portfolio.</div>
-    </div>
-    <div class="grid-3">
-      <div class="field"><label>Super Platform</label>
-        ${platformSelect('F.superPlatform', F.superPlatform, 'consolidateScenarios();')}
-      </div>
-      <div class="field"><label>Investment Platform</label>
-        ${platformSelect('F.invPlatform', F.invPlatform, 'consolidateScenarios();')}
-      </div>
-      <div class="field"><label>Pension Platform</label>
-        ${platformSelect('F.pensionPlatform', F.pensionPlatform, 'consolidateScenarios();')}
-      </div>
-    </div>
-  </div>`;
   h += renderAdminWording();
 
   // ── Export / reset ──
@@ -17416,14 +17415,23 @@ function renderClientSection(){
         ${[['','—'],['0.17','17% (15% + 2% Medicare)'],['0.32','32% (30% + 2% Medicare)'],['0.39','39% (37% + 2% Medicare)'],['0.47','47% (45% + 2% Medicare)']].map(([v,l])=>`<option value="${v}" ${String(val)===v?'selected':''}>${l}</option>`).join('')}
         ${String(val)==='0.18' ? '<option value="0.18" selected>18% (16% + 2% Medicare — pre-July 2026 rate)</option>' : ''}
       </select></div>`;
+    // Entities pay tax at company/trust rates, not personal marginal rates.
+    const __entSel = () => `<div class="field" style="max-width:340px"><label>${e((F.entityName||'').trim() || 'Entity')} Tax Rate (for ${__mtrWhy})</label>
+      <select onchange="F.entityMtr=this.value;render()">
+        ${[['','—'],['0.15','15% (SMSF — accumulation)'],['0.25','25% (base rate company)'],['0.30','30% (company)'],['0.47','47% (trust — top marginal rate)']].map(([v,l])=>`<option value="${v}" ${String(F.entityMtr)===v?'selected':''}>${l}</option>`).join('')}
+      </select></div>`;
     const __joint = F.clientType==='joint' || F.clientType==='joint_entity';
+    const __hasEntity = F.clientType==='entity' || F.clientType==='joint_entity';
     const __n1 = (F.client1Name||'').trim().split(/\s+/)[0] || 'Client 1';
     const __n2 = (F.client2Name||'').trim().split(/\s+/)[0] || 'Client 2';
     if(__joint){
       h += `<div class="grid-2" style="gap:12px">${__mtrSel('client1Mtr', F.client1Mtr, e(__n1)+"'s Marginal Tax Rate")}${__mtrSel('client2Mtr', F.client2Mtr, e(__n2)+"'s Marginal Tax Rate")}</div>`;
+    } else if(F.clientType==='entity'){
+      h += `<div class="grid-2" style="gap:12px">${__mtrSel('client1Mtr', F.client1Mtr, e(__n1)+"'s Marginal Tax Rate")}${__entSel()}</div>`;
     } else {
       h += __mtrSel('client1Mtr', F.client1Mtr, 'Client Marginal Tax Rate');
     }
+    if(F.clientType==='joint_entity') h += __entSel();
     h += `<div class="helper" style="margin:4px 0 10px;max-width:700px">2026–27 resident marginal rates — each option <strong>includes the 2% Medicare levy</strong>. ${__mtrHelp}</div>`;
   }
   h += `
@@ -17546,21 +17554,22 @@ function switchAssetAllocationSet(setName){
 function syncVariationFromAllocation(pi){
   const p = F.portfolios[pi];
   if(!p || !p.rows) return;
+  // Values are matched on the canonical CARE name, so a variation table still
+  // holding the doc's short names ("Core High Growth") keeps its percentages
+  // when mirrored against the full allocation titles ("CARE Core High Growth
+  // Portfolio"). Footnote stars (Cash*) are dropped from the variation names.
+  const keyOf = n => canonicalCareName(String(n||'').replace(/\*+$/,'').trim()).toLowerCase();
   const existingByName = {};
   (p.allocComparison.rows||[]).forEach(r => {
-    if(r.name) existingByName[r.name] = r;
+    if(r.name) existingByName[keyOf(r.name)] = r;
   });
   const newRows = [];
   p.rows.forEach(r => {
     if(!r.n || r.isFee) return;
-    // Strip "CARE " and "Portfolio" suffix to match Dobos-style short names
-    const shortName = r.n
-      .replace(/^CARE\s+/i,'')
-      .replace(/\s+Portfolio$/i,'')
-      .trim();
-    const existing = existingByName[r.n] || existingByName[shortName];
+    const fullName = r.n.replace(/\*+$/,'').trim();
+    const existing = existingByName[keyOf(fullName)];
     newRows.push({
-      name: shortName,
+      name: fullName,
       current: existing?.current || "",
       proposed: existing?.proposed || "",
       variance: existing?.variance || ""
@@ -17929,7 +17938,8 @@ function renderSection3ByStrategy(){
       h += renderPortfolioAllocation(p, pi);
 
       // 3. Variation table
-      h += `<h4 class="strategy-step">3. Variation Table</h4>`;
+      h += `<h4 class="strategy-step">3. Variation Table</h4>
+        <div class="helper" style="margin:2px 0 8px">Only required where there is a rebalance of the existing portfolio — it compares the current vs recommended asset allocation. Leave it off for new accounts, retained funds and non-rebalance advice.</div>`;
       h += renderPortfolioVariation(p, pi);
 
       h += `</div></div>`;
@@ -18148,7 +18158,7 @@ function renderPortfolioVariation(p, pi){
   let h = `<div class="strategy-sub">
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
       <label style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;text-transform:none;letter-spacing:0">
-        <input type="checkbox" ${p.allocComparison.show?'checked':''} onchange="F.portfolios[${pi}].allocComparison.show=this.checked;render()">
+        <input type="checkbox" ${p.allocComparison.show?'checked':''} onchange="F.portfolios[${pi}].allocComparison.show=this.checked;F.portfolios[${pi}].allocComparison._manual=true;render()">
         Include variation table
       </label>
       <button class="btn btn-xs btn-blue" onclick="syncVariationFromAllocation(${pi})">↻ Mirror allocation table fund names</button>
@@ -18449,7 +18459,7 @@ function renderPortfolio(p, pi){
 
     <h4 style="margin-top:14px;margin-bottom:6px">Variation Table (optional)
       <label style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;margin-left:10px;text-transform:none;letter-spacing:0">
-        <input type="checkbox" ${p.allocComparison.show?'checked':''} onchange="F.portfolios[${pi}].allocComparison.show=this.checked;render()">
+        <input type="checkbox" ${p.allocComparison.show?'checked':''} onchange="F.portfolios[${pi}].allocComparison.show=this.checked;F.portfolios[${pi}].allocComparison._manual=true;render()">
         Include
       </label>
       <span class="text-xs text-muted" style="font-weight:400;margin-left:8px">Shows Current % vs Proposed % vs Variance by asset — mirrors the allocation table fund list.</span>
@@ -19326,7 +19336,7 @@ function renderRoaDocHTML(){
     }
     // Portfolio table
     const productHeader = (p.contextLabel ? e(p.contextLabel)+' - ' : '')+'Investment Product';
-    h += `<table class="alloc-doc"><thead><tr><th>${productHeader}</th><th>Recommended Allocation $</th><th>${__mate ? 'Fees' : "Fund Manager's Fee (ICR)"}</th></tr>
+    h += `<table class="alloc-doc"><thead><tr><th>${productHeader}</th><th>Recommended Allocation $</th><th>Fees</th></tr>
       <tr class="platform-row"><td>Platform Name</td><td colspan="2">${e(p.platform)}</td></tr></thead><tbody>`;
     p.rows.forEach(r => {
       if(!r.n) return;
@@ -21405,7 +21415,7 @@ async function exportDocx(){
       children:[
         cellTxt(productHeader, {shade:NY, color:"FFFFFF", bold:true, size:19, w:colW[0], font:"ABC Arizona Flare", bord:SBORD}),
         cellTxt("Recommended Allocation $", {shade:NY, color:"FFFFFF", bold:true, size:19, w:colW[1], font:"ABC Arizona Flare", bord:SBORD}),
-        cellTxt(__mate ? "Fees" : "Fund Manager's Fee (ICR)", {shade:NY, color:"FFFFFF", bold:true, size:19, w:colW[2], font:"ABC Arizona Flare", bord:SBORD}),
+        cellTxt("Fees", {shade:NY, color:"FFFFFF", bold:true, size:19, w:colW[2], font:"ABC Arizona Flare", bord:SBORD}),
       ]
     }));
     // Platform Name — a full-width brand-blue row, the value spanning columns 2+3
