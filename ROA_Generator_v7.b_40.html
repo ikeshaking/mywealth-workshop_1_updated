@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_39";
+const APP_VERSION = "v7.b_40";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -10247,6 +10247,7 @@ function resetState(){
     hasOptions:false, option1Text:"", option2Text:"", additionalAck:[],
     // NAA (No Advice Acknowledgement) — top-level doc type
     naaTransactionSummary:"",      // appears in the type table on the cover page
+    naaLetterIntro:"",           // the letter-page instruction sentence
     naaType:"",                    // '' | purchase | selldown | pension_withdrawal | other
     naaBuyAmount:"", naaBuySecurity:"", naaBuyAccount:"",
     naaSellAccount:"", naaSellPurpose:"", naaSellHoldings:[],
@@ -15181,7 +15182,7 @@ function initNAAState(){
   F.feesChanged = false;
   F.showProjection = false;
   // Reset the transaction-type fields so a new NAA starts clean.
-  F.naaType = ""; F.naaTransactionSummary = ""; F.naaScopePhrase = ""; F.naaTransactionDetails = "";
+  F.naaType = ""; F.naaLetterIntro = ""; F.naaTransactionSummary = ""; F.naaScopePhrase = ""; F.naaTransactionDetails = "";
   F.naaBuyAmount = ""; F.naaBuySecurity = ""; F.naaBuyAccount = "";
   F.naaSellAccount = ""; F.naaSellPurpose = ""; F.naaSellHoldings = [];
   F.naaWdAmount = ""; F.naaWdAccount = ""; F.naaWdSource = "reserves portfolio"; F.naaWdPurpose = "";
@@ -19929,6 +19930,10 @@ function naaBlockCover(){
     <div class="section-block-body">
       <div class="card">
         <div class="card-sub">Shown on the cover page beside <em>No Advice Acknowledgement (execution only)</em>. A short sentence summarising what the client instructed — this is the equivalent of the "Type of ROA" row.</div>
+        <div class="field"><label>Cover letter instruction sentence (page 1)</label>
+          <input value="${e(F.naaLetterIntro)}" onchange="F.naaLetterIntro=this.value"
+            placeholder="You have advised us that you would like …">
+        </div>
         <div class="field"><label>Transaction summary</label>
           <input value="${e(F.naaTransactionSummary)}" onchange="F.naaTransactionSummary=this.value"
             placeholder="e.g. Super investment alterations based on personal preferences.">
@@ -20104,6 +20109,21 @@ function renderNAADocHTML(){
   const pron = wP ? 'we' : 'I';
   const Pron = pron.charAt(0).toUpperCase() + pron.slice(1);
   let h = '';
+  // Cover letter page (exemplar format)
+  {
+    const _first = getFirstName();
+    h += `<img src="data:image/png;base64,${BRAND_HEADER_PNG_B64}" alt="My Wealth Solutions" style="display:block;width:100%;max-width:680px;margin:0 0 18px">
+      <p>${e(ordD(F.roaDate) || '')}</p>
+      <p><strong>${e(cn)}</strong></p>
+      <p>Dear ${e(_first || cn)},</p>
+      <p>${e(F.naaLetterIntro || '[Instruction summary — pick a transaction type or edit this sentence in the builder.]')} This No Advice Acknowledgement document lists your instructions you wish us to implement on your behalf.</p>
+      <p>Section 2 of the document outlines the Acknowledgement form required to be signed and returned in order to action your request as per the above. If you would like us to proceed, please sign and return the Acknowledgement page.</p>
+      <p>If you would like some further information on these documents, please contact us on ${e(F.adviserPhone || '(07) 3852 4114')}.</p>
+      <p>Yours sincerely,</p>
+      <p style="margin-bottom:2px"><strong>${e(F.adviserName || '[Adviser]')}</strong><br>Financial Adviser<br>My Wealth Solutions</p>
+      <p style="font-size:10px;color:#555">${e(F.adviserName || '[Adviser]')} is an Authorised Representative of ${e(F.licensee || 'GPS Wealth Ltd')}, ABN 17 005 482 726, Australian Financial Services Licence number: ${e((F.licenseeAFSL || '254 544').replace(/\s/g,''))}</p>
+      <hr style="margin:22px 0;border:none;border-top:2px dashed #c9d8e4">`;
+  }
   // Cover page (mirrors the ROA cover but with NAA-specific titles)
   h += `<img src="data:image/png;base64,${BRAND_HEADER_PNG_B64}" alt="My Wealth Solutions" style="display:block;width:100%;max-width:700px;margin:0 0 18px 0" />
     <h1>No Advice Acknowledgement</h1>
@@ -20148,8 +20168,11 @@ function renderNAADocHTML(){
   h += `<p>${lead}</p>`;
   // Boxed transaction-details block (mirrors the single-cell table in the template)
   h += `<div style="border:1px solid var(--border, #d4e2ee);padding:10px 14px;border-radius:9px;background:#fafcfd;margin:8px 0 16px 0"><strong>Transaction Details:</strong><br>`;
-  // Auto lead-in for transaction details
-  h += `<p style="margin:6px 0">On the ${e(instructionDate)} you requested via ${e(instructionMethod)} that you would like to ${e(scope)}.</p>`;
+  // Generic lead-in only for free-form NAAs — the typed seeds carry their own
+  // exemplar-style opening ("In a meeting with … you have advised us that …").
+  if(!F.naaType || F.naaType === 'other'){
+    h += `<p style="margin:6px 0">On the ${e(instructionDate)} you requested via ${e(instructionMethod)} that you would like to ${e(scope)}.</p>`;
+  }
   // Free-text body (split on blank lines into paragraphs)
   if(F.naaTransactionDetails){
     F.naaTransactionDetails.split(/\n\s*\n/).forEach(p => {
@@ -20248,24 +20271,42 @@ function selectNaaType(t){
   wizardStep = 0;
   if(t && t !== 'other'){ naaSyncType(); } else { render(); }
 }
+// NAA transaction types — seed the letter sentence, summary, scope and Section 1
+// details from the firm's exemplar NAAs (Zenovich purchase, Aubrey/Tillotson/
+// McClymont selldowns, Derickx pension withdrawal). Re-seeds whenever a type
+// field changes; the free text stays editable afterwards.
+function naaInstructionContext(){
+  // "In a meeting with Hayden on the 3rd of July 2026, you have advised us that you would like "
+  // "You have recently advised us via email that you would like "
+  const m = (F.naaInstructionMethod||'').trim();
+  const d = (F.naaInstructionDate||'').trim();
+  const adv = (F.adviserName||'').trim().split(/\s+/)[0];
+  if(m === 'meeting' && d && adv) return `In a meeting with ${adv} on the ${d}, you have advised us that you would like `;
+  if(m && m !== 'meeting') return `You have recently advised us via ${m} that you would like `;
+  return `You have advised us that you would like `;
+}
 function naaSyncType(){
   const t = F.naaType;
   if(!t || t === 'other') { render(); return; }
+  const ctx = naaInstructionContext();
   if(t === 'purchase'){
     const amt = (F.naaBuyAmount||'$[amount]'), sec = (F.naaBuySecurity||'[security]'), acct = (F.naaBuyAccount||'[platform] investment');
     F.naaScopePhrase = `purchase ${amt} worth of ${sec} through your ${acct} account`;
     F.naaTransactionSummary = `Client-directed purchase of ${sec}.`;
-    F.naaTransactionDetails = `You have advised us that you would like our assistance purchasing ${amt} worth of ${sec} through your ${acct} account. This transaction is to be completed on an execution-only basis — we have not provided, and you have not sought, personal advice in relation to this purchase.`;
+    F.naaLetterIntro = `You have advised us that you would like our assistance purchasing ${amt} worth of ${sec} through your ${acct} account.`;
+    F.naaTransactionDetails = ctx + `our assistance purchasing ${amt} worth of ${sec} through your ${acct} account.`;
   } else if(t === 'selldown'){
     const acct = (F.naaSellAccount||'[platform] investment'), why = (F.naaSellPurpose||'').trim();
-    F.naaScopePhrase = `sell down and withdraw investments from your ${acct} account`;
-    F.naaTransactionSummary = `Client-directed investment sale and withdrawal.`;
-    F.naaTransactionDetails = `You have advised us that you would like us to sell and withdraw the following investments held within your ${acct} account${why ? ' to fund ' + why : ''}:`;
+    F.naaScopePhrase = `sell and withdraw investments from your ${acct} account`;
+    F.naaTransactionSummary = `Investment Sale and Withdrawal`;
+    F.naaLetterIntro = `You have advised us that you would like us to sell and withdraw the following investments held within your ${acct} account${why ? ' for ' + why : ''}.`;
+    F.naaTransactionDetails = ctx + `us to sell and withdraw the following investments held within your ${acct} account${why ? ' for ' + why : ''}:`;
   } else if(t === 'pension_withdrawal'){
     const amt = (F.naaWdAmount||'$[amount]'), acct = (F.naaWdAccount||'[platform] pension'), srcp = (F.naaWdSource||'').trim(), why = (F.naaWdPurpose||'').trim();
     F.naaScopePhrase = `withdraw ${amt} from your ${acct} account`;
-    F.naaTransactionSummary = `Client-directed pension withdrawal.`;
-    F.naaTransactionDetails = `You have advised us that you would like to withdraw ${amt} from your ${acct} account${srcp ? ' using the ' + srcp : ''}${why ? ' to help fund ' + why : ''}.`
+    F.naaTransactionSummary = `Pension Withdrawal`;
+    F.naaLetterIntro = `You have advised us that you would like to withdraw ${amt} from your ${acct} account${why ? ' to help fund ' + why : ''}.`;
+    F.naaTransactionDetails = ctx + `to withdraw ${amt} of your ${acct} account${srcp ? ' using the ' + srcp : ''}.`
       + (F.naaRebalanceShow ? `\n\nFollowing the withdrawal of funds from your pension account, we will rebalance your account in line with your risk profile as per the below table:` : '');
   }
   render();
@@ -20278,7 +20319,7 @@ async function exportNAADocx(){
   const D = docx;
   const { Document, Packer, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType,
     BorderStyle, ShadingType, PageOrientation, LevelFormat, convertInchesToTwip, HeightRule, Header, Footer, ImageRun,
-    HorizontalPositionAlign, VerticalPositionAlign, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom, TextWrappingType } = D;
+    HorizontalPositionAlign, VerticalPositionAlign, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom, TextWrappingType , PageBreak } = D;
 
   const NY = "0C2E3F";
   const TL = "E5F4F6";
@@ -20347,12 +20388,35 @@ async function exportNAADocx(){
 
   const children = [];
 
+  // ─── Cover letter page (exemplar format: Dear <client> → instruction →
+  //     sign-and-return → Yours sincerely) ───
+  {
+    const LP = (t, opts={}) => new Paragraph({spacing:{before:0, after: opts.after != null ? opts.after : 160}, children:[new TextRun({text:t, font:"Nunito", size:19, color:"1a1a1a", bold:!!opts.bold})]});
+    children.push(new Paragraph({
+      spacing:{after:200},
+      children:[new ImageRun({data: b64ToUint8(BRAND_HEADER_PNG_B64), transformation:{width:700, height:Math.round(700 * BRAND_HEADER_H / BRAND_HEADER_W)}})]
+    }));
+    children.push(LP(ordD(F.roaDate) || '', {after:220}));
+    children.push(LP(cn, {after:220, bold:true}));
+    const _first = getFirstName();
+    children.push(LP(`Dear ${_first || cn},`, {after:200}));
+    children.push(LP((F.naaLetterIntro || '[Instruction summary — pick a transaction type or edit this sentence in the builder.]') + ' This No Advice Acknowledgement document lists your instructions you wish us to implement on your behalf.'));
+    children.push(LP('Section 2 of the document outlines the Acknowledgement form required to be signed and returned in order to action your request as per the above. If you would like us to proceed, please sign and return the Acknowledgement page.'));
+    children.push(LP(`If you would like some further information on these documents, please contact us on ${F.adviserPhone || '(07) 3852 4114'}.`));
+    children.push(LP('Yours sincerely,', {after:260}));
+    children.push(LP(F.adviserName || '[Adviser]', {after:40, bold:true}));
+    children.push(LP('Financial Adviser', {after:40}));
+    children.push(LP('My Wealth Solutions', {after:160}));
+    children.push(new Paragraph({spacing:{after:0}, children:[new TextRun({text:`${F.adviserName || '[Adviser]'} is an Authorised Representative of ${F.licensee || 'GPS Wealth Ltd'}, ABN 17 005 482 726, Australian Financial Services Licence number: ${(F.licenseeAFSL || '254 544').replace(/\s/g,'')}`, font:"Nunito", size:16, color:"555555"})]}));
+    children.push(new Paragraph({children:[new PageBreak()]}));
+  }
+
   // ─── Cover: brand header image ───
   children.push(new Paragraph({
     spacing:{after:160},
     children:[new ImageRun({data: b64ToUint8(BRAND_HEADER_PNG_B64), transformation:{width:700, height:Math.round(700 * BRAND_HEADER_H / BRAND_HEADER_W)}})]
   }));
-  children.push(H1("Record of Advice"));
+  children.push(H1("No Advice Acknowledgement"));
 
   // Cover two-column "prepared for" / "what this document is about"
   const coverColW = [4975, 4975];
@@ -20426,7 +20490,9 @@ async function exportNAADocx(){
   const scope = F.naaScopePhrase || 'alter your current investment allocation';
   const tdParas = [];
   tdParas.push(new Paragraph({spacing:{before:0, after:80}, children:[new TextRun({text:"Transaction Details:", font:"Nunito", size:19, bold:true})]}));
-  tdParas.push(new Paragraph({spacing:{before:0, after:80}, children:[new TextRun({text:`On the ${instructionDate} you requested via ${instructionMethod} that you would like to ${scope}.`, font:"Nunito", size:19})]}));
+  if(!F.naaType || F.naaType === 'other'){
+    tdParas.push(new Paragraph({spacing:{before:0, after:80}, children:[new TextRun({text:`On the ${instructionDate} you requested via ${instructionMethod} that you would like to ${scope}.`, font:"Nunito", size:19})]}));
+  }
   if(F.naaTransactionDetails){
     F.naaTransactionDetails.split(/\n\s*\n/).forEach(p => {
       const txt = p.trim();
