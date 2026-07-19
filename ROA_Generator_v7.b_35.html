@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ROA Paraplanner — My Wealth Solutions</title>
+<title>ROA &amp; Advice Doc Generator — My Wealth Solutions</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Nunito+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js" onerror="var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js';document.head.appendChild(s)"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -1652,7 +1652,7 @@ const SCENARIOS = {
     risks:[
       "Rolling over funds may result in loss of any insurance cover held within the {fromFund} account (e.g. death, TPD, income protection). Please review your existing cover before rolling over and ensure replacement cover is in place if required.",
       "Rolling over may trigger exit fees or buy/sell spreads within the transferring fund.",
-      "Capital gains may crystalise within the transferring fund upon rollover, which will be reflected in the amount ultimately rolled over.",
+      "Capital gains may crystallise within the transferring fund upon rollover, which will be reflected in the amount ultimately rolled over.",
       "Any employer contributions currently paid to the {fromFund} will need to be redirected — you will need to notify your employer of the new fund details.",
       "There may be a short period during rollover where funds are out of the market, exposing you to market timing risk.",
       "Features and fees of the new fund may differ from the previous fund."
@@ -1729,7 +1729,7 @@ const SCENARIOS = {
       "Rebalancing inside super is tax-effective as CGT in accumulation phase is capped at 15% (10% after one-year discount), and is nil in pension phase."
     ],
     risks:[
-      "Rebalancing may crystalise capital gains within the super fund, resulting in up to 15% CGT (or 10% after the one-year discount) in accumulation phase.",
+      "Rebalancing may crystallise capital gains within the super fund, resulting in up to 15% CGT (or 10% after the one-year discount) in accumulation phase.",
       "You will incur transaction costs (buy/sell spreads) as a result of the rebalance trades.",
       "Timing of the rebalance relative to market movements may impact the outcome in the short term.",
       "Investment returns are not guaranteed and you remain exposed to market volatility.",
@@ -1752,7 +1752,7 @@ const SCENARIOS = {
       "Ongoing rebalancing within the CARE portfolios is handled professionally, reducing the need for manual intervention."
     ],
     risks:[
-      "The reconstruction will involve buying and selling investments, potentially crystalising capital gains (taxed at up to 15%, or 10% after the one-year discount within accumulation).",
+      "The reconstruction will involve buying and selling investments, potentially crystallising capital gains (taxed at up to 15%, or 10% after the one-year discount within accumulation).",
       "Transaction costs (buy/sell spreads) will apply to the trades.",
       "Short-term market movements during the transition may impact the entry prices of replacement holdings.",
       "Past performance of any fund is not a guarantee of future returns.",
@@ -1823,7 +1823,7 @@ const SCENARIOS = {
       "Ongoing professional management via the CARE managed portfolios continues."
     ],
     risks:[
-      "Switching may crystalise capital gains within the existing super fund, resulting in CGT of up to 15% (or 10% after the one-year discount).",
+      "Switching may crystallise capital gains within the existing super fund, resulting in CGT of up to 15% (or 10% after the one-year discount).",
       "Transaction costs (buy/sell spreads) will apply on both the sell-down in the old menu and the purchase in the new menu.",
       "Insurance arrangements held through the old menu may not automatically transfer — you must arrange replacement cover if required.",
       "A period out of the market during the transition may impact returns if markets move during the implementation window.",
@@ -1852,7 +1852,7 @@ const SCENARIOS = {
       "Holding a defensive reserves allocation reduces expected long-term returns compared to a fully growth-weighted portfolio.",
       "You will incur transaction costs (buy/sell spreads) to establish the reserves position.",
       "Short-term market movements during the rebalance may affect the outcome.",
-      "Rebalancing may crystalise capital gains in accumulation phase (taxed at up to 15%, or 10% after the one-year discount).",
+      "Rebalancing may crystallise capital gains in accumulation phase (taxed at up to 15%, or 10% after the one-year discount).",
       "Investment returns within reserves are not guaranteed and remain subject to market risk."
     ]
   },
@@ -1872,7 +1872,7 @@ const SCENARIOS = {
     ],
     risks:[
       "By allocating a greater portion of your portfolio to the Reserves Portfolio, your overall investment returns may be lower than if those funds remained invested in growth assets.",
-      "Rebalancing may crystalise capital gains within the super fund, resulting in CGT in accumulation phase.",
+      "Rebalancing may crystallise capital gains within the super fund, resulting in CGT in accumulation phase.",
       "You will incur transaction costs (buy/sell spreads) from the rebalance.",
       "Investment returns are not guaranteed and remain subject to market risk."
     ]
@@ -1919,7 +1919,7 @@ const SCENARIOS = {
       "Transaction costs (buy/sell spreads) will apply to establish the new position.",
       "The Realm investment option may underperform traditional fixed income in periods of credit stress.",
       "You will incur additional underlying manager fees — please review the relevant PDS before proceeding.",
-      "Rebalancing may crystalise capital gains in accumulation phase (taxed at up to 15%, or 10% after the one-year discount)."
+      "Rebalancing may crystallise capital gains in accumulation phase (taxed at up to 15%, or 10% after the one-year discount)."
     ]
   },
 
@@ -1937,7 +1937,7 @@ const SCENARIOS = {
       "Consolidated reporting across the portfolio improves visibility and review."
     ],
     risks:[
-      "Selling the existing shares will crystalise capital gains within the super fund, resulting in CGT of up to 15% (10% after the one-year discount).",
+      "Selling the existing shares will crystallise capital gains within the super fund, resulting in CGT of up to 15% (10% after the one-year discount).",
       "You will incur brokerage and buy/sell spreads on the transition.",
       "Short-term market movements during the transition may impact the outcome.",
       "Past performance of the CARE portfolios is not a guarantee of future returns.",
@@ -2221,7 +2221,7 @@ const SCENARIOS = {
       "You will experience market volatility. This will change the value of your investment from day to day.",
       "The upfront portion is exposed to market movements immediately.",
       "The DCA portion may underperform a full lump sum investment in a rising market.",
-      "Rebalancing may crystalise capital gains within the super fund (taxed at up to 15%, or 10% after the one-year discount) as the cash is invested.",
+      "Rebalancing may crystallise capital gains within the super fund (taxed at up to 15%, or 10% after the one-year discount) as the cash is invested.",
       "Transaction costs (buy/sell spreads) will apply as the capital is deployed.",
       "Super funds are preserved until you meet a condition of release."
     ]
@@ -2288,7 +2288,7 @@ const SCENARIOS = {
       "The rebalance maintains an appropriate cash buffer in line with your liquidity needs."
     ],
     risks:[
-      "Rebalancing will crystalise capital gains or losses in the investment account, creating a tax event at your marginal tax rate (with the 50% CGT discount available for assets held 12+ months).",
+      "Rebalancing will crystallise capital gains or losses in the investment account, creating a tax event at your marginal tax rate (with the 50% CGT discount available for assets held 12+ months).",
       "You will incur transaction costs (buy/sell spreads) as a result of the rebalance trades.",
       "Short-term market movements during the rebalance may affect the outcome.",
       "Investment funds involve some investment risk and do not guarantee your returns. The value of your investments might not increase as you would like and their value may even fall at times.",
@@ -2312,7 +2312,7 @@ const SCENARIOS = {
     ],
     risks:[
       "By allocating a greater portion of your portfolio to the Reserves Portfolio, your overall investment returns may be lower than if those funds remained invested in growth assets.",
-      "Rebalancing will crystalise capital gains or losses, creating a tax event at your marginal tax rate.",
+      "Rebalancing will crystallise capital gains or losses, creating a tax event at your marginal tax rate.",
       "Transaction costs (buy/sell spreads) will apply.",
       "Investment funds involve some investment risk and do not guarantee your returns. The value of your investments might not increase as you would like and their value may even fall at times.",
       "You will experience market volatility. This will change the value of your investment from day to day."
@@ -2334,7 +2334,7 @@ const SCENARIOS = {
     ],
     risks:[
       "By allocating a greater portion of your portfolio to the Reserves Portfolio, your overall investment returns may be lower than if those funds remained invested in growth assets.",
-      "Rebalancing will crystalise capital gains or losses, creating a tax event at your marginal tax rate.",
+      "Rebalancing will crystallise capital gains or losses, creating a tax event at your marginal tax rate.",
       "Transaction costs (buy/sell spreads) will apply.",
       "Investment returns are not guaranteed and remain subject to market risk."
     ]
@@ -2345,7 +2345,7 @@ const SCENARIOS = {
     desc:"Transfer existing holdings in-specie",
     needs:{inv:true},
     pd:"In-specie transfer of existing investment holdings to the recommended platform",
-    obj:"{name}, during our recent meeting we discussed consolidating your existing investment holdings of {amount} into your {invPlatform} investment account via in-specie transfer, avoiding unnecessary CGT crystalisation.",
+    obj:"{name}, during our recent meeting we discussed consolidating your existing investment holdings of {amount} into your {invPlatform} investment account via in-specie transfer, avoiding unnecessary CGT crystallisation.",
     rec:"transfer your existing holdings to your {invPlatform} investment account by way of in-specie transfer, preserving the original cost base and acquisition dates.",
     benefits:[
       "An in-specie transfer does not constitute a disposal and therefore does not trigger a CGT event — original cost base and holding periods are preserved.",
@@ -2378,7 +2378,7 @@ const SCENARIOS = {
     ],
     risks:[
       "As a result of withdrawing funds from your investment portfolio, the amount of capital remaining invested will be reduced, which may limit the future growth potential of your portfolio and reduce the benefits of compounding returns over time. We estimate your funds will be approximately $X in X years (after withdrawal) compared to $Y (before withdrawal) / We estimate your funds will last X years (after withdrawal) compared to Y years (before withdrawal).",
-      "As at today, you will crystalise an estimated capital gains of $XX through the selldown for your withdrawal. This will incur an estimated capital gains tax of $XX based on your marginal tax rate ({mtrPercent}). Please contact a qualified tax agent or accountant to confirm the accuracy of this estimate and final figures.",
+      "As at today, you will crystallise an estimated capital gains of $XX through the selldown for your withdrawal. This will incur an estimated capital gains tax of $XX based on your marginal tax rate ({mtrPercent}). Please contact a qualified tax agent or accountant to confirm the accuracy of this estimate and final figures.",
       "Investment funds involve some investment risk and do not guarantee your returns. The value of your investments might not increase as you would like and their value may even fall at times.",
       "You will experience market volatility. This will change the value of your investment from day to day.",
       "Based on my recommendations, you will incur transaction fees{transactionFees} from this rebalance."
@@ -2399,7 +2399,7 @@ const SCENARIOS = {
       "Any remaining cash held in the platform at closure is typically paid out in full."
     ],
     risks:[
-      "Selling all holdings will crystalise any capital gains or losses. Realised capital gains will be taxed at your marginal tax rate (with the 50% CGT discount available for assets held 12+ months). Please consult your accountant to confirm the estimated CGT impact prior to implementation.",
+      "Selling all holdings will crystallise any capital gains or losses. Realised capital gains will be taxed at your marginal tax rate (with the 50% CGT discount available for assets held 12+ months). Please consult your accountant to confirm the estimated CGT impact prior to implementation.",
       "Transaction costs (buy/sell spreads and brokerage) will apply on the selldown.",
       "The sale price achieved depends on market conditions on the day of execution; short-term market movements may affect the net proceeds.",
       "Once closed, re-opening the account (or a new one) requires a full new application and may not retain the previous platform pricing.",
@@ -2511,7 +2511,7 @@ const SCENARIOS = {
       "Transaction costs (buy/sell spreads) will apply to establish the new position.",
       "The Realm option may underperform traditional fixed income in periods of credit stress.",
       "You will incur additional underlying manager fees — please review the relevant PDS before proceeding.",
-      "Rebalancing will crystalise capital gains or losses outside of super, creating a tax event at your marginal tax rate."
+      "Rebalancing will crystallise capital gains or losses outside of super, creating a tax event at your marginal tax rate."
     ]
   },
 
@@ -2529,7 +2529,7 @@ const SCENARIOS = {
       "Consolidated reporting across your portfolio improves visibility and review."
     ],
     risks:[
-      "Selling the existing shares will crystalise capital gains outside super, creating a taxable event at your marginal tax rate (with the 50% CGT discount available for assets held 12+ months).",
+      "Selling the existing shares will crystallise capital gains outside super, creating a taxable event at your marginal tax rate (with the 50% CGT discount available for assets held 12+ months).",
       "You will incur brokerage and buy/sell spreads on the transition.",
       "Short-term market movements during the transition may impact the outcome.",
       "Past performance of the CARE portfolios is not a guarantee of future returns.",
@@ -3296,7 +3296,7 @@ const SCENARIOS = {
       "Consolidating into fewer, higher-quality funds simplifies ongoing reporting and review."
     ],
     risks:[
-      "Selling the existing holdings crystalises capital gains or losses, creating a tax event at your marginal tax rate (with the 50% CGT discount for assets held 12+ months).",
+      "Selling the existing holdings crystallises capital gains or losses, creating a tax event at your marginal tax rate (with the 50% CGT discount for assets held 12+ months).",
       "Brokerage and buy/sell spreads will apply on the transition.",
       "Short-term market movements during the switch may affect entry/exit prices.",
       "Past performance of the new fund is not a guarantee of future returns.",
@@ -5319,7 +5319,7 @@ const STRATEGY_PAPERS = {
       {
         heading: "Tax Impact of the Switch",
         bullets: [
-          "Transitioning between portfolios may crystalise capital gains or losses.",
+          "Transitioning between portfolios may crystallise capital gains or losses.",
           "Estimated realised gain on switch: $[Realised gain].",
           "Estimated CGT payable: $[CGT] (at marginal rate with 50% discount if 12+ months).",
           "The fee/return advantage of the proposed portfolio needs to be weighed against the one-off tax cost.",
@@ -6322,7 +6322,7 @@ const STRATEGY_PAPERS = {
         bullets: [
           "**Option A (Sell)** realises {{sellNowNet}} in net cash now — deployed to other wealth building (super, investments, debt reduction).",
           "**Option B (Hold)** commits to ongoing cashflow impact of {{afterTaxCashflow}} p.a. in exchange for future capital growth.",
-          "Selling crystalises gains at today's tax rate — if retirement brings lower marginal tax, deferring may save CGT.",
+          "Selling crystallises gains at today's tax rate — if retirement brings lower marginal tax, deferring may save CGT.",
           "Holding exposes to ongoing property-specific risks (tenant issues, repairs, market).",
           "Opportunity cost matters — where else could net sale proceeds be deployed?"
         ]
@@ -8117,7 +8117,7 @@ const MODELLING_SCENARIOS = {
           "Your non-deductible PPoR debt reduces by approximately {{netAfterCGT}}, saving ~{{ppORInterestSavedAnnual}} in interest every year.",
           "Your overall loan exposure reduces materially, improving cashflow and financial resilience.",
           "You lose the long-term growth exposure of the investment property — consider whether alternative growth assets (super, investment portfolio) should replace this.",
-          "The CGT event crystalises a gain that would otherwise be deferred — timing the sale carefully (e.g. in a lower-income year) can reduce the tax impact.",
+          "The CGT event crystallises a gain that would otherwise be deferred — timing the sale carefully (e.g. in a lower-income year) can reduce the tax impact.",
           "Simplification: one fewer property to manage, no tenant risk, no ongoing repairs.",
           "If you plan to re-enter property investment later, re-establishing scale takes time — consider whether this is a one-way decision."
         ]
@@ -8746,7 +8746,7 @@ const MODELLING_SCENARIOS = {
       {
         heading: "Option 1 — Sell Shares to Fund Deposit",
         body: [
-          "Under this option, you sell {{sharesToSell}} of your current share portfolio of {{shareHoldings}}, crystalising a proportional capital gain. The sale triggers CGT which is paid in the financial year of the sale contract."
+          "Under this option, you sell {{sharesToSell}} of your current share portfolio of {{shareHoldings}}, crystallising a proportional capital gain. The sale triggers CGT which is paid in the financial year of the sale contract."
         ],
         tables: [{
           title: "Option 1 Calculation",
@@ -8798,7 +8798,7 @@ const MODELLING_SCENARIOS = {
         bullets: [
           "**Annual rental income lost**: {{ipLostAnnualRent}} gross, roughly {{ipLostAnnualNetRent}} after expenses and loan interest (pre-tax).",
           "**Pros**: Eliminates property management overhead. Removes existing loan. Cashflow simplifies. Net after-CGT proceeds may exceed the deposit needed, leaving a surplus for offset or other use.",
-          "**Cons**: Immediate CGT crystalisation. Loses long-term growth on the IP. Loses the tax deductibility of the IP loan interest. Irreversible — re-entering property investing involves stamp duty etc. again.",
+          "**Cons**: Immediate CGT crystallisation. Loses long-term growth on the IP. Loses the tax deductibility of the IP loan interest. Irreversible — re-entering property investing involves stamp duty etc. again.",
           "**Tax timing**: CGT is triggered at contract date. Aligning with a lower-income year (e.g. after retirement or during a career break) can materially reduce the CGT bill."
         ]
       },
@@ -14364,7 +14364,7 @@ function renderTopbar(){
   let subtitle;
   if(docType === 'Strategy') subtitle = 'Strategy<br>Paper';
   else if(docType === 'NAA') subtitle = 'NAA<br>Paraplanner';
-  else subtitle = 'ROA<br>Paraplanner';
+  else subtitle = 'ROA &amp; Advice<br>Doc Generator';
   const status = sectionStatusText();
   return `<div class="topbar">
     <div class="topbar-left">
@@ -14375,7 +14375,6 @@ function renderTopbar(){
         </span>
       </div>
       <span class="tool-label">${subtitle}</span>
-      <span class="ver-chip">${APP_VERSION}</span>
     </div>
     <div class="topbar-mid">
       <div class="topnav">
@@ -16010,7 +16009,7 @@ function buildPortfolioPaperForPreview(id, tpl){
   sections.push({
     heading: "Trade-offs & Key Considerations",
     bullets: [
-      "Selling crystalises CGT for investment properties — timing matters. A lower-income year (e.g. post-retirement, career break) reduces the marginal rate on any taxable gain.",
+      "Selling crystallises CGT for investment properties — timing matters. A lower-income year (e.g. post-retirement, career break) reduces the marginal rate on any taxable gain.",
       "Converting a PPoR to an IP triggers a cost base reset under Section 118-192 (market value at first rental) — this can be tax-advantageous if the property has appreciated.",
       "Converting an IP back to PPoR re-establishes main residence status — subject to CGT apportionment across the total ownership period.",
       "Refinancing to release equity increases borrowings — deductibility depends on the use of funds, not the security. Keep purpose-based loan splits for clean tax-deductibility.",
