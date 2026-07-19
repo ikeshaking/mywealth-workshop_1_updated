@@ -1158,7 +1158,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_40";
+const APP_VERSION = "v7.b_41";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -19880,14 +19880,10 @@ function naaBlockType(){
   // ─── Transaction type picker — drives the Section 1 wording + table blocks ───
   h += `<div class="section-block">
     <div class="section-block-head">
-      <div class="section-block-title"><span>Transaction Type</span></div>
+      <div class="section-block-title"><span>Transaction Details</span></div>
     </div>
     <div class="section-block-body"><div class="card">
-      <div class="card-sub">Pick the type of instruction — the summary, scope and Section 1 wording pre-fill from the firm's standard NAA formats, and the matching table block prints in the document. Editing the fields below re-seeds the wording; you can still fine-tune the free text afterwards.</div>
-      <div class="tog" style="flex-wrap:wrap">
-        ${[['purchase','Purchase (execution only)'],['selldown','Sale / Selldown & Withdrawal'],['pension_withdrawal','Pension / Super Withdrawal'],['other','Other instruction']].map(([v,l]) =>
-          `<button class="${F.naaType===v?'on':'off'}" onclick="F.naaType='${v}';naaSyncType()">${l}</button>`).join('')}
-      </div>`;
+      `;
   if(F.naaType === 'purchase'){
     h += `<div class="grid-3" style="margin-top:10px">
       <div class="field"><label>Amount</label><input value="${e(F.naaBuyAmount)}" onchange="F.naaBuyAmount=this.value;naaSyncType()" placeholder="$5,000"></div>
@@ -20323,20 +20319,20 @@ function naaSyncType(){
     F.naaScopePhrase = `purchase ${amt} worth of ${sec} through your ${acct} account`;
     F.naaTransactionSummary = `Client-directed purchase of ${sec}.`;
     F.naaLetterIntro = `You have advised us that you would like our assistance purchasing ${amt} worth of ${sec} through your ${acct} account.`;
-    F.naaTransactionDetails = ctx + `our assistance purchasing ${amt} worth of ${sec} through your ${acct} account.`;
+    F.naaTransactionDetails = ctx + `our assistance purchasing ${amt} worth of ${sec} through your ${acct} account. You have requested this to be actioned as soon as possible.`;
   } else if(t === 'selldown'){
     const acct = (F.naaSellAccount||'[platform] investment'), why = (F.naaSellPurpose||'').trim();
     F.naaScopePhrase = `sell and withdraw investments from your ${acct} account`;
     F.naaTransactionSummary = `Investment Sale and Withdrawal`;
     F.naaLetterIntro = `You have advised us that you would like us to sell and withdraw the following investments held within your ${acct} account${why ? ' for ' + why : ''}.`;
-    F.naaTransactionDetails = ctx + `us to sell and withdraw the following investments held within your ${acct} account${why ? ' for ' + why : ''}:`
-      + `\n\nTax Considerations:\nAs part of this transaction, you may be liable for capital gains tax payable upon the sale of your investments. We recommend that you seek confirmation from your accountant regarding the capital gains tax (CGT) implications associated with this transaction to determine your final tax position.`;
+    F.naaTransactionDetails = ctx + `us to sell and withdraw the following investments held within your ${acct} account${why ? ' for ' + why : ''}. You have requested this to be actioned as soon as possible. The investments to be sold are:`
+      + `\n\nTax Considerations:\nAs part of this transaction, you may be liable for capital gains tax payable upon the sale of your investments. As at today we estimate you will crystallise capital gains of $XX and tax payable of $XX. We recommend that you seek confirmation from your accountant regarding the capital gains tax (CGT) implications associated with this transaction to determine your final tax position.`;
   } else if(t === 'pension_withdrawal'){
     const amt = (F.naaWdAmount||'$[amount]'), acct = (F.naaWdAccount||'[platform] pension'), srcp = (F.naaWdSource||'').trim(), why = (F.naaWdPurpose||'').trim();
     F.naaScopePhrase = `withdraw ${amt} from your ${acct} account`;
     F.naaTransactionSummary = `Pension Withdrawal`;
     F.naaLetterIntro = `You have advised us that you would like to withdraw ${amt} from your ${acct} account${why ? ' to help fund ' + why : ''}.`;
-    F.naaTransactionDetails = ctx + `to withdraw ${amt} of your ${acct} account${srcp ? ' using the ' + srcp : ''}.`
+    F.naaTransactionDetails = ctx + `to withdraw ${amt} of your ${acct} account${srcp ? ' using the ' + srcp : ''}. You have requested this to be immediately actioned.`
       + (F.naaRebalanceShow ? `\n\nFollowing the withdrawal of funds from your pension account, we will rebalance your account in line with your risk profile as per the below table:` : '');
   }
   render();
@@ -20368,6 +20364,11 @@ async function exportNAADocx(){
     children:[new TextRun({text:t, font:"ABC Arizona Flare", size:48, color:NY, bold:false})]
   });
   const H2 = t => new Paragraph({
+    spacing:{before:320, after:160},
+    children:[new TextRun({text:t, font:"Nunito", size:26, color:NY, bold:true})]
+  });
+  const H2New = t => new Paragraph({
+    pageBreakBefore:true,
     spacing:{before:320, after:160},
     children:[new TextRun({text:t, font:"Nunito", size:26, color:NY, bold:true})]
   });
@@ -20422,10 +20423,6 @@ async function exportNAADocx(){
   //     sign-and-return → Yours sincerely) ───
   {
     const LP = (t, opts={}) => new Paragraph({spacing:{before:0, after: opts.after != null ? opts.after : 160}, children:[new TextRun({text:t, font:"Nunito", size:19, color:"1a1a1a", bold:!!opts.bold})]});
-    children.push(new Paragraph({
-      spacing:{after:200},
-      children:[new ImageRun({data: b64ToUint8(BRAND_HEADER_PNG_B64), transformation:{width:700, height:Math.round(700 * BRAND_HEADER_H / BRAND_HEADER_W)}})]
-    }));
     children.push(LP(ordD(F.roaDate) || '', {after:220}));
     children.push(LP(cn, {after:220, bold:true}));
     const _first = getFirstName();
@@ -20441,11 +20438,7 @@ async function exportNAADocx(){
     children.push(new Paragraph({children:[new PageBreak()]}));
   }
 
-  // ─── Cover: brand header image ───
-  children.push(new Paragraph({
-    spacing:{after:160},
-    children:[new ImageRun({data: b64ToUint8(BRAND_HEADER_PNG_B64), transformation:{width:700, height:Math.round(700 * BRAND_HEADER_H / BRAND_HEADER_W)}})]
-  }));
+  // (Brand header/footer repeat on every page via the section header/footer.)
   children.push(H1("No Advice Acknowledgement"));
 
   // Cover two-column "prepared for" / "what this document is about"
@@ -20510,7 +20503,7 @@ async function exportNAADocx(){
   }));
 
   // ─── Section 1: Your Instructions ───
-  children.push(H2("Section 1: Your Instructions"));
+  children.push(H2New("Section 1: Your Instructions"));
   const lead = `${fn ? fn + ', ' : ''}you have requested we complete the following transaction on your behalf, for which you do not require our advice. Your requested transaction is Execution Only. Execution Only transactions occur when clients know exactly what they want and do not require advice:`;
   children.push(P(lead));
 
@@ -20576,7 +20569,7 @@ async function exportNAADocx(){
   if(tdParas.__rebalanceTable){ children.push(P("")); children.push(tdParas.__rebalanceTable); }
 
   // ─── Section 2: Acknowledgement ───
-  children.push(H2("Section 2: Acknowledgement"));
+  children.push(H2New("Section 2: Acknowledgement"));
   const fsgPart = F.fsgDate ? ' ' + ordD(F.fsgDate) : '';
   const apPart = F.adviserProfileDate ? ' ' + ordD(F.adviserProfileDate) : '';
   const datedPart = F.roaDate ? ' dated ' + ordD(F.roaDate) : '';
@@ -20618,8 +20611,6 @@ async function exportNAADocx(){
     sigRow(F.adviserName||'[Adviser]')
   ]}));
 
-  // Footer image
-  children.push(new Paragraph({spacing:{before:300, after:0}, children:[new ImageRun({data: b64ToUint8(BRAND_FOOTER_PNG_B64), transformation:{width:700, height:Math.round(700 * BRAND_FOOTER_H / BRAND_FOOTER_W)}})]}));
 
   // Build the document
   const doc = new Document({
@@ -20637,9 +20628,64 @@ async function exportNAADocx(){
     sections:[{
       properties:{
         page:{
-          size:{orientation: PageOrientation.PORTRAIT, width: 11906, height: 16838},
-          margin:{top: 720, right: 720, bottom: 720, left: 720}
+          size:{ width:11906, height:16838, orientation: PageOrientation.PORTRAIT },
+          // Even left/right margins (978 twips each) so body text and the 9950-DXA tables
+          // are symmetric — the right edge lines up with the left.
+          margin:{ top:3402, right:978, bottom:1077, left:978, header:992, footer:896 }
         }
+      },
+      headers:{
+        default: new Header({
+          children:[
+            new Paragraph({
+              spacing:{before:0, after:0},
+              children:[new ImageRun({
+                type:"png",
+                data: b64ToUint8(BRAND_HEADER_PNG_B64),
+                // 794 px at 96 DPI = 8.27" = full A4 width (edge-to-edge bleed)
+                transformation:{ width: 794, height: 224 },
+                floating:{
+                  horizontalPosition:{
+                    relative: HorizontalPositionRelativeFrom.PAGE,
+                    align: HorizontalPositionAlign.LEFT
+                  },
+                  verticalPosition:{
+                    relative: VerticalPositionRelativeFrom.PAGE,
+                    align: VerticalPositionAlign.TOP
+                  },
+                  behindDocument: false,
+                  wrap:{ type: TextWrappingType.NONE }
+                }
+              })]
+            })
+          ]
+        })
+      },
+      footers:{
+        default: new Footer({
+          children:[
+            new Paragraph({
+              spacing:{before:0, after:0},
+              children:[new ImageRun({
+                type:"png",
+                data: b64ToUint8(BRAND_FOOTER_PNG_B64),
+                transformation:{ width: 794, height: 84 },
+                floating:{
+                  horizontalPosition:{
+                    relative: HorizontalPositionRelativeFrom.PAGE,
+                    align: HorizontalPositionAlign.LEFT
+                  },
+                  verticalPosition:{
+                    relative: VerticalPositionRelativeFrom.PAGE,
+                    align: VerticalPositionAlign.BOTTOM
+                  },
+                  behindDocument: false,
+                  wrap:{ type: TextWrappingType.NONE }
+                }
+              })]
+            })
+          ]
+        })
       },
       children
     }]
