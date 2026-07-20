@@ -20445,7 +20445,7 @@ a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
 .inv-pc{margin-top:16px;font-weight:800;color:#0C2E3F}
 .inv-client{margin-top:2px;white-space:pre-line}
 .inv-h2{font-family:'ABC Arizona Flare','ABC Arizona Serif','Playfair Display',Georgia,serif!important;color:#0C2E3F;font-size:15.5px;
-  border-bottom:2px solid #0D6BE0;padding-bottom:4px;margin:20px 0 9px;font-weight:400}
+  border-bottom:2px solid #0D6BE0;padding-bottom:4px;margin:34px 0 9px;font-weight:400}
 .inv-desc{color:#16242e}
 .inv-desc .sub{color:#42586a;font-size:11px}
 .inv-sumtbl{width:100%;border-collapse:collapse;margin-top:12px}
@@ -20453,12 +20453,12 @@ a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
 .inv-sumtbl td.v{text-align:right;font-weight:700;white-space:nowrap;width:130px}
 .inv-sumtbl tr.hl td{background:#E5F4F6;font-weight:800;color:#0C2E3F;padding:7px 8px;border-radius:2px}
 .inv-sumtbl tr.sep td{border-top:1px solid #D4E2EE;padding-top:7px}
-.inv-strattbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:10.5px}
-.inv-strattbl th{background:#0C2E3F;color:#fff;text-align:left;padding:6px 8px;font-weight:700;font-size:10px}
-.inv-strattbl th:last-child,.inv-strattbl td:last-child{text-align:right;white-space:nowrap}
-.inv-strattbl td{padding:5px 8px;border:1px solid #D4E2EE;vertical-align:top;color:#16242e}
+.inv-strattbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:11px}
+.inv-strattbl th{background:#0C2E3F;color:#fff;text-align:left;padding:8px 10px;font-weight:700;font-size:11px}
+.inv-strattbl th:last-child,.inv-strattbl td:last-child{text-align:center;white-space:nowrap}
+.inv-strattbl td{padding:7px 10px;border:1px solid #D4E2EE;vertical-align:top;color:#16242e}
 .inv-strattbl tr:nth-child(even) td{background:#EAF4FB}
-.inv-strattbl tr.tot td{background:#fff;font-weight:800;border-top:2px solid #0C2E3F}
+.inv-strattbl tr.tot td{background:#2B6FD6;color:#fff;font-weight:800;border-color:#2B6FD6}
 .inv-gst{margin-top:12px;font-size:10.5px;color:#42586a;font-style:italic}
 .inv-note{margin-top:10px;font-size:9px;color:#8a97a3;line-height:1.5}
 .pv-zoom .preview-doc{transform-origin:top center}
@@ -21226,13 +21226,13 @@ function secFees(){
     <div class="card-sub">Cashflow fees the client paid during the year. Under TD 2024/7 the apportionment applies to the total fee for the period — upfront and ongoing amounts are combined into a single fee, then weighted across the advice provided.</div>
     <div class="seg" style="margin-bottom:14px">
       ${seg('ongoing','Ongoing fees')}
-      ${seg('upfront','Upfront fees')}
-      ${seg('combined','Upfront + Ongoing')}
+      ${seg('upfront','Retainer (upfront) fees')}
+      ${seg('combined','Retainer + Ongoing')}
     </div>
     ${(F.feeType==='upfront'||F.feeType==='combined') ? `
-      <h3 style="margin-bottom:6px">Upfront / initial advice fees</h3>
+      <h3 style="margin-bottom:6px">Retainer / upfront advice fees</h3>
       <div class="grid2">
-        ${inputFNum('upfrontFee','Upfront advice fees paid (gross, incl. GST)')}
+        ${inputFNum('upfrontFee','Retainer advice fees paid (gross, incl. GST)')}
       </div>`:''}
     ${(F.feeType==='ongoing'||F.feeType==='combined') ? `
       <h3 style="margin-bottom:6px">Ongoing advice fees</h3>
@@ -21477,10 +21477,22 @@ function secInvoice(){
   </div>`;
 }
 
+function descHeading(){
+  return F.feeType==='upfront'  ? 'Description of Services — Retainer Cashflow Advice Fees Paid'
+       : F.feeType==='combined' ? 'Description of Services — Retainer & Ongoing Cashflow Advice Fees Paid'
+       : 'Description of Services — Ongoing Cashflow Advice Fees Paid';
+}
+/* "ongoing cashflow advice" / "retainer cashflow advice" — used in the
+   description line and the summary-row labels */
+function feeNoun(){
+  return F.feeType==='upfront'  ? 'retainer cashflow advice'
+       : F.feeType==='combined' ? 'retainer & ongoing cashflow advice'
+       : 'ongoing cashflow advice';
+}
 function autoDescription(){
-  const kind = F.feeType==='ongoing' ? 'Financial planning advice fees'
-             : F.feeType==='upfront' ? 'Initial financial planning advice fees'
-             : 'Initial and ongoing financial planning advice fees';
+  const kind = F.feeType==='ongoing' ? 'Financial planning ongoing cashflow advice fees'
+             : F.feeType==='upfront' ? 'Financial planning retainer cashflow advice fees'
+             : 'Financial planning retainer and ongoing cashflow advice fees';
   return `${kind} for the advice presented by ${F.adviser || '[adviser]'}`;
 }
 
@@ -21559,14 +21571,14 @@ function invoiceHTML(){
       <div class="inv-pc">Private and Confidential</div>
       <div class="inv-client">${e(clientLine)}${F.addr?'\n'+e(F.addr):''}</div>
 
-      <div class="inv-h2">Description of services — Paid</div>
+      <div class="inv-h2">${e(descHeading())}</div>
       <div class="inv-desc">${e(desc)}${fyLine?`<div class="sub">${e(fyLine)}</div>`:''}</div>
 
       <table class="inv-sumtbl">
         ${C.useUp && C.useOn ? `
-        <tr><td>Upfront advice fees paid:</td><td class="v">${money(r2(n(F.upfrontFee)))}</td></tr>
-        <tr><td>Ongoing advice fees paid:</td><td class="v">${money(r2(n(F.ongoingFee)))}</td></tr>`:''}
-        <tr><td>Total advice fees paid:</td><td class="v">${money(R.gross)}</td></tr>
+        <tr><td>Retainer cashflow advice fees paid:</td><td class="v">${money(r2(n(F.upfrontFee)))}</td></tr>
+        <tr><td>Ongoing cashflow advice fees paid:</td><td class="v">${money(r2(n(F.ongoingFee)))}</td></tr>`:''}
+        <tr><td>Total ${e(feeNoun())} fees paid:</td><td class="v">${money(R.gross)}</td></tr>
         <tr><td>Advice not related to tax affairs:</td><td class="v">${money(R.notRelated)}</td></tr>
         <tr class="sep"><td>Advice fee related to tax affairs:</td><td class="v">${money(R.dedTotal)}</td></tr>
         <tr class="hl"><td>Estimated deductible portion for ${e(F.c1||'Client 1')}${both?'':''}</td><td class="v">${money(both ? R.c1 : R.dedTotal)}</td></tr>
@@ -21596,10 +21608,7 @@ function invoiceHTML(){
 
   if(F.gst) h += `<div class="inv-gst">The above figures include GST.</div>`;
   if(F.notes.trim()) h += `<div class="inv-desc" style="margin-top:8px">${e(F.notes)}</div>`;
-  h += `<div class="inv-note">This tax receipt has been prepared to assist in identifying the potential deductibility of financial
-    advice fees under s8-1 and s25-5 ITAA 1997 and ATO guidance (TD 2024/7). The estimated deductible amounts are indicative only —
-    eligibility depends on individual circumstances and should be confirmed with a registered tax agent.</div>
-    </div>
+  h += `</div>
     <img class="inv-brand-footer" src="data:image/png;base64,${BRAND_FOOTER_PNG_B64}" alt="My Wealth Solutions">
   </div>`;
   return h;
@@ -21624,7 +21633,7 @@ function copySummary(){
   const both = !!F.c2.trim();
   let t = `TAX RECEIPT — ${F.licensee} (ABN ${F.abn})\n${F.c2?`${F.c1} and ${F.c2}`:F.c1}\n${F.descOverride.trim()||autoDescription()}\n`;
   if(F.fyStart&&F.fyEnd) t += `For the financial year ${fmtDateLong(F.fyStart)} to ${fmtDateLong(F.fyEnd)}\n`;
-  t += `\nTotal advice fees paid: ${money(R.gross)}\nAdvice not related to tax affairs: ${money(R.notRelated)}\nAdvice fee related to tax affairs: ${money(R.dedTotal)}\n`;
+  t += `\nTotal ${feeNoun()} fees paid: ${money(R.gross)}\nAdvice not related to tax affairs: ${money(R.notRelated)}\nAdvice fee related to tax affairs: ${money(R.dedTotal)}\n`;
   t += `\nEstimated deductible portion for ${F.c1||'Client 1'}: ${money(both?R.c1:R.dedTotal)}\n`;
   if(both) t += `Estimated deductible portion for ${F.c2}: ${money(R.c2)}\n`;
   t += `\nStrategy | Who | Why tax related | Deductible ($)\n`;
@@ -21713,7 +21722,7 @@ function renderHistory(){
   const q = regFilter.trim().toLowerCase();
   const list = q ? reg.filter(r => `${r.num} ${r.client1} ${r.client2} ${r.adviser} ${r.office}`.toLowerCase().includes(q)) : reg;
   const fmtTs = ts => { if(!ts) return ''; const d = new Date(ts); return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
-  const feeLabel = t => t==='combined' ? 'Upfront + Ongoing' : t==='upfront' ? 'Upfront' : 'Ongoing';
+  const feeLabel = t => t==='combined' ? 'Retainer + Ongoing' : t==='upfront' ? 'Retainer' : 'Ongoing';
 
   let h = `<div style="max-width:1150px;margin:0 auto">
   <div class="card card-accent">
@@ -21875,9 +21884,9 @@ function exportDocx(){
   if(F.addr) F.addr.split('\n').forEach((ln,i,a)=> kids.push(P(ln,{after: i===a.length-1?200:20})));
 
   /* Description heading */
-  kids.push(new Paragraph({spacing:{before:200,after:120},
+  kids.push(new Paragraph({spacing:{before:480,after:120},
     border:{bottom:{color:BL, space:4, style:BorderStyle.SINGLE, size:12}},
-    children:[new TextRun({text:'Description of services — Paid', font:"ABC Arizona Flare", size:30, color:NY})]}));
+    children:[new TextRun({text:descHeading(), font:"ABC Arizona Flare", size:30, color:NY})]}));
   kids.push(P(desc,{after: fyLine?20:160}));
   if(fyLine) kids.push(P(fyLine,{color:GREY, size:19, after:160}));
 
@@ -21893,10 +21902,10 @@ function exportDocx(){
   ]});
   const sumRows = [];
   if(C.useUp && C.useOn){
-    sumRows.push(sumRow('Upfront advice fees paid:', money(r2(n(F.upfrontFee)))));
-    sumRows.push(sumRow('Ongoing advice fees paid:', money(r2(n(F.ongoingFee)))));
+    sumRows.push(sumRow('Retainer cashflow advice fees paid:', money(r2(n(F.upfrontFee)))));
+    sumRows.push(sumRow('Ongoing cashflow advice fees paid:', money(r2(n(F.ongoingFee)))));
   }
-  sumRows.push(sumRow('Total advice fees paid:', money(R.gross)));
+  sumRows.push(sumRow(`Total ${feeNoun()} fees paid:`, money(R.gross)));
   sumRows.push(sumRow('Advice not related to tax affairs:', money(R.notRelated)));
   sumRows.push(sumRow('Advice fee related to tax affairs:', money(R.dedTotal)));
   sumRows.push(sumRow(`Estimated deductible portion for ${F.c1||'Client 1'}`, money(both?R.c1:R.dedTotal), {hl:true}));
@@ -21909,10 +21918,10 @@ function exportDocx(){
     const th = t => new TableCell({shading:{type:ShadingType.CLEAR, fill:NY}, borders:allB(NY),
       margins:{top:70,bottom:70,left:100,right:100},
       children:[new Paragraph({children:[new TextRun({text:t, font:"Nunito", size:18, bold:true, color:"FFFFFF"})]})]});
-    const td = (t,i,right) => new TableCell({shading: i%2 ? {type:ShadingType.CLEAR, fill:LB} : undefined,
-      borders:allB(BORD), margins:{top:50,bottom:50,left:100,right:100},
-      children:[new Paragraph({alignment:right?AlignmentType.RIGHT:AlignmentType.LEFT,
-        children:[new TextRun({text:t, font:"Nunito", size:18, color:"16242E"})]})]});
+    const td = (t,i,center) => new TableCell({shading: i%2 ? {type:ShadingType.CLEAR, fill:LB} : undefined,
+      borders:allB(BORD), margins:{top:60,bottom:60,left:100,right:100},
+      children:[new Paragraph({alignment:center?AlignmentType.CENTER:AlignmentType.LEFT,
+        children:[new TextRun({text:t, font:"Nunito", size:19, color:"16242E"})]})]});
 
     const headCells = [th('Strategy')];
     if(showWho) headCells.push(th('Who'));
@@ -21929,14 +21938,19 @@ function exportDocx(){
       cells.push(td(money(r.dedR), i, true));
       trows.push(new TableRow({children:cells}));
     });
-    const totCells = [new TableCell({borders:allB(BORD), margins:{top:60,bottom:60,left:100,right:100},
-      children:[new Paragraph({children:[new TextRun({text:'Total', font:"Nunito", size:18, bold:true, color:NY})]})]})];
-    const blank = () => new TableCell({borders:allB(BORD), children:[new Paragraph({children:[]})]});
+    /* Total row — solid brand blue with white bold text */
+    const TOTBLUE = "2B6FD6";
+    const totCells = [new TableCell({shading:{type:ShadingType.CLEAR, fill:TOTBLUE}, borders:allB(TOTBLUE),
+      margins:{top:70,bottom:70,left:100,right:100},
+      children:[new Paragraph({children:[new TextRun({text:'Total', font:"Nunito", size:19, bold:true, color:"FFFFFF"})]})]})];
+    const blank = () => new TableCell({shading:{type:ShadingType.CLEAR, fill:TOTBLUE}, borders:allB(TOTBLUE),
+      children:[new Paragraph({children:[]})]});
     if(showWho) totCells.push(blank());
     totCells.push(blank());
     if(detailed){ totCells.push(blank()); totCells.push(blank()); }
-    totCells.push(new TableCell({borders:allB(BORD), margins:{top:60,bottom:60,left:100,right:100},
-      children:[new Paragraph({alignment:AlignmentType.RIGHT, children:[new TextRun({text:money(R.dedTotal), font:"Nunito", size:18, bold:true, color:NY})]})]}));
+    totCells.push(new TableCell({shading:{type:ShadingType.CLEAR, fill:TOTBLUE}, borders:allB(TOTBLUE),
+      margins:{top:70,bottom:70,left:100,right:100},
+      children:[new Paragraph({alignment:AlignmentType.CENTER, children:[new TextRun({text:money(R.dedTotal), font:"Nunito", size:19, bold:true, color:"FFFFFF"})]})]}));
     trows.push(new TableRow({children:totCells}));
 
     kids.push(new Table({width:{size:100,type:WidthType.PERCENTAGE}, rows:trows}));
@@ -21944,8 +21958,6 @@ function exportDocx(){
 
   if(F.gst) kids.push(P('The above figures include GST.',{i:true, color:GREY, size:19, before:200}));
   if(F.notes.trim()) kids.push(P(F.notes,{size:19, before:120}));
-  kids.push(P('This tax receipt has been prepared to assist in identifying the potential deductibility of financial advice fees under s8-1 and s25-5 ITAA 1997 and ATO guidance (TD 2024/7). The estimated deductible amounts are indicative only — eligibility depends on individual circumstances and should be confirmed with a registered tax agent.',
-    {size:15, color:"8A97A3", before:200}));
 
   const doc = new Document({
     styles:{default:{document:{run:{font:"Nunito", size:21}}}},
