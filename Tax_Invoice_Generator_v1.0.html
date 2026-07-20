@@ -20645,8 +20645,8 @@ function defaultState(){
     officeId:'mws1', adviser:'',
     licensee:'GPS Wealth Ltd', abn:'17 005 482 726', afsl:'254544',
     feeType:'ongoing',                 // ongoing | upfront | combined
-    ongoingFee:0, ongoingSuper:0,
-    upfrontFee:0, upfrontSuper:0,
+    ongoingFee:0,
+    upfrontFee:0,
     invDate:todayISO(), fyStart:'', fyEnd:'', invNum:'',
     gst:true, layout:'receipt',        // receipt | detailed
     hideZero:false, showWho:true,
@@ -20726,8 +20726,7 @@ function calc(){
   const useUp  = F.feeType==='upfront'  || F.feeType==='combined';
   const useOn  = F.feeType==='ongoing'  || F.feeType==='combined';
   const gross  = (useUp ? n(F.upfrontFee)   : 0) + (useOn ? n(F.ongoingFee)   : 0);
-  const superF = (useUp ? n(F.upfrontSuper) : 0) + (useOn ? n(F.ongoingSuper) : 0);
-  const net    = Math.max(0, gross - superF);
+  const net    = gross;
 
   const rows = F.strategies.map(s => {
     const fee  = net * n(s.w)/100;
@@ -20752,7 +20751,7 @@ function calc(){
   const c2s8  = rows.reduce((a,r)=> a + (r.who==='Client 2' ? r.s8  : r.who==='Both' ? r.s8/2  : 0), 0);
   const c2s25 = rows.reduce((a,r)=> a + (r.who==='Client 2' ? r.s25 : r.who==='Both' ? r.s25/2 : 0), 0);
 
-  return { useUp, useOn, gross, superF, net, rows, wSum, dedTotal, s25Total, s8Total, notRelated, c1, c2, c1s8, c1s25, c2s8, c2s25 };
+  return { useUp, useOn, gross, net, rows, wSum, dedTotal, s25Total, s8Total, notRelated, c1, c2, c1s8, c1s25, c2s8, c2s25 };
 }
 
 /* Validation — errors block a clean export; warnings flag judgment calls */
@@ -20762,7 +20761,6 @@ function validate(C){
   if(!F.adviser.trim()) errs.push('Adviser name is missing.');
   if(!F.licensee.trim()) errs.push('Licensee (AFSL) name is missing.');
   if(C.gross <= 0) errs.push('No advice fees have been entered.');
-  if(C.superF > C.gross) errs.push('Fees paid via superannuation exceed the total fees paid.');
   if(!F.fyStart || !F.fyEnd) warns.push('Financial year start / end dates are not set.');
   if(F.strategies.length === 0) errs.push('No strategies have been added — the fee has nothing to be apportioned against.');
   if(F.strategies.length > 0 && Math.abs(C.wSum - 100) > 0.5)
@@ -20782,7 +20780,6 @@ function validate(C){
     if(F.c2.trim() === '' && r.who !== 'Client 1')
       warns.push(`“${r.name}” is allocated to ${r.who} but no Client 2 has been entered.`);
   });
-  if(C.superF > 0 && C.dedTotal > 0){ /* informational only */ }
   return { errs, warns };
 }
 
@@ -20861,7 +20858,7 @@ function logInvoice(){
     num:F.invNum, ts:new Date().toISOString(), rev: existing ? (existing.rev||1)+1 : 1,
     client1:F.c1, client2:F.c2, adviser:F.adviser, office:o?o.label:'',
     feeType:F.feeType, fyStart:F.fyStart, fyEnd:F.fyEnd, layout:F.layout,
-    gross:R.gross, superF:R.superF, dedTotal:R.dedTotal, c1:R.c1, c2:R.c2,
+    gross:R.gross, dedTotal:R.dedTotal, c1:R.c1, c2:R.c2,
     snapshot: JSON.parse(JSON.stringify(F)),
   };
   if(existing) reg[reg.indexOf(existing)] = rec; else reg.push(rec);
@@ -20893,11 +20890,11 @@ function regClear(){
 function regCSV(){
   const reg = loadRegister();
   if(!reg.length){ toast('Register is empty'); return; }
-  const head = ['Invoice No','Last exported','Rev','Client 1','Client 2','Adviser','Office','Fee type','FY start','FY end','Layout','Total fees','Via super','Deductible total','Deductible C1','Deductible C2'];
+  const head = ['Invoice No','Last exported','Rev','Client 1','Client 2','Adviser','Office','Fee type','FY start','FY end','Layout','Total fees','Deductible total','Deductible C1','Deductible C2'];
   const esc = v => { v = String(v==null?'':v); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; };
   const lines = [head.join(',')].concat(reg.map(r =>
     [r.num, r.ts, r.rev, r.client1, r.client2, r.adviser, r.office, r.feeType, r.fyStart, r.fyEnd, r.layout,
-     r.gross, r.superF, r.dedTotal, r.c1, r.c2].map(esc).join(',')));
+     r.gross, r.dedTotal, r.c1, r.c2].map(esc).join(',')));
   saveAs(new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8'}), 'MWS_Invoice_Register.csv');
   toast('Register downloaded (CSV)');
 }
@@ -20950,7 +20947,6 @@ function sectionStatus(k){
       return {state:'ok'};
     case 'fees':
       if(C.gross <= 0) return {state:'todo', hint:'Enter the fees paid'};
-      if(C.superF > C.gross) return {state:'warn', hint:'Super-paid fees exceed total'};
       if(!F.fyStart || !F.fyEnd) return {state:'warn', hint:'Set the financial year'};
       return {state:'ok'};
     case 'strategies':
@@ -21135,8 +21131,6 @@ function renderSideSummary(){
   const C = calc();
   el.innerHTML = `
     <div>Total fees <b>${money(C.gross)}</b></div>
-    <div>Via super <b>${money(C.superF)}</b></div>
-    <div>Net to apportion <b>${money(C.net)}</b></div>
     <div>Weighting <b>${parseFloat(C.wSum.toFixed(2))}%</b></div>
     <div>Deductible <b class="pos">${money(C.dedTotal)}</b></div>`;
 }
@@ -21229,7 +21223,7 @@ function secFees(){
   let h = `
   <div class="card">
     <h2>What fees does this receipt cover?</h2>
-    <div class="card-sub">Cashflow fees the client paid personally during the year. Under TD 2024/7 the apportionment applies to the total fee for the period — upfront and ongoing amounts are combined into a single net fee, then weighted across the advice provided. Fees paid from superannuation or pension products are excluded (never personally deductible).</div>
+    <div class="card-sub">Cashflow fees the client paid during the year. Under TD 2024/7 the apportionment applies to the total fee for the period — upfront and ongoing amounts are combined into a single fee, then weighted across the advice provided.</div>
     <div class="seg" style="margin-bottom:14px">
       ${seg('ongoing','Ongoing fees')}
       ${seg('upfront','Upfront fees')}
@@ -21239,18 +21233,14 @@ function secFees(){
       <h3 style="margin-bottom:6px">Upfront / initial advice fees</h3>
       <div class="grid2">
         ${inputFNum('upfrontFee','Upfront advice fees paid (gross, incl. GST)')}
-        ${inputFNum('upfrontSuper','— of which paid via superannuation / pension')}
       </div>`:''}
     ${(F.feeType==='ongoing'||F.feeType==='combined') ? `
       <h3 style="margin-bottom:6px">Ongoing advice fees</h3>
       <div class="grid2">
         ${inputFNum('ongoingFee','Ongoing advice fees paid (gross, incl. GST)')}
-        ${inputFNum('ongoingSuper','— of which paid via superannuation / pension')}
       </div>`:''}
     <div class="sumgrid">
-      <div class="sumtile"><div class="st-l">Total fees paid</div><div class="st-v">${money(C.gross,true)}</div></div>
-      <div class="sumtile"><div class="st-l">Paid via super</div><div class="st-v">${money(C.superF,true)}</div></div>
-      <div class="sumtile hl"><div class="st-l">Net fee to apportion</div><div class="st-v">${money(C.net,true)}</div></div>
+      <div class="sumtile hl"><div class="st-l">Total fee to apportion</div><div class="st-v">${money(C.gross)}</div></div>
     </div>
   </div>
   <div class="card">
@@ -21429,7 +21419,6 @@ function secReview(){
     <div class="card-sub">Figures shown to the cent (2 decimals), exactly as they will print on the receipt.</div>
     <div class="sumgrid">
       <div class="sumtile"><div class="st-l">Total advice fees paid</div><div class="st-v">${money(R.gross)}</div></div>
-      <div class="sumtile"><div class="st-l">Paid via superannuation</div><div class="st-v">${money(R.superF)}</div></div>
       <div class="sumtile"><div class="st-l">Not related to tax affairs</div><div class="st-v">${money(R.notRelated)}</div></div>
       <div class="sumtile hl"><div class="st-l">Related to tax affairs</div><div class="st-v">${money(R.dedTotal)}</div></div>
       <div class="sumtile"><div class="st-l">s8-1 component</div><div class="st-v">${money(r2(C.s8Total))}</div></div>
@@ -21538,10 +21527,9 @@ function displayRounding(C){
   const rows = C.rows.map(r => ({...r, dedR: r2(r.ded)}));
   const dedTotal = r2(rows.reduce((a,r)=>a+r.dedR,0));
   const gross = r2(C.gross);
-  const superF = r2(C.superF);
-  const notRelated = Math.max(0, r2(gross - superF - dedTotal));
+  const notRelated = Math.max(0, r2(gross - dedTotal));
   const c1 = r2(C.c1), c2 = r2(C.c2);
-  return { rows, dedTotal, gross, superF, notRelated, c1, c2 };
+  return { rows, dedTotal, gross, notRelated, c1, c2 };
 }
 
 /* =========================================================================
@@ -21579,7 +21567,6 @@ function invoiceHTML(){
         <tr><td>Upfront advice fees paid:</td><td class="v">${money(r2(n(F.upfrontFee)))}</td></tr>
         <tr><td>Ongoing advice fees paid:</td><td class="v">${money(r2(n(F.ongoingFee)))}</td></tr>`:''}
         <tr><td>Total advice fees paid:</td><td class="v">${money(R.gross)}</td></tr>
-        <tr><td>Advice fees paid via superannuation:</td><td class="v">${money(R.superF)}</td></tr>
         <tr><td>Advice not related to tax affairs:</td><td class="v">${money(R.notRelated)}</td></tr>
         <tr class="sep"><td>Advice fee related to tax affairs:</td><td class="v">${money(R.dedTotal)}</td></tr>
         <tr class="hl"><td>Estimated deductible portion for ${e(F.c1||'Client 1')}${both?'':''}</td><td class="v">${money(both ? R.c1 : R.dedTotal)}</td></tr>
@@ -21637,7 +21624,7 @@ function copySummary(){
   const both = !!F.c2.trim();
   let t = `TAX RECEIPT — ${F.licensee} (ABN ${F.abn})\n${F.c2?`${F.c1} and ${F.c2}`:F.c1}\n${F.descOverride.trim()||autoDescription()}\n`;
   if(F.fyStart&&F.fyEnd) t += `For the financial year ${fmtDateLong(F.fyStart)} to ${fmtDateLong(F.fyEnd)}\n`;
-  t += `\nTotal advice fees paid: ${money(R.gross)}\nAdvice fees paid via superannuation: ${money(R.superF)}\nAdvice not related to tax affairs: ${money(R.notRelated)}\nAdvice fee related to tax affairs: ${money(R.dedTotal)}\n`;
+  t += `\nTotal advice fees paid: ${money(R.gross)}\nAdvice not related to tax affairs: ${money(R.notRelated)}\nAdvice fee related to tax affairs: ${money(R.dedTotal)}\n`;
   t += `\nEstimated deductible portion for ${F.c1||'Client 1'}: ${money(both?R.c1:R.dedTotal)}\n`;
   if(both) t += `Estimated deductible portion for ${F.c2}: ${money(R.c2)}\n`;
   t += `\nStrategy | Who | Why tax related | Deductible ($)\n`;
@@ -21651,7 +21638,7 @@ function copySummary(){
 function copySoaText(){
   const C = calc(); const R = displayRounding(C);
   const both = !!F.c2.trim();
-  let t = `Tax deductibility of advice fees\n\nA portion of the fees you personally pay for financial advice may be tax-deductible, depending on the nature of the advice provided. Under s25-5 of the Income Tax Assessment Act 1997 (ITAA 1997), fees related to managing your tax affairs may be deductible, and under s8-1, fees incurred in producing assessable income may also be deductible. Any advice fees paid via superannuation or pension products are not eligible for a personal tax deduction.\n\nBased on our assessment of the advice provided, of the ${money(R.gross)} in advice fees paid in the ${F.fyStart?fmtDateLong(F.fyStart):''} to ${F.fyEnd?fmtDateLong(F.fyEnd):''} financial year (${money(R.superF)} of which was paid via superannuation), we estimate the following deductible portion:\n\n`;
+  let t = `Tax deductibility of advice fees\n\nA portion of the fees you pay for financial advice may be tax-deductible, depending on the nature of the advice provided. Under s25-5 of the Income Tax Assessment Act 1997 (ITAA 1997), fees related to managing your tax affairs may be deductible, and under s8-1, fees incurred in producing assessable income may also be deductible.\n\nBased on our assessment of the advice provided, of the ${money(R.gross)} in advice fees paid in the ${F.fyStart?fmtDateLong(F.fyStart):''} to ${F.fyEnd?fmtDateLong(F.fyEnd):''} financial year, we estimate the following deductible portion:\n\n`;
   t += `Estimated deductible portion for ${F.c1||'Client 1'}: ${money(both?R.c1:R.dedTotal)}${C.c1s8||C.c1s25?` (s8-1: ${money(r2(both?C.c1s8:C.s8Total))}, s25-5: ${money(r2(both?C.c1s25:C.s25Total))})`:''}\n`;
   if(both) t += `Estimated deductible portion for ${F.c2}: ${money(R.c2)} (s8-1: ${money(r2(C.c2s8))}, s25-5: ${money(r2(C.c2s25))})\n`;
   t += `\nThe attached invoice provides a detailed breakdown of the apportionment and the basis for this calculation. This guidance is based on our understanding of current tax laws and ATO guidance (TD 2024/7). Your eligibility to claim a deduction will depend on your individual circumstances — we recommend consulting a registered tax agent to confirm deductibility, and retaining this document with your records.`;
@@ -21791,7 +21778,7 @@ function renderGuide(){
   <div class="card"><h3 style="font-family:var(--bf)!important">1 · Client & Adviser</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Enter the client (and partner for couples) and postal address, then pick the office and adviser — the corporate authorised representative and licensee details fill in automatically from the same roster as the ROA Generator. These print in the receipt header.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">2 · Fees & Period</h3>
-    <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Choose whether the receipt covers <b>upfront</b>, <b>ongoing</b> or <b>both</b> fee types, then enter the gross amounts paid and how much was paid from super/pension products. The net fee to apportion is total minus super-paid — fees paid from super are never personally deductible. Set the financial year and receipt date.</p></div>
+    <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Choose whether the receipt covers <b>upfront</b>, <b>ongoing</b> or <b>both</b> fee types, then enter the gross amounts paid. Upfront and ongoing amounts are combined into a single fee that is apportioned across the advice. Set the financial year and receipt date.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">3 · Strategy Apportionment</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-top:4px">This is the strategy-basis method from TD 2024/7: allocate the total advice fee across the strategies recommended, using professional judgment on what share of the advice each represents. Weightings <b>must total 100%</b> (use ⚖ Normalise). Each strategy pre-fills its deductible % range, deduction section (s8-1 / s25-5) and invoice wording from the cheat sheet — the ranges vary per client, so adjust to the client's facts. The ℹ button shows the full house-rule guidance inline; anything outside guidance is flagged amber, not blocked.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">4 · Review & Check</h3>
@@ -21801,7 +21788,7 @@ function renderGuide(){
   <div class="card"><h3 style="font-family:var(--bf)!important">The tax framework in 30 seconds</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-top:4px"><b>s8-1 ITAA 1997</b> — deductible to the extent the fee is incurred in gaining or producing assessable income: typically ongoing management of an existing income-producing portfolio, income-protection premiums advice, deductible-debt (gearing) management.<br><br>
     <b>s25-5 ITAA 1997</b> — deductible to the extent the fee is for managing the client's tax affairs: tax (financial) advice such as CGT planning, salary sacrifice, contribution deductibility, structuring.<br><br>
-    <b>Not deductible</b> — capital or private advice: establishing new portfolios, non-deductible debt, budgeting, estate planning, most personal insurance. Fees paid from super are excluded entirely.<br><br>
+    <b>Not deductible</b> — capital or private advice: establishing new portfolios, non-deductible debt, budgeting, estate planning, most personal insurance.<br><br>
     The deductibility depends on the <i>nature of the advice</i>, not whether the fee is labelled initial or ongoing (TD 2024/7).</p></div>
   <div class="card" style="border-left:3px solid var(--amber)"><p style="font-size:11px;color:var(--text-dim)">
     Internal tool for MWS advisers. Outputs are indicative and must be checked and approved by the adviser before being sent.
@@ -21910,7 +21897,6 @@ function exportDocx(){
     sumRows.push(sumRow('Ongoing advice fees paid:', money(r2(n(F.ongoingFee)))));
   }
   sumRows.push(sumRow('Total advice fees paid:', money(R.gross)));
-  sumRows.push(sumRow('Advice fees paid via superannuation:', money(R.superF)));
   sumRows.push(sumRow('Advice not related to tax affairs:', money(R.notRelated)));
   sumRows.push(sumRow('Advice fee related to tax affairs:', money(R.dedTotal)));
   sumRows.push(sumRow(`Estimated deductible portion for ${F.c1||'Client 1'}`, money(both?R.c1:R.dedTotal), {hl:true}));
