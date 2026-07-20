@@ -20647,7 +20647,7 @@ function defaultState(){
     feeType:'ongoing',                 // ongoing | upfront | combined
     ongoingFee:0,
     upfrontFee:0,
-    invDate:todayISO(), fyStart:'', fyEnd:'', invNum:'',
+    invDate:todayISO(), fyStart:'', fyEnd:'', invNum:'', invNum2:'',
     gst:true, layout:'receipt',        // receipt | detailed
     hideZero:false, showWho:true,
     descOverride:'', notes:'',
@@ -20722,11 +20722,29 @@ function calcAndSoftRender(){
 /* =========================================================================
    CALCULATION ENGINE — Strategy-basis apportionment (TD 2024/7)
    ========================================================================= */
+/* One "bucket" per invoice: retainer and ongoing fees are never merged —
+   in combined mode each bucket produces its own separate invoice. */
+function buckets(){
+  const b = [];
+  if(F.feeType==='upfront' || F.feeType==='combined') b.push({kind:'upfront', fee:n(F.upfrontFee)});
+  if(F.feeType==='ongoing' || F.feeType==='combined') b.push({kind:'ongoing', fee:n(F.ongoingFee)});
+  return b;
+}
+/* Invoice number for a bucket — the retainer invoice uses invNum, the
+   ongoing invoice uses invNum2 when both are generated. */
+function bucketNum(kind){
+  if(F.feeType==='combined' && kind==='ongoing') return F.invNum2 || '';
+  return F.invNum || '';
+}
 function calc(){
   const useUp  = F.feeType==='upfront'  || F.feeType==='combined';
   const useOn  = F.feeType==='ongoing'  || F.feeType==='combined';
-  const gross  = (useUp ? n(F.upfrontFee)   : 0) + (useOn ? n(F.ongoingFee)   : 0);
-  const net    = gross;
+  const gross  = buckets().reduce((a,b)=>a+b.fee,0);
+  return Object.assign({useUp, useOn}, calcAmount(gross));
+}
+/* Apportion a single invoice amount across the strategies */
+function calcAmount(gross){
+  const net = gross;
 
   const rows = F.strategies.map(s => {
     const fee  = net * n(s.w)/100;
@@ -20751,7 +20769,7 @@ function calc(){
   const c2s8  = rows.reduce((a,r)=> a + (r.who==='Client 2' ? r.s8  : r.who==='Both' ? r.s8/2  : 0), 0);
   const c2s25 = rows.reduce((a,r)=> a + (r.who==='Client 2' ? r.s25 : r.who==='Both' ? r.s25/2 : 0), 0);
 
-  return { useUp, useOn, gross, net, rows, wSum, dedTotal, s25Total, s8Total, notRelated, c1, c2, c1s8, c1s25, c2s8, c2s25 };
+  return { gross, net, rows, wSum, dedTotal, s25Total, s8Total, notRelated, c1, c2, c1s8, c1s25, c2s8, c2s25 };
 }
 
 /* Validation — errors block a clean export; warnings flag judgment calls */
@@ -20761,6 +20779,10 @@ function validate(C){
   if(!F.adviser.trim()) errs.push('Adviser name is missing.');
   if(!F.licensee.trim()) errs.push('Licensee (AFSL) name is missing.');
   if(C.gross <= 0) errs.push('No advice fees have been entered.');
+  if(F.feeType==='combined'){
+    if(n(F.upfrontFee) <= 0) errs.push('Retainer + Ongoing generates two separate invoices, but the retainer fee is zero — enter it or switch to Ongoing only.');
+    if(n(F.ongoingFee) <= 0) errs.push('Retainer + Ongoing generates two separate invoices, but the ongoing fee is zero — enter it or switch to Retainer only.');
+  }
   if(!F.fyStart || !F.fyEnd) warns.push('Financial year start / end dates are not set.');
   if(F.strategies.length === 0) errs.push('No strategies have been added — the fee has nothing to be apportioned against.');
   if(F.strategies.length > 0 && Math.abs(C.wSum - 100) > 0.5)
@@ -20849,15 +20871,14 @@ function nextInvNum(){
   try{ localStorage.setItem(SEQ_KEY, String(nxt)); }catch(e){}
   return String(nxt);
 }
-function logInvoice(){
-  const C = calc(); const R = displayRounding(C);
+function logInvoice(num, kind, R){
   const reg = loadRegister();
   const o = currentOffice();
-  const existing = reg.find(r => r.num === F.invNum);
+  const existing = reg.find(r => r.num === num);
   const rec = {
-    num:F.invNum, ts:new Date().toISOString(), rev: existing ? (existing.rev||1)+1 : 1,
+    num, ts:new Date().toISOString(), rev: existing ? (existing.rev||1)+1 : 1,
     client1:F.c1, client2:F.c2, adviser:F.adviser, office:o?o.label:'',
-    feeType:F.feeType, fyStart:F.fyStart, fyEnd:F.fyEnd, layout:F.layout,
+    feeType:kind, fyStart:F.fyStart, fyEnd:F.fyEnd, layout:F.layout,
     gross:R.gross, dedTotal:R.dedTotal, c1:R.c1, c2:R.c2,
     snapshot: JSON.parse(JSON.stringify(F)),
   };
@@ -21223,11 +21244,11 @@ function secFees(){
   let h = `
   <div class="card">
     <h2>What fees does this receipt cover?</h2>
-    <div class="card-sub">Cashflow fees the client paid during the year. Under TD 2024/7 the apportionment applies to the total fee for the period — upfront and ongoing amounts are combined into a single fee, then weighted across the advice provided.</div>
+    <div class="card-sub">Cashflow fees the client paid during the year, weighted across the advice provided (TD 2024/7). Retainer and ongoing fees are never merged — selecting <b>Retainer + Ongoing</b> generates <b>two separate invoices</b>, each with its own invoice number and apportionment, exported together.</div>
     <div class="seg" style="margin-bottom:14px">
       ${seg('ongoing','Ongoing fees')}
       ${seg('upfront','Retainer (upfront) fees')}
-      ${seg('combined','Retainer + Ongoing')}
+      ${seg('combined','Retainer + Ongoing (2 invoices)')}
     </div>
     ${(F.feeType==='upfront'||F.feeType==='combined') ? `
       <h3 style="margin-bottom:6px">Retainer / upfront advice fees</h3>
@@ -21240,7 +21261,12 @@ function secFees(){
         ${inputFNum('ongoingFee','Ongoing advice fees paid (gross, incl. GST)')}
       </div>`:''}
     <div class="sumgrid">
-      <div class="sumtile hl"><div class="st-l">Total fee to apportion</div><div class="st-v">${money(C.gross)}</div></div>
+      ${F.feeType==='combined' ? `
+        <div class="sumtile hl"><div class="st-l">Retainer invoice fee</div><div class="st-v">${money(n(F.upfrontFee))}</div></div>
+        <div class="sumtile hl"><div class="st-l">Ongoing invoice fee</div><div class="st-v">${money(n(F.ongoingFee))}</div></div>
+      ` : `
+        <div class="sumtile hl"><div class="st-l">Fee to apportion</div><div class="st-v">${money(C.gross)}</div></div>
+      `}
     </div>
   </div>
   <div class="card">
@@ -21254,7 +21280,7 @@ function secFees(){
         <input type="date" value="${e(F.invDate)}" oninput="setF('invDate',this.value)" onblur="render()"></div>
     </div>
     <div class="grid2" style="margin-top:2px">
-      <div class="field"><label>Invoice number</label>
+      <div class="field"><label>${F.feeType==='combined' ? 'Retainer invoice number' : 'Invoice number'}</label>
         <div style="display:flex;gap:6px">
           <input type="text" value="${e(F.invNum)}" placeholder="auto-generated at export if left blank"
             oninput="setF('invNum', this.value)" onblur="render()" style="flex:1">
@@ -21262,6 +21288,14 @@ function secFees(){
         </div>
         <div class="helper">Each Word export is logged against this number in the History tab (register).</div>
       </div>
+      ${F.feeType==='combined' ? `
+      <div class="field"><label>Ongoing invoice number</label>
+        <div style="display:flex;gap:6px">
+          <input type="text" value="${e(F.invNum2)}" placeholder="auto-generated at export if left blank"
+            oninput="setF('invNum2', this.value)" onblur="render()" style="flex:1">
+          <button class="btn btn-sm" onclick="F.invNum2=nextInvNum();save();render()" title="Assign the next number in the sequence">⚙ Auto</button>
+        </div>
+      </div>`:''}
       <div class="field"><label>Figures include GST?</label>
         <div class="seg"><button class="${F.gst?'on':''}" onclick="F.gst=true;save();render()">Yes — incl. GST</button><button class="${!F.gst?'on':''}" onclick="F.gst=false;save();render()">No</button></div>
       </div>
@@ -21280,8 +21314,9 @@ function secStrategies(){
     <div style="font-size:11.5px;color:var(--text-dim);line-height:1.6">
       <b>How this works.</b> Add each strategy that formed part of the advice, weight it by its share of the total
       advice effort/value (<b>weightings must total 100%</b>), then set the deductible portion of that strategy using the
-      built-in cheat-sheet guidance. The tool calculates each strategy's share of the net fee (${money(C.net)}) and the
-      deductible amount, split between s8-1 and s25-5. Ranges shown under each control are the MWS house-rule guidance —
+      built-in cheat-sheet guidance. The tool calculates each strategy's share of the fee${F.feeType==='combined'
+        ? ' on each invoice separately — the same weightings apply to the retainer and ongoing invoices'
+        : ` (${money(C.net)})`} and the deductible amount, split between s8-1 and s25-5. Ranges shown under each control are the MWS house-rule guidance —
       going outside them flags a warning, not a block: override where the client's facts support it, and document why.
     </div>
   </div>
@@ -21428,6 +21463,13 @@ function secReview(){
       <div class="sumtile hl"><div class="st-l">Deductible — ${e(F.c1||'Client 1')}</div><div class="st-v">${money(r2(C.c1))}</div></div>
       <div class="sumtile hl"><div class="st-l">Deductible — ${e(F.c2)}</div><div class="st-v">${money(r2(C.c2))}</div></div>
     </div>`:''}
+    ${F.feeType==='combined' ? (()=>{
+      const up = displayRounding(calcAmount(n(F.upfrontFee)));
+      const on = displayRounding(calcAmount(n(F.ongoingFee)));
+      return `<div class="helper" style="background:var(--blue-light);border-left:3px solid var(--blue);border-radius:8px;padding:8px 12px;margin-top:4px">
+        Two <b>separate invoices</b> will be exported: <b>Retainer</b> ${money(up.gross)} (deductible ${money(up.dedTotal)})
+        and <b>Ongoing</b> ${money(on.gross)} (deductible ${money(on.dedTotal)}). The tiles above are the combined totals across both.</div>`;
+    })() : ''}
   </div>
   <div class="card">
     <h2>Validation</h2>
@@ -21469,7 +21511,9 @@ function secInvoice(){
     <h2>Description of services</h2>
     <div class="field"><label>Override the description line (leave blank for the automatic wording)</label>
       <textarea rows="2" placeholder="${e(autoDescription())}" oninput="setF('descOverride',this.value)" onblur="render()">${e(F.descOverride)}</textarea>
-      <div class="helper">Automatic wording: “${e(autoDescription())}”</div>
+      <div class="helper">${F.feeType==='combined'
+        ? `Two invoices are generated — each uses its own automatic wording (“${e(autoDescription('upfront'))}” / “${e(autoDescription('ongoing'))}”). An override here replaces the wording on <b>both</b> invoices.`
+        : `Automatic wording: “${e(autoDescription())}”`}</div>
     </div>
     <div class="field"><label>Additional note printed under the table (optional)</label>
       <textarea rows="2" placeholder="e.g. Please provide this receipt to your accountant when preparing your tax return." oninput="setF('notes',this.value)" onblur="render()">${e(F.notes)}</textarea>
@@ -21477,23 +21521,21 @@ function secInvoice(){
   </div>`;
 }
 
-function descHeading(){
-  return F.feeType==='upfront'  ? 'Description of Services — Retainer Cashflow Advice Fees Paid'
-       : F.feeType==='combined' ? 'Description of Services — Retainer & Ongoing Cashflow Advice Fees Paid'
-       : 'Description of Services — Ongoing Cashflow Advice Fees Paid';
+/* Each invoice covers exactly one fee kind — retainer or ongoing */
+function descHeading(kind){
+  return kind==='upfront' ? 'Description of Services — Retainer Cashflow Advice Fees Paid'
+                          : 'Description of Services — Ongoing Cashflow Advice Fees Paid';
 }
 /* "ongoing cashflow advice" / "retainer cashflow advice" — used in the
    description line and the summary-row labels */
-function feeNoun(){
-  return F.feeType==='upfront'  ? 'retainer cashflow advice'
-       : F.feeType==='combined' ? 'retainer & ongoing cashflow advice'
-       : 'ongoing cashflow advice';
+function feeNoun(kind){
+  return kind==='upfront' ? 'retainer cashflow advice' : 'ongoing cashflow advice';
 }
-function autoDescription(){
-  const kind = F.feeType==='ongoing' ? 'Financial planning ongoing cashflow advice fees'
-             : F.feeType==='upfront' ? 'Financial planning retainer cashflow advice fees'
-             : 'Financial planning retainer and ongoing cashflow advice fees';
-  return `${kind} for the advice presented by ${F.adviser || '[adviser]'}`;
+function autoDescription(kind){
+  const k = kind || buckets()[0]?.kind || 'ongoing';
+  const lead = k==='upfront' ? 'Financial planning retainer cashflow advice fees'
+                             : 'Financial planning ongoing cashflow advice fees';
+  return `${lead} for the advice presented by ${F.adviser || '[adviser]'}`;
 }
 
 /* ── Section: export ── */
@@ -21548,13 +21590,19 @@ function displayRounding(C){
    PREVIEW — the invoice document
    ========================================================================= */
 function invoiceHTML(){
-  const C = calc();
+  return buckets().map(b => invoiceDocHTML(b)).join('<div style="height:20px"></div>');
+}
+/* One complete invoice document for a single fee bucket (retainer OR ongoing) */
+function invoiceDocHTML(bucket){
+  const C = calcAmount(bucket.fee);
   const R = displayRounding(C);
+  const kind = bucket.kind;
+  const invNum = bucketNum(kind);
   const both = !!F.c2.trim();
   const clientLine = both ? `${F.c1} and ${F.c2}` : F.c1;
   const showWho = F.showWho && both;
   const rows = R.rows.filter(r => !F.hideZero || r.dedR > 0);
-  const desc = F.descOverride.trim() || autoDescription();
+  const desc = F.descOverride.trim() || autoDescription(kind);
   const fyLine = (F.fyStart && F.fyEnd) ? `For the financial year ${fmtDateLong(F.fyStart)} to ${fmtDateLong(F.fyEnd)}` : '';
   const detailed = F.layout === 'detailed';
 
@@ -21563,7 +21611,7 @@ function invoiceHTML(){
     <div class="inv-body">
       <div class="inv-titlebar">
         <h1>${detailed ? 'TAX RECEIPT — ITEMISED ADDENDUM' : 'TAX RECEIPT'}</h1>
-        <div class="inv-date">${e(fmtDate(F.invDate))}${F.invNum ? `<br>Invoice No. ${e(F.invNum)}`:''}</div>
+        <div class="inv-date">${e(fmtDate(F.invDate))}${invNum ? `<br>Invoice No. ${e(invNum)}`:''}</div>
       </div>
       <div class="inv-lic">${e(F.licensee)}<br>
         <span class="abn">ABN: ${e(F.abn)}${F.afsl?` &nbsp;·&nbsp; AFSL No. ${e(F.afsl)}`:''}${corpRepLine()?`<br>${e(corpRepLine())}`:''}</span>
@@ -21571,14 +21619,11 @@ function invoiceHTML(){
       <div class="inv-pc">Private and Confidential</div>
       <div class="inv-client">${e(clientLine)}${F.addr?'\n'+e(F.addr):''}</div>
 
-      <div class="inv-h2">${e(descHeading())}</div>
+      <div class="inv-h2">${e(descHeading(kind))}</div>
       <div class="inv-desc">${e(desc)}${fyLine?`<div class="sub">${e(fyLine)}</div>`:''}</div>
 
       <table class="inv-sumtbl">
-        ${C.useUp && C.useOn ? `
-        <tr><td>Retainer cashflow advice fees paid:</td><td class="v">${money(r2(n(F.upfrontFee)))}</td></tr>
-        <tr><td>Ongoing cashflow advice fees paid:</td><td class="v">${money(r2(n(F.ongoingFee)))}</td></tr>`:''}
-        <tr><td>Total ${e(feeNoun())} fees paid:</td><td class="v">${money(R.gross)}</td></tr>
+        <tr><td>Total ${e(feeNoun(kind))} fees paid:</td><td class="v">${money(R.gross)}</td></tr>
         <tr><td>Advice not related to tax affairs:</td><td class="v">${money(R.notRelated)}</td></tr>
         <tr class="sep"><td>Advice fee related to tax affairs:</td><td class="v">${money(R.dedTotal)}</td></tr>
         <tr class="hl"><td>Estimated deductible portion for ${e(F.c1||'Client 1')}${both?'':''}</td><td class="v">${money(both ? R.c1 : R.dedTotal)}</td></tr>
@@ -21629,20 +21674,25 @@ function copyText(t, msg){
   });
 }
 function copySummary(){
-  const C = calc(); const R = displayRounding(C);
   const both = !!F.c2.trim();
-  let t = `TAX RECEIPT — ${F.licensee} (ABN ${F.abn})\n${F.c2?`${F.c1} and ${F.c2}`:F.c1}\n${F.descOverride.trim()||autoDescription()}\n`;
-  if(F.fyStart&&F.fyEnd) t += `For the financial year ${fmtDateLong(F.fyStart)} to ${fmtDateLong(F.fyEnd)}\n`;
-  t += `\nTotal ${feeNoun()} fees paid: ${money(R.gross)}\nAdvice not related to tax affairs: ${money(R.notRelated)}\nAdvice fee related to tax affairs: ${money(R.dedTotal)}\n`;
-  t += `\nEstimated deductible portion for ${F.c1||'Client 1'}: ${money(both?R.c1:R.dedTotal)}\n`;
-  if(both) t += `Estimated deductible portion for ${F.c2}: ${money(R.c2)}\n`;
-  t += `\nStrategy | Who | Why tax related | Deductible ($)\n`;
-  R.rows.filter(r=>!F.hideZero||r.dedR>0).forEach(r=>{
-    t += `${r.name} | ${r.who} | ${r.ded>0?r.basis:''} | ${money(r.dedR)}\n`;
+  const blocks = buckets().map(b => {
+    const R = displayRounding(calcAmount(b.fee));
+    const invNum = bucketNum(b.kind);
+    let t = `TAX RECEIPT${invNum?` — Invoice No. ${invNum}`:''} — ${F.licensee} (ABN ${F.abn})\n${F.c2?`${F.c1} and ${F.c2}`:F.c1}\n${F.descOverride.trim()||autoDescription(b.kind)}\n`;
+    if(F.fyStart&&F.fyEnd) t += `For the financial year ${fmtDateLong(F.fyStart)} to ${fmtDateLong(F.fyEnd)}\n`;
+    t += `\nTotal ${feeNoun(b.kind)} fees paid: ${money(R.gross)}\nAdvice not related to tax affairs: ${money(R.notRelated)}\nAdvice fee related to tax affairs: ${money(R.dedTotal)}\n`;
+    t += `\nEstimated deductible portion for ${F.c1||'Client 1'}: ${money(both?R.c1:R.dedTotal)}\n`;
+    if(both) t += `Estimated deductible portion for ${F.c2}: ${money(R.c2)}\n`;
+    t += `\nStrategy | Who | Why tax related | Deductible ($)\n`;
+    R.rows.filter(r=>!F.hideZero||r.dedR>0).forEach(r=>{
+      t += `${r.name} | ${r.who} | ${r.ded>0?r.basis:''} | ${money(r.dedR)}\n`;
+    });
+    t += `Total | | | ${money(R.dedTotal)}\n`;
+    if(F.gst) t += `\nThe above figures include GST.\n`;
+    return t;
   });
-  t += `Total | | | ${money(R.dedTotal)}\n`;
-  if(F.gst) t += `\nThe above figures include GST.\n`;
-  copyText(t, 'Summary copied to clipboard');
+  copyText(blocks.join('\n────────────────────────────\n\n'),
+    blocks.length > 1 ? 'Both invoice summaries copied' : 'Summary copied to clipboard');
 }
 function copySoaText(){
   const C = calc(); const R = displayRounding(C);
@@ -21787,7 +21837,7 @@ function renderGuide(){
   <div class="card"><h3 style="font-family:var(--bf)!important">1 · Client & Adviser</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Enter the client (and partner for couples) and postal address, then pick the office and adviser — the corporate authorised representative and licensee details fill in automatically from the same roster as the ROA Generator. These print in the receipt header.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">2 · Fees & Period</h3>
-    <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Choose whether the receipt covers <b>upfront</b>, <b>ongoing</b> or <b>both</b> fee types, then enter the gross amounts paid. Upfront and ongoing amounts are combined into a single fee that is apportioned across the advice. Set the financial year and receipt date.</p></div>
+    <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Choose whether the receipt covers <b>ongoing</b> fees, <b>retainer</b> (upfront) fees, or both, then enter the gross amounts paid. Retainer and ongoing fees are never merged — selecting both generates <b>two separate invoices</b>, each with its own invoice number and apportionment, exported as two Word documents and logged individually in History. Set the financial year and receipt date.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">3 · Strategy Apportionment</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-top:4px">This is the strategy-basis method from TD 2024/7: allocate the total advice fee across the strategies recommended, using professional judgment on what share of the advice each represents. Weightings <b>must total 100%</b> (use ⚖ Normalise). Each strategy pre-fills its deductible % range, deduction section (s8-1 / s25-5) and invoice wording from the cheat sheet — the ranges vary per client, so adjust to the client's facts. The ℹ button shows the full house-rule guidance inline; anything outside guidance is flagged amber, not blocked.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">4 · Review & Check</h3>
@@ -21816,19 +21866,34 @@ function b64ToU8(b64){
 
 function exportDocx(){
   if(typeof docx === 'undefined'){ alert('The Word export library has not loaded yet — check your internet connection and refresh.'); return; }
-  if(!String(F.invNum||'').trim()){ F.invNum = nextInvNum(); if(!reexporting) save(); }
+  const bl = buckets();
+  if(!bl.length){ toast('No fees entered'); return; }
+  /* Each invoice gets its own number — retainer first, then ongoing */
+  if(!String(F.invNum||'').trim()) F.invNum = nextInvNum();
+  if(bl.length > 1 && !String(F.invNum2||'').trim()) F.invNum2 = nextInvNum();
+  if(!reexporting) save();
+  const nums = bl.map(b => bucketNum(b.kind));
+  bl.forEach(b => exportDocxBucket(b, bucketNum(b.kind)));
+  if(!reexporting) render();
+  toast(bl.length > 1
+    ? `2 separate invoices exported (${nums.join(' & ')}) & logged in History`
+    : `Invoice ${nums[0]} exported & logged in History`);
+}
+/* Build and save the Word document for a single fee bucket (one invoice) */
+function exportDocxBucket(bucket, invNum){
   const D = docx;
   const { Document, Packer, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType,
           BorderStyle, Header, Footer, ImageRun, HorizontalPositionAlign, VerticalPositionAlign,
           HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom, TextWrappingType, ShadingType } = D;
 
   const NY = "0C2E3F", BL = "0D6BE0", TL = "E5F4F6", LB = "EAF4FB", BORD = "D4E2EE", GREY = "5C6B78";
-  const C = calc(); const R = displayRounding(C);
+  const C = calcAmount(bucket.fee); const R = displayRounding(C);
+  const kind = bucket.kind;
   const both = !!F.c2.trim();
   const showWho = F.showWho && both;
   const detailed = F.layout === 'detailed';
   const rows = R.rows.filter(r => !F.hideZero || r.dedR > 0);
-  const desc = F.descOverride.trim() || autoDescription();
+  const desc = F.descOverride.trim() || autoDescription(kind);
   const fyLine = (F.fyStart && F.fyEnd) ? `For the financial year ${fmtDateLong(F.fyStart)} to ${fmtDateLong(F.fyEnd)}` : '';
 
   const noBorder = {top:{style:BorderStyle.NONE,size:0,color:"FFFFFF"},bottom:{style:BorderStyle.NONE,size:0,color:"FFFFFF"},
@@ -21869,7 +21934,7 @@ function exportDocx(){
       ]}),
       new TableCell({borders:noBorder, width:{size:30,type:WidthType.PERCENTAGE}, children:[
         new Paragraph({alignment:AlignmentType.RIGHT, children:[T(fmtDate(F.invDate),{color:GREY})]}),
-        ...(F.invNum ? [new Paragraph({alignment:AlignmentType.RIGHT, children:[T('Invoice No. '+F.invNum,{color:GREY,size:18})]})] : []),
+        ...(invNum ? [new Paragraph({alignment:AlignmentType.RIGHT, children:[T('Invoice No. '+invNum,{color:GREY,size:18})]})] : []),
       ]}),
     ]}),
   ]}));
@@ -21886,7 +21951,7 @@ function exportDocx(){
   /* Description heading */
   kids.push(new Paragraph({spacing:{before:480,after:120},
     border:{bottom:{color:BL, space:4, style:BorderStyle.SINGLE, size:12}},
-    children:[new TextRun({text:descHeading(), font:"ABC Arizona Flare", size:30, color:NY})]}));
+    children:[new TextRun({text:descHeading(kind), font:"ABC Arizona Flare", size:30, color:NY})]}));
   kids.push(P(desc,{after: fyLine?20:160}));
   if(fyLine) kids.push(P(fyLine,{color:GREY, size:19, after:160}));
 
@@ -21901,11 +21966,7 @@ function exportDocx(){
       children:[P(val,{bold:true, color:o.hl?NY:'16242E', align:AlignmentType.RIGHT, after:0})]}),
   ]});
   const sumRows = [];
-  if(C.useUp && C.useOn){
-    sumRows.push(sumRow('Retainer cashflow advice fees paid:', money(r2(n(F.upfrontFee)))));
-    sumRows.push(sumRow('Ongoing cashflow advice fees paid:', money(r2(n(F.ongoingFee)))));
-  }
-  sumRows.push(sumRow(`Total ${feeNoun()} fees paid:`, money(R.gross)));
+  sumRows.push(sumRow(`Total ${feeNoun(kind)} fees paid:`, money(R.gross)));
   sumRows.push(sumRow('Advice not related to tax affairs:', money(R.notRelated)));
   sumRows.push(sumRow('Advice fee related to tax affairs:', money(R.dedTotal)));
   sumRows.push(sumRow(`Estimated deductible portion for ${F.c1||'Client 1'}`, money(both?R.c1:R.dedTotal), {hl:true}));
@@ -21971,13 +22032,11 @@ function exportDocx(){
 
   const fnClient = (F.c1||'Client').replace(/[^\w\- ]+/g,'').trim().replace(/ +/g,'_');
   const fnFy = F.fyEnd ? 'FY'+String(new Date(F.fyEnd).getFullYear()).slice(2) : '';
-  const fname = `MWS_Tax_Receipt_${F.invNum}_${fnClient}_${fnFy}.docx`;
-  const invNumExported = F.invNum;
-  logInvoice();                       // record this export in the invoice register
-  if(!reexporting) render();          // refresh UI (invoice number / History count)
+  const fnKind = kind==='upfront' ? 'Retainer' : 'Ongoing';
+  const fname = `MWS_Tax_Receipt_${invNum}_${fnKind}_${fnClient}_${fnFy}.docx`;
+  logInvoice(invNum, kind, R);        // record this export in the invoice register
   Packer.toBlob(doc).then(blob=>{
     saveAs(blob, fname);
-    toast(`Invoice ${invNumExported} exported & logged in History`);
   }).catch(err=>{ alert('Export failed: '+err.message); });
 }
 
