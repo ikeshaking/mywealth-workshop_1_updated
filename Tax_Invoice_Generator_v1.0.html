@@ -21306,6 +21306,19 @@ function secClient(){
 }
 
 /* ── Section: fees ── */
+/* FY24/25, FY25/26, FY26/27 — the two most recent completed/current
+   financial years plus the next one, rolling forward each July */
+function fyOptions(){
+  const now = new Date();
+  const fyNow = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;  // FY starting year
+  return [fyNow-2, fyNow-1, fyNow];
+}
+function setFY(startYear){
+  const y = parseInt(startYear, 10);
+  F.fyStart = `${y}-07-01`;
+  F.fyEnd = `${y+1}-06-30`;
+  save(); render();
+}
 function secFees(){
   const C = calc();
   const seg = (v,l) => `<button class="${F.feeType===v?'on':''}" onclick="F.feeType='${v}';save();render()">${l}</button>`;
@@ -21339,13 +21352,20 @@ function secFees(){
   </div>
   <div class="card">
     <h2>Period & receipt details</h2>
-    <div class="grid3">
+    <div class="grid2">
+      <div class="field"><label>Financial year</label>
+        <select onchange="if(this.value){setFY(this.value)}">
+          <option value="">— select to auto-fill the dates —</option>
+          ${fyOptions().map(y=>`<option value="${y}" ${F.fyStart===`${y}-07-01`&&F.fyEnd===`${y+1}-06-30`?'selected':''}>FY${String(y).slice(2)}/${String(y+1).slice(2)}</option>`).join('')}
+        </select>
+        <div class="helper">Sets 1 July – 30 June automatically; the dates below stay editable.</div>
+      </div>
+      <div class="field"><label>Invoice / receipt date</label>
+        <input type="date" value="${e(F.invDate)}" oninput="setF('invDate',this.value)" onblur="render()"></div>
       <div class="field"><label>Financial year start</label>
         <input type="date" value="${e(F.fyStart)}" oninput="setF('fyStart',this.value)" onblur="render()"></div>
       <div class="field"><label>Financial year end</label>
         <input type="date" value="${e(F.fyEnd)}" oninput="setF('fyEnd',this.value)" onblur="render()"></div>
-      <div class="field"><label>Invoice / receipt date</label>
-        <input type="date" value="${e(F.invDate)}" oninput="setF('invDate',this.value)" onblur="render()"></div>
     </div>
     <div class="grid2" style="margin-top:2px">
       <div class="field"><label>${F.feeType==='combined' ? 'Retainer invoice number' : 'Invoice number'}</label>
