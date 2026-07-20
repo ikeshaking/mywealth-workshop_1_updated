@@ -20648,7 +20648,7 @@ function defaultState(){
     ongoingFee:0,
     upfrontFee:0,
     invDate:todayISO(), fyStart:'', fyEnd:'', invNum:'', invNum2:'',
-    gst:true, layout:'receipt',        // receipt | detailed
+    gst:true,
     hideZero:false, showWho:true,
     descOverride:'', notes:'',
     strategies:[],
@@ -20878,7 +20878,7 @@ function logInvoice(num, kind, R){
   const rec = {
     num, ts:new Date().toISOString(), rev: existing ? (existing.rev||1)+1 : 1,
     client1:F.c1, client2:F.c2, adviser:F.adviser, office:o?o.label:'',
-    feeType:kind, fyStart:F.fyStart, fyEnd:F.fyEnd, layout:F.layout,
+    feeType:kind, fyStart:F.fyStart, fyEnd:F.fyEnd,
     gross:R.gross, dedTotal:R.dedTotal, c1:R.c1, c2:R.c2,
     snapshot: JSON.parse(JSON.stringify(F)),
   };
@@ -20911,10 +20911,10 @@ function regClear(){
 function regCSV(){
   const reg = loadRegister();
   if(!reg.length){ toast('Register is empty'); return; }
-  const head = ['Invoice No','Last exported','Rev','Client 1','Client 2','Adviser','Office','Fee type','FY start','FY end','Layout','Total fees','Deductible total','Deductible C1','Deductible C2'];
+  const head = ['Invoice No','Last exported','Rev','Client 1','Client 2','Adviser','Office','Fee type','FY start','FY end','Total fees','Deductible total','Deductible C1','Deductible C2'];
   const esc = v => { v = String(v==null?'':v); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; };
   const lines = [head.join(',')].concat(reg.map(r =>
-    [r.num, r.ts, r.rev, r.client1, r.client2, r.adviser, r.office, r.feeType, r.fyStart, r.fyEnd, r.layout,
+    [r.num, r.ts, r.rev, r.client1, r.client2, r.adviser, r.office, r.feeType, r.fyStart, r.fyEnd,
      r.gross, r.dedTotal, r.c1, r.c2].map(esc).join(',')));
   saveAs(new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8'}), 'MWS_Invoice_Register.csv');
   toast('Register downloaded (CSV)');
@@ -21494,12 +21494,7 @@ function secInvoice(){
   return `
   <div class="card">
     <h2>Layout</h2>
-    <div class="seg" style="margin-bottom:10px">
-      <button class="${F.layout==='receipt'?'on':''}" onclick="F.layout='receipt';save();render()">Tax receipt (standard)</button>
-      <button class="${F.layout==='detailed'?'on':''}" onclick="F.layout='detailed';save();render()">Itemised addendum (detailed)</button>
-    </div>
-    <div class="helper">The standard receipt mirrors the MWS FY25 format — summary block plus a strategy table with who / why / deductible $.
-    The itemised addendum adds the weighting % and deductible % columns for clients (or their accountants) who want the full working.</div>
+    <div class="helper">The receipt mirrors the MWS format — summary block plus a strategy table with who / why / deductible $.</div>
     <div style="display:flex;gap:18px;margin-top:12px;flex-wrap:wrap">
       <label style="display:flex;gap:7px;align-items:center;font-size:12px;cursor:pointer">
         <input type="checkbox" ${F.hideZero?'checked':''} onchange="F.hideZero=this.checked;save();render()"> Hide $0 (non-deductible) strategy rows on the invoice</label>
@@ -21625,13 +21620,12 @@ function invoiceDocHTML(bucket){
   const rows = R.rows.filter(r => !F.hideZero || r.dedR > 0);
   const desc = F.descOverride.trim() || autoDescription(kind);
   const fyLine = (F.fyStart && F.fyEnd) ? `For the financial year ${fmtDateLong(F.fyStart)} to ${fmtDateLong(F.fyEnd)}` : '';
-  const detailed = F.layout === 'detailed';
 
   let h = `<div class="preview-doc">
     <img class="inv-brand-header" src="data:image/png;base64,${BRAND_HEADER_PNG_B64}" alt="My Wealth Solutions">
     <div class="inv-body">
       <div class="inv-titlebar">
-        <h1>${detailed ? 'TAX RECEIPT — ITEMISED ADDENDUM' : 'TAX RECEIPT'}</h1>
+        <h1>TAX RECEIPT</h1>
         <div class="inv-date">${e(fmtDate(F.invDate))}${invNum ? `<br>Invoice No. ${e(invNum)}`:''}</div>
       </div>
       <div class="inv-lic">${e(F.licensee)}<br>
@@ -21653,10 +21647,9 @@ function invoiceDocHTML(bucket){
 
   if(rows.length){
     h += `<table class="inv-strattbl"><thead><tr>
-      <th style="width:${detailed?'26%':'32%'}">Strategy</th>
+      <th style="width:32%">Strategy</th>
       ${showWho?'<th style="width:14%">Who</th>':''}
       <th>Summary of why tax related</th>
-      ${detailed?'<th style="width:9%">Weighting</th><th style="width:9%">Deductible</th>':''}
       <th style="width:15%">Estimated deductible portion ($)</th>
     </tr></thead><tbody>`;
     rows.forEach(r=>{
@@ -21664,11 +21657,10 @@ function invoiceDocHTML(bucket){
         <td>${e(r.name)}</td>
         ${showWho?`<td>${e(r.who==='Client 1'?(F.c1||'Client 1'):r.who==='Client 2'?(F.c2||'Client 2'):'Both')}</td>`:''}
         <td>${e(r.ded>0 ? r.basis : '')}</td>
-        ${detailed?`<td style="text-align:right">${n(r.w)}%</td><td style="text-align:right">${n(r.d)}%</td>`:''}
         <td>${money(r.dedR)}</td>
       </tr>`;
     });
-    h += `<tr class="tot"><td>Total</td>${showWho?'<td></td>':''}<td></td>${detailed?'<td></td><td></td>':''}<td>${money(R.dedTotal)}</td></tr>`;
+    h += `<tr class="tot"><td>Total</td>${showWho?'<td></td>':''}<td></td><td>${money(R.dedTotal)}</td></tr>`;
     h += `</tbody></table>`;
   }
 
@@ -21864,7 +21856,7 @@ function renderGuide(){
   <div class="card"><h3 style="font-family:var(--bf)!important">4 · Review & Check</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Totals, the s8-1 / s25-5 split, per-client amounts for couples, and a validation list. Errors (weights ≠ 100%, super &gt; total, no strategies) should be fixed; warnings are judgment flags to document in the file note.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">5 · Invoice Wording & 6 · Export</h3>
-    <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Pick the standard tax receipt or the itemised addendum (adds weighting and deductible % columns), tweak the description, then export as a branded Word document or print to PDF. You can also copy a plain-text summary or ready-made SoA disclosure text, and save the inputs as a JSON client file to re-load next year.</p></div>
+    <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Tweak the description and display options, then export as a branded Word document or print to PDF. You can also copy a plain-text summary or ready-made SoA disclosure text, and save the inputs as a JSON client file to re-load next year.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">The tax framework in 30 seconds</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-top:4px"><b>s8-1 ITAA 1997</b> — deductible to the extent the fee is incurred in gaining or producing assessable income: typically ongoing management of an existing income-producing portfolio, income-protection premiums advice, deductible-debt (gearing) management.<br><br>
     <b>s25-5 ITAA 1997</b> — deductible to the extent the fee is for managing the client's tax affairs: tax (financial) advice such as CGT planning, salary sacrifice, contribution deductibility, structuring.<br><br>
@@ -21912,7 +21904,6 @@ function exportDocxBucket(bucket, invNum){
   const kind = bucket.kind;
   const both = !!F.c2.trim();
   const showWho = F.showWho && both;
-  const detailed = F.layout === 'detailed';
   const rows = R.rows.filter(r => !F.hideZero || r.dedR > 0);
   const desc = F.descOverride.trim() || autoDescription(kind);
   const fyLine = (F.fyStart && F.fyEnd) ? `For the financial year ${fmtDateLong(F.fyStart)} to ${fmtDateLong(F.fyEnd)}` : '';
@@ -21951,7 +21942,7 @@ function exportDocxBucket(bucket, invNum){
   kids.push(new Table({width:{size:100,type:WidthType.PERCENTAGE}, borders:noBorder, rows:[
     new TableRow({children:[
       new TableCell({borders:noBorder, width:{size:70,type:WidthType.PERCENTAGE}, children:[
-        new Paragraph({spacing:{after:60}, children:[new TextRun({text: detailed ? 'TAX RECEIPT — ITEMISED ADDENDUM' : 'TAX RECEIPT', font:"ABC Arizona Flare", size:52, color:NY})]}),
+        new Paragraph({spacing:{after:60}, children:[new TextRun({text:'TAX RECEIPT', font:"ABC Arizona Flare", size:52, color:NY})]}),
       ]}),
       new TableCell({borders:noBorder, width:{size:30,type:WidthType.PERCENTAGE}, children:[
         new Paragraph({alignment:AlignmentType.RIGHT, children:[T(fmtDate(F.invDate),{color:GREY})]}),
@@ -22008,7 +21999,6 @@ function exportDocxBucket(bucket, invNum){
     const headCells = [th('Strategy')];
     if(showWho) headCells.push(th('Who'));
     headCells.push(th('Summary of why tax related'));
-    if(detailed){ headCells.push(th('Weighting')); headCells.push(th('Deductible')); }
     headCells.push(th('Estimated deductible portion ($)'));
 
     const trows = [new TableRow({tableHeader:true, children:headCells})];
@@ -22016,7 +22006,6 @@ function exportDocxBucket(bucket, invNum){
       const cells = [td(r.name,i)];
       if(showWho) cells.push(td(r.who==='Client 1'?(F.c1||'Client 1'):r.who==='Client 2'?(F.c2||'Client 2'):'Both', i));
       cells.push(td(r.ded>0 ? (r.basis||'') : '', i));
-      if(detailed){ cells.push(td(n(r.w)+'%', i, true)); cells.push(td(n(r.d)+'%', i, true)); }
       cells.push(td(money(r.dedR), i, true));
       trows.push(new TableRow({children:cells}));
     });
@@ -22029,7 +22018,6 @@ function exportDocxBucket(bucket, invNum){
       children:[new Paragraph({children:[]})]});
     if(showWho) totCells.push(blank());
     totCells.push(blank());
-    if(detailed){ totCells.push(blank()); totCells.push(blank()); }
     totCells.push(new TableCell({shading:{type:ShadingType.CLEAR, fill:TOTBLUE}, borders:allB(TOTBLUE),
       margins:{top:70,bottom:70,left:100,right:100},
       children:[new Paragraph({alignment:AlignmentType.CENTER, children:[new TextRun({text:money(R.dedTotal), font:"Nunito", size:19, bold:true, color:"FFFFFF"})]})]}));
