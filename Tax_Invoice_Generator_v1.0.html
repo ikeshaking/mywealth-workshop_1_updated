@@ -20929,8 +20929,8 @@ function regJSON(){
 /* JSON save / load for client files */
 function saveJSON(){
   const blob = new Blob([JSON.stringify(F, null, 2)], {type:'application/json'});
-  const name = (F.c1 || 'client').replace(/[^\w\- ]+/g,'').trim().replace(/ +/g,'_');
-  saveAs(blob, `MWS_Tax_Invoice_${name}_${(F.fyEnd||'').slice(0,4)||'FY'}.json`);
+  const fy = fyFileLabel();
+  saveAs(blob, sanitizeFileName(`MWS Tax Invoice Data${fy ? ' '+fy : ''} - ${clientFileName()}`) + '.json');
 }
 function loadJSON(){
   const inp = document.createElement('input');
@@ -21521,6 +21521,27 @@ function secInvoice(){
   </div>`;
 }
 
+/* File-name helpers: "MWS Tax Invoice Ongoing FY25-26 - John Smith.docx".
+   Couples share a surname as "John & Ann Smith", otherwise
+   "John Smith & Ann Doe". (A literal "/" is not allowed in file names,
+   so FY25/26 is written FY25-26.) */
+function clientFileName(){
+  const c1 = F.c1.trim(), c2 = F.c2.trim();
+  if(!c1 && !c2) return 'Client';
+  if(!c2) return c1;
+  const surname = s => s.split(/\s+/).slice(-1)[0].toLowerCase();
+  if(c1.includes(' ') && surname(c1) === surname(c2)){
+    const given = c1.split(/\s+/).slice(0,-1).join(' ');
+    return `${given} & ${c2}`;
+  }
+  return `${c1} & ${c2}`;
+}
+function fyFileLabel(){
+  if(!F.fyStart || !F.fyEnd) return '';
+  return `FY${String(F.fyStart).slice(2,4)}-${String(F.fyEnd).slice(2,4)}`;
+}
+function sanitizeFileName(s){ return s.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim(); }
+
 /* Each invoice covers exactly one fee kind — retainer or ongoing */
 function descHeading(kind){
   return kind==='upfront' ? 'Description of Services — Retainer Cashflow Advice Fees Paid'
@@ -22030,10 +22051,9 @@ function exportDocxBucket(bucket, invNum){
     }],
   });
 
-  const fnClient = (F.c1||'Client').replace(/[^\w\- ]+/g,'').trim().replace(/ +/g,'_');
-  const fnFy = F.fyEnd ? 'FY'+String(new Date(F.fyEnd).getFullYear()).slice(2) : '';
   const fnKind = kind==='upfront' ? 'Retainer' : 'Ongoing';
-  const fname = `MWS_Tax_Receipt_${invNum}_${fnKind}_${fnClient}_${fnFy}.docx`;
+  const fnFy = fyFileLabel();
+  const fname = sanitizeFileName(`MWS Tax Invoice ${fnKind}${fnFy ? ' '+fnFy : ''} - ${clientFileName()}`) + '.docx';
   logInvoice(invNum, kind, R);        // record this export in the invoice register
   Packer.toBlob(doc).then(blob=>{
     saveAs(blob, fname);
