@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v7.b_49";
+const APP_VERSION = "v8.a_3";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -1260,6 +1260,9 @@ const DEFAULT_SETTINGS = {
       {name:"Hayden Wilson",  email:"hwilson@mywealthsolutions.com.au",  profileDate:"", fsgDate:"2025-11-04"},
       {name:"Guy Freeman",    email:"gfreeman@mywealthsolutions.com.au", profileDate:"", fsgDate:"2025-11-11"},
     ]},
+    {id:"mwslife", label:"MWS Life", phone:"07 3852 4114", address:"1/18 Masters Street, Newstead, Brisbane 4006", corpRepName:"My Wealth Solutions Pty Ltd", corpRepNo:"414145", corpRepABN:"66 153 751 832", advisers:[
+      {name:"Chloe Foster", email:"chloe@mywealthsolutions.com.au", profileDate:"", fsgDate:""},
+    ]},
     {id:"mws2", label:"MWS2 — Brisbane (Newstead)", phone:"07 3852 4114", address:"1/18 Masters Street, Newstead, Brisbane 4006", corpRepName:"My Wealth Solutions No2 Pty Ltd T/A My Wealth Solutions", corpRepNo:"1289548", corpRepABN:"83 650 826 234", advisers:[
       {name:"Nikki Booth", email:"nbooth@mywealthsolutions.com.au", profileDate:"", fsgDate:"2025-11-04"},
     ]},
@@ -1284,6 +1287,7 @@ const DEFAULT_SETTINGS = {
     {name:"Josh Bareham",   phone:"07 3852 4114", email:"jbareham@mywealthsolutions.com.au", address:"1/18 Masters Street, Newstead, Brisbane 4006", profileDate:""},
     {name:"Hayden Wilson",  phone:"07 3852 4114", email:"hwilson@mywealthsolutions.com.au",  address:"1/18 Masters Street, Newstead, Brisbane 4006", profileDate:""},
     {name:"Guy Freeman",    phone:"07 3852 4114", email:"gfreeman@mywealthsolutions.com.au", address:"1/18 Masters Street, Newstead, Brisbane 4006", profileDate:""},
+    {name:"Chloe Foster",   phone:"07 3852 4114", email:"chloe@mywealthsolutions.com.au",    address:"1/18 Masters Street, Newstead, Brisbane 4006", profileDate:""},
     {name:"Matthew Leech",  phone:"02 3813 8743", email:"matt@mywealthsolutions.com.au",     address:"Level 32, 200 George Street, Sydney NSW 2000", profileDate:""},
     {name:"Nikki Booth",    phone:"07 3852 4114", email:"nbooth@mywealthsolutions.com.au",   address:"1/18 Masters Street, Newstead, Brisbane 4006", profileDate:""},
     {name:"Andrew McLauchlan", phone:"07 5230 4198", email:"andrew@ewar.com.au", address:"80-82 Upton Street, Bundall, QLD 4217", profileDate:""},
@@ -1349,7 +1353,7 @@ const DEFAULT_SETTINGS = {
   // advisers are refreshed from these built-in defaults so roster updates always show through
   // (without wiping their other saved settings). Current update: 4 offices, per-adviser FSG
   // dates, per-office authorised-rep/CAR details.
-  rosterVersion: "2026-06-22a"
+  rosterVersion: "2026-07-20a"
 };
 
 // Live settings — loaded from localStorage (falling back to DEFAULT_SETTINGS),
