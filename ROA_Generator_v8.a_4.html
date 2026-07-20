@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_3";
+const APP_VERSION = "v8.a_4";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -1261,15 +1261,15 @@ const DEFAULT_SETTINGS = {
       {name:"Guy Freeman",    email:"gfreeman@mywealthsolutions.com.au", profileDate:"", fsgDate:"2025-11-11"},
     ]},
     {id:"mwslife", label:"MWS Life", phone:"07 3852 4114", address:"1/18 Masters Street, Newstead, Brisbane 4006", corpRepName:"My Wealth Solutions Pty Ltd", corpRepNo:"414145", corpRepABN:"66 153 751 832", advisers:[
-      {name:"Chloe Foster", email:"chloe@mywealthsolutions.com.au", profileDate:"", fsgDate:""},
+      {name:"Chloe Foster", email:"chloe@mywealthsolutions.com.au", profileDate:"", fsgDate:"2025-11-01"},
     ]},
-    {id:"mws2", label:"MWS2 — Brisbane (Newstead)", phone:"07 3852 4114", address:"1/18 Masters Street, Newstead, Brisbane 4006", corpRepName:"My Wealth Solutions No2 Pty Ltd T/A My Wealth Solutions", corpRepNo:"1289548", corpRepABN:"83 650 826 234", advisers:[
+    {id:"mws2", label:"MWS2 — Brisbane (Newstead)", phone:"07 3852 4114", address:"1/18 Masters Street, Newstead, Brisbane 4006", corpRepName:"My Wealth Solutions No2 Pty Ltd T/A My Wealth Solutions ACN 650 826 234", corpRepNo:"1289548", corpRepABN:"83 650 826 234", advisers:[
       {name:"Nikki Booth", email:"nbooth@mywealthsolutions.com.au", profileDate:"", fsgDate:"2025-11-04"},
     ]},
-    {id:"mws3", label:"MWS3 — Sydney", phone:"02 3813 8743", address:"Level 32, 200 George Street, Sydney NSW 2000", corpRepName:"My Wealth Solutions No3 Pty Ltd T/A My Wealth Solutions", corpRepNo:"1289548", corpRepABN:"83 650 826 234", advisers:[
+    {id:"mws3", label:"MWS Sydney", phone:"02 3813 8743", address:"Level 32, 200 George Street, Sydney NSW 2000", corpRepName:"My Wealth Sydney Pty Ltd T/A My Wealth Solutions ACN 664 520 334", corpRepNo:"1302551", corpRepABN:"", advisers:[
       {name:"Matthew Leech", email:"matt@mywealthsolutions.com.au", profileDate:"", fsgDate:"2025-11-06"},
     ]},
-    {id:"ewar", label:"EWAR — Gold Coast (Bundall)", phone:"07 5230 4198", address:"80-82 Upton Street, Bundall, QLD 4217", corpRepName:"My Wealth Solutions", corpRepNo:"", corpRepABN:"", advisers:[
+    {id:"ewar", label:"Ballina — My Wealth Gold Coast to Ballina", phone:"07 5230 4198", address:"80-82 Upton Street, Bundall, QLD 4217", corpRepName:"BallinaGCFP Pty Ltd trading as My Wealth Gold Coast to Ballina ACN 670 111 583", corpRepNo:"1305335", corpRepABN:"66 153 751 832", advisers:[
       {name:"Andrew McLauchlan", email:"andrew@ewar.com.au", profileDate:"", fsgDate:""},
       {name:"Ryan Tarr",         email:"ryan@ewar.com.au",   profileDate:"", fsgDate:""},
       {name:"Colby Atkinson",    email:"colby@ewar.com.au",  profileDate:"", fsgDate:"2025-11-03"},
@@ -1353,7 +1353,7 @@ const DEFAULT_SETTINGS = {
   // advisers are refreshed from these built-in defaults so roster updates always show through
   // (without wiping their other saved settings). Current update: 4 offices, per-adviser FSG
   // dates, per-office authorised-rep/CAR details.
-  rosterVersion: "2026-07-20a"
+  rosterVersion: "2026-07-20b"
 };
 
 // Live settings — loaded from localStorage (falling back to DEFAULT_SETTINGS),
