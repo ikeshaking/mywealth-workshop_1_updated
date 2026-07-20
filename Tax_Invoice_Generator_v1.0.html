@@ -20367,17 +20367,24 @@ a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
 .strat-title{flex:1;min-width:200px}
 .strat-title .cat-tag{display:inline-block;font-size:8.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:2px 8px;border-radius:999px;margin-bottom:4px}
 .strat-title h3{font-family:var(--bf)!important;font-size:13px;font-weight:800;color:var(--heading)}
-.strat-controls{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:0 12px;margin-top:10px}
-@media(max-width:900px){.strat-controls{grid-template-columns:1fr 1fr}}
+.strat-controls{display:grid;grid-template-columns:1.4fr 1.1fr .8fr;gap:0 14px;margin-top:10px;align-items:start}
+.strat-controls.with-who{grid-template-columns:1.4fr 1.1fr .8fr .7fr}
+@media(max-width:900px){.strat-controls,.strat-controls.with-who{grid-template-columns:1fr 1fr}}
 .strat-basis{margin-top:2px}
-.range-line{display:flex;align-items:center;gap:8px}
-.range-line input[type=range]{flex:1;accent-color:var(--blue)}
-.range-line input[type=number]{width:64px;text-align:right}
+.range-line{display:flex;align-items:center;gap:7px}
+.range-line input[type=range]{flex:1;accent-color:var(--blue);min-width:60px}
+.range-line input[type=number]{width:60px;text-align:right}
+.range-line .pct{font-size:11px;color:var(--text-muted);font-weight:700}
+.guide-inline{font-size:9px;font-weight:700;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:999px;padding:0 7px;margin-left:5px;cursor:default;vertical-align:1px}
+.guide-inline.out{background:var(--amber-light);border-color:var(--amber);color:var(--amber)}
 .guide-chip{display:inline-block;font-size:9.5px;font-weight:700;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:999px;padding:1px 8px;margin-top:3px;cursor:default}
 .guide-chip.out{background:var(--amber-light);border-color:var(--amber);color:var(--amber)}
-.qchips{display:inline-flex;gap:4px;margin-top:3px}
-.qchips button{font-size:9px;font-weight:700;padding:1px 7px;border-radius:999px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-dim);cursor:pointer}
+.nd-note{font-size:11px;color:var(--text-faint);font-style:italic;padding:9px 2px}
+.strat-fee .nd-fee{font-size:11px;color:var(--text-faint);font-style:italic;font-weight:600}
+.qchips{display:inline-flex;gap:3px}
+.qchips button{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-dim);cursor:pointer}
 .qchips button:hover{border-color:var(--blue);color:var(--blue)}
+.qchips button.on{background:var(--blue);border-color:var(--blue);color:#fff}
 .strat-detail{margin-top:10px;border-top:1px dashed var(--border-soft);padding-top:9px;font-size:11px;color:var(--text-dim);line-height:1.6;display:grid;grid-template-columns:1fr 1fr;gap:8px 18px}
 @media(max-width:900px){.strat-detail{grid-template-columns:1fr}}
 .strat-detail h5{font-size:9.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-family:var(--bf)!important;margin-bottom:2px}
@@ -20650,16 +20657,38 @@ function defaultState(){
     gst:true,
     hideZero:false, showWho:true,
     descOverride:'', notes:'',
-    strategies:[],
+    stratsUp:[],   // strategies apportioning the retainer (upfront) invoice
+    stratsOn:[],   // strategies apportioning the ongoing invoice
   };
 }
+/* Migrate saves from when there was a single shared strategy list */
+function normalizeState(f){
+  if(Array.isArray(f.strategies) && f.strategies.length && !(f.stratsUp||[]).length && !(f.stratsOn||[]).length){
+    if(f.feeType === 'upfront') f.stratsUp = f.strategies;
+    else f.stratsOn = f.strategies;
+  }
+  delete f.strategies;
+  if(!Array.isArray(f.stratsUp)) f.stratsUp = [];
+  if(!Array.isArray(f.stratsOn)) f.stratsOn = [];
+  return f;
+}
+/* Which invoice's strategy list is being edited right now */
+let stratTab = 'ongoing';
+function activeKind(){
+  if(F.feeType === 'upfront') return 'upfront';
+  if(F.feeType === 'ongoing') return 'ongoing';
+  return stratTab;
+}
+function stratsFor(kind){ return kind === 'upfront' ? F.stratsUp : F.stratsOn; }
+function activeStrats(){ return stratsFor(activeKind()); }
+function allStrats(){ return [...F.stratsUp, ...F.stratsOn]; }
 function todayISO(){ const d=new Date(); return d.toISOString().slice(0,10); }
 
 function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(F)); }catch(e){} }
 function load(){
   try{
     const s = localStorage.getItem(LS_KEY);
-    if(s){ F = Object.assign(defaultState(), JSON.parse(s)); }
+    if(s){ F = normalizeState(Object.assign(defaultState(), JSON.parse(s))); }
   }catch(e){}
 }
 
@@ -20703,7 +20732,7 @@ function treatClass(t){
 function setF(key, val){ F[key] = val; save(); calcAndSoftRender(); }
 function setFNum(key, val){ F[key] = n(val); save(); calcAndSoftRender(); }
 function setS(id, key, val){
-  const s = F.strategies.find(x=>x.id===id); if(!s) return;
+  const s = allStrats().find(x=>x.id===id); if(!s) return;
   s[key] = (key==='w'||key==='d') ? Math.min(100, Math.max(0, n(val))) : val;
   if(key==='treat' && val==='Non-Deductible'){ s.d = 0; }
   save(); calcAndSoftRender();
@@ -20735,17 +20764,26 @@ function bucketNum(kind){
   if(F.feeType==='combined' && kind==='ongoing') return F.invNum2 || '';
   return F.invNum || '';
 }
+/* Aggregate across all invoices (used by the review step, sidebar and
+   validation summaries). Each invoice is still calculated on its own
+   strategy list — nothing is merged. */
 function calc(){
-  const useUp  = F.feeType==='upfront'  || F.feeType==='combined';
-  const useOn  = F.feeType==='ongoing'  || F.feeType==='combined';
-  const gross  = buckets().reduce((a,b)=>a+b.fee,0);
-  return Object.assign({useUp, useOn}, calcAmount(gross));
+  const bs = buckets().map(b => ({...b, C: calcAmount(b.fee, b.kind)}));
+  const sum = k => bs.reduce((a,b)=>a+b.C[k],0);
+  return {
+    buckets: bs,
+    rows: bs.flatMap(b => b.C.rows),
+    gross: sum('gross'), net: sum('net'), dedTotal: sum('dedTotal'),
+    s25Total: sum('s25Total'), s8Total: sum('s8Total'), notRelated: sum('notRelated'),
+    c1: sum('c1'), c2: sum('c2'),
+    c1s8: sum('c1s8'), c1s25: sum('c1s25'), c2s8: sum('c2s8'), c2s25: sum('c2s25'),
+  };
 }
-/* Apportion a single invoice amount across the strategies */
-function calcAmount(gross){
+/* Apportion a single invoice amount across that invoice's strategies */
+function calcAmount(gross, kind){
   const net = gross;
 
-  const rows = F.strategies.map(s => {
+  const rows = stratsFor(kind).map(s => {
     const fee  = net * n(s.w)/100;
     const ded  = s.treat==='Non-Deductible' ? 0 : fee * n(s.d)/100;
     return {
@@ -20783,23 +20821,30 @@ function validate(C){
     if(n(F.ongoingFee) <= 0) errs.push('Retainer + Ongoing generates two separate invoices, but the ongoing fee is zero — enter it or switch to Retainer only.');
   }
   if(!F.fyStart || !F.fyEnd) warns.push('Financial year start / end dates are not set.');
-  if(F.strategies.length === 0) errs.push('No strategies have been added — the fee has nothing to be apportioned against.');
-  if(F.strategies.length > 0 && Math.abs(C.wSum - 100) > 0.5)
-    errs.push(`Strategy weightings total ${parseFloat(C.wSum.toFixed(2))}% — they must total 100% of the advice provided.`);
-  C.rows.forEach(r => {
-    const lib = libByName(r.libKey || r.name);
-    if(lib){
-      if(n(r.w) > lib.wHi)
-        warns.push(`“${r.name}” weighting ${r.w}% is above the cheat-sheet guidance of ${lib.wLo}–${lib.wHi}%.`);
-      if(n(r.d) > lib.dHi)
-        warns.push(`“${r.name}” deductible ${r.d}% exceeds the cheat-sheet guidance of ${lib.dGuide}.`);
-      if(lib.special && n(r.d) > 0)
-        warns.push(`“${r.name}” defaults to 0% deductible unless separately identifiable tax-affairs advice exists — document the override.`);
-    }
-    if(r.ded > 0 && !String(r.basis||'').trim())
-      warns.push(`“${r.name}” has a deductible amount but no “summary of why tax related” for the invoice.`);
-    if(F.c2.trim() === '' && r.who !== 'Client 1')
-      warns.push(`“${r.name}” is allocated to ${r.who} but no Client 2 has been entered.`);
+  /* Each invoice validates its own strategy list */
+  const combined = F.feeType === 'combined';
+  buckets().forEach(b => {
+    const tag = combined ? (b.kind==='upfront' ? 'Retainer invoice: ' : 'Ongoing invoice: ') : '';
+    const list = stratsFor(b.kind);
+    const bc = calcAmount(b.fee, b.kind);
+    if(list.length === 0) errs.push(`${tag}no strategies have been added — the fee has nothing to be apportioned against.`);
+    if(list.length > 0 && Math.abs(bc.wSum - 100) > 0.5)
+      errs.push(`${tag}strategy weightings total ${parseFloat(bc.wSum.toFixed(2))}% — they must total 100% of the advice provided.`);
+    bc.rows.forEach(r => {
+      const lib = libByName(r.libKey || r.name);
+      if(lib){
+        if(n(r.w) > lib.wHi)
+          warns.push(`${tag}“${r.name}” weighting ${r.w}% is above the cheat-sheet guidance of ${lib.wLo}–${lib.wHi}%.`);
+        if(n(r.d) > lib.dHi)
+          warns.push(`${tag}“${r.name}” deductible ${r.d}% exceeds the cheat-sheet guidance of ${lib.dGuide}.`);
+        if(lib.special && n(r.d) > 0)
+          warns.push(`${tag}“${r.name}” defaults to 0% deductible unless separately identifiable tax-affairs advice exists — document the override.`);
+      }
+      if(r.ded > 0 && !String(r.basis||'').trim())
+        warns.push(`${tag}“${r.name}” has a deductible amount but no “summary of why tax related” for the invoice.`);
+      if(F.c2.trim() === '' && r.who !== 'Client 1')
+        warns.push(`${tag}“${r.name}” is allocated to ${r.who} but no Client 2 has been entered.`);
+    });
   });
   return { errs, warns };
 }
@@ -20810,9 +20855,10 @@ function validate(C){
 function addStrategy(name){
   const lib = libByName(name);
   if(!lib) return;
-  if(F.strategies.some(s => s.name === name)){ toast('Strategy already added'); return; }
+  const list = activeStrats();
+  if(list.some(s => s.name === name)){ toast('Strategy already on this invoice'); return; }
   const mid = r => Math.round((r[0]+r[1])/2);
-  F.strategies.push({
+  list.push({
     id: uid(), libKey: name, name,
     cat: lib.cat,
     who: 'Client 1',
@@ -20825,27 +20871,42 @@ function addStrategy(name){
   toast('Added — review the weighting and deductible %');
 }
 function addCustomStrategy(){
-  F.strategies.push({ id: uid(), libKey:'', name:'Custom strategy', cat:'Investments', who:'Client 1', w:10, d:0, treat:'Non-Deductible', basis:'' });
+  activeStrats().push({ id: uid(), libKey:'', name:'Custom strategy', cat:'Investments', who:'Client 1', w:10, d:0, treat:'Non-Deductible', basis:'' });
   save(); render();
 }
-function removeStrategy(id){ F.strategies = F.strategies.filter(s=>s.id!==id); save(); render(); }
+function removeStrategy(id){
+  F.stratsUp = F.stratsUp.filter(s=>s.id!==id);
+  F.stratsOn = F.stratsOn.filter(s=>s.id!==id);
+  save(); render();
+}
 function moveStrategy(id, dir){
-  const i = F.strategies.findIndex(s=>s.id===id);
+  const list = F.stratsUp.some(s=>s.id===id) ? F.stratsUp : F.stratsOn;
+  const i = list.findIndex(s=>s.id===id);
   const j = i + dir;
-  if(i<0 || j<0 || j>=F.strategies.length) return;
-  const t = F.strategies[i]; F.strategies[i] = F.strategies[j]; F.strategies[j] = t;
+  if(i<0 || j<0 || j>=list.length) return;
+  const t = list[i]; list[i] = list[j]; list[j] = t;
   save(); render();
 }
 function normaliseWeights(){
-  const sum = F.strategies.reduce((a,s)=>a+n(s.w),0);
+  const list = activeStrats();
+  const sum = list.reduce((a,s)=>a+n(s.w),0);
   if(sum <= 0){ toast('Nothing to normalise'); return; }
   let acc = 0;
-  F.strategies.forEach((s,i)=>{
-    if(i === F.strategies.length-1){ s.w = Math.round((100-acc)*100)/100; }
+  list.forEach((s,i)=>{
+    if(i === list.length-1){ s.w = Math.round((100-acc)*100)/100; }
     else { s.w = Math.round(n(s.w)/sum*10000)/100; acc += s.w; }
   });
   save(); render();
   toast('Weightings normalised to 100%');
+}
+/* Copy the other invoice's strategies onto the active one as a starting point */
+function copyStrategiesFromOther(){
+  const from = activeKind()==='upfront' ? F.stratsOn : F.stratsUp;
+  if(!from.length){ toast('The other invoice has no strategies yet'); return; }
+  const list = activeStrats();
+  from.forEach(s => { if(!list.some(x=>x.name===s.name)) list.push({...s, id: uid()}); });
+  save(); render();
+  toast('Strategies copied — adjust weightings for this invoice');
 }
 
 function resetAll(){
@@ -20887,14 +20948,14 @@ function logInvoice(num, kind, R){
 function regLoad(num){
   const rec = loadRegister().find(r => r.num === num); if(!rec) return;
   if(!confirm(`Load invoice ${num} (${rec.client1||'no client'}) into the builder? Current unsaved work will be replaced.`)) return;
-  F = Object.assign(defaultState(), rec.snapshot);
+  F = normalizeState(Object.assign(defaultState(), rec.snapshot));
   save(); page = 'builder'; wizardStep = 0; render();
   toast(`Invoice ${num} loaded`);
 }
 function regReExport(num){
   const rec = loadRegister().find(r => r.num === num); if(!rec) return;
   const cur = F;
-  F = Object.assign(defaultState(), rec.snapshot);
+  F = normalizeState(Object.assign(defaultState(), rec.snapshot));
   reexporting = true;
   try{ exportDocx(); } finally { reexporting = false; F = cur; }
 }
@@ -20938,7 +20999,7 @@ function loadJSON(){
     const f = inp.files[0]; if(!f) return;
     const r = new FileReader();
     r.onload = () => {
-      try{ F = Object.assign(defaultState(), JSON.parse(r.result)); save(); render(); toast('Client file loaded'); }
+      try{ F = normalizeState(Object.assign(defaultState(), JSON.parse(r.result))); save(); render(); toast('Client file loaded'); }
       catch(err){ alert('Could not read that file: ' + err.message); }
     };
     r.readAsText(f);
@@ -20969,10 +21030,15 @@ function sectionStatus(k){
       if(C.gross <= 0) return {state:'todo', hint:'Enter the fees paid'};
       if(!F.fyStart || !F.fyEnd) return {state:'warn', hint:'Set the financial year'};
       return {state:'ok'};
-    case 'strategies':
-      if(F.strategies.length === 0) return {state:'todo', hint:'Add the strategies advised'};
-      if(Math.abs(C.wSum-100) > 0.5) return {state:'warn', hint:'Weightings must total 100%'};
+    case 'strategies': {
+      for(const b of buckets()){
+        const tag = F.feeType==='combined' ? (b.kind==='upfront' ? 'Retainer invoice: ' : 'Ongoing invoice: ') : '';
+        if(stratsFor(b.kind).length === 0) return {state:'todo', hint:tag+'add the strategies advised'};
+        const bc = calcAmount(b.fee, b.kind);
+        if(Math.abs(bc.wSum-100) > 0.5) return {state:'warn', hint:tag+'weightings must total 100%'};
+      }
       return {state:'ok'};
+    }
     case 'review':
       if(V.errs.length) return {state:'todo', hint:V.errs.length + ' issue(s) to fix'};
       if(V.warns.length) return {state:'warn', hint:V.warns.length + ' warning(s) to review'};
@@ -21005,7 +21071,7 @@ function recordUndo(){
 function __applyStateSnapshot(s){
   __undo.restoring = true;
   try{
-    F = Object.assign(defaultState(), JSON.parse(s));
+    F = normalizeState(Object.assign(defaultState(), JSON.parse(s)));
     save(); render();
   }catch(_){ }
   __undo.restoring = false;
@@ -21149,9 +21215,12 @@ function renderSideSummary(){
   const el = document.getElementById('sideSummary');
   if(!el) return;
   const C = calc();
+  const wLines = C.buckets.map(b =>
+    `<div>${F.feeType==='combined' ? (b.kind==='upfront'?'Retainer wgt':'Ongoing wgt') : 'Weighting'} <b>${parseFloat(b.C.wSum.toFixed(2))}%</b></div>`
+  ).join('');
   el.innerHTML = `
     <div>Total fees <b>${money(C.gross)}</b></div>
-    <div>Weighting <b>${parseFloat(C.wSum.toFixed(2))}%</b></div>
+    ${wLines}
     <div>Deductible <b class="pos">${money(C.dedTotal)}</b></div>`;
 }
 
@@ -21305,7 +21374,11 @@ function secFees(){
 
 /* ── Section: strategies ── */
 function secStrategies(){
-  const C = calc();
+  const combined = F.feeType === 'combined';
+  const kind = activeKind();
+  const bucket = buckets().find(b => b.kind === kind) || {kind, fee:0};
+  const C = calcAmount(bucket.fee, kind);
+  const list = stratsFor(kind);
   const pct = Math.min(C.wSum, 100);
   const fillCls = Math.abs(C.wSum-100) <= 0.5 ? 'ok' : (C.wSum > 100 ? 'over' : '');
   let h = `
@@ -21313,92 +21386,98 @@ function secStrategies(){
     <div style="font-size:11.5px;color:var(--text-dim);line-height:1.6">
       <b>How this works.</b> Add each strategy that formed part of the advice, weight it by its share of the total
       advice effort/value (<b>weightings must total 100%</b>), then set the deductible portion of that strategy using the
-      built-in cheat-sheet guidance. The tool calculates each strategy's share of the fee${F.feeType==='combined'
-        ? ' on each invoice separately — the same weightings apply to the retainer and ongoing invoices'
-        : ` (${money(C.net)})`} and the deductible amount, split between s8-1 and s25-5. Ranges shown under each control are the MWS house-rule guidance —
-      going outside them flags a warning, not a block: override where the client's facts support it, and document why.
+      built-in cheat-sheet guidance.${combined
+        ? ' The retainer and ongoing invoices each have their <b>own strategy list</b> — e.g. the retainer might cover establishing a new portfolio (not deductible) while the ongoing covers managing an existing one (deductible). Use the tabs below to switch invoice.'
+        : ` The tool calculates each strategy's share of the fee (${money(C.net)}) and the deductible amount, split between s8-1 and s25-5.`}
+      Ranges shown are the MWS house-rule guidance — going outside them flags a warning, not a block: override where the client's facts support it, and document why.
     </div>
   </div>
 
+  ${combined ? `<div class="seg" style="margin-bottom:12px">
+    <button class="${stratTab==='upfront'?'on':''}" onclick="stratTab='upfront';render()">Retainer invoice · ${money(n(F.upfrontFee))} (${F.stratsUp.length})</button>
+    <button class="${stratTab==='ongoing'?'on':''}" onclick="stratTab='ongoing';render()">Ongoing invoice · ${money(n(F.ongoingFee))} (${F.stratsOn.length})</button>
+  </div>`:''}
+
   <div class="wtotal-bar">
-    <span class="wtotal-num">Weighting: ${parseFloat(C.wSum.toFixed(2))}%</span>
+    <span class="wtotal-num">${combined ? (kind==='upfront'?'Retainer':'Ongoing')+' weighting' : 'Weighting'}: ${parseFloat(C.wSum.toFixed(2))}%</span>
     <div class="wtotal-track"><div class="wtotal-fill ${fillCls}" style="width:${pct}%"></div></div>
-    <button class="btn btn-sm" onclick="normaliseWeights()" ${F.strategies.length?'':'disabled'}>⚖ Normalise to 100%</button>
+    <button class="btn btn-sm" onclick="normaliseWeights()" ${list.length?'':'disabled'}>⚖ Normalise to 100%</button>
+    ${combined ? `<button class="btn btn-sm btn-ghost" onclick="copyStrategiesFromOther()" title="Copy the other invoice's strategies onto this one as a starting point">⧉ Copy from ${kind==='upfront'?'ongoing':'retainer'}</button>`:''}
     <button class="btn btn-sm btn-blue" onclick="pickerOpen=!pickerOpen;render()">＋ Add strategy</button>
   </div>`;
 
   if(pickerOpen) h += renderPicker();
 
-  if(F.strategies.length === 0){
+  if(list.length === 0){
     h += `<div class="card" style="text-align:center;padding:34px 20px;color:var(--text-muted)">
       <div style="font-size:26px;margin-bottom:8px">🧩</div>
-      No strategies yet. Click <b>＋ Add strategy</b> to pick from the cheat sheet — weighting, deductible % and the
+      No strategies on ${combined ? `the <b>${kind==='upfront'?'retainer':'ongoing'} invoice</b>` : 'this invoice'} yet.
+      Click <b>＋ Add strategy</b> to pick from the cheat sheet — weighting, deductible % and the
       invoice wording pre-fill from the house rules.
     </div>`;
   }
 
-  F.strategies.forEach((s,i)=>{
+  const couple = !!F.c2.trim();
+  list.forEach((s,i)=>{
     const lib = libByName(s.libKey || s.name);
     const r = C.rows[i];
     const cat = CATS[s.cat] || {label:s.cat, color:'#42586a', bg:'#eef3f8'};
     const wOut = lib && n(s.w) > lib.wHi;
     const dOut = lib && (n(s.d)>lib.dHi || (lib.special && n(s.d)>0));
     const exp = expandedRows[s.id];
+    const nonDed = s.treat === 'Non-Deductible';
+    /* quick-set chips: only when the guidance is a real range */
+    const chipVals = (lib && !nonDed) ? [...new Set([lib.dLo, Math.round((lib.dLo+lib.dHi)/2), lib.dHi])].filter(v=>v>0) : [];
     h += `
-    <div class="strat-row ${wOut||dOut?'flagged':''}">
+    <div class="strat-row ${wOut||dOut?'flagged':''} ${nonDed?'nd':''}">
       <div class="strat-head">
         <div class="strat-title">
           <span class="cat-tag" style="background:${cat.bg};color:${cat.color}">${e(cat.label)}</span>
           <h3>${e(s.name)}</h3>
         </div>
         <div style="display:flex;gap:6px;align-items:center">
-          <div class="strat-fee">${money(r.ded)}<small>deductible of ${money(r.fee)} fee share</small></div>
+          <div class="strat-fee">${nonDed ? `<span class="nd-fee">not deductible</span>` : money(r.ded)}<small>of ${money(r.fee)} fee share</small></div>
           <button class="btn btn-xs" title="Move up" onclick="moveStrategy('${s.id}',-1)">↑</button>
           <button class="btn btn-xs" title="Move down" onclick="moveStrategy('${s.id}',1)">↓</button>
           ${lib?`<button class="btn btn-xs" title="Cheat-sheet guidance" onclick="expandedRows['${s.id}']=!expandedRows['${s.id}'];render()">${exp?'▴':'ℹ'}</button>`:''}
           <button class="btn btn-xs btn-danger" title="Remove" onclick="removeStrategy('${s.id}')">✕</button>
         </div>
       </div>
-      <div class="strat-controls">
+      <div class="strat-controls ${couple?'with-who':''}">
         <div class="field">
-          <label>Weighting of strategy to advice</label>
+          <label>Weighting ${lib?`<span class="guide-inline ${wOut?'out':''}" title="MWS house-rule weighting guidance">guide ${lib.wLo}–${lib.wHi}%</span>`:''}</label>
           <div class="range-line">
             <input type="range" min="0" max="100" step="1" value="${n(s.w)}" oninput="setS('${s.id}','w',this.value)">
-            <input type="number" min="0" max="100" step="0.01" value="${n(s.w)}" oninput="setS('${s.id}','w',this.value)" onblur="render()">%
+            <input type="number" min="0" max="100" step="0.01" value="${n(s.w)}" oninput="setS('${s.id}','w',this.value)" onblur="render()"><span class="pct">%</span>
           </div>
-          ${lib?`<span class="guide-chip ${wOut?'out':''}" title="MWS house-rule weighting guidance">guide ${lib.wLo}–${lib.wHi}%</span>`:''}
         </div>
         <div class="field">
-          <label>Deductible portion of strategy</label>
-          <div class="range-line">
-            <input type="number" min="0" max="100" step="0.01" value="${n(s.d)}" ${s.treat==='Non-Deductible'?'disabled':''} oninput="setS('${s.id}','d',this.value)" onblur="render()">%
-          </div>
-          ${lib?`<span class="guide-chip ${dOut?'out':''}" title="${e(lib.dGuide)}">guide ${e(lib.dGuide.length>22 ? lib.dLo+'–'+lib.dHi+'%*' : lib.dGuide)}</span>
-          <span class="qchips">
-            <button onclick="setS('${s.id}','d',${lib.dLo});render()" title="Conservative end">${lib.dLo}</button>
-            <button onclick="setS('${s.id}','d',${Math.round((lib.dLo+lib.dHi)/2)});render()" title="Midpoint">${Math.round((lib.dLo+lib.dHi)/2)}</button>
-            <button onclick="setS('${s.id}','d',${lib.dHi});render()" title="Top of range — needs strong evidence">${lib.dHi}</button>
-          </span>`:''}
+          <label>Deductible ${lib && !nonDed ?`<span class="guide-inline ${dOut?'out':''}" title="${e(lib.dGuide)}">guide ${lib.dLo}–${lib.dHi}%${lib.special?'*':''}</span>`:''}</label>
+          ${nonDed
+            ? `<div class="nd-note">$0 — non-deductible strategy</div>`
+            : `<div class="range-line">
+                <input type="number" min="0" max="100" step="0.01" value="${n(s.d)}" oninput="setS('${s.id}','d',this.value)" onblur="render()"><span class="pct">%</span>
+                ${chipVals.length > 1 ? `<span class="qchips">${chipVals.map(v=>`<button class="${n(s.d)===v?'on':''}" onclick="setS('${s.id}','d',${v});render()" title="Set ${v}%">${v}</button>`).join('')}</span>`:''}
+              </div>`}
         </div>
         <div class="field">
           <label>Deduction section</label>
           <select onchange="setS('${s.id}','treat',this.value);render()">
             ${['s8-1','s25-5','s25-5 & s8-1','Non-Deductible'].map(t=>`<option ${s.treat===t?'selected':''}>${t}</option>`).join('')}
           </select>
-          <span class="treat-pill ${treatClass(s.treat)}" style="margin-top:4px">${e(s.treat)}</span>
         </div>
-        <div class="field">
-          <label>Who (couples)</label>
+        ${couple ? `<div class="field">
+          <label>Who</label>
           <select onchange="setS('${s.id}','who',this.value);render()">
-            ${['Client 1','Client 2','Both'].map(w=>`<option ${s.who===w?'selected':''}>${w}${w==='Client 1'&&F.c1?' — '+e(F.c1.split(' ')[0]):''}${w==='Client 2'&&F.c2?' — '+e(F.c2.split(' ')[0]):''}</option>`).join('')}
+            ${['Client 1','Client 2','Both'].map(w=>`<option value="${w}" ${s.who===w?'selected':''}>${w==='Client 1'?e(F.c1.split(' ')[0]||'Client 1'):w==='Client 2'?e(F.c2.split(' ')[0]||'Client 2'):'Both'}</option>`).join('')}
           </select>
-        </div>
+        </div>`:''}
       </div>
-      <div class="field strat-basis">
+      ${!nonDed ? `<div class="field strat-basis">
         <label>Summary of why tax related (prints on the invoice)</label>
-        <input list="basisList" value="${e(s.basis)}" placeholder="${s.treat==='Non-Deductible'?'not needed — non-deductible':'pick a standard phrase or type your own'}"
+        <input list="basisList" value="${e(s.basis)}" placeholder="pick a standard phrase or type your own"
           oninput="setS('${s.id}','basis',this.value)" onblur="render()">
-      </div>
+      </div>`:''}
       ${exp && lib ? `<div class="strat-detail">
         <div><h5>Use when</h5>${e(lib.useWhen)}</div>
         <div><h5>Apportionment indicators / watch outs</h5>${e(lib.watch)}</div>
@@ -21409,7 +21488,7 @@ function secStrategies(){
   });
 
   h += `<datalist id="basisList">${BASIS_OPTIONS.map(b=>`<option value="${e(b)}">`).join('')}</datalist>`;
-  if(F.strategies.length){
+  if(list.length){
     h += `<div style="display:flex;gap:8px;margin-top:4px">
       <button class="btn btn-sm" onclick="pickerOpen=true;render();window.scrollTo(0,0)">＋ Add another strategy</button>
       <button class="btn btn-sm btn-ghost" onclick="addCustomStrategy()">＋ Custom strategy (not in cheat sheet)</button>
@@ -21430,7 +21509,7 @@ function renderPicker(){
   });
   h += `</div><div class="picker-list">`;
   CHEAT.filter(c=>c.cat===pickerCat).forEach(c=>{
-    const added = F.strategies.some(s=>s.name===c.name);
+    const added = activeStrats().some(s=>s.name===c.name);
     h += `<div class="picker-item ${added?'added':''}" onclick="addStrategy('${e(c.name).replace(/'/g,"\\'")}')" title="${e(c.useWhen)}">
       <span>${e(c.name)}</span>
       <span class="pi-ranges">w ${c.wLo}–${c.wHi}% · ded ${c.dLo}–${c.dHi}%</span>
@@ -21463,8 +21542,8 @@ function secReview(){
       <div class="sumtile hl"><div class="st-l">Deductible — ${e(F.c2)}</div><div class="st-v">${money(r2(C.c2))}</div></div>
     </div>`:''}
     ${F.feeType==='combined' ? (()=>{
-      const up = displayRounding(calcAmount(n(F.upfrontFee)));
-      const on = displayRounding(calcAmount(n(F.ongoingFee)));
+      const up = displayRounding(calcAmount(n(F.upfrontFee), 'upfront'));
+      const on = displayRounding(calcAmount(n(F.ongoingFee), 'ongoing'));
       return `<div class="helper" style="background:var(--blue-light);border-left:3px solid var(--blue);border-radius:8px;padding:8px 12px;margin-top:4px">
         Two <b>separate invoices</b> will be exported: <b>Retainer</b> ${money(up.gross)} (deductible ${money(up.dedTotal)})
         and <b>Ongoing</b> ${money(on.gross)} (deductible ${money(on.dedTotal)}). The tiles above are the combined totals across both.</div>`;
@@ -21609,7 +21688,7 @@ function invoiceHTML(){
 }
 /* One complete invoice document for a single fee bucket (retainer OR ongoing) */
 function invoiceDocHTML(bucket){
-  const C = calcAmount(bucket.fee);
+  const C = calcAmount(bucket.fee, bucket.kind);
   const R = displayRounding(C);
   const kind = bucket.kind;
   const invNum = bucketNum(kind);
@@ -21688,7 +21767,7 @@ function copyText(t, msg){
 function copySummary(){
   const both = !!F.c2.trim();
   const blocks = buckets().map(b => {
-    const R = displayRounding(calcAmount(b.fee));
+    const R = displayRounding(calcAmount(b.fee, b.kind));
     const invNum = bucketNum(b.kind);
     let t = `TAX RECEIPT${invNum?` — Invoice No. ${invNum}`:''} — ${F.licensee} (ABN ${F.abn})\n${F.c2?`${F.c1} and ${F.c2}`:F.c1}\n${F.descOverride.trim()||autoDescription(b.kind)}\n`;
     if(F.fyStart&&F.fyEnd) t += `For the financial year ${fmtDateLong(F.fyStart)} to ${fmtDateLong(F.fyEnd)}\n`;
@@ -21743,7 +21822,7 @@ function renderCheatSheet(){
 
   list.forEach(c=>{
     const cat = CATS[c.cat];
-    const added = F.strategies.some(s=>s.name===c.name);
+    const added = activeStrats().some(s=>s.name===c.name);
     h += `<div class="cs-card">
       <div class="cs-head">
         <div>
@@ -21851,7 +21930,7 @@ function renderGuide(){
   <div class="card"><h3 style="font-family:var(--bf)!important">2 · Fees & Period</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Choose whether the receipt covers <b>ongoing</b> fees, <b>retainer</b> (upfront) fees, or both, then enter the gross amounts paid. Retainer and ongoing fees are never merged — selecting both generates <b>two separate invoices</b>, each with its own invoice number and apportionment, exported as two Word documents and logged individually in History. Set the financial year and receipt date.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">3 · Strategy Apportionment</h3>
-    <p style="font-size:12px;color:var(--text-dim);margin-top:4px">This is the strategy-basis method from TD 2024/7: allocate the total advice fee across the strategies recommended, using professional judgment on what share of the advice each represents. Weightings <b>must total 100%</b> (use ⚖ Normalise). Each strategy pre-fills its deductible % range, deduction section (s8-1 / s25-5) and invoice wording from the cheat sheet — the ranges vary per client, so adjust to the client's facts. The ℹ button shows the full house-rule guidance inline; anything outside guidance is flagged amber, not blocked.</p></div>
+    <p style="font-size:12px;color:var(--text-dim);margin-top:4px">This is the strategy-basis method from TD 2024/7: allocate each invoice's fee across the strategies recommended, using professional judgment on what share of the advice each represents. Weightings <b>must total 100%</b> (use ⚖ Normalise). In Retainer + Ongoing mode each invoice has its <b>own strategy list</b> (switch with the tabs) — e.g. the retainer might cover establishing a new portfolio (not deductible) while the ongoing covers managing an existing one (deductible); ⧉ Copy pulls the other invoice's list across as a starting point. Each strategy pre-fills its deductible % range, deduction section (s8-1 / s25-5) and invoice wording from the cheat sheet — the ranges vary per client, so adjust to the client's facts. The ℹ button shows the full house-rule guidance inline; anything outside guidance is flagged amber, not blocked.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">4 · Review & Check</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Totals, the s8-1 / s25-5 split, per-client amounts for couples, and a validation list. Errors (weights ≠ 100%, super &gt; total, no strategies) should be fixed; warnings are judgment flags to document in the file note.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">5 · Invoice Wording & 6 · Export</h3>
@@ -21899,7 +21978,7 @@ function exportDocxBucket(bucket, invNum){
           HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom, TextWrappingType, ShadingType } = D;
 
   const NY = "0C2E3F", BL = "0D6BE0", TL = "E5F4F6", LB = "EAF4FB", BORD = "D4E2EE", GREY = "5C6B78";
-  const C = calcAmount(bucket.fee); const R = displayRounding(C);
+  const C = calcAmount(bucket.fee, bucket.kind); const R = displayRounding(C);
   const kind = bucket.kind;
   const both = !!F.c2.trim();
   const showWho = F.showWho && both;
