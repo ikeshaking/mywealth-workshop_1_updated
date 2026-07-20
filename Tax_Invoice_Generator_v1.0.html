@@ -20656,7 +20656,6 @@ function defaultState(){
     invDate:todayISO(), fyStart:'', fyEnd:'', invNum:'', invNum2:'',
     gst:true,
     hideZero:false, showWho:true,
-    descOverride:'', notes:'',
     stratsUp:[],   // strategies apportioning the retainer (upfront) invoice
     stratsOn:[],   // strategies apportioning the ongoing invoice
   };
@@ -21015,7 +21014,6 @@ const SECTIONS = [
   {k:'fees',      l:'Fees & Period',            sub:'Upfront and/or ongoing fees paid, and the financial year'},
   {k:'strategies',l:'Strategy Apportionment',   sub:'Weight the advice provided and set the deductible portion of each strategy'},
   {k:'review',    l:'Review & Check',           sub:'Totals, per-client split and validation against the cheat sheet'},
-  {k:'invoice',   l:'Invoice Wording',          sub:'Description of services, layout and notes'},
   {k:'export',    l:'Export',                   sub:'Word document, print/PDF, SoA text and client file'},
 ];
 
@@ -21043,7 +21041,6 @@ function sectionStatus(k){
       if(V.errs.length) return {state:'todo', hint:V.errs.length + ' issue(s) to fix'};
       if(V.warns.length) return {state:'warn', hint:V.warns.length + ' warning(s) to review'};
       return {state:'ok'};
-    case 'invoice': return {state:'ok'};
     case 'export':  return V.errs.length ? {state:'todo', hint:'Fix validation issues first'} : {state:'ok'};
   }
   return {state:'ok'};
@@ -21231,7 +21228,6 @@ function renderSection(k){
     case 'fees': return secFees();
     case 'strategies': return secStrategies();
     case 'review': return secReview();
-    case 'invoice': return secInvoice();
     case 'export': return secExport();
   }
   return '';
@@ -21587,33 +21583,6 @@ function secReview(){
   return h;
 }
 
-/* ── Section: invoice wording ── */
-function secInvoice(){
-  return `
-  <div class="card">
-    <h2>Layout</h2>
-    <div class="helper">The receipt mirrors the MWS format — summary block plus a strategy table with who / why / deductible $.</div>
-    <div style="display:flex;gap:18px;margin-top:12px;flex-wrap:wrap">
-      <label style="display:flex;gap:7px;align-items:center;font-size:12px;cursor:pointer">
-        <input type="checkbox" ${F.hideZero?'checked':''} onchange="F.hideZero=this.checked;save();render()"> Hide $0 (non-deductible) strategy rows on the invoice</label>
-      <label style="display:flex;gap:7px;align-items:center;font-size:12px;cursor:pointer">
-        <input type="checkbox" ${F.showWho?'checked':''} onchange="F.showWho=this.checked;save();render()"> Show the “Who” column ${F.c2.trim()?'':'(auto-hidden for single clients)'}</label>
-    </div>
-  </div>
-  <div class="card">
-    <h2>Description of services</h2>
-    <div class="field"><label>Override the description line (leave blank for the automatic wording)</label>
-      <textarea rows="2" placeholder="${e(autoDescription())}" oninput="setF('descOverride',this.value)" onblur="render()">${e(F.descOverride)}</textarea>
-      <div class="helper">${F.feeType==='combined'
-        ? `Two invoices are generated — each uses its own automatic wording (“${e(autoDescription('upfront'))}” / “${e(autoDescription('ongoing'))}”). An override here replaces the wording on <b>both</b> invoices.`
-        : `Automatic wording: “${e(autoDescription())}”`}</div>
-    </div>
-    <div class="field"><label>Additional note printed under the table (optional)</label>
-      <textarea rows="2" placeholder="e.g. Please provide this receipt to your accountant when preparing your tax return." oninput="setF('notes',this.value)" onblur="render()">${e(F.notes)}</textarea>
-    </div>
-  </div>`;
-}
-
 /* File-name helpers: "MWS Tax Invoice Ongoing FY25-26 - John Smith.docx".
    Couples share a surname as "John & Ann Smith", otherwise
    "John Smith & Ann Doe". (A literal "/" is not allowed in file names,
@@ -21716,7 +21685,7 @@ function invoiceDocHTML(bucket){
   const clientLine = both ? `${F.c1} and ${F.c2}` : F.c1;
   const showWho = F.showWho && both;
   const rows = R.rows.filter(r => !F.hideZero || r.dedR > 0);
-  const desc = F.descOverride.trim() || autoDescription(kind);
+  const desc = autoDescription(kind);
   const fyLine = (F.fyStart && F.fyEnd) ? `For the financial year ${fmtDateLong(F.fyStart)} to ${fmtDateLong(F.fyEnd)}` : '';
 
   let h = `<div class="preview-doc">
@@ -21763,7 +21732,6 @@ function invoiceDocHTML(bucket){
   }
 
   if(F.gst) h += `<div class="inv-gst">The above figures include GST.</div>`;
-  if(F.notes.trim()) h += `<div class="inv-desc" style="margin-top:8px">${e(F.notes)}</div>`;
   h += `</div>
     <img class="inv-brand-footer" src="data:image/png;base64,${BRAND_FOOTER_PNG_B64}" alt="My Wealth Solutions">
   </div>`;
@@ -21789,7 +21757,7 @@ function copySummary(){
   const blocks = buckets().map(b => {
     const R = displayRounding(calcAmount(b.fee, b.kind));
     const invNum = bucketNum(b.kind);
-    let t = `TAX RECEIPT${invNum?` — Invoice No. ${invNum}`:''} — ${F.licensee} (ABN ${F.abn})\n${F.c2?`${F.c1} and ${F.c2}`:F.c1}\n${F.descOverride.trim()||autoDescription(b.kind)}\n`;
+    let t = `TAX RECEIPT${invNum?` — Invoice No. ${invNum}`:''} — ${F.licensee} (ABN ${F.abn})\n${F.c2?`${F.c1} and ${F.c2}`:F.c1}\n${autoDescription(b.kind)}\n`;
     if(F.fyStart&&F.fyEnd) t += `For the financial year ${fmtDateLong(F.fyStart)} to ${fmtDateLong(F.fyEnd)}\n`;
     t += `\nTotal ${feeNoun(b.kind)} fees paid: ${money(R.gross)}\nAdvice not related to tax affairs: ${money(R.notRelated)}\nAdvice fee related to tax affairs: ${money(R.dedTotal)}\n`;
     t += `\nEstimated deductible portion for ${F.c1||'Client 1'}: ${money(both?R.c1:R.dedTotal)}\n`;
@@ -21953,8 +21921,8 @@ function renderGuide(){
     <p style="font-size:12px;color:var(--text-dim);margin-top:4px">This is the strategy-basis method from TD 2024/7: allocate each invoice's fee across the strategies recommended, using professional judgment on what share of the advice each represents. Weightings <b>must total 100%</b> (use ⚖ Normalise). In Retainer + Ongoing mode each invoice has its <b>own strategy list</b> (switch with the tabs) — e.g. the retainer might cover establishing a new portfolio (not deductible) while the ongoing covers managing an existing one (deductible); ⧉ Copy pulls the other invoice's list across as a starting point. Each strategy pre-fills its deductible % range, deduction section (s8-1 / s25-5) and invoice wording from the cheat sheet — the ranges vary per client, so adjust to the client's facts. The ℹ button shows the full house-rule guidance inline; anything outside guidance is flagged amber, not blocked.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">4 · Review & Check</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Totals, the s8-1 / s25-5 split, per-client amounts for couples, and a validation list. Errors (weights ≠ 100%, super &gt; total, no strategies) should be fixed; warnings are judgment flags to document in the file note.</p></div>
-  <div class="card"><h3 style="font-family:var(--bf)!important">5 · Invoice Wording & 6 · Export</h3>
-    <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Tweak the description and display options, then export as a branded Word document or print to PDF. You can also copy a plain-text summary or ready-made SoA disclosure text, and save the inputs as a JSON client file to re-load next year.</p></div>
+  <div class="card"><h3 style="font-family:var(--bf)!important">5 · Export</h3>
+    <p style="font-size:12px;color:var(--text-dim);margin-top:4px">The invoice wording is standardised — no customisation needed. Export as a branded Word document or print to PDF, copy a plain-text summary or ready-made SoA disclosure text, and save the inputs as a JSON client file to re-load next year.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">The tax framework in 30 seconds</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-top:4px"><b>s8-1 ITAA 1997</b> — deductible to the extent the fee is incurred in gaining or producing assessable income: typically ongoing management of an existing income-producing portfolio, income-protection premiums advice, deductible-debt (gearing) management.<br><br>
     <b>s25-5 ITAA 1997</b> — deductible to the extent the fee is for managing the client's tax affairs: tax (financial) advice such as CGT planning, salary sacrifice, contribution deductibility, structuring.<br><br>
@@ -22003,7 +21971,7 @@ function exportDocxBucket(bucket, invNum){
   const both = !!F.c2.trim();
   const showWho = F.showWho && both;
   const rows = R.rows.filter(r => !F.hideZero || r.dedR > 0);
-  const desc = F.descOverride.trim() || autoDescription(kind);
+  const desc = autoDescription(kind);
   const fyLine = (F.fyStart && F.fyEnd) ? `For the financial year ${fmtDateLong(F.fyStart)} to ${fmtDateLong(F.fyEnd)}` : '';
 
   const noBorder = {top:{style:BorderStyle.NONE,size:0,color:"FFFFFF"},bottom:{style:BorderStyle.NONE,size:0,color:"FFFFFF"},
@@ -22125,7 +22093,6 @@ function exportDocxBucket(bucket, invNum){
   }
 
   if(F.gst) kids.push(P('The above figures include GST.',{i:true, color:GREY, size:19, before:200}));
-  if(F.notes.trim()) kids.push(P(F.notes,{size:19, before:120}));
 
   const doc = new Document({
     styles:{default:{document:{run:{font:"Nunito", size:21}}}},
