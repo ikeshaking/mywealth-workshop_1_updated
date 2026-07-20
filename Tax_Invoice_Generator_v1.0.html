@@ -20456,14 +20456,15 @@ a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
 .inv-desc{color:#16242e}
 .inv-desc .sub{color:#42586a;font-size:11px}
 .inv-sumtbl{width:100%;border-collapse:collapse;margin-top:12px}
-.inv-sumtbl td{padding:4px 2px;font-size:11.5px}
+.inv-sumtbl td{padding:4px 8px 4px 2px;font-size:11.5px}
 .inv-sumtbl td.v{text-align:right;font-weight:700;white-space:nowrap;width:130px}
 .inv-sumtbl tr.hl td{background:#E5F4F6;font-weight:800;color:#0C2E3F;padding:7px 8px;border-radius:2px}
 .inv-sumtbl tr.sep td{border-top:1px solid #D4E2EE;padding-top:7px}
 .inv-strattbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:11px}
-.inv-strattbl th{background:#0C2E3F;color:#fff;text-align:left;padding:9px 12px;font-weight:700;font-size:11px}
+.inv-strattbl th{background:#0C2E3F;color:#fff;text-align:left;padding:9px 12px;font-weight:700;font-size:11.5px;
+  font-family:'ABC Arizona Flare','ABC Arizona Serif','Playfair Display',Georgia,serif;letter-spacing:.01em}
 .inv-strattbl th:last-child,.inv-strattbl td:last-child{white-space:nowrap}
-.inv-strattbl td{padding:8px 12px;border:1px solid #D4E2EE;vertical-align:top;color:#16242e;background:#EAF4FB}
+.inv-strattbl td{padding:8px 12px;border:1px solid #D4E2EE;vertical-align:top;color:#16242e;background:#E5F4F6}
 .inv-strattbl tr.tot td{background:#2B6FD6;color:#fff;font-weight:800;border-color:#2B6FD6}
 .inv-gst{margin-top:12px;font-size:10.5px;color:#42586a;font-style:italic}
 .inv-note{margin-top:10px;font-size:9px;color:#8a97a3;line-height:1.5}
@@ -22039,7 +22040,7 @@ function exportDocxBucket(bucket, invNum){
       margins:{top:o.hl?80:40,bottom:o.hl?80:40,left:o.hl?120:0,right:60},
       children:[P(label,{bold:!!o.hl, color:o.hl?NY:'16242E', after:0})]}),
     new TableCell({borders:noBorder, shading:o.hl?{type:ShadingType.CLEAR,fill:TL}:undefined,
-      margins:{top:o.hl?80:40,bottom:o.hl?80:40,left:60,right:o.hl?120:0},
+      margins:{top:o.hl?80:40,bottom:o.hl?80:40,left:60,right:120},
       width:{size:22,type:WidthType.PERCENTAGE},
       children:[P(val,{bold:true, color:o.hl?NY:'16242E', align:AlignmentType.RIGHT, after:0})]}),
   ]});
@@ -22055,9 +22056,9 @@ function exportDocxBucket(bucket, invNum){
   /* Strategy table */
   if(rows.length){
     const th = t => new TableCell({shading:{type:ShadingType.CLEAR, fill:NY}, borders:allB(NY),
-      margins:{top:70,bottom:70,left:100,right:100},
-      children:[new Paragraph({children:[new TextRun({text:t, font:"Nunito", size:18, bold:true, color:"FFFFFF"})]})]});
-    const td = (t) => new TableCell({shading:{type:ShadingType.CLEAR, fill:LB},
+      margins:{top:70,bottom:70,left:120,right:120},
+      children:[new Paragraph({children:[new TextRun({text:t, font:"ABC Arizona Flare", size:20, bold:true, color:"FFFFFF"})]})]});
+    const td = (t) => new TableCell({shading:{type:ShadingType.CLEAR, fill:TL},
       borders:allB(BORD), margins:{top:70,bottom:70,left:120,right:120},
       children:[new Paragraph({alignment:AlignmentType.LEFT,
         children:[new TextRun({text:t, font:"Nunito", size:19, color:"16242E"})]})]});
