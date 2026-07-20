@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_4";
+const APP_VERSION = "v8.a_5";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -1250,29 +1250,29 @@ const DEFAULT_SETTINGS = {
   // firm-wide (see defaultFsgDate) and the same across every office.
   officeGroups: [
     {id:"mws1", label:"MWS1 — Brisbane (Newstead)", phone:"07 3852 4114", address:"1/18 Masters Street, Newstead, Brisbane 4006", corpRepName:"My Wealth Solutions Pty Ltd", corpRepNo:"414145", corpRepABN:"66 153 751 832", advisers:[
-      {name:"Chris Runge",    email:"crunge@mywealthsolutions.com.au",   profileDate:"", fsgDate:""},
-      {name:"Nathan Bouris",  email:"nathan@mywealthsolutions.com.au",   profileDate:"", fsgDate:""},
-      {name:"Damien Guazzo",  email:"damien@mywealthsolutions.com.au",   profileDate:"", fsgDate:"2025-11-09"},
-      {name:"Cory Behrens",   email:"cbehrens@mywealthsolutions.com.au", profileDate:"", fsgDate:"2025-11-03"},
-      {name:"Hayden Boglary", email:"hayden@mywealthsolutions.com.au",   profileDate:"", fsgDate:"2025-11-07"},
-      {name:"Ben Budge",      email:"bbudge@mywealthsolutions.com.au",   profileDate:"", fsgDate:"2025-11-09"},
-      {name:"Josh Bareham",   email:"jbareham@mywealthsolutions.com.au", profileDate:"", fsgDate:"2025-11-09"},
-      {name:"Hayden Wilson",  email:"hwilson@mywealthsolutions.com.au",  profileDate:"", fsgDate:"2025-11-04"},
-      {name:"Guy Freeman",    email:"gfreeman@mywealthsolutions.com.au", profileDate:"", fsgDate:"2025-11-11"},
+      {name:"Chris Runge", email:"crunge@mywealthsolutions.com.au", profileDate:"", fsgDate:"2025-11-01"},
+      {name:"Nathan Bouris", email:"nathan@mywealthsolutions.com.au", profileDate:"", fsgDate:"2025-11-01"},
+      {name:"Damien Guazzo", email:"damien@mywealthsolutions.com.au", profileDate:"2025-11-09", fsgDate:"2025-11-01"},
+      {name:"Cory Behrens", email:"cbehrens@mywealthsolutions.com.au", profileDate:"2025-11-03", fsgDate:"2025-11-01"},
+      {name:"Hayden Boglary", email:"hayden@mywealthsolutions.com.au", profileDate:"2025-11-07", fsgDate:"2025-11-01"},
+      {name:"Ben Budge", email:"bbudge@mywealthsolutions.com.au", profileDate:"2025-11-09", fsgDate:"2025-11-01"},
+      {name:"Josh Bareham", email:"jbareham@mywealthsolutions.com.au", profileDate:"2025-11-09", fsgDate:"2025-11-01"},
+      {name:"Hayden Wilson", email:"hwilson@mywealthsolutions.com.au", profileDate:"2025-11-04", fsgDate:"2025-11-01"},
+      {name:"Guy Freeman", email:"gfreeman@mywealthsolutions.com.au", profileDate:"2025-11-11", fsgDate:"2025-11-01"},
     ]},
     {id:"mwslife", label:"MWS Life", phone:"07 3852 4114", address:"1/18 Masters Street, Newstead, Brisbane 4006", corpRepName:"My Wealth Solutions Pty Ltd", corpRepNo:"414145", corpRepABN:"66 153 751 832", advisers:[
       {name:"Chloe Foster", email:"chloe@mywealthsolutions.com.au", profileDate:"", fsgDate:"2025-11-01"},
     ]},
     {id:"mws2", label:"MWS2 — Brisbane (Newstead)", phone:"07 3852 4114", address:"1/18 Masters Street, Newstead, Brisbane 4006", corpRepName:"My Wealth Solutions No2 Pty Ltd T/A My Wealth Solutions ACN 650 826 234", corpRepNo:"1289548", corpRepABN:"83 650 826 234", advisers:[
-      {name:"Nikki Booth", email:"nbooth@mywealthsolutions.com.au", profileDate:"", fsgDate:"2025-11-04"},
+      {name:"Nikki Booth", email:"nbooth@mywealthsolutions.com.au", profileDate:"2025-11-04", fsgDate:"2025-11-01"},
     ]},
     {id:"mws3", label:"MWS Sydney", phone:"02 3813 8743", address:"Level 32, 200 George Street, Sydney NSW 2000", corpRepName:"My Wealth Sydney Pty Ltd T/A My Wealth Solutions ACN 664 520 334", corpRepNo:"1302551", corpRepABN:"", advisers:[
-      {name:"Matthew Leech", email:"matt@mywealthsolutions.com.au", profileDate:"", fsgDate:"2025-11-06"},
+      {name:"Matthew Leech", email:"matt@mywealthsolutions.com.au", profileDate:"2025-11-06", fsgDate:"2025-11-01"},
     ]},
     {id:"ewar", label:"Ballina — My Wealth Gold Coast to Ballina", phone:"07 5230 4198", address:"80-82 Upton Street, Bundall, QLD 4217", corpRepName:"BallinaGCFP Pty Ltd trading as My Wealth Gold Coast to Ballina ACN 670 111 583", corpRepNo:"1305335", corpRepABN:"66 153 751 832", advisers:[
-      {name:"Andrew McLauchlan", email:"andrew@ewar.com.au", profileDate:"", fsgDate:""},
-      {name:"Ryan Tarr",         email:"ryan@ewar.com.au",   profileDate:"", fsgDate:""},
-      {name:"Colby Atkinson",    email:"colby@ewar.com.au",  profileDate:"", fsgDate:"2025-11-03"},
+      {name:"Andrew McLauchlan", email:"andrew@ewar.com.au", profileDate:"", fsgDate:"2025-11-01"},
+      {name:"Ryan Tarr", email:"ryan@ewar.com.au", profileDate:"", fsgDate:"2025-11-01"},
+      {name:"Colby Atkinson", email:"colby@ewar.com.au", profileDate:"2025-11-03", fsgDate:"2025-11-01"},
     ]},
   ],
   // Legacy flat roster — kept in sync from officeGroups so older adviser-lookup code and
@@ -1302,7 +1302,7 @@ const DEFAULT_SETTINGS = {
   // Default street address shown on the cover page (firm office).
   defaultStreet: "1/18 Masters Street, Newstead, Brisbane 4006",
   // Firm-wide FSG date applied to every new ROA (e.g. the current FSG version date).
-  defaultFsgDate: "",
+  defaultFsgDate: "2025-11-01",
   // Fallback adviser profile date (used if the selected adviser has no per-adviser date).
   defaultAdviserProfileDate: "",
   // Per-scenario wording overrides — lets the firm edit objectives / recommendation
@@ -1353,7 +1353,7 @@ const DEFAULT_SETTINGS = {
   // advisers are refreshed from these built-in defaults so roster updates always show through
   // (without wiping their other saved settings). Current update: 4 offices, per-adviser FSG
   // dates, per-office authorised-rep/CAR details.
-  rosterVersion: "2026-07-20b"
+  rosterVersion: "2026-07-20c"
 };
 
 // Live settings — loaded from localStorage (falling back to DEFAULT_SETTINGS),
