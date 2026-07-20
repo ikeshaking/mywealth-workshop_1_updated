@@ -20454,10 +20454,9 @@ a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
 .inv-sumtbl tr.hl td{background:#E5F4F6;font-weight:800;color:#0C2E3F;padding:7px 8px;border-radius:2px}
 .inv-sumtbl tr.sep td{border-top:1px solid #D4E2EE;padding-top:7px}
 .inv-strattbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:11px}
-.inv-strattbl th{background:#0C2E3F;color:#fff;text-align:left;padding:8px 10px;font-weight:700;font-size:11px}
-.inv-strattbl th:last-child,.inv-strattbl td:last-child{text-align:center;white-space:nowrap}
-.inv-strattbl td{padding:7px 10px;border:1px solid #D4E2EE;vertical-align:top;color:#16242e}
-.inv-strattbl tr:nth-child(even) td{background:#EAF4FB}
+.inv-strattbl th{background:#0C2E3F;color:#fff;text-align:left;padding:9px 12px;font-weight:700;font-size:11px}
+.inv-strattbl th:last-child,.inv-strattbl td:last-child{white-space:nowrap}
+.inv-strattbl td{padding:8px 12px;border:1px solid #D4E2EE;vertical-align:top;color:#16242e;background:#EAF4FB}
 .inv-strattbl tr.tot td{background:#2B6FD6;color:#fff;font-weight:800;border-color:#2B6FD6}
 .inv-gst{margin-top:12px;font-size:10.5px;color:#42586a;font-style:italic}
 .inv-note{margin-top:10px;font-size:9px;color:#8a97a3;line-height:1.5}
@@ -21991,9 +21990,9 @@ function exportDocxBucket(bucket, invNum){
     const th = t => new TableCell({shading:{type:ShadingType.CLEAR, fill:NY}, borders:allB(NY),
       margins:{top:70,bottom:70,left:100,right:100},
       children:[new Paragraph({children:[new TextRun({text:t, font:"Nunito", size:18, bold:true, color:"FFFFFF"})]})]});
-    const td = (t,i,center) => new TableCell({shading: i%2 ? {type:ShadingType.CLEAR, fill:LB} : undefined,
-      borders:allB(BORD), margins:{top:60,bottom:60,left:100,right:100},
-      children:[new Paragraph({alignment:center?AlignmentType.CENTER:AlignmentType.LEFT,
+    const td = (t) => new TableCell({shading:{type:ShadingType.CLEAR, fill:LB},
+      borders:allB(BORD), margins:{top:70,bottom:70,left:120,right:120},
+      children:[new Paragraph({alignment:AlignmentType.LEFT,
         children:[new TextRun({text:t, font:"Nunito", size:19, color:"16242E"})]})]});
 
     const headCells = [th('Strategy')];
@@ -22002,11 +22001,11 @@ function exportDocxBucket(bucket, invNum){
     headCells.push(th('Estimated deductible portion ($)'));
 
     const trows = [new TableRow({tableHeader:true, children:headCells})];
-    rows.forEach((r,i)=>{
-      const cells = [td(r.name,i)];
-      if(showWho) cells.push(td(r.who==='Client 1'?(F.c1||'Client 1'):r.who==='Client 2'?(F.c2||'Client 2'):'Both', i));
-      cells.push(td(r.ded>0 ? (r.basis||'') : '', i));
-      cells.push(td(money(r.dedR), i, true));
+    rows.forEach(r=>{
+      const cells = [td(r.name)];
+      if(showWho) cells.push(td(r.who==='Client 1'?(F.c1||'Client 1'):r.who==='Client 2'?(F.c2||'Client 2'):'Both'));
+      cells.push(td(r.ded>0 ? (r.basis||'') : ''));
+      cells.push(td(money(r.dedR)));
       trows.push(new TableRow({children:cells}));
     });
     /* Total row — solid brand blue with white bold text */
@@ -22019,8 +22018,8 @@ function exportDocxBucket(bucket, invNum){
     if(showWho) totCells.push(blank());
     totCells.push(blank());
     totCells.push(new TableCell({shading:{type:ShadingType.CLEAR, fill:TOTBLUE}, borders:allB(TOTBLUE),
-      margins:{top:70,bottom:70,left:100,right:100},
-      children:[new Paragraph({alignment:AlignmentType.CENTER, children:[new TextRun({text:money(R.dedTotal), font:"Nunito", size:19, bold:true, color:"FFFFFF"})]})]}));
+      margins:{top:70,bottom:70,left:120,right:120},
+      children:[new Paragraph({alignment:AlignmentType.LEFT, children:[new TextRun({text:money(R.dedTotal), font:"Nunito", size:19, bold:true, color:"FFFFFF"})]})]}));
     trows.push(new TableRow({children:totCells}));
 
     kids.push(new Table({width:{size:100,type:WidthType.PERCENTAGE}, rows:trows}));
