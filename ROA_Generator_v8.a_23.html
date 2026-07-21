@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_22";
+const APP_VERSION = "v8.a_23";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","Acenda","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -3300,33 +3300,26 @@ const SCENARIOS = {
   // ═══════════════════════════════════════════════════════════
   // INSURANCE — Additional scenarios
   // ═══════════════════════════════════════════════════════════
-  ins_key_person: {
-    cat:"Insurance", type:"ROA", label:"Insurance — Key Person / Buy-Sell Insurance", short:"Key Person",
-    desc:"Key person or buy-sell insurance for business",
-    needs:{insurance:true, insuranceTable:"recommended"},
-    pd:"Key person / buy-sell insurance recommendation",
-    obj:"{name}, during our recent meeting we discussed implementing key person and/or buy-sell insurance through {newInsurer} to protect the business in the event of the death, disability, or trauma of a key person (or business partner), and to provide an orderly succession mechanism.",
-    rec:"apply for key person / buy-sell insurance through {newInsurer} as outlined in the insurance table below, with policy ownership and premium funding structured per the buy-sell or cross-insurance agreement.",
+  ins_agreed_to_indemnity: {
+    cat:"Insurance", type:"ROA", label:"Insurance — Switch Agreed Value IP to Indemnity", short:"Agreed → Indemnity",
+    desc:"Convert an Agreed Value Income Protection policy to an Indemnity policy to reduce premiums",
+    needs:{insurance:true, insuranceTable:"alter"}, coverScope:["ip"],
+    pd:"Alteration of your Income Protection policy from Agreed Value to Indemnity",
+    obj:"{name}, during our recent review, you advised that you would like to reduce the cost of your Income Protection cover while maintaining an appropriate level of protection. You have requested advice regarding the suitability of converting your existing Agreed Value Income Protection policy to an Indemnity Income Protection policy to improve affordability.",
+    rec:"alter your existing Income Protection policy from an Agreed Value policy to an Indemnity policy.",
     benefits:[
-      "Key person insurance provides your business with a financial buffer to replace the economic contribution of a key person who is lost to death, disability or serious illness.",
-      "Buy-sell insurance funds the transfer of business equity from a departing or deceased owner's estate to the continuing owners, avoiding a forced sale or disruption to the business.",
-      "Cross-insurance arrangements, where each owner holds a policy on the other, can provide a tax-efficient way to fund the agreement.",
-      "Premiums for revenue-purpose key person cover are generally tax-deductible, with the benefits taxable. Premiums for capital-purpose cover are not deductible, however the benefits may be treated on capital account.",
-      "A well-structured buy-sell agreement with insurance funding reduces the risk of a forced business sale, unwanted external equity entering the business, or disputes with a deceased owner's estate.",
-      "This provides peace of mind for you, your fellow business owners, your staff and your creditors."
+      "The recommended alteration will reduce the ongoing premium payable for your Income Protection cover by $XX, improving the affordability of maintaining the policy.",
+      "The premium savings may assist in improving your cashflow and reducing the overall cost of your insurance arrangements.",
+      "Where premiums are funded through superannuation, the reduction in premiums may help preserve your superannuation balance by reducing the amount deducted from the fund to maintain the cover.",
+      "Subject to the insurer's terms and conditions, you will continue to hold Income Protection cover with the same waiting period and benefit period currently applicable under the policy.",
+      "We consider this recommendation to be appropriate as it addresses your objective of reducing the cost of your Income Protection cover while continuing to maintain an appropriate level of protection."
     ],
     risks:[
-      "Key person and buy-sell insurance is a specialist area. Incorrect structuring can result in unintended tax outcomes, ownership disputes or ineffective funding of the intended benefit.",
-      "Your buy-sell agreement must be updated when ownership or business valuations change. If it is not reviewed, the insured amount can fall out of line with the actual equity values.",
-      "Premiums for capital-purpose key person cover are not tax-deductible, whereas revenue-purpose premiums are. Incorrect classification can result in disputes with the ATO.",
-      "Your application is subject to underwriting. Based on health, occupation or business activities, the insurer may apply an exclusion or may decline the cover.",
-      "Premiums can be substantial for larger cover amounts or for older business owners. Therefore you should confirm the cover remains affordable on an ongoing basis.",
-      "Your buy-sell agreement should be reviewed by a qualified solicitor to ensure it aligns with the business's constituent documents, such as a shareholders or partnership agreement.",
-      "The tax treatment of key person benefits at claim time depends on the purpose of the cover. Please engage your accountant for guidance."
-    ],
-    otherConsiderations:[
-      "Please engage your business solicitor and accountant to draft / review the buy-sell agreement alongside this insurance implementation.",
-      "A valuation review should be conducted every 2-3 years to ensure cover remains aligned with business value."
+      "The recommended alteration will reduce the policy’s income replacement ratio from 75% to 70%, which may result in a lower monthly benefit being payable at claim time.",
+      "By converting from an Agreed Value policy to an Indemnity policy, you will lose the certainty of a pre-agreed monthly benefit. Under an Indemnity policy, the benefit payable will be assessed based on your eligible earnings in the period prior to claim.",
+      "The insured monthly benefit represents the maximum benefit available under the policy and is not guaranteed to be paid. If your income reduces before a claim, the actual benefit payable may be lower than the insured amount and lower than the benefit that may have been payable under your existing Agreed Value policy.",
+      "The insurer may require financial evidence to verify your income at claim time, which may result in a more detailed claims assessment process.",
+      "Agreed Value Income Protection policies are no longer available for new business. If you proceed with this alteration, you will be unable to reinstate or obtain Agreed Value cover in the future, making the change irreversible."
     ]
   },
 
