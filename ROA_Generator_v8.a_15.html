@@ -1185,9 +1185,9 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_14";
+const APP_VERSION = "v8.a_15";
 
-const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
+const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","Acenda","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
 // (e.g. "ClearView ClearChoice" → "ClearView", "NEOS Protect" → "NEOS"). The table still
 // shows whatever was entered; this only affects the narrative tokens. Unknown values are
@@ -13770,7 +13770,7 @@ function parseInsuranceScheduleRoa(text){
     // the provider line is the NEXT record's sum insured (e.g. the trauma sum
     // or IP monthly benefit printed above the next "TAL (BT)"/"AIA" line) —
     // pull it into this record instead of the previous one.
-    while(cut > from && /^\s*(?:\$[\d,]+(?:\.\d{2})?)?\s*$/.test(lines[cut-1]||'')) cut--;
+    while(cut > from && /^\s*(?:\$[\d,]+(?:\.\d{2})?(?:\s+\$[\d,]+(?:\.\d{2})?)*)?\s*$/.test(lines[cut-1]||'')) cut--;
     bounds.push(cut);
   });
   bounds.push(lines.length);
@@ -13792,9 +13792,10 @@ function parseInsuranceScheduleRoa(text){
     // "Own Occupation" in the TPD row) — never assume Own.
     const anyOcc = /any\s*occupation/i.test(chunk);
     const ownOcc = /own\s*occupation/i.test(chunk);
-    const occ = (anyOcc && !ownOcc) ? 'Any-Occupation' : 'Own-Occupation';
+    const occ = (anyOcc && !ownOcc) ? 'Any-Occupation'
+      : (ownOcc ? 'Own-Occupation' : (inSuper ? 'Any-Occupation' : 'Own-Occupation'));
     // Trauma features from the schedule comments (Plus option, Reinstatement).
-    const trFeats = [linked ? 'Linked' : 'Standalone'];
+    const trFeats = [(linked || !/standalone/i.test(chunk)) ? 'Linked' : 'Standalone'];
     if(/\bPlus\b/.test(chunk)) trFeats.push('Plus');
     if(/Reinstatement:\s*Yes/i.test(chunk)) trFeats.push('Reinstatement');
     const trLabel = 'Trauma (' + (trFeats.length > 1 ? trFeats.slice(0,-1).join(', ') + ' & ' + trFeats[trFeats.length-1] : trFeats[0]) + ')';
@@ -13806,7 +13807,7 @@ function parseInsuranceScheduleRoa(text){
     // stops "$1,400.76" backtracking into a bogus "$1,40" lump-sum match.
     const bigs = [...chunk.matchAll(/\$\s*([\d,]+(?:\.\d+)?)/g)]
       .filter(x=>!x[1].includes('.')).map(x=>parseFloat(x[1].replace(/,/g,'')))
-      .filter(n=>n>=1000).sort((a,b)=>b-a);
+      .filter(n=>n>=100).sort((a,b)=>b-a);
     const prems = [...chunk.matchAll(/\$([\d,]+\.\d{2})/g)].map(x=>parseFloat(x[1].replace(/,/g,'')));
     const annual = /annual/i.test(chunk);
     const pm = prems.length ? (annual ? prems[0]/12 : prems[0]) : 0;
@@ -13840,6 +13841,14 @@ function parseInsuranceScheduleRoa(text){
       monthlyPremiumAfterTax: afterPm ? fmt(afterPm) + ' pm (after tax)' : '',
       exclusions: /Exclusion:\s*Yes/i.test(chunk)?'Yes (see policy)':'',
       status:'In Force', _pm: pm, _after: afterPm, _super: inSuper});
+  });
+  // A super TPD with a super Life at the same provider is LINKED even when
+  // the schedule omits the token — they share the one policy.
+  rows.forEach(r => {
+    if(/^TPD \(Standalone/.test(r.coverType) && r._super
+       && rows.some(l => /^Life/.test(l.coverType) && l._super && (l.provider||'') === (r.provider||''))){
+      r.coverType = r.coverType.replace('Standalone', 'Linked');
+    }
   });
   // ── One cover split across premium components ── some schedules hold the
   // SAME cover as stepped + level layers of the one policy (two Life lines,
@@ -13923,7 +13932,7 @@ function parseInsuranceScheduleRoa(text){
     if(/^ip|income/i.test(r.coverType) && !r.benefitAmount){
       const all = [...body.matchAll(/\$\s*([\d,]+(?:\.\d+)?)/g)]
         .filter(x=>!x[1].includes('.')).map(x=>parseFloat(x[1].replace(/,/g,'')));
-      const cand = all.filter(n=>n>=1000 && n<60000 && usedBens.indexOf(n)===-1).sort((a,b)=>b-a)[0];
+      const cand = all.filter(n=>n>=100 && n<60000 && usedBens.indexOf(n)===-1).sort((a,b)=>b-a)[0];
       if(cand) r.benefitAmount = fmt(cand)+' pm';
     }
   });
