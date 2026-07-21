@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_9";
+const APP_VERSION = "v8.a_10";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -13787,8 +13787,13 @@ function parseInsuranceScheduleRoa(text){
     const anyOcc = /any\s*occupation/i.test(chunk);
     const ownOcc = /own\s*occupation/i.test(chunk);
     const occ = (anyOcc && !ownOcc) ? 'Any-Occupation' : 'Own-Occupation';
+    // Trauma features from the schedule comments (Plus option, Reinstatement).
+    const trFeats = [linked ? 'Linked' : 'Standalone'];
+    if(/\bPlus\b/.test(chunk)) trFeats.push('Plus');
+    if(/Reinstatement:\s*Yes/i.test(chunk)) trFeats.push('Reinstatement');
+    const trLabel = 'Trauma (' + (trFeats.length > 1 ? trFeats.slice(0,-1).join(', ') + ' & ' + trFeats[trFeats.length-1] : trFeats[0]) + ')';
     const ct = isIP ? (/indemnity/i.test(chunk)?'IP (Indemnity & Standard Contract)':'Income Protection')
-      : isTrauma ? (linked?'Trauma':'Trauma (Standalone)')
+      : isTrauma ? trLabel
       : isTPD ? (linked?('TPD (Linked & '+occ+')'):('TPD (Standalone & '+occ+')'))
       : 'Life (Linked)';
     // Whole money tokens only — matching digits-with-optional-decimals up front
@@ -13799,6 +13804,9 @@ function parseInsuranceScheduleRoa(text){
     const prems = [...chunk.matchAll(/\$([\d,]+\.\d{2})/g)].map(x=>parseFloat(x[1].replace(/,/g,'')));
     const annual = /annual/i.test(chunk);
     const pm = prems.length ? (annual ? prems[0]/12 : prems[0]) : 0;
+    // "After rebate:" figure (super 15% tax rebate) → the after-tax premium.
+    const hasRebate = /after\s*rebate/i.test(chunk) && prems.length > 1;
+    const afterPm = hasRebate ? (annual ? prems[prems.length-1]/12 : prems[prems.length-1]) : 0;
     let benN = isIP ? (bigs.find(n=>n<60000)||0) : (bigs[0]||0);
     if(benN) usedBens.push(benN);
     const wait = (chunk.match(/(\d+)\s*Days?\s*Waiting/i)||[])[1];
@@ -13807,10 +13815,38 @@ function parseInsuranceScheduleRoa(text){
     rows.push({provider:prov, coverType:ct, lifeInsured: insured.split(/\s+/)[0], owner: inSuper?'Super':(insured.split(/\s+/)[0]||'Self-Owned'),
       benefitAmount: benN?fmt(benN)+(isIP?' pm':''):'',
       waitingPeriod: wait?wait+' days':'', benefitPeriod: bp?'To Age '+bp:'',
-      premiumStructure: struct, premiumNote: pm?fmt(pm)+' pm':'',
+      premiumStructure: struct,
+      monthlyPremium: pm ? (fmt(pm) + (afterPm ? ' pm (before tax)' : ' pm')) : '',
+      monthlyPremiumAfterTax: afterPm ? fmt(afterPm) + ' pm (after tax)' : '',
       exclusions: /Exclusion:\s*Yes/i.test(chunk)?'Yes (see policy)':'',
-      status:'In Force'});
+      status:'In Force', _pm: pm, _after: afterPm, _super: inSuper});
   });
+  // ── Superlink TPD (SOA-generator presentation) ── an Any-Occupation TPD
+  // inside super plus an ordinary Own-Occupation (Superlink) TPD are ONE
+  // cover: own occupation supersedes any, the row stays grouped with the
+  // linked Life in super, and the personal-cashflow premium joins the linked
+  // Life+TPD premium as "($X from super plus $Y from personal cashflow)".
+  {
+    const tSuper = rows.find(r => /^TPD/.test(r.coverType) && r._super && /Any-Occupation/.test(r.coverType));
+    const tOwn = rows.find(r => /^TPD/.test(r.coverType) && !r._super && /Own-Occupation/.test(r.coverType));
+    if(tSuper && tOwn){
+      tSuper.coverType = tSuper.coverType.replace('Any-Occupation', 'Own-Occupation');
+      const life = rows.find(r => /^Life/.test(r.coverType) && r._super);
+      const superMo = Math.round((life ? life._pm : 0) + tSuper._pm);
+      const persMo = Math.round(tOwn._pm);
+      const target = life || tSuper;
+      target.monthlyPremium = fmt(superMo + persMo) + ' pm (before tax)';
+      target.premiumNote = '(' + fmt(superMo) + ' from super plus ' + fmt(persMo) + ' from personal cashflow)';
+      const anyRebate = (life && life._after) || tSuper._after;
+      if(anyRebate){
+        const superAfter = Math.round((life ? (life._after || life._pm) : 0) + (tSuper._after || tSuper._pm));
+        target.monthlyPremiumAfterTax = fmt(superAfter + persMo) + ' pm (after tax)';
+      }
+      if(life){ tSuper.monthlyPremium = ''; tSuper.monthlyPremiumAfterTax = ''; tSuper.premiumNote = ''; tSuper.sharedPremiumWithPrev = true; }
+      rows.splice(rows.indexOf(tOwn), 1);
+    }
+  }
+  rows.forEach(r => { delete r._pm; delete r._after; delete r._super; });
   // Reading-order interleave: an IP monthly benefit can land in the previous
   // record's window — recover it from the whole schedule if the IP row is bare.
   rows.forEach(r=>{
