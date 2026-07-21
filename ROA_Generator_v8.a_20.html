@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_19";
+const APP_VERSION = "v8.a_20";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","Acenda","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -18975,7 +18975,9 @@ function renderInsuranceTable(title, key, mirrorSourceKey){
   // Per-table Total Premium Cost (super-funded + cashflow-funded). Stored per table so
   // every table (Current, Original, Altered, Recommended, Alternative…) shows its own
   // total beneath it. Can be auto-calculated from the rows or entered manually.
-  const isAuto = !!(F.insuranceTotalsAuto && F.insuranceTotalsAuto[key]);
+  // Auto-calculation is the DEFAULT — totals sum themselves from the rows on
+  // every render. Typing a manual total switches the table to manual (false).
+  const isAuto = !(F.insuranceTotalsAuto && F.insuranceTotalsAuto[key] === false);
   // When auto is on, recompute from the current rows on each render so it stays in sync.
   if(isAuto){
     if(!F.insuranceTotals) F.insuranceTotals = {};
@@ -18985,7 +18987,7 @@ function renderInsuranceTable(title, key, mirrorSourceKey){
   h += `<div style="margin-top:12px;padding:10px 12px;background:var(--blue-light);border:1px solid var(--blue-soft);border-radius:11px">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
       <div style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px">Total Premium Cost for this table</div>
-      <button class="btn btn-xs" style="margin-left:auto" onclick="autoCalcInsTableTotals('${key}')" title="Add up the before-tax premiums from the rows above — super-owned cover into the Super total, everything else into the Cashflow total.">∑ Auto-calculate from rows</button>
+      ${isAuto ? '' : `<button class="btn btn-xs" style="margin-left:auto" onclick="autoCalcInsTableTotals('${key}')" title="Return to automatic totals — before-tax premiums from the rows above, super-owned cover into the Super total, everything else into Cashflow.">↺ Back to auto-calculated</button>`}
     </div>
     ${isAuto ? `<div class="helper" style="margin:0 0 6px;color:var(--blue)">✓ Auto-calculated from the rows above (updates as you edit premiums). Type in a box to override and switch off auto.</div>` : ''}
     <div class="grid-2">
@@ -19004,7 +19006,8 @@ function setInsTableTotal(tableKey, which, value){
   if(!F.insuranceTotals[tableKey]) F.insuranceTotals[tableKey] = {};
   F.insuranceTotals[tableKey][which] = value;
   // A manual edit turns off auto-calc for this table so we don't overwrite the figure.
-  if(F.insuranceTotalsAuto && F.insuranceTotalsAuto[tableKey]) F.insuranceTotalsAuto[tableKey] = false;
+  if(!F.insuranceTotalsAuto) F.insuranceTotalsAuto = {};
+  F.insuranceTotalsAuto[tableKey] = false;
   render();
 }
 
@@ -19221,6 +19224,13 @@ function autoFillInsAfterTax(){
           r.monthlyPremiumAfterTax = ''; delete r._afterTaxAuto;
         }
       });
+      // Table totals auto-calculate too (unless the adviser typed a manual
+      // total for this table) — computed here so they're right even when the
+      // insurance section hasn't been opened before exporting.
+      if(!(F.insuranceTotalsAuto && F.insuranceTotalsAuto[k] === false) && typeof computeInsTableTotals === 'function'){
+        if(!F.insuranceTotals) F.insuranceTotals = {};
+        F.insuranceTotals[k] = computeInsTableTotals(k);
+      }
     });
   }catch(_){}
 }
