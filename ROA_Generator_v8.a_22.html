@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_21";
+const APP_VERSION = "v8.a_22";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","Acenda","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -14504,6 +14504,13 @@ async function importInsuranceFileToTable(file, fKey, forcedPerson){
       const differentPerson = exNames.size && inNames.size && ![...inNames].some(n => exNames.has(n));
       if(differentPerson){
         mode = 'append';
+      } else if(fKey === 'insuranceRecommended' || fKey === 'insuranceAltered'){
+        // Mirror-then-import workflow: the table is usually mirrored from
+        // Current Cover, then the alteration quote drops on top. The quote
+        // OVERRIDES the mirrored rows in place — matching covers take the
+        // imported figures; only genuinely new covers are added. Never
+        // duplicate rows.
+        mode = 'update';
       } else {
         mode = confirm('The ' + tableNice + ' table already has ' + existing.length + ' cover line(s).\n\nOK — UPDATE the matching covers with the imported figures (covers not in the table yet are added underneath).\nCancel — REPLACE the whole table with the imported lines.') ? 'update' : 'replace';
       }
@@ -18179,7 +18186,10 @@ function renderSection3ByStrategy(){
     </div>
   </div>`;
   // Smart import — CDM reports, quotes and prior ROAs can be dropped here too.
-  h += renderSmartImportCard();
+  // On an insurance-only ROA the Current / Recommended cover tables have their
+  // own drop zones, so the general card is left out to keep the section clean.
+  const __insOnly = selectedScenarios.length && selectedScenarios.every(id => (SCENARIOS[id]?.cat||'') === 'Insurance');
+  if(!__insOnly) h += renderSmartImportCard();
 
   // Strategy blocks grouped by advice category, mirroring the document flow:
   //   Superannuation tables (each portfolio: recs + allocation + variation)
