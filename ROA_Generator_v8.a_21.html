@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_20";
+const APP_VERSION = "v8.a_21";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","Acenda","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -13320,6 +13320,91 @@ function parseOnePathQuoteRoa(text){
 // ── MetLife Protect new-business quote ("Quote Illustration for …") ────────
 // Section blocks ("Section 1 . Non-Super policy structure") with per-cover
 // field lists: "Cover amount $X", "Total <cover> Premium $Y", WP/BP labels.
+// MetLife Protect "Policy Alteration Quote" EMAIL — one or more policies per
+// client (the super policy plus, sometimes, an ordinary Own-Occupation
+// superlink policy), each with a PROPOSED COVERS table. Builds firm-style rows
+// per client: linked Life+TPD with the combined premium (superlink own-occ
+// premium folded in as the personal-cashflow portion), and the Income Cover
+// with waiting/benefit period + Superannuation Contribution Option.
+function parseMetlifeInforceEmailRoa(text){
+  if(!/MetLife/i.test(text) || !/Policy Alteration Quote/i.test(text) || !/PROPOSED COVERS/i.test(text)) return null;
+  const money = s => parseFloat(String(s||'').replace(/[$,]/g,''))||0;
+  const fmtW = n => '$' + Math.round(n).toLocaleString('en-AU');
+  const parts = text.split(/Policy Number:/i).slice(1);
+  if(!parts.length) return null;
+  const people = {};   // first name → accumulated policy data
+  const order = [];
+  parts.forEach(part => {
+    const insM = part.match(/P[SN]\d{6,}\s*\t([A-Za-z'’\- ]+)/);
+    if(!insM) return;
+    const insured = insM[1].trim();
+    const first = insured.split(/\s+/)[0];
+    if(!people[first]){ people[first] = {insured, life:null, tpd:null, ip:null, sco:0, ownOccMo:0, struct:''}; order.push(first); }
+    const P = people[first];
+    const head = part.split(/PROPOSED COVERS/i)[0] || '';
+    const body = (part.split(/PROPOSED COVERS/i).slice(1).join(' ') || '').split(/Insurance premiums paid|The information contained/i)[0];
+    const inSuper = /Equity Trustees|Superannuation Limited|Superannuation Fund/i.test(head);
+    const yearly = /Payment frequency\s*Yearly/i.test(part);
+    const mo = v => yearly ? v/12 : v;
+    const lifeM = body.match(/^Life\t\$([\d,]+)\t([A-Za-z]+)\t\$([\d,.]+)/m);
+    const tpdM = body.match(/^TPD[^\t\n]*\t\$([\d,]+)\t[A-Za-z]+\t\$([\d,.]+)/m);
+    const ipM = body.match(/(\d+)\s*Days?\s*WP,?\s*To Age\s*(\d+)\s*BP\t\$([\d,]+)\t[A-Za-z]+\t\$([\d,.]+)/);
+    const scoM = body.match(/Superannuation Contribution Option\s*\$([\d,]+)/);
+    const ownM = body.match(/^Own Occupation \(Linked to TPD\)\t[A-Za-z]+\t\$([\d,.]+)/m);
+    const totM = body.match(/Total premium \(Excl\.?\s*Stamp duty\)\s*\$([\d,.]+)/i);
+    if(lifeM){ P.life = {amt:money(lifeM[1]), premMo:mo(money(lifeM[3])), inSuper}; P.struct = lifeM[2]; }
+    if(tpdM){ P.tpd = {amt:money(tpdM[1]), premMo:mo(money(tpdM[2])), inSuper}; }
+    if(ipM){
+      // IP premium = everything income-related in this policy (income cover +
+      // claim indexation + super contribution option) = total − life − tpd.
+      const ipPremAnnualish = totM ? (money(totM[1]) - (lifeM?money(lifeM[3]):0) - (tpdM?money(tpdM[2]):0)) : money(ipM[4]);
+      P.ip = {wp: ipM[1]+' days', bp: 'To Age '+ipM[2], amt: money(ipM[3]), premMo: mo(ipPremAnnualish), inSuper};
+    }
+    if(scoM) P.sco = money(scoM[1]);
+    if(ownM) P.ownOccMo = mo(money(ownM[1]));
+  });
+  const rows = [];
+  order.forEach(first => {
+    const P = people[first];
+    if(!P.life && !P.tpd && !P.ip) return;
+    const struct = P.struct || 'Stepped';
+    const linked = !!(P.life && P.tpd);
+    if(P.life){
+      const superMo = (P.life.premMo||0) + (P.tpd ? P.tpd.premMo : 0);
+      const persMo = P.ownOccMo || 0;
+      const row = {provider:'MetLife', coverType: linked ? 'Life (Linked)' : 'Life',
+        lifeInsured:first, owner: P.life.inSuper ? 'Super' : first,
+        benefitAmount: fmtW(P.life.amt), premiumStructure: struct};
+      if(linked){
+        row.monthlyPremium = fmtW(Math.round(superMo) + Math.round(persMo)) + ' pm (before tax)';
+        if(persMo) row.premiumNote = '(' + fmtW(superMo) + ' from super plus ' + fmtW(persMo) + ' from personal cashflow)';
+        row.monthlyPremiumAfterTax = fmtW(Math.round(superMo*0.85) + Math.round(persMo)) + ' pm (after tax)';
+      } else {
+        row.monthlyPremium = fmtW(P.life.premMo) + ' pm (before tax)';
+        row.monthlyPremiumAfterTax = fmtW(P.life.premMo * (P.life.inSuper ? 0.85 : 1)) + ' pm (after tax)';
+      }
+      rows.push(row);
+    }
+    if(P.tpd){
+      rows.push({provider:'MetLife',
+        coverType: 'TPD (' + (linked?'Linked':'Standalone') + ' & ' + (P.ownOccMo ? 'Own-Occupation' : 'Any-Occupation') + ')',
+        lifeInsured:first, owner: P.tpd.inSuper ? 'Super' : first,
+        benefitAmount: fmtW(P.tpd.amt), premiumStructure: struct,
+        sharedPremiumWithPrev: linked});
+    }
+    if(P.ip){
+      rows.push({provider:'MetLife', coverType:'IP (Indemnity & Standard Contract)',
+        lifeInsured:first, owner: P.ip.inSuper ? 'Super' : first,
+        benefitAmount: fmtW(P.ip.amt) + ' pm', waitingPeriod: P.ip.wp, benefitPeriod: P.ip.bp,
+        superContribution: P.sco ? fmtW(P.sco) : '',
+        premiumStructure: struct,
+        monthlyPremium: fmtW(P.ip.premMo) + ' pm (before tax)',
+        monthlyPremiumAfterTax: fmtW(P.ip.premMo * (P.ip.inSuper ? 0.85 : 1)) + ' pm (after tax)'});
+    }
+  });
+  if(!rows.length) return null;
+  return {rows, client: order.length === 1 ? people[order[0]].insured : ''};
+}
 function parseMetlifeQuoteRoa(text){
   const t = String(text||'');
   if(!/MetLife Protect/i.test(t) || !/Quote Illustration/i.test(t)) return null;
@@ -14230,6 +14315,13 @@ async function importInsuranceFileToTable(file, fKey, forcedPerson){
         rows = (dk === 'current') ? ni.current : ni.proposed;
         cdmClient = ni.client || '';
         source = (dk === 'current') ? 'the NEOS in-force quote (current)' : 'the NEOS in-force quote (new vs current — changes flagged)';
+      }
+    }
+    if(!rows.length){
+      const mi = parseMetlifeInforceEmailRoa(text);
+      if(mi && mi.rows.length){
+        rows = mi.rows; cdmClient = mi.client || '';
+        source = 'the MetLife Protect alteration quote (proposed covers per policy)';
       }
     }
     if(!rows.length){
