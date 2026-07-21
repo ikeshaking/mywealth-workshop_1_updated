@@ -903,7 +903,7 @@ details.collapse-card > div{margin-top:8px;padding-top:8px;border-top:1px solid 
 /* Insurance body rows: vertical alignment on top so visually-merged cells with rowspan align with text */
 .preview-doc h3.cat-head{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif;font-size:17px;color:#0C2E3F;font-weight:700;margin:26px 0 10px}
 .preview-doc p.bnr-head{margin-top:18px}
-.preview-doc table.insurance-table td{vertical-align:top;overflow-wrap:break-word;word-break:normal}
+.preview-doc table.insurance-table td{vertical-align:middle;overflow-wrap:break-word;word-break:normal}
 .preview-doc table.insurance-table tr td{background:#E4F3F5}
 .preview-doc table.insurance-table td.alt{background:#E4F3F5}
 .preview-doc table.insurance-table td.alt2{background:#E4F3F5}
@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_18";
+const APP_VERSION = "v8.a_19";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","Acenda","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -23889,7 +23889,7 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
   const INS_BAND = "5EA6FF";
   const INS_CELL = "E4F3F5";
   const D = docx;
-  const { Table, TableRow, TableCell, WidthType, Paragraph, TextRun, ShadingType, BorderStyle, AlignmentType, VerticalMergeType } = D;
+  const { Table, TableRow, TableCell, WidthType, Paragraph, TextRun, ShadingType, BorderStyle, AlignmentType, VerticalMergeType, VerticalAlign } = D;
 
   // Map merge state names to docx-library values, with fallback for older builds that
   // don't expose VerticalMergeType but accept the string forms.
@@ -23943,6 +23943,7 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
     const cellSpec = {
       width:{size:opts.w||2500, type:WidthType.DXA},
       shading: opts.shade ? {type:ShadingType.CLEAR, fill:opts.shade, color:"auto"} : undefined,
+      verticalAlign: VerticalAlign.CENTER,
       margins:{top:90, bottom:90, left:140, right:140},
       borders:{
         top:{color:BORD, space:0, style:BorderStyle.SINGLE, size:4},
@@ -24105,10 +24106,10 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
       else premStructCell = mergedCellTxt(r.premiumStructure||"", {w:colW[5], shade, align:C});
 
       drows.push(new TableRow({children:[
-        cellTxt(r.coverType, {w:colW[0], shade}),
+        mergedCellTxt(r.coverType, {w:colW[0], shade}),
         buildMergedCell('lifeInsured', r.lifeInsured||""),
         buildMergedCell('owner', r.owner||""),
-        cellTxt(r.status, {w:colW[3], shade, align:C}),
+        mergedCellTxt(r.status, {w:colW[3], shade, align:C}),
         multiCell(benefitLines, {w:colW[4], shade, align:C}),
         premStructCell,
         premiumCell,
