@@ -20867,12 +20867,17 @@ function addStrategy(name){
   const list = activeStrats();
   if(list.some(s => s.name === name)){ toast('Strategy already on this invoice'); return; }
   const mid = r => Math.round((r[0]+r[1])/2);
+  /* Where the guidance range starts at 0% (e.g. downsizer, re-contribution,
+     spouse contributions) the house rules treat the strategy as
+     non-deductible by default — a deductible % must be a deliberate,
+     documented override, so it starts at 0 rather than the midpoint. */
+  const dDefault = (lib.treat==='Non-Deductible' || lib.dLo === 0) ? 0 : mid([lib.dLo, lib.dHi]);
   list.push({
     id: uid(), libKey: name, name,
     cat: lib.cat,
     who: 'Client 1',
     w: mid([lib.wLo, lib.wHi]),
-    d: lib.treat==='Non-Deductible' ? 0 : mid([lib.dLo, lib.dHi]),
+    d: dDefault,
     treat: lib.treat,
     basis: (lib.treat!=='Non-Deductible' && DEFAULT_BASIS[name]) ? DEFAULT_BASIS[name] : '',
   });
