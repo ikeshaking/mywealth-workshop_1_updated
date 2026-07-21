@@ -21129,7 +21129,7 @@ function render(){
         <a class="${page==='builder'?'active':''}" onclick="page='builder';render()">Builder</a>
         <a class="${page==='cheatsheet'?'active':''}" onclick="page='cheatsheet';render()">Apportioning Rules</a>
         <a class="${page==='history'?'active':''}" onclick="page='history';render()">History${loadRegister().length?` (${loadRegister().length})`:''}</a>
-        <a class="${page==='guide'?'active':''}" onclick="page='guide';render()">Guide</a>
+        <a class="${page==='guide'?'active':''}" onclick="page='guide';render()">How To Guide</a>
       </nav>
     </div>
     <div class="top-actions">
@@ -21410,9 +21410,10 @@ function secStrategies(){
   let h = `
   <div class="card card-accent" style="padding:12px 16px">
     <div style="font-size:11.5px;color:var(--text-dim);line-height:1.6">
-      <b>How this works.</b> Add each strategy that formed part of the advice, weight it by its share of the total
-      advice effort/value (<b>weightings must total 100%</b>), then set the deductible portion of that strategy using the
-      built-in apportioning-rules guidance.${combined
+      <b>How this works.</b> Add each strategy that formed part of the advice — <b>confirm them against the client's most
+      recent relevant SoA(s) and cross-check against their most recent relevant wealth review (where applicable)</b> —
+      then weight each by its share of the total advice effort/value (<b>weightings must total 100%</b>) and set the
+      deductible portion using the built-in apportioning-rules guidance.${combined
         ? ' The retainer and ongoing invoices each have their <b>own strategy list</b> — e.g. the retainer might cover establishing a new portfolio (not deductible) while the ongoing covers managing an existing one (deductible). Use the tabs below to switch invoice.'
         : ` The tool calculates each strategy's share of the fee (${money(C.net)}) and the deductible amount, split between s8-1 and s25-5.`}
       Ranges shown are the MWS house-rule guidance — going outside them flags a warning, not a block: override where the client's facts support it, and document why.
@@ -21929,14 +21930,14 @@ function renderHistory(){
    ========================================================================= */
 function renderGuide(){
   return `<div style="max-width:900px;margin:0 auto">
-  <div class="card card-accent"><h2>How to use this tool</h2>
+  <div class="card card-accent"><h2>How To Guide</h2>
   <div class="card-sub" style="margin-bottom:0">Six steps, left to right — the preview on the right always shows exactly what will export.</div></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">1 · Client & Adviser</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Enter the client (and partner for couples) and postal address, then pick the office and adviser — the corporate authorised representative and licensee details fill in automatically from the same roster as the ROA Generator. These print in the receipt header.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">2 · Fees & Period</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Choose whether the receipt covers <b>ongoing</b> fees, <b>retainer</b> (upfront) fees, or both, then enter the gross amounts paid. Retainer and ongoing fees are never merged — selecting both generates <b>two separate invoices</b>, each with its own invoice number and apportionment, exported as two Word documents and logged individually in History. Set the financial year and receipt date.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">3 · Strategy Apportionment</h3>
-    <p style="font-size:12px;color:var(--text-dim);margin-top:4px">This is the strategy-basis method from TD 2024/7: allocate each invoice's fee across the strategies recommended, using professional judgment on what share of the advice each represents. Weightings <b>must total 100%</b> (use ⚖ Normalise). In Retainer + Ongoing mode each invoice has its <b>own strategy list</b> (switch with the tabs) — e.g. the retainer might cover establishing a new portfolio (not deductible) while the ongoing covers managing an existing one (deductible); ⧉ Copy pulls the other invoice's list across as a starting point. Each strategy pre-fills its deductible % range, deduction section (s8-1 / s25-5) and invoice wording from the apportioning rules — the ranges vary per client, so adjust to the client's facts. The ℹ button shows the full house-rule guidance inline; anything outside guidance is flagged amber, not blocked.</p></div>
+    <p style="font-size:12px;color:var(--text-dim);margin-top:4px">This is the strategy-basis method from TD 2024/7: allocate each invoice's fee across the strategies recommended, using professional judgment on what share of the advice each represents. <b>Confirm the strategies you select against the client's most recent relevant SoA(s), and cross-check them against their most recent relevant wealth review (where applicable)</b> — the invoice must reflect the advice actually provided in the period, and those documents are the evidence for it. Weightings <b>must total 100%</b> (use ⚖ Normalise). In Retainer + Ongoing mode each invoice has its <b>own strategy list</b> (switch with the tabs) — e.g. the retainer might cover establishing a new portfolio (not deductible) while the ongoing covers managing an existing one (deductible); ⧉ Copy pulls the other invoice's list across as a starting point. Each strategy pre-fills its deductible % range, deduction section (s8-1 / s25-5) and invoice wording from the apportioning rules — the ranges vary per client, so adjust to the client's facts. The ℹ button shows the full house-rule guidance inline; anything outside guidance is flagged amber, not blocked.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">4 · Review & Check</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Totals, the s8-1 / s25-5 split, per-client amounts for couples, and a validation list. Errors (weights ≠ 100%, super &gt; total, no strategies) should be fixed; warnings are judgment flags to document in the file note.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">5 · Export</h3>
