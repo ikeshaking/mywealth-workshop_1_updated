@@ -20622,7 +20622,7 @@ const DEFAULT_BASIS = {
   'Tax-Loss Harvesting Strategy':'Advice on managing Capital Gains Tax (CGT) implications of investments (s25-5)',
   'Investment Structuring Advice (e.g., Trust, Company)':'Advice on tax-effective investment structuring (e.g., ownership in trust, company, joint names) (s25-5)',
   'Income Protection Insurance Application/Review':'Premiums are tax-deductible as the policy secures assessable replacement income (e.g., Income Protection) (s8-1)',
-  'Advice on Structuring Insurance Inside vs. Outside Super':'Advice on structuring insurance within superannuation, involving tax considerations (s25-5) and the asset itself (s8-1)',
+  'Advice on Structuring Insurance Inside vs. Outside Super':'Advice on the operation of a Commonwealth law relating to taxation (s25-5)',
   'Business Expenses Insurance Advice':'Premiums are tax-deductible as the policy secures assessable replacement income (e.g., Income Protection) (s8-1)',
   'Key Person Insurance (Deductibility Analysis)':'Advice on satisfying tax liabilities or claiming tax entitlements (s25-5)',
   'Debt Recycling Strategy':'Advice on managing a deductible investment loan (Gearing) (s8-1)',
@@ -20867,11 +20867,12 @@ function addStrategy(name){
   const list = activeStrats();
   if(list.some(s => s.name === name)){ toast('Strategy already on this invoice'); return; }
   const mid = r => Math.round((r[0]+r[1])/2);
-  /* Where the guidance range starts at 0% (e.g. downsizer, re-contribution,
-     spouse contributions) the house rules treat the strategy as
-     non-deductible by default — a deductible % must be a deliberate,
-     documented override, so it starts at 0 rather than the midpoint. */
-  const dDefault = (lib.treat==='Non-Deductible' || lib.dLo === 0) ? 0 : mid([lib.dLo, lib.dHi]);
+  /* The deductible % always starts at the conservative low end of the
+     house-rule guidance (0 where the range starts at 0 — e.g. downsizer,
+     re-contribution, spouse contributions). Every watch-out in the rules
+     says the higher end needs documented evidence, so anything above the
+     floor is a deliberate adviser decision via the quick-set chips. */
+  const dDefault = lib.treat==='Non-Deductible' ? 0 : lib.dLo;
   list.push({
     id: uid(), libKey: name, name,
     cat: lib.cat,
