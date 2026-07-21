@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_6";
+const APP_VERSION = "v8.a_7";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -14583,7 +14583,7 @@ function renderAdmin(){
         <div class="field" style="margin:0"><label>Corporate Authorised Rep Name</label><input value="${e(off.corpRepName||'')}" oninput="SETTINGS.officeGroups[${oi}].corpRepName=this.value;adminMarkDirty()" placeholder="e.g. My Wealth Solutions Pty Ltd"></div>
         <div class="field" style="margin:0"><label>Corp Rep No. (CAR)</label><input value="${e(off.corpRepNo||'')}" oninput="SETTINGS.officeGroups[${oi}].corpRepNo=this.value;adminMarkDirty()" placeholder="e.g. 414145"></div>
       </div>
-      <div class="field" style="margin:8px 0 0"><label>Corp Rep ABN</label><input value="${e(off.corpRepABN||'')}" oninput="SETTINGS.officeGroups[${oi}].corpRepABN=this.value;adminMarkDirty()" placeholder="e.g. 66 153 751 832"></div>
+      <div class="field" style="margin:8px 0 0"><label>Corp Rep ABN/ACN</label><input value="${e(off.corpRepABN||'')}" oninput="SETTINGS.officeGroups[${oi}].corpRepABN=this.value;adminMarkDirty()" placeholder="e.g. 66 153 751 832"></div>
       <div class="helper" style="margin-top:4px">The authorised-rep entity, CAR number and ABN print on the ROA cover and fill in automatically when this office is selected. Leave blank to use the firm default.</div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
         <div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px">Advisers in this office</div>
@@ -17521,7 +17521,7 @@ function renderClientSection(){
     </div>
     <div class="grid-3">
       <div class="field"><label>Corporate Authorised Rep Name</label><input value="${e(F.corpRepName)}" onchange="F.corpRepName=this.value"></div>
-      <div class="field"><label>Corp Rep ABN</label><input value="${e(F.corpRepABN)}" onchange="F.corpRepABN=this.value"></div>
+      <div class="field"><label>Corp Rep ABN/ACN</label><input value="${e(F.corpRepABN)}" onchange="F.corpRepABN=this.value"></div>
       <div class="field"><label>Corp Rep No.</label><input value="${e(F.corpRepNo)}" onchange="F.corpRepNo=this.value"></div>
     </div>
     </div>
