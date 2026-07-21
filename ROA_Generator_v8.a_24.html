@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_23";
+const APP_VERSION = "v8.a_24";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","Acenda","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -14492,8 +14492,12 @@ async function importInsuranceFileToTable(file, fKey, forcedPerson){
       // A different person's document (e.g. the partner's quote landing after
       // client 1's) appends under the existing rows automatically — no
       // update/replace question, both people end up in the one table.
-      const exNames = new Set(existing.map(r => (r.lifeInsured||'').trim().toLowerCase()).filter(Boolean));
-      const inNames = new Set(rows.map(r => (r.lifeInsured||'').trim().toLowerCase()).filter(Boolean));
+      // Compare by FIRST NAME — "Colin" (mirrored summary) and "Colin Wirth"
+      // (alteration quote) are the same person, not a reason to append a
+      // second copy of the whole table.
+      const __firstOf = n => (n||'').trim().toLowerCase().split(/\s+/)[0] || '';
+      const exNames = new Set(existing.map(r => __firstOf(r.lifeInsured)).filter(Boolean));
+      const inNames = new Set(rows.map(r => __firstOf(r.lifeInsured)).filter(Boolean));
       const differentPerson = exNames.size && inNames.size && ![...inNames].some(n => exNames.has(n));
       if(differentPerson){
         mode = 'append';
