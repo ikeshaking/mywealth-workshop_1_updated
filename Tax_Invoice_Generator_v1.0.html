@@ -20380,6 +20380,7 @@ a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
 .guide-chip{display:inline-block;font-size:9.5px;font-weight:700;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:999px;padding:1px 8px;margin-top:3px;cursor:default}
 .guide-chip.out{background:var(--amber-light);border-color:var(--amber);color:var(--amber)}
 .nd-note{font-size:11px;color:var(--text-faint);font-style:italic;padding:9px 2px}
+.s25-note{font-size:9.5px;font-weight:700;color:var(--amber);background:var(--amber-light);border:1px solid var(--amber);border-radius:999px;padding:1px 8px;margin-top:4px;display:inline-block;cursor:default}
 .strat-fee .nd-fee{font-size:11px;color:var(--text-faint);font-style:italic;font-weight:600}
 .qchips{display:inline-flex;gap:3px}
 .qchips button{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-dim);cursor:pointer}
@@ -20850,6 +20851,9 @@ function validate(C){
         warns.push(`${tag}“${r.name}” is allocated to ${r.who} but no Client 2 has been entered.`);
     });
   });
+  /* s25-5 precondition (TD 2024/7): the advice must come from a recognised tax adviser */
+  if(C.s25Total > 0)
+    warns.push(`This invoice claims ${money(r2(C.s25Total))} under s25-5 (managing tax affairs). A s25-5 deduction is only available where the advice is provided by a recognised tax adviser — a registered tax agent or a Qualified Tax Relevant Provider (QTRP) registered with ASIC. Confirm ${F.adviser ? F.adviser + ' holds' : 'the adviser holds'} this status before issuing the invoice.`);
   return { errs, warns };
 }
 
@@ -21486,6 +21490,7 @@ function secStrategies(){
           <select onchange="setS('${s.id}','treat',this.value);render()">
             ${['s8-1','s25-5','s25-5 & s8-1','Non-Deductible'].map(t=>`<option ${s.treat===t?'selected':''}>${t}</option>`).join('')}
           </select>
+          ${(s.treat==='s25-5'||s.treat==='s25-5 & s8-1') && n(s.d)>0 ? `<div class="s25-note" title="TD 2024/7: a s25-5 deduction is only available where the advice is provided by a recognised tax adviser — a registered tax agent or a Qualified Tax Relevant Provider (QTRP) registered with ASIC">⚠ s25-5 requires a recognised tax adviser (QTRP)</div>`:''}
         </div>
         ${couple ? `<div class="field">
           <label>Who</label>
