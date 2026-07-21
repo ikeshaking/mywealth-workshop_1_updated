@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_11";
+const APP_VERSION = "v8.a_12";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -18970,10 +18970,13 @@ function splitPremiumDisplayLines(fields){
       // "$83 pm (before tax) ($71 from super and $13 from personal cashflow)"
       // splits into the premium line and the funding-split line, so the cell
       // prints them as separate spaced lines instead of one bracketed blob.
+      // "(before tax)" / "(after tax)" drop to their own line within the cell —
+      // "$87 pm (after tax)" reads better as "$87 pm" over "(after tax)".
+      const taxNL = s => s.replace(/\s*\((before tax|after tax)\)$/i, '\n($1)');
       const fm = part.match(/\(([^()]*(?:from super|from cashflow|from personal|split)[^()]*)\)/i);
       if(fm){
         const rest = (part.slice(0, fm.index) + ' ' + part.slice(fm.index + fm[0].length)).replace(/\s+/g,' ').trim();
-        if(rest) out.push(rest);
+        if(rest) out.push(taxNL(rest));
         out.push('(' + fm[1].trim() + ')');
         return;
       }
@@ -18982,7 +18985,7 @@ function splitPremiumDisplayLines(fields){
       // unless the adviser already wrapped it themselves.
       const isSplitNote = /super/i.test(part) && /(cashflow|personal)/i.test(part);
       if(isSplitNote && !/^\(.*\)$/.test(part)) part = '(' + part + ')';
-      out.push(part);
+      out.push(taxNL(part));
     });
   });
   return out;
@@ -19965,7 +19968,7 @@ function renderInsurancePreviewTable(rows, defsKey){
       // Premium cell: split each field on "/" / newlines so hybrid premiums land on
       // separate lines (matching the Word doc), with a blank-line gap for readability.
       const premLines = splitPremiumDisplayLines(coverKind(r.coverType)==='trauma' ? [r.monthlyPremium, r.premiumNote] : [r.monthlyPremium, r.premiumNote, r.monthlyPremiumAfterTax]);
-      const premiumHtml = premLines.map((s, idx) => `<div${idx < premLines.length - 1 ? ' style="margin-bottom:6px"' : ''}>${e(s)}</div>`).join('');
+      const premiumHtml = premLines.map((s, idx) => `<div${idx < premLines.length - 1 ? ' style="margin-bottom:6px"' : ''}>${e(s).replace(/\n/g,'<br>')}</div>`).join('');
       // Benefit cell: main amount on line 1, waiting/benefit period on line 2.
       const periodBits = insPeriodsDisplay(r);
       const scoTxt = (r.superContribution||'').trim();
@@ -23837,13 +23840,18 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
     valid.forEach((ln, idx) => {
       // opts.gap leaves a blank line between the entries (used by the premium
       // cell so before-tax / funding-split / after-tax read as separate blocks).
-      if(idx > 0) runs.push(new TextRun({text:"", break: opts.gap ? 2 : 1, font:"Nunito", size:opts.size||18}));
-      runs.push(new TextRun({
-        text: ln,
-        font:"Nunito", size:opts.size||18,
-        color: opts.color || (opts.shade===NY ? "FFFFFF" : "1a1a1a"),
-        bold: opts.bold||false, italics: opts.italic||false
-      }));
+      // A newline INSIDE an entry is a plain soft break — "(after tax)" sits
+      // directly under its amount without the blank-line gap.
+      ln.split('\n').forEach((sub, si) => {
+        if(idx > 0 && si === 0) runs.push(new TextRun({text:"", break: opts.gap ? 2 : 1, font:"Nunito", size:opts.size||18}));
+        else if(si > 0) runs.push(new TextRun({text:"", break: 1, font:"Nunito", size:opts.size||18}));
+        runs.push(new TextRun({
+          text: sub,
+          font:"Nunito", size:opts.size||18,
+          color: opts.color || (opts.shade===NY ? "FFFFFF" : "1a1a1a"),
+          bold: opts.bold||false, italics: opts.italic||false
+        }));
+      });
     });
     const cellSpec = {
       width:{size:opts.w||2500, type:WidthType.DXA},
