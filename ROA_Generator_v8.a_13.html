@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_12";
+const APP_VERSION = "v8.a_13";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -13835,6 +13835,34 @@ function parseInsuranceScheduleRoa(text){
       exclusions: /Exclusion:\s*Yes/i.test(chunk)?'Yes (see policy)':'',
       status:'In Force', _pm: pm, _after: afterPm, _super: inSuper});
   });
+  // ── One cover split across premium components ── some schedules hold the
+  // SAME cover as stepped + level layers of the one policy (two Life lines,
+  // two TPD lines…). ADD the layers together: one row per cover kind with the
+  // benefit amounts and premiums summed; mixed structures show as Hybrid.
+  {
+    const kindKey = r => {
+      const k = (r.coverType||'').toLowerCase();
+      const kind = /^life/.test(k) ? 'life' : (/^tpd/.test(k) ? 'tpd' : (/^ip\b|income/.test(k) ? 'ip' : (/trauma/.test(k) ? 'trauma' : k)));
+      return kind + '|' + (r._super ? 's' : 'o') + '|' + (r.provider||'') + '|' + (r.owner||'');
+    };
+    const numB = s => { const n = parseFloat(String(s||'').replace(/[^0-9.]/g,'')); return isFinite(n) ? n : 0; };
+    const firstByKey = {};
+    for(let i = 0; i < rows.length; i++){
+      const key = kindKey(rows[i]);
+      const first = firstByKey[key];
+      if(!first){ firstByKey[key] = rows[i]; continue; }
+      const r = rows[i];
+      const isPmBen = / pm$/.test(first.benefitAmount||'') || / pm$/.test(r.benefitAmount||'');
+      const benSum = numB(first.benefitAmount) + numB(r.benefitAmount);
+      if(benSum) first.benefitAmount = fmt(benSum) + (isPmBen ? ' pm' : '');
+      first._pm = (first._pm||0) + (r._pm||0);
+      first._after = (first._after||0) + (r._after||0);
+      if((r.premiumStructure||'') && first.premiumStructure !== r.premiumStructure) first.premiumStructure = 'Hybrid';
+      first.monthlyPremium = first._pm ? (fmt(first._pm) + (first._after ? ' pm (before tax)' : ' pm')) : '';
+      first.monthlyPremiumAfterTax = first._after ? fmt(first._after) + ' pm (after tax)' : '';
+      rows.splice(i, 1); i--;
+    }
+  }
   // ── Superlink TPD (SOA-generator presentation) ── an Any-Occupation TPD
   // inside super plus an ordinary Own-Occupation (Superlink) TPD are ONE
   // cover: own occupation supersedes any, the row stays grouped with the
