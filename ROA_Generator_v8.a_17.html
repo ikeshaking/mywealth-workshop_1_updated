@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_16";
+const APP_VERSION = "v8.a_17";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","Acenda","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -13799,7 +13799,9 @@ function parseInsuranceScheduleRoa(text){
     if(/\bPlus\b/.test(chunk)) trFeats.push('Plus');
     if(/Reinstatement:\s*Yes/i.test(chunk)) trFeats.push('Reinstatement');
     const trLabel = 'Trauma (' + (trFeats.length > 1 ? trFeats.slice(0,-1).join(', ') + ' & ' + trFeats[trFeats.length-1] : trFeats[0]) + ')';
-    const ct = isIP ? (/indemnity/i.test(chunk)?'IP (Indemnity & Standard Contract)':'Income Protection')
+    // IP is Indemnity & Standard Contract unless the schedule explicitly says
+    // Agreed Value.
+    const ct = isIP ? (/agreed\s*value/i.test(chunk) ? 'IP (Agreed & Standard Contract)' : 'IP (Indemnity & Standard Contract)')
       : isTrauma ? trLabel
       : isTPD ? (linked?('TPD (Linked & '+occ+')'):('TPD (Standalone & '+occ+')'))
       : 'Life (Linked)';
@@ -18932,7 +18934,7 @@ function renderInsuranceTable(title, key, mirrorSourceKey){
         ${isTrauma
           ? `<div class="ins-linked-note">After-tax premium n/a for Trauma (no tax saving).</div>`
           : `<div class="ins-after-tax-row">
-            <input ${fk('at')} value="${e(r.monthlyPremiumAfterTax)}" onchange="F['${key}'][${i}].monthlyPremiumAfterTax=this.value" placeholder="$77 pm (after tax) — optional">
+            <input ${fk('at')} value="${e(r.monthlyPremiumAfterTax)}" onchange="F['${key}'][${i}].monthlyPremiumAfterTax=this.value;delete F['${key}'][${i}]._afterTaxAuto" placeholder="$77 pm (after tax) — auto">
             <button class="btn btn-xs" style="padding:2px 7px;font-size:8.5px" onclick="autoAfterTax('${key}',${i})" title="Estimate the after-tax premium based on cover type: Life/TPD — 15% saving on the super-funded portion only; Income Protection — 15% in super, or the client's marginal rate if personally funded. Reads any super/cashflow split from the Premium field. Override if needed.">auto</button>
           </div>`}
         ${span > 1 ? `<div class="ins-linked-note">⛓ One combined premium across this linked Life + TPD policy — the cells merge over both rows, as in the document. <a onclick="F['${key}'][${i+1}].sharedPremiumWithPrev=false;render()">Unlink</a></div>` : ''}
@@ -19142,25 +19144,24 @@ function splitPremiumFunding(txt, ownerIsSuper){
   const first = dollars.length ? dollars[0].amount : 0;
   return ownerIsSuper ? {superAmt:first, cashAmt:0} : {superAmt:0, cashAmt:first};
 }
-function autoAfterTax(tableKey, i){
-  const r = (F[tableKey]||[])[i];
-  if(!r) return;
+// Pure computation shared by the per-row button and the automatic fill:
+// returns {text} on success, {reason} when it can't be estimated, null for
+// covers with no after-tax saving (trauma) or no before-tax premium yet.
+function computeAfterTaxPremium(r){
   const dollars = parsePremiumDollars(r.premiumNote||'');
-  if(!dollars.length){ alert('Enter a before-tax premium (a "$" figure) first.'); return; }
+  if(!dollars.length) return {reason:'no-premium'};
   const kind = coverKind(r.coverType);
+  if(kind === 'trauma') return null;   // not tax-deductible — no saving
   const ownerIsSuper = /super/i.test(r.owner||'');
   const before = dollars[0].amount;
   // Joint ROA: use the rate belonging to this cover's life insured.
   const __c2first = (F.client2Name||'').trim().split(/\s+/)[0];
   const __forC2 = __c2first && (r.lifeInsured||'').trim() && (r.lifeInsured||'').trim().toLowerCase().startsWith(__c2first.toLowerCase());
-  const mtr = parseFloat(__forC2 ? F.client2Mtr : F.client1Mtr)||0;
+  let mtr = parseFloat(__forC2 ? (F.client2Mtr || F.client1Mtr) : F.client1Mtr)||0;
+  if(mtr > 1) mtr = mtr/100;   // entered as "39" → 39%
 
   let after;
-  if(kind === 'trauma'){
-    // Trauma is not tax-deductible — there is no after-tax saving, so the auto button is
-    // not offered on Trauma rows. If somehow invoked, do nothing.
-    return;
-  } else if(kind === 'lifetpd'){
+  if(kind === 'lifetpd'){
     // 15% saving on the super-funded portion only; cashflow portion no saving.
     const {superAmt, cashAmt} = splitPremiumFunding(r.premiumNote||'', ownerIsSuper);
     const base = (superAmt + cashAmt) || before;
@@ -19173,19 +19174,49 @@ function autoAfterTax(tableKey, i){
     const base = (superAmt + cashAmt) || before;
     const sup = superAmt || (ownerIsSuper ? base : 0);
     const cash = cashAmt || (ownerIsSuper ? 0 : base);
+    if(!ownerIsSuper && !mtr && cash) return {reason:'no-mtr'};
     after = sup * 0.85 + cash * (1 - mtr);
-    if(!ownerIsSuper && !mtr && cash){
-      // No MTR entered — can't estimate the personal deduction. Tell the adviser.
-      alert('This Income Protection cover is personally funded and is tax-deductible at the client\'s marginal rate.\n\nSet the Client Marginal Tax Rate on the Client Details screen to estimate the after-tax cost, or enter the after-tax premium manually.');
-      return;
-    }
   } else {
-    after = before; // unknown cover type — no assumption
+    return null;   // unknown cover type — no assumption
   }
-
-  const fmt = n => '$' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' pm (after tax)';
-  r.monthlyPremiumAfterTax = fmt(after);
+  return {text: '$' + String(Math.round(after)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' pm (after tax)'};
+}
+function autoAfterTax(tableKey, i){
+  const r = (F[tableKey]||[])[i];
+  if(!r) return;
+  const res = computeAfterTaxPremium(r);
+  if(!res) return;
+  if(res.reason === 'no-premium'){ alert('Enter a before-tax premium (a "$" figure) first.'); return; }
+  if(res.reason === 'no-mtr'){
+    alert('This Income Protection cover is personally funded and is tax-deductible at the client\'s marginal rate.\n\nSet the Client Marginal Tax Rate on the Client Details screen to estimate the after-tax cost, or enter the after-tax premium manually.');
+    return;
+  }
+  r.monthlyPremiumAfterTax = res.text;
+  delete r._afterTaxAuto;
   render();
+}
+// Automatic before/after-tax: every insurance row with a before-tax premium
+// gets its after-tax figure computed on the fly — no button press needed.
+// A value typed into the after-tax cell by the adviser always wins; only
+// blank or previously auto-computed values are (re)filled, so the figure
+// tracks premium / owner / MTR changes.
+function autoFillInsAfterTax(){
+  try{
+    ['insuranceCurrent','insuranceRecommended','insuranceOriginal','insuranceAltered','insuranceAlternative','insuranceOption1','insuranceOption2'].forEach(k => {
+      (F[k]||[]).forEach(r => {
+        if(!r || r.sharedPremiumWithPrev) return;
+        if((r.monthlyPremiumAfterTax||'').trim() && !r._afterTaxAuto) return;   // manual or imported value stays
+        const res = computeAfterTaxPremium(r);
+        if(res && res.text){
+          if(r.monthlyPremiumAfterTax !== res.text){ r.monthlyPremiumAfterTax = res.text; }
+          r._afterTaxAuto = true;
+        } else if(r._afterTaxAuto){
+          // No longer computable (premium cleared etc.) — clear the stale figure.
+          r.monthlyPremiumAfterTax = ''; delete r._afterTaxAuto;
+        }
+      });
+    });
+  }catch(_){}
 }
 
 function renderBdbnSection(){
@@ -22106,6 +22137,7 @@ function render(){
   if(ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT')){
     focusKey = ae.getAttribute('data-fk') || null;
   }
+  autoFillInsAfterTax();
   let html = renderTopbar();
   html += renderDatalists();
   if(page==='picker') html += renderPicker();
