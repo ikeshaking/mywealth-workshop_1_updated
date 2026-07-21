@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_17";
+const APP_VERSION = "v8.a_18";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","Acenda","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -19039,6 +19039,12 @@ function splitPremiumDisplayLines(fields){
       out.push(taxNL(part));
     });
   });
+  // Whenever the cell shows an "(after tax)" figure, the before-tax premium is
+  // labelled too — the first plain $ line gains "(before tax)" on its own line.
+  if(out.some(l => /\(after tax\)/i.test(l)) && !out.some(l => /\(before tax\)/i.test(l))){
+    const bi = out.findIndex(l => /^\$/.test(l.trim()) && !/\(after tax\)/i.test(l));
+    if(bi >= 0) out[bi] = out[bi] + '\n(before tax)';
+  }
   return out;
 }
 
