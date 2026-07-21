@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_10";
+const APP_VERSION = "v8.a_11";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -13806,7 +13806,21 @@ function parseInsuranceScheduleRoa(text){
     const pm = prems.length ? (annual ? prems[0]/12 : prems[0]) : 0;
     // "After rebate:" figure (super 15% tax rebate) → the after-tax premium.
     const hasRebate = /after\s*rebate/i.test(chunk) && prems.length > 1;
-    const afterPm = hasRebate ? (annual ? prems[prems.length-1]/12 : prems[prems.length-1]) : 0;
+    let afterPm = hasRebate ? (annual ? prems[prems.length-1]/12 : prems[prems.length-1]) : 0;
+    // No explicit rebate figure — apply the same rules as the grid's after-tax
+    // calculator: super-funded premiums save the 15% super tax rebate;
+    // personally-funded IP is deductible at the client's marginal rate (when
+    // the MTR has been entered). Trauma has no after-tax saving.
+    if(!afterPm && pm){
+      if(inSuper) afterPm = pm * 0.85;
+      else if(isIP){
+        const c2first = ((F.client2Name||'').trim().split(/\s+/)[0]||'').toLowerCase();
+        const whoFirst = (insured.split(/\s+/)[0]||'').toLowerCase();
+        const mtrV = (c2first && whoFirst === c2first) ? (F.client2Mtr || F.client1Mtr) : F.client1Mtr;
+        const mtrN = parseFloat(String(mtrV||'').replace(/[^0-9.]/g,''));
+        if(isFinite(mtrN) && mtrN > 0) afterPm = pm * (1 - mtrN/100);
+      }
+    }
     let benN = isIP ? (bigs.find(n=>n<60000)||0) : (bigs[0]||0);
     if(benN) usedBens.push(benN);
     const wait = (chunk.match(/(\d+)\s*Days?\s*Waiting/i)||[])[1];
@@ -13846,6 +13860,25 @@ function parseInsuranceScheduleRoa(text){
       rows.splice(rows.indexOf(tOwn), 1);
     }
   }
+  // ── Linked Life + TPD share ONE policy premium ── combine both premiums on
+  // the Life row (the TPD row shares the merged cell), matching the SOA
+  // presentation. Skipped when the superlink merge above already combined.
+  {
+    const life = rows.find(r => /^Life/.test(r.coverType) && /linked/i.test(r.coverType));
+    const tpd = rows.find(r => /^TPD \(Linked/.test(r.coverType));
+    if(life && tpd && !tpd.sharedPremiumWithPrev && life._pm && tpd._pm
+       && life._super === tpd._super && (life.provider||'') === (tpd.provider||'')){
+      const anyRebate = life._after || tpd._after;
+      life.monthlyPremium = fmt(Math.round(life._pm) + Math.round(tpd._pm)) + (anyRebate ? ' pm (before tax)' : ' pm');
+      if(anyRebate) life.monthlyPremiumAfterTax = fmt(Math.round(life._after || life._pm) + Math.round(tpd._after || tpd._pm)) + ' pm (after tax)';
+      tpd.monthlyPremium = ''; tpd.monthlyPremiumAfterTax = ''; tpd.sharedPremiumWithPrev = true;
+    }
+  }
+  // Standard cover order: Life, TPD, IP, then Trauma (IP always before Trauma).
+  const __kindOrder = ct => { const k = (ct||'').toLowerCase();
+    if(/^life/.test(k)) return 0; if(/^tpd/.test(k)) return 1;
+    if(/^ip\b|income/.test(k)) return 2; if(/trauma/.test(k)) return 3; return 4; };
+  rows.sort((a,b) => __kindOrder(a.coverType) - __kindOrder(b.coverType));
   rows.forEach(r => { delete r._pm; delete r._after; delete r._super; });
   // Reading-order interleave: an IP monthly benefit can land in the previous
   // record's window — recover it from the whole schedule if the IP row is bare.
