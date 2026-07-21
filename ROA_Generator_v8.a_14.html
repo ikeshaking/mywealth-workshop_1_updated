@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_13";
+const APP_VERSION = "v8.a_14";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -11234,7 +11234,13 @@ function dedupe(arr){
 }
 function e(s){return(s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
 function ordD(s){if(!s)return"";try{const iso=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s);const d=iso?new Date(+iso[1],+iso[2]-1,+iso[3]):new Date(s),day=d.getDate(),sf=[11,12,13].includes(day)?"th":{1:"st",2:"nd",3:"rd"}[day%10]||"th",m=["January","February","March","April","May","June","July","August","September","October","November","December"];return day+sf+" "+m[d.getMonth()]+" "+d.getFullYear()}catch{return s}}
-function opts(arr,v){return'<option value="">— Select —</option>'+arr.map(x=>`<option ${x===v?'selected':''}>${e(x)}</option>`).join('')}
+function opts(arr,v){
+  // A value that isn't one of the presets (e.g. a combined "Stepped/Level"
+  // premium structure from a layered policy) still shows selected instead of
+  // silently blanking the cell.
+  const extra = (v && !arr.includes(v)) ? `<option selected>${e(v)}</option>` : '';
+  return '<option value="">— Select —</option>'+arr.map(x=>`<option ${x===v?'selected':''}>${e(x)}</option>`).join('')+extra;
+}
 
 // Platform select that shows a write-in text field whenever the underlying value
 // is "Other" or a non-preset value. `pathExpr` is the live JS path to read/write,
@@ -13857,7 +13863,10 @@ function parseInsuranceScheduleRoa(text){
       if(benSum) first.benefitAmount = fmt(benSum) + (isPmBen ? ' pm' : '');
       first._pm = (first._pm||0) + (r._pm||0);
       first._after = (first._after||0) + (r._after||0);
-      if((r.premiumStructure||'') && first.premiumStructure !== r.premiumStructure) first.premiumStructure = 'Hybrid';
+      // Mixed structures name what they actually are — "Stepped/Level".
+      if(!first._structs) first._structs = [first.premiumStructure].filter(Boolean);
+      if((r.premiumStructure||'') && !first._structs.includes(r.premiumStructure)) first._structs.push(r.premiumStructure);
+      first.premiumStructure = first._structs.join('/');
       first.monthlyPremium = first._pm ? (fmt(first._pm) + (first._after ? ' pm (before tax)' : ' pm')) : '';
       first.monthlyPremiumAfterTax = first._after ? fmt(first._after) + ' pm (after tax)' : '';
       rows.splice(i, 1); i--;
@@ -13907,7 +13916,7 @@ function parseInsuranceScheduleRoa(text){
     if(/^life/.test(k)) return 0; if(/^tpd/.test(k)) return 1;
     if(/^ip\b|income/.test(k)) return 2; if(/trauma/.test(k)) return 3; return 4; };
   rows.sort((a,b) => __kindOrder(a.coverType) - __kindOrder(b.coverType));
-  rows.forEach(r => { delete r._pm; delete r._after; delete r._super; });
+  rows.forEach(r => { delete r._pm; delete r._after; delete r._super; delete r._structs; });
   // Reading-order interleave: an IP monthly benefit can land in the previous
   // record's window — recover it from the whole schedule if the IP row is bare.
   rows.forEach(r=>{
