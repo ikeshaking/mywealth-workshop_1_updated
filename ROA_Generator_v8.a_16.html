@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_15";
+const APP_VERSION = "v8.a_16";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","Acenda","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -13863,7 +13863,10 @@ function parseInsuranceScheduleRoa(text){
     const numB = s => { const n = parseFloat(String(s||'').replace(/[^0-9.]/g,'')); return isFinite(n) ? n : 0; };
     const firstByKey = {};
     for(let i = 0; i < rows.length; i++){
-      const key = kindKey(rows[i]);
+      let key = kindKey(rows[i]);
+      // Income Protection covers stay SEPARATE rows — only lump-sum covers
+      // (Life / TPD / Trauma) add their layers together.
+      if(key.startsWith('ip|')) key += '|' + i;
       const first = firstByKey[key];
       if(!first){ firstByKey[key] = rows[i]; continue; }
       const r = rows[i];
