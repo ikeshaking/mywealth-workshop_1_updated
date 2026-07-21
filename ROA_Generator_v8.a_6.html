@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_5";
+const APP_VERSION = "v8.a_6";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -14201,6 +14201,34 @@ async function importInsuranceFileToTable(file, fKey){
     rows = filterRowsToRoaClients(rows);
     if(!rows.length) return;
 
+    // ── Two-client ROA: map this document to client 1 or client 2 ──
+    // Insurance summaries and alteration quotes are per-person documents. The
+    // person named in the document decides the mapping; when the document
+    // doesn't name anyone readable, the adviser is asked — so client 2's quote
+    // can never land recorded against client 1.
+    let mappedClient = '';
+    const __clients = roaClientNames();
+    if(__clients.length === 2){
+      const namesInDoc = [...new Set(rows.map(r => (r.lifeInsured||'').trim()).filter(Boolean))];
+      const docName = (cdmClient||'').trim() || (namesInDoc.length === 1 ? namesInDoc[0] : '');
+      const m1 = docName ? nameMatchesClient(docName, __clients[0]) : false;
+      const m2 = docName ? nameMatchesClient(docName, __clients[1]) : false;
+      if(m1 && !m2) mappedClient = __clients[0];
+      else if(m2 && !m1) mappedClient = __clients[1];
+      else if(namesInDoc.length <= 1){
+        const pick = prompt('Who does "' + file.name + '" belong to?\n\nThis ROA covers two clients — mapping the document keeps each person\'s cover lines separate.\n\n1 — ' + __clients[0] + '\n2 — ' + __clients[1] + '\n3 — both / joint (leave the names as read)\n\nEnter 1, 2 or 3:', '1');
+        if(pick !== null){
+          if(pick.trim() === '1') mappedClient = __clients[0];
+          else if(pick.trim() === '2') mappedClient = __clients[1];
+        }
+      }
+      // A document naming BOTH clients (namesInDoc >= 2) stays as read.
+      if(mappedClient){
+        const first = mappedClient.split(/\s+/)[0];
+        rows.forEach(r => { r.lifeInsured = first; });
+      }
+    }
+
     // Table-appropriate defaults and clean-up. Blank the mkInsurance status
     // default ("Recommend") first, so rows without an explicit status from the
     // document genuinely fall through to the table's default (Current table →
@@ -14260,6 +14288,9 @@ async function importInsuranceFileToTable(file, fKey){
         + (r.premiumNote ? ' · ' + r.premiumNote : '')
         + (r.exclusions ? ' · EXCLUSION: ' + r.exclusions : '') + '\n';
     });
+    if(mappedClient){
+      summary += '\nMapped to ' + mappedClient + ' — every imported line is recorded with them as the life insured.\n';
+    }
     if(cdmClient && !(F.client1Name||'').trim()){
       summary += '\nClient 1 name will be pre-filled as "' + cdmClient + '" (currently blank).\n';
     }
@@ -14284,13 +14315,19 @@ async function importInsuranceFileToTable(file, fKey){
         return 'other';
       };
       const variantOf = ct => /own/i.test(ct||'') ? 'own' : (/any/i.test(ct||'') ? 'any' : '');
+      // On a joint ROA only update a row belonging to the SAME person — client
+      // 2's quote must never overwrite client 1's cover of the same kind.
+      // Rows without a life-insured name on either side still match (single-
+      // client ROAs and older tables keep the previous behaviour).
+      const personOf = r => (r.lifeInsured||'').trim().toLowerCase().split(/\s+/)[0] || '';
+      const samePerson = (a, b) => { const pa = personOf(a), pb = personOf(b); return !pa || !pb || pa === pb; };
       const used = new Set();
       rows.forEach(nr => {
         const k = kindOf(nr.coverType);
         // Prefer an exact TPD own/any variant match, then any row of the same kind.
-        let ti = existing.findIndex((er, ei) => !used.has(ei) && kindOf(er.coverType) === k
+        let ti = existing.findIndex((er, ei) => !used.has(ei) && kindOf(er.coverType) === k && samePerson(er, nr)
           && (k !== 'tpd' || !variantOf(nr.coverType) || variantOf(er.coverType) === variantOf(nr.coverType)));
-        if(ti < 0 && k === 'tpd') ti = existing.findIndex((er, ei) => !used.has(ei) && kindOf(er.coverType) === 'tpd');
+        if(ti < 0 && k === 'tpd') ti = existing.findIndex((er, ei) => !used.has(ei) && kindOf(er.coverType) === 'tpd' && samePerson(er, nr));
         if(ti >= 0){
           used.add(ti);
           const er = existing[ti];
