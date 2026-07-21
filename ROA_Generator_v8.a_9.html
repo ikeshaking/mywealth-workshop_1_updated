@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_8";
+const APP_VERSION = "v8.a_9";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -22265,13 +22265,13 @@ function sniffClientInText(text){
   }catch(_){ return ''; }
 }
 const ROA_SMART_TYPE_OPTS = [
-  ['care', 'CARE / Hub24 rebalance'], ['wealthsolver', 'WealthSolver comparison'],
-  ['insurance-current', 'Current cover summary (CDM / schedule)'],
-  ['insurance-recommended', 'Insurer quote → recommended cover'],
-  ['aia', 'AIA alteration (current + new)'], ['alt-dual', 'Alteration quote (current + proposed)'],
-  ['soa', 'Prior SOA (both clients)'], ['roadoc', 'Prior ROA/SOA (general read)'],
-  ['json', 'Saved ROA (JSON)'], ['html', 'Saved tool copy (HTML)'],
-  ['care-pdf', 'CARE document (PDF)'], ['skip', 'Skip this file'],
+  ['care', 'CARE / Hub24 rebalance document'], ['wealthsolver', 'WealthSolver comparison'],
+  ['insurance-current', 'Existing cover summary → Current Cover table'],
+  ['insurance-recommended', 'New quote → Recommended Cover table'],
+  ['alt-dual', 'Alteration quote (any insurer) → Current + Recommended'],
+  ['soa', 'Prior SOA — both clients’ cover'], ['roadoc', 'Prior ROA/SOA document (general read)'],
+  ['json', 'Saved ROA file (JSON)'], ['html', 'Saved tool copy (HTML)'],
+  ['care-pdf', 'CARE document (PDF — needs the Word version)'], ['skip', 'Skip this file'],
 ];
 function roaSmartPersonCell(i, type, person){
   const c1 = (F.client1Name||'').trim(), c2 = (F.client2Name||'').trim();
@@ -22300,7 +22300,7 @@ function roaShowSmartModal(items){
         + (unknown
             ? '<div class="text-xs" style="color:#c0392b;margin-top:2px">type not recognised — set it below</div>'
             : '<div class="text-xs" style="color:#2f855a;margin-top:2px">✓ ' + e(it.cls.label) + '</div>') + '</td>'
-        + '<td style="padding:7px 8px"><select data-i="' + i + '" class="rsm-type" onchange="roaSmartSyncRow(' + i + ',this.value)" style="padding:4px 6px">' + typeOpts(unknown ? 'skip' : it.cls.type) + '</select></td>'
+        + '<td style="padding:7px 8px"><select data-i="' + i + '" class="rsm-type" onchange="roaSmartSyncRow(' + i + ',this.value)" style="padding:4px 6px">' + typeOpts(unknown ? 'skip' : (it.cls.type === 'aia' ? 'alt-dual' : it.cls.type)) + '</select></td>'
         + '<td style="padding:7px 8px" data-pcell="' + i + '">' + roaSmartPersonCell(i, it.cls.type, it.cls.person || '') + '</td></tr>';
     }).join('');
     const wrap = document.createElement('div');
