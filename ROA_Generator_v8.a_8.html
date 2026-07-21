@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_7";
+const APP_VERSION = "v8.a_8";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -1207,7 +1207,7 @@ function insurerBrand(name){
   return v;
 }
 const COVER_TYPES=["Life (Linked)","TPD (Linked & Any-Occupation)","TPD (Linked & Own-Occupation)","TPD (Standalone & Any-Occupation)","TPD (Standalone & Own-Occupation)","TPD (Any-Occupation)","TPD (Own-Occupation)","Income Protection","Income Protection — Indemnity","IP (Indemnity & Standard Contract)","Trauma","Trauma (Standalone)","Child Cover","Other"];
-const PREM_STRUCT=["Stepped / Age-based","Stepped","Level","Hybrid","Variable Age-Stepped"];
+const PREM_STRUCT=["Stepped / Age-based","Stepped","Level","Hybrid","Variable","Variable Age-Stepped"];
 const OWNERS=["Super","Flexi-Linked Super","Linked Super"];
 // The policy-owner dropdown shows: Super, the client's first name (personally owned),
 // Flexi-Linked Super, Linked Super. The personal option is dynamic — it's the client's
@@ -13745,7 +13745,10 @@ function parseInsuranceScheduleRoa(text){
   // The schedule table ends where the boilerplate notes begin.
   const body = text.split(/Please note in respect|IMPORTANT\s*[-—]|Insurance type\s+Sum Insured/i)[0];
   const lines = body.split('\n');
-  const anchorRe = /\b\d{6,}\b[\s\S]*?\b\d{2}\/\d{2}\/\d{4}\b/;
+  // Policy numbers can be purely numeric (67117545) or letter-prefixed
+  // (LL522830, YF522830, CS522831 — TAL/BT schedules), so anchor on an
+  // optional short letter prefix + 5+ digits followed by the insured + DOB.
+  const anchorRe = /(?:^|[\t ])[A-Z]{0,4}\d{5,}[\t ][\s\S]*?\b\d{2}\/\d{2}\/\d{4}\b/;
   const anchors = [];
   lines.forEach((l,i)=>{ if(anchorRe.test(l)) anchors.push(i); });
   if(!anchors.length) return null;
@@ -13757,6 +13760,11 @@ function parseInsuranceScheduleRoa(text){
     let cut = k===0 ? 0 : ai;
     const from = k===0 ? 0 : anchors[k-1]+1;
     for(let i=from;i<ai;i++){ if(provRe.test(lines[i])){ cut = i; break; } }
+    // pdf.js reading-order spill: a line holding ONLY a $ amount just before
+    // the provider line is the NEXT record's sum insured (e.g. the trauma sum
+    // or IP monthly benefit printed above the next "TAL (BT)"/"AIA" line) —
+    // pull it into this record instead of the previous one.
+    while(cut > from && /^\s*(?:\$[\d,]+(?:\.\d{2})?)?\s*$/.test(lines[cut-1]||'')) cut--;
     bounds.push(cut);
   });
   bounds.push(lines.length);
@@ -13774,9 +13782,14 @@ function parseInsuranceScheduleRoa(text){
     const isLife = !isIP && !isTrauma && !isTPD && /\bLife\b/i.test(chunk);
     if(!(isIP||isTrauma||isTPD||isLife)) return;
     const linked = /linked/i.test(chunk);
+    // Occupation basis comes from the schedule itself ("Any Occupation" /
+    // "Own Occupation" in the TPD row) — never assume Own.
+    const anyOcc = /any\s*occupation/i.test(chunk);
+    const ownOcc = /own\s*occupation/i.test(chunk);
+    const occ = (anyOcc && !ownOcc) ? 'Any-Occupation' : 'Own-Occupation';
     const ct = isIP ? (/indemnity/i.test(chunk)?'IP (Indemnity & Standard Contract)':'Income Protection')
       : isTrauma ? (linked?'Trauma':'Trauma (Standalone)')
-      : isTPD ? (linked?'TPD (Linked & Own-Occupation)':'TPD (Standalone & Own-Occupation)')
+      : isTPD ? (linked?('TPD (Linked & '+occ+')'):('TPD (Standalone & '+occ+')'))
       : 'Life (Linked)';
     // Whole money tokens only — matching digits-with-optional-decimals up front
     // stops "$1,400.76" backtracking into a bogus "$1,40" lump-sum match.
@@ -13790,7 +13803,7 @@ function parseInsuranceScheduleRoa(text){
     if(benN) usedBens.push(benN);
     const wait = (chunk.match(/(\d+)\s*Days?\s*Waiting/i)||[])[1];
     const bp = (chunk.match(/To\s*Age\s*(\d+)/i)||[])[1];
-    const struct = /variable\s*age[- ]?stepped/i.test(chunk)?'Variable age-stepped':((chunk.match(/\b(Stepped|Level|Hybrid)\b/i)||[])[1]||'');
+    const struct = /variable\s*age[- ]?stepped/i.test(chunk)?'Variable age-stepped':((chunk.match(/\b(Stepped|Level|Hybrid|Variable)\b/i)||[])[1]||'');
     rows.push({provider:prov, coverType:ct, lifeInsured: insured.split(/\s+/)[0], owner: inSuper?'Super':(insured.split(/\s+/)[0]||'Self-Owned'),
       benefitAmount: benN?fmt(benN)+(isIP?' pm':''):'',
       waitingPeriod: wait?wait+' days':'', benefitPeriod: bp?'To Age '+bp:'',
@@ -14007,7 +14020,7 @@ function parseRoaTableOcr(text){
   return { rows, client: lifeInsured };
 }
 
-async function importInsuranceFileToTable(file, fKey){
+async function importInsuranceFileToTable(file, fKey, forcedPerson){
   if(!file) return;
   const dkMap = {insuranceCurrent:'current', insuranceRecommended:'recommended', insuranceOriginal:'original', insuranceAltered:'altered', insuranceAlternative:'alternative', insuranceOption1:'option1', insuranceOption2:'option2'};
   const dk = dkMap[fKey] || 'current';
@@ -14208,7 +14221,10 @@ async function importInsuranceFileToTable(file, fKey){
     // can never land recorded against client 1.
     let mappedClient = '';
     const __clients = roaClientNames();
-    if(__clients.length === 2){
+    if(__clients.length === 2 && forcedPerson === 'client1'){ mappedClient = __clients[0]; }
+    else if(__clients.length === 2 && forcedPerson === 'client2'){ mappedClient = __clients[1]; }
+    else if(__clients.length === 2 && forcedPerson === 'both'){ /* keep the names as read */ }
+    else if(__clients.length === 2){
       const namesInDoc = [...new Set(rows.map(r => (r.lifeInsured||'').trim()).filter(Boolean))];
       const docName = (cdmClient||'').trim() || (namesInDoc.length === 1 ? namesInDoc[0] : '');
       const m1 = docName ? nameMatchesClient(docName, __clients[0]) : false;
@@ -14223,10 +14239,10 @@ async function importInsuranceFileToTable(file, fKey){
         }
       }
       // A document naming BOTH clients (namesInDoc >= 2) stays as read.
-      if(mappedClient){
-        const first = mappedClient.split(/\s+/)[0];
-        rows.forEach(r => { r.lifeInsured = first; });
-      }
+    }
+    if(mappedClient){
+      const first = mappedClient.split(/\s+/)[0];
+      rows.forEach(r => { r.lifeInsured = first; });
     }
 
     // Table-appropriate defaults and clean-up. Blank the mkInsurance status
@@ -18210,7 +18226,7 @@ function renderPortfolioVariation(p, pi){
     </div>`;
   if(p.allocComparison.show){
     h += `<div style="overflow-x:auto"><table class="alloc-table">
-      <thead><tr><th style="width:26px"></th><th>Portfolio name</th><th style="width:90px">Current %</th><th style="width:90px">Proposed %</th><th style="width:90px">Variance</th><th style="width:26px"></th></tr></thead><tbody>`;
+      <thead><tr><th style="width:26px"></th><th>Portfolio name</th><th style="width:90px">Current %</th><th style="width:90px">Recommended %</th><th style="width:90px">Variance</th><th style="width:26px"></th></tr></thead><tbody>`;
     p.allocComparison.rows.forEach((r, ri) => {
       h += `<tr ${dragAttrs(`F.portfolios[${pi}].allocComparison.rows`, ri)}>
         <td style="padding:2px 4px;text-align:center">${dragHandle()}</td>
@@ -18520,7 +18536,7 @@ function renderPortfolio(p, pi){
       <span class="text-xs text-muted" style="margin-left:8px">Uses the fund names from the allocation table — only fills the Portfolio name column, you enter the percentages.</span>
     </div>
     <div style="overflow-x:auto"><table class="alloc-table">
-      <thead><tr><th style="width:26px"></th><th>Portfolio name</th><th style="width:90px">Current %</th><th style="width:90px">Proposed %</th><th style="width:90px">Variance</th><th style="width:26px"></th></tr></thead><tbody>`;
+      <thead><tr><th style="width:26px"></th><th>Portfolio name</th><th style="width:90px">Current %</th><th style="width:90px">Recommended %</th><th style="width:90px">Variance</th><th style="width:26px"></th></tr></thead><tbody>`;
     p.allocComparison.rows.forEach((r, ri) => {
       h += `<tr ${dragAttrs(`F.portfolios[${pi}].allocComparison.rows`, ri)}>
         <td style="padding:2px 4px;text-align:center">${dragHandle()}</td>
@@ -19422,7 +19438,7 @@ function renderRoaDocHTML(){
       h += `<h3>Variation Table</h3><p>Below is a summary of your current portfolio asset allocation compared with your recommended portfolio asset allocation.</p>`;
       h += `<table class="var-doc"><thead>
         <tr><th colspan="4" style="text-align:center">${p.contextLabel?e(p.contextLabel)+' - ':''}${e(p.platform)}</th></tr>
-        <tr><th>Portfolio name</th><th>Current %</th><th>Proposed %</th><th>Variance</th></tr>
+        <tr><th>Portfolio name</th><th>Current %</th><th>Recommended %</th><th>Variance</th></tr>
         </thead><tbody>`;
       p.allocComparison.rows.filter(r => r.name).forEach(r => {
         h += `<tr><td>${e(r.name)}</td><td>${e(r.current)}</td><td>${e(r.proposed)}</td><td>${e(r.variance)}</td></tr>`;
@@ -20012,7 +20028,7 @@ function naaBlockRebalance(){
         <input value="${e(F.naaRebalanceIntro||'')}" onchange="F.naaRebalanceIntro=this.value;render()" placeholder="${e(NAA_REBAL_INTRO)}"></div>
       <div class="field" style="margin-top:8px"><label>Table title (banner row)</label>
         <input value="${e(F.naaRebalanceTitle||'')}" onchange="F.naaRebalanceTitle=this.value;render()" placeholder="Johannes Derickx - Pension - Hub24 Investment Choice"></div>
-      <div style="margin-top:6px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:5px;font-size:10px;font-weight:700;color:var(--navy)"><span>ASSET / FUND NAME</span><span>CURRENT AMOUNT</span><span>PROPOSED AMOUNT</span><span>CHANGE (BUY/SELL)</span><span></span></div>`;
+      <div style="margin-top:6px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:5px;font-size:10px;font-weight:700;color:var(--navy)"><span>ASSET / FUND NAME</span><span>CURRENT AMOUNT</span><span>RECOMMENDED AMOUNT</span><span>CHANGE (BUY/SELL)</span><span></span></div>`;
       (F.naaRebalanceRows||[]).forEach((r, ri) => {
         h += `<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:5px;margin-bottom:4px">
           <input class="field" style="margin:0" value="${e(r.name)}" onchange="F.naaRebalanceRows[${ri}].name=this.value;render()">
@@ -21277,7 +21293,7 @@ function renderNAADocHTML(){
     if((F.naaRebalanceIntro||'').trim()) h += `<p>${e(F.naaRebalanceIntro)}</p>`;
     h += `<table class="var-doc" style="margin:8px 0"><thead>`;
     if((F.naaRebalanceTitle||'').trim()) h += `<tr><th colspan="4" style="text-align:center">${e(F.naaRebalanceTitle)}</th></tr>`;
-    h += `<tr><th style="background:#0E6BE0;font-family:'Nunito Sans',sans-serif!important">Asset / Fund name</th><th style="background:#0E6BE0;font-family:'Nunito Sans',sans-serif!important">Current Amount</th><th style="background:#0E6BE0;font-family:'Nunito Sans',sans-serif!important">Proposed Amount</th><th style="background:#0E6BE0;font-family:'Nunito Sans',sans-serif!important">Change (Buy/Sell)</th></tr></thead><tbody>`;
+    h += `<tr><th style="background:#0E6BE0;font-family:'Nunito Sans',sans-serif!important">Asset / Fund name</th><th style="background:#0E6BE0;font-family:'Nunito Sans',sans-serif!important">Current Amount</th><th style="background:#0E6BE0;font-family:'Nunito Sans',sans-serif!important">Recommended Amount</th><th style="background:#0E6BE0;font-family:'Nunito Sans',sans-serif!important">Change (Buy/Sell)</th></tr></thead><tbody>`;
     F.naaRebalanceRows.filter(r => r.name).forEach(r => {
       h += `<tr><td>${e(r.name)}</td><td>${e(r.current||'')}</td><td>${e(r.proposed||'')}</td><td>${e(r.change||'')}</td></tr>`;
     });
@@ -21722,7 +21738,7 @@ async function exportNAADocx(){
     rbRows.push(new TableRow({tableHeader:true, children:[
       cellTxt("Asset / Fund name", {shade:PB, color:"FFFFFF", bold:true, size:19, w:rbW[0]}),
       cellTxt("Current Amount", {shade:PB, color:"FFFFFF", bold:true, size:19, w:rbW[1], align:AlignmentType.CENTER}),
-      cellTxt("Proposed Amount", {shade:PB, color:"FFFFFF", bold:true, size:19, w:rbW[2], align:AlignmentType.CENTER}),
+      cellTxt("Recommended Amount", {shade:PB, color:"FFFFFF", bold:true, size:19, w:rbW[2], align:AlignmentType.CENTER}),
       cellTxt("Change (Buy/Sell)", {shade:PB, color:"FFFFFF", bold:true, size:19, w:rbW[3], align:AlignmentType.CENTER}),
     ]}));
     F.naaRebalanceRows.filter(r => r.name).forEach(r => {
@@ -22146,11 +22162,14 @@ function filterCareAccountsToRoaScenarios(accounts){
 async function classifySmartImportFile(file){
   const ext = (file.name.split('.').pop()||'').toLowerCase();
   const mt = file.type || '';
+  let text = '';
+  // Per-person insurance documents carry a best-guess client pick (from the
+  // name found inside the document) into the smart-drop mapping modal.
+  const __wp = cls => { cls.person = sniffClientInText(text); return cls; };
   if(ext === 'json' || mt.includes('json')) return {type:'json', label:'Saved ROA (JSON)', order:0};
   if(ext === 'html') return {type:'html', label:'Saved tool copy (HTML)', order:0};
   if(['png','jpg','jpeg','gif','bmp','webp'].includes(ext) || mt.startsWith('image/'))
-    return {type:'insurance-current', label:'Insurance table screenshot (OCR)', order:3};
-  let text = '';
+    return __wp({type:'insurance-current', label:'Insurance table screenshot (OCR)', order:3});
   try{
     if(ext === 'docx' || mt.includes('wordprocessingml')){
       if(typeof mammoth === 'undefined') throw new Error('the Word reader (mammoth) has not loaded — check your internet connection');
@@ -22173,46 +22192,46 @@ async function classifySmartImportFile(file){
     return {type:'unknown', label:'Unreadable — '+(ex && ex.message ? ex.message : ex), order:9, error:String(ex && ex.message ? ex.message : ex)};
   }
   if(/policy alteration illustration/i.test(text) || (/current details/i.test(text) && /quote\s*\d/i.test(text)))
-    return {type:'insurance-recommended', label:'Insurer alteration quote', order:3};
+    return __wp({type:'insurance-recommended', label:'Insurer alteration quote', order:3});
   if(/INSURANCE\s+SCHEDULE/i.test(text) && /POLICY\s*NO/i.test(text))
-    return {type:'insurance-current', label:'Insurance schedule (existing cover summary)', order:3};
+    return __wp({type:'insurance-current', label:'Insurance schedule (existing cover summary)', order:3});
   if(/\bAIA\b/i.test(text) && /Current Plan/i.test(text) && /New Quotation/i.test(text))
-    return {type:'aia', label:'AIA alteration quote (current plan + new quotation)', order:3};
+    return __wp({type:'aia', label:'AIA alteration quote (current plan + new quotation)', order:3});
   if(/NEOS/i.test(text) && /Cover\s+(Life Cover|Income Support Cover|Attached TPD Cover)/i.test(text))
-    return {type:'insurance-recommended', label:'NEOS quote', order:3};
+    return __wp({type:'insurance-recommended', label:'NEOS quote', order:3});
   if(/clear\s*view|clearchoice/i.test(text) && /\$[\d,]+\.\d{2}\s+\$[\d,]+\.\d{2}\s+[YN]\b/.test(text))
-    return {type:'insurance-recommended', label:'ClearView quote', order:3};
+    return __wp({type:'insurance-recommended', label:'ClearView quote', order:3});
   if(/zurich active/i.test(text) && /active health events/i.test(text))
-    return {type:'insurance-recommended', label:'Zurich Active quote', order:3};
+    return __wp({type:'insurance-recommended', label:'Zurich Active quote', order:3});
   if(/alteration quotation/i.test(text) && /zurich/i.test(text))
-    return {type:'alt-dual', label:'Zurich alteration quote (existing + proposed)', order:3};
+    return __wp({type:'alt-dual', label:'Zurich alteration quote (existing + proposed)', order:3});
   if(/Zurich Wealth Protection/i.test(text) && /Policy \d/i.test(text))
-    return {type:'insurance-recommended', label:'Zurich Wealth Protection quote', order:3};
+    return __wp({type:'insurance-recommended', label:'Zurich Wealth Protection quote', order:3});
   if(/ClearView (LifeSolutions|ClearChoice) Quotation/i.test(text) && /Current Cover\s*\tCurrent Premium\s*\tAmended Cover/i.test(text))
-    return {type:'alt-dual', label:'ClearView alteration quote (current + amended)', order:3};
+    return __wp({type:'alt-dual', label:'ClearView alteration quote (current + amended)', order:3});
   if(/NEOS/i.test(text) && /Sum Insured\s*\tPremium\s*\tSum Insured\s*\tPremium/i.test(text))
-    return {type:'alt-dual', label:'NEOS in-force quote (current + new)', order:3};
+    return __wp({type:'alt-dual', label:'NEOS in-force quote (current + new)', order:3});
   if(/MetLife/i.test(text) && /PROPOSED COVERS/i.test(text))
-    return {type:'insurance-recommended', label:'MetLife alteration quote', order:3};
+    return __wp({type:'insurance-recommended', label:'MetLife alteration quote', order:3});
   if(/MetLife Protect/i.test(text) && /Quote Illustration/i.test(text))
-    return {type:'insurance-recommended', label:'MetLife Protect quote', order:3};
+    return __wp({type:'insurance-recommended', label:'MetLife Protect quote', order:3});
   if(/one\s*care|onepath/i.test(text) && /Policy 1 for|Non Super Premium|Income Secure|Amount Insured\s+Super Premium/i.test(text))
-    return {type:'insurance-recommended', label:'OnePath OneCare quote', order:3};
+    return __wp({type:'insurance-recommended', label:'OnePath OneCare quote', order:3});
   // (checked AFTER the insurer-specific layouts — many quote PDS boilerplates
   // mention "amended terms" in passing)
   if(/amended terms/i.test(text) && /agree/i.test(text))
-    return {type:'insurance-recommended', label:'Amended terms agreement', order:3};
+    return __wp({type:'insurance-recommended', label:'Amended terms agreement', order:3});
   try{
-    if(/benefits report/i.test(text)) return {type:'insurance-current', label:'CDM benefits report (current cover)', order:3};
+    if(/benefits report/i.test(text)) return __wp({type:'insurance-current', label:'CDM benefits report (current cover)', order:3});
     const cdm = (typeof cdmParseBenefitsReport === 'function') ? cdmParseBenefitsReport(text) : null;
-    if(cdm && cdm.rows && cdm.rows.length) return {type:'insurance-current', label:'CDM benefits report (current cover)', order:3};
+    if(cdm && cdm.rows && cdm.rows.length) return __wp({type:'insurance-current', label:'CDM benefits report (current cover)', order:3});
   }catch(_){}
   if(/statement of advice/i.test(text) && /insurance provider/i.test(text))
     return {type:'soa', label:'Prior SOA — original recommendations (client 1 & 2)', order:2};
   if(/record of advice|statement of advice/i.test(text))
     return {type:'roadoc', label:'Prior ROA/SOA document (client details + tables)', order:2};
   if(/\b(life|tpd|trauma|income protection)\b/i.test(text) && /\$\s*[\d,]{3,}/.test(text))
-    return {type:'insurance-recommended', label:'Insurance quote / cover summary', order:3};
+    return __wp({type:'insurance-recommended', label:'Insurance quote / cover summary', order:3});
   return {type:'roadoc', label:'General advice document (best-effort read)', order:2};
 }
 // Recommended-cover quotes land on the table the current ROA type actually
@@ -22221,6 +22240,94 @@ async function classifySmartImportFile(file){
 function smartQuoteTargetKey(){
   try{ if(typeof isRevisedTermsRoa === 'function' && isRevisedTermsRoa()) return 'insuranceAltered'; }catch(_){}
   return 'insuranceRecommended';
+}
+// ── Smart-drop confirmation modal (matches the SOA generator's) ──
+// One table listing every dropped file: what it was identified as (editable)
+// and — for per-person insurance documents on a two-client ROA — which client
+// it belongs to, pre-picked from the name found inside the document.
+const ROA_SMART_PERSON_TYPES = ['insurance-current', 'insurance-recommended', 'aia', 'alt-dual'];
+function sniffClientInText(text){
+  try{
+    const c1 = (F.client1Name||'').trim(), c2 = (F.client2Name||'').trim();
+    if(!c1 || !c2 || !text) return '';
+    const hit = n => {
+      const parts = n.toLowerCase().split(/\s+/).filter(Boolean);
+      const t = String(text).toLowerCase();
+      if(parts.length > 1 && t.includes(parts.join(' '))) return 2;   // full name
+      return t.match(new RegExp('\\b' + parts[0].replace(/[^a-z]/g,'') + '\\b')) ? 1 : 0;
+    };
+    const h1 = hit(c1), h2 = hit(c2);
+    if(h1 && !h2) return 'client1';
+    if(h2 && !h1) return 'client2';
+    if(h1 === 2 && h2 < 2) return 'client1';
+    if(h2 === 2 && h1 < 2) return 'client2';
+    return '';
+  }catch(_){ return ''; }
+}
+const ROA_SMART_TYPE_OPTS = [
+  ['care', 'CARE / Hub24 rebalance'], ['wealthsolver', 'WealthSolver comparison'],
+  ['insurance-current', 'Current cover summary (CDM / schedule)'],
+  ['insurance-recommended', 'Insurer quote → recommended cover'],
+  ['aia', 'AIA alteration (current + new)'], ['alt-dual', 'Alteration quote (current + proposed)'],
+  ['soa', 'Prior SOA (both clients)'], ['roadoc', 'Prior ROA/SOA (general read)'],
+  ['json', 'Saved ROA (JSON)'], ['html', 'Saved tool copy (HTML)'],
+  ['care-pdf', 'CARE document (PDF)'], ['skip', 'Skip this file'],
+];
+function roaSmartPersonCell(i, type, person){
+  const c1 = (F.client1Name||'').trim(), c2 = (F.client2Name||'').trim();
+  if(!ROA_SMART_PERSON_TYPES.includes(type)) return '<span class="text-xs text-muted">Joint / n/a</span>';
+  if(!c1 || !c2) return '<span class="text-xs text-muted">' + (c1 ? 'single client' : 'enter client names first') + '</span>';
+  return '<select data-i="' + i + '" class="rsm-person" style="padding:4px 6px">'
+    + '<option value=""' + (!person ? ' selected' : '') + '>— pick —</option>'
+    + '<option value="client1"' + (person === 'client1' ? ' selected' : '') + '>' + e(c1) + '</option>'
+    + '<option value="client2"' + (person === 'client2' ? ' selected' : '') + '>' + e(c2) + '</option>'
+    + '<option value="both"' + (person === 'both' ? ' selected' : '') + '>Both / as read</option></select>';
+}
+function roaSmartSyncRow(i, type){
+  const cell = document.querySelector('#roa-smart-modal td[data-pcell="' + i + '"]');
+  const items = window.__roaSmartItems || [];
+  if(cell && items[i]) cell.innerHTML = roaSmartPersonCell(i, type, items[i].cls.person || '');
+}
+function roaShowSmartModal(items){
+  return new Promise(resolve => {
+    window.__roaSmartItems = items;
+    window.__roaSmartResolve = resolve;
+    const typeOpts = sel => ROA_SMART_TYPE_OPTS.map(o => '<option value="' + o[0] + '"' + (sel === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('');
+    const rows = items.map((it, i) => {
+      const unknown = it.cls.type === 'unknown';
+      return '<tr style="border-top:1px solid #dbe6ef">'
+        + '<td style="padding:7px 8px;font-size:12px;max-width:230px;word-break:break-word">' + e(it.file.name)
+        + (unknown
+            ? '<div class="text-xs" style="color:#c0392b;margin-top:2px">type not recognised — set it below</div>'
+            : '<div class="text-xs" style="color:#2f855a;margin-top:2px">✓ ' + e(it.cls.label) + '</div>') + '</td>'
+        + '<td style="padding:7px 8px"><select data-i="' + i + '" class="rsm-type" onchange="roaSmartSyncRow(' + i + ',this.value)" style="padding:4px 6px">' + typeOpts(unknown ? 'skip' : it.cls.type) + '</select></td>'
+        + '<td style="padding:7px 8px" data-pcell="' + i + '">' + roaSmartPersonCell(i, it.cls.type, it.cls.person || '') + '</td></tr>';
+    }).join('');
+    const wrap = document.createElement('div');
+    wrap.id = 'roa-smart-modal-wrap';
+    wrap.innerHTML =
+      '<div id="roa-smart-modal" style="position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px">'
+      + '<div style="background:#fff;color:#1a2b3c;max-width:700px;width:100%;max-height:86vh;overflow:auto;border-radius:14px;padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.35)">'
+      + '<div style="font-weight:800;font-size:17px;margin-bottom:4px">Smart drop — confirm mapping</div>'
+      + '<div class="text-xs" style="margin-bottom:14px;opacity:.8">' + items.length + ' file(s) read. Check what each one is and who it belongs to, then apply. Per-person insurance documents (cover summaries, alteration quotes) are recorded against the client you pick — the pick is pre-filled from the name found inside the document.</div>'
+      + '<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="text-align:left;color:#64748b">'
+      + '<th style="padding:6px 8px">File</th><th style="padding:6px 8px">Type</th><th style="padding:6px 8px">Client</th></tr></thead><tbody>' + rows + '</tbody></table>'
+      + '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px">'
+      + '<button class="btn" onclick="roaSmartModalClose(false)">Cancel</button>'
+      + '<button class="btn btn-blue" onclick="roaSmartModalClose(true)">Apply mapping</button>'
+      + '</div></div></div>';
+    document.body.appendChild(wrap);
+  });
+}
+function roaSmartModalClose(ok){
+  const items = window.__roaSmartItems || [];
+  if(ok){
+    document.querySelectorAll('#roa-smart-modal .rsm-type').forEach(s => { const i = +s.getAttribute('data-i'); if(items[i]) items[i].cls.type = s.value; });
+    document.querySelectorAll('#roa-smart-modal .rsm-person').forEach(s => { const i = +s.getAttribute('data-i'); if(items[i]) items[i].cls.person = s.value; });
+  }
+  const w = document.getElementById('roa-smart-modal-wrap'); if(w) w.remove();
+  const r = window.__roaSmartResolve; window.__roaSmartResolve = null;
+  if(r) r(ok ? items : null);
 }
 async function handleSmartImport(fileList){
   const files = Array.from(fileList||[]).filter(Boolean);
@@ -22231,26 +22338,33 @@ async function handleSmartImport(fileList){
     items.push({file: f, cls: await classifySmartImportFile(f)});
   }
   hideImportStatus();
-  const lines = items.map(it => '• ' + it.file.name + '\n     → ' + it.cls.label);
-  if(!confirm('Import ' + items.length + ' document(s)?\n\n' + lines.join('\n') + '\n\nEach document is applied by its matching importer — you can review and edit every value afterwards.')) return;
+  // SOA-style mapping modal: confirm each file's type and (for per-person
+  // insurance documents) which client it belongs to, before anything applies.
+  const confirmed = await roaShowSmartModal(items);
+  if(!confirmed) return;
+  const todo = confirmed.filter(it => it.cls.type !== 'skip');
   // Apply in dependency order: saved work first, then CARE (builds portfolios and
-  // client names), then prior ROA docs, then insurance documents.
-  items.sort((a,b) => (a.cls.order||9) - (b.cls.order||9));
-  for(const it of items){
+  // client names), then prior ROA docs, then insurance documents. The type may
+  // have been corrected in the modal, so the order is recomputed here.
+  const ORDER = {json:0, html:0, care:1, wealthsolver:1, 'care-pdf':1, soa:2, roadoc:2,
+    'insurance-current':3, 'insurance-recommended':3, aia:3, 'alt-dual':3};
+  todo.sort((a,b) => (ORDER[a.cls.type] ?? 9) - (ORDER[b.cls.type] ?? 9));
+  for(const it of todo){
     const t = it.cls.type;
+    const who = it.cls.person || '';
     try{
       if(t === 'json'){ importRoaJson({files:[it.file], value:''}); }
       else if(t === 'html'){ uploadHTMLSave({files:[it.file], value:''}); }
       else if(t === 'care'){ await handleCareImport({files:[it.file], value:''}); }
       else if(t === 'wealthsolver'){ await importWealthSolverRoa(it.file); }
       else if(t === 'care-pdf'){ alert(it.file.name + ' looks like a CARE/Hub24 rebalance document exported as PDF.\n\nA PDF export loses the table structure this importer relies on — please export it from CARE as Word (.docx) and drop that file instead.'); }
-      else if(t === 'insurance-current'){ await importInsuranceFileToTable(it.file, 'insuranceCurrent'); }
-      else if(t === 'insurance-recommended'){ await importInsuranceFileToTable(it.file, smartQuoteTargetKey()); }
+      else if(t === 'insurance-current'){ await importInsuranceFileToTable(it.file, 'insuranceCurrent', who); }
+      else if(t === 'insurance-recommended'){ await importInsuranceFileToTable(it.file, smartQuoteTargetKey(), who); }
       else if(t === 'aia' || t === 'alt-dual'){
         // Both sides of an alteration quote apply: existing cover → Current
         // Cover, proposed (with Reduce/Cancel statuses) → the recommended table.
-        await importInsuranceFileToTable(it.file, 'insuranceCurrent');
-        await importInsuranceFileToTable(it.file, smartQuoteTargetKey());
+        await importInsuranceFileToTable(it.file, 'insuranceCurrent', who);
+        await importInsuranceFileToTable(it.file, smartQuoteTargetKey(), who);
       }
       else if(t === 'soa'){
         // A prior SOA's Insurance Products tables (both clients) → the Original
@@ -23035,7 +23149,7 @@ async function exportDocx(){
       compRows.push(new TableRow({tableHeader:true, children:[
         cellTxt("Portfolio name", {shade:PB, color:"FFFFFF", bold:true, size:19, w:compW[0], bord:SBORD}),
         cellTxt("Current %", {shade:PB, color:"FFFFFF", bold:true, size:19, w:compW[1], bord:SBORD, align:AlignmentType.CENTER}),
-        cellTxt("Proposed %", {shade:PB, color:"FFFFFF", bold:true, size:19, w:compW[2], bord:SBORD, align:AlignmentType.CENTER}),
+        cellTxt("Recommended %", {shade:PB, color:"FFFFFF", bold:true, size:19, w:compW[2], bord:SBORD, align:AlignmentType.CENTER}),
         cellTxt("Variance", {shade:PB, color:"FFFFFF", bold:true, size:19, w:compW[3], bord:SBORD, align:AlignmentType.CENTER}),
       ]}));
       p.allocComparison.rows.filter(r => r.name).forEach(r => {
