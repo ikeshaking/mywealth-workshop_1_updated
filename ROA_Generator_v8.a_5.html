@@ -11559,10 +11559,12 @@ async function readDocxText(file, onProgress){
 
 function extractClientInfo(text){
   const out = {fields:[]};
-  const m1 = text.match(/Prepared\s+for\s+([A-Z][a-zA-Z'\-]+(?:\s+[A-Z][a-zA-Z'\-]+)+)/i);
+  // "Prepared for X" and "Prepared on 11th December 2025 for X" both match;
+  // name words never cross a line break.
+  const m1 = text.match(/Prepared(?:[^\n]{0,60}?)\s+for\s+([A-Z][a-zA-Z'\-]+(?:[ \t]+[A-Z][a-zA-Z'\-]+)+)/);
   if(m1){
     // Detect joint
-    const joint = text.match(/Prepared\s+for\s+([A-Z][a-zA-Z'\-]+(?:\s+[A-Z][a-zA-Z'\-]+)?)\s+&\s+([A-Z][a-zA-Z'\-]+(?:\s+[A-Z][a-zA-Z'\-]+)?)/i);
+    const joint = text.match(/Prepared(?:[^\n]{0,60}?)\s+for\s+([A-Z][a-zA-Z'\-]+(?:[ \t]+[A-Z][a-zA-Z'\-]+)?)[ \t]*&[ \t]*([A-Z][a-zA-Z'\-]+(?:[ \t]+[A-Z][a-zA-Z'\-]+)?)/);
     if(joint){
       out.fields.push({key:'clientType', value:'joint', label:'Client Type'});
       out.fields.push({key:'client1Name', value:joint[1].trim(), label:'Client 1'});
@@ -12396,12 +12398,15 @@ function ex_classifySection(heading){
   if(/alternative/.test(h)) return 'alternative';
   if(/option 1|option one/.test(h)) return 'option1';
   if(/option 2|option two/.test(h)) return 'option2';
+  // An SOA's "Insurance Products" section holds the RECOMMENDED cover tables
+  // (one per person). Checked last, so a nearer specific heading always wins.
+  if(/insurance products/.test(h)) return 'recommended';
   return null;
 }
 function ex_extractInsuranceTables(text){
   const lines = text.split('\n');
   const tables = [];
-  let i = 0, recentHeadings = [];
+  let i = 0, recentHeadings = [], ex_prevStop = -1;
   while(i < lines.length){
     const line = lines[i];
     const trimmed = (line||'').trim();
@@ -12415,6 +12420,14 @@ function ex_extractInsuranceTables(text){
       const providerIsBanded = (cols.coverType === undefined);
       let section = null;
       for(let k = recentHeadings.length-1; k>=0; k--){ section = ex_classifySection(recentHeadings[k]); if(section) break; }
+      // A second person's table often sits back-to-back under the one heading
+      // ("Insurance Products" → Karen's table, then Tim's straight after). The
+      // heading context was consumed by the first table — inherit its section
+      // when nothing but blank lines separates the two.
+      if(section === null && tables.length && ex_prevStop >= 0 && i >= ex_prevStop
+         && lines.slice(ex_prevStop, i).every(l => !(l||'').trim())){
+        section = tables[tables.length-1].section;
+      }
       const rows = []; let currentProvider = ""; let j = i+1;
       while(j < lines.length){
         const L = lines[j], t = (L||'').trim();
@@ -12459,6 +12472,7 @@ function ex_extractInsuranceTables(text){
         j++;
       }
       if(rows.length) tables.push({section, rows});
+      ex_prevStop = j;
       i = j; recentHeadings = []; continue;
     }
     i++;
@@ -12509,6 +12523,85 @@ function extractRoaTables(text){
     commission: ex_extractCommission(text),
     superAllocation: ex_extractSuperAllocation(text)
   };
+}
+
+// ── SOA "Replacement Implications → Insurance" wide table ───────────────────
+// The SOA compares policies per ATTRIBUTE, one column per policy:
+//      [ blank | Existing Policy | Existing Policies increase | Recommended Policy ]
+//   Karen                                   ← person band (single cell)
+//   Name of Insurer   UniSuper…  UniSuper…  NEOS
+//   Life              $218,000 (Linked)  …  …
+//   TPD / Income Protection / Trauma rows, then Annual Premium rows, then Tim's block.
+// The FIRST data column is the client's EXISTING cover — the levels, types and
+// premiums they hold now — which no header-based reader can see. Turn each
+// person's existing column into standard current-cover rows (section 'current')
+// so it can fill the Current table or ride along as "Retain" rows.
+function parseSoaReplacementWide(text){
+  const lines = text.split('\n');
+  const tables = [];
+  let inBlock = false, person = '', insurer = '', rows = [], premNotes = [];
+  const flush = () => {
+    if(person && rows.length){
+      if(premNotes.length && rows[0] && !(rows[0].premiumNote||'').trim()) rows[0].premiumNote = premNotes.join(' + ');
+      tables.push({section:'current', heading:'Insurance Replacement Implications (existing cover)', rows});
+    }
+    rows = []; premNotes = []; insurer = '';
+  };
+  const COVER = /^(Life|TPD|Income Protection|IP|Trauma|Child)\b/i;
+  for(let i = 0; i < lines.length; i++){
+    const line = lines[i] || '';
+    const cells = line.split('\t').map(c => c.trim());
+    if(!inBlock){
+      if(cells.length >= 3 && !cells[0] && /existing pol/i.test(cells[1]||'') && cells.some(c => /recommended pol/i.test(c))){ inBlock = true; person = ''; }
+      continue;
+    }
+    if(!line.trim()) continue;
+    if(cells.length === 1){
+      // A short single-cell line inside the table is the next person's band.
+      if(/^[A-Z][\w'’-]+( [A-Z][\w'’-]+)?$/.test(cells[0]) && cells[0].length < 40){ flush(); person = cells[0]; continue; }
+      flush(); inBlock = false; person = ''; continue;
+    }
+    const label = cells[0], existing = (cells[1]||'').trim();
+    if(/^name of insurer/i.test(label)){ insurer = existing; continue; }
+    if(COVER.test(label)){
+      if(!existing || existing === '-' || existing === '–') continue;
+      const row = mkInsurance();
+      row.provider = insurer; row.lifeInsured = person; row.status = 'In Force';
+      row.coverType = label;
+      let ben = existing;
+      const wm = ben.match(/(\d+\s*(?:days?|weeks?|months?))\s*wait/i);
+      if(wm) row.waitingPeriod = wm[1];
+      const bm = ben.match(/((?:\d+\s*years?)|(?:to\s*age\s*\d+)|(?:age\s*\d+))\s*benefit/i);
+      if(bm) row.benefitPeriod = bm[1];
+      // "(Linked & Any Occupation)" belongs on the cover type; "(Indemnity, 90
+      // days wait, 2 years benefit)" is captured above and dropped from the amount.
+      ben = ben.replace(/\s*\(([^)]*)\)/g, (m, p) => {
+        if(!/indemnity|agreed|wait|benefit/i.test(p)) row.coverType = label + ' (' + p + ')';
+        return '';
+      }).trim() || existing;
+      row.benefitAmount = ben.replace(/\s*p\.?m\.?(?=\s|$)/i, ' pm').replace(/\s+$/,'');
+      if(/super/i.test(insurer)) row.owner = 'Super';
+      rows.push(row);
+      continue;
+    }
+    if(/^annual premium/i.test(label)){
+      if(existing && existing !== '-' && existing !== '–') premNotes.push(existing + ' p.a.' + (/super/i.test(label) ? ' (super)' : ' (cashflow)'));
+      continue;
+    }
+    if(/^(notes|reason for replacement|changes in benefits|further implications|taxation|estate planning)/i.test(label)){ flush(); inBlock = false; person = ''; continue; }
+  }
+  flush();
+  return tables;
+}
+
+// SOA cover page: "Prepared on 11th December 2025 for Karen Delaforce & Tim
+// George" → the clients' FULL names (the cover tables only carry first names).
+function soaPreparedForNames(text){
+  // Name words never cross a line break — [ \t]+ between them, not \s+.
+  const joint = text.match(/Prepared[^\n]{0,60}?for\s+([A-Z][\w'’-]+(?:[ \t]+[A-Z][\w'’-]+)*)[ \t]*&[ \t]*([A-Z][\w'’-]+(?:[ \t]+[A-Z][\w'’-]+)*)/);
+  if(joint) return [joint[1].trim(), joint[2].trim()];
+  const single = text.match(/Prepared[^\n]{0,60}?for\s+([A-Z][\w'’-]+(?:[ \t]+[A-Z][\w'’-]+)+)/);
+  return single ? [single[1].trim()] : [];
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -14250,16 +14343,25 @@ async function importInsuranceFileToTable(file, fKey){
     // 3) Structured cover tables (Word tables, column-aligned PDFs).
     if(!rows.length){
       const found = ex_extractInsuranceTables(text);
+      // The SOA's wide "Replacement Implications" comparison holds the EXISTING
+      // cover in its first data column — read it as current-cover tables.
+      const wide = parseSoaReplacementWide(text);
+      if(wide.length) found.push(...wide);
       if(found.length){
-        const match = found.find(t => t.section === dk);
-        if(match){ rows = match.rows.slice(); source = 'the "' + tableNice + '" table in the document'; }
+        // On a revised-terms ROA the Original table is filled from a prior
+        // SOA, whose product tables are headed "Recommended" — same thing.
+        const wantSec = found.some(t => t.section === dk) ? dk
+          : (dk === 'original' && found.some(t => t.section === 'recommended')) ? 'recommended'
+          : null;
+        const matches = wantSec ? found.filter(t => t.section === wantSec) : [];
+        if(matches.length){ rows = matches.reduce((a,t)=>a.concat(t.rows), []); source = 'the "' + tableNice + '" table in the document'; }
         else { rows = found.reduce((a,t)=>a.concat(t.rows), []); source = found.length + ' cover table(s) in the document'; }
         // Revised-terms ROAs show retained existing cover ALONGSIDE the new
         // cover in the one table. If the document (e.g. the original SOA) also
         // holds a current / replacement-implications table, offer to carry
         // those existing-cover lines in underneath as "Retain" rows.
-        if(match && (dk === 'altered' || dk === 'recommended')){
-          const keepRows = found.filter(t => t !== match && t.section === 'current')
+        if(matches.length && (dk === 'altered' || dk === 'recommended')){
+          const keepRows = found.filter(t => !matches.includes(t) && t.section === 'current')
             .reduce((a,t)=>a.concat(t.rows), []);
           if(keepRows.length && confirm('This document also contains ' + keepRows.length + ' EXISTING cover line(s) (current cover / insurance replacement implications).\n\nOK — add them under the ' + tableNice + ' lines as "Retain" rows (retained existing cover, e.g. cover kept in the old super fund).\nCancel — import only the ' + tableNice + ' lines.')){
             keepRows.forEach(r => { r.status = 'Retain'; });
@@ -14303,6 +14405,21 @@ async function importInsuranceFileToTable(file, fKey){
       return;
     }
 
+    // A joint SOA dropped on a FRESH ROA (client not set yet): ask up front who
+    // this ROA is for, keep only their lines, and prefill the client name from
+    // the SOA cover page ("Prepared … for Karen Delaforce & Tim George").
+    if(!roaClientNames().length){
+      const ppl = [...new Set(rows.map(r => (r.lifeInsured||'').trim()).filter(Boolean))];
+      if(ppl.length === 2){
+        const fulls = soaPreparedForNames(text);
+        const fullFor = p => (fulls.find(fn => sameGivenName(fn, p)) || p);
+        const first = confirm('This document holds cover for ' + ppl.join(' and ') + ', and this ROA\'s client is not set yet.\n\nWho is this ROA for?\nOK — ' + fullFor(ppl[0]) + '\nCancel — ' + fullFor(ppl[1]));
+        const chosen = first ? ppl[0] : ppl[1];
+        rows = rows.filter(r => { const n = (r.lifeInsured||'').trim(); return !n || sameGivenName(n, chosen); });
+        F.client1Name = fullFor(chosen);
+        if(!rows.length) return;
+      }
+    }
     // A joint document for a single-client ROA: offer to keep only this ROA's
     // client's cover lines (matched on the life-insured name).
     rows = filterRowsToRoaClients(rows);
@@ -14355,12 +14472,15 @@ async function importInsuranceFileToTable(file, fKey){
       .concat(roaClientNames().map(n => n.split(/\s+/)[0]));
     const singleClient = !(F.clientType === 'joint' || F.clientType === 'joint_entity');
     const clientFirst = ((F.client1Name||'').trim().split(/\s+/)[0]) || '';
+    // Only force an unmatched name onto the client when the document names ONE
+    // person — a doc genuinely covering two people must keep both names.
+    const importNames = [...new Set(rows.map(r => (r.lifeInsured||'').trim().toLowerCase()).filter(Boolean))];
     rows.forEach(r => {
       const n = (r.lifeInsured||'').trim();
       if(!n) return;
       const hit = canonNames.find(c => sameGivenName(c, n));
       if(hit && hit.toLowerCase() !== n.toLowerCase()) r.lifeInsured = hit;
-      else if(!hit && singleClient && clientFirst) r.lifeInsured = clientFirst;
+      else if(!hit && singleClient && clientFirst && importNames.length === 1) r.lifeInsured = clientFirst;
     });
     let mode = 'replace';
     if(existing.length && !insuranceTableIsPristine(F[fKey])){
@@ -22181,7 +22301,8 @@ function nameMatchesClient(label, clientName){
   const first = parts[0], last = parts[parts.length - 1];
   if(l === parts.join(' ')) return true;
   const words = l.split(/[\s,]+/).filter(Boolean);
-  if(words.some(w => w === first || (parts.length > 1 && w === last))) return true;
+  // sameGivenName: "Tim" ↔ "Timothy" count as the same first name.
+  if(words.some(w => w === first || sameGivenName(w, first) || (parts.length > 1 && w === last))) return true;
   // Single-initial owners ("R" for Robert) — common in CARE account names.
   if(words.some(w => w.length === 1 && w === first[0])) return true;
   return false;
