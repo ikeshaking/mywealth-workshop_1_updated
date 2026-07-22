@@ -21112,6 +21112,7 @@ function impGuessMap(headers){
     date:    find('transaction time','transaction date','settlement date','payment date','date'),
     status:  find('status'),
     adviser: find('full name','adviser','advisor','owner'),
+    recur:   find('recurring'),
   };
 }
 function impParseDate(v){
@@ -21160,15 +21161,43 @@ function impCompute(){
     const inFY = !fyStart || (dt && dt >= fyStart && dt <= fyEnd);
     if(inFY) fyTotal += amt;
     let g = groups.get(client);
-    if(!g){ g = {name:client, count:0, totalFY:0, totalAll:0, maxSingle:0, advisers:new Set()}; groups.set(client, g); }
+    if(!g){ g = {name:client, count:0, totalFY:0, totalAll:0, maxSingle:0, advisers:new Set(), pays:[]}; groups.set(client, g); }
     g.totalAll += amt;
     if(ffAdviser) g.advisers.add(ffAdviser);
-    if(inFY){ g.count++; g.totalFY += amt; g.maxSingle = Math.max(g.maxSingle, amt); }
+    if(inFY){
+      g.count++; g.totalFY += amt; g.maxSingle = Math.max(g.maxSingle, amt);
+      const hasRec = m.recur >= 0 ? (r[m.recur] != null && String(r[m.recur]).trim() !== '') : null;
+      g.pays.push({amt, hasRec});
+    }
+  });
+  /* Split each group's FY total into ongoing vs upfront/one-off:
+     - a payment with no recurring-payment ID is a one-off;
+     - a payment far larger than the group's regular amount (3x+ the most
+       common payment, or 3x+ the smallest when no amount repeats) is
+       treated as upfront even if it sat on a recurring schedule.
+     Heuristic only — the drafted invoice remains fully editable. */
+  groups.forEach(g => {
+    let base = 0;
+    const freq = new Map();
+    g.pays.forEach(p => { const k = Math.round(p.amt*100); freq.set(k, (freq.get(k)||0)+1); });
+    let bestN = 0;
+    freq.forEach((n,k) => { if(n > bestN){ bestN = n; base = k/100; } });
+    if(bestN < 2 && g.pays.length > 1) base = Math.min(...g.pays.map(p=>p.amt));
+    let up = 0;
+    g.pays.forEach(p => {
+      const oneOff = p.hasRec === false;
+      const outlier = base > 0 && p.amt >= 3*base && p.amt >= 1000 && g.pays.length > 1;
+      if(oneOff || outlier) up += p.amt;
+    });
+    g.upFY = up;
+    g.ongFY = g.totalFY - up;
+    delete g.pays;
   });
   IMP.groups = [...groups.values()].sort((a,b) => b.totalFY - a.totalFY);
   const fyTots = IMP.groups.filter(g => g.totalFY > 0).map(g => g.totalFY).sort((a,b)=>a-b);
   const median = fyTots.length ? fyTots[Math.floor(fyTots.length/2)] : 0;
   IMP.totals = {reportTotal, fyTotal, exclCount, noDate, medianFY: median,
+    upfrontFY: IMP.groups.reduce((a,g)=>a+(g.upFY||0),0),
     groupsInFY: fyTots.length};
 }
 /* "John Blackburn & Christine Whitfield" → [c1, c2] */
@@ -21213,10 +21242,12 @@ function impDraft(idx){
   if(hasWork && !confirm(`Draft an invoice for ${g.name}? Your current builder contents will be replaced (export or save them first if needed).`)) return;
   const split = impSplitClients(g.name);
   const fyY = IMP.fy === 'all' ? null : parseInt(IMP.fy, 10);
+  const up = r2(g.upFY || 0), on = r2(g.ongFY || 0);
   F = normalizeState(Object.assign(defaultState(), {
     c1: split[0] || '', c2: split[1] || '',
-    feeType: 'ongoing',
-    ongoingFee: r2(g.totalFY),
+    feeType: up > 0 && on > 0 ? 'combined' : up > 0 ? 'upfront' : 'ongoing',
+    ongoingFee: on,
+    upfrontFee: up,
     fyStart: fyY ? `${fyY}-07-01` : '',
     fyEnd:   fyY ? `${fyY+1}-06-30` : '',
   }));
@@ -21225,7 +21256,9 @@ function impDraft(idx){
   save();
   IMP.drafted.add(g.name);
   page = 'builder'; wizardStep = 0; render(); window.scrollTo(0,0);
-  toast(`Draft created for ${g.name} — add the address, then apportion the strategies`);
+  toast(up > 0 && on > 0
+    ? `Draft created for ${g.name} — retainer ${money(up)} + ongoing ${money(on)} (2 invoices). Add the address, then apportion each invoice.`
+    : `Draft created for ${g.name} — add the address, then apportion the strategies`);
 }
 
 function renderImport(){
@@ -21257,6 +21290,7 @@ function renderImport(){
         ${colSel('date','Payment date column', true)}
         ${colSel('status','Status column (optional)', true)}
         ${colSel('adviser','Adviser column (optional)', true)}
+        ${colSel('recur','Recurring ID column (optional)', true)}
         <div class="field"><label>Financial year</label>
           <select onchange="IMP.fy=this.value;impCompute();render()">
             ${fyOptions().map(y=>`<option value="${y}" ${IMP.fy===String(y)?'selected':''}>FY${String(y).slice(2)}/${String(y+1).slice(2)}</option>`).join('')}
@@ -21274,6 +21308,7 @@ function renderImport(){
       <div class="sumtile hl"><div class="st-l">Total ${IMP.fy==='all'?'(all dates)':'in FY'+IMP.fy.slice(2)+'/'+String(parseInt(IMP.fy,10)+1).slice(2)}</div><div class="st-v">${money(T.fyTotal)}</div></div>
       <div class="sumtile"><div class="st-l">Client groups with FY payments</div><div class="st-v">${T.groupsInFY}</div></div>
       <div class="sumtile"><div class="st-l">Median per client group</div><div class="st-v">${money(r2(T.medianFY||0))}</div></div>
+      ${T.upfrontFY>0?`<div class="sumtile"><div class="st-l">Of which upfront / one-off</div><div class="st-v">${money(r2(T.upfrontFY))}</div></div>`:''}
       ${T.exclCount?`<div class="sumtile"><div class="st-l">Excluded (not approved)</div><div class="st-v">${T.exclCount}</div></div>`:''}
       ${T.noDate?`<div class="sumtile"><div class="st-l">Rows without a date</div><div class="st-v">${T.noDate}</div></div>`:''}
     </div>`;
@@ -21304,7 +21339,8 @@ function renderImport(){
     } else {
       h += `<div class="card" style="padding:0;overflow-x:auto"><table class="reg-table">
         <thead><tr><th>Client group</th><th>Adviser (from report)</th><th style="text-align:right">Payments</th>
-        <th style="text-align:right">Total for FY</th><th style="text-align:right">Total (all dates)</th><th></th></tr></thead><tbody>`;
+        <th style="text-align:right">Ongoing (FY)</th><th style="text-align:right">Upfront / one-off (FY)</th>
+        <th style="text-align:right">Total for FY</th><th></th></tr></thead><tbody>`;
       visible.forEach(g => {
         const gi = IMP.groups.indexOf(g);
         const done = IMP.drafted.has(g.name);
@@ -21312,18 +21348,21 @@ function renderImport(){
           <td><b>${e(g.name)}</b>${g.maxSingle >= 5000 ? ` <span class="s25-note" title="This group includes a single payment of ${money(r2(g.maxSingle))} — verify it is an advice fee (not e.g. an insurance premium or other payment) before invoicing">⚠ ${money(r2(g.maxSingle))} single payment</span>`:''}</td>
           <td>${e([...new Set([...g.advisers].map(impShortAdviser))].join(', '))}</td>
           <td style="text-align:right">${g.count}</td>
+          <td style="text-align:right">${money(r2(g.ongFY||0))}</td>
+          <td style="text-align:right">${g.upFY>0?`<b style="color:var(--amber)">${money(r2(g.upFY))}</b>`:'—'}</td>
           <td style="text-align:right;font-weight:700">${money(r2(g.totalFY))}</td>
-          <td style="text-align:right">${money(r2(g.totalAll))}</td>
           <td style="white-space:nowrap">${done
             ? `<span style="color:var(--green-dark);font-weight:700;font-size:11px">✓ drafted</span> <button class="btn btn-xs" onclick="impDraft(${gi})">again</button>`
             : `<button class="btn btn-xs btn-blue" onclick="impDraft(${gi})">✎ Draft invoice</button>`}</td>
         </tr>`;
       });
       h += `</tbody></table></div>
-      <div class="card"><div class="cs-legal">Drafting fills the client name(s), the ongoing fee total and the financial year, and matches
-      the adviser and office from the report where possible. The postal address, fee type (switch to retainer / two invoices if needed),
-      invoice number and the strategy apportionment are completed in the builder as usual. Cross-check the total against the client's fee
-      arrangement before issuing.</div></div>`;
+      <div class="card"><div class="cs-legal">Drafting fills the client name(s), the fee totals and the financial year, and matches the
+      adviser and office from the report where possible. <b>Upfront / one-off detection is a heuristic</b> — a payment with no recurring
+      payment ID, or one at least 3× the group's regular amount, is treated as upfront; where a group has both, the draft opens in
+      Retainer + Ongoing mode as two separate invoices with the amounts pre-split. Always cross-check the split against the client's fee
+      arrangement (the amounts stay editable on the Fees & Period step). The postal address, invoice numbers and the strategy
+      apportionment are completed in the builder as usual.</div></div>`;
     }
   }
   h += `</div>`;
