@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_29";
+const APP_VERSION = "v8.a_30";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","Acenda","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -12571,6 +12571,15 @@ function ex_scanCoverLines(text){
       const cand = pmAmts.filter(n => n !== dollars[0].n && n !== scoAmt && n !== atAmt).sort((a,b)=>a-b);
       if(cand.length) premium = '$' + (Number.isInteger(cand[0]) ? String(cand[0]) : cand[0].toFixed(2)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' pm';
     }
+    // …or a yearly-tagged premium, converted to the firm's monthly figure.
+    if(!premium){
+      const paAmts = [];
+      const paRe = /\$\s*([\d,]+(?:\.\d+)?)(?=\s*\(?\s*(?:per\s*annum|per\s*year|p\.?a\.?\b|annually|yearly|annual\b))/gi;
+      let paM;
+      while((paM = paRe.exec(line))) paAmts.push(parseFloat(paM[1].replace(/,/g,'')));
+      const cand = paAmts.filter(n => n !== dollars[0].n && n !== scoAmt).sort((a,b)=>a-b);
+      if(cand.length) premium = '$' + String(Math.round(cand[0]/12)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' pm';
+    }
     const wait = line.match(/(\d+)\s*[- ]?(days?|weeks?)\b/i);
     const bper = line.match(/(?:to|until)\s*age\s*(\d{2})/i) || line.match(/(\d+)\s*year(?:s)?\s*benefit/i);
     const struct = /variable\s*age[- ]?stepped|variable\s*age|stepped|level|hybrid/i.exec(line);
@@ -12588,10 +12597,95 @@ function ex_scanCoverLines(text){
       monthlyPremiumAfterTax: atM ? '$' + atM[1] + ' pm (after tax)' : '',
       superContribution: scoM ? '$' + scoM[1] + ' pm' : '',
       owner: /flexi[- ]?linked/i.test(line) ? 'Flexi-Linked Super'
-        : (/(?:inside|via|within|through)\s+super|super\s*owned|\bsuper\s+(?:recommend|retain|in force)/i.test(line) ? 'Super' : '')
+        : (/(?:inside|via|within|through)\s+super|super\s*owned|\bsuper\s+(?:recommend|retain|in force)|trustee|superannuation\s+(?:fund|limited|pty)|\(super\)|paid\s+(?:by|via|from)\s+(?:super|rollover)/i.test(line) ? 'Super'
+        : (/personally\s+owned|self[- ]owned|\(ordinary\)|non[- ]super/i.test(line) ? 'Self-Owned' : '')),
+      _src: line
     });
     if(rows.length >= 15) break;
   }
+  // The life insured is usually named once for the whole document.
+  const liM = text.match(/(?:life insured|life assured|insured person|person insured|client(?:\s*name)?)\s*[:\-–\t][ \t]*((?:[A-Z][a-zA-Z'’\-]+)(?:[ \t]+[A-Z][a-zA-Z'’\-]+){0,3})/i);
+  if(liM) rows.forEach(r => { if(!(r.lifeInsured||'').trim()) r.lifeInsured = liM[1].trim(); });
+  return rows;
+}
+
+// ── Firm-presentation layer for generically read cover rows ────────────────
+// The insurer-specific readers bake the firm's table conventions in; rows
+// recovered by the generic table / keyword-scan fallbacks get the same
+// treatment here: IP contract labels, trauma linked-by-default, super TPD
+// any-occupation unless the document says own, adjacent linked Life+TPD
+// premiums combined onto the Life row (with the super/personal split when the
+// TPD share is personally funded — a superlink), and the firm's
+// Life → TPD → IP → Trauma row order per person.
+function roaApplyFirmPresentation(rows, text){
+  try{
+    if(!Array.isArray(rows) || rows.length < 1) return rows;
+    const num = s => { const m = String(s||'').match(/\$\s*([\d,]+(?:\.\d+)?)/); return m ? parseFloat(m[1].replace(/,/g,'')) : 0; };
+    const fmtW = n => '$' + Math.round(n).toLocaleString('en-AU');
+    const kindOf = ct => {
+      const k = (ct||'').toLowerCase();
+      if(/income protection|\bip\b/.test(k)) return 'ip';
+      if(/trauma|critical/.test(k)) return 'trauma';
+      if(/child/.test(k)) return 'child';
+      if(/tpd|total (and|&) permanent/.test(k)) return 'tpd';
+      if(/life|death/.test(k)) return 'life';
+      return 'other';
+    };
+    const superOwned = r => /super|smsf|trustee/i.test(r.owner||'');
+    const alreadyLinkedDoc = rows.some(r => r.sharedPremiumWithPrev);
+    rows.forEach(r => {
+      const src = (r._src||'').toLowerCase();
+      const k = kindOf(r.coverType);
+      if(k === 'ip' && !/agreed|indemnity/i.test(r.coverType||''))
+        r.coverType = /agreed\s*value/.test(src) ? 'IP (Agreed & Standard Contract)' : 'IP (Indemnity & Standard Contract)';
+      if(k === 'trauma' && !/standalone|linked/i.test(r.coverType||''))
+        r.coverType = /standalone|stand[- ]alone/.test(src) ? 'Trauma (Standalone)' : 'Trauma (Linked)';
+      // Own-occupation TPD can't be held through super — a defaulted "Own"
+      // reads Any-Occupation when the document didn't actually say own.
+      // (Only for scanned rows, where the source line is known: an explicit
+      // Own-Occupation from a structured table — e.g. a superlink merge in the
+      // firm's own exported table — must survive a re-import.)
+      if(k === 'tpd' && superOwned(r) && r._src != null && !/own[\s-]*occ/.test(src) && /own-occupation/i.test(r.coverType||''))
+        r.coverType = r.coverType.replace(/own-occupation/i, 'Any-Occupation');
+    });
+    // Firm row order (per person, in first-appearance order).
+    const pOf = r => ((r.lifeInsured||'').trim().split(/\s+/)[0]||'').toLowerCase();
+    if(!alreadyLinkedDoc){
+      const persons = [];
+      rows.forEach(r => { const p = pOf(r); if(persons.indexOf(p) < 0) persons.push(p); });
+      const rank = {life:0, tpd:1, ip:2, trauma:3, child:4, other:5};
+      const orig = new Map(rows.map((r,i) => [r, i]));
+      rows.sort((a,b) => (persons.indexOf(pOf(a)) - persons.indexOf(pOf(b)))
+        || (rank[kindOf(a.coverType)] - rank[kindOf(b.coverType)])
+        || (orig.get(a) - orig.get(b)));
+    }
+    // Linked Life + TPD share ONE premium, shown on the Life row.
+    for(let i = 0; i < rows.length - 1; i++){
+      const lf = rows[i], tp = rows[i+1];
+      if(kindOf(lf.coverType) !== 'life' || kindOf(tp.coverType) !== 'tpd') continue;
+      if(tp.sharedPremiumWithPrev || /standalone/i.test(tp.coverType||'')) continue;
+      if(pOf(lf) !== pOf(tp)) continue;
+      if(lf.provider && tp.provider && lf.provider !== tp.provider) continue;
+      const lp = num(lf.premiumNote || lf.monthlyPremium), tn = num(tp.premiumNote || tp.monthlyPremium);
+      if(!lp || !tn) continue;   // a blank TPD premium is handled by the adjacent-linked rule on import
+      if(superOwned(lf) && !superOwned(tp) && (tp.owner||'').trim()){
+        // Superlink: the personally owned share funds the own-occupation
+        // top-up — combined premium with the super/personal split.
+        lf.premiumNote = fmtW(Math.round(lp) + Math.round(tn)) + ' pm (' + fmtW(lp) + ' from super plus ' + fmtW(tn) + ' from personal cashflow)';
+        tp.owner = lf.owner;
+        if(/any-occupation/i.test(tp.coverType||'')) tp.coverType = tp.coverType.replace(/any-occupation/i, 'Own-Occupation');
+      } else {
+        lf.premiumNote = fmtW(Math.round(lp) + Math.round(tn)) + ' pm';
+      }
+      lf.monthlyPremium = '';
+      if(!/linked/i.test(lf.coverType||'')) lf.coverType = 'Life (Linked)';
+      if(!/linked/i.test(tp.coverType||''))
+        tp.coverType = /\(/.test(tp.coverType||'') ? tp.coverType.replace(/^(TPD\s*)\(/i, '$1(Linked & ') : 'TPD (Linked)';
+      tp.premiumNote = ''; tp.monthlyPremium = ''; tp.monthlyPremiumAfterTax = '';
+      tp.sharedPremiumWithPrev = true;
+    }
+    rows.forEach(r => { delete r._src; });
+  }catch(_){ rows.forEach(r => { try{ delete r._src; }catch(__){} }); }
   return rows;
 }
 
@@ -14701,6 +14795,9 @@ async function importInsuranceFileToTable(file, fKey, forcedPerson){
             source = 'the Insurance Products table (re-read by layout)';
           }
         }
+        // Generic table reads get the firm conventions applied (the firm's own
+        // re-read table is already in the house style).
+        if(source.indexOf('re-read by layout') < 0) rows = roaApplyFirmPresentation(rows, text);
       }
     }
     // 3.5) A screenshot (or scanned PDF) of the firm's own "Insurance Products"
@@ -14712,9 +14809,10 @@ async function importInsuranceFileToTable(file, fKey, forcedPerson){
         source = 'the Insurance Products table (read from the image)';
       }
     }
-    // 4) Fallback — keyword scan of the raw text (quote / summary layouts).
+    // 4) Fallback — keyword scan of the raw text (quote / summary layouts),
+    //    lifted to the firm's presentation conventions.
     if(!rows.length){
-      rows = ex_scanCoverLines(text);
+      rows = roaApplyFirmPresentation(ex_scanCoverLines(text), text);
       source = 'a best-effort scan of the document text';
     }
     if(!rows.length){
