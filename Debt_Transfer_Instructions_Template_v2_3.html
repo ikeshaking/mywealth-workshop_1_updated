@@ -2869,6 +2869,7 @@
                     svg += '<marker id="mL" markerWidth="9" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="' + LIME_A + '"/></marker>';
                     svg += '<filter id="ds" x="-12%" y="-12%" width="124%" height="134%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0C2E3F" flood-opacity="0.16"/></filter>';
                     svg += '<clipPath id="fcClip"><rect x="0" y="0" width="780" height="' + totalHeight + '" rx="18"/></clipPath>';
+                    svg += '<clipPath id="avClip"><circle cx="125" cy="84" r="35"/></clipPath>';
                     svg += '</defs>';
 
                     svg += '<rect x="0.5" y="0.5" width="779" height="' + (totalHeight - 1) + '" rx="18" fill="url(#fcBg)" stroke="' + DIV + '" stroke-width="1"/>';
@@ -2880,14 +2881,16 @@
                     // === ROW 1: MONEY IN ===
                     svg += _head(390, 36, 'MONEY IN');
                     var fMin = formatCurrency(Math.ceil(parseFloat(document.getElementById('homeLoanPayment').value) || 0));
-                    // Salary / Wages — solid blue
-                    svg += _card(50, 60, 150, 96, BLUE);
-                    svg += _badge(125, 60, BLUE, 'person');
-                    svg += _tag(125, 86, 'INCOME', WHT_SOFT);
-                    svg += _t(125, 110, 'Salary / Wages', 13, 800, WHT);
-                    svg += _t(125, 132, 'paid into offset', 8.5, 600, WHT_DIM, true);
-                    svg += _flow(205, 108, 293, 108, BLUE, 'mB');
-                    svg += _lbl(249, 95, 'wages in', BLUE);
+                    // Salary / Wages — gender-neutral person avatar (head + shoulders)
+                    svg += '<circle cx="125" cy="84" r="35" fill="#E8F1FB" stroke="' + BLUE + '" stroke-width="1.8" filter="url(#ds)"/>';
+                    svg += '<g clip-path="url(#avClip)">';
+                    svg += '<circle cx="125" cy="72" r="12.5" fill="' + BLUE + '"/>';
+                    svg += '<path d="M100,122 C100,97 150,97 150,122 L150,126 L100,126 Z" fill="' + BLUE + '"/>';
+                    svg += '</g>';
+                    svg += _t(125, 138, 'Salary / Wages', 13, 800, NAVY);
+                    svg += _t(125, 153, 'paid into offset', 8.5, 600, '#7C8894', true);
+                    svg += _flow(172, 92, 293, 106, BLUE, 'mB');
+                    svg += _lbl(235, 86, 'wages in', BLUE);
                     // Offset account — solid navy
                     svg += _card(300, 60, 128, 96, NAVY);
                     svg += _badge(364, 60, NAVY, 'dollar');
