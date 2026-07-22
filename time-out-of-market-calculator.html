@@ -758,7 +758,6 @@ async function exportBrandedExcel(){
   M.rows.forEach((row,ri)=>{ const xr=ws.getRow(r); row.forEach((v,ci)=>{ const c=xr.getCell(ci+1); const f=M.fmts[ci];
     if(v==null||v===''){c.value=null;} else if(f==='pct'){c.value=v;c.numFmt='0.000%';} else if(f==='price'){c.value=v;c.numFmt='$0.0000';} else if(f==='units'){c.value=v;c.numFmt='#,##0.0000';} else if(f==='text'){c.value=v;} else {c.value=v;c.numFmt='$#,##0.00';}
     c.font={name:'Nunito',size:9,color:{argb:argb(BRAND.navy)}}; c.alignment={horizontal:ci===0?'left':'right'}; c.border=allBorder; if(ri%2)c.fill=fill(BRAND.lightblue); }); r++; });
-  ws.autoFilter={from:{row:headRow,column:1},to:{row:headRow,column:M.headers.length}};
   // methodology sheet
   const ms=wb.addWorksheet('Methodology'); ms.getColumn(1).width=118;
   const mt=ms.getCell(1,1); mt.value='Methodology & assumptions'; mt.font={name:'Georgia',bold:true,size:13,color:{argb:argb(BRAND.navy)}};
@@ -938,7 +937,7 @@ function renderWizard(){
     <div class="wizard-nav">
       ${state.wizardStep>0?`<button class="btn" onclick="gotoStep(${state.wizardStep-1})">← ${e(steps[state.wizardStep-1].l)}</button>`:`<button class="btn" onclick="state.page='picker';render();window.scrollTo(0,0)">← Scenarios</button>`}
       <span class="wizard-nav-mid">Step ${state.wizardStep+1} of ${steps.length}</span>
-      ${state.wizardStep<steps.length-1?`<button class="btn btn-blue" onclick="gotoStep(${state.wizardStep+1})">Next: ${e(steps[state.wizardStep+1].l)} →</button>`:`<button class="btn btn-green" onclick="window.print()">⬇ Print / save PDF</button>`}
+      ${state.wizardStep<steps.length-1?`<button class="btn btn-blue" onclick="gotoStep(${state.wizardStep+1})">Next: ${e(steps[state.wizardStep+1].l)} →</button>`:`<button class="btn btn-green" onclick="exportBrandedExcel()">⬇ Download Excel</button>`}
     </div>
   </div>`;
 
@@ -1225,8 +1224,6 @@ function body_results(){
     <div class="chartbox" id="chartbox"><svg id="chart" role="img" aria-label="Counterfactual vs actual over the period"></svg><div class="tooltip" id="tooltip"></div></div>
     <div class="legend" id="legend"></div>
     <div class="row no-print" style="margin-top:12px">
-      <button class="btn btn-sm btn-green" onclick="exportBrandedExcel()" title="Download the full ledger as a branded Excel workbook">⬇ Branded Excel (ledger)</button>
-      <button class="btn btn-sm btn-ghost" onclick="csvExport()">Plain CSV</button>
       <button class="btn btn-sm btn-ghost" onclick="window.print()">Print / PDF</button></div>
     <details style="margin-top:14px"><summary>Daily ledger</summary><div class="ledger-wrap">${ledgerHTML(R)}</div></details>
     <details style="margin-top:8px" open><summary>Methodology &amp; assumptions</summary><div class="meth">${methHTML(R)}</div></details>`;
