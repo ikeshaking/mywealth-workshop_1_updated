@@ -547,8 +547,8 @@
         .key-point{
             background-color:#EAF4FB;
             border:none;
-            padding:15px;
-            margin:10px 0;
+            padding:8px 12px;
+            margin:6px 0;
             border-radius:9px;
             font-size:9.5pt;
         }
@@ -3112,7 +3112,7 @@
                 + '.doc-section h3 { font-family: "ABC Arizona Flare", Georgia, serif; color: #0066cc; font-size: 1.1em; margin: 10px 0 6px 0; }'
                 + '.doc-section p { margin: 0 0 8px 0; font-size: 9.5pt; }'
                 + '.highlight-box { background-color: #EAF4FB; padding: 12px; margin: 8px 0; border: none; border-radius: 6px; font-size: 9.5pt; }'
-                + '.key-point { background-color: #EAF4FB; padding: 12px; margin: 8px 0; border: none; border-radius: 6px; font-size: 9.5pt; }'
+                + '.key-point { background-color: #EAF4FB; padding: 7px 10px; margin: 4px 0; border: none; border-radius: 6px; font-size: 9.5pt; }'
                 + '.warning { background-color: #fff3cd; padding: 12px; margin: 10px 0; border-left: 4px solid #ffc107; border-radius: 6px; }'
                 + 'table { width: 90%; border-collapse: collapse; font-size: 8.5pt; margin: 8px 0; }'
                 + 'table th { background-color: #0078D4; color: white; padding: 4px 5px; text-align: left; font-weight: 700; font-size: 8pt; }'
@@ -3266,7 +3266,7 @@
                 + '.doc-section h3 { font-family: "ABC Arizona Flare", Georgia, serif; color: #0066cc; font-size: 11pt; margin: 12px 0 8px 0; font-weight: normal; }'
                 + '.doc-section p { margin: 0 0 10px 0; font-size: 9.5pt; line-height: 1.6; }'
                 + '.highlight-box { background-color: #EAF4FB; padding: 15px; margin: 10px 0; border: none; font-size: 9.5pt; }'
-                + '.key-point { background-color: #EAF4FB; padding: 15px; margin: 10px 0; border: none; font-size: 9.5pt; }'
+                + '.key-point { background-color: #EAF4FB; padding: 7px 10px; margin: 4px 0; border: none; font-size: 9.5pt; }'
                 + '.warning { background-color: #fff3cd; padding: 12px; margin: 10px 0; border-left: 4px solid #ffc107; }'
                 + 'table { width: 100%; border-collapse: collapse; mso-cellspacing: 0cm; font-size: 9pt; margin: 10px 0; word-wrap: break-word; table-layout: fixed; margin-left: 0; text-align: left; }'
                 + 'table th { background-color: #0C2E3F; color: white; padding: 6px 9px; text-align: left; font-family: "ABC Arizona Flare", Georgia, serif; font-weight: normal; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.5px; border: none; }'
@@ -4449,7 +4449,7 @@
                         children: [new D.TableCell({
                             borders: noBorder,
                             shading: { fill: fill, type: D.ShadingType.CLEAR, color: 'auto' },
-                            margins: { top: 140, bottom: 140, left: 180, right: 180 },
+                            margins: { top: 70, bottom: 70, left: 150, right: 150 },
                             children: children.length ? children : [new D.Paragraph('')]
                         })]
                     })]
@@ -4546,7 +4546,12 @@
                     });
                     return;
                 }
-                if (tag === 'table') { out.push(convertTable(el)); return; }
+                if (tag === 'table') {
+                    out.push(convertTable(el));
+                    // white gap between a table and whatever follows it
+                    out.push(new D.Paragraph({ spacing: { before: 0, after: 120 }, children: [new D.TextRun({ text: ' ', size: 8 })] }));
+                    return;
+                }
                 if (tag === 'p') {
                     var align = /text-align:\s*center/.test(st) ? D.AlignmentType.CENTER : undefined;
                     var color = dtParseColor((st.match(/(?:^|;)\s*color:\s*([^;]+)/) || [])[1]);
@@ -4559,7 +4564,7 @@
                     var inner = [];
                     convertChildren(el, inner, ctx);
                     out.push(shadedBoxTable(fill, inner));
-                    out.push(new D.Paragraph({ spacing: { after: 60 }, children: [] }));
+                    out.push(new D.Paragraph({ spacing: { before: 0, after: 20 }, children: [new D.TextRun({ text: ' ', size: 4 })] }));
                     return;
                 }
                 if (/cta-section/.test(cls)) {
