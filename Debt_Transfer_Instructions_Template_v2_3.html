@@ -576,6 +576,9 @@
 
         .preview-content table tr:nth-child(even){background-color:#f9f9f9}
 
+        .preview-content ul,.preview-content ol{margin:2px 0 6px;padding-left:22px;line-height:1.5}
+        .preview-content li{margin:0 0 2px}
+
         .cta-section{
             background:linear-gradient(135deg,#0066cc 0%,#0052a3 100%);
             color:white;
@@ -686,7 +689,7 @@
         .topnav a.active{background:var(--blue);color:#fff}
         [data-theme="night"] .topnav a.active{color:var(--navy-deep)}
 
-        .wrapper{grid-template-columns:205px minmax(0,1fr) minmax(320px,34%);gap:14px;max-width:1720px}
+        .wrapper{grid-template-columns:205px minmax(340px,500px) minmax(420px,1fr);gap:14px;max-width:1720px}
         .form-panel{position:static;max-height:none;overflow:visible;top:auto}
         .preview-panel{position:sticky;top:66px;max-height:calc(100vh - 86px);display:flex;flex-direction:column}
         .preview-content{flex:1;max-height:none}
@@ -790,6 +793,37 @@
             vertical-align:2px;margin-left:6px;font-family:var(--bf);
         }
 
+        /* ── Night-mode legibility: remap hardcoded light inline styles inside the
+              form panel (incl. dynamically added sections) to theme tokens. The
+              generated document preview intentionally stays light. ── */
+        [data-theme="night"] .form-panel [style*="f0f2f5"],
+        [data-theme="night"] .form-panel [style*="f0f8ff"],
+        [data-theme="night"] .form-panel [style*="f9f9f9"],
+        [data-theme="night"] .form-panel [style*="EEECE1"],
+        [data-theme="night"] .form-panel [style*="background: white"],
+        [data-theme="night"] .form-panel [style*="background:white"]{
+            background:var(--surface-2)!important;border-color:var(--border)!important;
+        }
+        [data-theme="night"] .form-panel [style*="color:#888"],
+        [data-theme="night"] .form-panel [style*="color: #888"],
+        [data-theme="night"] .form-panel [style*="color:#999"],
+        [data-theme="night"] .form-panel [style*="color: #999"]{color:var(--text-muted)!important}
+        [data-theme="night"] .form-panel [style*="color:#666"],
+        [data-theme="night"] .form-panel [style*="color: #666"]{color:var(--text-dim)!important}
+        [data-theme="night"] .form-panel [style*="color:#0066cc"],
+        [data-theme="night"] .form-panel [style*="color: #0066cc"]{color:var(--blue)!important}
+        [data-theme="night"] .form-panel [style*="color:#1F497D"],
+        [data-theme="night"] .form-panel [style*="color: #1F497D"]{color:var(--blue-bright)!important}
+
+        .wrapper.no-preview{grid-template-columns:205px minmax(0,1fr)}
+        .wrapper.no-preview .preview-panel{display:none!important}
+        .btn-preview-toggle{
+            width:100%;margin-top:10px;background:var(--surface-2);color:var(--heading);
+            border:1px solid var(--border);border-radius:10px;padding:7px 10px;
+            font-size:10.5px;font-weight:700;cursor:pointer;font-family:var(--bf);transition:all .15s;
+        }
+        .btn-preview-toggle:hover{background:var(--blue-light);border-color:var(--blue-soft)}
+
         @media(max-width:1250px){
             .wrapper{grid-template-columns:205px minmax(0,1fr)}
             .preview-panel{position:static;max-height:none;grid-column:1 / -1}
@@ -845,6 +879,7 @@
                 <button type="button" class="wizard-step" onclick="goStep(6)"><span class="ws-dot">7</span><span class="ws-label">Flowchart</span></button>
                 <button type="button" class="wizard-step" onclick="goStep(7)"><span class="ws-dot">8</span><span class="ws-label">Summary &amp; Export</span></button>
             </div>
+            <button type="button" class="btn-preview-toggle" id="previewToggleBtn" onclick="togglePreview()">🙈 Hide preview</button>
             <div class="side-json-note">💾 Save a <b>JSON copy</b> with every guide — it downloads with the <b>same name as the Word file</b>. See the <a onclick="showPage('guide')">How To Guide</a>.</div>
         </aside>
 
@@ -2373,7 +2408,7 @@
                                 const wt = insW + advW + gearW + propW;      // weekly total, straight through
                                 const mt = wt * 52 / 12;                     // monthly equivalent
                                 var t = 'Transfer approximately $' + Math.round(wt).toLocaleString() + ' per week (or $' + Math.round(mt).toLocaleString() + ' per month) from your personal savings account to MCMA (Account Number: ending ' + mcmaAccount + '). This covers ongoing plan costs:';
-                                t += '<ul style="margin:2px 0 0 0;list-style:circle;padding-left:20px;">';
+                                t += '<ul style="margin:0 0 2px 0;list-style:circle;padding-left:22px;line-height:1.4;">';
 
                                 // Share investment loan interest (entered weekly by adviser)
                                 if (gearW > 0) t += '<li>Share investment loan interest: $' + Math.round(gearW).toLocaleString() + ' per week</li>';
@@ -2430,7 +2465,7 @@
                                 var suffix = (cd % 10 === 1 && cd % 100 !== 11) ? 'st' : (cd % 10 === 2 && cd % 100 !== 12) ? 'nd' : (cd % 10 === 3 && cd % 100 !== 13) ? 'rd' : 'th';
                                 timingText = 'Please ensure that this transfer is set to occur prior to the ' + cd + suffix + ' of each month.';
                             }
-                            addStep('Monthly Investment Transfer', 'Set up a regular transfer from your Share Investment Loan Offset (Account Number: ending ' + invOffsetAccount + ') of ' + monthlySurplus + ' per month to your MCMA (Account Number: ending ' + mcmaAccount + '). Once these funds hit your MCMA, we will arrange to have ' + platform + ' debit and invest these funds into the market.<ul style="margin:2px 0 0 0;list-style:circle;padding-left:20px;"><li>' + timingText + '</li></ul>');
+                            addStep('Monthly Investment Transfer', 'Set up a regular transfer from your Share Investment Loan Offset (Account Number: ending ' + invOffsetAccount + ') of ' + monthlySurplus + ' per month to your MCMA (Account Number: ending ' + mcmaAccount + '). Once these funds hit your MCMA, we will arrange to have ' + platform + ' debit and invest these funds into the market.<ul style="margin:0 0 2px 0;list-style:circle;padding-left:22px;line-height:1.4;"><li>' + timingText + '</li></ul>');
 
                             // Step: Investment Loan Interest Redirection
                             if (document.getElementById('includeStep7InterestRedirect').checked) {
@@ -2462,7 +2497,7 @@
                                     });
                                 }
                                 var irBody = 'Arrange for interest from your investment loan(s) to be paid from your MCMA (Account Number: ending ' + mcmaAccount + '). This applies to:';
-                                irBody += '<ul style="margin:2px 0 0 0;list-style:circle;padding-left:20px;">';
+                                irBody += '<ul style="margin:0 0 2px 0;list-style:circle;padding-left:22px;line-height:1.4;">';
                                 loanList.forEach(function(l){ irBody += '<li>' + l + '</li>'; });
                                 irBody += '</ul>';
                                 if (st === 'confirm') irBody += '<p style="margin-top:8px;font-size:0.9em;color:#666;">Please contact your bank to confirm whether your interest repayments can be redirected to your MCMA.</p>';
@@ -2558,6 +2593,27 @@
                     var _div = function (y) {
                         return '<line x1="40" y1="' + y + '" x2="740" y2="' + y + '" stroke="' + DIV + '" stroke-width="1"/>';
                     };
+                    // Small icon badge that sits on the card's top edge.
+                    var _badge = function (cx, cy, color, glyph) {
+                        var g = '<g transform="translate(' + cx + ',' + cy + ')">';
+                        g += '<circle cx="0" cy="0" r="13" fill="#FFFFFF" stroke="' + color + '" stroke-width="1.6"/>';
+                        if (glyph === 'person') {
+                            g += '<circle cx="0" cy="-3.5" r="3" fill="none" stroke="' + color + '" stroke-width="1.5"/>';
+                            g += '<path d="M-5,7 C-5,1.5 5,1.5 5,7" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linecap="round"/>';
+                        } else if (glyph === 'house') {
+                            g += '<path d="M-6,0 L0,-5.5 L6,0" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
+                            g += '<path d="M-4,0.5 V6 H4 V0.5" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
+                        } else if (glyph === 'bank') {
+                            g += '<path d="M-6,-1.5 L0,-5.5 L6,-1.5 Z" fill="none" stroke="' + color + '" stroke-width="1.3" stroke-linejoin="round"/>';
+                            g += '<path d="M-4,1 V4.5 M0,1 V4.5 M4,1 V4.5 M-6,6.5 H6" fill="none" stroke="' + color + '" stroke-width="1.3" stroke-linecap="round"/>';
+                        } else if (glyph === 'chart') {
+                            g += '<path d="M-5,4 L-1.5,0.5 L1,3 L5,-2.5" fill="none" stroke="' + color + '" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>';
+                            g += '<path d="M2,-3.2 L5,-2.5 L4.3,0.4" fill="none" stroke="' + color + '" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>';
+                        } else {
+                            g += '<text x="0" y="4.5" text-anchor="middle" font-size="12" font-weight="800" fill="' + color + '">$</text>';
+                        }
+                        return g + '</g>';
+                    };
 
                     // Calculate dynamic height based on what's included
                     var hasPropFC = false; document.querySelectorAll('#propertyLoansContainer .nested-section').forEach(function(s){ var b=s.querySelector('.propLoanBalance'); var p=s.querySelector('.propLoanPayment'); if ((b&&parseFloat(b.value)>0)||(p&&parseFloat(p.value)>0)) hasPropFC = true; });
@@ -2620,6 +2676,7 @@
                     var fMin = formatCurrency(Math.ceil(parseFloat(document.getElementById('homeLoanPayment').value) || 0));
                     // Salary / Wages
                     svg += _card(50, 66, 150, 84, BLUE, '#FFFFFF');
+                    svg += _badge(125, 66, BLUE, 'person');
                     svg += _tag(125, 90, 'INCOME', BLUE);
                     svg += _t(125, 112, 'Salary / Wages', 13, 800, TEXT);
                     svg += _t(125, 132, 'paid into offset', 8.5, 600, SUB, true);
@@ -2628,6 +2685,7 @@
                     svg += _lbl(249, 99, 'wages in', BLUE);
                     // Offset account
                     svg += _card(300, 60, 128, 96, BLUE, BLUE_T);
+                    svg += _badge(364, 60, BLUE, 'dollar');
                     svg += _tag(364, 80, 'OFFSET ACCOUNT', BLUE);
                     svg += _t(364, 102, 'Min ' + fMin + '/mo', 11, 800, TEXT);
                     svg += _t(364, 120, '+ ' + fWC + '/wk extra', 10.5, 800, BLUE);
@@ -2637,6 +2695,7 @@
                     svg += _lbl(490, 99, 'repayments', CORAL);
                     // Home Loan
                     svg += _card(555, 66, 170, 84, CORAL, '#FFFFFF');
+                    svg += _badge(640, 66, CORAL, 'house');
                     svg += _tag(640, 90, 'HOME LOAN', CORAL);
                     svg += _t(640, 114, fHL, 16, 800, TEXT);
                     svg += _t(640, 134, 'repaid from offset', 8.5, 600, SUB, true);
@@ -2647,12 +2706,14 @@
 
                     // === ROW 2: Investment chain ===
                     svg += _card(30, 250, 148, 74, CORAL, '#FFFFFF');
+                    svg += _badge(104, 250, CORAL, 'bank');
                     svg += _tag(104, 270, 'INVESTMENT LOAN', CORAL);
                     svg += _t(104, 292, fIL, 15, 800, TEXT);
                     svg += _t(104, 310, 'tax-deductible interest', 8.5, 600, SUB, true);
                     svg += '<path d="M183,287 L213,287" stroke="' + CORAL + '" stroke-width="2" stroke-linecap="round" fill="none" marker-end="url(#mC)"/>';
                     svg += _lbl(198, 278, 'draw', CORAL);
                     svg += _card(220, 255, 118, 64, BLUE, BLUE_T);
+                    svg += _badge(279, 255, BLUE, 'dollar');
                     svg += _tag(279, 276, 'INV. LOAN OFFSET', BLUE);
                     svg += _t(279, 297, 'funds held here', 9.5, 700, TEXT);
                     svg += '<path d="M343,287 L393,287" stroke="' + BLUE + '" stroke-width="2" stroke-linecap="round" fill="none" marker-end="url(#mB)"/>';
@@ -2660,6 +2721,7 @@
 
                     // MCMA — the hub, deep navy
                     svg += _card(400, 243, 160, 84, NAVY, NAVY);
+                    svg += _badge(480, 243, NAVY, 'bank');
                     svg += _tag(480, 264, 'MCMA · CASH HUB', '#9FC1D8');
                     svg += _t(480, 285, 'Cash Management', 11.5, 800, '#FFFFFF');
                     svg += _t(480, 302, 'all money flows', 8.5, 600, 'rgba(255,255,255,0.65)', true);
@@ -2671,6 +2733,7 @@
                     // Investment Platform
                     var platH = hasInitial ? 88 : 74;
                     svg += _card(630, 250, 150, platH, LIME_S, LIME_T);
+                    svg += _badge(705, 250, LIME_D, 'chart');
                     svg += _tag(705, 270, String(platform).toUpperCase(), LIME_D);
                     if (hasInitial) {
                         svg += _t(705, 290, 'Initial: ' + formatCurrency(initAmtFC), 11, 800, TEXT);
@@ -2731,6 +2794,7 @@
                         svg += _head(390, propSectionStart + 25, 'INVESTMENT PROPERTY');
                         var houseTopY = propSectionStart + 45;
                         svg += _card(110, houseTopY, 170, 84, CORAL, '#FFFFFF');
+                    svg += _badge(195, houseTopY, CORAL, 'house');
                         svg += _tag(195, houseTopY + 24, 'INVESTMENT PROPERTY', CORAL);
                         svg += _t(195, houseTopY + 48, fPD, 15, 800, TEXT);
                         svg += _t(195, houseTopY + 68, 'loan balance', 8.5, 600, SUB, true);
@@ -2837,7 +2901,8 @@
                 + 'table { width: 90%; border-collapse: collapse; font-size: 8.5pt; margin: 8px 0; }'
                 + 'table th { background-color: #0078D4; color: white; padding: 4px 5px; text-align: left; font-weight: 700; font-size: 8pt; }'
                 + 'table td { padding: 3px 4px; border-bottom: 1px solid #eee; font-size: 8.5pt; }'
-                + 'ol, ul { font-size: 9.5pt; line-height: 1.5; margin: 2px 0; padding-left: 20px; }'
+                + 'ol, ul { font-size: 9.5pt; line-height: 1.4; margin: 1px 0 3px 0; padding-left: 20px; }'
+                + 'li { margin: 0 0 1px 0; }'
                 + 'li { margin-bottom: 2px; }'
                 + 'strong { color: #333; }'
                 + 'svg { max-width: 100%; height: auto; }'
@@ -2873,8 +2938,16 @@
 
             var previewClone = document.getElementById('preview').cloneNode(true);
 
-            // Remove the banner image from the Word doc (title text is kept).
-            previewClone.querySelectorAll('.doc-header img, .doc-brand-footer').forEach(function(el){ el.remove(); });
+            // Keep the brand banner & footer band in the Word doc (like the Tax
+            // Invoice Generator) — size them explicitly so Word fits them to the page.
+            previewClone.querySelectorAll('.doc-header img').forEach(function(el){
+                el.setAttribute('width', '640'); el.setAttribute('height', '181');
+                el.style.cssText = 'width:6.67in;height:auto;display:block;';
+            });
+            previewClone.querySelectorAll('.doc-brand-footer').forEach(function(el){
+                el.setAttribute('width', '640'); el.setAttribute('height', '67');
+                el.style.cssText = 'width:6.67in;height:auto;display:block;margin-top:18pt;';
+            });
 
             var svgs = previewClone.querySelectorAll('svg');
             
@@ -2930,7 +3003,9 @@
                             var pngData = canvas.toDataURL('image/png');
                             var imgTag = document.createElement('img');
                             imgTag.src = pngData;
-                            imgTag.style.cssText = 'width:6.8in;max-width:100%;height:auto;display:block;margin:0 auto;';
+                            var dispW = 640, dispH = Math.round(640 * h / w);
+                            imgTag.setAttribute('width', dispW); imgTag.setAttribute('height', dispH);
+                            imgTag.style.cssText = 'width:6.67in;height:auto;display:block;margin:0 auto;';
                             if (svg.parentNode) svg.parentNode.replaceChild(imgTag, svg);
                         } catch(e) {
                             console.log('Canvas error', e);
@@ -2977,8 +3052,8 @@
                 + 'table { width: 100%; border-collapse: collapse; font-size: 9pt; margin: 10px 0; word-wrap: break-word; table-layout: fixed; margin-left: 0; text-align: left; }'
                 + 'table th { background-color: #0078D4; color: white; padding: 4px 5px; text-align: left; font-weight: 700; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.5px; border: none; }'
                 + 'table td { padding: 3px 4px; border: none; border-bottom: 1px solid #eee; font-size: 8.5pt; }'
-                + 'ol, ul { font-size: 9.5pt; line-height: 1.6; margin: 4px 0; padding-left: 20px; }'
-                + 'li { margin-bottom: 3px; }'
+                + 'ol, ul { font-size: 9.5pt; line-height: 1.35; margin: 1px 0 3px 0; padding-left: 20px; }'
+                + 'li { margin: 0; mso-margin-top-alt: 0; mso-margin-bottom-alt: 0; }'
                 + 'strong { color: #333; font-weight: 700; }'
                 + '.footer-doc { text-align: center; font-size: 9pt; color: #888; padding: 15px 0; border-top: 2px solid #8fafd4; margin-top: 25px; }'
                 + '.fc-section { page-break-before: always; margin: 0; padding: 10px 0; }'
@@ -3135,7 +3210,7 @@
                             ctx.scale(2, 2); ctx.drawImage(img, 0, 0, w, h);
                             var png = canvas.toDataURL('image/png');
                             var it = document.createElement('img');
-                            it.src = png; it.style.cssText = 'width:100%;max-width:680px;height:auto;display:block;';
+                            it.src = png; it.setAttribute('width', '640'); it.setAttribute('height', String(Math.round(640 * h / w))); it.style.cssText = 'width:100%;max-width:640px;height:auto;display:block;';
                             if (svg.parentNode) svg.parentNode.replaceChild(it, svg);
                         } catch (e) { if (svg.parentNode) svg.parentNode.removeChild(svg); }
                         URL.revokeObjectURL(bUrl);
@@ -4034,6 +4109,24 @@
             }
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initHistory);
             else initHistory();
+        })();
+
+        /* ===================== PREVIEW SHOW / HIDE ===================== */
+        function setPreviewVisible(v) {
+            var w = document.getElementById('builderPage');
+            if (w) w.classList.toggle('no-preview', !v);
+            var b = document.getElementById('previewToggleBtn');
+            if (b) b.textContent = v ? '🙈 Hide preview' : '👁 Show preview';
+            try { localStorage.setItem('dtPreviewHidden', v ? '' : '1'); } catch (e) {}
+        }
+
+        function togglePreview() {
+            var w = document.getElementById('builderPage');
+            setPreviewVisible(w ? w.classList.contains('no-preview') : true);
+        }
+
+        (function () {
+            try { if (localStorage.getItem('dtPreviewHidden') === '1') setPreviewVisible(false); } catch (e) {}
         })();
 
         /* ===================== DAY / NIGHT THEME (matches ROA generator) ===================== */
