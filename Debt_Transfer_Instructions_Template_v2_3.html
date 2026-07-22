@@ -2749,18 +2749,20 @@
                 + '<p style="margin-bottom:15px;color:#666;font-size:0.9em;">How your money flows through the strategy:</p>'
 
                 + (() => {
-                    // ── MWS flowchart: light page canvas, dark navy rounded cards ──
-                    var BG1 = '#FFFFFF', BG2 = '#F3F7FA', CARD = '#123B52';
-                    var TEXTW = '#FFFFFF', SUBW = 'rgba(255,255,255,0.62)';
-                    var HEAD = '#0C2E3F', DIV = '#E4EAF1';
-                    var BLUE = '#2B6FD6', BLUE_P = '#8FC1FF';
-                    var CORAL = '#E85540', CORAL_P = '#FF9C8A';
-                    var LIME = '#CFE87F', LIME_DK = '#0C2E3F', LIME_ST = '#A8C455', LIME_A = '#7A9A2E', LIME_P = '#D9EC9C';
-                    var GREY = '#8A97A3', GREY_ST = '#B9C4CE', GREY_BG = '#F1F4F8', SLATE_ST = '#93A5B3';
+                    // ── MWS flowchart v5: colourful solid brand nodes on a light canvas,
+                    //    house-shaped Home Loan / Investment Property nodes ──
+                    var BG1 = '#FFFFFF', BG2 = '#F3F7FA';
+                    var NAVY = '#0C2E3F', HEAD = '#0C2E3F', DIV = '#E4EAF1';
+                    var BLUE = '#2B6FD6', BLUE_D = '#1F5BB8';
+                    var CORAL = '#F56A5A', CORAL_D = '#DE4B39', CORAL_A = '#E85540';
+                    var LIME = '#CFE87F', LIME_ST = '#A8C455', LIME_A = '#7A9A2E';
+                    var GREEN = '#27ae60', GREEN_D = '#1F9251', GREEN_A = '#219a52';
+                    var GREY = '#8A97A3', GREY_ST = '#B9C4CE', GREY_BG = '#F1F4F8';
+                    var WHT = '#FFFFFF', WHT_SOFT = 'rgba(255,255,255,0.82)', WHT_DIM = 'rgba(255,255,255,0.72)';
                     var SERIF = 'ABC Arizona Flare,Georgia,serif';
 
-                    var _card = function (x, y, w, h, stroke, fill, dash) {
-                        return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="13" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.5"' + (dash ? ' stroke-dasharray="5,4"' : '') + ' filter="url(#ds)"/>';
+                    var _card = function (x, y, w, h, fill, stroke, dash) {
+                        return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="13" fill="' + fill + '"' + (stroke ? ' stroke="' + stroke + '" stroke-width="1.5"' : '') + (dash ? ' stroke-dasharray="5,4"' : '') + ' filter="url(#ds)"/>';
                     };
                     var _tag = function (cx, y, t, color) {
                         return '<text x="' + cx + '" y="' + y + '" text-anchor="middle" font-size="8" font-weight="800" letter-spacing="1.5" fill="' + color + '">' + t + '</text>';
@@ -2777,16 +2779,18 @@
                     var _div = function (y) {
                         return '<line x1="40" y1="' + y + '" x2="740" y2="' + y + '" stroke="' + DIV + '" stroke-width="1"/>';
                     };
+                    // Gently curved connector for a friendlier feel.
+                    var _flow = function (x1, y1, x2, y2, color, marker) {
+                        var mx = (x1 + x2) / 2;
+                        return '<path d="M' + x1 + ',' + y1 + ' C' + mx + ',' + (y1 - 7) + ' ' + mx + ',' + (y2 - 7) + ' ' + x2 + ',' + y2 + '" stroke="' + color + '" stroke-width="2.2" stroke-linecap="round" fill="none" marker-end="url(#' + marker + ')"/>';
+                    };
                     // Icon badge sitting on the card's top edge.
                     var _badge = function (cx, cy, color, glyph) {
                         var g = '<g transform="translate(' + cx + ',' + cy + ')">';
-                        g += '<circle cx="0" cy="0" r="13" fill="#FFFFFF" stroke="' + color + '" stroke-width="1.6"/>';
+                        g += '<circle cx="0" cy="0" r="13" fill="#FFFFFF" stroke="' + color + '" stroke-width="1.6" filter="url(#ds)"/>';
                         if (glyph === 'person') {
                             g += '<circle cx="0" cy="-3.5" r="3" fill="none" stroke="' + color + '" stroke-width="1.5"/>';
                             g += '<path d="M-5,7 C-5,1.5 5,1.5 5,7" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linecap="round"/>';
-                        } else if (glyph === 'house') {
-                            g += '<path d="M-6,0 L0,-5.5 L6,0" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
-                            g += '<path d="M-4,0.5 V6 H4 V0.5" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
                         } else if (glyph === 'bank') {
                             g += '<path d="M-6,-1.5 L0,-5.5 L6,-1.5 Z" fill="none" stroke="' + color + '" stroke-width="1.3" stroke-linejoin="round"/>';
                             g += '<path d="M-4,1 V4.5 M0,1 V4.5 M4,1 V4.5 M-6,6.5 H6" fill="none" stroke="' + color + '" stroke-width="1.3" stroke-linecap="round"/>';
@@ -2797,6 +2801,15 @@
                             g += '<text x="0" y="4.5" text-anchor="middle" font-size="12" font-weight="800" fill="' + color + '">$</text>';
                         }
                         return g + '</g>';
+                    };
+                    // House-shaped node: two-tone roof + body (with a little chimney).
+                    var _house = function (cx, roofY, bodyW, bodyBottom, bodyFill, roofFill) {
+                        var eaveY = roofY + 46, bodyX = cx - bodyW / 2;
+                        var h = '';
+                        h += '<rect x="' + (cx + 44) + '" y="' + (roofY + 10) + '" width="11" height="26" rx="2.5" fill="' + roofFill + '"/>';
+                        h += '<rect x="' + bodyX + '" y="' + (eaveY - 6) + '" width="' + bodyW + '" height="' + (bodyBottom - eaveY + 6) + '" rx="11" fill="' + bodyFill + '" filter="url(#ds)"/>';
+                        h += '<path d="M' + (bodyX - 9) + ',' + eaveY + ' L' + (cx - 5) + ',' + (roofY + 2) + ' Q' + cx + ',' + (roofY - 2) + ' ' + (cx + 5) + ',' + (roofY + 2) + ' L' + (bodyX + bodyW + 9) + ',' + eaveY + ' Q' + (bodyX + bodyW + 12) + ',' + (eaveY + 4) + ' ' + (bodyX + bodyW + 7) + ',' + (eaveY + 4) + ' L' + (bodyX - 7) + ',' + (eaveY + 4) + ' Q' + (bodyX - 12) + ',' + (eaveY + 4) + ' ' + (bodyX - 9) + ',' + eaveY + ' Z" fill="' + roofFill + '" filter="url(#ds)"/>';
+                        return h;
                     };
 
                     // Calculate dynamic height based on what's included
@@ -2810,7 +2823,7 @@
                     var costBoxY = costsLineY + 58;
 
                     var propSectionStart = costBoxY + 65;
-                    var propSectionEnd = hasPropFC ? propSectionStart + 155 : propSectionStart;
+                    var propSectionEnd = hasPropFC ? propSectionStart + 165 : propSectionStart;
 
                     var strategySectionStart = hasPropFC ? propSectionEnd + 5 : costBoxY + 65;
 
@@ -2848,12 +2861,13 @@
                     var svg = '<svg viewBox="0 0 780 ' + totalHeight + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:Nunito,sans-serif;">';
                     svg += '<defs>';
                     svg += '<linearGradient id="fcBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + BG1 + '"/><stop offset="1" stop-color="' + BG2 + '"/></linearGradient>';
-                    svg += '<radialGradient id="fcGlowC" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="rgba(245,106,90,0.07)"/><stop offset="1" stop-color="rgba(245,106,90,0)"/></radialGradient>';
-                    svg += '<radialGradient id="fcGlowB" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="rgba(43,111,214,0.06)"/><stop offset="1" stop-color="rgba(43,111,214,0)"/></radialGradient>';
+                    svg += '<radialGradient id="fcGlowC" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="rgba(245,106,90,0.08)"/><stop offset="1" stop-color="rgba(245,106,90,0)"/></radialGradient>';
+                    svg += '<radialGradient id="fcGlowB" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="rgba(43,111,214,0.07)"/><stop offset="1" stop-color="rgba(43,111,214,0)"/></radialGradient>';
                     svg += '<marker id="mB" markerWidth="9" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="' + BLUE + '"/></marker>';
-                    svg += '<marker id="mC" markerWidth="9" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="' + CORAL + '"/></marker>';
+                    svg += '<marker id="mC" markerWidth="9" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="' + CORAL_A + '"/></marker>';
+                    svg += '<marker id="mG" markerWidth="9" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="' + GREEN_A + '"/></marker>';
                     svg += '<marker id="mL" markerWidth="9" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="' + LIME_A + '"/></marker>';
-                    svg += '<filter id="ds" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0C2E3F" flood-opacity="0.16"/></filter>';
+                    svg += '<filter id="ds" x="-12%" y="-12%" width="124%" height="134%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0C2E3F" flood-opacity="0.16"/></filter>';
                     svg += '<clipPath id="fcClip"><rect x="0" y="0" width="780" height="' + totalHeight + '" rx="18"/></clipPath>';
                     svg += '</defs>';
 
@@ -2866,72 +2880,71 @@
                     // === ROW 1: MONEY IN ===
                     svg += _head(390, 36, 'MONEY IN');
                     var fMin = formatCurrency(Math.ceil(parseFloat(document.getElementById('homeLoanPayment').value) || 0));
-                    // Salary / Wages
-                    svg += _card(50, 60, 150, 96, BLUE, CARD);
+                    // Salary / Wages — solid blue
+                    svg += _card(50, 60, 150, 96, BLUE);
                     svg += _badge(125, 60, BLUE, 'person');
-                    svg += _tag(125, 86, 'INCOME', BLUE_P);
-                    svg += _t(125, 110, 'Salary / Wages', 13, 800, TEXTW);
-                    svg += _t(125, 132, 'paid into offset', 8.5, 600, SUBW, true);
-                    svg += '<path d="M205,108 L293,108" stroke="' + BLUE + '" stroke-width="2" stroke-linecap="round" fill="none" marker-end="url(#mB)"/>';
-                    svg += _lbl(249, 99, 'wages in', BLUE);
-                    // Offset account
-                    svg += _card(300, 60, 128, 96, BLUE, CARD);
-                    svg += _badge(364, 60, BLUE, 'dollar');
-                    svg += _tag(364, 84, 'OFFSET ACCOUNT', BLUE_P);
-                    svg += _t(364, 106, 'Min ' + fMin + '/mo', 11, 800, TEXTW);
-                    svg += _t(364, 124, '+ ' + fWC + '/wk extra', 10.5, 800, LIME_P);
-                    svg += _t(364, 142, 'extra on top of minimum', 8, 600, SUBW, true);
-                    svg += '<path d="M433,108 L548,108" stroke="' + CORAL + '" stroke-width="2" stroke-linecap="round" fill="none" marker-end="url(#mC)"/>';
-                    svg += _lbl(490, 99, 'repayments', CORAL);
-                    // Home Loan
-                    svg += _card(555, 60, 170, 96, CORAL, CARD);
-                    svg += _badge(640, 60, CORAL, 'house');
-                    svg += _tag(640, 86, 'HOME LOAN', CORAL_P);
-                    svg += _t(640, 112, fHL, 16, 800, TEXTW);
-                    svg += _t(640, 134, 'repaid from offset', 8.5, 600, SUBW, true);
+                    svg += _tag(125, 86, 'INCOME', WHT_SOFT);
+                    svg += _t(125, 110, 'Salary / Wages', 13, 800, WHT);
+                    svg += _t(125, 132, 'paid into offset', 8.5, 600, WHT_DIM, true);
+                    svg += _flow(205, 108, 293, 108, BLUE, 'mB');
+                    svg += _lbl(249, 95, 'wages in', BLUE);
+                    // Offset account — solid navy
+                    svg += _card(300, 60, 128, 96, NAVY);
+                    svg += _badge(364, 60, NAVY, 'dollar');
+                    svg += _tag(364, 84, 'OFFSET ACCOUNT', WHT_SOFT);
+                    svg += _t(364, 106, 'Min ' + fMin + '/mo', 11, 800, WHT);
+                    svg += _t(364, 124, '+ ' + fWC + '/wk extra', 10.5, 800, LIME);
+                    svg += _t(364, 142, 'extra on top of minimum', 8, 600, WHT_DIM, true);
+                    svg += _flow(433, 108, 546, 108, CORAL_A, 'mC');
+                    svg += _lbl(490, 95, 'repayments', CORAL_A);
+                    // Home Loan — house shape, two-tone coral
+                    svg += _house(640, 44, 136, 156, CORAL, CORAL_D);
+                    svg += _tag(640, 106, 'HOME LOAN', WHT_SOFT);
+                    svg += _t(640, 128, fHL, 16, 800, WHT);
+                    svg += _t(640, 146, 'repaid from offset', 8.5, 600, WHT_DIM, true);
 
                     // === DIVIDER ===
                     svg += _div(200);
                     svg += _head(390, 225, 'INVESTMENT STRATEGY');
 
                     // === ROW 2: Investment chain ===
-                    svg += _card(30, 247, 148, 84, CORAL, CARD);
+                    svg += _card(30, 247, 148, 84, CORAL);
                     svg += _badge(104, 247, CORAL, 'bank');
-                    svg += _tag(104, 271, 'INVESTMENT LOAN', CORAL_P);
-                    svg += _t(104, 296, fIL, 15, 800, TEXTW);
-                    svg += _t(104, 318, 'tax-deductible interest', 8.5, 600, SUBW, true);
-                    svg += '<path d="M183,289 L213,289" stroke="' + CORAL + '" stroke-width="2" stroke-linecap="round" fill="none" marker-end="url(#mC)"/>';
-                    svg += _lbl(198, 280, 'draw', CORAL);
-                    svg += _card(220, 247, 118, 84, BLUE, CARD);
-                    svg += _badge(279, 247, BLUE, 'dollar');
-                    svg += _tag(279, 271, 'INV. LOAN OFFSET', BLUE_P);
-                    svg += _t(279, 298, 'funds held here', 9.5, 700, TEXTW);
-                    svg += '<path d="M343,289 L393,289" stroke="' + BLUE + '" stroke-width="2" stroke-linecap="round" fill="none" marker-end="url(#mB)"/>';
-                    svg += _lbl(368, 280, 'transfer', BLUE);
+                    svg += _tag(104, 271, 'INVESTMENT LOAN', WHT_SOFT);
+                    svg += _t(104, 296, fIL, 15, 800, WHT);
+                    svg += _t(104, 318, 'tax-deductible interest', 8.5, 600, WHT_DIM, true);
+                    svg += _flow(183, 289, 213, 289, CORAL_A, 'mC');
+                    svg += _lbl(198, 276, 'draw', CORAL_A);
+                    svg += _card(220, 247, 118, 84, NAVY);
+                    svg += _badge(279, 247, NAVY, 'dollar');
+                    svg += _tag(279, 271, 'INV. LOAN OFFSET', WHT_SOFT);
+                    svg += _t(279, 298, 'funds held here', 9.5, 700, WHT);
+                    svg += _flow(343, 289, 393, 289, BLUE, 'mB');
+                    svg += _lbl(368, 276, 'transfer', BLUE);
 
                     // MCMA — the lime hero hub
-                    svg += _card(400, 243, 160, 92, LIME_ST, LIME);
+                    svg += _card(400, 243, 160, 92, LIME, LIME_ST);
                     svg += _badge(480, 243, LIME_ST, 'bank');
                     svg += _tag(480, 267, 'MCMA · CASH HUB', 'rgba(12,46,63,0.75)');
-                    svg += _t(480, 290, 'Cash Management', 11.5, 800, LIME_DK);
+                    svg += _t(480, 290, 'Cash Management', 11.5, 800, NAVY);
                     svg += _t(480, 308, 'all money flows', 8.5, 600, 'rgba(12,46,63,0.65)', true);
                     svg += _t(480, 320, 'through here', 8.5, 600, 'rgba(12,46,63,0.65)', true);
 
                     // Arrow: MCMA -> Platform
-                    svg += '<path d="M565,289 L623,289" stroke="' + LIME_A + '" stroke-width="2" stroke-linecap="round" fill="none" marker-end="url(#mL)"/>';
-                    svg += _lbl(594, 280, 'invest', LIME_A);
-                    // Investment Platform
+                    svg += _flow(565, 289, 623, 289, GREEN_A, 'mG');
+                    svg += _lbl(594, 276, 'invest', GREEN_A);
+                    // Investment Platform — growth green
                     var platH = hasInitial ? 96 : 84;
-                    svg += _card(630, 247, 150, platH, LIME_ST, CARD);
-                    svg += _badge(705, 247, LIME_ST, 'chart');
-                    svg += _tag(705, 271, String(platform).toUpperCase(), LIME_P);
+                    svg += _card(630, 247, 150, platH, GREEN);
+                    svg += _badge(705, 247, GREEN, 'chart');
+                    svg += _tag(705, 271, String(platform).toUpperCase(), WHT_SOFT);
                     if (hasInitial) {
-                        svg += _t(705, 292, 'Initial: ' + formatCurrency(initAmtFC), 11, 800, TEXTW);
-                        svg += _t(705, 310, '+ ' + fMF + ' per month', 11.5, 800, TEXTW);
-                        svg += _t(705, 330, 'dividends reinvested', 8.5, 600, SUBW, true);
+                        svg += _t(705, 292, 'Initial: ' + formatCurrency(initAmtFC), 11, 800, WHT);
+                        svg += _t(705, 310, '+ ' + fMF + ' per month', 11.5, 800, WHT);
+                        svg += _t(705, 330, 'dividends reinvested', 8.5, 600, WHT_DIM, true);
                     } else {
-                        svg += _t(705, 296, fMF + ' per month', 12.5, 800, TEXTW);
-                        svg += _t(705, 318, 'dividends reinvested', 8.5, 600, SUBW, true);
+                        svg += _t(705, 296, fMF + ' per month', 12.5, 800, WHT);
+                        svg += _t(705, 318, 'dividends reinvested', 8.5, 600, WHT_DIM, true);
                     }
 
                     // === COSTS SECTION ===
@@ -2941,41 +2954,41 @@
                     // Dotted MCMA -> costs line, swooping wide at x=680 so it stays clear
                     // of the section heading text (which ends around x=640).
                     var clearY = costsLineY + 44;
-                    svg += '<path d="M556,' + (mcmaBottom - 4) + ' C650,' + (mcmaBottom + 6) + ' 680,' + (clearY - 30) + ' 680,' + (clearY - 10) + ' C680,' + clearY + ' 655,' + clearY + ' 620,' + clearY + ' L345,' + clearY + ' L345,' + (costBoxY - 4) + '" stroke="' + CORAL + '" stroke-width="1.6" fill="none" stroke-dasharray="5,4" marker-end="url(#mC)" opacity="0.75"/>';
+                    svg += '<path d="M556,' + (mcmaBottom - 4) + ' C650,' + (mcmaBottom + 6) + ' 680,' + (clearY - 30) + ' 680,' + (clearY - 10) + ' C680,' + clearY + ' 655,' + clearY + ' 620,' + clearY + ' L345,' + clearY + ' L345,' + (costBoxY - 4) + '" stroke="' + CORAL_A + '" stroke-width="1.6" fill="none" stroke-dasharray="5,4" marker-end="url(#mC)" opacity="0.75"/>';
 
                     var inclInterestRedirect = document.getElementById('includeStep7InterestRedirect') ? document.getElementById('includeStep7InterestRedirect').checked : true;
                     var interestNotPossible = document.getElementById('step7InterestStatus') ? document.getElementById('step7InterestStatus').value === 'notpossible' : false;
                     var interestFromMCMA = inclInterestRedirect && !interestNotPossible;
 
                     if (interestFromMCMA) {
-                        svg += _card(60, costBoxY, 170, 58, CORAL, CARD);
-                        svg += _t(145, costBoxY + 20, 'Inv. Loan Interest', 10.5, 800, CORAL_P);
-                        svg += _t(145, costBoxY + 36, 'tax deductible', 9.5, 600, 'rgba(255,255,255,0.85)');
-                        svg += _t(145, costBoxY + 50, 'debited from MCMA', 8, 600, SUBW, true);
+                        svg += _card(60, costBoxY, 170, 58, '#FDEEEC', CORAL_A);
+                        svg += _t(145, costBoxY + 20, 'Inv. Loan Interest', 10.5, 800, '#D9503C');
+                        svg += _t(145, costBoxY + 36, 'tax deductible', 9.5, 600, '#5C6B78');
+                        svg += _t(145, costBoxY + 50, 'debited from MCMA', 8, 600, '#9AA6B2', true);
                     } else {
-                        svg += _card(60, costBoxY, 170, 58, GREY_ST, GREY_BG, true);
+                        svg += _card(60, costBoxY, 170, 58, GREY_BG, GREY_ST, true);
                         svg += _t(145, costBoxY + 20, 'Inv. Loan Interest', 10.5, 800, GREY);
                         svg += _t(145, costBoxY + 36, 'tax deductible', 9.5, 600, GREY);
                         svg += _t(145, costBoxY + 50, 'debited separately', 8, 600, GREY, true);
                     }
                     // Cycle arrow back to Investment Loan
-                    svg += '<path d="M60,' + (costBoxY + 29) + ' C30,' + (costBoxY + 29) + ' 20,352 20,289 C20,244 30,244 30,289" stroke="' + CORAL + '" stroke-width="1.2" fill="none" stroke-dasharray="4,3" opacity="0.35"/>';
+                    svg += '<path d="M60,' + (costBoxY + 29) + ' C30,' + (costBoxY + 29) + ' 20,352 20,289 C20,244 30,244 30,289" stroke="' + CORAL_A + '" stroke-width="1.2" fill="none" stroke-dasharray="4,3" opacity="0.35"/>';
 
                     var inclInsD = document.getElementById('includeInsuranceInMCMA') ? document.getElementById('includeInsuranceInMCMA').checked : true;
-                    svg += _card(260, costBoxY, 170, 58, CORAL, CARD);
-                    svg += _t(345, costBoxY + 20, (inclInsD ? 'Insurance &amp; Advice Fees' : 'Advice Fees'), 10.5, 800, CORAL_P);
-                    svg += _t(345, costBoxY + 36, 'monthly premiums', 9.5, 600, 'rgba(255,255,255,0.85)');
-                    svg += _t(345, costBoxY + 50, 'debited from MCMA', 8, 600, SUBW, true);
+                    svg += _card(260, costBoxY, 170, 58, '#FDEEEC', CORAL_A);
+                    svg += _t(345, costBoxY + 20, (inclInsD ? 'Insurance &amp; Advice Fees' : 'Advice Fees'), 10.5, 800, '#D9503C');
+                    svg += _t(345, costBoxY + 36, 'monthly premiums', 9.5, 600, '#5C6B78');
+                    svg += _t(345, costBoxY + 50, 'debited from MCMA', 8, 600, '#9AA6B2', true);
 
                     var propModeD = (document.getElementById('excludePropCostsFromPlan') && document.getElementById('excludePropCostsFromPlan').checked) ? 'aside' : 'mcma';
                     var hasPropD = false; document.querySelectorAll('#propertyLoansContainer .nested-section').forEach(function(s){ var b=s.querySelector('.propLoanBalance'); var p=s.querySelector('.propLoanPayment'); if ((b&&parseFloat(b.value)>0)||(p&&parseFloat(p.value)>0)) hasPropD = true; });
                     if (hasPropD && propModeD === 'mcma') {
-                        svg += _card(460, costBoxY, 175, 58, CORAL, CARD);
-                        svg += _t(547, costBoxY + 20, 'Property Expenses', 10.5, 800, CORAL_P);
-                        svg += _t(547, costBoxY + 36, 'rates, maintenance', 9.5, 600, 'rgba(255,255,255,0.85)');
-                        svg += _t(547, costBoxY + 50, 'debited from MCMA', 8, 600, SUBW, true);
+                        svg += _card(460, costBoxY, 175, 58, '#FDEEEC', CORAL_A);
+                        svg += _t(547, costBoxY + 20, 'Property Expenses', 10.5, 800, '#D9503C');
+                        svg += _t(547, costBoxY + 36, 'rates, maintenance', 9.5, 600, '#5C6B78');
+                        svg += _t(547, costBoxY + 50, 'debited from MCMA', 8, 600, '#9AA6B2', true);
                     } else if (hasPropD && propModeD === 'aside') {
-                        svg += _card(460, costBoxY, 175, 58, GREY_ST, GREY_BG, true);
+                        svg += _card(460, costBoxY, 175, 58, GREY_BG, GREY_ST, true);
                         svg += _t(547, costBoxY + 20, 'Property Expenses', 10.5, 800, GREY);
                         svg += _t(547, costBoxY + 38, 'managed separately', 9, 600, GREY, true);
                     }
@@ -2984,27 +2997,27 @@
                     if (hasPropFC) {
                         svg += _div(propSectionStart);
                         svg += _head(390, propSectionStart + 25, 'INVESTMENT PROPERTY');
-                        var houseTopY = propSectionStart + 45;
-                        svg += _card(110, houseTopY, 170, 84, CORAL, CARD);
-                        svg += _badge(195, houseTopY, CORAL, 'house');
-                        svg += _tag(195, houseTopY + 24, 'INVESTMENT PROPERTY', CORAL_P);
-                        svg += _t(195, houseTopY + 48, fPD, 15, 800, TEXTW);
-                        svg += _t(195, houseTopY + 68, 'loan balance', 8.5, 600, SUBW, true);
+                        var houseTopY = propSectionStart + 48;
+                        // house-shaped node (two-tone coral), body holds the figures
+                        svg += _house(195, houseTopY, 140, houseTopY + 96, CORAL, CORAL_D);
+                        svg += _tag(195, houseTopY + 58, 'INVESTMENT PROPERTY', WHT_SOFT);
+                        svg += _t(195, houseTopY + 78, fPD, 14, 800, WHT);
+                        svg += _t(195, houseTopY + 92, 'loan balance', 8, 600, WHT_DIM, true);
 
                         if (propModeD === 'mcma') {
-                            var arrowRightX = 645;
+                            var arrowRightX = 668;
                             var arrowTopY = mcmaBottom - 10;
-                            var arrowBottomY = houseTopY + 42;
+                            var arrowBottomY = houseTopY + 52;
                             var arrowMidY = (arrowTopY + arrowBottomY) / 2;
                             svg += '<path d="M285,' + arrowBottomY + ' C360,' + arrowBottomY + ' ' + arrowRightX + ',' + (arrowBottomY - 30) + ' ' + arrowRightX + ',' + arrowMidY + ' C' + arrowRightX + ',' + (arrowTopY + 20) + ' 580,' + arrowTopY + ' 560,' + arrowTopY + '" stroke="' + LIME_A + '" stroke-width="1.8" fill="none" marker-end="url(#mL)" stroke-dasharray="6,4" opacity="0.85"/>';
-                            svg += '<text x="300" y="' + (houseTopY + 70) + '" font-size="9" fill="#5F7F1F" font-weight="700">rental income &#8594; MCMA</text>';
-                            svg += '<text x="300" y="' + (houseTopY + 83) + '" font-size="8.5" fill="#7C8894" font-style="italic">expenses paid from MCMA</text>';
+                            svg += '<text x="300" y="' + (houseTopY + 80) + '" font-size="9" fill="#5F7F1F" font-weight="700">rental income &#8594; MCMA</text>';
+                            svg += '<text x="300" y="' + (houseTopY + 93) + '" font-size="8.5" fill="#7C8894" font-style="italic">expenses paid from MCMA</text>';
                         } else {
-                            svg += _card(400, houseTopY + 12, 200, 58, GREY_ST, GREY_BG, true);
-                            svg += _t(500, houseTopY + 34, 'Managed Separately', 10.5, 800, GREY);
-                            svg += _t(500, houseTopY + 50, 'rental income &amp; expenses', 8.5, 600, GREY, true);
-                            svg += _t(500, houseTopY + 62, 'handled outside of MCMA', 8.5, 600, GREY, true);
-                            svg += '<path d="M285,' + (houseTopY + 42) + ' L395,' + (houseTopY + 41) + '" stroke="' + GREY_ST + '" stroke-width="1.5" fill="none" stroke-dasharray="5,4"/>';
+                            svg += _card(400, houseTopY + 22, 200, 58, GREY_BG, GREY_ST, true);
+                            svg += _t(500, houseTopY + 44, 'Managed Separately', 10.5, 800, GREY);
+                            svg += _t(500, houseTopY + 60, 'rental income &amp; expenses', 8.5, 600, GREY, true);
+                            svg += _t(500, houseTopY + 72, 'handled outside of MCMA', 8.5, 600, GREY, true);
+                            svg += '<path d="M285,' + (houseTopY + 52) + ' L395,' + (houseTopY + 51) + '" stroke="' + GREY_ST + '" stroke-width="1.5" fill="none" stroke-dasharray="5,4"/>';
                         }
                     }
 
@@ -3014,9 +3027,9 @@
                         svg += _head(390, strategySectionStart + 25, 'STRATEGY &amp; BENEFITS');
 
                         var schemes = {
-                            blue:  { stroke: BLUE,     fill: CARD, text: BLUE_P,  desc: 'rgba(255,255,255,0.75)' },
-                            lime:  { stroke: LIME_ST,  fill: CARD, text: LIME_P,  desc: 'rgba(255,255,255,0.75)' },
-                            slate: { stroke: SLATE_ST, fill: CARD, text: 'rgba(255,255,255,0.8)', desc: 'rgba(255,255,255,0.55)' }
+                            blue:  { fill: '#E8F1FB', stroke: BLUE,    text: BLUE_D,  desc: '#42586A' },
+                            lime:  { fill: '#F1F7DF', stroke: LIME_ST, text: '#5F7F1F', desc: '#42586A' },
+                            slate: { fill: GREY_BG,   stroke: GREY_ST, text: '#5C6B78', desc: '#8A97A3' }
                         };
                         var itemCount = stratItems.length;
                         var totalW = 700;
@@ -3028,7 +3041,7 @@
                             var sc = schemes[item.scheme] || schemes.blue;
                             var bx = startX + idx * (boxW + gap);
                             var cx = bx + boxW / 2;
-                            svg += _card(bx, stratBoxY, boxW, 55, sc.stroke, sc.fill);
+                            svg += _card(bx, stratBoxY, boxW, 55, sc.fill, sc.stroke);
                             svg += _t(cx, stratBoxY + 22, item.label, 10.5, 800, sc.text);
                             if (item.desc) {
                                 svg += _t(cx, stratBoxY + 38, item.desc, 9.5, 600, sc.desc);
@@ -3045,7 +3058,7 @@
                     var propW_fc = exclProp_fc ? 0 : (parseFloat(document.getElementById('propCostsBefore').value) || 0);
                     var mcmaWeekly_fc = insW_fc + advW_fc + gearW_fc + propW_fc;
                     svg += '<rect x="160" y="' + (pathwayTextY - 20) + '" width="460" height="31" rx="15.5" fill="' + LIME + '" stroke="' + LIME_ST + '" stroke-width="1.2" filter="url(#ds)"/>';
-                    svg += '<text x="390" y="' + pathwayTextY + '" text-anchor="middle" font-size="12.5" font-weight="700" fill="' + LIME_DK + '" font-family="' + SERIF + '" letter-spacing="0.3">Pathway Commitment: $' + Math.round(mcmaWeekly_fc).toLocaleString() + ' per week</text>';
+                    svg += '<text x="390" y="' + pathwayTextY + '" text-anchor="middle" font-size="12.5" font-weight="700" fill="' + NAVY + '" font-family="' + SERIF + '" letter-spacing="0.3">Pathway Commitment: $' + Math.round(mcmaWeekly_fc).toLocaleString() + ' per week</text>';
                     svg += '</svg>';
                     return svg;
                 })()
