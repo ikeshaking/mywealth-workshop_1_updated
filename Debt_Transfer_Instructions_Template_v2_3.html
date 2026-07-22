@@ -572,7 +572,7 @@
 
         .preview-content table td{
             padding:8px 10px;
-            border-bottom:1px solid #ddd;
+            border-bottom:1px solid #D4E2EE;
         }
 
         .preview-content ul,.preview-content ol{margin:2px 0 6px;padding-left:22px;line-height:1.5}
@@ -2437,34 +2437,34 @@
                         </tr></thead>
                         <tbody>
                             <tr>
-                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#71A4EA;color:#ffffff;border-bottom:1.5pt solid #ffffff;">Home Loan</td>
-                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;">${formatCurrency(document.getElementById('homeLoanBalance').value)}</td>
-                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:center;font-size:8.5pt;">${document.getElementById('homeLoanRate').value}%</td>
-                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;">${homeLoanPayment} per month</td>
-                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ${last4(document.getElementById('homeLoanAccount').value)}</td>
+                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">Home Loan</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;">${formatCurrency(document.getElementById('homeLoanBalance').value)}</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:center;font-size:8.5pt;">${document.getElementById('homeLoanRate').value}%</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;">${homeLoanPayment} per month</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ${last4(document.getElementById('homeLoanAccount').value)}</td>
                             </tr>
                             <tr>
-                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#71A4EA;color:#ffffff;border-bottom:1.5pt solid #ffffff;">Home Loan Offset</td>
-                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;">${formatCurrency(document.getElementById('homeLoanOffsetBalance').value)}</td>
-                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td>
-                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ${homeLoanOffsetAccount}</td>
+                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">Home Loan Offset</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;">${formatCurrency(document.getElementById('homeLoanOffsetBalance').value)}</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ${homeLoanOffsetAccount}</td>
                             </tr>
                             <tr>
-                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#71A4EA;color:#ffffff;border-bottom:1.5pt solid #ffffff;vertical-align:top;">Share Investment Loan${(document.querySelectorAll('#shareLoanContainer .nested-section').length > 0) ? ' 1' : ''}</td>
-                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;vertical-align:top;line-height:1.5;">
+                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;vertical-align:top;">Share Investment Loan${(document.querySelectorAll('#shareLoanContainer .nested-section').length > 0) ? ' 1' : ''}</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;vertical-align:top;line-height:1.5;">
                                     <span style="color:#888;">Limit</span> <strong>${invLoanLimitDisplay}</strong><br/>
                                     <span style="color:#888;">Balance</span> ${invLoanDrawnDisplay}<br/>
                                     <span style="color:#888;">Available</span> <strong style="color:#548235;">${invLoanAvailableDisplay}</strong>
                                 </td>
-                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:center;font-size:8.5pt;vertical-align:top;">${invLoanRate}%</td>
-                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;vertical-align:top;">${invLoanPayment} per month*</td>
-                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;vertical-align:top;">ending ${invLoanAccount}</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:center;font-size:8.5pt;vertical-align:top;">${invLoanRate}%</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;vertical-align:top;">${invLoanPayment} per month*</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;vertical-align:top;">ending ${invLoanAccount}</td>
                             </tr>
                             <tr>
-                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#71A4EA;color:#ffffff;border-bottom:1.5pt solid #ffffff;">Investment Loan Offset</td>
-                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;">${invOffsetBalanceDisplay}</td>
-                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td>
-                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ${invOffsetAccount}</td>
+                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">Investment Loan Offset</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;">${invOffsetBalanceDisplay}</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ${invOffsetAccount}</td>
                             </tr>
                             ${(() => {
                                 // Additional share investment loans
@@ -2482,26 +2482,26 @@
                                     var defaultName = 'Share Investment Loan ' + (idx + 2);
                                     var label = (desc && desc !== defaultName) ? escapeHtml(desc) : defaultName;
                                     var payment = formatCurrency((lim * (parseFloat(rate)||0) / 100) / 12);
-                                    sRows += '<tr><td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#71A4EA;color:#ffffff;border-bottom:1.5pt solid #ffffff;vertical-align:top;">' + label + '</td>'
-                                        + '<td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;vertical-align:top;line-height:1.5;">'
+                                    sRows += '<tr><td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;vertical-align:top;">' + label + '</td>'
+                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;vertical-align:top;line-height:1.5;">'
                                         + '<span style="color:#888;">Limit</span> <strong>' + formatCurrency(lim) + '</strong><br/>'
                                         + '<span style="color:#888;">Balance</span> ' + formatCurrency(drw) + '<br/>'
                                         + '<span style="color:#888;">Available</span> <strong style="color:#548235;">' + formatCurrency(avail) + '</strong>'
                                         + '</td>'
-                                        + '<td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:center;font-size:8.5pt;vertical-align:top;">' + (rate||'0') + '%</td>'
-                                        + '<td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;vertical-align:top;">' + payment + ' per month*</td>'
-                                        + '<td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;vertical-align:top;">ending ' + last4(acct) + '</td></tr>';
-                                    sRows += '<tr><td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#71A4EA;color:#ffffff;border-bottom:1.5pt solid #ffffff;">Share Loan ' + (idx+2) + ' Offset</td>'
-                                        + '<td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;">' + formatCurrency(offBal) + '</td>'
-                                        + '<td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td>'
-                                        + '<td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ' + last4(offAcct) + '</td></tr>';
+                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:center;font-size:8.5pt;vertical-align:top;">' + (rate||'0') + '%</td>'
+                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;vertical-align:top;">' + payment + ' per month*</td>'
+                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;vertical-align:top;">ending ' + last4(acct) + '</td></tr>';
+                                    sRows += '<tr><td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">Share Loan ' + (idx+2) + ' Offset</td>'
+                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;">' + formatCurrency(offBal) + '</td>'
+                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td>'
+                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ' + last4(offAcct) + '</td></tr>';
                                 });
                                 return sRows;
                             })()}
                             <tr>
-                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#71A4EA;color:#ffffff;border-bottom:1.5pt solid #ffffff;">MCMA</td>
-                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#999;font-size:8.5pt;" colspan="3">&mdash;</td>
-                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ${mcmaAccount}</td>
+                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">MCMA</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#999;font-size:8.5pt;" colspan="3">&mdash;</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ${mcmaAccount}</td>
                             </tr>
                             ${(() => {
                                 var rows = '';
@@ -2518,10 +2518,10 @@
                                         var label = (desc && desc.value) ? escapeHtml(desc.value) : 'Inv. Property ' + (idx+1);
                                         var rowNum = baseRowCount + idx;
                                         var bg = rowNum % 2 !== 0 ? 'background-color:#f0f2f5;' : '';
-                                        rows += '<tr style="' + bg + '"><td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#71A4EA;color:#ffffff;border-bottom:1.5pt solid #ffffff;">' + label + '</td><td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;">' + formatCurrency(bal.value) + '</td><td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:center;font-size:8.5pt;">' + (rate ? rate.value : '0') + '%</td><td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;">' + formatCurrency(payment ? payment.value : '0') + ' per month</td><td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ' + last4(acct ? acct.value : '') + '</td></tr>';
+                                        rows += '<tr style="' + bg + '"><td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">' + label + '</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;">' + formatCurrency(bal.value) + '</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:center;font-size:8.5pt;">' + (rate ? rate.value : '0') + '%</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;">' + formatCurrency(payment ? payment.value : '0') + ' per month</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ' + last4(acct ? acct.value : '') + '</td></tr>';
                                         var offBalVal = offBal ? (parseFloat(offBal.value)||0) : 0;
                                         var offAcctVal = offAcct ? (offAcct.value || 'TBC') : 'TBC';
-                                        rows += '<tr style="' + bg + '"><td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#71A4EA;color:#ffffff;border-bottom:1.5pt solid #ffffff;">' + label + ' Offset</td><td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;">' + formatCurrency(offBalVal) + '</td><td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td><td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ' + last4(offAcctVal) + '</td></tr>';
+                                        rows += '<tr style="' + bg + '"><td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">' + label + ' Offset</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;">' + formatCurrency(offBalVal) + '</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ' + last4(offAcctVal) + '</td></tr>';
                                     }
                                 });
                                 return rows;
@@ -3144,16 +3144,9 @@
 
             var previewClone = document.getElementById('preview').cloneNode(true);
 
-            // Keep the brand banner & footer band in the Word doc (like the Tax
-            // Invoice Generator) — size them explicitly so Word fits them to the page.
-            previewClone.querySelectorAll('.doc-header img').forEach(function(el){
-                el.setAttribute('width', '794'); el.setAttribute('height', '224');
-                el.style.cssText = 'width:21cm;height:auto;display:block;margin-left:-1.8cm;';
-            });
-            previewClone.querySelectorAll('.doc-brand-footer').forEach(function(el){
-                el.setAttribute('width', '794'); el.setAttribute('height', '84');
-                el.style.cssText = 'width:21cm;height:auto;display:block;margin-left:-1.8cm;margin-top:18pt;';
-            });
+            // The brand banner & footer live in the Word page header/footer (like the
+            // Tax Invoice Generator's docx) — strip the in-body copies for the export.
+            previewClone.querySelectorAll('.doc-header img, .doc-brand-footer').forEach(function(el){ el.remove(); });
 
             var svgs = previewClone.querySelectorAll('svg');
             
@@ -3240,9 +3233,10 @@
                 + '<head><meta charset="utf-8"><title>Debt Transfer Instructions - ' + clientDisplay + '</title>'
                 + '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->'
                 + '<style>'
-                + '@page { size: A4; margin: 1.5cm 1.8cm; }'
-                + '@page WordSection1 { size: A4; margin: 1.5cm 1.8cm; mso-header-margin: 0.8cm; mso-footer-margin: 0.8cm; }'
+                + '@page { size: A4; margin: 6.4cm 1.8cm 2.7cm 1.8cm; }'
+                + '@page WordSection1 { size: A4; margin: 6.4cm 1.8cm 2.7cm 1.8cm; mso-header-margin: 0cm; mso-footer-margin: 0cm; mso-header: h1; mso-footer: f1; }'
                 + 'div.WordSection1 { page: WordSection1; }'
+                + 'p.MsoHeader, p.MsoFooter { margin: 0; }'
                 + 'body { font-family: "Nunito", Calibri, Arial, sans-serif; font-size: 9.5pt; color: #333; line-height: 1.6; margin: 0; padding: 0 30px; }'
                 + 'h1, h2, h3 { font-family: "ABC Arizona Flare", Georgia, serif; color: #0066cc; }'
                 + '.doc-header { background: #fff; padding: 0; border-bottom: none; margin: 0 0 10px 0; }'
@@ -3258,7 +3252,7 @@
                 + '.warning { background-color: #fff3cd; padding: 12px; margin: 10px 0; border-left: 4px solid #ffc107; }'
                 + 'table { width: 100%; border-collapse: collapse; font-size: 9pt; margin: 10px 0; word-wrap: break-word; table-layout: fixed; margin-left: 0; text-align: left; }'
                 + 'table th { background-color: #0C2E3F; color: white; padding: 5px 6px; text-align: left; font-family: "ABC Arizona Flare", Georgia, serif; font-weight: normal; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.5px; border: none; }'
-                + 'table td { padding: 5px 8px; border: none; border-bottom: 1.5pt solid #ffffff; font-size: 8.5pt; }'
+                + 'table td { padding: 5px 8px; border: none; border-bottom: 0.5pt solid #D4E2EE; font-size: 8.5pt; }'
                 + 'ol, ul { font-size: 9.5pt; line-height: 1.35; margin: 1px 0 3px 0; padding-left: 20px; }'
                 + 'li { margin: 0; mso-margin-top-alt: 0; mso-margin-bottom-alt: 0; }'
                 + 'strong { color: #333; font-weight: 700; }'
@@ -3268,6 +3262,8 @@
                 + '</style></head><body>'
                 + '<div class="WordSection1">'
                 + previewContent
+                + '<div style="mso-element:header" id="h1"><p class="MsoHeader" style="margin:0 0 0 -1.8cm;line-height:0;"><img width="794" height="224" src="' + bannerBase64 + '" alt="My Wealth Solutions"></p></div>'
+                + '<div style="mso-element:footer" id="f1"><p class="MsoFooter" style="margin:0 0 0 -1.8cm;line-height:0;"><img width="794" height="84" src="' + buildOfficeFooter() + '" alt="My Wealth Solutions"></p></div>'
                 + '</div></body></html>';
 
             var blob = new Blob(['\ufeff' + wordHTML], { type: 'application/msword' });
