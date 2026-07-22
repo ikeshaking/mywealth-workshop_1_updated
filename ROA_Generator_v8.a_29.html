@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_28";
+const APP_VERSION = "v8.a_29";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","Acenda","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -13763,74 +13763,198 @@ function parseZurichWealthQuoteRoa(text){
   return rows.length ? {rows, client} : null;
 }
 
-// ── Zurich alteration quotation (in-force change / reduction) ──────────────
-// "Existing cover summary" block(s) = current, "Quote summary" / "Quote - …"
-// block(s) = proposed. Cover lines: "<name>\t$sum\t$premium". Statuses on the
-// proposed side flag reductions and cancellations, like the AIA importer.
+// ── Zurich / OnePath alteration quotation (in-force change) ────────────────
+// Two layouts share the detector:
+//  • old: "Existing cover summary - <product> (super)" … "Quote - <product>",
+//    cover lines "Income (variable age - stepped) (WP 90, BP 65)\t$sum\t$prem"
+//  • new: per-policy "Policy number NNN - <product>[ - Super]" blocks, each
+//    with an "Existing cover summary" and a "Quote summary" section; cover
+//    lines "<name> - Variable age-stepped, <details>\t[Yes\t]$sum\t$prem" with
+//    the details wrapping onto following lines, Yearly or Monthly premium
+//    frequency, and rollover-rebate totals.
+// A non-super policy holding only a Superlink/Optimised TPD ("* This cover is
+// under policy …") folds into the super TPD as the personal-cashflow share of
+// the linked Life+TPD premium, per the firm's presentation.
 function parseZurichAlterationRoa(text){
   const t = String(text||'');
   if(!/alteration quotation/i.test(t) || !/zurich/i.test(t)) return null;
   const num = s => { const n = parseFloat(String(s==null?'':s).replace(/[$,\s]/g,'')); return isFinite(n)?n:0; };
-  const fmt = n => '$'+String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const fmtW = n => '$' + Math.round(n).toLocaleString('en-AU');
+  const tc = s => String(s||'').trim().toLowerCase().replace(/(^|[\s'’\-])\S/g, c => c.toUpperCase());
+  const provider = /one\s*care|onepath/i.test(t) ? 'OnePath' : 'Zurich';
   const liM = t.match(/Life insured\s*(?:details)?\s*(?:[-–]|Name:)\s*\t?([A-Z][a-zA-Z'’\- ]+)/i);
-  let client = liM ? liM[1].trim() : '';
-  client = client.toLowerCase().replace(/(^|[\s'-])\S/g, c => c.toUpperCase());
+  let client = liM ? tc(liM[1]) : '';
   const fn = client.split(/\s+/)[0] || '';
-  const lines = t.split('\n').map(l => l.trim());
-  const cur = [], nw = [];
-  let bucket = null, inSuper = false;
-  const coverOf = (name) => {
-    const s = name.toLowerCase();
-    if(/^death/.test(s)) return 'Life (Linked)';
-    if(/tpd/.test(s)) return /optimised(?!.*any)|own/.test(s) ? 'TPD (Linked & Own-Occupation)' : 'TPD (Linked & Any-Occupation)';
-    if(/trauma/.test(s)) return 'Trauma';
-    if(/^income/.test(s)) return 'Income Protection';
-    if(/super contributions? option/.test(s)) return 'SCO';
-    return '';
+  const ownFromStr = s => /non[\s-]?super/i.test(s||'') ? false : (/\bsuper\b/i.test(s||'') ? true : null);
+
+  const policies = [];
+  let pol = null, side = null, pend = null, insured = client;
+  const newPol = title => { pol = {title: title||'', sides:{}}; policies.push(pol); side = null; pend = null; };
+  const openSide = (key, hint) => {
+    if(!pol || pol.sides[key]) newPol('');
+    side = pol.sides[key] = {covers:[], scos:[], total:0, after:0, own:null, freq:'monthly', linked:false, superlinkNote:false};
+    let o = ownFromStr(hint);
+    if(o == null) o = ownFromStr(pol.title);
+    side.own = o;
+    pend = null;
   };
-  for(const l of lines){
-    if(/\(super\)|- Super\b|Pay method\s*\t?Platform/i.test(l)) inSuper = true;
-    if(/non-?super|Pay method\s*\t?Direct Debit/i.test(l)) inSuper = false;
-    if(/^Existing cover summary/i.test(l)){ bucket = cur; continue; }
-    if(/^Quote summary|^Quote - /i.test(l)){ bucket = nw; continue; }
-    if(/^Policy totals|^AUTHORITY TO PROCEED|^Projections/i.test(l)){ bucket = null; continue; }
-    if(!bucket || /^Stamp duty|^Management fee|^Total premium|^Premium for all/i.test(l)) continue;
-    const m = l.match(/^(.+?)\s*\t\$([\d,]+)\s*\t\$([\d,]+\.\d{2})$/);
-    if(!m) continue;
-    const ct = coverOf(m[1]);
-    if(!ct) continue;
-    const entry = {ct, name: m[1], sum: num(m[2]), prem: num(m[3]), inSuper};
-    // IP terms ride on the name: "Income (variable age - stepped) (WP 90, BP 65)"
-    const wp = m[1].match(/WP\s*(\d+)/i), bp = m[1].match(/BP\s*(\d+)/i);
-    if(wp) entry.wait = wp[1]+' days';
-    if(bp) entry.bp = (+bp[1] <= 40) ? bp[1]+' years' : 'To Age '+bp[1];
-    if(ct === 'SCO'){
-      const host = bucket[bucket.length-1];
-      if(host && /^ip|income/i.test(host.ct)) host.sco = entry.sum;
+  const KW = /^(Premium for all|Policy totals|Total\b|Management fee|QLD stamp|Stamp duty|Discounts applied|Quote discounts|General options|Optional extras|Date of quote|Rollover rebate|This policy|Life insured|Pay method|Premium frequency|Smoker status|Date of birth|Indexation\b|Amount insured|Cover type|Zurich Australia|ABN\b|SDIN|AWAS|OneCare is issued|www\.|Email:|Telephone|Related to policy|Issue date|Quote expiry|Your adviser|Phone:|Name:|Gender)/i;
+  for(const raw of t.split('\n')){
+    const l = raw.trim();
+    if(!l) continue;
+    let m;
+    if((m = l.match(/^Policy number\s*[-–]?\s*\d*\s*[-–]?\s*(.*)$/i)) && /^Policy number/i.test(l)){ newPol(m[1]); continue; }
+    if((m = l.match(/^Existing cover summary(?:\s*[-–]\s*(.+))?$/i))){ openSide('cur', m[1]); continue; }
+    if((m = l.match(/^Quote summary$/i))){ openSide('nw', ''); continue; }
+    if((m = l.match(/^Quote\s*[-–]\s*(.+)$/i))){ openSide('nw', m[1]); continue; }
+    if(/^Projections|^A\s*U\s*T\s*H\s*O\s*R/i.test(l)){ side = null; pend = null; continue; }
+    if(!side) continue;
+    if((m = l.match(/^Replacement Policy\s*\d*\s*[-–]\s*(.+)$/i))){ const o = ownFromStr(m[1]); if(o!=null) side.own = o; pend = null; continue; }
+    if((m = l.match(/^Ownership structure\s*\t?(.+)$/i))){ const o = ownFromStr(m[1]); if(o!=null) side.own = o; pend = null; continue; }
+    if((m = l.match(/^Pay method\s*\t?(.+)$/i))){ if(side.own == null) side.own = /platform|rollover/i.test(m[1]) ? true : (/direct debit/i.test(m[1]) ? false : null); pend = null; continue; }
+    if((m = l.match(/^Premium frequency\s*\t?(Yearly|Monthly)/i))){ side.freq = m[1].toLowerCase(); pend = null; continue; }
+    if((m = l.match(/^Life insured\s*[-–]\s*(.+)$/i))){ insured = tc(m[1]); if(!client){ client = insured; } pend = null; continue; }
+    if((m = l.match(/^Total(?: (?:yearly|monthly))? premium after rollover rebate\s*\t?\$([\d,.]+)$/i))){ side.after = num(m[1]); pend = null; continue; }
+    if((m = l.match(/^Total(?: (?:yearly|monthly))? premium\s*\t?\$([\d,.]+)$/i))){ side.total = num(m[1]); pend = null; continue; }
+    if(/^(?:death|life)[^\t$]*\bwith\b/i.test(l) && l.indexOf('$') < 0){ side.linked = true; pend = null; continue; }
+    if(/^\* This cover is under policy/i.test(l)){ side.superlinkNote = true; pend = null; continue; }
+    if((m = l.match(/^(.{2,}?)\t(?:(?:Yes|No)\t)?\$([\d,]+)\t\$([\d,]+\.\d{2})$/))){
+      pend = {detail: m[1].trim(), sum: num(m[2]), prem: num(m[3]), insured};
+      if(/^super contributions? option/i.test(pend.detail)) side.scos.push(pend); else side.covers.push(pend);
       continue;
     }
-    bucket.push(entry);
+    if(KW.test(l)){ pend = null; continue; }
+    if(pend && l.indexOf('$') < 0) pend.detail += ' ' + l;
   }
-  if(!cur.length && !nw.length) return null;
-  const mkRow = (r, status) => ({
-    provider:'Zurich', coverType: r.ct, lifeInsured: fn,
-    owner: r.inSuper ? 'Super' : (fn||'Self-Owned'),
-    benefitAmount: fmt(r.sum) + (/income/i.test(r.ct) ? ' pm' : ''),
-    superContribution: r.sco ? fmt(r.sco)+' pm' : '',
-    waitingPeriod: r.wait||'', benefitPeriod: r.bp||'',
-    premiumStructure:'Variable age-stepped',
-    premiumNote: r.prem ? fmt(r.prem)+' pm' : '',
-    status
-  });
+
+  const buildSide = key => {
+    const groups = [];
+    policies.forEach(p => {
+      const s = p.sides[key];
+      if(!s || !s.covers.length) return;
+      const mo = v => (s.freq === 'yearly') ? v/12 : v;
+      const covers = s.covers.map(c => {
+        const d = c.detail.toLowerCase();
+        const cv = {sum: c.sum, premMo: mo(c.prem), insured: c.insured, detail: d};
+        if(/^(death|life)\b/.test(d)) cv.kind = 'life';
+        else if(/^tpd/.test(d)){
+          cv.kind = 'tpd';
+          cv.superlink = /superlink|optimised/.test(d);
+          cv.ownOcc = cv.superlink || /,\s*own\b/.test(d);
+        } else if(/^income/.test(d)){
+          cv.kind = 'ip';
+          cv.contract = /agreed/.test(d) ? 'Agreed' : 'Indemnity';
+          const wp = d.match(/wp\s*(\d+)/) || d.match(/(\d+)\s*days/);
+          if(wp) cv.wait = wp[1] + ' days';
+          const bp = d.match(/bp\s*(\d+)/) || d.match(/to age\s*(\d+)/);
+          if(bp) cv.bp = (+bp[1] <= 40) ? bp[1]+' years' : 'To Age '+bp[1];
+        } else if(/^trauma/.test(d)) cv.kind = 'trauma';
+        else if(/^child/.test(d)) cv.kind = 'child';
+        else cv.kind = 'other';
+        return cv;
+      });
+      // SCO is part of the income benefit; its premium joins the IP premium
+      s.scos.forEach(sc => {
+        const ip = covers.find(c => c.kind === 'ip');
+        if(ip){ ip.sco = sc.sum; ip.premMo += mo(sc.prem); }
+      });
+      const totalMo = s.total ? mo(s.total) : covers.reduce((a,c) => a + c.premMo, 0);
+      // a single-cover policy's premium is the policy total (incl stamp duty)
+      if(covers.length === 1) covers[0].premMo = totalMo;
+      groups.push({covers, own: s.own === true, linked: s.linked, totalMo,
+        afterMo: s.after ? mo(s.after) : 0, superlinkNote: s.superlinkNote, persMo: 0});
+    });
+    // fold the personal Superlink TPD policy into the super linked bundle
+    const hostG = groups.find(g => g.own && g.covers.some(c => c.kind === 'life'));
+    for(let gi = groups.length - 1; gi >= 0; gi--){
+      const g = groups[gi];
+      if(g === hostG || g.own || !hostG) continue;
+      if(g.covers.length === 1 && g.covers[0].kind === 'tpd' && (g.superlinkNote || g.covers[0].superlink)){
+        const ht = hostG.covers.find(c => c.kind === 'tpd');
+        if(ht){ ht.ownOcc = true; hostG.persMo += g.totalMo; groups.splice(gi, 1); }
+      }
+    }
+    const out = [];
+    groups.forEach(g => {
+      const owner = g.own ? 'Super' : (fn || 'Self-Owned');
+      const life = g.covers.find(c => c.kind === 'life');
+      const tpd = g.covers.find(c => c.kind === 'tpd');
+      const linked = g.linked || !!(life && tpd);
+      const firstOf = c => (c.insured || client).split(/\s+/)[0] || fn;
+      if(life){
+        const superMo = life.premMo + (tpd ? tpd.premMo : 0);
+        const row = {provider, coverType: linked ? 'Life (Linked)' : 'Life', lifeInsured: firstOf(life),
+          owner, benefitAmount: fmtW(life.sum), premiumStructure: 'Variable age-stepped'};
+        if(g.own){
+          // the after-rebate policy total stands in for the linked pair when
+          // the policy holds nothing else
+          const groupIsPolicy = g.covers.every(c => c.kind === 'life' || c.kind === 'tpd');
+          const afterSuper = (g.afterMo && groupIsPolicy) ? g.afterMo : superMo * 0.85;
+          row.monthlyPremium = fmtW(Math.round(superMo) + Math.round(g.persMo)) + ' pm (before tax)';
+          if(g.persMo) row.premiumNote = '(' + fmtW(superMo) + ' from super plus ' + fmtW(g.persMo) + ' from personal cashflow)';
+          row.monthlyPremiumAfterTax = fmtW(Math.round(afterSuper) + Math.round(g.persMo)) + ' pm (after tax)';
+        } else {
+          row.monthlyPremium = fmtW(superMo + g.persMo) + ' pm';
+        }
+        out.push({row, kind:'life', sum: life.sum, insured: firstOf(life)});
+      }
+      if(tpd){
+        const row = {provider, coverType: 'TPD (' + (linked ? 'Linked' : 'Standalone') + ' & ' + (tpd.ownOcc ? 'Own' : 'Any') + '-Occupation)',
+          lifeInsured: firstOf(tpd), owner, benefitAmount: fmtW(tpd.sum), premiumStructure: 'Variable age-stepped'};
+        if(life) row.sharedPremiumWithPrev = true;
+        else if(g.own){
+          row.monthlyPremium = fmtW(tpd.premMo) + ' pm (before tax)';
+          row.monthlyPremiumAfterTax = fmtW(tpd.premMo * 0.85) + ' pm (after tax)';
+        } else row.monthlyPremium = fmtW(tpd.premMo) + ' pm';
+        out.push({row, kind:'tpd', sum: tpd.sum, insured: firstOf(tpd)});
+      }
+      g.covers.filter(c => c.kind === 'ip').forEach(ip => {
+        const row = {provider, coverType: 'IP (' + ip.contract + ' & Standard Contract)', lifeInsured: firstOf(ip),
+          owner, benefitAmount: fmtW(ip.sum) + ' pm', waitingPeriod: ip.wait || '', benefitPeriod: ip.bp || '',
+          superContribution: ip.sco ? fmtW(ip.sco) + ' pm' : '', premiumStructure: 'Variable age-stepped'};
+        if(g.own){
+          row.monthlyPremium = fmtW(ip.premMo) + ' pm (before tax)';
+          const after = (g.covers.length === 1 && g.afterMo) ? g.afterMo : ip.premMo * 0.85;
+          row.monthlyPremiumAfterTax = fmtW(after) + ' pm (after tax)';
+        } else row.monthlyPremium = fmtW(ip.premMo) + ' pm';   // after-tax auto-fills from the MTR
+        out.push({row, kind:'ip', sum: ip.sum, insured: firstOf(ip)});
+      });
+      g.covers.filter(c => c.kind === 'trauma').forEach(tr => {
+        // firm default: trauma reads Linked unless the doc says standalone
+        const row = {provider, coverType: 'Trauma (' + (/standalone/.test(tr.detail) ? 'Standalone' : 'Linked') + ')',
+          lifeInsured: firstOf(tr), owner, benefitAmount: fmtW(tr.sum), premiumStructure: 'Variable age-stepped'};
+        if(g.own){
+          row.monthlyPremium = fmtW(tr.premMo) + ' pm (before tax)';
+          row.monthlyPremiumAfterTax = fmtW(tr.premMo * 0.85) + ' pm (after tax)';
+        } else row.monthlyPremium = fmtW(tr.premMo) + ' pm';
+        out.push({row, kind:'trauma', sum: tr.sum, insured: firstOf(tr)});
+      });
+      g.covers.filter(c => c.kind === 'child' || c.kind === 'other').forEach(cv => {
+        const label = cv.kind === 'child' ? 'Child Cover' : tc(cv.detail.split(/\s*[-–]\s*/)[0]);
+        out.push({row: {provider, coverType: label, lifeInsured: firstOf(cv), owner,
+          benefitAmount: fmtW(cv.sum), premiumStructure: 'Variable age-stepped',
+          monthlyPremium: fmtW(cv.premMo) + ' pm'}, kind: cv.kind + '|' + label, sum: cv.sum, insured: firstOf(cv)});
+      });
+    });
+    const rank = {life:0, tpd:1, ip:2, trauma:3};
+    out.sort((a,b) => ((rank[a.kind] != null ? rank[a.kind] : 4) - (rank[b.kind] != null ? rank[b.kind] : 4)));
+    return out;
+  };
+
+  const curList = buildSide('cur'), nwList = buildSide('nw');
+  if(!curList.length && !nwList.length) return null;
+  curList.forEach(e => { e.row.status = 'In Force'; });
   const used = new Set();
-  const proposed = nw.map(r => {
-    const mi = cur.findIndex((c,i) => !used.has(i) && c.ct === r.ct);
-    let status = 'New';
-    if(mi >= 0){ used.add(mi); status = (r.sum < cur[mi].sum - 0.5) ? 'Reduce' : 'Retain & Alter'; }
-    return mkRow(r, status);
+  nwList.forEach(e => {
+    const mi = curList.findIndex((c,i) => !used.has(i) && c.kind === e.kind && c.insured === e.insured);
+    if(mi < 0){ e.row.status = 'New'; return; }
+    used.add(mi);
+    const cs = curList[mi].sum;
+    e.row.status = e.sum < cs - 0.5 ? 'Reduce' : (e.sum > cs + 0.5 ? 'Increase' : 'Retain & Alter');
   });
-  cur.forEach((c,i) => { if(!used.has(i)) proposed.push(mkRow(c, 'Cancel')); });
-  return { current: cur.map(r => mkRow(r, 'In Force')), proposed, client };
+  const proposed = nwList.map(e => e.row);
+  curList.forEach((c,i) => { if(!used.has(i)) proposed.push(Object.assign({}, c.row, {status:'Cancel'})); });
+  return { current: curList.map(e => e.row), proposed, client };
 }
 
 // ── ClearView LifeSolutions alteration quotation ───────────────────────────
@@ -19498,6 +19622,9 @@ function computeAfterTaxPremium(r){
   if(kind === 'lifetpd'){
     // 15% saving on the super-funded portion only; cashflow portion no saving.
     const {superAmt, cashAmt} = splitPremiumFunding(r.premiumNote||'', ownerIsSuper);
+    // Fully personally funded Life/TPD has no tax treatment at all — an
+    // "(after tax)" figure equal to the before-tax one is just noise.
+    if(!ownerIsSuper && !superAmt) return null;
     const base = (superAmt + cashAmt) || before;
     const sup = superAmt || (ownerIsSuper ? base : 0);
     const cash = cashAmt || (ownerIsSuper ? 0 : base);
@@ -22584,12 +22711,15 @@ function filterRowsToRoaClients(rows){
   try{
     const clients = roaClientNames();
     if(!clients.length || !Array.isArray(rows) || rows.length < 2) return rows;
-    const names = [...new Set(rows.map(r => (r.lifeInsured||'').trim()).filter(Boolean))];
+    // Child Cover rides on the client's own policy — the child's name is never
+    // an ROA client, but the line still belongs here.
+    const isChild = r => /child/i.test(r.coverType||'');
+    const names = [...new Set(rows.filter(r => !isChild(r)).map(r => (r.lifeInsured||'').trim()).filter(Boolean))];
     if(names.length < 2) return rows;                       // one person in the document
     const match = n => clients.some(c => nameMatchesClient(n, c));
     const keepNames = names.filter(match), dropNames = names.filter(n => !match(n));
     if(!keepNames.length || !dropNames.length) return rows; // all match, or none do — keep everything
-    const kept = rows.filter(r => { const n = (r.lifeInsured||'').trim(); return !n || match(n); });
+    const kept = rows.filter(r => { if(isChild(r)) return true; const n = (r.lifeInsured||'').trim(); return !n || match(n); });
     if(confirm('This document holds cover for ' + names.join(' and ') + ', but this ROA is for ' + clients.join(' & ') + '.\n\nOK — import only the cover for ' + keepNames.join(' & ') + ' (' + kept.length + ' line(s); ' + dropNames.join(' & ') + '’s lines are left out).\nCancel — import every line anyway.')){
       return kept;
     }
