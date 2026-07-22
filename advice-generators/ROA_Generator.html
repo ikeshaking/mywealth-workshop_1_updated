@@ -15260,6 +15260,60 @@ function renderAdminWordingNWF(){
   return h;
 }
 
+// ── Brand cover — adviser box (shared by the Strategy Paper & NWF exporters).
+//    All details resolve from the current document's adviser fields, which
+//    auto-fill from Admin (office phone/address, email, corporate authorised
+//    rep and licensee details) when an adviser is selected.
+function adviserCoverDetails(){
+  return {
+    name: (F.adviserName||'').trim() || '[Adviser Name]',
+    phone: (F.adviserPhone||'').trim(),
+    email: (F.adviserEmail||'').trim(),
+    address: (F.adviserStreet||'').trim() || (SETTINGS.defaultStreet||''),
+    website: 'www.mywealthsolutions.com.au',
+    carLine: (F.corpRepName||'My Wealth Solutions Pty Ltd') + ' ABN ' + (F.corpRepABN||'66 153 751 832') + ' is a Corporate Authorised Representative ' + (F.corpRepNo||'414145'),
+    licLine: (F.licensee||'GPS Wealth Ltd') + ' | Australian Financial Services Licence ' + (F.licenseeAFSL||'254544') + ' | ABN ' + (F.licenseeABN||'17 005 482 726') + ' | ' + String(F.licenseeWeb||'www.gpswealth.com.au').replace(/^https?:\/\//,'').replace(/^www\./,''),
+    postalLine: (F.licenseeAddress||'GPO Box 1453, SYDNEY NSW 2001') + ' | T: ' + (F.licenseePhone||'1300 650 432') + ' | E: ' + (F.licenseeEmail||'info@count.au')
+  };
+}
+function buildAdviserCoverBox(D, TBLW){
+  const { Table, TableRow, TableCell, Paragraph, TextRun, WidthType, BorderStyle } = D;
+  const a = adviserCoverDetails();
+  const NAVY = "0C2E3F", BLUE = "0D6BE0", ARROW = "5EA6FF", GREY = "6b7a86";
+  const line = (runs, o={}) => new Paragraph({ spacing:{before:o.before||0, after:(o.after!=null?o.after:60)}, children:runs });
+  const arrow = (t, u) => new Paragraph({
+    spacing:{after:50}, indent:{left:420},
+    children:[
+      new TextRun({text:"➤  ", font:"Nunito", size:20, bold:true, color:ARROW}),
+      new TextRun({text:String(t), font:"Nunito", size:20, color:NAVY, underline:(u?{}:undefined)})
+    ]
+  });
+  const kids = [
+    line([new TextRun({text:"YOUR FINANCIAL ADVISER:", font:"Nunito", size:24, bold:true, color:NAVY})], {after:220}),
+    line([new TextRun({text:a.name, font:"Nunito", size:36, bold:true, color:BLUE})], {after:160}),
+    line([new TextRun({text:"is an Authorised Representative", font:"Nunito", size:21, italics:true, color:NAVY})], {after:140}),
+  ];
+  if(a.phone) kids.push(arrow(a.phone));
+  if(a.email) kids.push(arrow(a.email, true));
+  if(a.address) kids.push(arrow(a.address));
+  kids.push(arrow(a.website, true));
+  kids.push(line([new TextRun({text:a.carLine, font:"Nunito", size:16, color:GREY})], {before:160, after:20}));
+  kids.push(line([new TextRun({text:a.licLine, font:"Nunito", size:16, color:GREY})], {after:100}));
+  kids.push(line([new TextRun({text:a.postalLine, font:"Nunito", size:16, color:GREY})], {after:0}));
+  const cell = new TableCell({
+    width:{size:TBLW, type:WidthType.DXA},
+    margins:{top:160, bottom:160, left:260, right:260},
+    borders:{
+      top:{style:BorderStyle.NONE, size:0, color:"auto"},
+      bottom:{style:BorderStyle.NONE, size:0, color:"auto"},
+      left:{style:BorderStyle.SINGLE, size:12, color:ARROW},
+      right:{style:BorderStyle.SINGLE, size:12, color:ARROW}
+    },
+    children:kids
+  });
+  return new Table({columnWidths:[TBLW], width:{size:TBLW, type:WidthType.DXA}, rows:[new TableRow({children:[cell]})]});
+}
+
 // ── Suggested wording editor — edit scenario objectives / recommendation /
 //    benefits / risks without re-running the file through Claude. ──
 let adminWordingScenario = "";
@@ -17653,7 +17707,7 @@ async function exportStrategyPaperDocx(){
   // NWF Template v1 branding — same theme as the NWF exporter (Arizona Flare
   // blue headings, Nunito body, navy tables, brand cover + background page art)
   // so Strategy Papers and NWFs come out of the same visual family.
-  const NAVY = "0C2E3F", NBLUE = "0C6AE1", PBLUE = "0D6BE0", CELL = "DDE5ED", DNAVY = "003B56";
+  const NAVY = "0C2E3F", NBLUE = "0C6AE1", PBLUE = "0D6BE0", CELL = "E5F4F6", DNAVY = "003B56";
   const TBLW = 9026; // A4 minus template margins (1440 each side)
 
   const cn = getFullClientName() || '[Client Name]';
@@ -17754,22 +17808,7 @@ async function exportStrategyPaperDocx(){
       children:[new TextRun({text:(docxFill(sp, sp.title || 'Strategy Paper')).toUpperCase(), font:"ABC Arizona Flare", size:96, color:PBLUE})]}));
     children.push(new Paragraph({spacing:{after:2600},
       children:[new TextRun({text:"PREPARED ON " + ((F.roaDate ? ordD(F.roaDate) : ordD(todayLocalISO())) || '').toUpperCase(), font:"Nunito", size:28, bold:true, color:DNAVY})]}));
-    const covCel = (t, o={}) => new TableCell({
-      width:{size:o.w||TBLW, type:WidthType.DXA},
-      shading:{type:ShadingType.CLEAR, fill:"F3F3F3", color:"auto"},
-      margins:{top:80, bottom:80, left:140, right:140},
-      borders:{top:{color:"FFFFFF",space:0,style:BorderStyle.SINGLE,size:8},bottom:{color:"FFFFFF",space:0,style:BorderStyle.SINGLE,size:8},left:{color:"FFFFFF",space:0,style:BorderStyle.SINGLE,size:8},right:{color:"FFFFFF",space:0,style:BorderStyle.SINGLE,size:8}},
-      children: o.lines.map((L, i) => new Paragraph({spacing:{before:0, after:i===o.lines.length-1?0:40},
-        children:[new TextRun({text:L[0], font:"Nunito", size:L[1]||18, bold:!!L[2], color:DNAVY})]}))
-    });
-    children.push(new Table({columnWidths:[TBLW], width:{size:TBLW, type:WidthType.DXA}, rows:[
-      new TableRow({children:[covCel('', {lines:[
-        ["YOUR FINANCIAL ADVISER:", 20, true],
-        [F.adviserName || "[Adviser]", 22, true],
-        ["1/18 Masters Street, Newstead, Brisbane 4006  /  07 3852 4114  /  www.mywealthsolutions.com.au", 16, false],
-        ["My Wealth Solutions Pty Ltd ABN 66 153 751 832 is a Corporate Authorised Representative 414145 of GPS Wealth Ltd | Australian Financial Services Licence 254544 | ABN 17 005 482 726", 14, false],
-      ]})]})
-    ]}));
+    children.push(buildAdviserCoverBox(D, TBLW));
 
     // ── Paper body — starts on a new page after the cover ──
     children.push(H1N(docxFill(sp, sp.title || 'Strategy Paper'), true));
@@ -21587,7 +21626,7 @@ async function exportNWFDocx(){
     HorizontalPositionAlign, VerticalPositionAlign, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom,
     TextWrappingType, PageBreak } = D;
 
-  const NAVY = "0C2E3F", NBLUE = "0C6AE1", PBLUE = "0D6BE0", CELL = "DDE5ED", DNAVY = "003B56";
+  const NAVY = "0C2E3F", NBLUE = "0C6AE1", PBLUE = "0D6BE0", CELL = "E5F4F6", DNAVY = "003B56";
   const cn = getFullClientName() || '[Client Name]';
   const n = nwfNames();
   const TBLW = 9026; // A4 minus template margins (1440 each side)
@@ -21668,22 +21707,7 @@ async function exportNWFDocx(){
     children:[new TextRun({text:"NEXT WEALTH FOCUS", font:"ABC Arizona Flare", size:96, color:PBLUE})]}));
   children.push(new Paragraph({spacing:{after:2600},
     children:[new TextRun({text:"PREPARED ON " + ((F.roaDate ? ordD(F.roaDate) : ordD(todayLocalISO())) || '').toUpperCase(), font:"Nunito", size:28, bold:true, color:DNAVY})]}));
-  const covCel = (t, o={}) => new TableCell({
-    width:{size:o.w||TBLW, type:WidthType.DXA},
-    shading:{type:ShadingType.CLEAR, fill:"F3F3F3", color:"auto"},
-    margins:{top:80, bottom:80, left:140, right:140},
-    borders:{top:{color:"FFFFFF",space:0,style:BorderStyle.SINGLE,size:8},bottom:{color:"FFFFFF",space:0,style:BorderStyle.SINGLE,size:8},left:{color:"FFFFFF",space:0,style:BorderStyle.SINGLE,size:8},right:{color:"FFFFFF",space:0,style:BorderStyle.SINGLE,size:8}},
-    children: o.lines.map((L, i) => new Paragraph({spacing:{before:0, after:i===o.lines.length-1?0:40},
-      children:[new TextRun({text:L[0], font:"Nunito", size:L[1]||18, bold:!!L[2], color:DNAVY})]}))
-  });
-  children.push(new Table({columnWidths:[TBLW], width:{size:TBLW, type:WidthType.DXA}, rows:[
-    new TableRow({children:[covCel('', {lines:[
-      ["YOUR FINANCIAL ADVISER:", 20, true],
-      [F.adviserName || "[Adviser]", 22, true],
-      ["1/18 Masters Street, Newstead, Brisbane 4006  /  07 3852 4114  /  www.mywealthsolutions.com.au", 16, false],
-      ["My Wealth Solutions Pty Ltd ABN 66 153 751 832 is a Corporate Authorised Representative 414145 of GPS Wealth Ltd | Australian Financial Services Licence 254544 | ABN 17 005 482 726", 14, false],
-    ]})]})
-  ]}));
+  children.push(buildAdviserCoverBox(D, TBLW));
 
   // ── Standard opening pages ──
   if(F.nwfIntroShow){
@@ -24687,6 +24711,14 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
   docType = FIXED_DOC_TYPE;
   if(FIXED_DOC_TYPE === 'NAA' && !F.naaType) initNAAState();
   if(FIXED_DOC_TYPE === 'NWF' && !F.nwfType) initNWFState();
+  // Retired strategy-paper scenarios (flagged as trivial / not needed) —
+  // removed from the picker and Admin. Previously saved JSONs that used one
+  // still open and export from their own saved copy of the wording.
+  ['sp_model_smsf_breakeven','sp_spouse_equalisation','sp_model_estate_equalisation','sp_estate_equalisation','sp_divorce_planning'].forEach(id => {
+    try{ delete STRATEGY_PAPERS[id]; }catch(_){}
+    try{ delete MODELLING_SCENARIOS[id]; }catch(_){}
+    try{ delete PORTFOLIO_SCENARIOS[id]; }catch(_){}
+  });
   applyTheme();
   render();
 })();
