@@ -14702,7 +14702,6 @@ function renderTopbar(){
       <div class="topnav">
         <a class="${page==='picker'?'active':''}" onclick="page='picker';render()">1 · Scenarios</a>
         <a class="${page==='builder'?'active':''}" onclick="if(selectedScenarios.length){if(docType==='ROA')consolidateScenarios();page='builder';render()}">2 · Build</a>
-        <a class="${page==='preview'?'active':''}" onclick="if(selectedScenarios.length){page='preview';render()}">3 · Preview</a>
         <a class="${page==='howto'?'active':''}" onclick="page='howto';render()" title="How to use this generator">📘 How to</a>
       </div>
       ${status ? `<span class="topbar-status">${status}</span>` : ''}
@@ -14717,10 +14716,6 @@ function renderTopbar(){
       <label class="import-btn" style="margin:0" title="Re-open a saved .json working file and keep editing">📂 Load JSON
         <input type="file" accept=".json,application/json" style="display:none" onchange="importRoaJson(this)">
       </label>
-      <label class="import-btn" style="margin:0" title="Load a saved HTML copy of this tool">📂 Load HTML
-        <input type="file" accept=".html" style="display:none" onchange="uploadHTMLSave(this)">
-      </label>
-      <button class="btn btn-sm btn-ghost" onclick="downloadHTMLSave()" title="Download a copy of this tool with all your work saved inside it">💾 Save HTML</button>
       <button class="btn btn-sm btn-blue" onclick="topbarExport()" title="Export the Word document">⬇ Export Word</button>
       <button class="btn btn-sm btn-ghost" onclick="undoAction()" title="Undo (Ctrl/⌘+Z)">↶</button>
       <button class="btn btn-sm btn-ghost" onclick="redoAction()" title="Redo (Ctrl+Y / ⌘+Shift+Z)">↷</button>
@@ -15693,12 +15688,7 @@ function renderHowToPage(){
       To pick up where you left off, open this page again and use <strong>📂 Load JSON</strong> (or drag the .json file onto the page).
       The browser auto-draft is a convenience only — it lives on this device and can be lost; the JSON file is your reliable copy.
     </div>
-    <div class="howto-important" style="background:var(--blue-light);border-color:var(--blue-soft);border-left-color:var(--blue)">
-      <strong style="color:var(--blue)">JSON vs HTML save — what's the difference?</strong><br>
-      <strong>💾 Save JSON / 📂 Load JSON</strong> is your everyday working file: a small data-only file with everything you've typed. Load it back into this generator to keep working. Use it for every client document.<br>
-      <strong>💾 Save HTML / 📂 Load HTML</strong> saves a complete copy of this whole tool with your work embedded inside it (a much bigger file). Use it when you want one self-contained file that opens anywhere — e.g. handing the tool plus a work-in-progress to a colleague — or to archive a frozen copy. For day-to-day saving, prefer JSON.
-    </div>
-    <p>Notes: a JSON saved by one generator only opens in that generator — if you pick the wrong one, a message tells you which to use. Both the JSON and HTML files contain client information — store and share them per the firm's client-data policy.</p>
+    <p>Notes: a JSON saved by one generator only opens in that generator — if you pick the wrong one, a message tells you which to use. The JSON file contains client information — store and share it per the firm's client-data policy.</p>
   </div></div>
 
   <div class="howto"><div class="howto-body">
@@ -15708,7 +15698,6 @@ function renderHowToPage(){
       <tbody>
         <tr><td>Word document</td><td><code>NAA_Client_Name_date.docx</code></td><td><code>NAA_Jane_Citizen_2026-07-22.docx</code></td></tr>
         <tr><td>JSON working copy</td><td><code>Same name as the Word document, ending .json</code></td><td><code>NAA_Jane_Citizen_2026-07-22.json</code></td></tr>
-        <tr><td>HTML self-save (optional)</td><td><code>NAA_ClientName_date.html</code></td><td><code>NAA_Jane_Citizen_2026-07-22.html</code></td></tr>
       </tbody>
     </table></div>
     <p>The name is built from the client name and the NAA date. The Word file and its JSON working copy share the same name so they stay paired in the client's folder.</p>
