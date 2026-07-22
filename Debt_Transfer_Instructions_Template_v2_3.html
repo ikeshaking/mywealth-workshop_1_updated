@@ -1613,7 +1613,7 @@
             <p>Review the <b>cashflow summary</b> (weekly/monthly/annual before and after, tax refunds) against the advice document, then:</p>
             <ul>
                 <li><b>📄 Generate Guide</b> — builds the full preview on the right. Read it top to bottom.</li>
-                <li><b>📥 Download Word</b> — exports the branded document, auto-named <code>Debt_Transfer_&lt;Clients&gt;_&lt;date&gt;.doc</code>.</li>
+                <li><b>📥 Download Word</b> — exports the branded document, auto-named in the ROA convention, e.g. <code>260722JosephAndSteviDebtTransfer220726.docx</code>.</li>
                 <li><b>💾 Save Backup (.json)</b> — downloads the working file, <b>named identically to the Word document</b>.</li>
                 <li><b>✉️ Copy for Email</b> — copies the formatted guide for pasting straight into Outlook/Gmail, or print to PDF from the preview.</li>
             </ul>
@@ -2829,6 +2829,14 @@
                     var initAmtFC = parseFloat(document.getElementById('initialInvestment').value) || 0;
                     var hasInitial = initAmtFC > 0;
 
+                    var inclInsMCMA_fc = document.getElementById('includeInsuranceInMCMA') ? document.getElementById('includeInsuranceInMCMA').checked : true;
+                    var insW_fc = inclInsMCMA_fc ? (parseFloat(document.getElementById('insuranceBefore').value) || 0) : 0;
+                    var advW_fc = parseFloat(document.getElementById('advicesBefore').value) || 0;
+                    var gearW_fc = parseFloat(document.getElementById('gearingBefore').value) || 0;
+                    var exclProp_fc = document.getElementById('excludePropCostsFromPlan') ? document.getElementById('excludePropCostsFromPlan').checked : false;
+                    var propW_fc = exclProp_fc ? 0 : (parseFloat(document.getElementById('propCostsBefore').value) || 0);
+                    var mcmaWeekly_fc = insW_fc + advW_fc + gearW_fc + propW_fc;
+
                     var costsHeadY = 464;
                     var costBoxY = 490;
 
@@ -2911,6 +2919,7 @@
                     svg += _tag(640, 104, 'HOME LOAN', WHT_SOFT);
                     svg += _t(640, 126, fHL, 16, 800, WHT);
                     svg += _t(640, 144, 'repaid from offset', 8.5, 600, WHT_DIM, true);
+                    svg += _t(640, 172, 'your equity secures the Investment Loan', 8, 700, CORAL_A, true);
 
                     // === HUB ZONE: INVESTMENT STRATEGY ===
                     svg += _div(178);
@@ -2924,7 +2933,7 @@
 
                     // feed from the offset down into the hub
                     svg += '<path d="M372,160 C380,192 386,218 389,250" stroke="' + BLUE + '" stroke-width="2.2" stroke-linecap="round" fill="none" stroke-dasharray="1,0" marker-end="url(#mB)"/>';
-                    svg += '<text x="404" y="212" font-size="8.5" font-weight="800" letter-spacing="1.2" fill="' + BLUE + '">SURPLUS &amp; TRANSFERS</text>';
+                    svg += '<text x="404" y="212" font-size="8.5" font-weight="800" letter-spacing="1.2" fill="' + BLUE + '">WEEKLY TRANSFER · $' + Math.round(mcmaWeekly_fc).toLocaleString() + '/WK</text>';
 
                     // left stack: Investment Loan -> its offset -> hub
                     svg += _card(30, 252, 150, 70, CORAL);
@@ -2939,13 +2948,13 @@
                     svg += _tag(105, 376, 'INV. LOAN OFFSET', WHT_SOFT);
                     svg += _t(105, 400, 'funds held here', 9.5, 700, WHT);
                     svg += '<path d="M184,380 C240,378 265,365 294,346" stroke="' + BLUE + '" stroke-width="2.2" stroke-linecap="round" fill="none" marker-end="url(#mB)"/>';
-                    svg += _lbl(240, 398, 'transfer', BLUE);
+                    svg += _lbl(240, 398, 'transfer ' + fMF + '/mo', BLUE);
 
                     // THE HUB — MCMA
                     svg += _card(hubX, hubY, hubW, hubH, LIME, LIME_ST);
                     svg += _badge(hubCX, hubY, LIME_ST, 'bank');
-                    svg += _tag(hubCX, hubY + 28, 'MCMA · CASH HUB', 'rgba(12,46,63,0.75)');
-                    svg += _t(hubCX, hubY + 54, 'Cash Management', 13, 800, NAVY);
+                    svg += _tag(hubCX, hubY + 28, 'MCMA — YOUR CASH HUB', 'rgba(12,46,63,0.75)');
+                    svg += _t(hubCX, hubY + 54, 'Cash Management Account', 12, 800, NAVY);
                     svg += '<line x1="' + (hubCX - 52) + '" y1="' + (hubY + 66) + '" x2="' + (hubCX + 52) + '" y2="' + (hubY + 66) + '" stroke="rgba(12,46,63,0.25)" stroke-width="1"/>';
                     svg += _t(hubCX, hubY + 84, 'ALL MONEY FLOWS', 8.5, 800, 'rgba(12,46,63,0.8)');
                     svg += _t(hubCX, hubY + 98, 'THROUGH HERE', 8.5, 800, 'rgba(12,46,63,0.8)');
@@ -2990,7 +2999,6 @@
                         svg += _t(145, costBoxY + 36, 'tax deductible', 9.5, 600, GREY);
                         svg += _t(145, costBoxY + 50, 'debited separately', 8, 600, GREY, true);
                     }
-                    svg += '<path d="M60,' + (costBoxY + 29) + ' C22,' + (costBoxY + 29) + ' 16,420 16,287 C16,262 23,262 30,284" stroke="' + CORAL_A + '" stroke-width="1.2" fill="none" stroke-dasharray="4,3" opacity="0.35"/>';
 
                     var inclInsD = document.getElementById('includeInsuranceInMCMA') ? document.getElementById('includeInsuranceInMCMA').checked : true;
                     svg += _card(260, costBoxY, 170, 58, '#FDEEEC', CORAL_A);
@@ -3068,13 +3076,6 @@
                     }
 
                     // Pathway Commitment pill
-                    var inclInsMCMA_fc = document.getElementById('includeInsuranceInMCMA') ? document.getElementById('includeInsuranceInMCMA').checked : true;
-                    var insW_fc = inclInsMCMA_fc ? (parseFloat(document.getElementById('insuranceBefore').value) || 0) : 0;
-                    var advW_fc = parseFloat(document.getElementById('advicesBefore').value) || 0;
-                    var gearW_fc = parseFloat(document.getElementById('gearingBefore').value) || 0;
-                    var exclProp_fc = document.getElementById('excludePropCostsFromPlan') ? document.getElementById('excludePropCostsFromPlan').checked : false;
-                    var propW_fc = exclProp_fc ? 0 : (parseFloat(document.getElementById('propCostsBefore').value) || 0);
-                    var mcmaWeekly_fc = insW_fc + advW_fc + gearW_fc + propW_fc;
                     svg += '<rect x="160" y="' + (pathwayTextY - 20) + '" width="460" height="31" rx="15.5" fill="' + LIME + '" stroke="' + LIME_ST + '" stroke-width="1.2" filter="url(#ds)"/>';
                     svg += '<text x="390" y="' + pathwayTextY + '" text-anchor="middle" font-size="12.5" font-weight="700" fill="' + NAVY + '" font-family="' + SERIF + '" letter-spacing="0.3">Pathway Commitment: $' + Math.round(mcmaWeekly_fc).toLocaleString() + ' per week</text>';
                     svg += '</svg>';
@@ -3152,7 +3153,7 @@
             var client2 = document.getElementById('client2Name').value;
             var clientDisplay = client2 ? client1 + ' and ' + client2 : client1;
             var timestamp = new Date().toISOString().slice(0,10);
-            var filename = 'Debt_Transfer_' + clientDisplay.replace(/\s+/g, '_') + '_' + timestamp + '.doc';
+            var filename = dtExportBaseName() + '.doc';
 
             var previewClone = document.getElementById('preview').cloneNode(true);
 
@@ -3649,7 +3650,7 @@
             const timestamp = new Date().toISOString().slice(0,10);
             // Named identically to the exported Word document (only the extension differs)
             // so the pair files together in the client's folder.
-            const filename = `Debt_Transfer_${clientDisplay.replace(/\s+/g, '_')}_${timestamp}.json`;
+            const filename = dtExportBaseName() + '.json';
 
             // Collect all form data
             const backupData = {
@@ -4366,6 +4367,20 @@
             try { if (localStorage.getItem('dtPreviewHidden') === '1') setPreviewVisible(false); } catch (e) {}
         })();
 
+        // Export base name in the ROA convention: YYMMDDClientsDebtTransferDDMMYY
+        // (e.g. 260722JosephAndSteviDebtTransfer220726).
+        function dtExportBaseName() {
+            var c1 = document.getElementById('client1Name').value || 'Client';
+            var c2 = document.getElementById('client2Name').value;
+            var names = (c2 ? c1 + ' And ' + c2 : c1).replace(/[^A-Za-z0-9 ]/g, '');
+            var compact = names.split(/\s+/).map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join('');
+            var d = new Date();
+            var p = function (n) { return ('0' + n).slice(-2); };
+            var ymd = p(d.getFullYear() % 100) + p(d.getMonth() + 1) + p(d.getDate());
+            var dmy = p(d.getDate()) + p(d.getMonth() + 1) + p(d.getFullYear() % 100);
+            return ymd + compact + 'DebtTransfer' + dmy;
+        }
+
         /* ===================== REAL .DOCX EXPORT =====================
            Built with the docx library — the brand banner and office footer
            band are page-anchored header/footer images, exactly like the
@@ -4698,7 +4713,7 @@
             var client2 = document.getElementById('client2Name').value;
             var clientDisplay = client2 ? client1 + ' and ' + client2 : client1;
             var timestamp = new Date().toISOString().slice(0, 10);
-            var filename = 'Debt_Transfer_' + clientDisplay.replace(/\s+/g, '_') + '_' + timestamp + '.docx';
+            var filename = dtExportBaseName() + '.docx';
 
             var clone = document.getElementById('preview').cloneNode(true);
             // banner & footer live in the page header/footer of the .docx
