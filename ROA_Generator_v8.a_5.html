@@ -3055,17 +3055,21 @@ const SCENARIOS = {
     cat:"Insurance", type:"ROA", label:"Insurance — Revised Terms: Retain Existing & Top-Up", short:"Revised: Retain + Top-Up",
     desc:"Retain existing cover and top up with original recommended due to revised terms",
     needs:{insurance:true, insuranceTable:"revised", hasOptions:true},
-    pd:"Revised insurance recommendation — retain existing cover and top up with originally recommended insurer",
-    obj:"{name}, following a pre-assessment of your situation with {originalInsurer}, we were informed that they would apply {underwritingNote}. After exploring alternative insurers and application outcomes, we have updated our original insurance recommendation to retain your existing cover through {originalInsurer} and also apply for top-up cover through {newInsurer}, to ensure you hold the maximum amount of cover not subject to exclusions and that we can still meet your insurance objective of being adequately insured.",
+    pd:"Change of insurance recommendation based on terms offered",
+    obj:"{name}, following the underwriting process, {newInsurer} has advised that {underwritingNote}. As a result, we are altering our original insurance recommendations — retaining your existing cover through {originalInsurer} and proceeding with the recommended cover through {newInsurer} at a revised level — to ensure that you hold the maximum amount of cover not subject to exclusions and have the best cover for your circumstances.",
     rec:"retain your existing Life/TPD/IP cover through {originalInsurer}. Proceed with the additional recommended cover through {newInsurer} as outlined in the Altered Recommendations table.",
     benefits:[
       "By retaining your existing {originalInsurer} cover, you keep the benefit levels, terms and any grandfathered features already in place.",
       "The additional cover through {newInsurer} provides the extra capacity required to fully meet your insurance needs.",
       "By combining the two policies, you achieve your full insurance objective while minimising your exposure to the exclusion or premium 'loading' applied by the original insurer.",
+      "There are no pre-existing medical exclusions on your existing {originalInsurer} cover — if a claim were to arise from a condition excluded under the {newInsurer} policy, your retained cover still provides some level of protection.",
       "The top-up has been structured with your cashflow and superannuation balance in mind."
     ],
     risks:[
       "You will hold cover with two insurers, which means two sets of premiums, two lots of policy administration and two claim processes.",
+      "Your existing {originalInsurer} cover has never been individually underwritten, which reduces the certainty of a successful payout if you need to claim.",
+      "Your existing {originalInsurer} cover may not be Guaranteed Renewable — the insurer can alter the underlying terms, definitions and conditions of the policy in future at its discretion.",
+      "Your existing {originalInsurer} cover may not offer CPI indexation, so its benefit amounts may not keep pace with inflation over time.",
       "Your total premiums will be higher than if you held all of your cover with one insurer.",
       "Making a claim may be more complex, as benefits may need to be coordinated between the two policies.",
       "Any future increase in your cover may still be subject to underwriting.",
@@ -3077,7 +3081,7 @@ const SCENARIOS = {
     cat:"Insurance", type:"ROA", label:"Insurance — Revised Terms: Retain + Hub24 Takeover + Top-Up", short:"Revised: Takeover + Top-Up",
     desc:"Retain existing cover, transfer to Hub24 via takeover terms, top up with original recommended",
     needs:{insurance:true, insuranceTable:"revised", hasOptions:true},
-    pd:"Revised insurance recommendation — retain existing cover, transfer to Hub24 via takeover terms, and top up with originally recommended insurer",
+    pd:"Change of insurance recommendation based on terms offered",
     obj:"{name}, following the pre-assessment outcome with {originalInsurer} which applied {underwritingNote}, we discussed retaining your existing cover and transferring it to Hub24 via takeover terms, then topping up through {newInsurer} as originally recommended. This preserves your existing cover on favourable terms while providing the additional capacity needed.",
     rec:"retain your existing cover and apply for a transfer via Hub24 takeover terms. Proceed with the additional recommended cover through {newInsurer} as outlined in the Altered Recommendations table.",
     benefits:[
@@ -3099,8 +3103,8 @@ const SCENARIOS = {
     cat:"Insurance", type:"ROA", label:"Insurance — Revised Terms: Retain + Apply in Full (Cancel on Review)", short:"Revised: Retain + Apply Full",
     desc:"Retain existing cover and apply in full with new insurer with intent to cancel when exclusion is reviewable",
     needs:{insurance:true, insuranceTable:"revised", hasOptions:true},
-    pd:"Revised insurance recommendation — retain existing cover and apply in full through new insurer with intent to cancel the existing when the exclusion is reviewable",
-    obj:"{name}, following the pre-assessment with {originalInsurer} which applied {underwritingNote} (reviewable if certain conditions are met), we discussed retaining your existing cover and applying in full through {newInsurer} in parallel. Once the exclusion becomes reviewable and is successfully removed, we will cancel the duplicate existing cover.",
+    pd:"Change of insurance recommendation based on terms offered",
+    obj:"{name}, following the underwriting process, {newInsurer} has advised that {underwritingNote} (reviewable if certain conditions are met). As a result, we are altering our original insurance recommendations — retaining your existing cover and applying for the full recommended cover through {newInsurer} in parallel — so that you hold the maximum amount of cover not subject to exclusions. Once the exclusion becomes reviewable and is successfully removed, we will cancel the duplicate existing cover.",
     rec:"retain your existing cover and apply for the full recommended insurance cover through {newInsurer}. Once the exclusion is reviewable and successfully removed, cancel the existing cover at that time.",
     benefits:[
       "Once the new policy is accepted, you will be fully insured with cover that is not subject to the exclusion.",
@@ -3121,7 +3125,7 @@ const SCENARIOS = {
     cat:"Insurance", type:"ROA", label:"Insurance — Revised Terms: Switch Insurer", short:"Revised: Switch Insurer",
     desc:"Switch entirely to new insurer following revised terms",
     needs:{insurance:true, insuranceTable:"revised", hasOptions:true},
-    pd:"Revised insurance recommendation — switch insurer following favourable alternative terms",
+    pd:"Change of insurance recommendation based on terms offered",
     obj:"{name}, following the pre-assessment with {originalInsurer} which indicated {underwritingNote}, we explored alternative insurers. After submitting an application to {newInsurer}, we were advised that they would apply more favourable terms. As a result, we are altering our original insurance recommendation to proceed with {newInsurer} instead of {originalInsurer}.",
     rec:"proceed with the recommended insurance through {newInsurer} instead of {originalInsurer}, as outlined in the Altered Recommendations table.",
     benefits:[
@@ -3142,7 +3146,7 @@ const SCENARIOS = {
     cat:"Insurance", type:"ROA", label:"Insurance — Revised Terms: ClearView Accident-Only Cover", short:"Accident-Only (ClearView)",
     desc:"Accept ClearView accident-only cover where illness cover unavailable (ClearView was the SOA recommended/alternative insurer)",
     needs:{insurance:true, insuranceTable:"revised"},
-    pd:"Revised insurance recommendation — accept ClearView accident-only cover where full cover is unavailable",
+    pd:"Change of insurance recommendation based on terms offered",
     obj:"{name}, ClearView was the insurer recommended (or presented as an alternative) in your Statement of Advice. Following the application which was declined/restricted due to medical history, we explored ClearView's accident-only cover option. We now recommend accepting the ClearView accident-only cover as the best available option under your current circumstances.",
     rec:"proceed with ClearView accident-only cover as outlined in the Altered Recommendations table.",
     benefits:[
@@ -10444,6 +10448,17 @@ function consolidateScenarios(){
   const descs = selectedScenarios.filter(id => SCENARIOS[id]).map(id => scnWording(id, SCENARIOS[id]).pd);
   F.roaDescription = joinAnd(descs.map(capFirst));
 
+  // Revised-terms retain scenarios: give the two acknowledgement options real
+  // default wording (only when the adviser hasn't written their own).
+  if(selectedScenarios.some(id => /^ins_revised_(retain|transfer)/.test(id))){
+    const nb = insurerBrand(F.newInsurer) || '[New Insurer]';
+    const ob = insurerBrand(F.originalInsurer) || 'your existing insurer';
+    if(!(F.option1Text||'').trim())
+      F.option1Text = 'Proceed with implementing the recommended advice to retain your ' + ob + ' insurance cover whilst proceeding with the recommended ' + nb + ' insurance, noting and accepting the revised terms applied to your policy.';
+    if(!(F.option2Text||'').trim())
+      F.option2Text = 'Proceed with implementing the original advice as per the Statement of Advice with the revised terms provided by ' + nb + ' (closing your existing cover). You acknowledge and accept the risks involved in this cover.';
+  }
+
   // Objectives — strip leading "{name}, " (or the joint form) from each scenario's obj
   // so the name appears exactly once at the start of Section 2, regardless of single/joint client.
   const firstName = getFirstName();
@@ -13323,7 +13338,7 @@ function parseMetlifeQuoteRoa(text){
   const client = liM ? liM[1].trim() : '';
   const fn = client.split(/\s+/)[0] || '';
   const lines = t.split('\n').map(l => l.trim());
-  let inSuper = false, freqYearly = false;
+  let inSuper = false, freqYearly = false, exSD = 0;
   let cur = null; const rows = [];
   const flush = () => {
     if(!cur) return;
@@ -13360,6 +13375,7 @@ function parseMetlifeQuoteRoa(text){
     else if((m = l.match(/^Income benefit period\s*\t?(.+)$/i))) cur.bp = m[1].replace(/^To Age/i,'To Age').trim();
     else if((m = l.match(/^Premium type\s*\t?(.+)$/i))) cur.struct = m[1].trim();
     else if(/^Income cover definition\s*\t?Indemnity/i.test(l)) cur.ct = 'IP (Indemnity & Standard Contract)';
+    else if((m = l.match(/premium not including stamp duty\s*\t?\$([\d,]+(?:\.\d+)?)/i))) exSD += num(m[1]) * (freqYearly ? 1 : 12);
     else if(!cur.prem && (m = l.match(/^Total .*?Premium\s*\t?\$([\d,]+(?:\.\d+)?)/i))) cur.prem = num(m[1]);
   }
   flush();
@@ -13399,7 +13415,10 @@ function parseMetlifeQuoteRoa(text){
     ? ('MetLife quote basis: ' + uwBits.join('; ')
        + (dl.length ? (uwBits.length ? '. ' : '') + 'Discounts/loadings: ' + dl.slice(0,5).join('; ') : ''))
     : '';
-  return rows.length ? {rows, client, uwNote} : null;
+  // Standard commission estimate off the annual ex-stamp-duty premium —
+  // prefills Section 5 (fully editable there).
+  const comm = exSD > 0 ? {upfront: fmt(exSD * 0.66), ongoing: fmt(exSD * 0.22)} : null;
+  return rows.length ? {rows, client, uwNote, comm} : null;
 }
 
 // ── MetLife Protect alteration quote (the emailed "Policy Alteration Quote") ─
@@ -14067,7 +14086,7 @@ async function importInsuranceFileToTable(file, fKey){
     hideImportStatus();
 
     // 0) ClearView Amended Terms Agreement (revised-terms letter).
-    let rows = [], source = '', cdmClient = '', uwNote = '';
+    let rows = [], source = '', cdmClient = '', uwNote = '', commEst = null;
     const amended = parseAmendedTermsAgreement(text);
     if(amended && amended.rows.length){
       rows = amended.rows; cdmClient = amended.client || '';
@@ -14173,7 +14192,7 @@ async function importInsuranceFileToTable(file, fKey){
     }
     if(!rows.length){
       const mq = parseMetlifeQuoteRoa(text);
-      if(mq && mq.rows.length){ rows = mq.rows; cdmClient = mq.client || ''; uwNote = mq.uwNote || ''; source = 'the MetLife Protect quote'; }
+      if(mq && mq.rows.length){ rows = mq.rows; cdmClient = mq.client || ''; uwNote = mq.uwNote || ''; commEst = mq.comm || null; source = 'the MetLife Protect quote'; }
     }
     // 1.5) CDM / adviser "INSURANCE SCHEDULE" existing-cover summary PDF.
     if(!rows.length){
@@ -14302,6 +14321,9 @@ async function importInsuranceFileToTable(file, fKey){
     if(uwNote){
       summary += '\nUnderwriting basis (added to the Underwriting Note): ' + uwNote + '\n';
     }
+    if(commEst && dk !== 'current'){
+      summary += '\nEstimated commissions (66% / 22% of the ex-stamp-duty annual premium): ' + commEst.upfront + ' upfront, ' + commEst.ongoing + ' renewal — prefilled into Section 5 if blank (editable).\n';
+    }
     summary += '\n' + (mode === 'update'
       ? 'UPDATE the matching covers in the ' + tableNice + ' table with these?'
       : mode === 'append'
@@ -14313,6 +14335,10 @@ async function importInsuranceFileToTable(file, fKey){
     if(uwNote){
       if(!(F.underwritingNote||'').trim()) F.underwritingNote = uwNote;
       else if(!F.underwritingNote.includes(uwNote)) F.underwritingNote = F.underwritingNote.trim() + '\n' + uwNote;
+    }
+    if(commEst && dk !== 'current'){
+      if(!(F.commissionUpfront||'').trim()) F.commissionUpfront = commEst.upfront;
+      if(!(F.commissionOngoing||'').trim()) F.commissionOngoing = commEst.ongoing;
     }
     if(mode === 'update'){
       // Match each imported line to an existing cover of the same kind and lift
@@ -17838,6 +17864,13 @@ function renderMetaSection(){
   // Insurance — revised terms after underwriting
   if(isRevisedTermsRoa()){
     h += `<h4 style="margin-top:14px;margin-bottom:6px;font-size:11px;color:var(--navy);font-weight:700">Insurance — Revised Terms Details</h4>
+    ${(['ins_revised_retain_topup','ins_revised_transfer_hub24','ins_revised_retain_apply_full'].some(id => selectedScenarios.includes(id))
+       && !selectedScenarios.some(id => (SCENARIOS[id]||{}).cat === 'Superannuation')) ? `
+      <div class="helper" style="padding:10px 12px;background:var(--amber-light);border-left:3px solid var(--amber);border-radius:10px;margin-bottom:10px">
+        <strong>Retaining cover held in a super fund?</strong> The ROA should also show the retained fund in a Super section
+        (minimum balance, employer contributions, opt-in so the cover doesn't lapse).
+        <button class="btn btn-xs btn-blue" style="margin-left:8px" onclick="toggleScenario('super_rollover_partial')">＋ Add "Partial Rollover (Retain Insurance)"</button>
+      </div>`:''}
     <div class="field"><label>Revised Terms Approach</label>
       <div class="tog">
         <button class="${(F.revisedTermsApproach||'retain_topup')==='retain_topup'?'on':'off'}" onclick="F.revisedTermsApproach='retain_topup';consolidateScenarios();render()">Retain Existing + Top-Up with New Insurer</button>
@@ -18896,6 +18929,14 @@ function splitPremiumDisplayLines(fields){
         const rest = (part.slice(0, fm.index) + ' ' + part.slice(fm.index + fm[0].length)).replace(/\s+/g,' ').trim();
         if(rest) out.push(rest);
         out.push('(' + fm[1].trim() + ')');
+        return;
+      }
+      // "$172 pm (after tax)" prints as two lines — the amount, then the
+      // "(after tax)" / "(before tax)" tag on its own line, matching the doc.
+      const bt = part.match(/^(.*?\S)\s*\(\s*((?:before|after)\s+tax)\s*\)\s*$/i);
+      if(bt){
+        out.push(bt[1].trim());
+        out.push('(' + bt[2].toLowerCase().replace(/\s+/g,' ') + ')');
         return;
       }
       // A split-funding line (mentions both super and cashflow/personal) is wrapped in
