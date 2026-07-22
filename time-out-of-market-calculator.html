@@ -8,6 +8,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" onerror="var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';document.head.appendChild(s)"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>if(typeof pdfjsLib!=='undefined'){pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}</script>
+<script src="https://unpkg.com/docx@8.5.0/build/index.umd.js" onerror="var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js';document.head.appendChild(s)"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <style>
 @import url('https://fonts.cdnfonts.com/css/abc-arizona-flare');
 @import url('https://fonts.cdnfonts.com/css/abc-arizona-serif');
@@ -621,6 +624,119 @@ function csvExport(){
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='tom-ledger.csv'; a.click();
 }
 
+/* ================= BRANDED EXPORTS (Excel + Word, NAA branding) ================= */
+const BRAND={navy:'0C2E3F',blue:'0D6BE0',lightblue:'EAF4FB',teal:'E5F4F6',border:'D4E2EE',coral:'F56A5A',grey:'6b7a86',green:'1E8449',red:'C0392B'};
+function stripHtml(s){ const d=document.createElement('div'); d.innerHTML=s; return (d.textContent||'').replace(/\s+/g,' ').trim(); }
+function fileBase(){ const c=(F.clientName||'Time Out of Market').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,''); return c+'-TOM'; }
+function ledgerMatrix(R){
+  // returns {headers, rows, fmts} where fmts[col] in {'money','money4','units','pct','price','text'}
+  if(R.kind==='cash')return {headers:['Date',R.basis.toUpperCase()+' price','Daily return','Contribution','Distribution credit','Counterfactual (invested)','Interest','Actual (cash)'],
+    fmts:['text','price','pct','money','money','money','money','money'],
+    rows:R.ledger.map(l=>[fmtDate(l.date),l.price,l.ret,l.contrib||null,l.distCredit||null,l.cf,l.int||null,l.actual])};
+  if(R.kind==='units')return {headers:['Date',R.basis.toUpperCase()+' price','Contribution','Units bought','Distribution units','Cumulative units','Value'],
+    fmts:['text','price','money','units','units','units','money'],
+    rows:R.ledger.map(l=>[fmtDate(l.date),l.price,l.contrib||null,l.bought||null,l.distU||null,l.units,l.value])};
+  if(R.kind==='switch')return {headers:['Date',R.basis.toUpperCase()+' price','Stayed invested','Sold → cash → back'],
+    fmts:['text','price','money','money'],
+    rows:R.ledger.map(l=>[fmtDate(l.date),l.price,l.stayed,l.roundtrip])};
+  return {headers:['Date',R.basis.toUpperCase()+' price','Invested (actual)','Lump units','Phased units','Cash','Lump value','Phased value'],
+    fmts:['text','price','money','units','units','money','money','money'],
+    rows:R.ledger.map(l=>[fmtDate(l.date),l.price,l.invested||null,l.cfUnits,l.acUnits,l.cash,l.cfVal,l.acVal])};
+}
+function summaryPairs(R){
+  if(R.kind==='cash')return [['A · Counterfactual (invested)',fmt$(R.A)],['B · Actual (sat in cash)',fmt$(R.B)],['Net opportunity cost (A − B)',fmt$(R.net),true],
+    ['— Market growth foregone',fmt$(R.growthForegone)],['— Missed distributions',fmt$(R.distTotal)],['— Less interest earned (offset)',fmt$(-R.interestTotal)]];
+  if(R.kind==='units')return [['A · Counterfactual units',fmtU(R.A)],['B · Actual units held',fmtU(R.B)],['Unit shortfall',fmtU(R.shortfall)],['Closing price',fmt$(R.endPrice,4)],['Opportunity loss',fmt$(R.loss),true]];
+  if(R.kind==='switch')return [['If never sold (units)',fmtU(R.unitsNeverSold)],['After the round trip (units)',fmtU(R.unitsBack)],['Days out of market',String(R.gapDays)],['Re-entry cost',fmt$(R.reentryCost)],['Less interest earned',fmt$(R.interestOffset)],['Opportunity loss',fmt$(R.loss),true]];
+  return [['Lump sum invested day 1',fmt$(R.cfValue)],['Phased in (actual)',fmt$(R.acValue)],['Lump-sum advantage',fmt$(R.advantage),true]];
+}
+function snippetRows(R){
+  // "snippets from the ledger": first 3, any contribution/distribution rows, last 3 — deduped, in order
+  const L=R.ledger, keep=new Set();
+  for(let i=0;i<Math.min(3,L.length);i++)keep.add(i);
+  for(let i=Math.max(0,L.length-3);i<L.length;i++)keep.add(i);
+  L.forEach((l,i)=>{ if(l.contrib||l.distCredit||l.distU||l.invested||l.bought)keep.add(i); });
+  const idx=[...keep].sort((a,b)=>a-b).slice(0,24);
+  const M=ledgerMatrix(R);
+  return {headers:M.headers, fmts:M.fmts, rows:idx.map(i=>M.rows[i]), truncated:idx.length<L.length, total:L.length};
+}
+function cellText(v,fmt){ if(v==null||v==='')return ''; if(fmt==='price')return '$'+Number(v).toFixed(4); if(fmt==='money')return fmt$(v); if(fmt==='money4')return fmt$(v,4); if(fmt==='units')return fmtU(v); if(fmt==='pct')return (v*100).toFixed(3)+'%'; return String(v); }
+
+async function exportBrandedExcel(){
+  const R=state.result; if(!R||R.error){alert('Calculate a result first.');return;}
+  if(typeof ExcelJS==='undefined'){alert('The Excel writer (ExcelJS) hasn’t loaded — check your connection, or use Download CSV.');return;}
+  const M=ledgerMatrix(R), wb=new ExcelJS.Workbook(); wb.creator='My Wealth Solutions'; wb.created=new Date(2000,0,1);
+  const ws=wb.addWorksheet('Time Out of Market',{views:[{state:'frozen',ySplit:0}]});
+  const nCols=M.headers.length;
+  const argb=h=>'FF'+h; const fill=h=>({type:'pattern',pattern:'solid',fgColor:{argb:argb(h)}});
+  const thin={style:'thin',color:{argb:argb(BRAND.border)}}; const allBorder={top:thin,left:thin,bottom:thin,right:thin};
+  const merge=(r,txt,opts={})=>{ ws.mergeCells(r,1,r,nCols); const c=ws.getCell(r,1); c.value=txt; c.font={name:'Nunito',...(opts.font||{})}; if(opts.fill)c.fill=fill(opts.fill); if(opts.align)c.alignment={horizontal:opts.align,vertical:'middle'}; ws.getRow(r).height=opts.h||18; return c; };
+  merge(1,'MY WEALTH SOLUTIONS',{font:{bold:true,size:11,color:{argb:'FFFFFFFF'}},fill:BRAND.navy,align:'left',h:26}); ws.getCell(1,1).alignment={horizontal:'left',vertical:'middle',indent:1};
+  merge(2,'Time Out of Market — Opportunity Cost Analysis',{font:{name:'Georgia',bold:true,size:15,color:{argb:argb(BRAND.navy)}},h:24});
+  merge(3,`${F.clientName||'(client)'}  ·  ${F.fundName||'(fund)'}  ·  ${fmtDate(R.start)} – ${fmtDate(R.end)}  ·  ${R.basis.toUpperCase()} basis`,{font:{size:10,color:{argb:argb(BRAND.grey)}},h:18});
+  let r=5; merge(r,'Result summary',{font:{name:'Georgia',bold:true,size:12,color:{argb:argb(BRAND.blue)}}}); r++;
+  for(const [lbl,val,hero] of summaryPairs(R)){ const a=ws.getCell(r,1); a.value=lbl; a.font={name:'Nunito',bold:!!hero,size:hero?12:10,color:{argb:argb(hero?BRAND.navy:'333333')}}; const b=ws.getCell(r,2); b.value=val; b.font={name:'Nunito',bold:!!hero,size:hero?12:10,color:{argb:argb(hero?BRAND.blue:BRAND.navy)}}; if(hero){a.fill=fill(BRAND.lightblue);b.fill=fill(BRAND.lightblue);} r++; }
+  r++; merge(r,'Full daily ledger',{font:{name:'Georgia',bold:true,size:12,color:{argb:argb(BRAND.blue)}}}); r++;
+  const hdr=ws.getRow(r); M.headers.forEach((h,i)=>{ const c=hdr.getCell(i+1); c.value=h; c.font={name:'Nunito',bold:true,size:9,color:{argb:'FFFFFFFF'}}; c.fill=fill(BRAND.navy); c.alignment={horizontal:i===0?'left':'right',vertical:'middle',wrapText:true}; c.border=allBorder; }); hdr.height=26; const headRow=r; r++;
+  M.rows.forEach((row,ri)=>{ const xr=ws.getRow(r); row.forEach((v,ci)=>{ const c=xr.getCell(ci+1); const f=M.fmts[ci];
+    if(v==null||v===''){c.value=null;} else if(f==='pct'){c.value=v;c.numFmt='0.000%';} else if(f==='price'){c.value=v;c.numFmt='$0.0000';} else if(f==='units'){c.value=v;c.numFmt='#,##0.0000';} else if(f==='text'){c.value=v;} else {c.value=v;c.numFmt='$#,##0.00';}
+    c.font={name:'Nunito',size:9,color:{argb:argb(BRAND.navy)}}; c.alignment={horizontal:ci===0?'left':'right'}; c.border=allBorder; if(ri%2)c.fill=fill(BRAND.lightblue); }); r++; });
+  ws.columns.forEach((c,i)=>{ c.width=i===0?13:(M.headers[i].length>14?15:13); });
+  ws.autoFilter={from:{row:headRow,column:1},to:{row:headRow,column:nCols}};
+  // methodology sheet
+  const ms=wb.addWorksheet('Methodology'); ms.getColumn(1).width=120;
+  const methTxt=stripHtml(methHTML(R)).split(/(?<=\.)\s+(?=[A-Z])/);
+  ms.mergeCells(1,1,1,1); const mt=ms.getCell(1,1); mt.value='Methodology & assumptions'; mt.font={name:'Georgia',bold:true,size:13,color:{argb:argb(BRAND.navy)}};
+  let mr=3; for(const para of stripHtml(methHTML(R)).split('  ').filter(Boolean)){ /* fallback single block */ }
+  ms.getCell(mr,1).value=stripHtml(methHTML(R)); ms.getCell(mr,1).alignment={wrapText:true,vertical:'top'}; ms.getCell(mr,1).font={name:'Nunito',size:10,color:{argb:'FF333333'}}; ms.getRow(mr).height=380;
+  const buf=await wb.xlsx.writeBuffer(); saveBlob(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), fileBase()+'-ledger.xlsx');
+}
+function saveBlob(blob,name){ if(typeof saveAs==='function'){saveAs(blob,name);return;} const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); }
+
+async function exportBrandedWord(){
+  const R=state.result; if(!R||R.error){alert('Calculate a result first.');return;}
+  if(typeof docx==='undefined'){alert('The Word writer (docx) hasn’t loaded — check your connection, then try again.');return;}
+  const D=docx; const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,BorderStyle,AlignmentType,HeadingLevel,PageNumber,Header,Footer,ShadingType}=D;
+  const NY=BRAND.navy,BL=BRAND.blue,LB=BRAND.lightblue,BORD=BRAND.border;
+  const H1=t=>new Paragraph({spacing:{before:120,after:200},children:[new TextRun({text:t,font:'ABC Arizona Flare',size:44,color:NY})]});
+  const H2=t=>new Paragraph({spacing:{before:360,after:180},border:{bottom:{color:BL,space:4,style:BorderStyle.SINGLE,size:12}},children:[new TextRun({text:t,font:'ABC Arizona Flare',size:30,color:NY})]});
+  const P=(runs,opts={})=>new Paragraph({spacing:{after:opts.after??120,before:opts.before??0},children:Array.isArray(runs)?runs:[new TextRun({text:runs,font:'Nunito',size:20,color:'333333'})]});
+  const money=n=>fmt$(n);
+  const cell=(txt,o={})=>new TableCell({width:o.w?{size:o.w,type:WidthType.DXA}:undefined,shading:o.fill?{type:ShadingType.CLEAR,fill:o.fill,color:'auto'}:undefined,margins:{top:40,bottom:40,left:80,right:80},children:[new Paragraph({alignment:o.align||AlignmentType.LEFT,children:[new TextRun({text:txt==null?'':String(txt),font:'Nunito',size:o.head?15:15,bold:!!o.head||!!o.bold,color:o.color||(o.head?'FFFFFF':NY)})]})]});
+  const bord={top:{style:BorderStyle.SINGLE,size:4,color:BORD},bottom:{style:BorderStyle.SINGLE,size:4,color:BORD},left:{style:BorderStyle.SINGLE,size:4,color:BORD},right:{style:BorderStyle.SINGLE,size:4,color:BORD},insideHorizontal:{style:BorderStyle.SINGLE,size:4,color:BORD},insideVertical:{style:BorderStyle.SINGLE,size:4,color:BORD}};
+
+  // summary table
+  const sPairs=summaryPairs(R);
+  const sumTable=new Table({width:{size:100,type:WidthType.PERCENTAGE},borders:bord,rows:sPairs.map(([lbl,val,hero])=>new TableRow({children:[
+    cell(lbl,{fill:hero?LB:'FFFFFF',bold:!!hero}),cell(val,{align:AlignmentType.RIGHT,fill:hero?LB:'FFFFFF',bold:!!hero,color:hero?BL:NY})]}))});
+
+  // ledger snippet table
+  const sn=snippetRows(R);
+  const headRow=new TableRow({tableHeader:true,children:sn.headers.map((h,i)=>cell(h,{head:true,fill:NY,align:i===0?AlignmentType.LEFT:AlignmentType.RIGHT}))});
+  const dataRows=sn.rows.map((row,ri)=>new TableRow({children:row.map((v,ci)=>cell(cellText(v,sn.fmts[ci]),{align:ci===0?AlignmentType.LEFT:AlignmentType.RIGHT,fill:ri%2?LB:'FFFFFF'}))}));
+  const ledgerTable=new Table({width:{size:100,type:WidthType.PERCENTAGE},borders:bord,rows:[headRow,...dataRows]});
+
+  const methParas=stripHtml(methHTML(R)).split(/(?<=\.)\s+(?=[A-Z(])/).reduce((acc,s)=>{ if(acc.length&&acc[acc.length-1].length<160)acc[acc.length-1]+=' '+s; else acc.push(s); return acc; },[]).map(t=>P(t,{after:120}));
+
+  const doc=new Document({creator:'My Wealth Solutions',styles:{default:{document:{run:{font:'Nunito',size:20,color:'333333'}}}},sections:[{
+    properties:{page:{margin:{top:1000,bottom:1000,left:1000,right:1000}}},
+    headers:{default:new Header({children:[new Paragraph({spacing:{after:0},children:[new TextRun({text:'MY WEALTH SOLUTIONS',font:'Nunito',size:14,bold:true,color:NY,characterSpacing:40})]}),new Paragraph({border:{bottom:{color:BL,space:2,style:BorderStyle.SINGLE,size:8}},spacing:{after:120},children:[new TextRun({text:'Adviser tools',font:'Nunito',size:12,color:BRAND.grey})]})]})},
+    footers:{default:new Footer({children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:'Prepared '+fmtDate(new Date().toISOString().slice(0,10))+'  ·  Page ',font:'Nunito',size:14,color:BRAND.grey}),new TextRun({children:[PageNumber.CURRENT],font:'Nunito',size:14,color:BRAND.grey}),new TextRun({text:' of ',font:'Nunito',size:14,color:BRAND.grey}),new TextRun({children:[PageNumber.TOTAL_PAGES],font:'Nunito',size:14,color:BRAND.grey})]})]})},
+    children:[
+      H1('Time Out of Market'),
+      P([new TextRun({text:'Opportunity-cost analysis',font:'ABC Arizona Flare',size:26,color:BRAND.coral,italics:true})],{after:160}),
+      P([new TextRun({text:(F.clientName||'(client)'),font:'Nunito',size:22,bold:true,color:NY}),new TextRun({text:'   ·   '+(F.fundName||'(fund)'),font:'Nunito',size:20,color:'333333'})],{after:40}),
+      P([new TextRun({text:`${fmtDate(R.start)} – ${fmtDate(R.end)}  ·  ${R.rows.length} pricing days  ·  ${R.basis.toUpperCase()} basis`,font:'Nunito',size:18,color:BRAND.grey})],{after:60}),
+      P([new TextRun({text:stripHtml(SCEN[R.scenario].full),font:'Nunito',size:18,italics:true,color:BRAND.grey})],{after:120}),
+      H2('Result summary'), sumTable,
+      H2('Methodology & assumptions'), ...methParas,
+      H2('Ledger extract'),
+      P([new TextRun({text:`Key rows from the ${sn.total}-day ledger (contributions, distributions and period ends). The full ledger is in the accompanying Excel workbook.`,font:'Nunito',size:16,italics:true,color:BRAND.grey})],{after:120}),
+      ledgerTable,
+    ]}]});
+  const blob=await Packer.toBlob(doc); saveBlob(blob, fileBase()+'-report.docx');
+}
+
 /* ================= RENDER: TOPBAR ================= */
 function renderTopbar(){
   const sc=SCEN[F.scenario];
@@ -652,13 +768,8 @@ function renderTopbar(){
 
 /* ================= RENDER: PICKER ================= */
 function renderPicker(){
-  let h=`<div class="main">
-    <div class="hero"><div class="hero-inner"><div class="hero-left">
-      <div class="hero-sub">My Wealth Solutions · Adviser tools</div>
-      <h1>Time Out of Market <em>Calculator</em></h1>
-      <div class="hero-tag">Quantify the return foregone when a client’s money sat out of the market. Pick the scenario that matches what happened, upload the Vanguard price &amp; distribution exports, and the wizard walks you through to a documented opportunity-cost figure.</div>
-    </div></div></div>`;
-  h+=`<div class="picker-intro"><h3>Choose a scenario</h3><p>Each scenario maps to a modelling method. You can change it at any time from the top bar.</p></div>`;
+  let h=`<div class="main">`;
+  h+=`<div class="picker-intro" style="padding-top:14px"><h3>Choose a scenario</h3><p>Each scenario maps to a modelling method. Quantify the return foregone when a client’s money sat out of the market — pick what happened and the wizard walks you through to a documented figure. You can change it any time from the top bar.</p></div>`;
   h+=`<div class="scenario-grid">`;
   for(const k of Object.keys(SCEN)){ const s=SCEN[k]; const sel=F.scenario===k&&state.page==='wizard'?'selected':'';
     h+=`<div class="scenario-card ${sel}" onclick="pickScenario('${k}')">
@@ -827,10 +938,16 @@ function body_contrib(){
     <td style="font-variant-numeric:tabular-nums">${fmt$(rowNet(r))}</td>
     <td><input type="checkbox" ${r.include?'checked':''} onchange="F.sched[${i}].include=this.checked;render()"></td>
     <td class="no-print"><button class="btn btn-xs btn-ghost" onclick="F.sched.splice(${i},1);render()">✕</button></td></tr>`).join('');
-  return `<div class="grid g3">
-      ${fld('Monthly contribution (gross $)',inp('grossContrib','number','step="10" min="0"'))}
-      ${fld('Contribution day of month',inp('contribDay','number','min="1" max="31"'))}
-      <div class="field"><label>&nbsp;</label><button class="btn btn-blue" style="width:100%" onclick="genSchedule()">Generate schedule</button></div>
+  const txContribN=F.cashTx.filter(t=>t.cat==='contribution'&&t.amount>0).length;
+  return `<div class="info"><strong>Contribution dates vary month to month?</strong> Import the actual dated deposits from the cash-transactions report — the real dates (not always the 6th) come straight from the account. Otherwise generate an even monthly schedule as a starting point; <em>every date in the table below is editable</em>, so adjust any that landed on a different day.</div>
+    <div class="grid g2" style="margin:2px 0 6px">
+      <label class="import-btn btn-blue btn-sm" style="justify-content:center" title="Import the actual dated contributions (and interest credits) from the cash-account transactions export">⬆ Import actual contributions from cash-transactions report<input type="file" id="contribTxFile" accept=".xlsx,.xlsm,.xls,.csv,.txt,.tsv" style="display:none"></label>
+      <div style="align-self:center">${txContribN?`<span class="pill ok">${txContribN} dated contribution${txContribN===1?'':'s'} loaded from the report</span>`:`<span class="hint" style="margin:0">The report’s deposit lines become dated rows below, with their real dates preserved.</span>`}</div>
+    </div>
+    <div class="grid g3">
+      ${fld('Even monthly amount (gross $)',inp('grossContrib','number','step="10" min="0"'))}
+      ${fld('Nominal day of month',inp('contribDay','number','min="1" max="31"'))}
+      <div class="field"><label>&nbsp;</label><button class="btn" style="width:100%" onclick="genSchedule()">Generate even schedule</button></div>
     </div>
     <div class="grid g3">
       ${fld('Advice fee deducted from the contribution?',sel('feeOn',[['no','No — full amount was headed for investment'],['yes','Yes — fee comes out of the contribution']]))}
@@ -840,7 +957,7 @@ function body_contrib(){
     <div class="info">Net invested per contribution: <strong>${fmt$(netMonthly())}</strong>. The fee is payable in <em>both</em> scenarios, so it is never a recoverable loss — it only reduces the amount that should have been invested (the Wilson net-basis principle).</div>
     <table class="data sched-table" style="margin-top:6px"><thead><tr><th>Date</th><th>Type</th><th>Gross $</th><th>Net invested $</th><th>Include</th><th class="no-print"></th></tr></thead><tbody>${rows}</tbody></table>
     <div class="row" style="margin-top:8px"><button class="btn btn-sm" onclick="F.sched.push({date:F.tomStart||(F.prices[0]&&F.prices[0].date)||'',type:'oneoff',gross:0,include:true});render()">+ Add one-off contribution</button>
-      <span class="hint" style="margin:0">One-off deposits invest in full. Contributions on a non-pricing day move to the next pricing day. Untick “Include” for contributions invested correctly.</span></div>`;
+      <span class="hint" style="margin:0">One-off deposits invest in full. A contribution on a non-pricing day is invested on the next pricing day. Untick “Include” for contributions that were invested correctly.</span></div>`;
 }
 function body_interest(){
   const base=parseNum(F.startCash);
@@ -875,6 +992,16 @@ function cashTxSummary(){
     <details style="margin-top:6px"><summary style="font-size:11px">Show all transactions</summary><div class="ledger-wrap" style="max-height:220px;margin-top:6px"><table class="data"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead><tbody>${F.cashTx.map((t,i)=>`<tr><td>${fmtDate(t.date)}</td><td style="text-align:left;max-width:180px;overflow:hidden;text-overflow:ellipsis">${e(t.desc)}</td><td><select onchange="F.cashTx[${i}].cat=this.value;syncInterestFromTx();render()" style="font-size:11px;padding:2px 4px">${['interest','contribution','fee','investment','redemption','other'].map(c=>`<option ${t.cat===c?'selected':''}>${c}</option>`).join('')}</select></td><td>${fmt$(t.amount)}</td></tr>`).join('')}</tbody></table></div></details>`;
 }
 function syncInterestFromTx(){ const interest=F.cashTx.filter(r=>r.cat==='interest'&&r.amount>0).map(r=>({date:r.date,amount:+r.amount.toFixed(2)})); F.intCredits=interest; if(interest.length)F.intMode='actual'; }
+function handleContribTx(t){
+  const res=parseCashTx(t); if(res.error){alert(res.error);return;}
+  F.cashTx=res.rows.map(r=>({...r,cat:txCategory(r.desc)}));
+  const contribs=F.cashTx.filter(r=>r.cat==='contribution'&&r.amount>0);
+  if(contribs.length) F.sched=contribs.map(r=>({date:r.date,type:'monthly',gross:+r.amount.toFixed(2),include:true}));
+  syncInterestFromTx();
+  render();
+  const ni=F.intCredits.length, ti=F.intCredits.reduce((a,b)=>a+b.amount,0);
+  alert(`Read ${F.cashTx.length} transactions.\n\n• ${contribs.length} dated contribution${contribs.length===1?'':'s'} → the schedule below now uses the real deposit dates (${contribs.length?fmtDate(contribs[0].date)+(contribs.length>1?' … '+fmtDate(contribs[contribs.length-1].date):''):''}).\n• ${ni} interest credit${ni===1?'':'s'} (${fmt$(ti)}) set as the cash-interest offset.\n\nEvery row stays editable — adjust anything the parser mis-read.`);
+}
 function body_lump(){
   const feeOn=F.feeOn==='yes';
   return `<div class="grid g3">
@@ -961,7 +1088,11 @@ function body_results(){
     <h3 style="margin-top:16px;font-family:var(--hf);color:var(--heading)">${chartTitle(R)}</h3>
     <div class="chartbox" id="chartbox"><svg id="chart" role="img" aria-label="Counterfactual vs actual over the period"></svg><div class="tooltip" id="tooltip"></div></div>
     <div class="legend" id="legend"></div>
-    <div class="row no-print" style="margin-top:12px"><button class="btn btn-sm" onclick="csvExport()">Download ledger CSV</button><button class="btn btn-sm" onclick="window.print()">Print / save PDF</button></div>
+    <div class="row no-print" style="margin-top:12px">
+      <button class="btn btn-sm btn-green" onclick="exportBrandedExcel()" title="Download the full ledger as a branded Excel workbook">⬇ Branded Excel (ledger)</button>
+      <button class="btn btn-sm btn-blue" onclick="exportBrandedWord()" title="Download a branded Word report with the summary, methodology and ledger snippets">⬇ Branded Word report</button>
+      <button class="btn btn-sm btn-ghost" onclick="csvExport()">Plain CSV</button>
+      <button class="btn btn-sm btn-ghost" onclick="window.print()">Print / PDF</button></div>
     <details style="margin-top:14px"><summary>Daily ledger</summary><div class="ledger-wrap">${ledgerHTML(R)}</div></details>
     <details style="margin-top:8px" open><summary>Methodology &amp; assumptions</summary><div class="meth">${methHTML(R)}</div></details>`;
 }
@@ -1059,6 +1190,7 @@ function render(){
   const ps=$('pdfStart'); if(ps)ps.addEventListener('change',ev=>{if(ev.target.files[0])readAccountPdf(ev.target.files[0],'start');});
   const pe=$('pdfEnd'); if(pe)pe.addEventListener('change',ev=>{if(ev.target.files[0])readAccountPdf(ev.target.files[0],'end');});
   const ct=$('cashTxFile'); if(ct)ct.addEventListener('change',ev=>{if(ev.target.files[0])readFile(ev.target.files[0],handleCashTxText);});
+  const ctc=$('contribTxFile'); if(ctc)ctc.addEventListener('change',ev=>{if(ev.target.files[0])readFile(ev.target.files[0],handleContribTx);});
   if(state.needChart&&$('chart')){ drawChart(); state.needChart=false; }
   // restore focus/caret
   if(fk){ const el=document.querySelector(`[data-fk="${fk}"]`); if(el){ el.focus(); try{if(selS!=null)el.setSelectionRange(selS,selE);}catch(_){} } }
