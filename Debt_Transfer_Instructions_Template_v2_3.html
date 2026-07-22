@@ -2829,8 +2829,8 @@
                     var initAmtFC = parseFloat(document.getElementById('initialInvestment').value) || 0;
                     var hasInitial = initAmtFC > 0;
 
-                    var costsHeadY = 502;
-                    var costBoxY = 528;
+                    var costsHeadY = 464;
+                    var costBoxY = 490;
 
                     var propSectionStart = costBoxY + 58 + 26;
                     var propSectionEnd = hasPropFC ? propSectionStart + 172 : propSectionStart;
@@ -2918,10 +2918,9 @@
 
                     // halo rings + glow — the hub visibly at the centre
                     svg += '<g clip-path="url(#fcClip)">';
-                    svg += '<circle cx="' + hubCX + '" cy="' + hubCY + '" r="165" fill="url(#fcGlowL)"/>';
+                    svg += '<circle cx="' + hubCX + '" cy="' + hubCY + '" r="140" fill="url(#fcGlowL)"/>';
                     svg += '<circle cx="' + hubCX + '" cy="' + hubCY + '" r="118" fill="none" stroke="rgba(168,196,85,0.5)" stroke-width="1.2" stroke-dasharray="2,6"/>';
-                    svg += '<circle cx="' + hubCX + '" cy="' + hubCY + '" r="150" fill="none" stroke="rgba(168,196,85,0.3)" stroke-width="1.2" stroke-dasharray="2,8"/>';
-                    svg += '</g>';
+                                        svg += '</g>';
 
                     // feed from the offset down into the hub
                     svg += '<path d="M372,160 C380,192 386,218 389,250" stroke="' + BLUE + '" stroke-width="2.2" stroke-linecap="round" fill="none" stroke-dasharray="1,0" marker-end="url(#mB)"/>';
@@ -4536,7 +4535,7 @@
                 }
                 if (tag === 'h2') {
                     out.push(new D.Paragraph({
-                        pageBreakBefore: pb, keepNext: true, spacing: { before: 360, after: 140 },
+                        pageBreakBefore: pb, keepNext: true, spacing: { before: 240, after: 120 },
                         border: { bottom: { color: DOCBLUE, space: 4, style: D.BorderStyle.SINGLE, size: 12 } },
                         children: [new D.TextRun({ text: el.textContent.trim(), font: HEAD_FONT, size: 30, color: DOCBLUE })]
                     }));
@@ -4650,7 +4649,7 @@
             var doc = new D.Document({
                 styles: { default: { document: { run: { font: BODY_FONT, size: 19 } } } },
                 sections: [{
-                    properties: { page: { margin: { top: 3800, bottom: 1700, left: 1100, right: 1100 } } },
+                    properties: { page: { margin: { top: 3560, bottom: 1650, left: 1100, right: 1100 } } },
                     headers: { default: new D.Header({ children: [headerImg] }) },
                     footers: { default: new D.Footer({ children: [footerImg] }) },
                     children: kids
