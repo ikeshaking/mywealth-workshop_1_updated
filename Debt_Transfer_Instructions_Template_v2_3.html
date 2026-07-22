@@ -474,7 +474,7 @@
             font-family:'ABC Arizona Flare','Georgia',serif;
             font-size:1.8em;
             margin-bottom:8px;
-            font-weight:700;
+            font-weight:400;
             letter-spacing:-1px;
             color:#333;
         }
@@ -493,7 +493,7 @@
             margin-bottom:15px;
             padding-bottom:10px;
             border-bottom:3px solid #0066cc;
-            font-weight:700;
+            font-weight:400;
             letter-spacing:-.5px;
         }
 
@@ -503,7 +503,7 @@
             font-size:1.1em;
             margin-top:15px;
             margin-bottom:10px;
-            font-weight:700;
+            font-weight:400;
         }
 
         .doc-section p{
@@ -559,11 +559,12 @@
         }
 
         .preview-content table th{
-            background-color:#0078D4;
+            background-color:#0C2E3F;
             color:white;
             padding:10px;
             text-align:left;
-            font-weight:700;
+            font-family:'ABC Arizona Flare','Georgia',serif;
+            font-weight:normal;
             text-transform:uppercase;
             font-size:9pt;
             letter-spacing:.5px;
@@ -573,8 +574,6 @@
             padding:8px 10px;
             border-bottom:1px solid #ddd;
         }
-
-        .preview-content table tr:nth-child(even){background-color:#f9f9f9}
 
         .preview-content ul,.preview-content ol{margin:2px 0 6px;padding-left:22px;line-height:1.5}
         .preview-content li{margin:0 0 2px}
@@ -667,6 +666,7 @@
 
         @media print{
             .topbar, .form-panel, .preview-header, .preview-buttons, .tabs, .tab-button{display:none}
+            .doc-header img, .doc-brand-footer{width:100%!important;max-width:100%!important;margin-left:0!important;margin-right:0!important}
             body{background:white}
             .wrapper{display:block;padding:0;max-width:none}
             .preview-panel{box-shadow:none;border:none;padding:0;border-radius:0}
@@ -2403,7 +2403,7 @@
             
             const html = `
                 <div class="doc-header" style="background:#fff;padding:0;text-align:left;border-bottom:none;overflow:hidden;">
-                    <img src="${bannerBase64}" style="width:100%;height:auto;display:block;" alt="MyWealth Solutions Banner"/>
+                    <img src="${bannerBase64}" style="width:calc(100% + 60px);max-width:none;margin:0 -30px;height:auto;display:block;" alt="MyWealth Solutions Banner"/>
                     <div style="padding:20px 40px 25px;">
                         <h1 style="font-size:1.8em;color:#333;font-weight:700;margin:0;">Debt Transfer Instructions${isRefresh ? ' &ndash; Refresh' : ''}</h1>
                         <p style="color:#666;font-size:1em;margin-top:5px;">Prepared for ${clientDisplay}</p>
@@ -2429,42 +2429,42 @@
                     <h2>Your Account Structure</h2>
                     <table style="width:100%;border-collapse:collapse;font-size:9pt;margin:10px 0 10px 0;table-layout:fixed;margin-left:0;margin-right:auto;text-align:left;">
                         <thead><tr>
-                            <th style="text-align:left;padding:4px 6px;background:#0078D4;color:white;font-size:8pt;letter-spacing:0.3px;width:28%;">ACCOUNT</th>
-                            <th style="text-align:right;padding:4px 6px;background:#0078D4;color:white;font-size:8pt;width:20%;">BALANCE</th>
-                            <th style="text-align:center;padding:4px 6px;background:#0078D4;color:white;font-size:8pt;width:10%;">RATE</th>
-                            <th style="text-align:right;padding:4px 6px;background:#0078D4;color:white;font-size:8pt;width:22%;">REPAYMENT</th>
-                            <th style="text-align:right;padding:4px 6px;background:#0078D4;color:white;font-size:8pt;width:20%;">ACCOUNT #</th>
+                            <th style="text-align:left;padding:4px 6px;background:#0C2E3F;color:white;font-family:ABC Arizona Flare,Georgia,serif;font-weight:normal;font-size:8pt;letter-spacing:0.3px;width:28%;">ACCOUNT</th>
+                            <th style="text-align:right;padding:4px 6px;background:#0C2E3F;color:white;font-family:ABC Arizona Flare,Georgia,serif;font-weight:normal;font-size:8pt;width:20%;">BALANCE</th>
+                            <th style="text-align:center;padding:4px 6px;background:#0C2E3F;color:white;font-family:ABC Arizona Flare,Georgia,serif;font-weight:normal;font-size:8pt;width:10%;">RATE</th>
+                            <th style="text-align:right;padding:4px 6px;background:#0C2E3F;color:white;font-family:ABC Arizona Flare,Georgia,serif;font-weight:normal;font-size:8pt;width:22%;">REPAYMENT</th>
+                            <th style="text-align:right;padding:4px 6px;background:#0C2E3F;color:white;font-family:ABC Arizona Flare,Georgia,serif;font-weight:normal;font-size:8pt;width:20%;">ACCOUNT #</th>
                         </tr></thead>
                         <tbody>
                             <tr>
-                                <td style="padding:3px 4px;font-weight:700;font-size:8.5pt;">Home Loan</td>
-                                <td style="padding:3px 4px;text-align:right;font-size:8.5pt;">${formatCurrency(document.getElementById('homeLoanBalance').value)}</td>
-                                <td style="padding:3px 4px;text-align:center;font-size:8.5pt;">${document.getElementById('homeLoanRate').value}%</td>
-                                <td style="padding:3px 4px;text-align:right;font-size:8.5pt;">${homeLoanPayment} per month</td>
-                                <td style="padding:3px 4px;text-align:right;color:#888;font-size:8.5pt;">ending ${last4(document.getElementById('homeLoanAccount').value)}</td>
-                            </tr>
-                            <tr style="background-color:#f0f2f5;">
-                                <td style="padding:3px 4px;font-weight:700;font-size:8.5pt;">Home Loan Offset</td>
-                                <td style="padding:3px 4px;text-align:right;font-size:8.5pt;">${formatCurrency(document.getElementById('homeLoanOffsetBalance').value)}</td>
-                                <td style="padding:3px 4px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td>
-                                <td style="padding:3px 4px;text-align:right;color:#888;font-size:8.5pt;">ending ${homeLoanOffsetAccount}</td>
+                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#71A4EA;color:#ffffff;border-bottom:1.5pt solid #ffffff;">Home Loan</td>
+                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;">${formatCurrency(document.getElementById('homeLoanBalance').value)}</td>
+                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:center;font-size:8.5pt;">${document.getElementById('homeLoanRate').value}%</td>
+                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;">${homeLoanPayment} per month</td>
+                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ${last4(document.getElementById('homeLoanAccount').value)}</td>
                             </tr>
                             <tr>
-                                <td style="padding:3px 4px;font-weight:700;font-size:8.5pt;vertical-align:top;">Share Investment Loan${(document.querySelectorAll('#shareLoanContainer .nested-section').length > 0) ? ' 1' : ''}</td>
-                                <td style="padding:3px 4px;text-align:right;font-size:8.5pt;vertical-align:top;line-height:1.5;">
+                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#71A4EA;color:#ffffff;border-bottom:1.5pt solid #ffffff;">Home Loan Offset</td>
+                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;">${formatCurrency(document.getElementById('homeLoanOffsetBalance').value)}</td>
+                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td>
+                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ${homeLoanOffsetAccount}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#71A4EA;color:#ffffff;border-bottom:1.5pt solid #ffffff;vertical-align:top;">Share Investment Loan${(document.querySelectorAll('#shareLoanContainer .nested-section').length > 0) ? ' 1' : ''}</td>
+                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;vertical-align:top;line-height:1.5;">
                                     <span style="color:#888;">Limit</span> <strong>${invLoanLimitDisplay}</strong><br/>
                                     <span style="color:#888;">Balance</span> ${invLoanDrawnDisplay}<br/>
                                     <span style="color:#888;">Available</span> <strong style="color:#548235;">${invLoanAvailableDisplay}</strong>
                                 </td>
-                                <td style="padding:3px 4px;text-align:center;font-size:8.5pt;vertical-align:top;">${invLoanRate}%</td>
-                                <td style="padding:3px 4px;text-align:right;font-size:8.5pt;vertical-align:top;">${invLoanPayment} per month*</td>
-                                <td style="padding:3px 4px;text-align:right;color:#888;font-size:8.5pt;vertical-align:top;">ending ${invLoanAccount}</td>
+                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:center;font-size:8.5pt;vertical-align:top;">${invLoanRate}%</td>
+                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;vertical-align:top;">${invLoanPayment} per month*</td>
+                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;vertical-align:top;">ending ${invLoanAccount}</td>
                             </tr>
-                            <tr style="background-color:#f0f2f5;">
-                                <td style="padding:3px 4px;font-weight:700;font-size:8.5pt;">Investment Loan Offset</td>
-                                <td style="padding:3px 4px;text-align:right;font-size:8.5pt;">${invOffsetBalanceDisplay}</td>
-                                <td style="padding:3px 4px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td>
-                                <td style="padding:3px 4px;text-align:right;color:#888;font-size:8.5pt;">ending ${invOffsetAccount}</td>
+                            <tr>
+                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#71A4EA;color:#ffffff;border-bottom:1.5pt solid #ffffff;">Investment Loan Offset</td>
+                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;">${invOffsetBalanceDisplay}</td>
+                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td>
+                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ${invOffsetAccount}</td>
                             </tr>
                             ${(() => {
                                 // Additional share investment loans
@@ -2482,26 +2482,26 @@
                                     var defaultName = 'Share Investment Loan ' + (idx + 2);
                                     var label = (desc && desc !== defaultName) ? escapeHtml(desc) : defaultName;
                                     var payment = formatCurrency((lim * (parseFloat(rate)||0) / 100) / 12);
-                                    sRows += '<tr><td style="padding:3px 4px;font-weight:700;font-size:8.5pt;vertical-align:top;">' + label + '</td>'
-                                        + '<td style="padding:3px 4px;text-align:right;font-size:8.5pt;vertical-align:top;line-height:1.5;">'
+                                    sRows += '<tr><td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#71A4EA;color:#ffffff;border-bottom:1.5pt solid #ffffff;vertical-align:top;">' + label + '</td>'
+                                        + '<td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;vertical-align:top;line-height:1.5;">'
                                         + '<span style="color:#888;">Limit</span> <strong>' + formatCurrency(lim) + '</strong><br/>'
                                         + '<span style="color:#888;">Balance</span> ' + formatCurrency(drw) + '<br/>'
                                         + '<span style="color:#888;">Available</span> <strong style="color:#548235;">' + formatCurrency(avail) + '</strong>'
                                         + '</td>'
-                                        + '<td style="padding:3px 4px;text-align:center;font-size:8.5pt;vertical-align:top;">' + (rate||'0') + '%</td>'
-                                        + '<td style="padding:3px 4px;text-align:right;font-size:8.5pt;vertical-align:top;">' + payment + ' per month*</td>'
-                                        + '<td style="padding:3px 4px;text-align:right;color:#888;font-size:8.5pt;vertical-align:top;">ending ' + last4(acct) + '</td></tr>';
-                                    sRows += '<tr style="background-color:#f0f2f5;"><td style="padding:3px 4px;font-weight:700;font-size:8.5pt;">Share Loan ' + (idx+2) + ' Offset</td>'
-                                        + '<td style="padding:3px 4px;text-align:right;font-size:8.5pt;">' + formatCurrency(offBal) + '</td>'
-                                        + '<td style="padding:3px 4px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td>'
-                                        + '<td style="padding:3px 4px;text-align:right;color:#888;font-size:8.5pt;">ending ' + last4(offAcct) + '</td></tr>';
+                                        + '<td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:center;font-size:8.5pt;vertical-align:top;">' + (rate||'0') + '%</td>'
+                                        + '<td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;vertical-align:top;">' + payment + ' per month*</td>'
+                                        + '<td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;vertical-align:top;">ending ' + last4(acct) + '</td></tr>';
+                                    sRows += '<tr><td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#71A4EA;color:#ffffff;border-bottom:1.5pt solid #ffffff;">Share Loan ' + (idx+2) + ' Offset</td>'
+                                        + '<td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;">' + formatCurrency(offBal) + '</td>'
+                                        + '<td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td>'
+                                        + '<td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ' + last4(offAcct) + '</td></tr>';
                                 });
                                 return sRows;
                             })()}
                             <tr>
-                                <td style="padding:3px 4px;font-weight:700;font-size:8.5pt;">MCMA</td>
-                                <td style="padding:3px 4px;text-align:right;color:#999;font-size:8.5pt;" colspan="3">&mdash;</td>
-                                <td style="padding:3px 4px;text-align:right;color:#888;font-size:8.5pt;">ending ${mcmaAccount}</td>
+                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#71A4EA;color:#ffffff;border-bottom:1.5pt solid #ffffff;">MCMA</td>
+                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#999;font-size:8.5pt;" colspan="3">&mdash;</td>
+                                <td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ${mcmaAccount}</td>
                             </tr>
                             ${(() => {
                                 var rows = '';
@@ -2518,10 +2518,10 @@
                                         var label = (desc && desc.value) ? escapeHtml(desc.value) : 'Inv. Property ' + (idx+1);
                                         var rowNum = baseRowCount + idx;
                                         var bg = rowNum % 2 !== 0 ? 'background-color:#f0f2f5;' : '';
-                                        rows += '<tr style="' + bg + '"><td style="padding:3px 4px;font-weight:700;font-size:8.5pt;">' + label + '</td><td style="padding:3px 4px;text-align:right;font-size:8.5pt;">' + formatCurrency(bal.value) + '</td><td style="padding:3px 4px;text-align:center;font-size:8.5pt;">' + (rate ? rate.value : '0') + '%</td><td style="padding:3px 4px;text-align:right;font-size:8.5pt;">' + formatCurrency(payment ? payment.value : '0') + ' per month</td><td style="padding:3px 4px;text-align:right;color:#888;font-size:8.5pt;">ending ' + last4(acct ? acct.value : '') + '</td></tr>';
+                                        rows += '<tr style="' + bg + '"><td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#71A4EA;color:#ffffff;border-bottom:1.5pt solid #ffffff;">' + label + '</td><td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;">' + formatCurrency(bal.value) + '</td><td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:center;font-size:8.5pt;">' + (rate ? rate.value : '0') + '%</td><td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;">' + formatCurrency(payment ? payment.value : '0') + ' per month</td><td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ' + last4(acct ? acct.value : '') + '</td></tr>';
                                         var offBalVal = offBal ? (parseFloat(offBal.value)||0) : 0;
                                         var offAcctVal = offAcct ? (offAcct.value || 'TBC') : 'TBC';
-                                        rows += '<tr style="' + bg + '"><td style="padding:3px 4px;font-weight:700;font-size:8.5pt;">' + label + ' Offset</td><td style="padding:3px 4px;text-align:right;font-size:8.5pt;">' + formatCurrency(offBalVal) + '</td><td style="padding:3px 4px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td><td style="padding:3px 4px;text-align:right;color:#888;font-size:8.5pt;">ending ' + last4(offAcctVal) + '</td></tr>';
+                                        rows += '<tr style="' + bg + '"><td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#71A4EA;color:#ffffff;border-bottom:1.5pt solid #ffffff;">' + label + ' Offset</td><td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;font-size:8.5pt;">' + formatCurrency(offBalVal) + '</td><td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td><td style="background:#E5F4F6;border-bottom:1.5pt solid #ffffff;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ' + last4(offAcctVal) + '</td></tr>';
                                     }
                                 });
                                 return rows;
@@ -2749,14 +2749,14 @@
                 + '<p style="margin-bottom:15px;color:#666;font-size:0.9em;">How your money flows through the strategy:</p>'
 
                 + (() => {
-                    // ── Dark fintech flowchart (MWS brand: deep navy canvas, lime hero hub) ──
-                    var BG1 = '#10394F', BG2 = '#0A2536', CARD = '#16455F';
-                    var TEXTW = '#FFFFFF', SUBW = 'rgba(255,255,255,0.6)';
-                    var HEAD = '#EAF3FA', DIV = 'rgba(255,255,255,0.14)';
-                    var BLUE = '#5FA8FF', BLUE_SOFT = 'rgba(95,168,255,0.16)';
-                    var CORAL = '#FF8A76', CORAL_SOFT = 'rgba(255,138,118,0.13)';
-                    var LIME = '#CFE87F', LIME_DK = '#0C2E3F', LIME_SOFT = 'rgba(207,232,127,0.16)';
-                    var SLATE = 'rgba(255,255,255,0.38)', SLATE_SOFT = 'rgba(255,255,255,0.07)';
+                    // ── MWS flowchart: light page canvas, dark navy rounded cards ──
+                    var BG1 = '#FFFFFF', BG2 = '#F3F7FA', CARD = '#123B52';
+                    var TEXTW = '#FFFFFF', SUBW = 'rgba(255,255,255,0.62)';
+                    var HEAD = '#0C2E3F', DIV = '#E4EAF1';
+                    var BLUE = '#2B6FD6', BLUE_P = '#8FC1FF';
+                    var CORAL = '#E85540', CORAL_P = '#FF9C8A';
+                    var LIME = '#CFE87F', LIME_DK = '#0C2E3F', LIME_ST = '#A8C455', LIME_A = '#7A9A2E', LIME_P = '#D9EC9C';
+                    var GREY = '#8A97A3', GREY_ST = '#B9C4CE', GREY_BG = '#F1F4F8', SLATE_ST = '#93A5B3';
                     var SERIF = 'ABC Arizona Flare,Georgia,serif';
 
                     var _card = function (x, y, w, h, stroke, fill, dash) {
@@ -2772,7 +2772,7 @@
                         return '<text x="' + cx + '" y="' + y + '" text-anchor="middle" font-size="8.5" font-weight="800" letter-spacing="1.2" fill="' + color + '">' + t.toUpperCase() + '</text>';
                     };
                     var _head = function (cx, y, t, color) {
-                        return '<text x="' + cx + '" y="' + y + '" text-anchor="middle" font-size="13.5" font-weight="700" fill="' + (color || HEAD) + '" letter-spacing="3" font-family="' + SERIF + '">' + t + '</text>';
+                        return '<text x="' + cx + '" y="' + y + '" text-anchor="middle" font-size="13.5" font-weight="400" fill="' + (color || HEAD) + '" letter-spacing="3" font-family="' + SERIF + '">' + t + '</text>';
                     };
                     var _div = function (y) {
                         return '<line x1="40" y1="' + y + '" x2="740" y2="' + y + '" stroke="' + DIV + '" stroke-width="1"/>';
@@ -2780,7 +2780,7 @@
                     // Icon badge sitting on the card's top edge.
                     var _badge = function (cx, cy, color, glyph) {
                         var g = '<g transform="translate(' + cx + ',' + cy + ')">';
-                        g += '<circle cx="0" cy="0" r="13" fill="' + BG2 + '" stroke="' + color + '" stroke-width="1.6"/>';
+                        g += '<circle cx="0" cy="0" r="13" fill="#FFFFFF" stroke="' + color + '" stroke-width="1.6"/>';
                         if (glyph === 'person') {
                             g += '<circle cx="0" cy="-3.5" r="3" fill="none" stroke="' + color + '" stroke-width="1.5"/>';
                             g += '<path d="M-5,7 C-5,1.5 5,1.5 5,7" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linecap="round"/>';
@@ -2848,16 +2848,16 @@
                     var svg = '<svg viewBox="0 0 780 ' + totalHeight + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:Nunito,sans-serif;">';
                     svg += '<defs>';
                     svg += '<linearGradient id="fcBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + BG1 + '"/><stop offset="1" stop-color="' + BG2 + '"/></linearGradient>';
-                    svg += '<radialGradient id="fcGlowC" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="rgba(245,106,90,0.20)"/><stop offset="1" stop-color="rgba(245,106,90,0)"/></radialGradient>';
-                    svg += '<radialGradient id="fcGlowB" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="rgba(95,168,255,0.16)"/><stop offset="1" stop-color="rgba(95,168,255,0)"/></radialGradient>';
+                    svg += '<radialGradient id="fcGlowC" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="rgba(245,106,90,0.07)"/><stop offset="1" stop-color="rgba(245,106,90,0)"/></radialGradient>';
+                    svg += '<radialGradient id="fcGlowB" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="rgba(43,111,214,0.06)"/><stop offset="1" stop-color="rgba(43,111,214,0)"/></radialGradient>';
                     svg += '<marker id="mB" markerWidth="9" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="' + BLUE + '"/></marker>';
                     svg += '<marker id="mC" markerWidth="9" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="' + CORAL + '"/></marker>';
-                    svg += '<marker id="mL" markerWidth="9" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="' + LIME + '"/></marker>';
-                    svg += '<filter id="ds" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.25"/></filter>';
+                    svg += '<marker id="mL" markerWidth="9" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="' + LIME_A + '"/></marker>';
+                    svg += '<filter id="ds" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0C2E3F" flood-opacity="0.16"/></filter>';
                     svg += '<clipPath id="fcClip"><rect x="0" y="0" width="780" height="' + totalHeight + '" rx="18"/></clipPath>';
                     svg += '</defs>';
 
-                    svg += '<rect x="0" y="0" width="780" height="' + totalHeight + '" rx="18" fill="url(#fcBg)"/>';
+                    svg += '<rect x="0.5" y="0.5" width="779" height="' + (totalHeight - 1) + '" rx="18" fill="url(#fcBg)" stroke="' + DIV + '" stroke-width="1"/>';
                     svg += '<g clip-path="url(#fcClip)">';
                     svg += '<circle cx="740" cy="20" r="150" fill="url(#fcGlowC)"/>';
                     svg += '<circle cx="30" cy="' + (totalHeight - 20) + '" r="170" fill="url(#fcGlowB)"/>';
@@ -2869,24 +2869,24 @@
                     // Salary / Wages
                     svg += _card(50, 60, 150, 96, BLUE, CARD);
                     svg += _badge(125, 60, BLUE, 'person');
-                    svg += _tag(125, 86, 'INCOME', BLUE);
+                    svg += _tag(125, 86, 'INCOME', BLUE_P);
                     svg += _t(125, 110, 'Salary / Wages', 13, 800, TEXTW);
                     svg += _t(125, 132, 'paid into offset', 8.5, 600, SUBW, true);
                     svg += '<path d="M205,108 L293,108" stroke="' + BLUE + '" stroke-width="2" stroke-linecap="round" fill="none" marker-end="url(#mB)"/>';
                     svg += _lbl(249, 99, 'wages in', BLUE);
                     // Offset account
-                    svg += _card(300, 60, 128, 96, BLUE, BLUE_SOFT);
+                    svg += _card(300, 60, 128, 96, BLUE, CARD);
                     svg += _badge(364, 60, BLUE, 'dollar');
-                    svg += _tag(364, 84, 'OFFSET ACCOUNT', BLUE);
+                    svg += _tag(364, 84, 'OFFSET ACCOUNT', BLUE_P);
                     svg += _t(364, 106, 'Min ' + fMin + '/mo', 11, 800, TEXTW);
-                    svg += _t(364, 124, '+ ' + fWC + '/wk extra', 10.5, 800, LIME);
+                    svg += _t(364, 124, '+ ' + fWC + '/wk extra', 10.5, 800, LIME_P);
                     svg += _t(364, 142, 'extra on top of minimum', 8, 600, SUBW, true);
                     svg += '<path d="M433,108 L548,108" stroke="' + CORAL + '" stroke-width="2" stroke-linecap="round" fill="none" marker-end="url(#mC)"/>';
                     svg += _lbl(490, 99, 'repayments', CORAL);
                     // Home Loan
                     svg += _card(555, 60, 170, 96, CORAL, CARD);
                     svg += _badge(640, 60, CORAL, 'house');
-                    svg += _tag(640, 86, 'HOME LOAN', CORAL);
+                    svg += _tag(640, 86, 'HOME LOAN', CORAL_P);
                     svg += _t(640, 112, fHL, 16, 800, TEXTW);
                     svg += _t(640, 134, 'repaid from offset', 8.5, 600, SUBW, true);
 
@@ -2897,34 +2897,34 @@
                     // === ROW 2: Investment chain ===
                     svg += _card(30, 247, 148, 84, CORAL, CARD);
                     svg += _badge(104, 247, CORAL, 'bank');
-                    svg += _tag(104, 271, 'INVESTMENT LOAN', CORAL);
+                    svg += _tag(104, 271, 'INVESTMENT LOAN', CORAL_P);
                     svg += _t(104, 296, fIL, 15, 800, TEXTW);
                     svg += _t(104, 318, 'tax-deductible interest', 8.5, 600, SUBW, true);
                     svg += '<path d="M183,289 L213,289" stroke="' + CORAL + '" stroke-width="2" stroke-linecap="round" fill="none" marker-end="url(#mC)"/>';
                     svg += _lbl(198, 280, 'draw', CORAL);
-                    svg += _card(220, 247, 118, 84, BLUE, BLUE_SOFT);
+                    svg += _card(220, 247, 118, 84, BLUE, CARD);
                     svg += _badge(279, 247, BLUE, 'dollar');
-                    svg += _tag(279, 271, 'INV. LOAN OFFSET', BLUE);
+                    svg += _tag(279, 271, 'INV. LOAN OFFSET', BLUE_P);
                     svg += _t(279, 298, 'funds held here', 9.5, 700, TEXTW);
                     svg += '<path d="M343,289 L393,289" stroke="' + BLUE + '" stroke-width="2" stroke-linecap="round" fill="none" marker-end="url(#mB)"/>';
                     svg += _lbl(368, 280, 'transfer', BLUE);
 
                     // MCMA — the lime hero hub
-                    svg += _card(400, 243, 160, 92, LIME, LIME);
-                    svg += _badge(480, 243, LIME, 'bank');
+                    svg += _card(400, 243, 160, 92, LIME_ST, LIME);
+                    svg += _badge(480, 243, LIME_ST, 'bank');
                     svg += _tag(480, 267, 'MCMA · CASH HUB', 'rgba(12,46,63,0.75)');
                     svg += _t(480, 290, 'Cash Management', 11.5, 800, LIME_DK);
                     svg += _t(480, 308, 'all money flows', 8.5, 600, 'rgba(12,46,63,0.65)', true);
                     svg += _t(480, 320, 'through here', 8.5, 600, 'rgba(12,46,63,0.65)', true);
 
                     // Arrow: MCMA -> Platform
-                    svg += '<path d="M565,289 L623,289" stroke="' + LIME + '" stroke-width="2" stroke-linecap="round" fill="none" marker-end="url(#mL)"/>';
-                    svg += _lbl(594, 280, 'invest', LIME);
+                    svg += '<path d="M565,289 L623,289" stroke="' + LIME_A + '" stroke-width="2" stroke-linecap="round" fill="none" marker-end="url(#mL)"/>';
+                    svg += _lbl(594, 280, 'invest', LIME_A);
                     // Investment Platform
                     var platH = hasInitial ? 96 : 84;
-                    svg += _card(630, 247, 150, platH, LIME, LIME_SOFT);
-                    svg += _badge(705, 247, LIME, 'chart');
-                    svg += _tag(705, 271, String(platform).toUpperCase(), LIME);
+                    svg += _card(630, 247, 150, platH, LIME_ST, CARD);
+                    svg += _badge(705, 247, LIME_ST, 'chart');
+                    svg += _tag(705, 271, String(platform).toUpperCase(), LIME_P);
                     if (hasInitial) {
                         svg += _t(705, 292, 'Initial: ' + formatCurrency(initAmtFC), 11, 800, TEXTW);
                         svg += _t(705, 310, '+ ' + fMF + ' per month', 11.5, 800, TEXTW);
@@ -2936,46 +2936,48 @@
 
                     // === COSTS SECTION ===
                     svg += _div(costsLineY);
-                    svg += _head(390, costsLabelY, 'ONGOING PLAN COSTS — PAID FROM MCMA', CORAL);
+                    svg += _head(390, costsLabelY, 'ONGOING PLAN COSTS — PAID FROM MCMA', '#D9503C');
 
-                    var clearY = costsLineY + 42;
-                    svg += '<path d="M553,' + mcmaBottom + ' C605,' + (mcmaBottom + 7) + ' 608,' + clearY + ' 480,' + clearY + ' L345,' + clearY + ' L345,' + (costBoxY - 4) + '" stroke="' + CORAL + '" stroke-width="1.6" fill="none" stroke-dasharray="5,4" marker-end="url(#mC)" opacity="0.8"/>';
+                    // Dotted MCMA -> costs line, swooping wide at x=680 so it stays clear
+                    // of the section heading text (which ends around x=640).
+                    var clearY = costsLineY + 44;
+                    svg += '<path d="M556,' + (mcmaBottom - 4) + ' C650,' + (mcmaBottom + 6) + ' 680,' + (clearY - 30) + ' 680,' + (clearY - 10) + ' C680,' + clearY + ' 655,' + clearY + ' 620,' + clearY + ' L345,' + clearY + ' L345,' + (costBoxY - 4) + '" stroke="' + CORAL + '" stroke-width="1.6" fill="none" stroke-dasharray="5,4" marker-end="url(#mC)" opacity="0.75"/>';
 
                     var inclInterestRedirect = document.getElementById('includeStep7InterestRedirect') ? document.getElementById('includeStep7InterestRedirect').checked : true;
                     var interestNotPossible = document.getElementById('step7InterestStatus') ? document.getElementById('step7InterestStatus').value === 'notpossible' : false;
                     var interestFromMCMA = inclInterestRedirect && !interestNotPossible;
 
                     if (interestFromMCMA) {
-                        svg += _card(60, costBoxY, 170, 58, CORAL, CORAL_SOFT);
-                        svg += _t(145, costBoxY + 20, 'Inv. Loan Interest', 10.5, 800, CORAL);
+                        svg += _card(60, costBoxY, 170, 58, CORAL, CARD);
+                        svg += _t(145, costBoxY + 20, 'Inv. Loan Interest', 10.5, 800, CORAL_P);
                         svg += _t(145, costBoxY + 36, 'tax deductible', 9.5, 600, 'rgba(255,255,255,0.85)');
                         svg += _t(145, costBoxY + 50, 'debited from MCMA', 8, 600, SUBW, true);
                     } else {
-                        svg += _card(60, costBoxY, 170, 58, SLATE, SLATE_SOFT, true);
-                        svg += _t(145, costBoxY + 20, 'Inv. Loan Interest', 10.5, 800, 'rgba(255,255,255,0.6)');
-                        svg += _t(145, costBoxY + 36, 'tax deductible', 9.5, 600, 'rgba(255,255,255,0.5)');
-                        svg += _t(145, costBoxY + 50, 'debited separately', 8, 600, 'rgba(255,255,255,0.45)', true);
+                        svg += _card(60, costBoxY, 170, 58, GREY_ST, GREY_BG, true);
+                        svg += _t(145, costBoxY + 20, 'Inv. Loan Interest', 10.5, 800, GREY);
+                        svg += _t(145, costBoxY + 36, 'tax deductible', 9.5, 600, GREY);
+                        svg += _t(145, costBoxY + 50, 'debited separately', 8, 600, GREY, true);
                     }
                     // Cycle arrow back to Investment Loan
-                    svg += '<path d="M60,' + (costBoxY + 29) + ' C30,' + (costBoxY + 29) + ' 20,352 20,289 C20,244 30,244 30,289" stroke="' + CORAL + '" stroke-width="1.2" fill="none" stroke-dasharray="4,3" opacity="0.4"/>';
+                    svg += '<path d="M60,' + (costBoxY + 29) + ' C30,' + (costBoxY + 29) + ' 20,352 20,289 C20,244 30,244 30,289" stroke="' + CORAL + '" stroke-width="1.2" fill="none" stroke-dasharray="4,3" opacity="0.35"/>';
 
                     var inclInsD = document.getElementById('includeInsuranceInMCMA') ? document.getElementById('includeInsuranceInMCMA').checked : true;
-                    svg += _card(260, costBoxY, 170, 58, CORAL, CORAL_SOFT);
-                    svg += _t(345, costBoxY + 20, (inclInsD ? 'Insurance &amp; Advice Fees' : 'Advice Fees'), 10.5, 800, CORAL);
+                    svg += _card(260, costBoxY, 170, 58, CORAL, CARD);
+                    svg += _t(345, costBoxY + 20, (inclInsD ? 'Insurance &amp; Advice Fees' : 'Advice Fees'), 10.5, 800, CORAL_P);
                     svg += _t(345, costBoxY + 36, 'monthly premiums', 9.5, 600, 'rgba(255,255,255,0.85)');
                     svg += _t(345, costBoxY + 50, 'debited from MCMA', 8, 600, SUBW, true);
 
                     var propModeD = (document.getElementById('excludePropCostsFromPlan') && document.getElementById('excludePropCostsFromPlan').checked) ? 'aside' : 'mcma';
                     var hasPropD = false; document.querySelectorAll('#propertyLoansContainer .nested-section').forEach(function(s){ var b=s.querySelector('.propLoanBalance'); var p=s.querySelector('.propLoanPayment'); if ((b&&parseFloat(b.value)>0)||(p&&parseFloat(p.value)>0)) hasPropD = true; });
                     if (hasPropD && propModeD === 'mcma') {
-                        svg += _card(460, costBoxY, 175, 58, CORAL, CORAL_SOFT);
-                        svg += _t(547, costBoxY + 20, 'Property Expenses', 10.5, 800, CORAL);
+                        svg += _card(460, costBoxY, 175, 58, CORAL, CARD);
+                        svg += _t(547, costBoxY + 20, 'Property Expenses', 10.5, 800, CORAL_P);
                         svg += _t(547, costBoxY + 36, 'rates, maintenance', 9.5, 600, 'rgba(255,255,255,0.85)');
                         svg += _t(547, costBoxY + 50, 'debited from MCMA', 8, 600, SUBW, true);
                     } else if (hasPropD && propModeD === 'aside') {
-                        svg += _card(460, costBoxY, 175, 58, SLATE, SLATE_SOFT, true);
-                        svg += _t(547, costBoxY + 20, 'Property Expenses', 10.5, 800, 'rgba(255,255,255,0.6)');
-                        svg += _t(547, costBoxY + 38, 'managed separately', 9, 600, 'rgba(255,255,255,0.5)', true);
+                        svg += _card(460, costBoxY, 175, 58, GREY_ST, GREY_BG, true);
+                        svg += _t(547, costBoxY + 20, 'Property Expenses', 10.5, 800, GREY);
+                        svg += _t(547, costBoxY + 38, 'managed separately', 9, 600, GREY, true);
                     }
 
                     // === INVESTMENT PROPERTY ROW ===
@@ -2985,7 +2987,7 @@
                         var houseTopY = propSectionStart + 45;
                         svg += _card(110, houseTopY, 170, 84, CORAL, CARD);
                         svg += _badge(195, houseTopY, CORAL, 'house');
-                        svg += _tag(195, houseTopY + 24, 'INVESTMENT PROPERTY', CORAL);
+                        svg += _tag(195, houseTopY + 24, 'INVESTMENT PROPERTY', CORAL_P);
                         svg += _t(195, houseTopY + 48, fPD, 15, 800, TEXTW);
                         svg += _t(195, houseTopY + 68, 'loan balance', 8.5, 600, SUBW, true);
 
@@ -2994,15 +2996,15 @@
                             var arrowTopY = mcmaBottom - 10;
                             var arrowBottomY = houseTopY + 42;
                             var arrowMidY = (arrowTopY + arrowBottomY) / 2;
-                            svg += '<path d="M285,' + arrowBottomY + ' C360,' + arrowBottomY + ' ' + arrowRightX + ',' + (arrowBottomY - 30) + ' ' + arrowRightX + ',' + arrowMidY + ' C' + arrowRightX + ',' + (arrowTopY + 20) + ' 580,' + arrowTopY + ' 560,' + arrowTopY + '" stroke="' + LIME + '" stroke-width="1.8" fill="none" marker-end="url(#mL)" stroke-dasharray="6,4" opacity="0.85"/>';
-                            svg += '<text x="300" y="' + (houseTopY + 70) + '" font-size="9" fill="' + LIME + '" font-weight="700">rental income &#8594; MCMA</text>';
-                            svg += '<text x="300" y="' + (houseTopY + 83) + '" font-size="8.5" fill="' + SUBW + '" font-style="italic">expenses paid from MCMA</text>';
+                            svg += '<path d="M285,' + arrowBottomY + ' C360,' + arrowBottomY + ' ' + arrowRightX + ',' + (arrowBottomY - 30) + ' ' + arrowRightX + ',' + arrowMidY + ' C' + arrowRightX + ',' + (arrowTopY + 20) + ' 580,' + arrowTopY + ' 560,' + arrowTopY + '" stroke="' + LIME_A + '" stroke-width="1.8" fill="none" marker-end="url(#mL)" stroke-dasharray="6,4" opacity="0.85"/>';
+                            svg += '<text x="300" y="' + (houseTopY + 70) + '" font-size="9" fill="#5F7F1F" font-weight="700">rental income &#8594; MCMA</text>';
+                            svg += '<text x="300" y="' + (houseTopY + 83) + '" font-size="8.5" fill="#7C8894" font-style="italic">expenses paid from MCMA</text>';
                         } else {
-                            svg += _card(400, houseTopY + 12, 200, 58, SLATE, SLATE_SOFT, true);
-                            svg += _t(500, houseTopY + 34, 'Managed Separately', 10.5, 800, 'rgba(255,255,255,0.6)');
-                            svg += _t(500, houseTopY + 50, 'rental income &amp; expenses', 8.5, 600, 'rgba(255,255,255,0.5)', true);
-                            svg += _t(500, houseTopY + 62, 'handled outside of MCMA', 8.5, 600, 'rgba(255,255,255,0.5)', true);
-                            svg += '<path d="M285,' + (houseTopY + 42) + ' L395,' + (houseTopY + 41) + '" stroke="' + SLATE + '" stroke-width="1.5" fill="none" stroke-dasharray="5,4"/>';
+                            svg += _card(400, houseTopY + 12, 200, 58, GREY_ST, GREY_BG, true);
+                            svg += _t(500, houseTopY + 34, 'Managed Separately', 10.5, 800, GREY);
+                            svg += _t(500, houseTopY + 50, 'rental income &amp; expenses', 8.5, 600, GREY, true);
+                            svg += _t(500, houseTopY + 62, 'handled outside of MCMA', 8.5, 600, GREY, true);
+                            svg += '<path d="M285,' + (houseTopY + 42) + ' L395,' + (houseTopY + 41) + '" stroke="' + GREY_ST + '" stroke-width="1.5" fill="none" stroke-dasharray="5,4"/>';
                         }
                     }
 
@@ -3012,9 +3014,9 @@
                         svg += _head(390, strategySectionStart + 25, 'STRATEGY &amp; BENEFITS');
 
                         var schemes = {
-                            blue:  { stroke: BLUE,  fill: BLUE_SOFT,  text: '#BFDCFF', desc: 'rgba(255,255,255,0.75)' },
-                            lime:  { stroke: LIME,  fill: LIME_SOFT,  text: '#E2F3AC', desc: 'rgba(255,255,255,0.75)' },
-                            slate: { stroke: SLATE, fill: SLATE_SOFT, text: 'rgba(255,255,255,0.75)', desc: 'rgba(255,255,255,0.5)' }
+                            blue:  { stroke: BLUE,     fill: CARD, text: BLUE_P,  desc: 'rgba(255,255,255,0.75)' },
+                            lime:  { stroke: LIME_ST,  fill: CARD, text: LIME_P,  desc: 'rgba(255,255,255,0.75)' },
+                            slate: { stroke: SLATE_ST, fill: CARD, text: 'rgba(255,255,255,0.8)', desc: 'rgba(255,255,255,0.55)' }
                         };
                         var itemCount = stratItems.length;
                         var totalW = 700;
@@ -3042,14 +3044,14 @@
                     var exclProp_fc = document.getElementById('excludePropCostsFromPlan') ? document.getElementById('excludePropCostsFromPlan').checked : false;
                     var propW_fc = exclProp_fc ? 0 : (parseFloat(document.getElementById('propCostsBefore').value) || 0);
                     var mcmaWeekly_fc = insW_fc + advW_fc + gearW_fc + propW_fc;
-                    svg += '<rect x="160" y="' + (pathwayTextY - 20) + '" width="460" height="31" rx="15.5" fill="' + LIME + '" filter="url(#ds)"/>';
+                    svg += '<rect x="160" y="' + (pathwayTextY - 20) + '" width="460" height="31" rx="15.5" fill="' + LIME + '" stroke="' + LIME_ST + '" stroke-width="1.2" filter="url(#ds)"/>';
                     svg += '<text x="390" y="' + pathwayTextY + '" text-anchor="middle" font-size="12.5" font-weight="700" fill="' + LIME_DK + '" font-family="' + SERIF + '" letter-spacing="0.3">Pathway Commitment: $' + Math.round(mcmaWeekly_fc).toLocaleString() + ' per week</text>';
                     svg += '</svg>';
                     return svg;
                 })()
                 + '</div>';
             })() + `
-                <img class="doc-brand-footer" src="${buildOfficeFooter()}" style="width:100%;height:auto;display:block;margin-top:26px;" alt="My Wealth Solutions"/>
+                <img class="doc-brand-footer" src="${buildOfficeFooter()}" style="width:calc(100% + 60px);max-width:none;margin:26px -30px 0;height:auto;display:block;" alt="My Wealth Solutions"/>
                 <div class="footer-doc" style="text-align:center;padding:10px 30px 0;border-top:none;margin-top:4px;font-size:0.85em;color:#888;background:none;">
                     <p style="margin:0;">Prepared for ${clientDisplay} | ${new Date().toLocaleDateString()}</p>
                 </div>
@@ -3128,12 +3130,12 @@
             // Keep the brand banner & footer band in the Word doc (like the Tax
             // Invoice Generator) — size them explicitly so Word fits them to the page.
             previewClone.querySelectorAll('.doc-header img').forEach(function(el){
-                el.setAttribute('width', '600'); el.setAttribute('height', '170');
-                el.style.cssText = 'width:6.25in;height:auto;display:block;';
+                el.setAttribute('width', '794'); el.setAttribute('height', '224');
+                el.style.cssText = 'width:21cm;height:auto;display:block;margin-left:-1.8cm;';
             });
             previewClone.querySelectorAll('.doc-brand-footer').forEach(function(el){
-                el.setAttribute('width', '600'); el.setAttribute('height', '63');
-                el.style.cssText = 'width:6.25in;height:auto;display:block;margin-top:18pt;';
+                el.setAttribute('width', '794'); el.setAttribute('height', '84');
+                el.style.cssText = 'width:21cm;height:auto;display:block;margin-left:-1.8cm;margin-top:18pt;';
             });
 
             var svgs = previewClone.querySelectorAll('svg');
@@ -3228,18 +3230,18 @@
                 + 'h1, h2, h3 { font-family: "ABC Arizona Flare", Georgia, serif; color: #0066cc; }'
                 + '.doc-header { background: #fff; padding: 0; border-bottom: none; margin: 0 0 10px 0; }'
                 + '.doc-header img { width: 100%; height: auto; display: block; }'
-                + '.doc-header h1 { font-family: "ABC Arizona Flare", Georgia, serif; font-size: 20pt; color: #333; font-weight: 700; margin: 15px 0 0 0; letter-spacing: -0.5px; }'
+                + '.doc-header h1 { font-family: "ABC Arizona Flare", Georgia, serif; font-size: 20pt; color: #333; font-weight: normal; margin: 15px 0 0 0; letter-spacing: -0.5px; }'
                 + '.doc-header p { color: #666; font-size: 10.5pt; margin: 4px 0 0 0; }'
                 + '.doc-section { margin: 0 0 25px 0; padding: 20px 0; page-break-inside: avoid; border: none; overflow: hidden; }'
-                + '.doc-section h2 { font-family: "ABC Arizona Flare", Georgia, serif; color: #0066cc; font-size: 15pt; margin: 0 0 12px 0; border-bottom: 3px solid #0066cc; padding-bottom: 8px; font-weight: 700; letter-spacing: -0.3px; }'
-                + '.doc-section h3 { font-family: "ABC Arizona Flare", Georgia, serif; color: #0066cc; font-size: 11pt; margin: 12px 0 8px 0; font-weight: 700; }'
+                + '.doc-section h2 { font-family: "ABC Arizona Flare", Georgia, serif; color: #0066cc; font-size: 15pt; margin: 0 0 12px 0; border-bottom: 3px solid #0066cc; padding-bottom: 8px; font-weight: normal; letter-spacing: -0.3px; }'
+                + '.doc-section h3 { font-family: "ABC Arizona Flare", Georgia, serif; color: #0066cc; font-size: 11pt; margin: 12px 0 8px 0; font-weight: normal; }'
                 + '.doc-section p { margin: 0 0 10px 0; font-size: 9.5pt; line-height: 1.6; }'
                 + '.highlight-box { background-color: #EAF4FB; padding: 15px; margin: 10px 0; border: none; font-size: 9.5pt; }'
                 + '.key-point { background-color: #EAF4FB; padding: 15px; margin: 10px 0; border: none; font-size: 9.5pt; }'
                 + '.warning { background-color: #fff3cd; padding: 12px; margin: 10px 0; border-left: 4px solid #ffc107; }'
                 + 'table { width: 100%; border-collapse: collapse; font-size: 9pt; margin: 10px 0; word-wrap: break-word; table-layout: fixed; margin-left: 0; text-align: left; }'
-                + 'table th { background-color: #0078D4; color: white; padding: 4px 5px; text-align: left; font-weight: 700; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.5px; border: none; }'
-                + 'table td { padding: 3px 4px; border: none; border-bottom: 1px solid #eee; font-size: 8.5pt; }'
+                + 'table th { background-color: #0C2E3F; color: white; padding: 5px 6px; text-align: left; font-family: "ABC Arizona Flare", Georgia, serif; font-weight: normal; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.5px; border: none; }'
+                + 'table td { padding: 5px 8px; border: none; border-bottom: 1.5pt solid #ffffff; font-size: 8.5pt; }'
                 + 'ol, ul { font-size: 9.5pt; line-height: 1.35; margin: 1px 0 3px 0; padding-left: 20px; }'
                 + 'li { margin: 0; mso-margin-top-alt: 0; mso-margin-bottom-alt: 0; }'
                 + 'strong { color: #333; font-weight: 700; }'
