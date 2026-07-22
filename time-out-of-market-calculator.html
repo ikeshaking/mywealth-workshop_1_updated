@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Time Out of Market Calculator</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1:#fcfcfb; --surface-2:#f2f1ee; --card:#ffffff;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#7a7973;
+    --border:#dddcd6; --accent:#2a78d6;
+    --series-1:#2a78d6;   /* counterfactual — categorical slot 1 (validated palette) */
+    --series-2:#eb6834;   /* actual — categorical slot 2 */
+    --good:#008300; --bad:#c62f2e; --warnbg:#fff7e6; --warnborder:#eda100;
+    --infobg:#eef4fc; --infoborder:#2a78d6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1:#1a1a19; --surface-2:#232322; --card:#212120;
+      --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#8f8e86;
+      --border:#3a3936; --accent:#3987e5;
+      --series-1:#3987e5; --series-2:#d95926;
+      --good:#4caf50; --bad:#e66767; --warnbg:#2b2413; --warnborder:#c98500;
+      --infobg:#16233a; --infoborder:#3987e5;
+    }
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--surface-1); color:var(--text-primary);
+    font:15px/1.5 "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  }
+  .wrap { max-width:1060px; margin:0 auto; padding:24px 20px 80px; }
+  h1 { font-size:26px; margin:0 0 4px; }
+  h2 { font-size:18px; margin:0 0 12px; }
+  .sub { color:var(--text-secondary); margin:0 0 24px; }
+  .card {
+    background:var(--card); border:1px solid var(--border); border-radius:10px;
+    padding:18px 20px; margin-bottom:18px;
+  }
+  .stepnum {
+    display:inline-flex; width:24px; height:24px; border-radius:50%;
+    background:var(--accent); color:#fff; align-items:center; justify-content:center;
+    font-size:13px; font-weight:600; margin-right:8px; flex:none;
+  }
+  .h-row { display:flex; align-items:center; margin-bottom:10px; }
+  label { display:block; font-size:13px; color:var(--text-secondary); margin-bottom:3px; }
+  input[type=text], input[type=number], input[type=date], select, textarea {
+    width:100%; padding:7px 9px; border:1px solid var(--border); border-radius:6px;
+    background:var(--surface-1); color:var(--text-primary); font:inherit; font-size:14px;
+  }
+  textarea { font-family:ui-monospace, Consolas, monospace; font-size:12.5px; }
+  .grid { display:grid; gap:14px; }
+  .g2 { grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); }
+  .g3 { grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:end; }
+  button {
+    padding:8px 14px; border:1px solid var(--border); border-radius:6px;
+    background:var(--surface-2); color:var(--text-primary); font:inherit; font-size:14px;
+    cursor:pointer;
+  }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+  button.small { padding:4px 9px; font-size:12.5px; }
+  button:hover { filter:brightness(0.96); }
+  .pill {
+    display:inline-block; padding:2px 10px; border-radius:999px; font-size:12.5px;
+    background:var(--surface-2); color:var(--text-secondary); margin-left:8px;
+  }
+  .pill.ok { background:color-mix(in srgb, var(--good) 14%, var(--surface-2)); color:var(--good); font-weight:600; }
+  .note { font-size:13px; color:var(--text-muted); margin-top:8px; }
+  .info {
+    background:var(--infobg); border-left:3px solid var(--infoborder);
+    padding:10px 14px; border-radius:0 8px 8px 0; font-size:13.5px; margin:10px 0;
+    color:var(--text-secondary);
+  }
+  .warn {
+    background:var(--warnbg); border-left:3px solid var(--warnborder);
+    padding:10px 14px; border-radius:0 8px 8px 0; font-size:13.5px; margin:10px 0;
+    color:var(--text-secondary);
+  }
+  .drop {
+    border:2px dashed var(--border); border-radius:8px; padding:14px; text-align:center;
+    color:var(--text-muted); font-size:13.5px; cursor:pointer; transition:border-color .15s;
+  }
+  .drop.over { border-color:var(--accent); color:var(--accent); }
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  th, td { padding:5px 9px; border-bottom:1px solid var(--border); text-align:right; white-space:nowrap; }
+  th { color:var(--text-secondary); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.03em; }
+  th:first-child, td:first-child { text-align:left; }
+  .sched-table input { padding:4px 6px; font-size:13px; }
+  .sched-table td { text-align:left; }
+  .mode-tabs { display:flex; gap:0; margin-bottom:14px; border:1px solid var(--border); border-radius:8px; overflow:hidden; width:fit-content; }
+  .mode-tabs button { border:none; border-radius:0; background:var(--surface-2); padding:9px 18px; }
+  .mode-tabs button.active { background:var(--accent); color:#fff; font-weight:600; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-bottom:16px; }
+  .stat { background:var(--surface-2); border-radius:10px; padding:14px 16px; }
+  .stat .lbl { font-size:12.5px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.04em; }
+  .stat .val { font-size:24px; font-weight:700; margin-top:2px; font-variant-numeric:tabular-nums; }
+  .stat .sub2 { font-size:12.5px; color:var(--text-muted); margin-top:2px; }
+  .stat.hero { background:color-mix(in srgb, var(--series-1) 10%, var(--surface-2)); }
+  .neg { color:var(--bad); } .pos { color:var(--good); }
+  .chartbox { position:relative; margin:6px 0 4px; }
+  .chartbox svg { display:block; width:100%; height:auto; }
+  .tooltip {
+    position:absolute; pointer-events:none; background:var(--card); border:1px solid var(--border);
+    border-radius:8px; padding:8px 12px; font-size:12.5px; box-shadow:0 4px 14px rgba(0,0,0,.14);
+    display:none; z-index:5; min-width:180px;
+  }
+  .tooltip .tt-date { font-weight:600; margin-bottom:4px; }
+  .tt-row { display:flex; justify-content:space-between; gap:14px; }
+  .tt-row .sw { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:6px; }
+  .legend { display:flex; gap:18px; font-size:13px; color:var(--text-secondary); margin-top:2px; }
+  .legend .sw { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; }
+  details summary { cursor:pointer; font-weight:600; margin-bottom:8px; }
+  .ledger-wrap { overflow-x:auto; max-height:420px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; }
+  .ledger-wrap th { position:sticky; top:0; background:var(--card); }
+  .meth { font-size:13.5px; color:var(--text-secondary); }
+  .meth p { margin:6px 0; }
+  .hidden { display:none !important; }
+  code { background:var(--surface-2); padding:1px 5px; border-radius:4px; font-size:12.5px; }
+  @media print {
+    body { background:#fff; color:#000; }
+    .no-print, textarea, .drop { display:none !important; }
+    .card { border:none; padding:8px 0; page-break-inside:avoid; }
+    .ledger-wrap { max-height:none; overflow:visible; border:none; }
+    details { open:true; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Time Out of Market Calculator</h1>
+  <p class="sub">Standardised opportunity-cost model for contributions left uninvested (or invested off-schedule) — based on the E&nbsp;&amp;&nbsp;A Sibly (cash basis) and J&nbsp;&amp;&nbsp;A Wilson (units basis) workbooks.</p>
+
+  <div class="info no-print">
+    <strong>Getting the data:</strong> a local HTML page cannot fetch Vanguard's price or distribution
+    history directly — browsers block cross-site requests (CORS) and Vanguard has no public API for this.
+    Instead, download the fund's <em>price history</em> and <em>distribution history</em> exports from the
+    fund's page on vanguard.com.au (Prices &amp; distributions section), or from the platform (CFS Edge
+    transaction/valuation reports), then upload the CSV below or simply <strong>copy the rows in Excel and
+    paste them</strong> — the calculator detects the columns and pre-populates automatically.
+  </div>
+
+  <!-- STEP 1 — PRICE HISTORY -->
+  <div class="card">
+    <div class="h-row"><span class="stepnum">1</span><h2 style="margin:0">Price history (Buy / Sell / NAV)<span id="priceStatus" class="pill">no data</span></h2></div>
+    <div class="grid g2 no-print">
+      <div>
+        <div class="drop" id="priceDrop">Drop the Vanguard price-history export here (.csv / .txt)<br>or click to choose a file</div>
+        <input type="file" id="priceFile" accept=".csv,.txt,.tsv" class="hidden">
+        <div class="note">Expected columns: Date, Buy, Sell, NAV (extra columns are ignored). Dates like <code>22 Apr 2025</code>, <code>22/04/2025</code> or <code>2025-04-22</code> all work. For .xlsx exports, open in Excel and copy-paste instead.</div>
+      </div>
+      <div>
+        <label>…or paste rows copied from Excel (including the header row)</label>
+        <textarea id="pricePaste" rows="6" placeholder="Date	Buy	Sell	NAV&#10;22 Apr 2025	$1.5554	$1.5549	$1.5549&#10;23 Apr 2025	$1.5702	$1.5692	$1.5692"></textarea>
+        <div class="row" style="margin-top:8px">
+          <button class="primary" id="pricePasteBtn">Parse pasted prices</button>
+          <button id="sampleBtn">Load sample data (demo)</button>
+          <button id="priceClearBtn" class="small">Clear</button>
+        </div>
+      </div>
+    </div>
+    <div id="priceSummary" class="note"></div>
+  </div>
+
+  <!-- STEP 2 — DISTRIBUTIONS -->
+  <div class="card">
+    <div class="h-row"><span class="stepnum">2</span><h2 style="margin:0">Distribution history<span id="distStatus" class="pill">none</span></h2></div>
+    <div class="no-print">
+      <label>Paste from the Vanguard distribution-history export (ex-date, cents per unit, reinvest date, reinvest price) — or add rows manually below</label>
+      <textarea id="distPaste" rows="3" placeholder="Ex date	CPU (c/unit)	Reinvest date	Reinvest price&#10;30 Jun 2025	1.969397	01 Jul 2025	$1.6714"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="primary" id="distPasteBtn">Parse pasted distributions</button>
+        <button id="distAddBtn">+ Add row manually</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto; margin-top:10px">
+      <table class="sched-table" id="distTable">
+        <thead><tr><th>Ex-date</th><th>CPU (cents/unit)</th><th>Reinvest date</th><th>Reinvest price $ <span style="text-transform:none">(units mode)</span></th><th class="no-print"></th></tr></thead>
+        <tbody id="distBody"></tbody>
+      </table>
+    </div>
+    <div class="note">Leave empty if no distribution fell inside the period. Distributions are computed as <em>units held at the ex-date × CPU</em> and credited on the reinvest date, so they compound into later ex-dates.</div>
+  </div>
+
+  <!-- STEP 3 — SCENARIO & ASSUMPTIONS -->
+  <div class="card">
+    <div class="h-row"><span class="stepnum">3</span><h2 style="margin:0">Scenario &amp; assumptions</h2></div>
+
+    <div class="mode-tabs no-print">
+      <button id="modeCash" class="active">Cash basis — money sat in cash</button>
+      <button id="modeUnits">Units basis — stayed invested (fee drag / off-schedule)</button>
+    </div>
+    <div class="note" id="modeHelp" style="margin-top:-6px; margin-bottom:12px"></div>
+
+    <div class="grid g3">
+      <div><label>Client name (for the report)</label><input type="text" id="clientName" placeholder="e.g. E & A Sibly"></div>
+      <div><label>Fund</label><input type="text" id="fundName" placeholder="e.g. Vanguard Growth Index Fund"></div>
+      <div><label>Return / price basis</label>
+        <select id="basis"><option value="buy" selected>Buy price</option><option value="sell">Sell price</option><option value="nav">NAV</option></select></div>
+      <div><label>Out-of-market period — start</label><input type="date" id="tomStart"></div>
+      <div><label>Out-of-market period — end</label><input type="date" id="tomEnd"></div>
+    </div>
+
+    <h2 style="margin-top:20px">Contributions</h2>
+    <div class="grid g3">
+      <div><label>Monthly contribution (gross $)</label><input type="number" id="grossContrib" value="2300" step="10" min="0"></div>
+      <div><label>Contribution day of month</label><input type="number" id="contribDay" value="6" min="1" max="31"></div>
+      <div><label style="visibility:hidden">.</label><button class="primary no-print" id="genSchedBtn" style="width:100%">Generate schedule</button></div>
+    </div>
+
+    <div class="grid g3" style="margin-top:14px">
+      <div>
+        <label>Advice fee deducted from the monthly contribution?</label>
+        <select id="feeOn"><option value="no" selected>No — full amount was headed for investment</option><option value="yes">Yes — fee comes out of the contribution</option></select>
+      </div>
+      <div id="feeAmtWrap" class="hidden"><label>Monthly advice fee ($)</label><input type="number" id="advFee" value="187.50" step="0.01" min="0"></div>
+      <div id="feeAdminWrap" class="hidden"><label>Other monthly admin/platform fees ($)</label><input type="number" id="adminFee" value="0" step="0.01" min="0"></div>
+    </div>
+    <div class="info" id="feeNote">Net invested per month: <strong id="netPreview">—</strong>. The fee is payable in <em>both</em> scenarios, so it is never treated as a recoverable loss — it simply reduces the amount that should have been invested (the Wilson net-basis principle).</div>
+
+    <div style="overflow-x:auto; margin-top:6px">
+      <table class="sched-table" id="schedTable">
+        <thead><tr><th>Date</th><th>Type</th><th>Gross $</th><th>Net invested $</th><th>Include</th><th class="no-print"></th></tr></thead>
+        <tbody id="schedBody"></tbody>
+      </table>
+    </div>
+    <div class="row no-print" style="margin-top:8px">
+      <button id="addOneOffBtn" class="small">+ Add one-off contribution</button>
+      <span class="note" style="margin:0">One-off deposits are invested in full (no monthly fee deducted). Contributions falling on a non-pricing day are invested on the next pricing day. Untick “Include” for contributions that were invested correctly (e.g. Sibly’s August contribution).</span>
+    </div>
+
+    <!-- CASH-MODE ONLY -->
+    <div id="cashOnly">
+      <h2 style="margin-top:20px">Interest earned on the idle cash (offsets the loss)</h2>
+      <div class="grid g3">
+        <div>
+          <label>Interest treatment</label>
+          <select id="intMode">
+            <option value="none">None</option>
+            <option value="rate" selected>Flat annual rate on the idle balance</option>
+            <option value="actual">Actual credits (apportioned, Sibly method)</option>
+          </select>
+        </div>
+        <div id="intRateWrap"><label>Cash account rate (% p.a.)</label><input type="number" id="intRate" value="4.0" step="0.05" min="0"></div>
+        <div id="intBaseWrap" class="hidden"><label>Pre-existing base cash at start ($)</label><input type="number" id="baseCash" value="0" step="0.01" min="0"></div>
+      </div>
+      <div id="intActualWrap" class="hidden" style="margin-top:10px">
+        <label>Actual interest credits to the whole cash account (each credit is split pro-rata between base cash and the contributions, by balance share immediately before the credit — only the contributions’ share offsets the loss)</label>
+        <table class="sched-table" style="max-width:420px"><thead><tr><th>Credit date</th><th>Amount $</th><th class="no-print"></th></tr></thead><tbody id="intBody"></tbody></table>
+        <button id="intAddBtn" class="small no-print" style="margin-top:6px">+ Add credit</button>
+      </div>
+      <div class="note" id="rateNote">Flat-rate mode accrues daily (rate ÷ 365) on the contributions’ running cash balance and credits monthly — no base-cash input needed, because interest on pre-existing cash is earned in both scenarios and cancels out.</div>
+    </div>
+
+    <!-- UNITS-MODE ONLY -->
+    <div id="unitsOnly" class="hidden">
+      <h2 style="margin-top:20px">Unit holdings (units basis)</h2>
+      <div class="grid g3">
+        <div><label>Opening units at period start</label><input type="number" id="openUnits" value="0" step="0.0001" min="0"></div>
+        <div><label>Actual units held at period end</label><input type="number" id="actualUnits" value="0" step="0.0001" min="0"></div>
+      </div>
+      <div class="note">Tie these to platform valuation reports. If the closing valuation is dated after the comparison date, back out any purchases made in between (Wilson: 2,845.50 valuation units less the 10-Feb purchase of 255.45 = 2,590.05 at 04 Feb). Cash interest is not modelled in units mode — the cash float is assumed immaterial.</div>
+    </div>
+
+    <div class="row no-print" style="margin-top:18px">
+      <button class="primary" id="calcBtn" style="font-size:16px; padding:10px 22px">Calculate</button>
+      <span class="note" id="calcMsg" style="margin:0"></span>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="card hidden" id="results">
+    <div class="h-row"><span class="stepnum">4</span><h2 style="margin:0">Results</h2></div>
+    <div class="cards" id="statCards"></div>
+    <div id="breakdownWrap"></div>
+
+    <h2 style="margin-top:18px" id="chartTitle">Counterfactual vs actual</h2>
+    <div class="chartbox" id="chartbox">
+      <svg id="chart" role="img" aria-label="Line chart comparing the counterfactual invested value against the actual balance over the out-of-market period"></svg>
+      <div class="tooltip" id="tooltip"></div>
+    </div>
+    <div class="legend" id="legend"></div>
+
+    <details style="margin-top:18px">
+      <summary>Daily ledger</summary>
+      <div class="ledger-wrap"><table id="ledgerTable"><thead id="ledgerHead"></thead><tbody id="ledgerBody"></tbody></table></div>
+      <div class="row no-print" style="margin-top:8px">
+        <button id="csvBtn" class="small">Download ledger as CSV</button>
+        <button id="printBtn" class="small">Print / save report as PDF</button>
+      </div>
+    </details>
+
+    <details style="margin-top:14px" open>
+      <summary>Methodology &amp; assumptions (auto-generated)</summary>
+      <div class="meth" id="methBox"></div>
+    </details>
+  </div>
+
+</div>
+
+<script>
+'use strict';
+
+/* ---------------- state ---------------- */
+const S = {
+  prices: [],        // [{date:'YYYY-MM-DD', buy, sell, nav}] sorted asc
+  dists: [],         // [{ex, cpu, reinvest, price}]
+  sched: [],         // [{date, type:'monthly'|'oneoff', gross, include}]
+  intCredits: [],    // [{date, amount}]
+  mode: 'cash',
+  result: null,
+};
+
+/* ---------------- helpers ---------------- */
+const $ = id => document.getElementById(id);
+const MONTHS = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+function pad(n){ return String(n).padStart(2,'0'); }
+function iso(y,m,d){ return `${y}-${pad(m+1)}-${pad(d)}`; }
+
+function parseDateStr(s){
+  if (s==null) return null;
+  s = String(s).trim().replace(/["']/g,'');
+  if (!s) return null;
+  let m;
+  if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return iso(+m[1], +m[2]-1, +m[3]);
+  if ((m = s.match(/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{2,4})$/))) {           // dd/mm/yyyy (AU)
+    let y = +m[3]; if (y < 100) y += 2000;
+    return iso(y, +m[2]-1, +m[1]);
+  }
+  if ((m = s.match(/^(\d{1,2})\s+([A-Za-z]{3,})\.?,?\s+(\d{4})$/))) {           // 22 Apr 2025
+    const mo = MONTHS[m[2].slice(0,3).toLowerCase()];
+    if (mo!=null) return iso(+m[3], mo, +m[1]);
+  }
+  if ((m = s.match(/^([A-Za-z]{3,})\.?\s+(\d{1,2}),?\s+(\d{4})$/))) {           // Apr 22, 2025
+    const mo = MONTHS[m[1].slice(0,3).toLowerCase()];
+    if (mo!=null) return iso(+m[3], mo, +m[2]);
+  }
+  const d = new Date(s);
+  return isNaN(d) ? null : iso(d.getFullYear(), d.getMonth(), d.getDate());
+}
+function parseNum(s){
+  if (s==null) return null;
+  const v = parseFloat(String(s).replace(/[$,\s%]/g,''));
+  return isNaN(v) ? null : v;
+}
+function fmtDate(isoStr){
+  const [y,mo,d] = isoStr.split('-').map(Number);
+  return `${pad(d)} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][mo-1]} ${y}`;
+}
+function fmt$(n, dp=2){
+  const neg = n < 0;
+  const v = Math.abs(n).toLocaleString('en-AU',{minimumFractionDigits:dp, maximumFractionDigits:dp});
+  return (neg?'-$':'$')+v;
+}
+function fmtU(n){ return n.toLocaleString('en-AU',{minimumFractionDigits:4, maximumFractionDigits:4}); }
+function daysBetween(a,b){ return Math.round((new Date(b) - new Date(a)) / 86400000); }
+function firstIdxOnOrAfter(rows, date){ for (let i=0;i<rows.length;i++) if (rows[i].date >= date) return i; return -1; }
+function lastIdxOnOrBefore(rows, date){ for (let i=rows.length-1;i>=0;i--) if (rows[i].date <= date) return i; return -1; }
+
+/* ---------------- table-text parsing ---------------- */
+function splitRows(text){
+  return text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length)
+    .map(l => l.includes('\t') ? l.split('\t') : splitCsvLine(l));
+}
+function splitCsvLine(line){
+  const out=[]; let cur='', q=false;
+  for (const ch of line){
+    if (ch === '"'){ q=!q; continue; }
+    if (ch === ',' && !q){ out.push(cur); cur=''; } else cur += ch;
+  }
+  out.push(cur);
+  return out.map(c=>c.trim());
+}
+
+function parsePrices(text){
+  const rows = splitRows(text);
+  if (!rows.length) return {error:'No rows found.'};
+  // find header row
+  let hi = -1, cols = null;
+  for (let i=0;i<Math.min(rows.length,10);i++){
+    const low = rows[i].map(c=>c.toLowerCase());
+    const di = low.findIndex(c=>/date/.test(c));
+    if (di>=0){
+      const bi = low.findIndex(c=>/buy/.test(c));
+      const si = low.findIndex(c=>/sell|exit|redeem/.test(c));
+      const ni = low.findIndex(c=>/nav|mid|unit\s*price|price/.test(c) && !/buy|sell/.test(c));
+      if (bi>=0 || si>=0 || ni>=0){ hi=i; cols={di,bi,si,ni}; break; }
+    }
+  }
+  if (hi<0){
+    // headerless: assume Date, Buy, Sell, NAV positional
+    cols = {di:0, bi:1, si:2, ni:3}; hi = -1;
+  }
+  const out = [];
+  for (let i=hi+1;i<rows.length;i++){
+    const r = rows[i];
+    const date = parseDateStr(r[cols.di]);
+    if (!date) continue;
+    const buy  = cols.bi>=0 ? parseNum(r[cols.bi]) : null;
+    const sell = cols.si>=0 ? parseNum(r[cols.si]) : null;
+    const nav  = cols.ni>=0 ? parseNum(r[cols.ni]) : null;
+    const first = buy ?? nav ?? sell;
+    if (first==null) continue;
+    out.push({date, buy:buy ?? first, sell:sell ?? first, nav:nav ?? first});
+  }
+  if (!out.length) return {error:'No parsable price rows found — check the columns include Date and at least one price.'};
+  out.sort((a,b)=> a.date < b.date ? -1 : 1);
+  const dedup = []; const seen = new Set();
+  for (const r of out){ if (!seen.has(r.date)){ seen.add(r.date); dedup.push(r); } }
+  return {rows: dedup};
+}
+
+function parseDists(text){
+  const rows = splitRows(text);
+  if (!rows.length) return {error:'No rows found.'};
+  let hi=-1, cols=null;
+  for (let i=0;i<Math.min(rows.length,6);i++){
+    const low = rows[i].map(c=>c.toLowerCase());
+    const ei = low.findIndex(c=>/ex/.test(c) && /date|div/.test(c) || /^ex\b/.test(c));
+    const ci = low.findIndex(c=>/cpu|cent|c\/unit|distribution/.test(c) && !/date/.test(c));
+    if (ei>=0 && ci>=0){
+      const ri = low.findIndex(c=>/re-?invest|pay/.test(c) && /date/.test(c));
+      const pi = low.findIndex(c=>/price/.test(c));
+      cols={ei,ci,ri,pi}; hi=i; break;
+    }
+  }
+  if (hi<0){ cols={ei:0, ci:1, ri:2, pi:3}; }
+  const out=[];
+  for (let i=hi+1;i<rows.length;i++){
+    const r = rows[i];
+    const ex = parseDateStr(r[cols.ei]);
+    const cpu = parseNum(r[cols.ci]);
+    if (!ex || cpu==null) continue;
+    const reinvest = cols.ri>=0 ? parseDateStr(r[cols.ri]) : null;
+    const price = cols.pi>=0 ? parseNum(r[cols.pi]) : null;
+    out.push({ex, cpu, reinvest, price});
+  }
+  if (!out.length) return {error:'No parsable distribution rows found.'};
+  return {rows: out};
+}
+
+/* ---------------- UI wiring: prices ---------------- */
+function setPrices(rows){
+  S.prices = rows;
+  const st = $('priceStatus');
+  st.textContent = `${rows.length} pricing days`;
+  st.className = 'pill ok';
+  $('priceSummary').textContent =
+    `Loaded ${rows.length} pricing days: ${fmtDate(rows[0].date)} – ${fmtDate(rows[rows.length-1].date)}. ` +
+    `Missing weekdays are treated as non-pricing days (holidays), matching the workbook convention.`;
+  if (!$('tomStart').value) $('tomStart').value = rows[0].date;
+  if (!$('tomEnd').value)   $('tomEnd').value   = rows[rows.length-1].date;
+}
+$('priceDrop').addEventListener('click', ()=> $('priceFile').click());
+$('priceDrop').addEventListener('dragover', e=>{ e.preventDefault(); $('priceDrop').classList.add('over'); });
+$('priceDrop').addEventListener('dragleave', ()=> $('priceDrop').classList.remove('over'));
+$('priceDrop').addEventListener('drop', e=>{
+  e.preventDefault(); $('priceDrop').classList.remove('over');
+  const f = e.dataTransfer.files[0];
+  if (f) readPriceFile(f);
+});
+$('priceFile').addEventListener('change', e=>{ if (e.target.files[0]) readPriceFile(e.target.files[0]); });
+function readPriceFile(f){
+  if (/\.xlsx?$/i.test(f.name)){
+    alert('Excel files can’t be read directly by this offline page. Open the export in Excel, copy the rows (with headers), and paste them into the paste box instead — or save as CSV.');
+    return;
+  }
+  const rd = new FileReader();
+  rd.onload = ()=> {
+    const res = parsePrices(rd.result);
+    if (res.error) alert(res.error); else setPrices(res.rows);
+  };
+  rd.readAsText(f);
+}
+$('pricePasteBtn').addEventListener('click', ()=>{
+  const res = parsePrices($('pricePaste').value);
+  if (res.error) alert(res.error); else setPrices(res.rows);
+});
+$('priceClearBtn').addEventListener('click', ()=>{
+  S.prices=[]; $('pricePaste').value='';
+  $('priceStatus').textContent='no data'; $('priceStatus').className='pill';
+  $('priceSummary').textContent='';
+});
+
+/* sample data — synthetic, for demonstrating the workflow only */
+$('sampleBtn').addEventListener('click', ()=>{
+  const rows=[]; let p=1.60;
+  let d = new Date('2025-04-01');
+  const end = new Date('2025-08-29');
+  let seed = 42;
+  const rand = ()=>{ seed = (seed*1103515245+12345) % 2147483648; return seed/2147483648; };
+  while (d <= end){
+    const dow = d.getDay();
+    if (dow!==0 && dow!==6){
+      p = p * (1 + (rand()-0.47)*0.012);
+      const buy = p, sell = p*0.9994, nav = p*0.9997;
+      rows.push({date: iso(d.getFullYear(),d.getMonth(),d.getDate()),
+                 buy:+buy.toFixed(4), sell:+sell.toFixed(4), nav:+nav.toFixed(4)});
+    }
+    d.setDate(d.getDate()+1);
+  }
+  setPrices(rows);
+  S.dists = [{ex:'2025-06-30', cpu:1.9694, reinvest:'2025-07-01', price:rows.find(r=>r.date>='2025-07-01').buy}];
+  renderDists();
+  $('clientName').value = 'Sample Client';
+  $('fundName').value = 'Sample Growth Fund (synthetic prices)';
+  genSchedule();
+});
+
+/* ---------------- UI wiring: distributions ---------------- */
+function renderDists(){
+  const tb = $('distBody'); tb.innerHTML='';
+  S.dists.forEach((d,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="date" value="${d.ex}" data-i="${i}" data-k="ex"></td>
+      <td><input type="number" step="0.000001" value="${d.cpu}" data-i="${i}" data-k="cpu"></td>
+      <td><input type="date" value="${d.reinvest||''}" data-i="${i}" data-k="reinvest"></td>
+      <td><input type="number" step="0.0001" value="${d.price??''}" data-i="${i}" data-k="price"></td>
+      <td class="no-print"><button class="small" data-del="${i}">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('input').forEach(inp=> inp.addEventListener('change', e=>{
+    const {i,k} = e.target.dataset;
+    S.dists[i][k] = (k==='cpu'||k==='price') ? parseNum(e.target.value) : e.target.value;
+  }));
+  tb.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', e=>{
+    S.dists.splice(+e.target.dataset.del,1); renderDists();
+  }));
+  const st = $('distStatus');
+  st.textContent = S.dists.length ? `${S.dists.length} distribution${S.dists.length>1?'s':''}` : 'none';
+  st.className = S.dists.length ? 'pill ok' : 'pill';
+}
+$('distPasteBtn').addEventListener('click', ()=>{
+  const res = parseDists($('distPaste').value);
+  if (res.error){ alert(res.error); return; }
+  S.dists = res.rows; renderDists();
+});
+$('distAddBtn').addEventListener('click', ()=>{
+  S.dists.push({ex:'', cpu:0, reinvest:'', price:null}); renderDists();
+});
+
+/* ---------------- mode + fee UI ---------------- */
+const MODE_HELP = {
+  cash: 'Cash basis (Sibly method): the contributions landed in the cash account and stayed there. Counterfactual = each contribution invested on its date, distributions reinvested. Actual = the cash pile plus interest it earned. Loss = A − B.',
+  units:'Units basis (Wilson method): the client stayed invested but contributions were invested late/short (e.g. fee drag). Counterfactual = opening units + disciplined purchase of the net contribution each month + reinvested distributions, compared with actual units held. Loss = unit shortfall × closing price.'
+};
+function setMode(m){
+  S.mode = m;
+  $('modeCash').classList.toggle('active', m==='cash');
+  $('modeUnits').classList.toggle('active', m==='units');
+  $('cashOnly').classList.toggle('hidden', m!=='cash');
+  $('unitsOnly').classList.toggle('hidden', m!=='units');
+  $('modeHelp').textContent = MODE_HELP[m];
+}
+$('modeCash').addEventListener('click', ()=> setMode('cash'));
+$('modeUnits').addEventListener('click', ()=> setMode('units'));
+setMode('cash');
+
+function netMonthly(){
+  const gross = parseNum($('grossContrib').value) ?? 0;
+  if ($('feeOn').value !== 'yes') return gross;
+  return Math.max(0, gross - (parseNum($('advFee').value)??0) - (parseNum($('adminFee').value)??0));
+}
+function updateFeeUI(){
+  const on = $('feeOn').value === 'yes';
+  $('feeAmtWrap').classList.toggle('hidden', !on);
+  $('feeAdminWrap').classList.toggle('hidden', !on);
+  $('netPreview').textContent = fmt$(netMonthly());
+  // update net column in schedule
+  renderSched();
+}
+['feeOn','advFee','adminFee','grossContrib'].forEach(id=> $(id).addEventListener('input', updateFeeUI));
+
+function updateIntUI(){
+  const m = $('intMode').value;
+  $('intRateWrap').classList.toggle('hidden', m!=='rate');
+  $('intActualWrap').classList.toggle('hidden', m!=='actual');
+  $('intBaseWrap').classList.toggle('hidden', m!=='actual');
+  $('rateNote').classList.toggle('hidden', m!=='rate');
+}
+$('intMode').addEventListener('change', updateIntUI);
+updateIntUI();
+
+/* ---------------- schedule ---------------- */
+function genSchedule(){
+  if (!S.prices.length){ alert('Load the price history first — the schedule maps contributions onto pricing days.'); return; }
+  const start = $('tomStart').value || S.prices[0].date;
+  const end = $('tomEnd').value || S.prices[S.prices.length-1].date;
+  const day = Math.min(31, Math.max(1, parseInt($('contribDay').value)||6));
+  const gross = parseNum($('grossContrib').value) ?? 0;
+  const out = [];
+  let [y,m] = start.split('-').map(Number); m -= 1;
+  for (let k=0; k<40; k++){
+    const dim = new Date(y, m+1, 0).getDate();
+    const target = iso(y, m, Math.min(day, dim));
+    if (target > end) break;
+    if (target >= start){
+      const idx = firstIdxOnOrAfter(S.prices, target);
+      const mapped = (idx>=0 && S.prices[idx].date <= end) ? S.prices[idx].date : null;
+      if (mapped) out.push({date: mapped, type:'monthly', gross, include:true});
+    }
+    m++; if (m>11){ m=0; y++; }
+  }
+  // keep existing one-offs
+  const oneoffs = S.sched.filter(r=>r.type==='oneoff');
+  S.sched = out.concat(oneoffs).sort((a,b)=> a.date<b.date?-1:1);
+  renderSched();
+}
+$('genSchedBtn').addEventListener('click', genSchedule);
+$('addOneOffBtn').addEventListener('click', ()=>{
+  S.sched.push({date: $('tomStart').value || (S.prices[0] && S.prices[0].date) || '', type:'oneoff', gross:0, include:true});
+  renderSched();
+});
+function rowNet(r){
+  if (r.type==='oneoff') return r.gross;
+  if ($('feeOn').value!=='yes') return r.gross;
+  return Math.max(0, r.gross - (parseNum($('advFee').value)??0) - (parseNum($('adminFee').value)??0));
+}
+function renderSched(){
+  const tb = $('schedBody'); tb.innerHTML='';
+  S.sched.forEach((r,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="date" value="${r.date}" data-i="${i}" data-k="date" style="width:150px"></td>
+      <td>${r.type==='monthly'?'Monthly':'One-off'}</td>
+      <td><input type="number" step="0.01" value="${r.gross}" data-i="${i}" data-k="gross" style="width:110px"></td>
+      <td style="font-variant-numeric:tabular-nums">${fmt$(rowNet(r))}</td>
+      <td><input type="checkbox" ${r.include?'checked':''} data-i="${i}" data-k="include"></td>
+      <td class="no-print"><button class="small" data-del="${i}">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('input').forEach(inp=> inp.addEventListener('change', e=>{
+    const {i,k} = e.target.dataset;
+    if (k==='include') S.sched[i].include = e.target.checked;
+    else if (k==='gross') S.sched[i].gross = parseNum(e.target.value) ?? 0;
+    else S.sched[i][k] = e.target.value;
+    renderSched();
+  }));
+  tb.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', e=>{
+    S.sched.splice(+e.target.dataset.del,1); renderSched();
+  }));
+}
+
+/* ---------------- interest credits ---------------- */
+function renderInt(){
+  const tb = $('intBody'); tb.innerHTML='';
+  S.intCredits.forEach((r,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="date" value="${r.date}" data-i="${i}" data-k="date"></td>
+      <td><input type="number" step="0.01" value="${r.amount}" data-i="${i}" data-k="amount"></td>
+      <td class="no-print"><button class="small" data-del="${i}">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('input').forEach(inp=> inp.addEventListener('change', e=>{
+    const {i,k} = e.target.dataset;
+    S.intCredits[i][k] = k==='amount' ? (parseNum(e.target.value)??0) : e.target.value;
+  }));
+  tb.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', e=>{
+    S.intCredits.splice(+e.target.dataset.del,1); renderInt();
+  }));
+}
+$('intAddBtn').addEventListener('click', ()=>{ S.intCredits.push({date:'', amount:0}); renderInt(); });
+
+/* ---------------- calculation engine ---------------- */
+function calculate(){
+  if (!S.prices.length){ $('calcMsg').textContent = 'Load the price history first.'; return; }
+  const start = $('tomStart').value, end = $('tomEnd').value;
+  if (!start || !end || start >= end){ $('calcMsg').textContent = 'Set a valid out-of-market period.'; return; }
+  const rows = S.prices.filter(r => r.date >= start && r.date <= end);
+  if (rows.length < 2){ $('calcMsg').textContent = 'Fewer than two pricing days inside the period — check the dates.'; return; }
+  const basis = $('basis').value;
+  const sched = S.sched.filter(r => r.include && r.date && r.gross > 0)
+                       .map(r => ({...r, net: rowNet(r)}))
+                       .filter(r => r.net > 0);
+  if (!sched.length){ $('calcMsg').textContent = 'No contributions in the schedule — generate or add some.'; return; }
+  const warnings = [];
+
+  // map contributions to row indices
+  const contribByIdx = {};
+  let totalNet = 0, totalGross = 0;
+  for (const c of sched){
+    const idx = firstIdxOnOrAfter(rows, c.date);
+    if (idx === -1){ warnings.push(`Contribution on ${fmtDate(c.date)} falls after the last pricing day — excluded.`); continue; }
+    contribByIdx[idx] = (contribByIdx[idx]||0) + c.net;
+    totalNet += c.net; totalGross += c.gross;
+  }
+
+  // distributions in range
+  const dists = S.dists.filter(d => d.ex && d.cpu > 0 && d.ex >= rows[0].date && d.ex <= rows[rows.length-1].date)
+    .map(d => {
+      const exIdx = lastIdxOnOrBefore(rows, d.ex);
+      let creditIdx = d.reinvest ? firstIdxOnOrAfter(rows, d.reinvest) : (exIdx+1 < rows.length ? exIdx+1 : exIdx);
+      if (creditIdx === -1){ creditIdx = rows.length-1; warnings.push(`Distribution reinvest date ${fmtDate(d.reinvest)} is after the last pricing day — credited on the final day instead.`); }
+      return {...d, exIdx, creditIdx};
+    });
+
+  const intMode = S.mode==='cash' ? $('intMode').value : 'none';
+  const creditsByIdx = {};
+  if (intMode === 'actual'){
+    for (const cr of S.intCredits.filter(c=>c.date && c.amount>0)){
+      let idx = firstIdxOnOrAfter(rows, cr.date);
+      if (idx === -1) idx = rows.length-1;
+      (creditsByIdx[idx] = creditsByIdx[idx]||[]).push(cr);
+    }
+  }
+  const rate = (parseNum($('intRate').value)??0)/100;
+  const baseCash0 = parseNum($('baseCash').value)??0;
+
+  const series = [];
+  const ledger = [];
+  let warningsOut = warnings;
+
+  if (S.mode === 'cash'){
+    /* counterfactual: value_t = (value_prev + contrib_t) × (1+r_t) + distCredit_t   (workbook convention)
+       actual: contributions accumulate in cash; interest per selected treatment */
+    let cf = 0, M = 0, G = baseCash0, prevP = null, prevDate = null;
+    let accrued = 0, interestTotal = 0, distTotal = 0;
+    const pending = {};
+    for (let i=0;i<rows.length;i++){
+      const p = rows[i][basis];
+      const contrib = contribByIdx[i]||0;
+      const r = (i>0) ? (p - prevP)/prevP : 0;
+      const distCredit = pending[i]||0;
+      cf = (cf + contrib) * (1 + r) + distCredit;
+      distTotal += distCredit;
+      // actual side
+      M += contrib; G += contrib;
+      let intToday = 0;
+      if (intMode==='rate'){
+        if (prevDate){
+          accrued += M * rate/365 * daysBetween(prevDate, rows[i].date);
+          if (rows[i].date.slice(0,7) !== prevDate.slice(0,7)){ intToday = accrued; M += accrued; G += accrued; interestTotal += accrued; accrued = 0; }
+        }
+      } else if (intMode==='actual' && creditsByIdx[i]){
+        for (const cr of creditsByIdx[i]){
+          const share = G > 0 ? M/G : 0;
+          const app = cr.amount * share;
+          intToday += app; M += app; interestTotal += app; G += cr.amount;
+        }
+      }
+      // ex-date? compute the missed distribution on the counterfactual units
+      for (const d of dists){
+        if (i === d.exIdx){
+          const units = cf / p;
+          const cash = units * d.cpu / 100;
+          d.units = units; d.cash = cash;
+          pending[d.creditIdx] = (pending[d.creditIdx]||0) + cash;
+        }
+      }
+      series.push({date: rows[i].date, a: cf, b: M});
+      ledger.push({date: rows[i].date, price: p, ret: i>0?r:null, contrib, distCredit, cf, int: intToday, actual: M});
+      prevP = p; prevDate = rows[i].date;
+    }
+    if (intMode==='rate' && accrued > 0){
+      const last = ledger[ledger.length-1];
+      last.int += accrued; last.actual += accrued;
+      interestTotal += accrued;
+      series[series.length-1].b = last.actual;
+      accrued = 0;
+    }
+    const A = cf, B = ledger[ledger.length-1].actual;
+    S.result = {
+      mode:'cash', rows, series, ledger, dists, warnings: warningsOut, basis,
+      A, B, net: A-B, totalNet, totalGross, interestTotal, distTotal,
+      growthForegone: A - distTotal - totalNet,
+      start: rows[0].date, end: rows[rows.length-1].date,
+      intMode, rate, baseCash0,
+    };
+  } else {
+    /* units basis */
+    const openUnits = parseNum($('openUnits').value)??0;
+    const actualUnits = parseNum($('actualUnits').value)??0;
+    let units = openUnits;
+    const pendingU = {};
+    let distUnitsTotal = 0, boughtUnits = 0;
+    for (let i=0;i<rows.length;i++){
+      const p = rows[i][basis];
+      const contrib = contribByIdx[i]||0;
+      const bought = contrib > 0 ? contrib/p : 0;
+      units += bought; boughtUnits += bought;
+      const du = pendingU[i]||0;
+      units += du; distUnitsTotal += du;
+      for (const d of dists){
+        if (i === d.exIdx){
+          const cash = units * d.cpu/100;
+          const rp = d.price || rows[d.creditIdx][basis];
+          const u = cash / rp;
+          d.units = units; d.cash = cash; d.unitsCredited = u;
+          pendingU[d.creditIdx] = (pendingU[d.creditIdx]||0) + u;
+        }
+      }
+      series.push({date: rows[i].date, a: units * p, b: null, units});
+      ledger.push({date: rows[i].date, price: p, contrib, bought, distU: du, units, value: units*p});
+    }
+    const endPrice = rows[rows.length-1][basis];
+    const shortfall = units - actualUnits;
+    S.result = {
+      mode:'units', rows, series, ledger, dists, warnings: warningsOut, basis,
+      A: units, B: actualUnits, shortfall, endPrice, loss: shortfall * endPrice,
+      openUnits, boughtUnits, distUnitsTotal, totalNet, totalGross,
+      start: rows[0].date, end: rows[rows.length-1].date,
+    };
+  }
+  $('calcMsg').textContent = '';
+  renderResults();
+}
+$('calcBtn').addEventListener('click', calculate);
+
+/* ---------------- results rendering ---------------- */
+function renderResults(){
+  const R = S.result;
+  $('results').classList.remove('hidden');
+  const cards = $('statCards');
+  const bw = $('breakdownWrap');
+
+  if (R.mode === 'cash'){
+    const sign = R.net >= 0 ? 'neg' : 'pos';
+    cards.innerHTML = `
+      <div class="stat"><div class="lbl">A · Counterfactual (invested)</div><div class="val">${fmt$(R.A)}</div><div class="sub2">contributions invested on receipt, distributions reinvested</div></div>
+      <div class="stat"><div class="lbl">B · Actual (sat in cash)</div><div class="val">${fmt$(R.B)}</div><div class="sub2">${fmt$(R.totalNet)} contributions + ${fmt$(R.interestTotal)} interest</div></div>
+      <div class="stat hero"><div class="lbl">Net opportunity cost (A − B)</div><div class="val ${sign}">${fmt$(R.net)}</div><div class="sub2">${fmtDate(R.start)} – ${fmtDate(R.end)} · ${R.basis.toUpperCase()} basis</div></div>`;
+    bw.innerHTML = `
+      <table style="max-width:560px">
+        <tr><td>Market growth foregone on the contributions (excl. distributions)</td><td>${fmt$(R.growthForegone)}</td></tr>
+        <tr><td>Missed distributions on the counterfactual units</td><td>${fmt$(R.distTotal)}</td></tr>
+        <tr><td>Less: interest earned on the idle cash${R.intMode==='actual'?' (apportioned)':''}</td><td>${fmt$(-R.interestTotal)}</td></tr>
+        <tr><th>Net opportunity cost</th><th>${fmt$(R.net)}</th></tr>
+      </table>`;
+    $('chartTitle').textContent = 'Counterfactual invested value vs actual cash balance';
+  } else {
+    const sign = R.loss >= 0 ? 'neg' : 'pos';
+    cards.innerHTML = `
+      <div class="stat"><div class="lbl">A · Counterfactual units</div><div class="val">${fmtU(R.A)}</div><div class="sub2">${fmtU(R.openUnits)} opening + ${fmtU(R.boughtUnits)} purchased + ${fmtU(R.distUnitsTotal)} distribution units</div></div>
+      <div class="stat"><div class="lbl">B · Actual units held</div><div class="val">${fmtU(R.B)}</div><div class="sub2">at ${fmtDate(R.end)}</div></div>
+      <div class="stat hero"><div class="lbl">Opportunity loss (shortfall × ${fmt$(R.endPrice,4)})</div><div class="val ${sign}">${fmt$(R.loss)}</div><div class="sub2">${fmtU(R.shortfall)} unit shortfall</div></div>`;
+    bw.innerHTML = '';
+    $('chartTitle').textContent = 'Counterfactual portfolio value (units × price)';
+  }
+
+  if (R.warnings.length){
+    bw.innerHTML += `<div class="warn">${R.warnings.map(w=>'• '+w).join('<br>')}</div>`;
+  }
+  if (R.dists.length){
+    bw.innerHTML += `<div class="note">Distributions modelled: ${R.dists.map(d=>
+      `${fmtDate(d.ex)} @ ${d.cpu} c/u → ${R.mode==='cash' ? fmt$(d.cash||0) : fmtU(d.unitsCredited||0)+' units'} credited ${fmtDate(R.rows[d.creditIdx].date)}`).join(' · ')}</div>`;
+  }
+
+  drawChart();
+  renderLedger();
+  renderMeth();
+}
+
+/* ---------------- chart (2 series max, validated palette slots 1–2) ---------------- */
+function drawChart(){
+  const R = S.result;
+  const box = $('chartbox');
+  const svg = $('chart');
+  const W = Math.max(560, box.clientWidth || 900), H = 340;
+  const m = {t:16, r:110, b:34, l:64};
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const twoSeries = R.mode === 'cash';
+  const ys = R.series.map(s=>s.a).concat(twoSeries ? R.series.map(s=>s.b) : []);
+  const ymin = 0, ymax = Math.max(...ys) * 1.06 || 1;
+  const n = R.series.length;
+  const x = i => m.l + (n<=1 ? 0 : i/(n-1)*iw);
+  const y = v => m.t + ih - (v-ymin)/(ymax-ymin)*ih;
+
+  const css = getComputedStyle(document.documentElement);
+  const c1 = css.getPropertyValue('--series-1').trim();
+  const c2 = css.getPropertyValue('--series-2').trim();
+  const grid = css.getPropertyValue('--border').trim();
+  const tmut = css.getPropertyValue('--text-muted').trim();
+  const tsec = css.getPropertyValue('--text-secondary').trim();
+
+  let el = `<g>`;
+  // recessive horizontal grid + y labels
+  const steps = 4;
+  for (let k=0;k<=steps;k++){
+    const v = ymin + (ymax-ymin)*k/steps;
+    el += `<line x1="${m.l}" x2="${m.l+iw}" y1="${y(v)}" y2="${y(v)}" stroke="${grid}" stroke-width="1"/>`;
+    el += `<text x="${m.l-8}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="${tmut}">${R.mode==='cash'? '$'+Math.round(v).toLocaleString() : '$'+Math.round(v).toLocaleString()}</text>`;
+  }
+  // x ticks: ~6 labels
+  const ticks = Math.min(6, n);
+  for (let k=0;k<ticks;k++){
+    const i = Math.round(k*(n-1)/(ticks-1||1));
+    el += `<text x="${x(i)}" y="${H-10}" text-anchor="middle" font-size="11" fill="${tmut}">${fmtDate(R.series[i].date).slice(0,6)}</text>`;
+  }
+  const path = key => R.series.map((s,i)=> (i?'L':'M')+x(i).toFixed(1)+' '+y(s[key]).toFixed(1)).join('');
+  if (twoSeries){
+    el += `<path d="${path('b')}" fill="none" stroke="${c2}" stroke-width="2" stroke-linejoin="round"/>`;
+  }
+  el += `<path d="${path('a')}" fill="none" stroke="${c1}" stroke-width="2" stroke-linejoin="round"/>`;
+  // direct labels at line ends
+  const lastI = n-1;
+  el += `<text x="${x(lastI)+6}" y="${y(R.series[lastI].a)+4}" font-size="12" font-weight="600" fill="${tsec}">Counterfactual</text>`;
+  if (twoSeries){
+    let yb = y(R.series[lastI].b);
+    if (Math.abs(yb - y(R.series[lastI].a)) < 16) yb = y(R.series[lastI].a) + (yb >= y(R.series[lastI].a) ? 16 : -16);
+    el += `<text x="${x(lastI)+6}" y="${yb+4}" font-size="12" font-weight="600" fill="${tsec}">Actual</text>`;
+  } else {
+    // actual endpoint marker
+    const ep = R.B * R.endPrice;
+    el += `<circle cx="${x(lastI)}" cy="${y(ep)}" r="5" fill="${c2}" stroke="${css.getPropertyValue('--card').trim()}" stroke-width="2"/>`;
+    el += `<text x="${x(lastI)+6}" y="${y(ep)+20}" font-size="12" font-weight="600" fill="${tsec}">Actual (endpoint)</text>`;
+  }
+  // crosshair + hover capture
+  el += `<line id="xhair" x1="0" x2="0" y1="${m.t}" y2="${m.t+ih}" stroke="${tmut}" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/>`;
+  el += `<circle id="dotA" r="4.5" fill="${c1}" stroke="${css.getPropertyValue('--card').trim()}" stroke-width="2" visibility="hidden"/>`;
+  if (twoSeries) el += `<circle id="dotB" r="4.5" fill="${c2}" stroke="${css.getPropertyValue('--card').trim()}" stroke-width="2" visibility="hidden"/>`;
+  el += `<rect id="hover" x="${m.l}" y="${m.t}" width="${iw}" height="${ih}" fill="transparent"/>`;
+  el += `</g>`;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = el;
+
+  $('legend').innerHTML = twoSeries
+    ? `<span><span class="sw" style="background:${c1}"></span>Counterfactual — invested</span>
+       <span><span class="sw" style="background:${c2}"></span>Actual — cash</span>`
+    : `<span><span class="sw" style="background:${c1}"></span>Counterfactual value</span>
+       <span><span class="sw" style="background:${c2}"></span>Actual units at end date</span>`;
+
+  const tt = $('tooltip');
+  const hover = svg.querySelector('#hover');
+  const xh = svg.querySelector('#xhair'), dA = svg.querySelector('#dotA'), dB = svg.querySelector('#dotB');
+  hover.addEventListener('mousemove', e=>{
+    const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    const sp = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const i = Math.max(0, Math.min(n-1, Math.round((sp.x - m.l)/(iw||1)*(n-1))));
+    const s = R.series[i];
+    xh.setAttribute('x1', x(i)); xh.setAttribute('x2', x(i)); xh.setAttribute('visibility','visible');
+    dA.setAttribute('cx', x(i)); dA.setAttribute('cy', y(s.a)); dA.setAttribute('visibility','visible');
+    if (dB){ dB.setAttribute('cx', x(i)); dB.setAttribute('cy', y(s.b)); dB.setAttribute('visibility','visible'); }
+    let html = `<div class="tt-date">${fmtDate(s.date)}</div>
+      <div class="tt-row"><span><span class="sw" style="background:${c1}"></span>Counterfactual</span><strong>${fmt$(s.a)}</strong></div>`;
+    if (R.mode==='cash') html += `<div class="tt-row"><span><span class="sw" style="background:${c2}"></span>Actual cash</span><strong>${fmt$(s.b)}</strong></div>
+      <div class="tt-row" style="margin-top:3px; border-top:1px solid var(--border); padding-top:3px"><span>Gap</span><strong>${fmt$(s.a-s.b)}</strong></div>`;
+    else html += `<div class="tt-row"><span>Units</span><strong>${fmtU(s.units)}</strong></div>`;
+    tt.innerHTML = html;
+    tt.style.display = 'block';
+    const bb = box.getBoundingClientRect();
+    let lx = e.clientX - bb.left + 16;
+    if (lx + 220 > bb.width) lx = e.clientX - bb.left - 230;
+    tt.style.left = lx+'px';
+    tt.style.top = (e.clientY - bb.top - 20)+'px';
+  });
+  hover.addEventListener('mouseleave', ()=>{
+    tt.style.display='none';
+    xh.setAttribute('visibility','hidden'); dA.setAttribute('visibility','hidden');
+    if (dB) dB.setAttribute('visibility','hidden');
+  });
+}
+window.addEventListener('resize', ()=>{ if (S.result) drawChart(); });
+
+/* ---------------- ledger ---------------- */
+function renderLedger(){
+  const R = S.result;
+  const head = $('ledgerHead'), body = $('ledgerBody');
+  const pct = v => v==null ? '' : (v*100).toFixed(3)+'%';
+  if (R.mode==='cash'){
+    head.innerHTML = `<tr><th>Date</th><th>${R.basis.toUpperCase()} $</th><th>Return</th><th>Contribution (net)</th><th>Dist credit</th><th>Counterfactual $</th><th>Interest</th><th>Actual cash $</th></tr>`;
+    body.innerHTML = R.ledger.map(l=>`<tr><td>${fmtDate(l.date)}</td><td>${l.price.toFixed(4)}</td><td>${pct(l.ret)}</td><td>${l.contrib?fmt$(l.contrib):''}</td><td>${l.distCredit?fmt$(l.distCredit):''}</td><td>${fmt$(l.cf)}</td><td>${l.int?fmt$(l.int):''}</td><td>${fmt$(l.actual)}</td></tr>`).join('');
+  } else {
+    head.innerHTML = `<tr><th>Date</th><th>${R.basis.toUpperCase()} $</th><th>Contribution (net)</th><th>Units bought</th><th>Dist units</th><th>Cumulative units</th><th>Value $</th></tr>`;
+    body.innerHTML = R.ledger.map(l=>`<tr><td>${fmtDate(l.date)}</td><td>${l.price.toFixed(4)}</td><td>${l.contrib?fmt$(l.contrib):''}</td><td>${l.bought?fmtU(l.bought):''}</td><td>${l.distU?fmtU(l.distU):''}</td><td>${fmtU(l.units)}</td><td>${fmt$(l.value)}</td></tr>`).join('');
+  }
+}
+
+/* ---------------- methodology text ---------------- */
+function renderMeth(){
+  const R = S.result;
+  const client = $('clientName').value || '(client)';
+  const fund = $('fundName').value || '(fund)';
+  const feeOn = $('feeOn').value==='yes';
+  const feeTxt = feeOn
+    ? `The adviser service fee of ${fmt$(parseNum($('advFee').value)??0)}/month${(parseNum($('adminFee').value)??0)>0?` plus ${fmt$(parseNum($('adminFee').value)??0)} admin/platform charges`:''} is debited from the cash contributions, so the counterfactual invests the NET amount. The fees are payable in both scenarios and are not treated as recoverable.`
+    : `No advice fee is deducted from the contributions — the full contribution amount is modelled as investable.`;
+  let core;
+  if (R.mode==='cash'){
+    const intTxt = {
+      none: 'No interest is credited on the idle cash.',
+      rate: `Interest on the idle cash is accrued daily at ${(R.rate*100).toFixed(2)}% p.a. on the contributions' running balance and credited monthly (total ${fmt$(R.interestTotal)}). Interest on any pre-existing base cash is earned in both scenarios and cancels out.`,
+      actual: `Actual interest credits are apportioned to the contributions pro-rata by balance share immediately before each credit (base cash at start ${fmt$(R.baseCash0)}); the apportioned total of ${fmt$(R.interestTotal)} is the valid offset — interest on the base cash is earned either way.`,
+    }[R.intMode];
+    core = `
+      <p><strong>Counterfactual (A):</strong> each net contribution is invested in the fund on its date; daily returns are measured on the ${R.basis.toUpperCase()} price (workbook convention: the contribution participates in the return on its investment day). Value<sub>t</sub> = (Value<sub>t−1</sub> + Contribution<sub>t</sub>) × (1 + r<sub>t</sub>) + DistributionCredit<sub>t</sub>. Distributions are computed as units held at the ex-date × CPU and credited on the reinvest date. A = ${fmt$(R.A)}.</p>
+      <p><strong>Actual (B):</strong> the contributions sat in the cash account. ${intTxt} B = ${fmt$(R.B)}.</p>
+      <p><strong>Net opportunity cost (A − B) = ${fmt$(R.net)}</strong>, reconciled as market growth foregone ${fmt$(R.growthForegone)} + missed distributions ${fmt$(R.distTotal)} − interest earned ${fmt$(R.interestTotal)}.</p>`;
+  } else {
+    core = `
+      <p><strong>Counterfactual (A):</strong> starting from ${fmtU(R.openUnits)} units, the net contribution buys units at each contribution date's ${R.basis.toUpperCase()} price; each distribution is computed on units held at its ex-date (units × CPU) and converted to units at the reinvest price, compounding into later ex-dates. A = ${fmtU(R.A)} units.</p>
+      <p><strong>Actual (B):</strong> ${fmtU(R.B)} units held at ${fmtDate(R.end)}, per platform valuation (post-comparison-date purchases backed out).</p>
+      <p><strong>Opportunity loss = ${fmtU(R.shortfall)} units × ${fmt$(R.endPrice,4)} = ${fmt$(R.loss)}.</strong> This excludes the fees themselves, which are payable either way.</p>`;
+  }
+  $('methBox').innerHTML = `
+    <p><strong>${client}</strong> · ${fund} · ${fmtDate(R.start)} – ${fmtDate(R.end)} · ${R.rows.length} pricing days · prepared ${fmtDate(new Date().toISOString().slice(0,10))}</p>
+    <p><strong>Scope:</strong> only the scheduled contributions (${fmt$(R.totalGross)} gross${R.totalGross!==R.totalNet?`, ${fmt$(R.totalNet)} net of fees`:''}) are treated as out of market. Any existing invested balance experienced actual market growth in both scenarios and carries no opportunity cost; pre-existing cash is excluded because its interest is earned either way.</p>
+    <p><strong>Fees:</strong> ${feeTxt}</p>
+    ${core}
+    <p><strong>Assumptions &amp; limitations:</strong> same-day investment with no processing lag; contributions on non-pricing days move to the next pricing day; ${R.basis.toUpperCase()}-price basis is a stated convention (Sell or NAV would change the result immaterially); distributions assumed reinvested; tax ignored on both sides; fund management costs are embedded in unit prices; adviser/platform fees are modelled only as reductions of the investable contribution, never as recoverable amounts.</p>`;
+}
+
+/* ---------------- export / print ---------------- */
+$('csvBtn').addEventListener('click', ()=>{
+  const R = S.result; if (!R) return;
+  let csv;
+  if (R.mode==='cash'){
+    csv = 'Date,Price,Return,Contribution (net),Distribution credit,Counterfactual value,Interest,Actual cash\n' +
+      R.ledger.map(l=>[l.date, l.price, l.ret??'', l.contrib||'', l.distCredit||'', l.cf.toFixed(2), l.int?l.int.toFixed(2):'', l.actual.toFixed(2)].join(',')).join('\n');
+  } else {
+    csv = 'Date,Price,Contribution (net),Units bought,Distribution units,Cumulative units,Value\n' +
+      R.ledger.map(l=>[l.date, l.price, l.contrib||'', l.bought?l.bought.toFixed(4):'', l.distU?l.distU.toFixed(4):'', l.units.toFixed(4), l.value.toFixed(2)].join(',')).join('\n');
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = 'tom-ledger.csv';
+  a.click();
+});
+$('printBtn').addEventListener('click', ()=> window.print());
+
+updateFeeUI();
+renderDists();
+</script>
+</body>
+</html>
