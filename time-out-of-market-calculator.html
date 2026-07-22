@@ -283,14 +283,14 @@ const DEFAULTS = () => ({
   scenario:'contribCash', basis:'buy', theme:'night',
   clientName:'', fundName:'', office:'mws1', adviserName:'',
   tomStart:'', tomEnd:'',
-  grossContrib:'2300', contribDay:'6', feeOn:'no', advFee:'187.50', adminFee:'0',
-  intMode:'actual', intRate:'4.0', baseCash:'0',
+  grossContrib:'', contribDay:'6', feeOn:'no', advFee:'', adminFee:'',
+  intMode:'actual', intRate:'', baseCash:'',
   startCash:'', startInv:'', endCash:'', endInv:'',
   cashTx:[],
-  openUnits:'0', actualUnits:'0',
-  lumpAmt:'100000',
-  swMode:'units', swAmt:'10000', swRate:'0', swSell:'', swBuy:'',
-  phLump:'120000', phN:'6', phEvery:'1', phRate:'0',
+  openUnits:'', actualUnits:'',
+  lumpAmt:'',
+  swMode:'units', swAmt:'', swRate:'', swSell:'', swBuy:'',
+  phLump:'', phN:'6', phEvery:'1', phRate:'',
   prices:[], dists:[], sched:[], intCredits:[], phInst:[],
 });
 let F = DEFAULTS();
@@ -645,18 +645,6 @@ function scrapeBalances(text){
   return {cash,inv,total};
 }
 function balTotal(cashK,invK){ const c=parseNum(F[cashK]),i=parseNum(F[invK]); if(c==null&&i==null)return null; return (c||0)+(i||0); }
-function loadSample(){
-  const rows=[]; let p=1.60; let d=new Date('2025-04-01'); const end=new Date('2025-08-29'); let seed=42;
-  const rand=()=>{seed=(seed*1103515245+12345)%2147483648;return seed/2147483648;};
-  while(d<=end){const dow=d.getDay();if(dow!==0&&dow!==6){p=p*(1+(rand()-0.47)*0.012);rows.push({date:iso(d.getFullYear(),d.getMonth(),d.getDate()),buy:+p.toFixed(4),sell:+(p*0.9994).toFixed(4),nav:+(p*0.9997).toFixed(4)});}d.setDate(d.getDate()+1);}
-  setPrices(rows);
-  F.dists=[{ex:'2025-06-30',cpu:1.9694,reinvest:'2025-07-01',price:rows.find(r=>r.date>='2025-07-01').buy}];
-  if(!F.clientName)F.clientName='Sample Client'; if(!F.fundName)F.fundName='Sample Growth Fund (synthetic prices)';
-  if(!F.startCash)F.startCash='5271.93'; if(!F.startInv)F.startInv='157871.10';
-  if(F.scenario==='contribCash'||F.scenario==='feeDrag'){F.sched=[];genSchedule();return;}
-  if(F.scenario==='phasing'){genPhasing();return;}
-  render();
-}
 
 /* ================= UNDO / REDO / RESET ================= */
 const __undo={stack:[],redo:[],last:'',restoring:false,cap:50};
@@ -987,7 +975,6 @@ function body_prices(){
         <div class="upload-lbl">…or paste from Excel</div>
         <textarea id="pricePaste" rows="5" placeholder="Date&#9;Buy&#9;Sell&#9;NAV&#10;22 Apr 2025&#9;$1.5554&#9;$1.5549&#9;$1.5549"></textarea>
         <div class="row" style="margin-top:8px"><button class="btn btn-blue btn-sm" onclick="handlePriceText($('pricePaste').value)">Parse pasted prices</button>
-          <button class="btn btn-sm" onclick="loadSample()">Sample data</button>
           ${F.prices.length?`<button class="btn btn-ghost btn-sm" onclick="F.prices=[];render()">Clear</button>`:''}</div>
       </div>
     </div>
