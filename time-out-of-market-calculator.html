@@ -1,965 +1,944 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-AU">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Time Out of Market Calculator</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Time Out of Market Calculator — My Wealth Solutions</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Nunito+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    color-scheme: light;
-    --surface-1:#fcfcfb; --surface-2:#f2f1ee; --card:#ffffff;
-    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#7a7973;
-    --border:#dddcd6; --accent:#2a78d6;
-    --series-1:#2a78d6;   /* counterfactual — categorical slot 1 (validated palette) */
-    --series-2:#eb6834;   /* actual — categorical slot 2 */
-    --good:#008300; --bad:#c62f2e; --warnbg:#fff7e6; --warnborder:#eda100;
-    --infobg:#eef4fc; --infoborder:#2a78d6;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:where(:not([data-theme="light"])) {
-      color-scheme: dark;
-      --surface-1:#1a1a19; --surface-2:#232322; --card:#212120;
-      --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#8f8e86;
-      --border:#3a3936; --accent:#3987e5;
-      --series-1:#3987e5; --series-2:#d95926;
-      --good:#4caf50; --bad:#e66767; --warnbg:#2b2413; --warnborder:#c98500;
-      --infobg:#16233a; --infoborder:#3987e5;
-    }
-  }
-  * { box-sizing:border-box; }
-  body {
-    margin:0; background:var(--surface-1); color:var(--text-primary);
-    font:15px/1.5 "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
-  }
-  .wrap { max-width:1060px; margin:0 auto; padding:24px 20px 80px; }
-  h1 { font-size:26px; margin:0 0 4px; }
-  h2 { font-size:18px; margin:0 0 12px; }
-  h3 { font-size:15px; margin:16px 0 8px; }
-  .sub { color:var(--text-secondary); margin:0 0 24px; }
-  .card {
-    background:var(--card); border:1px solid var(--border); border-radius:10px;
-    padding:18px 20px; margin-bottom:18px;
-  }
-  .stepnum {
-    display:inline-flex; width:24px; height:24px; border-radius:50%;
-    background:var(--accent); color:#fff; align-items:center; justify-content:center;
-    font-size:13px; font-weight:600; margin-right:8px; flex:none;
-  }
-  .h-row { display:flex; align-items:center; margin-bottom:10px; }
-  label { display:block; font-size:13px; color:var(--text-secondary); margin-bottom:3px; }
-  input[type=text], input[type=number], input[type=date], select, textarea {
-    width:100%; padding:7px 9px; border:1px solid var(--border); border-radius:6px;
-    background:var(--surface-1); color:var(--text-primary); font:inherit; font-size:14px;
-  }
-  textarea { font-family:ui-monospace, Consolas, monospace; font-size:12.5px; }
-  .grid { display:grid; gap:14px; }
-  .g2 { grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); }
-  .g3 { grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); }
-  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:end; }
-  button {
-    padding:8px 14px; border:1px solid var(--border); border-radius:6px;
-    background:var(--surface-2); color:var(--text-primary); font:inherit; font-size:14px;
-    cursor:pointer;
-  }
-  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
-  button.small { padding:4px 9px; font-size:12.5px; }
-  button:hover { filter:brightness(0.96); }
-  .pill {
-    display:inline-block; padding:2px 10px; border-radius:999px; font-size:12.5px;
-    background:var(--surface-2); color:var(--text-secondary); margin-left:8px;
-  }
-  .pill.ok { background:color-mix(in srgb, var(--good) 14%, var(--surface-2)); color:var(--good); font-weight:600; }
-  .note { font-size:13px; color:var(--text-muted); margin-top:8px; }
-  .info {
-    background:var(--infobg); border-left:3px solid var(--infoborder);
-    padding:10px 14px; border-radius:0 8px 8px 0; font-size:13.5px; margin:10px 0;
-    color:var(--text-secondary);
-  }
-  .warn {
-    background:var(--warnbg); border-left:3px solid var(--warnborder);
-    padding:10px 14px; border-radius:0 8px 8px 0; font-size:13.5px; margin:10px 0;
-    color:var(--text-secondary);
-  }
-  .drop {
-    border:2px dashed var(--border); border-radius:8px; padding:14px; text-align:center;
-    color:var(--text-muted); font-size:13.5px; cursor:pointer; transition:border-color .15s;
-  }
-  .drop.over { border-color:var(--accent); color:var(--accent); }
-  table { border-collapse:collapse; width:100%; font-size:13px; }
-  th, td { padding:5px 9px; border-bottom:1px solid var(--border); text-align:right; white-space:nowrap; }
-  th { color:var(--text-secondary); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.03em; }
-  th:first-child, td:first-child { text-align:left; }
-  .sched-table input { padding:4px 6px; font-size:13px; }
-  .sched-table td { text-align:left; }
-  .scenario-desc { font-size:13.5px; color:var(--text-secondary); margin:8px 0 14px; padding:10px 14px; background:var(--surface-2); border-radius:8px; }
-  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-bottom:16px; }
-  .stat { background:var(--surface-2); border-radius:10px; padding:14px 16px; }
-  .stat .lbl { font-size:12.5px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.04em; }
-  .stat .val { font-size:24px; font-weight:700; margin-top:2px; font-variant-numeric:tabular-nums; }
-  .stat .sub2 { font-size:12.5px; color:var(--text-muted); margin-top:2px; }
-  .stat.hero { background:color-mix(in srgb, var(--series-1) 10%, var(--surface-2)); }
-  .neg { color:var(--bad); } .pos { color:var(--good); }
-  .chartbox { position:relative; margin:6px 0 4px; }
-  .chartbox svg { display:block; width:100%; height:auto; }
-  .tooltip {
-    position:absolute; pointer-events:none; background:var(--card); border:1px solid var(--border);
-    border-radius:8px; padding:8px 12px; font-size:12.5px; box-shadow:0 4px 14px rgba(0,0,0,.14);
-    display:none; z-index:5; min-width:180px;
-  }
-  .tooltip .tt-date { font-weight:600; margin-bottom:4px; }
-  .tt-row { display:flex; justify-content:space-between; gap:14px; }
-  .tt-row .sw, .legend .sw { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; }
-  .legend { display:flex; gap:18px; font-size:13px; color:var(--text-secondary); margin-top:2px; flex-wrap:wrap; }
-  details summary { cursor:pointer; font-weight:600; margin-bottom:8px; }
-  .ledger-wrap { overflow-x:auto; max-height:420px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; }
-  .ledger-wrap th { position:sticky; top:0; background:var(--card); }
-  .meth { font-size:13.5px; color:var(--text-secondary); }
-  .meth p { margin:6px 0; }
-  .hidden { display:none !important; }
-  code { background:var(--surface-2); padding:1px 5px; border-radius:4px; font-size:12.5px; }
-  @media print {
-    body { background:#fff; color:#000; }
-    .no-print, textarea, .drop { display:none !important; }
-    .card { border:none; padding:8px 0; page-break-inside:avoid; }
-    .ledger-wrap { max-height:none; overflow:visible; border:none; }
-  }
+@import url('https://fonts.cdnfonts.com/css/abc-arizona-flare');
+@import url('https://fonts.cdnfonts.com/css/abc-arizona-serif');
+
+/* ============ DESIGN TOKENS (from the MyWealth ROA generator) ============ */
+:root{
+  --bg:#eef2f6; --surface:#ffffff; --surface-2:#eef3f8; --row-alt:#f1f5fa; --input-bg:#f7fafd;
+  --border:#d4dde7; --border-soft:#e6edf4; --border-strong:#c4d0dc;
+  --navy:#0C2E3F; --navy-deep:#0a2433; --chrome:#0C2E3F; --chrome-deep:#0a2433; --heading:#0C2E3F;
+  --blue:#2B6FD6; --blue-bright:#3B82E6; --blue-light:#e8f1fb; --blue-soft:#7fb0ef;
+  --coral:#F56A5A; --coral-light:#fdeeec; --lime:#CFE87F; --lime-dark:#4a6a10; --lime-light:#f1f7df;
+  --text:#16242e; --text-dim:#42586a; --text-muted:#5c6b78; --text-faint:#9aa6b2;
+  --green:#27ae60; --green-light:#e8f5e9; --green-dark:#2e7d32;
+  --red:#d63031; --red-light:#fdeaea; --amber:#b8860b; --amber-light:#fef6e0;
+  --series-1:#2B6FD6; --series-2:#F56A5A;
+  --hf:'ABC Arizona Flare','ABC Arizona Serif','Playfair Display','Georgia',serif;
+  --bf:'Nunito Sans','Nunito',-apple-system,BlinkMacSystemFont,sans-serif;
+  --shadow-sm:0 1px 2px rgba(12,46,63,.04); --shadow:0 2px 6px rgba(12,46,63,.06);
+  --shadow-md:0 4px 12px rgba(12,46,63,.08); --shadow-lg:0 8px 24px rgba(12,46,63,.08);
+}
+[data-theme="night"]{
+  --bg:#1C394E; --surface:#224A68; --surface-2:#2A5379; --row-alt:#27506F; --input-bg:#2F4A45;
+  --border:#345a7b; --border-soft:#2c4f6e; --border-strong:#456a88; --chrome:#15293c; --chrome-deep:#2c4964;
+  --navy:#2A5D8A; --navy-deep:#23547F; --heading:#f1f6fb;
+  --blue:#8fbdf0; --blue-bright:#a9d0fb; --blue-light:#284f72; --blue-soft:#3d6585;
+  --coral:#ff7a68; --coral-light:#5a2420; --lime:#CCE185; --lime-dark:#CCE185; --lime-light:#33401c;
+  --text:#e9f1f8; --text-dim:#c4d3df; --text-muted:#a9bfd0; --text-faint:#90a8b8;
+  --green:#5bb55b; --green-light:#1f3d33; --green-dark:#8fd08f;
+  --red:#f1707a; --red-light:#3f2024; --amber:#e6b34d; --amber-light:#3a3320;
+  --series-1:#8fbdf0; --series-2:#ff7a68;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font-family:var(--bf);font-size:14px;line-height:1.5;min-height:100vh}
+h1,h2,h3{font-family:var(--hf);color:var(--heading);margin:0;font-weight:600}
+a{color:inherit}
+em{font-style:italic}
+
+/* ============ TOPBAR ============ */
+.topbar{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:20px;padding:9px 24px;background:var(--chrome);border-bottom:1px solid var(--chrome-deep);position:sticky;top:0;z-index:50}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.brand{display:flex;align-items:center;cursor:pointer}
+.brand-stack{display:flex;flex-direction:column;line-height:1}
+.brand-name{font-family:var(--hf)!important;font-size:19px;font-weight:700;color:#fff;letter-spacing:-.02em}
+.brand-solutions{font-size:7px;letter-spacing:3.4px;color:rgba(255,255,255,.55);font-weight:700;margin-top:3px;text-transform:uppercase}
+.tool-label{font-size:9px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:1.6px;font-weight:700;line-height:1.5;padding-left:14px;border-left:1px solid rgba(255,255,255,.15)}
+.topbar-mid{display:flex;align-items:center;justify-content:center;gap:14px;min-width:0}
+.topbar-status{font-size:11px;color:rgba(255,255,255,.6);font-weight:600;white-space:nowrap}
+.topnav{display:flex;gap:2px;align-items:center;justify-content:center}
+.topnav a{padding:7px 13px;font-size:12px;font-weight:600;color:rgba(255,255,255,.75);text-decoration:none;border-radius:11px;cursor:pointer;transition:all .12s;white-space:nowrap}
+.topnav a:hover{background:rgba(255,255,255,.1);color:#fff}
+.topnav a.active{background:var(--blue);color:#fff}
+.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.topbar .top-actions .btn-ghost{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.25);color:#fff}
+.topbar .top-actions .btn-ghost:hover{background:rgba(255,255,255,.18)}
+.topbar .top-actions .import-btn{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.4);color:#fff}
+.topbar .top-actions .import-btn:hover{background:rgba(255,255,255,.18)}
+.theme-toggle-icon{font-size:14px;line-height:1}
+
+/* ============ BUTTONS ============ */
+.btn{background:var(--surface);color:var(--text);border:1px solid var(--border);padding:7px 14px;border-radius:10px;font-family:var(--bf);font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;text-decoration:none}
+.btn:hover{background:var(--surface-2);border-color:var(--border-strong)}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-primary:hover{background:var(--navy-deep);color:#fff}
+.btn-blue{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-blue:hover{background:#0958c0;color:#fff}
+.btn-coral{background:var(--coral);color:#fff;border-color:var(--coral)}
+.btn-lime{background:var(--lime);color:var(--navy);border-color:var(--lime)}
+.btn-green{background:#27ae60;color:#fff;border-color:#27ae60}
+.btn-green:hover{background:#219a52;color:#fff}
+.btn-ghost{background:transparent;border-color:var(--border)}
+.btn-danger{background:var(--red-light);color:var(--red);border-color:var(--red-light)}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-xs{padding:3px 8px;font-size:10px}
+.import-btn{cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);padding:7px 14px;border-radius:10px;font-size:12px;font-weight:700;background:var(--surface)}
+
+/* ============ LAYOUT ============ */
+.main{flex:1;padding:20px;max-width:1280px;width:100%;margin:0 auto}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow-sm);margin-bottom:12px}
+.card h2{margin-bottom:3px;font-size:17px}
+.card-sub{font-size:11.5px;color:var(--text-muted);margin-bottom:12px}
+
+/* ============ HERO ============ */
+.hero{background:linear-gradient(135deg,var(--chrome) 0%,var(--chrome-deep) 100%);border:1px solid var(--chrome-deep);color:#fff;padding:22px 24px 20px;border-radius:16px;margin-bottom:16px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-30%;right:-10%;width:420px;height:420px;background:radial-gradient(circle,rgba(255,101,80,.14),transparent 65%);pointer-events:none}
+.hero-inner{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.hero-left{flex:1;min-width:240px}
+.hero-sub{font-family:var(--bf);font-size:10px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:2px;font-weight:700;margin-bottom:5px}
+.hero h1{font-size:28px;color:#fff;line-height:1.08;font-weight:600;letter-spacing:-.01em}
+.hero h1 em{font-style:italic;color:var(--coral);font-weight:400}
+.hero-tag{font-size:12px;color:rgba(255,255,255,.85);margin-top:8px;max-width:640px;line-height:1.55}
+
+/* ============ PICKER ============ */
+.picker-intro{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 18px;margin-bottom:14px}
+.picker-intro h3{font-size:14px;margin-bottom:2px}
+.picker-intro p{font-size:11.5px;color:var(--text-dim)}
+.scenario-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:12px}
+.scenario-card{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:14px 15px;cursor:pointer;text-align:left;transition:all .15s;position:relative;user-select:none;display:flex;flex-direction:column;gap:5px}
+.scenario-card:hover{border-color:var(--blue);box-shadow:var(--shadow)}
+.scenario-card.selected{border-color:var(--blue);background:var(--blue-light);box-shadow:var(--shadow-md)}
+.scenario-card.selected::after{content:'✓';position:absolute;top:8px;right:10px;width:18px;height:18px;background:var(--blue);color:#fff;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.scenario-card .sc-tag{font-size:9px;text-transform:uppercase;letter-spacing:1px;font-weight:700;color:var(--blue)}
+.scenario-card .sc-name{font-family:var(--hf);font-size:15px;font-weight:700;color:var(--heading);line-height:1.15;padding-right:14px}
+.scenario-card .sc-desc{font-size:11px;color:var(--text-muted);line-height:1.4}
+
+/* ============ WIZARD ============ */
+.wizard-wrap{margin:0 auto;padding:14px 0 90px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:18px;align-items:start;max-width:1180px}
+.wizard-side{position:sticky;top:66px;background:var(--surface);border:1px solid var(--border-soft);border-radius:14px;padding:10px 8px;box-shadow:0 1px 3px rgba(0,0,0,.04);max-height:calc(100vh - 86px);overflow:auto}
+.sidebar-page-heading{font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:800;color:var(--text-faint);margin:2px 4px 8px}
+.wizard-steps-v{display:flex;flex-direction:column;gap:4px}
+.wizard-step{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:transparent;border:1px solid transparent;border-radius:10px;padding:7px 9px;cursor:pointer;font-size:12px;color:var(--text-dim);font-family:var(--bf)}
+.wizard-step .ws-dot{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-2);border:1px solid var(--border-strong);font-size:10.5px;font-weight:700;color:var(--text-dim);flex:0 0 auto}
+.wizard-step .ws-label{white-space:normal;line-height:1.25}
+.wizard-step.done .ws-dot{background:var(--green-light);border-color:var(--green);color:var(--green-dark)}
+.wizard-step.todo .ws-dot{background:var(--amber-light);border-color:var(--amber);color:var(--amber)}
+.wizard-step.current{border-color:var(--blue);background:var(--blue-light);color:var(--heading);font-weight:700}
+.wizard-step.current .ws-dot{background:var(--blue);border-color:var(--blue);color:#fff}
+.wizard-step:hover{border-color:var(--blue-soft)}
+.wizard-side-foot{margin-top:12px;padding:10px 9px;border-top:1px solid var(--border-soft)}
+.wizard-side-foot .wf-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-faint);font-weight:800}
+.wizard-side-foot .wf-val{font-family:var(--hf);font-size:20px;font-weight:700;color:var(--heading);margin-top:2px}
+.section-block{background:var(--surface);border:1px solid var(--border-soft);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);overflow:visible}
+.section-block-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding:16px 20px 6px;border-bottom:2px solid var(--blue);margin:0 20px;flex-wrap:wrap}
+.section-block-title{font-family:var(--hf);font-size:17px;font-weight:600;letter-spacing:-.01em;color:var(--heading);line-height:1.2}
+.section-block-body{padding:16px 20px 18px}
+.page-separator{display:flex;align-items:baseline;gap:10px;margin:0 0 10px}
+.page-separator-num{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--blue);background:var(--blue-light);padding:3px 9px;border-radius:8px}
+.page-separator-label{font-size:11px;color:var(--text-muted)}
+.wizard-hint{background:var(--amber-light);border:1px solid var(--amber);color:var(--amber);border-radius:10px;padding:9px 13px;font-size:12.5px;font-weight:600;margin:12px 0 0}
+.wizard-nav{display:flex;align-items:center;gap:12px;margin-top:18px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:14px;position:sticky;bottom:12px;box-shadow:0 6px 22px rgba(0,0,0,.12);z-index:5}
+.wizard-nav .wizard-nav-mid{flex:1;text-align:center;font-size:12px;color:var(--text-muted)}
+
+/* ============ FIELDS ============ */
+.field{margin-bottom:11px}
+.field label{font-family:var(--bf);font-size:11px;font-weight:600;color:var(--heading);display:block;margin-bottom:3px}
+.field input,.field select,.field textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:9px;background:var(--input-bg);color:var(--text);font-family:var(--bf);font-size:13px;transition:all .12s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--blue);background:var(--surface);box-shadow:0 0 0 2px rgba(43,111,214,.15)}
+.field textarea{min-height:64px;resize:vertical;line-height:1.5;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.field .hint{font-size:10.5px;color:var(--text-muted);margin-top:4px;line-height:1.4}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(155px,1fr))}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;background:var(--surface-2);color:var(--text-muted);margin-left:8px;font-weight:700}
+.pill.ok{background:var(--green-light);color:var(--green-dark)}
+.info{background:var(--blue-light);border-left:3px solid var(--blue);padding:10px 14px;border-radius:0 8px 8px 0;font-size:12.5px;margin:10px 0;color:var(--text-dim)}
+.warn{background:var(--amber-light);border-left:3px solid var(--amber);padding:10px 14px;border-radius:0 8px 8px 0;font-size:12.5px;margin:10px 0;color:var(--text-dim)}
+.drop{border:2px dashed var(--border-strong);border-radius:10px;padding:16px;text-align:center;color:var(--text-muted);font-size:12.5px;cursor:pointer;transition:border-color .15s;background:var(--input-bg)}
+.drop.over{border-color:var(--blue);color:var(--blue)}
+
+/* ============ TABLES ============ */
+table.data{border-collapse:collapse;width:100%;font-size:12.5px}
+table.data th,table.data td{padding:6px 9px;border-bottom:1px solid var(--border-soft);text-align:right;white-space:nowrap}
+table.data th{color:var(--text-muted);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em}
+table.data th:first-child,table.data td:first-child{text-align:left}
+.sched-table input{padding:5px 7px;font-size:12.5px;border:1px solid var(--border);border-radius:7px;background:var(--input-bg);color:var(--text);font-family:var(--bf)}
+.sched-table td{text-align:left}
+.ledger-wrap{overflow:auto;max-height:420px;border:1px solid var(--border-soft);border-radius:10px}
+.ledger-wrap th{position:sticky;top:0;background:var(--surface);z-index:1}
+
+/* ============ RESULTS ============ */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:14px}
+.stat{background:var(--surface-2);border:1px solid var(--border-soft);border-radius:12px;padding:14px 16px}
+.stat .lbl{font-size:10.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+.stat .val{font-family:var(--hf);font-size:26px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums;color:var(--heading)}
+.stat .sub2{font-size:11px;color:var(--text-muted);margin-top:3px}
+.stat.hero-stat{background:linear-gradient(135deg,var(--blue-light) 0%,var(--surface) 100%);border-color:var(--blue-soft)}
+.neg{color:var(--red)} .pos{color:var(--green-dark)}
+.chartbox{position:relative;margin:8px 0 4px;background:var(--surface);border:1px solid var(--border-soft);border-radius:12px;padding:12px}
+.chartbox svg{display:block;width:100%;height:auto}
+.tooltip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px;box-shadow:var(--shadow-md);display:none;z-index:5;min-width:180px}
+.tooltip .tt-date{font-weight:700;margin-bottom:4px;color:var(--heading)}
+.tt-row{display:flex;justify-content:space-between;gap:14px}
+.tt-row .sw,.legend .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+.legend{display:flex;gap:18px;font-size:12px;color:var(--text-dim);margin-top:4px;flex-wrap:wrap}
+.meth{font-size:12.5px;color:var(--text-dim)}
+.meth p{margin:6px 0}
+details summary{cursor:pointer;font-weight:700;color:var(--heading);margin:10px 0 8px}
+code{background:var(--surface-2);padding:1px 5px;border-radius:4px;font-size:11.5px}
+.hidden{display:none!important}
+
+@media(max-width:1080px){
+  .topbar{grid-template-columns:1fr auto;padding:10px 14px;gap:8px}
+  .topbar-mid{display:none}
+  .tool-label{display:none}
+  .wizard-wrap{grid-template-columns:1fr}
+  .wizard-side{position:static;max-height:none}
+  .main{padding:14px}
+}
+@media print{
+  body{background:#fff}
+  .topbar,.wizard-side,.wizard-nav,.no-print,.drop,textarea{display:none!important}
+  .wizard-wrap{grid-template-columns:1fr;padding:0}
+  .section-block,.card,.chartbox{border:none;box-shadow:none}
+  .ledger-wrap{max-height:none;overflow:visible}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-
-  <h1>Time Out of Market Calculator</h1>
-  <p class="sub">Standardised opportunity-cost model for money that was out of the market — for any client. Built from the E&nbsp;&amp;&nbsp;A Sibly (cash basis) and J&nbsp;&amp;&nbsp;A Wilson (units basis) Vanguard workbooks, extended with lump-sum, fund-switch and lump-sum-vs-phasing scenarios.</p>
-
-  <div class="info no-print">
-    <strong>Getting the data:</strong> download the fund's <em>price history</em> and <em>distribution history</em>
-    exports from vanguard.com.au (Prices &amp; distributions), or the platform's transaction/valuation reports
-    (CFS Edge etc.), then <strong>upload the file</strong> or <strong>paste the rows straight from Excel</strong> below —
-    the calculator detects the columns and pre-populates. (A local page can't fetch Vanguard directly: browsers block
-    cross-site requests and there's no public price API, so upload/paste is the reliable route.)
-  </div>
-
-  <!-- STEP 1 — PRICE HISTORY -->
-  <div class="card">
-    <div class="h-row"><span class="stepnum">1</span><h2 style="margin:0">Price history (Buy / Sell / NAV)<span id="priceStatus" class="pill">no data</span></h2></div>
-    <div class="grid g2 no-print">
-      <div>
-        <div class="drop" id="priceDrop">Drop the Vanguard price-history export here (.csv / .txt)<br>or click to choose a file</div>
-        <input type="file" id="priceFile" accept=".csv,.txt,.tsv" class="hidden">
-        <div class="note">Expected columns: Date, Buy, Sell, NAV (extras ignored). Dates like <code>22 Apr 2025</code>, <code>22/04/2025</code> or <code>2025-04-22</code> all work. For .xlsx, open in Excel and copy-paste instead.</div>
-      </div>
-      <div>
-        <label>…or paste rows copied from Excel (including the header row)</label>
-        <textarea id="pricePaste" rows="6" placeholder="Date	Buy	Sell	NAV&#10;22 Apr 2025	$1.5554	$1.5549	$1.5549&#10;23 Apr 2025	$1.5702	$1.5692	$1.5692"></textarea>
-        <div class="row" style="margin-top:8px">
-          <button class="primary" id="pricePasteBtn">Parse pasted prices</button>
-          <button id="sampleBtn">Load sample data (demo)</button>
-          <button id="priceClearBtn" class="small">Clear</button>
-        </div>
-      </div>
-    </div>
-    <div id="priceSummary" class="note"></div>
-  </div>
-
-  <!-- STEP 2 — DISTRIBUTIONS -->
-  <div class="card">
-    <div class="h-row"><span class="stepnum">2</span><h2 style="margin:0">Distribution history<span id="distStatus" class="pill">none</span></h2></div>
-    <div class="grid g2 no-print">
-      <div>
-        <div class="drop" id="distDrop">Drop the Vanguard distribution-history export here (.csv / .txt)<br>or click to choose a file</div>
-        <input type="file" id="distFile" accept=".csv,.txt,.tsv" class="hidden">
-        <div class="note">Expected columns: Ex-date, CPU (cents/unit), Reinvest date, Reinvest price. Leave empty if no distribution fell in the period.</div>
-      </div>
-      <div>
-        <label>…or paste from the distribution export</label>
-        <textarea id="distPaste" rows="4" placeholder="Ex date	CPU (c/unit)	Reinvest date	Reinvest price&#10;30 Jun 2025	1.969397	01 Jul 2025	$1.6714"></textarea>
-        <div class="row" style="margin-top:8px">
-          <button class="primary" id="distPasteBtn">Parse pasted distributions</button>
-          <button id="distAddBtn">+ Add row manually</button>
-        </div>
-      </div>
-    </div>
-    <div style="overflow-x:auto; margin-top:10px">
-      <table class="sched-table" id="distTable">
-        <thead><tr><th>Ex-date</th><th>CPU (cents/unit)</th><th>Reinvest date</th><th>Reinvest price $</th><th class="no-print"></th></tr></thead>
-        <tbody id="distBody"></tbody>
-      </table>
-    </div>
-    <div class="note">Distributions are computed as <em>units held at the ex-date × CPU</em> and credited on the reinvest date, so they compound into later ex-dates.</div>
-  </div>
-
-  <!-- STEP 3 — SCENARIO & ASSUMPTIONS -->
-  <div class="card">
-    <div class="h-row"><span class="stepnum">3</span><h2 style="margin:0">Scenario &amp; assumptions</h2></div>
-
-    <div class="grid g2">
-      <div>
-        <label>What happened?</label>
-        <select id="scenario">
-          <option value="contribCash">Contributions sat in cash (Sibly) — regular money never invested</option>
-          <option value="lumpCash">Lump sum sat in cash — rollover/transfer invested late</option>
-          <option value="feeDrag">Stayed invested, fee drag / off-schedule (Wilson) — units basis</option>
-          <option value="switch">Fund switch — out of market during the sell → buy gap</option>
-          <option value="phasing">Lump sum vs phased entry — did drip-feeding cost the client?</option>
-        </select>
-      </div>
-      <div>
-        <label>Return / price basis</label>
-        <select id="basis"><option value="buy" selected>Buy price</option><option value="sell">Sell price</option><option value="nav">NAV</option></select>
-      </div>
-    </div>
-    <div class="scenario-desc" id="scenarioDesc"></div>
-
-    <div class="grid g2">
-      <div><label>Client name (for the report)</label><input type="text" id="clientName" placeholder="e.g. E & A Sibly"></div>
-      <div><label>Fund</label><input type="text" id="fundName" placeholder="e.g. Vanguard Growth Index Fund"></div>
-    </div>
-
-    <!-- period (contribCash / lumpCash / feeDrag / phasing) -->
-    <div id="periodPanel" class="grid g2" style="margin-top:14px">
-      <div><label id="startLbl">Out-of-market period — start</label><input type="date" id="tomStart"></div>
-      <div><label id="endLbl">Out-of-market period — end</label><input type="date" id="tomEnd"></div>
-    </div>
-
-    <!-- CONTRIBUTIONS (contribCash / feeDrag) -->
-    <div id="contribPanel">
-      <h3>Contributions</h3>
-      <div class="grid g3">
-        <div><label>Monthly contribution (gross $)</label><input type="number" id="grossContrib" value="2300" step="10" min="0"></div>
-        <div><label>Contribution day of month</label><input type="number" id="contribDay" value="6" min="1" max="31"></div>
-        <div><label style="visibility:hidden">.</label><button class="primary no-print" id="genSchedBtn" style="width:100%">Generate schedule</button></div>
-      </div>
-    </div>
-
-    <!-- FEE (contribCash / feeDrag / lumpCash) -->
-    <div id="feePanel">
-      <div class="grid g3" style="margin-top:14px">
-        <div>
-          <label>Advice fee deducted from the contribution?</label>
-          <select id="feeOn"><option value="no" selected>No — full amount was headed for investment</option><option value="yes">Yes — fee comes out of the contribution</option></select>
-        </div>
-        <div id="feeAmtWrap" class="hidden"><label>Advice fee per contribution ($)</label><input type="number" id="advFee" value="187.50" step="0.01" min="0"></div>
-        <div id="feeAdminWrap" class="hidden"><label>Other admin/platform fees ($)</label><input type="number" id="adminFee" value="0" step="0.01" min="0"></div>
-      </div>
-      <div class="info" id="feeNote">Net invested per contribution: <strong id="netPreview">—</strong>. The fee is payable in <em>both</em> scenarios, so it is never treated as a recoverable loss — it simply reduces the amount that should have been invested (the Wilson net-basis principle).</div>
-    </div>
-
-    <!-- SCHEDULE (contribCash / feeDrag) -->
-    <div id="schedPanel">
-      <div style="overflow-x:auto; margin-top:6px">
-        <table class="sched-table" id="schedTable">
-          <thead><tr><th>Date</th><th>Type</th><th>Gross $</th><th>Net invested $</th><th>Include</th><th class="no-print"></th></tr></thead>
-          <tbody id="schedBody"></tbody>
-        </table>
-      </div>
-      <div class="row no-print" style="margin-top:8px">
-        <button id="addOneOffBtn" class="small">+ Add one-off contribution</button>
-        <span class="note" style="margin:0">One-off deposits invest in full (no fee). Contributions on a non-pricing day move to the next pricing day. Untick “Include” for contributions that were invested correctly.</span>
-      </div>
-    </div>
-
-    <!-- INTEREST (contribCash / lumpCash) -->
-    <div id="intPanel">
-      <h3>Interest earned on the idle cash (offsets the loss)</h3>
-      <div class="grid g3">
-        <div>
-          <label>Interest treatment</label>
-          <select id="intMode">
-            <option value="none">None</option>
-            <option value="rate" selected>Flat annual rate on the idle balance</option>
-            <option value="actual">Actual credits (apportioned, Sibly method)</option>
-          </select>
-        </div>
-        <div id="intRateWrap"><label>Cash account rate (% p.a.)</label><input type="number" id="intRate" value="4.0" step="0.05" min="0"></div>
-        <div id="intBaseWrap" class="hidden"><label>Pre-existing base cash at start ($)</label><input type="number" id="baseCash" value="0" step="0.01" min="0"></div>
-      </div>
-      <div id="intActualWrap" class="hidden" style="margin-top:10px">
-        <label>Actual interest credits to the whole cash account (each is split pro-rata between base cash and the contributions by balance share immediately before the credit — only the contributions’ share offsets the loss)</label>
-        <table class="sched-table" style="max-width:420px"><thead><tr><th>Credit date</th><th>Amount $</th><th class="no-print"></th></tr></thead><tbody id="intBody"></tbody></table>
-        <button id="intAddBtn" class="small no-print" style="margin-top:6px">+ Add credit</button>
-      </div>
-      <div class="note" id="rateNote">Flat-rate mode accrues daily (rate ÷ 365) on the idle balance and credits monthly — interest on any pre-existing base cash is earned in both scenarios and cancels out.</div>
-    </div>
-
-    <!-- UNITS HOLDINGS (feeDrag) -->
-    <div id="unitsPanel" class="hidden">
-      <h3>Unit holdings (units basis)</h3>
-      <div class="grid g3">
-        <div><label>Opening units at period start</label><input type="number" id="openUnits" value="0" step="0.0001" min="0"></div>
-        <div><label>Actual units held at period end</label><input type="number" id="actualUnits" value="0" step="0.0001" min="0"></div>
-      </div>
-      <div class="note">Tie these to platform valuation reports. If the closing valuation post-dates the comparison date, back out purchases made in between (Wilson: 2,845.50 valuation less the 10-Feb purchase of 255.45 = 2,590.05 at 04 Feb).</div>
-    </div>
-
-    <!-- LUMP CASH (lumpCash) -->
-    <div id="lumpPanel" class="hidden">
-      <h3>The lump sum</h3>
-      <div class="grid g3">
-        <div><label>Lump sum amount ($)</label><input type="number" id="lumpAmt" value="100000" step="1000" min="0"></div>
-        <div class="note" style="margin:0; align-self:center">The dates above are: <strong>start</strong> = the day it should have been invested; <strong>end</strong> = the day it was actually invested (the loss crystallises there).</div>
-      </div>
-    </div>
-
-    <!-- SWITCH (switch) -->
-    <div id="switchPanel" class="hidden">
-      <h3>The switch</h3>
-      <div class="grid g3">
-        <div><label>Amount switched, expressed as…</label>
-          <select id="swMode"><option value="units">Units sold</option><option value="dollars">Dollar value ($)</option></select></div>
-        <div><label id="swAmtLbl">Units sold</label><input type="number" id="swAmt" value="10000" step="1" min="0"></div>
-        <div><label>Interest on the cash during the gap (% p.a.)</label><input type="number" id="swRate" value="0" step="0.05" min="0"></div>
-        <div><label>Sell date (settled to cash)</label><input type="date" id="swSell"></div>
-        <div><label>Buy-back date (re-invested)</label><input type="date" id="swBuy"></div>
-      </div>
-      <div class="note">Sells at the <strong>Sell</strong> price, sits in cash over the gap, buys back at the <strong>Buy</strong> price. The loss captures the round-trip spread plus market drift, less interest earned, plus any distribution missed while out.</div>
-    </div>
-
-    <!-- PHASING (phasing) -->
-    <div id="phasingPanel" class="hidden">
-      <h3>Lump sum vs phased entry</h3>
-      <div class="grid g3">
-        <div><label>Lump sum available ($)</label><input type="number" id="phLump" value="120000" step="1000" min="0"></div>
-        <div><label>Number of instalments (actual)</label><input type="number" id="phN" value="6" min="1" max="60"></div>
-        <div><label>Months between instalments</label><input type="number" id="phEvery" value="1" min="1" max="12"></div>
-        <div><label>Interest on un-invested cash (% p.a.)</label><input type="number" id="phRate" value="0" step="0.05" min="0"></div>
-        <div><label style="visibility:hidden">.</label><button class="primary no-print" id="phGenBtn" style="width:100%">Build phasing schedule</button></div>
-      </div>
-      <div class="note">Counterfactual = the whole lump invested on the <strong>start</strong> date. Actual = equal instalments on the schedule below (edit freely), with the un-invested remainder held in cash. Comparison is made at the <strong>end</strong> date.</div>
-      <div style="overflow-x:auto; margin-top:6px">
-        <table class="sched-table"><thead><tr><th>Instalment date</th><th>Amount $</th><th class="no-print"></th></tr></thead><tbody id="phBody"></tbody></table>
-      </div>
-      <button id="phAddBtn" class="small no-print" style="margin-top:6px">+ Add instalment</button>
-    </div>
-
-    <div class="row no-print" style="margin-top:18px">
-      <button class="primary" id="calcBtn" style="font-size:16px; padding:10px 22px">Calculate</button>
-      <span class="note" id="calcMsg" style="margin:0"></span>
-    </div>
-  </div>
-
-  <!-- RESULTS -->
-  <div class="card hidden" id="results">
-    <div class="h-row"><span class="stepnum">4</span><h2 style="margin:0">Results</h2></div>
-    <div class="cards" id="statCards"></div>
-    <div id="breakdownWrap"></div>
-
-    <h2 style="margin-top:18px" id="chartTitle">Counterfactual vs actual</h2>
-    <div class="chartbox" id="chartbox">
-      <svg id="chart" role="img" aria-label="Line chart comparing the counterfactual against the actual over the period"></svg>
-      <div class="tooltip" id="tooltip"></div>
-    </div>
-    <div class="legend" id="legend"></div>
-
-    <details style="margin-top:18px">
-      <summary>Daily ledger</summary>
-      <div class="ledger-wrap"><table id="ledgerTable"><thead id="ledgerHead"></thead><tbody id="ledgerBody"></tbody></table></div>
-      <div class="row no-print" style="margin-top:8px">
-        <button id="csvBtn" class="small">Download ledger as CSV</button>
-        <button id="printBtn" class="small">Print / save report as PDF</button>
-      </div>
-    </details>
-
-    <details style="margin-top:14px" open>
-      <summary>Methodology &amp; assumptions (auto-generated)</summary>
-      <div class="meth" id="methBox"></div>
-    </details>
-  </div>
-
-</div>
+<div id="app"></div>
 
 <script>
 'use strict';
 
-/* ================= state ================= */
-const S = {
-  prices: [], dists: [], sched: [], intCredits: [], phInst: [],
-  scenario: 'contribCash', result: null,
-};
+/* ================= STATE ================= */
+const DEFAULTS = () => ({
+  scenario:'contribCash', basis:'buy', theme:'day',
+  clientName:'', fundName:'',
+  tomStart:'', tomEnd:'',
+  grossContrib:'2300', contribDay:'6', feeOn:'no', advFee:'187.50', adminFee:'0',
+  intMode:'rate', intRate:'4.0', baseCash:'0',
+  openUnits:'0', actualUnits:'0',
+  lumpAmt:'100000',
+  swMode:'units', swAmt:'10000', swRate:'0', swSell:'', swBuy:'',
+  phLump:'120000', phN:'6', phEvery:'1', phRate:'0',
+  prices:[], dists:[], sched:[], intCredits:[], phInst:[],
+});
+let F = DEFAULTS();
+const state = { page:'picker', wizardStep:0, result:null, needChart:false };
+const DRAFT_KEY = 'tom_calc_draft';
 
-/* ================= helpers ================= */
+/* ================= HELPERS ================= */
 const $ = id => document.getElementById(id);
-const MONTHS = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
-const pad = n => String(n).padStart(2,'0');
-const iso = (y,m,d) => `${y}-${pad(m+1)}-${pad(d)}`;
-
-function parseDateStr(s){
-  if (s==null) return null;
-  s = String(s).trim().replace(/["']/g,'');
-  if (!s) return null;
-  let m;
-  if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return iso(+m[1], +m[2]-1, +m[3]);
-  if ((m = s.match(/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{2,4})$/))) { let y=+m[3]; if (y<100) y+=2000; return iso(y, +m[2]-1, +m[1]); }
-  if ((m = s.match(/^(\d{1,2})\s+([A-Za-z]{3,})\.?,?\s+(\d{4})$/))) { const mo=MONTHS[m[2].slice(0,3).toLowerCase()]; if (mo!=null) return iso(+m[3], mo, +m[1]); }
-  if ((m = s.match(/^([A-Za-z]{3,})\.?\s+(\d{1,2}),?\s+(\d{4})$/))) { const mo=MONTHS[m[1].slice(0,3).toLowerCase()]; if (mo!=null) return iso(+m[3], mo, +m[2]); }
-  const d = new Date(s);
-  return isNaN(d) ? null : iso(d.getFullYear(), d.getMonth(), d.getDate());
-}
-function parseNum(s){ if (s==null) return null; const v = parseFloat(String(s).replace(/[$,\s%]/g,'')); return isNaN(v)?null:v; }
-function fmtDate(isoStr){ const [y,mo,d]=isoStr.split('-').map(Number); return `${pad(d)} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][mo-1]} ${y}`; }
-function fmt$(n, dp=2){ const neg=n<0; const v=Math.abs(n).toLocaleString('en-AU',{minimumFractionDigits:dp,maximumFractionDigits:dp}); return (neg?'-$':'$')+v; }
+const e = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const MONTHS={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+const pad=n=>String(n).padStart(2,'0');
+const iso=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`;
+function parseDateStr(s){ if(s==null)return null; s=String(s).trim().replace(/["']/g,''); if(!s)return null; let m;
+  if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)))return iso(+m[1],+m[2]-1,+m[3]);
+  if((m=s.match(/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{2,4})$/))){let y=+m[3];if(y<100)y+=2000;return iso(y,+m[2]-1,+m[1]);}
+  if((m=s.match(/^(\d{1,2})\s+([A-Za-z]{3,})\.?,?\s+(\d{4})$/))){const mo=MONTHS[m[2].slice(0,3).toLowerCase()];if(mo!=null)return iso(+m[3],mo,+m[1]);}
+  if((m=s.match(/^([A-Za-z]{3,})\.?\s+(\d{1,2}),?\s+(\d{4})$/))){const mo=MONTHS[m[1].slice(0,3).toLowerCase()];if(mo!=null)return iso(+m[3],mo,+m[2]);}
+  const d=new Date(s); return isNaN(d)?null:iso(d.getFullYear(),d.getMonth(),d.getDate()); }
+function parseNum(s){ if(s==null)return null; const v=parseFloat(String(s).replace(/[$,\s%]/g,'')); return isNaN(v)?null:v; }
+const num=k=>parseNum(F[k])??0;
+function fmtDate(isoStr){ if(!isoStr)return''; const [y,mo,d]=isoStr.split('-').map(Number); return `${pad(d)} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][mo-1]} ${y}`; }
+function fmt$(n,dp=2){ const neg=n<0; const v=Math.abs(n).toLocaleString('en-AU',{minimumFractionDigits:dp,maximumFractionDigits:dp}); return (neg?'-$':'$')+v; }
 function fmtU(n){ return n.toLocaleString('en-AU',{minimumFractionDigits:4,maximumFractionDigits:4}); }
 function daysBetween(a,b){ return Math.round((new Date(b)-new Date(a))/86400000); }
-function firstIdxOnOrAfter(rows,date){ for (let i=0;i<rows.length;i++) if (rows[i].date>=date) return i; return -1; }
-function lastIdxOnOrBefore(rows,date){ for (let i=rows.length-1;i>=0;i--) if (rows[i].date<=date) return i; return -1; }
-function addMonths(isoStr, k){ let [y,m,d]=isoStr.split('-').map(Number); m-=1; m+=k; while(m>11){m-=12;y++;} while(m<0){m+=12;y--;} const dim=new Date(y,m+1,0).getDate(); return iso(y,m,Math.min(d,dim)); }
+function firstIdxOnOrAfter(rows,date){ for(let i=0;i<rows.length;i++)if(rows[i].date>=date)return i; return -1; }
+function lastIdxOnOrBefore(rows,date){ for(let i=rows.length-1;i>=0;i--)if(rows[i].date<=date)return i; return -1; }
+function addMonths(isoStr,k){ let [y,m,d]=isoStr.split('-').map(Number); m-=1; m+=k; while(m>11){m-=12;y++;} while(m<0){m+=12;y--;} const dim=new Date(y,m+1,0).getDate(); return iso(y,m,Math.min(d,dim)); }
 
-/* ================= table-text parsing ================= */
-function splitRows(text){ return text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length).map(l=> l.includes('\t')?l.split('\t'):splitCsvLine(l)); }
-function splitCsvLine(line){ const out=[]; let cur='',q=false; for (const ch of line){ if(ch==='"'){q=!q;continue;} if(ch===','&&!q){out.push(cur);cur='';} else cur+=ch; } out.push(cur); return out.map(c=>c.trim()); }
-
+/* ================= PARSERS ================= */
+function splitRows(text){ return text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length).map(l=>l.includes('\t')?l.split('\t'):splitCsvLine(l)); }
+function splitCsvLine(line){ const out=[];let cur='',q=false; for(const ch of line){ if(ch==='"'){q=!q;continue;} if(ch===','&&!q){out.push(cur);cur='';}else cur+=ch; } out.push(cur); return out.map(c=>c.trim()); }
 function parsePrices(text){
-  const rows = splitRows(text);
-  if (!rows.length) return {error:'No rows found.'};
-  let hi=-1, cols=null;
-  for (let i=0;i<Math.min(rows.length,10);i++){
-    const low = rows[i].map(c=>c.toLowerCase());
-    const di = low.findIndex(c=>/date/.test(c));
-    if (di>=0){
-      const bi = low.findIndex(c=>/buy/.test(c));
-      const si = low.findIndex(c=>/sell|exit|redeem/.test(c));
-      const ni = low.findIndex(c=>(/nav|mid|unit\s*price|price/.test(c)) && !/buy|sell/.test(c));
-      if (bi>=0||si>=0||ni>=0){ hi=i; cols={di,bi,si,ni}; break; }
-    }
-  }
-  if (hi<0) cols={di:0,bi:1,si:2,ni:3};
+  const rows=splitRows(text); if(!rows.length)return{error:'No rows found.'};
+  let hi=-1,cols=null;
+  for(let i=0;i<Math.min(rows.length,10);i++){ const low=rows[i].map(c=>c.toLowerCase()); const di=low.findIndex(c=>/date/.test(c));
+    if(di>=0){ const bi=low.findIndex(c=>/buy/.test(c)); const si=low.findIndex(c=>/sell|exit|redeem/.test(c)); const ni=low.findIndex(c=>(/nav|mid|unit\s*price|price/.test(c))&&!/buy|sell/.test(c)); if(bi>=0||si>=0||ni>=0){hi=i;cols={di,bi,si,ni};break;} } }
+  if(hi<0)cols={di:0,bi:1,si:2,ni:3};
   const out=[];
-  for (let i=hi+1;i<rows.length;i++){
-    const r=rows[i]; const date=parseDateStr(r[cols.di]); if (!date) continue;
-    const buy=cols.bi>=0?parseNum(r[cols.bi]):null, sell=cols.si>=0?parseNum(r[cols.si]):null, nav=cols.ni>=0?parseNum(r[cols.ni]):null;
-    const first = buy ?? nav ?? sell; if (first==null) continue;
-    out.push({date, buy:buy??first, sell:sell??first, nav:nav??first});
-  }
-  if (!out.length) return {error:'No parsable price rows found — check the columns include Date and at least one price.'};
-  out.sort((a,b)=> a.date<b.date?-1:1);
-  const dedup=[],seen=new Set(); for (const r of out){ if(!seen.has(r.date)){seen.add(r.date);dedup.push(r);} }
-  return {rows:dedup};
+  for(let i=hi+1;i<rows.length;i++){ const r=rows[i];const date=parseDateStr(r[cols.di]);if(!date)continue;
+    const buy=cols.bi>=0?parseNum(r[cols.bi]):null,sell=cols.si>=0?parseNum(r[cols.si]):null,nav=cols.ni>=0?parseNum(r[cols.ni]):null;
+    const first=buy??nav??sell;if(first==null)continue; out.push({date,buy:buy??first,sell:sell??first,nav:nav??first}); }
+  if(!out.length)return{error:'No parsable price rows — check the columns include Date and at least one price.'};
+  out.sort((a,b)=>a.date<b.date?-1:1);
+  const dedup=[],seen=new Set(); for(const r of out){if(!seen.has(r.date)){seen.add(r.date);dedup.push(r);}}
+  return{rows:dedup};
 }
 function parseDists(text){
-  const rows=splitRows(text); if (!rows.length) return {error:'No rows found.'};
+  const rows=splitRows(text); if(!rows.length)return{error:'No rows found.'};
   let hi=-1,cols=null;
-  for (let i=0;i<Math.min(rows.length,6);i++){
-    const low=rows[i].map(c=>c.toLowerCase());
-    const ei=low.findIndex(c=>(/ex/.test(c)&&/date|div/.test(c))||/^ex\b/.test(c));
-    const ci=low.findIndex(c=>/cpu|cent|c\/unit|distribution/.test(c)&&!/date/.test(c));
-    if (ei>=0&&ci>=0){ const ri=low.findIndex(c=>/re-?invest|pay/.test(c)&&/date/.test(c)); const pi=low.findIndex(c=>/price/.test(c)); cols={ei,ci,ri,pi}; hi=i; break; }
-  }
-  if (hi<0) cols={ei:0,ci:1,ri:2,pi:3};
+  for(let i=0;i<Math.min(rows.length,6);i++){ const low=rows[i].map(c=>c.toLowerCase());
+    const ei=low.findIndex(c=>(/ex/.test(c)&&/date|div/.test(c))||/^ex\b/.test(c)); const ci=low.findIndex(c=>/cpu|cent|c\/unit|distribution/.test(c)&&!/date/.test(c));
+    if(ei>=0&&ci>=0){const ri=low.findIndex(c=>/re-?invest|pay/.test(c)&&/date/.test(c));const pi=low.findIndex(c=>/price/.test(c));cols={ei,ci,ri,pi};hi=i;break;} }
+  if(hi<0)cols={ei:0,ci:1,ri:2,pi:3};
   const out=[];
-  for (let i=hi+1;i<rows.length;i++){
-    const r=rows[i]; const ex=parseDateStr(r[cols.ei]); const cpu=parseNum(r[cols.ci]); if (!ex||cpu==null) continue;
-    out.push({ex, cpu, reinvest:cols.ri>=0?parseDateStr(r[cols.ri]):null, price:cols.pi>=0?parseNum(r[cols.pi]):null});
-  }
-  if (!out.length) return {error:'No parsable distribution rows found.'};
-  return {rows:out};
+  for(let i=hi+1;i<rows.length;i++){ const r=rows[i];const ex=parseDateStr(r[cols.ei]);const cpu=parseNum(r[cols.ci]);if(!ex||cpu==null)continue;
+    out.push({ex,cpu,reinvest:cols.ri>=0?parseDateStr(r[cols.ri]):null,price:cols.pi>=0?parseNum(r[cols.pi]):null}); }
+  if(!out.length)return{error:'No parsable distribution rows found.'};
+  return{rows:out};
 }
-
-/* ================= prices UI ================= */
 function setPrices(rows){
-  S.prices=rows;
-  const st=$('priceStatus'); st.textContent=`${rows.length} pricing days`; st.className='pill ok';
-  $('priceSummary').textContent = `Loaded ${rows.length} pricing days: ${fmtDate(rows[0].date)} – ${fmtDate(rows[rows.length-1].date)}. Missing weekdays are treated as non-pricing days (holidays), per the workbook convention.`;
-  if (!$('tomStart').value) $('tomStart').value=rows[0].date;
-  if (!$('tomEnd').value) $('tomEnd').value=rows[rows.length-1].date;
-  if (!$('swSell').value) $('swSell').value=rows[0].date;
-  if (!$('swBuy').value) $('swBuy').value=rows[Math.min(rows.length-1, 10)].date;
+  F.prices=rows;
+  if(!F.tomStart)F.tomStart=rows[0].date;
+  if(!F.tomEnd)F.tomEnd=rows[rows.length-1].date;
+  if(!F.swSell)F.swSell=rows[0].date;
+  if(!F.swBuy)F.swBuy=rows[Math.min(rows.length-1,10)].date;
 }
-function wireDrop(dropId, fileId, onText){
-  const drop=$(dropId), file=$(fileId);
-  drop.addEventListener('click', ()=> file.click());
-  drop.addEventListener('dragover', e=>{ e.preventDefault(); drop.classList.add('over'); });
-  drop.addEventListener('dragleave', ()=> drop.classList.remove('over'));
-  drop.addEventListener('drop', e=>{ e.preventDefault(); drop.classList.remove('over'); if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0], onText); });
-  file.addEventListener('change', e=>{ if (e.target.files[0]) readFile(e.target.files[0], onText); });
-}
-function readFile(f, onText){
-  if (/\.xlsx?$/i.test(f.name)){ alert('Excel files can’t be read by this offline page. Open the export in Excel, copy the rows (with headers) and paste them instead — or save as CSV.'); return; }
-  const rd=new FileReader(); rd.onload=()=> onText(rd.result); rd.readAsText(f);
-}
-wireDrop('priceDrop','priceFile', t=>{ const res=parsePrices(t); if (res.error) alert(res.error); else setPrices(res.rows); });
-wireDrop('distDrop','distFile', t=>{ const res=parseDists(t); if (res.error) alert(res.error); else { S.dists=res.rows; renderDists(); } });
-$('pricePasteBtn').addEventListener('click', ()=>{ const res=parsePrices($('pricePaste').value); if (res.error) alert(res.error); else setPrices(res.rows); });
-$('priceClearBtn').addEventListener('click', ()=>{ S.prices=[]; $('pricePaste').value=''; $('priceStatus').textContent='no data'; $('priceStatus').className='pill'; $('priceSummary').textContent=''; });
 
-$('sampleBtn').addEventListener('click', ()=>{
-  const rows=[]; let p=1.60; let d=new Date('2025-04-01'); const end=new Date('2025-08-29'); let seed=42;
-  const rand=()=>{ seed=(seed*1103515245+12345)%2147483648; return seed/2147483648; };
-  while (d<=end){ const dow=d.getDay(); if (dow!==0&&dow!==6){ p=p*(1+(rand()-0.47)*0.012); rows.push({date:iso(d.getFullYear(),d.getMonth(),d.getDate()), buy:+p.toFixed(4), sell:+(p*0.9994).toFixed(4), nav:+(p*0.9997).toFixed(4)}); } d.setDate(d.getDate()+1); }
-  setPrices(rows);
-  S.dists=[{ex:'2025-06-30', cpu:1.9694, reinvest:'2025-07-01', price:rows.find(r=>r.date>='2025-07-01').buy}]; renderDists();
-  $('clientName').value='Sample Client'; $('fundName').value='Sample Growth Fund (synthetic prices)';
-  if (S.scenario==='contribCash'||S.scenario==='feeDrag') genSchedule();
-  if (S.scenario==='phasing') genPhasing();
-});
-
-/* ================= distributions UI ================= */
-function renderDists(){
-  const tb=$('distBody'); tb.innerHTML='';
-  S.dists.forEach((d,i)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td><input type="date" value="${d.ex}" data-i="${i}" data-k="ex"></td>
-      <td><input type="number" step="0.000001" value="${d.cpu}" data-i="${i}" data-k="cpu"></td>
-      <td><input type="date" value="${d.reinvest||''}" data-i="${i}" data-k="reinvest"></td>
-      <td><input type="number" step="0.0001" value="${d.price??''}" data-i="${i}" data-k="price"></td>
-      <td class="no-print"><button class="small" data-del="${i}">✕</button></td>`;
-    tb.appendChild(tr);
-  });
-  tb.querySelectorAll('input').forEach(inp=> inp.addEventListener('change', e=>{ const {i,k}=e.target.dataset; S.dists[i][k]=(k==='cpu'||k==='price')?parseNum(e.target.value):e.target.value; }));
-  tb.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', e=>{ S.dists.splice(+e.target.dataset.del,1); renderDists(); }));
-  const st=$('distStatus'); st.textContent=S.dists.length?`${S.dists.length} distribution${S.dists.length>1?'s':''}`:'none'; st.className=S.dists.length?'pill ok':'pill';
-}
-$('distPasteBtn').addEventListener('click', ()=>{ const res=parseDists($('distPaste').value); if (res.error){ alert(res.error); return; } S.dists=res.rows; renderDists(); });
-$('distAddBtn').addEventListener('click', ()=>{ S.dists.push({ex:'',cpu:0,reinvest:'',price:null}); renderDists(); });
-
-/* ================= scenario switching ================= */
-const SCEN = {
-  contribCash: { desc:'Cash basis (Sibly). The client’s regular contributions landed in the cash account and were never invested. Counterfactual: each contribution invested on its date, distributions reinvested. Actual: the cash pile plus any interest it earned. Loss = A − B.',
-    panels:['period','contrib','fee','sched','int'], startLbl:'Out-of-market period — start', endLbl:'Out-of-market period — end' },
-  lumpCash: { desc:'Cash basis, single sum. A rollover/transfer sat in the cash hub and was invested late. Counterfactual: invested on the start date. Actual: sat in cash (with interest) until the end date, where the loss crystallises.',
-    panels:['period','fee','lump','int'], startLbl:'Should have been invested on', endLbl:'Actually invested on' },
-  feeDrag: { desc:'Units basis (Wilson). The client stayed invested, but contributions were invested late/short (e.g. adviser fee drawn from the contribution). Counterfactual: opening units + disciplined purchase of the net contribution each month + reinvested distributions, vs actual units held. Loss = unit shortfall × closing price.',
-    panels:['period','contrib','fee','sched','units'], startLbl:'Period — start', endLbl:'Period — end (comparison date)' },
-  switch: { desc:'Fund switch. Units were sold to cash and bought back a few days later, out of the market in between. Loss captures the round-trip spread (sold at Sell, bought at Buy) plus market drift over the gap, less interest earned, plus any distribution missed while out.',
-    panels:['switch'], startLbl:'', endLbl:'' },
-  phasing: { desc:'Lump sum vs phased entry. Compares investing the whole sum at once (counterfactual) against drip-feeding it in over several instalments (actual), with the un-invested remainder held in cash. A positive result means lump-sum would have won; negative means phasing did.',
-    panels:['period','phasing'], startLbl:'Lump available on (day 1)', endLbl:'Comparison date' },
+/* ================= SCENARIOS ================= */
+const SCEN={
+  contribCash:{tag:'Cash basis', name:'Contributions sat in cash', short:'Sibly',
+    desc:'Regular contributions landed in the cash account and were never invested.',
+    full:'Cash basis (Sibly). The client’s regular contributions landed in the cash account and were never invested. Counterfactual: each contribution invested on its date, distributions reinvested. Actual: the cash pile plus any interest it earned. Loss = A − B.'},
+  lumpCash:{tag:'Cash basis', name:'Lump sum sat in cash', short:'Rollover',
+    desc:'A rollover or transfer sat in the cash hub and was invested late.',
+    full:'Cash basis, single sum. A rollover/transfer sat in the cash hub and was invested late. Counterfactual: invested on the start date. Actual: sat in cash (with interest) until the end date, where the loss crystallises.'},
+  feeDrag:{tag:'Units basis', name:'Stayed invested — fee drag', short:'Wilson',
+    desc:'Stayed invested, but contributions went in late/short (fee drag).',
+    full:'Units basis (Wilson). The client stayed invested, but contributions were invested late/short (e.g. adviser fee drawn from the contribution). Counterfactual: opening units + disciplined purchase of the net contribution each month + reinvested distributions, vs actual units held. Loss = unit shortfall × closing price.'},
+  switch:{tag:'Transition', name:'Fund switch — out during the gap', short:'Switch',
+    desc:'Units sold to cash and bought back after a settlement gap.',
+    full:'Fund switch. Units were sold to cash and bought back a few days later, out of the market in between. Loss captures the round-trip spread (sold at Sell, bought at Buy) plus market drift over the gap, less interest earned, plus any distribution missed while out.'},
+  phasing:{tag:'Comparison', name:'Lump sum vs phased entry', short:'Phasing',
+    desc:'Did drip-feeding a lump sum in cost the client versus investing at once?',
+    full:'Lump sum vs phased entry. Compares investing the whole sum at once (counterfactual) against drip-feeding it in over several instalments (actual), with the un-invested remainder held in cash. A positive result means lump-sum would have won; negative means phasing did.'},
 };
-const ALL_PANELS=['period','contrib','fee','sched','int','units','lump','switch','phasing'];
-function setScenario(v){
-  S.scenario=v;
-  const cfg=SCEN[v];
-  $('scenarioDesc').textContent=cfg.desc;
-  ALL_PANELS.forEach(p=> $(p+'Panel').classList.toggle('hidden', !cfg.panels.includes(p)));
-  if (cfg.startLbl) $('startLbl').textContent=cfg.startLbl;
-  if (cfg.endLbl) $('endLbl').textContent=cfg.endLbl;
-  updateFeeUI();
-}
-$('scenario').addEventListener('change', e=> setScenario(e.target.value));
 
-/* ================= fee + interest UI ================= */
-function feePerContrib(){ return $('feeOn').value==='yes' ? ((parseNum($('advFee').value)??0)+(parseNum($('adminFee').value)??0)) : 0; }
-function netMonthly(){ return Math.max(0, (parseNum($('grossContrib').value)??0) - feePerContrib()); }
-function updateFeeUI(){
-  const on=$('feeOn').value==='yes';
-  $('feeAmtWrap').classList.toggle('hidden', !on);
-  $('feeAdminWrap').classList.toggle('hidden', !on);
-  $('netPreview').textContent=fmt$(netMonthly());
-  renderSched();
+/* ================= WIZARD STEPS ================= */
+function wizardSteps(){
+  const base=[{k:'prices',l:'Price history'},{k:'dists',l:'Distributions'}];
+  const sc=F.scenario; let mid;
+  if(sc==='contribCash')mid=[{k:'setup',l:'Client & period'},{k:'contrib',l:'Contributions & fees'},{k:'interest',l:'Cash interest'}];
+  else if(sc==='lumpCash')mid=[{k:'setup',l:'Client & period'},{k:'lump',l:'The lump sum & fees'},{k:'interest',l:'Cash interest'}];
+  else if(sc==='feeDrag')mid=[{k:'setup',l:'Client & period'},{k:'contrib',l:'Contributions & fees'},{k:'holdings',l:'Unit holdings'}];
+  else if(sc==='switch')mid=[{k:'setup',l:'Client & fund'},{k:'switch',l:'The switch'}];
+  else mid=[{k:'setup',l:'Client & period'},{k:'phasing',l:'Lump vs phasing'}];
+  return base.concat(mid,[{k:'results',l:'Results'}]);
 }
-['feeOn','advFee','adminFee','grossContrib'].forEach(id=> $(id).addEventListener('input', updateFeeUI));
-function updateIntUI(){
-  const m=$('intMode').value;
-  $('intRateWrap').classList.toggle('hidden', m!=='rate');
-  $('intActualWrap').classList.toggle('hidden', m!=='actual');
-  $('intBaseWrap').classList.toggle('hidden', m!=='actual');
-  $('rateNote').classList.toggle('hidden', m!=='rate');
-}
-$('intMode').addEventListener('change', updateIntUI);
-$('swMode').addEventListener('change', ()=> $('swAmtLbl').textContent = $('swMode').value==='units'?'Units sold':'Dollar value ($)');
-
-/* ================= contribution schedule ================= */
-function genSchedule(){
-  if (!S.prices.length){ alert('Load the price history first.'); return; }
-  const start=$('tomStart').value||S.prices[0].date, end=$('tomEnd').value||S.prices[S.prices.length-1].date;
-  const day=Math.min(31,Math.max(1,parseInt($('contribDay').value)||6)), gross=parseNum($('grossContrib').value)??0;
-  const out=[]; let [y,m]=start.split('-').map(Number); m-=1;
-  for (let k=0;k<60;k++){
-    const dim=new Date(y,m+1,0).getDate(); const target=iso(y,m,Math.min(day,dim));
-    if (target>end) break;
-    if (target>=start){ const idx=firstIdxOnOrAfter(S.prices,target); const mapped=(idx>=0&&S.prices[idx].date<=end)?S.prices[idx].date:null; if (mapped) out.push({date:mapped,type:'monthly',gross,include:true}); }
-    m++; if (m>11){ m=0; y++; }
+function stepStatus(k){
+  const has=v=>!!(v&&String(v).trim());
+  switch(k){
+    case 'prices': return F.prices.length?'ok':'todo';
+    case 'dists': return 'ok';
+    case 'setup': return (has(F.clientName)&&has(F.fundName)&&(F.scenario==='switch'||(has(F.tomStart)&&has(F.tomEnd))))?'ok':'todo';
+    case 'contrib': return effectiveSchedule().length?'ok':'todo';
+    case 'interest': return 'ok';
+    case 'lump': return num('lumpAmt')>0?'ok':'todo';
+    case 'holdings': return num('actualUnits')>0?'ok':'todo';
+    case 'switch': return (has(F.swSell)&&has(F.swBuy))?'ok':'todo';
+    case 'phasing': return F.phInst.length?'ok':'todo';
+    case 'results': return state.result&&!state.result.error?'ok':'todo';
   }
-  const oneoffs=S.sched.filter(r=>r.type==='oneoff');
-  S.sched=out.concat(oneoffs).sort((a,b)=> a.date<b.date?-1:1);
-  renderSched();
-}
-$('genSchedBtn').addEventListener('click', genSchedule);
-$('addOneOffBtn').addEventListener('click', ()=>{ S.sched.push({date:$('tomStart').value||(S.prices[0]&&S.prices[0].date)||'',type:'oneoff',gross:0,include:true}); renderSched(); });
-function rowNet(r){ if (r.type==='oneoff') return r.gross; return Math.max(0, r.gross - feePerContrib()); }
-function renderSched(){
-  const tb=$('schedBody'); if (!tb) return; tb.innerHTML='';
-  S.sched.forEach((r,i)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td><input type="date" value="${r.date}" data-i="${i}" data-k="date" style="width:150px"></td>
-      <td>${r.type==='monthly'?'Monthly':'One-off'}</td>
-      <td><input type="number" step="0.01" value="${r.gross}" data-i="${i}" data-k="gross" style="width:110px"></td>
-      <td style="font-variant-numeric:tabular-nums">${fmt$(rowNet(r))}</td>
-      <td><input type="checkbox" ${r.include?'checked':''} data-i="${i}" data-k="include"></td>
-      <td class="no-print"><button class="small" data-del="${i}">✕</button></td>`;
-    tb.appendChild(tr);
-  });
-  tb.querySelectorAll('input').forEach(inp=> inp.addEventListener('change', e=>{ const {i,k}=e.target.dataset; if (k==='include') S.sched[i].include=e.target.checked; else if (k==='gross') S.sched[i].gross=parseNum(e.target.value)??0; else S.sched[i][k]=e.target.value; renderSched(); }));
-  tb.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', e=>{ S.sched.splice(+e.target.dataset.del,1); renderSched(); }));
+  return 'ok';
 }
 
-/* ================= interest credits ================= */
-function renderInt(){
-  const tb=$('intBody'); tb.innerHTML='';
-  S.intCredits.forEach((r,i)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td><input type="date" value="${r.date}" data-i="${i}" data-k="date"></td>
-      <td><input type="number" step="0.01" value="${r.amount}" data-i="${i}" data-k="amount"></td>
-      <td class="no-print"><button class="small" data-del="${i}">✕</button></td>`;
-    tb.appendChild(tr);
-  });
-  tb.querySelectorAll('input').forEach(inp=> inp.addEventListener('change', e=>{ const {i,k}=e.target.dataset; S.intCredits[i][k]= k==='amount'?(parseNum(e.target.value)??0):e.target.value; }));
-  tb.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', e=>{ S.intCredits.splice(+e.target.dataset.del,1); renderInt(); }));
-}
-$('intAddBtn').addEventListener('click', ()=>{ S.intCredits.push({date:'',amount:0}); renderInt(); });
-
-/* ================= phasing schedule ================= */
-function genPhasing(){
-  const start=$('tomStart').value||(S.prices[0]&&S.prices[0].date); if (!start){ alert('Load prices and set the start date.'); return; }
-  const lump=parseNum($('phLump').value)??0, n=Math.max(1,parseInt($('phN').value)||1), every=Math.max(1,parseInt($('phEvery').value)||1);
-  const each=lump/n; S.phInst=[];
-  for (let k=0;k<n;k++) S.phInst.push({date:addMonths(start,k*every), amount:+each.toFixed(2)});
-  renderPhasing();
-}
-$('phGenBtn').addEventListener('click', genPhasing);
-$('phAddBtn').addEventListener('click', ()=>{ S.phInst.push({date:$('tomStart').value||'', amount:0}); renderPhasing(); });
-function renderPhasing(){
-  const tb=$('phBody'); tb.innerHTML='';
-  S.phInst.forEach((r,i)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td><input type="date" value="${r.date}" data-i="${i}" data-k="date"></td>
-      <td><input type="number" step="0.01" value="${r.amount}" data-i="${i}" data-k="amount"></td>
-      <td class="no-print"><button class="small" data-del="${i}">✕</button></td>`;
-    tb.appendChild(tr);
-  });
-  tb.querySelectorAll('input').forEach(inp=> inp.addEventListener('change', e=>{ const {i,k}=e.target.dataset; S.phInst[i][k]= k==='amount'?(parseNum(e.target.value)??0):e.target.value; }));
-  tb.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', e=>{ S.phInst.splice(+e.target.dataset.del,1); renderPhasing(); }));
-}
-
-/* ================= effective schedule (contribCash/lumpCash/feeDrag) ================= */
+/* ================= SCHEDULE / PHASING / INTEREST ================= */
+function feePerContrib(){ return F.feeOn==='yes' ? (num('advFee')+num('adminFee')) : 0; }
+function netMonthly(){ return Math.max(0, num('grossContrib')-feePerContrib()); }
+function rowNet(r){ if(r.type==='oneoff')return r.gross; return Math.max(0,r.gross-feePerContrib()); }
 function effectiveSchedule(){
-  if (S.scenario==='lumpCash'){
-    const amt=parseNum($('lumpAmt').value)??0;
-    return [{date:$('tomStart').value, type:'oneoff', gross:amt, net:amt}];
-  }
-  return S.sched.filter(r=>r.include&&r.date&&r.gross>0).map(r=>({...r, net:rowNet(r)})).filter(r=>r.net>0);
+  if(F.scenario==='lumpCash'){ const amt=num('lumpAmt'); return [{date:F.tomStart,type:'oneoff',gross:amt,net:amt}]; }
+  return F.sched.filter(r=>r.include&&r.date&&r.gross>0).map(r=>({...r,net:rowNet(r)})).filter(r=>r.net>0);
+}
+function genSchedule(){
+  if(!F.prices.length){alert('Load the price history first.');return;}
+  const start=F.tomStart||F.prices[0].date,end=F.tomEnd||F.prices[F.prices.length-1].date;
+  const day=Math.min(31,Math.max(1,parseInt(F.contribDay)||6)),gross=num('grossContrib');
+  const out=[]; let [y,m]=start.split('-').map(Number); m-=1;
+  for(let k=0;k<60;k++){ const dim=new Date(y,m+1,0).getDate(); const target=iso(y,m,Math.min(day,dim));
+    if(target>end)break;
+    if(target>=start){const idx=firstIdxOnOrAfter(F.prices,target);const mapped=(idx>=0&&F.prices[idx].date<=end)?F.prices[idx].date:null;if(mapped)out.push({date:mapped,type:'monthly',gross,include:true});}
+    m++;if(m>11){m=0;y++;} }
+  const oneoffs=F.sched.filter(r=>r.type==='oneoff');
+  F.sched=out.concat(oneoffs).sort((a,b)=>a.date<b.date?-1:1);
+  render();
+}
+function genPhasing(){
+  const start=F.tomStart||(F.prices[0]&&F.prices[0].date); if(!start){alert('Load prices and set the start date.');return;}
+  const lump=num('phLump'),n=Math.max(1,parseInt(F.phN)||1),every=Math.max(1,parseInt(F.phEvery)||1);
+  const each=lump/n; F.phInst=[];
+  for(let k=0;k<n;k++)F.phInst.push({date:addMonths(start,k*every),amount:+each.toFixed(2)});
+  render();
 }
 
-/* ================= engines ================= */
+/* ================= ENGINES (verified) ================= */
 function calculate(){
-  $('calcMsg').textContent='';
-  if (!S.prices.length){ $('calcMsg').textContent='Load the price history first.'; return; }
-  const basis=$('basis').value;
-  const sc=S.scenario;
-  let R;
-  if (sc==='switch') R=runSwitch(basis);
-  else if (sc==='phasing') R=runPhasing(basis);
-  else if (sc==='feeDrag') R=runUnits(basis);
-  else R=runCash(basis, sc);          // contribCash + lumpCash
-  if (!R){ return; }
-  if (R.error){ $('calcMsg').textContent=R.error; return; }
-  R.scenario=sc; R.basis=basis;
-  R.twoSeries = sc!=='feeDrag';
-  S.result=R;
-  renderResults();
+  if(!F.prices.length)return{error:'Load the price history first.'};
+  const basis=F.basis,sc=F.scenario; let R;
+  if(sc==='switch')R=runSwitch(basis);
+  else if(sc==='phasing')R=runPhasing(basis);
+  else if(sc==='feeDrag')R=runUnits(basis);
+  else R=runCash(basis,sc);
+  if(!R||R.error)return R||{error:'Could not calculate.'};
+  R.scenario=sc;R.basis=basis;R.twoSeries=sc!=='feeDrag';
+  return R;
 }
-$('calcBtn').addEventListener('click', calculate);
-
-/* ---- cash engine (contribCash + lumpCash) — verified against Sibly ---- */
-function runCash(basis, sc){
-  const start=$('tomStart').value, end=$('tomEnd').value;
-  if (!start||!end||start>=end){ return {error:'Set a valid period (start before end).'}; }
-  const rows=S.prices.filter(r=>r.date>=start&&r.date<=end);
-  if (rows.length<2) return {error:'Fewer than two pricing days in the period.'};
-  const sched=effectiveSchedule();
-  if (!sched.length) return {error:'No contributions to model — generate a schedule or enter a lump sum.'};
-  const warnings=[];
-  const contribByIdx={}; let totalNet=0, totalGross=0;
-  for (const c of sched){ const idx=firstIdxOnOrAfter(rows,c.date); if (idx===-1){ warnings.push(`Contribution on ${fmtDate(c.date)} is after the last pricing day — excluded.`); continue; } contribByIdx[idx]=(contribByIdx[idx]||0)+c.net; totalNet+=c.net; totalGross+=c.gross; }
-  const dists=S.dists.filter(d=>d.ex&&d.cpu>0&&d.ex>=rows[0].date&&d.ex<=rows[rows.length-1].date).map(d=>{
-    const exIdx=lastIdxOnOrBefore(rows,d.ex); let creditIdx=d.reinvest?firstIdxOnOrAfter(rows,d.reinvest):(exIdx+1<rows.length?exIdx+1:exIdx);
-    if (creditIdx===-1){ creditIdx=rows.length-1; } return {...d, exIdx, creditIdx};
-  });
-  const intMode=$('intMode').value;
-  const creditsByIdx={};
-  if (intMode==='actual'){ for (const cr of S.intCredits.filter(c=>c.date&&c.amount>0)){ let idx=firstIdxOnOrAfter(rows,cr.date); if (idx===-1) idx=rows.length-1; (creditsByIdx[idx]=creditsByIdx[idx]||[]).push(cr); } }
-  const rate=(parseNum($('intRate').value)??0)/100;
-  const baseCash0=parseNum($('baseCash').value)??0;
-
-  const series=[], ledger=[];
-  let cf=0, M=0, G=baseCash0, prevP=null, prevDate=null, accrued=0, interestTotal=0, distTotal=0;
-  const pending={};
-  for (let i=0;i<rows.length;i++){
-    const p=rows[i][basis], contrib=contribByIdx[i]||0, r=i>0?(p-prevP)/prevP:0, distCredit=pending[i]||0;
-    cf=(cf+contrib)*(1+r)+distCredit; distTotal+=distCredit;
-    M+=contrib; G+=contrib;
+function runCash(basis,sc){
+  const start=F.tomStart,end=F.tomEnd;
+  if(!start||!end||start>=end)return{error:'Set a valid period (start before end).'};
+  const rows=F.prices.filter(r=>r.date>=start&&r.date<=end); if(rows.length<2)return{error:'Fewer than two pricing days in the period.'};
+  const sched=effectiveSchedule(); if(!sched.length)return{error:'No contributions to model — generate a schedule or enter a lump sum.'};
+  const warnings=[]; const contribByIdx={}; let totalNet=0,totalGross=0;
+  for(const c of sched){const idx=firstIdxOnOrAfter(rows,c.date);if(idx===-1){warnings.push(`Contribution on ${fmtDate(c.date)} is after the last pricing day — excluded.`);continue;}contribByIdx[idx]=(contribByIdx[idx]||0)+c.net;totalNet+=c.net;totalGross+=c.gross;}
+  const dists=F.dists.filter(d=>d.ex&&d.cpu>0&&d.ex>=rows[0].date&&d.ex<=rows[rows.length-1].date).map(d=>{const exIdx=lastIdxOnOrBefore(rows,d.ex);let creditIdx=d.reinvest?firstIdxOnOrAfter(rows,d.reinvest):(exIdx+1<rows.length?exIdx+1:exIdx);if(creditIdx===-1)creditIdx=rows.length-1;return{...d,exIdx,creditIdx};});
+  const intMode=F.intMode,creditsByIdx={};
+  if(intMode==='actual'){for(const cr of F.intCredits.filter(c=>c.date&&c.amount>0)){let idx=firstIdxOnOrAfter(rows,cr.date);if(idx===-1)idx=rows.length-1;(creditsByIdx[idx]=creditsByIdx[idx]||[]).push(cr);}}
+  const rate=num('intRate')/100,baseCash0=num('baseCash');
+  const series=[],ledger=[]; let cf=0,M=0,G=baseCash0,prevP=null,prevDate=null,accrued=0,interestTotal=0,distTotal=0; const pending={};
+  for(let i=0;i<rows.length;i++){
+    const p=rows[i][basis],contrib=contribByIdx[i]||0,r=i>0?(p-prevP)/prevP:0,distCredit=pending[i]||0;
+    cf=(cf+contrib)*(1+r)+distCredit; distTotal+=distCredit; M+=contrib; G+=contrib;
     let intToday=0;
-    if (intMode==='rate'){ if (prevDate){ accrued+=M*rate/365*daysBetween(prevDate,rows[i].date); if (rows[i].date.slice(0,7)!==prevDate.slice(0,7)){ intToday=accrued; M+=accrued; G+=accrued; interestTotal+=accrued; accrued=0; } } }
-    else if (intMode==='actual'&&creditsByIdx[i]){ for (const cr of creditsByIdx[i]){ const share=G>0?M/G:0; const app=cr.amount*share; intToday+=app; M+=app; interestTotal+=app; G+=cr.amount; } }
-    for (const d of dists){ if (i===d.exIdx){ const units=cf/p; const cash=units*d.cpu/100; d.units=units; d.cash=cash; pending[d.creditIdx]=(pending[d.creditIdx]||0)+cash; } }
-    series.push({date:rows[i].date, a:cf, b:M});
-    ledger.push({date:rows[i].date, price:p, ret:i>0?r:null, contrib, distCredit, cf, int:intToday, actual:M});
-    prevP=p; prevDate=rows[i].date;
+    if(intMode==='rate'){if(prevDate){accrued+=M*rate/365*daysBetween(prevDate,rows[i].date);if(rows[i].date.slice(0,7)!==prevDate.slice(0,7)){intToday=accrued;M+=accrued;G+=accrued;interestTotal+=accrued;accrued=0;}}}
+    else if(intMode==='actual'&&creditsByIdx[i]){for(const cr of creditsByIdx[i]){const share=G>0?M/G:0;const app=cr.amount*share;intToday+=app;M+=app;interestTotal+=app;G+=cr.amount;}}
+    for(const d of dists){if(i===d.exIdx){const units=cf/p;const cash=units*d.cpu/100;d.units=units;d.cash=cash;pending[d.creditIdx]=(pending[d.creditIdx]||0)+cash;}}
+    series.push({date:rows[i].date,a:cf,b:M}); ledger.push({date:rows[i].date,price:p,ret:i>0?r:null,contrib,distCredit,cf,int:intToday,actual:M}); prevP=p;prevDate=rows[i].date;
   }
-  if (intMode==='rate'&&accrued>0){ const last=ledger[ledger.length-1]; last.int+=accrued; last.actual+=accrued; interestTotal+=accrued; series[series.length-1].b=last.actual; }
-  const A=cf, B=ledger[ledger.length-1].actual;
-  return { kind:'cash', rows, series, ledger, dists, warnings, A, B, net:A-B, totalNet, totalGross, interestTotal, distTotal,
-    growthForegone:A-distTotal-totalNet, start:rows[0].date, end:rows[rows.length-1].date, intMode, rate, baseCash0, sc };
+  if(intMode==='rate'&&accrued>0){const last=ledger[ledger.length-1];last.int+=accrued;last.actual+=accrued;interestTotal+=accrued;series[series.length-1].b=last.actual;}
+  const A=cf,B=ledger[ledger.length-1].actual;
+  return {kind:'cash',rows,series,ledger,dists,warnings,A,B,net:A-B,totalNet,totalGross,interestTotal,distTotal,growthForegone:A-distTotal-totalNet,start:rows[0].date,end:rows[rows.length-1].date,intMode,rate,baseCash0,sc};
 }
-
-/* ---- units engine (feeDrag) — verified against Wilson ---- */
 function runUnits(basis){
-  const start=$('tomStart').value, end=$('tomEnd').value;
-  if (!start||!end||start>=end){ return {error:'Set a valid period (start before end).'}; }
-  const rows=S.prices.filter(r=>r.date>=start&&r.date<=end);
-  if (rows.length<2) return {error:'Fewer than two pricing days in the period.'};
-  const sched=effectiveSchedule(); if (!sched.length) return {error:'No contributions to model.'};
-  const warnings=[];
-  const contribByIdx={}; let totalNet=0, totalGross=0;
-  for (const c of sched){ const idx=firstIdxOnOrAfter(rows,c.date); if (idx===-1){ warnings.push(`Contribution on ${fmtDate(c.date)} is after the last pricing day — excluded.`); continue; } contribByIdx[idx]=(contribByIdx[idx]||0)+c.net; totalNet+=c.net; totalGross+=c.gross; }
-  const dists=S.dists.filter(d=>d.ex&&d.cpu>0&&d.ex>=rows[0].date&&d.ex<=rows[rows.length-1].date).map(d=>{
-    const exIdx=lastIdxOnOrBefore(rows,d.ex); let creditIdx=d.reinvest?firstIdxOnOrAfter(rows,d.reinvest):(exIdx+1<rows.length?exIdx+1:exIdx); if (creditIdx===-1) creditIdx=rows.length-1; return {...d, exIdx, creditIdx};
-  });
-  const openUnits=parseNum($('openUnits').value)??0, actualUnits=parseNum($('actualUnits').value)??0;
-  let units=openUnits; const pendingU={}; let distUnitsTotal=0, boughtUnits=0;
-  const series=[], ledger=[];
-  for (let i=0;i<rows.length;i++){
-    const p=rows[i][basis], contrib=contribByIdx[i]||0, bought=contrib>0?contrib/p:0;
-    units+=bought; boughtUnits+=bought;
-    const du=pendingU[i]||0; units+=du; distUnitsTotal+=du;
-    for (const d of dists){ if (i===d.exIdx){ const cash=units*d.cpu/100; const rp=d.price||rows[d.creditIdx][basis]; const u=cash/rp; d.units=units; d.cash=cash; d.unitsCredited=u; pendingU[d.creditIdx]=(pendingU[d.creditIdx]||0)+u; } }
-    series.push({date:rows[i].date, a:units*p, b:null, units});
-    ledger.push({date:rows[i].date, price:p, contrib, bought, distU:du, units, value:units*p});
+  const start=F.tomStart,end=F.tomEnd;
+  if(!start||!end||start>=end)return{error:'Set a valid period (start before end).'};
+  const rows=F.prices.filter(r=>r.date>=start&&r.date<=end); if(rows.length<2)return{error:'Fewer than two pricing days in the period.'};
+  const sched=effectiveSchedule(); if(!sched.length)return{error:'No contributions to model.'};
+  const warnings=[]; const contribByIdx={}; let totalNet=0,totalGross=0;
+  for(const c of sched){const idx=firstIdxOnOrAfter(rows,c.date);if(idx===-1){warnings.push(`Contribution on ${fmtDate(c.date)} is after the last pricing day — excluded.`);continue;}contribByIdx[idx]=(contribByIdx[idx]||0)+c.net;totalNet+=c.net;totalGross+=c.gross;}
+  const dists=F.dists.filter(d=>d.ex&&d.cpu>0&&d.ex>=rows[0].date&&d.ex<=rows[rows.length-1].date).map(d=>{const exIdx=lastIdxOnOrBefore(rows,d.ex);let creditIdx=d.reinvest?firstIdxOnOrAfter(rows,d.reinvest):(exIdx+1<rows.length?exIdx+1:exIdx);if(creditIdx===-1)creditIdx=rows.length-1;return{...d,exIdx,creditIdx};});
+  const openUnits=num('openUnits'),actualUnits=num('actualUnits');
+  let units=openUnits; const pendingU={}; let distUnitsTotal=0,boughtUnits=0; const series=[],ledger=[];
+  for(let i=0;i<rows.length;i++){
+    const p=rows[i][basis],contrib=contribByIdx[i]||0,bought=contrib>0?contrib/p:0; units+=bought;boughtUnits+=bought;
+    const du=pendingU[i]||0;units+=du;distUnitsTotal+=du;
+    for(const d of dists){if(i===d.exIdx){const cash=units*d.cpu/100;const rp=d.price||rows[d.creditIdx][basis];const u=cash/rp;d.units=units;d.cash=cash;d.unitsCredited=u;pendingU[d.creditIdx]=(pendingU[d.creditIdx]||0)+u;}}
+    series.push({date:rows[i].date,a:units*p,b:null,units}); ledger.push({date:rows[i].date,price:p,contrib,bought,distU:du,units,value:units*p});
   }
-  const endPrice=rows[rows.length-1][basis], shortfall=units-actualUnits;
-  return { kind:'units', rows, series, ledger, dists, warnings, A:units, B:actualUnits, shortfall, endPrice, loss:shortfall*endPrice, openUnits, boughtUnits, distUnitsTotal, totalNet, totalGross, start:rows[0].date, end:rows[rows.length-1].date };
+  const endPrice=rows[rows.length-1][basis],shortfall=units-actualUnits;
+  return {kind:'units',rows,series,ledger,dists,warnings,A:units,B:actualUnits,shortfall,endPrice,loss:shortfall*endPrice,openUnits,boughtUnits,distUnitsTotal,totalNet,totalGross,start:rows[0].date,end:rows[rows.length-1].date};
 }
-
-/* ---- switch engine — verified in Node ---- */
 function runSwitch(basis){
-  const sellDate=$('swSell').value, buyDate=$('swBuy').value;
-  if (!sellDate||!buyDate) return {error:'Set the sell and buy-back dates.'};
-  const rows=S.prices;
-  const sellIdx=firstIdxOnOrAfter(rows,sellDate), buyIdx=firstIdxOnOrAfter(rows,buyDate);
-  if (sellIdx<0||buyIdx<0||buyIdx<sellIdx) return {error:'Sell/buy dates must be within the data, buy on or after sell.'};
-  const Ssell=rows[sellIdx].sell, Bbuy=rows[buyIdx].buy;
-  const amt=parseNum($('swAmt').value)??0, mode=$('swMode').value, rate=(parseNum($('swRate').value)??0);
-  const unitsSold= mode==='units'?amt: amt/Ssell;
-  const P=unitsSold*Ssell, gapDays=daysBetween(rows[sellIdx].date, rows[buyIdx].date);
-  const interest=P*(rate/100)/365*gapDays, cashAtBuy=P+interest, unitsBack=cashAtBuy/Bbuy;
-  let unitsNeverSold=unitsSold, distUnits=0;
-  const distList=S.dists.filter(d=>d.ex&&d.cpu>0&&d.ex>rows[sellIdx].date&&d.ex<=rows[buyIdx].date);
-  for (const d of distList){ const cash=unitsNeverSold*d.cpu/100; const rp=d.price||rows[firstIdxOnOrAfter(rows,d.reinvest||d.ex)].buy; const u=cash/rp; unitsNeverSold+=u; distUnits+=u; }
-  const valPrice=Bbuy, shortfall=unitsNeverSold-unitsBack, loss=shortfall*valPrice;
-  const reentryCost=unitsSold*(Bbuy-Ssell), spreadAtSell=unitsSold*(rows[sellIdx].buy-rows[sellIdx].sell), distMissed=distUnits*valPrice, interestOffset=-interest;
+  const sellDate=F.swSell,buyDate=F.swBuy; if(!sellDate||!buyDate)return{error:'Set the sell and buy-back dates.'};
+  const rows=F.prices; const sellIdx=firstIdxOnOrAfter(rows,sellDate),buyIdx=firstIdxOnOrAfter(rows,buyDate);
+  if(sellIdx<0||buyIdx<0||buyIdx<sellIdx)return{error:'Sell/buy dates must be within the data, buy on or after sell.'};
+  const Ssell=rows[sellIdx].sell,Bbuy=rows[buyIdx].buy; const amt=num('swAmt'),mode=F.swMode,rate=num('swRate');
+  const unitsSold=mode==='units'?amt:amt/Ssell; const P=unitsSold*Ssell,gapDays=daysBetween(rows[sellIdx].date,rows[buyIdx].date);
+  const interest=P*(rate/100)/365*gapDays,cashAtBuy=P+interest,unitsBack=cashAtBuy/Bbuy;
+  let unitsNeverSold=unitsSold,distUnits=0;
+  const distList=F.dists.filter(d=>d.ex&&d.cpu>0&&d.ex>rows[sellIdx].date&&d.ex<=rows[buyIdx].date);
+  for(const d of distList){const cash=unitsNeverSold*d.cpu/100;const rp=d.price||rows[firstIdxOnOrAfter(rows,d.reinvest||d.ex)].buy;const u=cash/rp;unitsNeverSold+=u;distUnits+=u;}
+  const valPrice=Bbuy,shortfall=unitsNeverSold-unitsBack,loss=shortfall*valPrice;
+  const reentryCost=unitsSold*(Bbuy-Ssell),spreadAtSell=unitsSold*(rows[sellIdx].buy-rows[sellIdx].sell),distMissed=distUnits*valPrice,interestOffset=-interest;
   const series=[];
-  for (let i=sellIdx;i<=buyIdx;i++){ const p=rows[i][basis]; const stayed=unitsSold*p; const accr=P*(rate/100)/365*daysBetween(rows[sellIdx].date,rows[i].date); const roundtrip=(i<buyIdx)?(P+accr):unitsBack*p; series.push({date:rows[i].date, a:stayed, b:roundtrip}); }
-  return { kind:'switch', rows:rows.slice(sellIdx,buyIdx+1), series, dists:[], warnings:[], sellIdx, buyIdx, Ssell, Bbuy, unitsSold, P, gapDays, interest, unitsBack, unitsNeverSold, shortfall, loss, valPrice, reentryCost, spreadAtSell, distMissed, interestOffset, distUnits, start:rows[sellIdx].date, end:rows[buyIdx].date,
-    ledger: series.map((s,k)=>({date:s.date, price:rows[sellIdx+k][basis], stayed:s.a, roundtrip:s.b })) };
+  for(let i=sellIdx;i<=buyIdx;i++){const p=rows[i][basis];const stayed=unitsSold*p;const accr=P*(rate/100)/365*daysBetween(rows[sellIdx].date,rows[i].date);const roundtrip=(i<buyIdx)?(P+accr):unitsBack*p;series.push({date:rows[i].date,a:stayed,b:roundtrip});}
+  return {kind:'switch',rows:rows.slice(sellIdx,buyIdx+1),series,dists:[],warnings:[],sellIdx,buyIdx,Ssell,Bbuy,unitsSold,P,gapDays,interest,unitsBack,unitsNeverSold,shortfall,loss,valPrice,reentryCost,spreadAtSell,distMissed,interestOffset,distUnits,start:rows[sellIdx].date,end:rows[buyIdx].date,ledger:series.map((s,k)=>({date:s.date,price:rows[sellIdx+k][basis],stayed:s.a,roundtrip:s.b}))};
 }
-
-/* ---- phasing engine — verified in Node ---- */
 function runPhasing(basis){
-  const start=$('tomStart').value, end=$('tomEnd').value;
-  if (!start||!end||start>=end) return {error:'Set the day-1 and comparison dates.'};
-  const win=S.prices.filter(r=>r.date>=start&&r.date<=end);
-  if (win.length<2) return {error:'Fewer than two pricing days in the window.'};
-  const lump=parseNum($('phLump').value)??0, rate=(parseNum($('phRate').value)??0);
-  const inst = S.phInst.length ? S.phInst : [{date:start, amount:lump}];
-  const instByIdx={}; for (const ins of inst){ if (!ins.date||ins.amount<=0) continue; const i=firstIdxOnOrAfter(win,ins.date); if (i>=0) instByIdx[i]=(instByIdx[i]||0)+ins.amount; }
-  const dists=S.dists.filter(d=>d.ex&&d.cpu>0&&d.ex>=win[0].date&&d.ex<=win[win.length-1].date).map(d=>{ const exIdx=lastIdxOnOrBefore(win,d.ex); let creditIdx=firstIdxOnOrAfter(win,d.reinvest||d.ex); if (creditIdx<0) creditIdx=win.length-1; return {...d, exIdx, creditIdx}; });
-  const P0=win[0][basis];
-  let cfUnits=lump/P0, acUnits=0, cash=lump, accr=0;
-  const pendCf={}, pendAc={}; const series=[], ledger=[]; let prevDate=null, investedTotal=0;
-  for (let i=0;i<win.length;i++){
+  const start=F.tomStart,end=F.tomEnd; if(!start||!end||start>=end)return{error:'Set the day-1 and comparison dates.'};
+  const win=F.prices.filter(r=>r.date>=start&&r.date<=end); if(win.length<2)return{error:'Fewer than two pricing days in the window.'};
+  const lump=num('phLump'),rate=num('phRate'); const inst=F.phInst.length?F.phInst:[{date:start,amount:lump}];
+  const instByIdx={}; for(const ins of inst){if(!ins.date||ins.amount<=0)continue;const i=firstIdxOnOrAfter(win,ins.date);if(i>=0)instByIdx[i]=(instByIdx[i]||0)+ins.amount;}
+  const dists=F.dists.filter(d=>d.ex&&d.cpu>0&&d.ex>=win[0].date&&d.ex<=win[win.length-1].date).map(d=>{const exIdx=lastIdxOnOrBefore(win,d.ex);let creditIdx=firstIdxOnOrAfter(win,d.reinvest||d.ex);if(creditIdx<0)creditIdx=win.length-1;return{...d,exIdx,creditIdx};});
+  const P0=win[0][basis]; let cfUnits=lump/P0,acUnits=0,cash=lump,accr=0; const pendCf={},pendAc={}; const series=[],ledger=[]; let prevDate=null;
+  for(let i=0;i<win.length;i++){
     const p=win[i][basis];
-    if (prevDate&&rate>0){ accr+=cash*(rate/100)/365*daysBetween(prevDate,win[i].date); if (win[i].date.slice(0,7)!==prevDate.slice(0,7)){ cash+=accr; accr=0; } }
-    const inv=instByIdx[i]||0; const put=Math.min(inv,cash); let bought=0;
-    if (put>0){ bought=put/p; acUnits+=bought; cash-=put; investedTotal+=put; }
-    cfUnits+=pendCf[i]||0; acUnits+=pendAc[i]||0;
-    for (const d of dists){ if (i===d.exIdx){ const rp=d.price||win[d.creditIdx][basis]; pendCf[d.creditIdx]=(pendCf[d.creditIdx]||0)+(cfUnits*d.cpu/100)/rp; pendAc[d.creditIdx]=(pendAc[d.creditIdx]||0)+(acUnits*d.cpu/100)/rp; } }
-    const acVal=acUnits*p+cash+accr;
-    series.push({date:win[i].date, a:cfUnits*p, b:acVal});
-    ledger.push({date:win[i].date, price:p, invested:put, bought, cfUnits, acUnits, cash:cash+accr, cfVal:cfUnits*p, acVal});
-    prevDate=win[i].date;
+    if(prevDate&&rate>0){accr+=cash*(rate/100)/365*daysBetween(prevDate,win[i].date);if(win[i].date.slice(0,7)!==prevDate.slice(0,7)){cash+=accr;accr=0;}}
+    const inv=instByIdx[i]||0;const put=Math.min(inv,cash);let bought=0; if(put>0){bought=put/p;acUnits+=bought;cash-=put;}
+    cfUnits+=pendCf[i]||0;acUnits+=pendAc[i]||0;
+    for(const d of dists){if(i===d.exIdx){const rp=d.price||win[d.creditIdx][basis];pendCf[d.creditIdx]=(pendCf[d.creditIdx]||0)+(cfUnits*d.cpu/100)/rp;pendAc[d.creditIdx]=(pendAc[d.creditIdx]||0)+(acUnits*d.cpu/100)/rp;}}
+    const acVal=acUnits*p+cash+accr; series.push({date:win[i].date,a:cfUnits*p,b:acVal}); ledger.push({date:win[i].date,price:p,invested:put,bought,cfUnits,acUnits,cash:cash+accr,cfVal:cfUnits*p,acVal}); prevDate=win[i].date;
   }
-  const endP=win[win.length-1][basis];
-  const cfValue=cfUnits*endP, acValue=acUnits*endP+cash+accr;
-  return { kind:'phasing', rows:win, series, ledger, dists:[], warnings:[], cfUnits, acUnits, cfValue, acValue, advantage:cfValue-acValue, endP, uninvested:cash+accr, lump, investedTotal, start:win[0].date, end:win[win.length-1].date };
+  const endP=win[win.length-1][basis]; const cfValue=cfUnits*endP,acValue=acUnits*endP+cash+accr;
+  return {kind:'phasing',rows:win,series,ledger,dists:[],warnings:[],cfUnits,acUnits,cfValue,acValue,advantage:cfValue-acValue,endP,uninvested:cash+accr,lump,start:win[0].date,end:win[win.length-1].date};
 }
 
-/* ================= results ================= */
-function renderResults(){
-  const R=S.result; $('results').classList.remove('hidden');
-  const cards=$('statCards'), bw=$('breakdownWrap'); bw.innerHTML='';
+/* ================= EVENT HANDLERS ================= */
+function setF(k,v){ F[k]=v; render(); }
+function setFnr(k,v){ F[k]=v; } // no re-render (for live typing where needed)
+function pickScenario(sc){ F.scenario=sc; state.wizardStep=0; state.result=null; state.page='wizard'; render(); window.scrollTo(0,0); }
+function gotoStep(i){ const steps=wizardSteps(); state.wizardStep=Math.max(0,Math.min(steps.length-1,i)); render(); window.scrollTo(0,0); }
 
-  if (R.kind==='cash'){
-    const sign=R.net>=0?'neg':'pos';
-    const bLabel = R.sc==='lumpCash' ? `${fmt$(R.totalNet)} lump + ${fmt$(R.interestTotal)} interest` : `${fmt$(R.totalNet)} contributions + ${fmt$(R.interestTotal)} interest`;
-    cards.innerHTML=`
-      <div class="stat"><div class="lbl">A · Counterfactual (invested)</div><div class="val">${fmt$(R.A)}</div><div class="sub2">invested on receipt, distributions reinvested</div></div>
+/* file helpers */
+function readFile(f,onText){ if(/\.xlsx?$/i.test(f.name)){alert('Excel files can’t be read by this offline page. Open the export in Excel, copy the rows (with headers) and paste them instead — or save as CSV.');return;} const rd=new FileReader();rd.onload=()=>onText(rd.result);rd.readAsText(f); }
+function handlePriceText(t){ const res=parsePrices(t); if(res.error){alert(res.error);return;} setPrices(res.rows); render(); }
+function handleDistText(t){ const res=parseDists(t); if(res.error){alert(res.error);return;} F.dists=res.rows; render(); }
+function loadSample(){
+  const rows=[]; let p=1.60; let d=new Date('2025-04-01'); const end=new Date('2025-08-29'); let seed=42;
+  const rand=()=>{seed=(seed*1103515245+12345)%2147483648;return seed/2147483648;};
+  while(d<=end){const dow=d.getDay();if(dow!==0&&dow!==6){p=p*(1+(rand()-0.47)*0.012);rows.push({date:iso(d.getFullYear(),d.getMonth(),d.getDate()),buy:+p.toFixed(4),sell:+(p*0.9994).toFixed(4),nav:+(p*0.9997).toFixed(4)});}d.setDate(d.getDate()+1);}
+  setPrices(rows);
+  F.dists=[{ex:'2025-06-30',cpu:1.9694,reinvest:'2025-07-01',price:rows.find(r=>r.date>='2025-07-01').buy}];
+  if(!F.clientName)F.clientName='Sample Client'; if(!F.fundName)F.fundName='Sample Growth Fund (synthetic prices)';
+  if(F.scenario==='contribCash'||F.scenario==='feeDrag'){F.sched=[];genSchedule();return;}
+  if(F.scenario==='phasing'){genPhasing();return;}
+  render();
+}
+
+/* ================= UNDO / REDO / RESET ================= */
+const __undo={stack:[],redo:[],last:'',restoring:false,cap:50};
+function __snap(){ try{return JSON.stringify(F);}catch(_){return'';} }
+function recordUndo(){ if(__undo.restoring)return; const s=__snap(); if(!s||s===__undo.last)return; if(__undo.last){__undo.stack.push(__undo.last);if(__undo.stack.length>__undo.cap)__undo.stack.shift();__undo.redo.length=0;} __undo.last=s; }
+function __apply(s){ __undo.restoring=true; try{F=JSON.parse(s);applyTheme();render();}catch(_){}__undo.restoring=false; }
+function undoAction(){ if(!__undo.stack.length)return; const prev=__undo.stack.pop(); __undo.redo.push(__undo.last); __undo.last=prev; __apply(prev); }
+function redoAction(){ if(!__undo.redo.length)return; const nxt=__undo.redo.pop(); __undo.stack.push(__undo.last); __undo.last=nxt; __apply(nxt); }
+function confirmResetAll(){
+  if(!confirm('Start a brand-new calculation?\n\nAll current inputs in this tab will be cleared — use 💾 Save first if you want to keep them.'))return;
+  const theme=F.theme; F=DEFAULTS(); F.theme=theme; state.page='picker'; state.wizardStep=0; state.result=null;
+  try{localStorage.removeItem(DRAFT_KEY);}catch(_){}
+  render(); window.scrollTo(0,0);
+}
+
+/* ================= THEME / SAVE / LOAD / DRAFT ================= */
+function toggleTheme(){ F.theme=F.theme==='night'?'day':'night'; try{localStorage.setItem('tom_theme',F.theme);}catch(_){} applyTheme(); render(); }
+function applyTheme(){ document.documentElement.setAttribute('data-theme',F.theme==='night'?'night':'day'); }
+function exportJson(){
+  const name=(F.clientName||'time-out-of-market').replace(/[^a-z0-9]+/gi,'-').toLowerCase();
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(F,null,2)],{type:'application/json'})); a.download=name+'.json'; a.click();
+}
+function importJson(inp){ const f=inp.files[0]; if(!f)return; const rd=new FileReader(); rd.onload=()=>{ try{const d=JSON.parse(rd.result);F=Object.assign(DEFAULTS(),d);applyTheme();state.page='wizard';render();}catch(_){alert('That file could not be read as a saved calculation.');} }; rd.readAsText(f); }
+let __draftTimer=null;
+function saveDraftSoon(){ clearTimeout(__draftTimer); __draftTimer=setTimeout(()=>{try{localStorage.setItem(DRAFT_KEY,JSON.stringify({F,page:state.page,wizardStep:state.wizardStep,ts:Date.now()}));}catch(_){}},600); }
+function csvExport(){
+  const R=state.result; if(!R||R.error)return; let csv;
+  if(R.kind==='cash')csv='Date,Price,Return,Contribution,Distribution credit,Counterfactual,Interest,Actual cash\n'+R.ledger.map(l=>[l.date,l.price,l.ret??'',l.contrib||'',l.distCredit||'',l.cf.toFixed(2),l.int?l.int.toFixed(2):'',l.actual.toFixed(2)].join(',')).join('\n');
+  else if(R.kind==='units')csv='Date,Price,Contribution,Units bought,Distribution units,Cumulative units,Value\n'+R.ledger.map(l=>[l.date,l.price,l.contrib||'',l.bought?l.bought.toFixed(4):'',l.distU?l.distU.toFixed(4):'',l.units.toFixed(4),l.value.toFixed(2)].join(',')).join('\n');
+  else if(R.kind==='switch')csv='Date,Price,Stayed invested,Round-trip\n'+R.ledger.map(l=>[l.date,l.price,l.stayed.toFixed(2),l.roundtrip.toFixed(2)].join(',')).join('\n');
+  else csv='Date,Price,Invested,Lump units,Phased units,Cash,Lump value,Phased value\n'+R.ledger.map(l=>[l.date,l.price,l.invested||'',l.cfUnits.toFixed(4),l.acUnits.toFixed(4),l.cash.toFixed(2),l.cfVal.toFixed(2),l.acVal.toFixed(2)].join(',')).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='tom-ledger.csv'; a.click();
+}
+
+/* ================= RENDER: TOPBAR ================= */
+function renderTopbar(){
+  const sc=SCEN[F.scenario];
+  const status = state.page==='wizard' ? `${sc.short} · ${F.prices.length} pricing days` : (F.prices.length?`${F.prices.length} pricing days loaded`:'');
+  return `<div class="topbar">
+    <div class="topbar-left">
+      <div class="brand" onclick="state.page='picker';render()" title="Back to the scenario picker">
+        <span class="brand-stack"><span class="brand-name">MyWealth</span><span class="brand-solutions">Solutions</span></span>
+      </div>
+      <span class="tool-label">Time Out<br>of Market</span>
+    </div>
+    <div class="topbar-mid">
+      <div class="topnav">
+        <a class="${state.page==='picker'?'active':''}" onclick="state.page='picker';render()">1 · Scenario</a>
+        <a class="${state.page==='wizard'?'active':''}" onclick="state.page='wizard';render()">2 · Calculate</a>
+      </div>
+      ${status?`<span class="topbar-status">${e(status)}</span>`:''}
+    </div>
+    <div class="top-actions">
+      <button class="btn btn-sm btn-ghost theme-toggle" onclick="toggleTheme()" title="Toggle day/night view"><span class="theme-toggle-icon">${F.theme==='night'?'☀️':'🌙'}</span><span style="margin-left:5px">${F.theme==='night'?'Day':'Night'}</span></button>
+      <button class="btn btn-sm btn-ghost" onclick="exportJson()" title="Download a .json working copy you can re-open later">💾 Save</button>
+      <label class="import-btn btn-sm" style="margin:0" title="Re-open a saved .json working file">📂 Load<input type="file" accept=".json,application/json" style="display:none" onchange="importJson(this)"></label>
+      <button class="btn btn-sm btn-ghost" onclick="undoAction()" title="Undo (Ctrl/⌘+Z)">↶</button>
+      <button class="btn btn-sm btn-ghost" onclick="redoAction()" title="Redo (Ctrl+Y / ⌘+Shift+Z)">↷</button>
+      <button class="btn btn-sm btn-ghost" style="color:var(--coral)" onclick="confirmResetAll()" title="Clear everything and start again">♻ Reset</button>
+    </div>
+  </div>`;
+}
+
+/* ================= RENDER: PICKER ================= */
+function renderPicker(){
+  let h=`<div class="main">
+    <div class="hero"><div class="hero-inner"><div class="hero-left">
+      <div class="hero-sub">My Wealth Solutions · Adviser tools</div>
+      <h1>Time Out of Market <em>Calculator</em></h1>
+      <div class="hero-tag">Quantify the return foregone when a client’s money sat out of the market. Pick the scenario that matches what happened, upload the Vanguard price &amp; distribution exports, and the wizard walks you through to a documented opportunity-cost figure.</div>
+    </div></div></div>`;
+  h+=`<div class="picker-intro"><h3>Choose a scenario</h3><p>Each scenario maps to a modelling method. You can change it at any time from the top bar.</p></div>`;
+  h+=`<div class="scenario-grid">`;
+  for(const k of Object.keys(SCEN)){ const s=SCEN[k]; const sel=F.scenario===k&&state.page==='wizard'?'selected':'';
+    h+=`<div class="scenario-card ${sel}" onclick="pickScenario('${k}')">
+      <span class="sc-tag">${e(s.tag)}</span>
+      <span class="sc-name">${e(s.name)}</span>
+      <span class="sc-desc">${e(s.desc)}</span>
+    </div>`; }
+  h+=`</div>`;
+  h+=`<div class="info">A local page can’t fetch Vanguard directly (browsers block cross-site requests and there’s no public price API), so you’ll upload or paste the price &amp; distribution exports on the next screen — the calculator detects the columns and pre-populates.</div>`;
+  h+=`</div>`;
+  return h;
+}
+
+/* ================= RENDER: WIZARD ================= */
+function renderWizard(){
+  const steps=wizardSteps(); const cur=steps[state.wizardStep];
+  // compute the result up-front so the sidebar estimate and the results step agree
+  state.result = F.prices.length ? calculate() : {error:'no prices'};
+  state.needChart = (cur.k==='results' && state.result && !state.result.error);
+  // sidebar
+  let side=`<aside class="wizard-side"><div class="sidebar-page-heading">${e(SCEN[F.scenario].short)} · Steps</div><div class="wizard-steps-v">`;
+  steps.forEach((s,i)=>{ const st=stepStatus(s.k); const cls=i===state.wizardStep?'current':(st==='ok'?'done':'todo');
+    side+=`<button class="wizard-step ${cls}" onclick="gotoStep(${i})" title="${e(s.l)}">
+      <span class="ws-dot">${i===state.wizardStep?i+1:(st==='ok'?'✓':i+1)}</span>
+      <span class="ws-label">${e(s.l)}</span></button>`; });
+  side+=`</div>`;
+  const R=state.result;
+  if(R&&!R.error){ const hv=heroValue(R); side+=`<div class="wizard-side-foot"><div class="wf-lbl">${e(hv.lbl)}</div><div class="wf-val ${hv.cls}">${hv.val}</div></div>`; }
+  side+=`</aside>`;
+
+  // main step body
+  let body=stepBody(cur.k);
+  const st=stepStatus(cur.k);
+  const hint = st!=='ok' ? stepHint(cur.k) : '';
+  let main=`<div>
+    <div class="page-separator"><span class="page-separator-num">Step ${state.wizardStep+1} of ${steps.length}</span><span class="page-separator-label">${e(SCEN[F.scenario].full.split('.')[0])}</span></div>
+    <div class="section-block">
+      <div class="section-block-head"><div class="section-block-title">${e(cur.l)}</div></div>
+      ${hint?`<div style="padding:0 20px">${hint}</div>`:''}
+      <div class="section-block-body">${body}</div>
+    </div>
+    <div class="wizard-nav">
+      ${state.wizardStep>0?`<button class="btn" onclick="gotoStep(${state.wizardStep-1})">← ${e(steps[state.wizardStep-1].l)}</button>`:`<button class="btn" onclick="state.page='picker';render();window.scrollTo(0,0)">← Scenarios</button>`}
+      <span class="wizard-nav-mid">Step ${state.wizardStep+1} of ${steps.length}</span>
+      ${state.wizardStep<steps.length-1?`<button class="btn btn-blue" onclick="gotoStep(${state.wizardStep+1})">Next: ${e(steps[state.wizardStep+1].l)} →</button>`:`<button class="btn btn-green" onclick="window.print()">⬇ Print / save PDF</button>`}
+    </div>
+  </div>`;
+
+  return `<div class="main"><div class="wizard-wrap">${side}${main}</div></div>`;
+}
+function stepHint(k){
+  const m={prices:'Load the price history to unlock the calculation.',setup:'Enter the client, fund and the period dates.',contrib:'Generate or add at least one contribution.',lump:'Enter the lump-sum amount.',holdings:'Enter the actual units held at the end date.',switch:'Set the sell and buy-back dates.',phasing:'Build the phasing schedule.',results:'Complete the earlier steps to see a result.'};
+  return m[k]?`<div class="wizard-hint">⚠ Still to do: ${e(m[k])}</div>`:'';
+}
+function heroValue(R){
+  if(R.kind==='cash')return{lbl:'Net opportunity cost',val:fmt$(R.net),cls:R.net>=0?'neg':'pos'};
+  if(R.kind==='units')return{lbl:'Opportunity loss',val:fmt$(R.loss),cls:R.loss>=0?'neg':'pos'};
+  if(R.kind==='switch')return{lbl:'Opportunity loss',val:fmt$(R.loss),cls:R.loss>=0?'neg':'pos'};
+  return{lbl:'Lump-sum advantage',val:fmt$(R.advantage),cls:R.advantage>=0?'pos':'neg'};
+}
+
+/* ---- individual step bodies ---- */
+function fld(label,inner,hint){ return `<div class="field"><label>${label}</label>${inner}${hint?`<div class="hint">${hint}</div>`:''}</div>`; }
+function inp(k,type='text',attrs=''){ return `<input type="${type}" value="${e(F[k])}" data-fk="${k}" ${attrs} oninput="setFnr('${k}',this.value)" onchange="setF('${k}',this.value)">`; }
+function sel(k,opts){ return `<select data-fk="${k}" onchange="setF('${k}',this.value)">${opts.map(o=>`<option value="${o[0]}" ${F[k]===o[0]?'selected':''}>${e(o[1])}</option>`).join('')}</select>`; }
+
+function stepBody(k){
+  if(k==='prices')return body_prices();
+  if(k==='dists')return body_dists();
+  if(k==='setup')return body_setup();
+  if(k==='contrib')return body_contrib();
+  if(k==='interest')return body_interest();
+  if(k==='lump')return body_lump();
+  if(k==='holdings')return body_holdings();
+  if(k==='switch')return body_switch();
+  if(k==='phasing')return body_phasing();
+  if(k==='results')return body_results();
+  return '';
+}
+function body_prices(){
+  const st=F.prices.length?`<span class="pill ok">${F.prices.length} pricing days</span>`:`<span class="pill">no data</span>`;
+  return `<div class="row" style="justify-content:space-between"><div style="font-size:12.5px;color:var(--text-muted)">Buy / Sell / NAV daily prices from the Vanguard price-history export.</div>${st}</div>
+    <div class="grid g2" style="margin-top:12px">
+      <div>
+        <div class="drop" id="priceDrop">Drop the price-history export here (.csv / .txt)<br>or click to choose a file</div>
+        <input type="file" id="priceFile" accept=".csv,.txt,.tsv" class="hidden">
+        <div class="hint">Columns: Date, Buy, Sell, NAV (extras ignored). Dates like <code>22 Apr 2025</code>, <code>22/04/2025</code> or <code>2025-04-22</code> all work. For .xlsx, copy-paste from Excel.</div>
+      </div>
+      <div>
+        ${fld('…or paste rows copied from Excel (with the header row)',`<textarea id="pricePaste" rows="6" placeholder="Date&#9;Buy&#9;Sell&#9;NAV&#10;22 Apr 2025&#9;$1.5554&#9;$1.5549&#9;$1.5549"></textarea>`)}
+        <div class="row"><button class="btn btn-blue" onclick="handlePriceText($('pricePaste').value)">Parse pasted prices</button>
+          <button class="btn" onclick="loadSample()">Load sample data (demo)</button>
+          <button class="btn btn-ghost" onclick="F.prices=[];render()">Clear</button></div>
+      </div>
+    </div>
+    ${F.prices.length?`<div class="info">Loaded ${F.prices.length} pricing days: ${fmtDate(F.prices[0].date)} – ${fmtDate(F.prices[F.prices.length-1].date)}. Missing weekdays are treated as non-pricing days (holidays), per the workbook convention.</div>`:''}`;
+}
+function body_dists(){
+  const rows=F.dists.map((d,i)=>`<tr>
+    <td><input type="date" value="${e(d.ex)}" onchange="F.dists[${i}].ex=this.value;render()"></td>
+    <td><input type="number" step="0.000001" value="${e(d.cpu)}" onchange="F.dists[${i}].cpu=parseNum(this.value);render()" style="width:120px"></td>
+    <td><input type="date" value="${e(d.reinvest||'')}" onchange="F.dists[${i}].reinvest=this.value;render()"></td>
+    <td><input type="number" step="0.0001" value="${e(d.price??'')}" onchange="F.dists[${i}].price=parseNum(this.value);render()" style="width:110px"></td>
+    <td class="no-print"><button class="btn btn-xs btn-ghost" onclick="F.dists.splice(${i},1);render()">✕</button></td></tr>`).join('');
+  return `<div class="grid g2">
+      <div>
+        <div class="drop" id="distDrop">Drop the distribution-history export here (.csv / .txt)<br>or click to choose a file</div>
+        <input type="file" id="distFile" accept=".csv,.txt,.tsv" class="hidden">
+        <div class="hint">Columns: Ex-date, CPU (cents/unit), Reinvest date, Reinvest price. Leave empty if none fell in the period.</div>
+      </div>
+      <div>
+        ${fld('…or paste from the distribution export',`<textarea id="distPaste" rows="4" placeholder="Ex date&#9;CPU (c/unit)&#9;Reinvest date&#9;Reinvest price&#10;30 Jun 2025&#9;1.969397&#9;01 Jul 2025&#9;$1.6714"></textarea>`)}
+        <div class="row"><button class="btn btn-blue" onclick="handleDistText($('distPaste').value)">Parse pasted distributions</button>
+          <button class="btn" onclick="F.dists.push({ex:'',cpu:0,reinvest:'',price:null});render()">+ Add row</button></div>
+      </div>
+    </div>
+    <table class="data sched-table" style="margin-top:12px"><thead><tr><th>Ex-date</th><th>CPU (c/unit)</th><th>Reinvest date</th><th>Reinvest price $</th><th class="no-print"></th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="hint" style="margin-top:8px">Distributions are computed as <em>units held at the ex-date × CPU</em> and credited on the reinvest date, so they compound into later ex-dates.</div>`;
+}
+function body_setup(){
+  const isSwitch=F.scenario==='switch';
+  const startLbl=F.scenario==='lumpCash'?'Should have been invested on':F.scenario==='phasing'?'Lump available on (day 1)':'Period — start';
+  const endLbl=F.scenario==='lumpCash'?'Actually invested on':F.scenario==='phasing'?'Comparison date':'Period — end';
+  let h=`<div class="grid g2">
+    ${fld('Client name (for the report)',inp('clientName','text','placeholder="e.g. E & A Sibly"'))}
+    ${fld('Fund',inp('fundName','text','placeholder="e.g. Vanguard Growth Index Fund"'))}
+    ${fld('Return / price basis',sel('basis',[['buy','Buy price'],['sell','Sell price'],['nav','NAV']]))}
+  </div>`;
+  if(!isSwitch)h+=`<div class="grid g2">${fld(startLbl,inp('tomStart','date'))}${fld(endLbl,inp('tomEnd','date'))}</div>`;
+  else h+=`<div class="info">Switch dates are set on the next step. Here just name the client and fund and pick the price basis.</div>`;
+  return h;
+}
+function body_contrib(){
+  const feeOn=F.feeOn==='yes';
+  const rows=F.sched.map((r,i)=>`<tr>
+    <td><input type="date" value="${e(r.date)}" onchange="F.sched[${i}].date=this.value;render()" style="width:150px"></td>
+    <td>${r.type==='monthly'?'Monthly':'One-off'}</td>
+    <td><input type="number" step="0.01" value="${e(r.gross)}" onchange="F.sched[${i}].gross=parseNum(this.value)||0;render()" style="width:110px"></td>
+    <td style="font-variant-numeric:tabular-nums">${fmt$(rowNet(r))}</td>
+    <td><input type="checkbox" ${r.include?'checked':''} onchange="F.sched[${i}].include=this.checked;render()"></td>
+    <td class="no-print"><button class="btn btn-xs btn-ghost" onclick="F.sched.splice(${i},1);render()">✕</button></td></tr>`).join('');
+  return `<div class="grid g3">
+      ${fld('Monthly contribution (gross $)',inp('grossContrib','number','step="10" min="0"'))}
+      ${fld('Contribution day of month',inp('contribDay','number','min="1" max="31"'))}
+      <div class="field"><label>&nbsp;</label><button class="btn btn-blue" style="width:100%" onclick="genSchedule()">Generate schedule</button></div>
+    </div>
+    <div class="grid g3">
+      ${fld('Advice fee deducted from the contribution?',sel('feeOn',[['no','No — full amount was headed for investment'],['yes','Yes — fee comes out of the contribution']]))}
+      ${feeOn?fld('Advice fee per contribution ($)',inp('advFee','number','step="0.01" min="0"')):''}
+      ${feeOn?fld('Other admin/platform fees ($)',inp('adminFee','number','step="0.01" min="0"')):''}
+    </div>
+    <div class="info">Net invested per contribution: <strong>${fmt$(netMonthly())}</strong>. The fee is payable in <em>both</em> scenarios, so it is never a recoverable loss — it only reduces the amount that should have been invested (the Wilson net-basis principle).</div>
+    <table class="data sched-table" style="margin-top:6px"><thead><tr><th>Date</th><th>Type</th><th>Gross $</th><th>Net invested $</th><th>Include</th><th class="no-print"></th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="row" style="margin-top:8px"><button class="btn btn-sm" onclick="F.sched.push({date:F.tomStart||(F.prices[0]&&F.prices[0].date)||'',type:'oneoff',gross:0,include:true});render()">+ Add one-off contribution</button>
+      <span class="hint" style="margin:0">One-off deposits invest in full. Contributions on a non-pricing day move to the next pricing day. Untick “Include” for contributions invested correctly.</span></div>`;
+}
+function body_interest(){
+  const m=F.intMode;
+  let h=`<div class="grid g3">
+    ${fld('Interest treatment',sel('intMode',[['none','None'],['rate','Flat annual rate on the idle balance'],['actual','Actual credits (apportioned, Sibly method)']]))}
+    ${m==='rate'?fld('Cash account rate (% p.a.)',inp('intRate','number','step="0.05" min="0"')):''}
+    ${m==='actual'?fld('Pre-existing base cash at start ($)',inp('baseCash','number','step="0.01" min="0"')):''}
+  </div>`;
+  if(m==='actual'){
+    const rows=F.intCredits.map((r,i)=>`<tr>
+      <td><input type="date" value="${e(r.date)}" onchange="F.intCredits[${i}].date=this.value;render()"></td>
+      <td><input type="number" step="0.01" value="${e(r.amount)}" onchange="F.intCredits[${i}].amount=parseNum(this.value)||0;render()"></td>
+      <td class="no-print"><button class="btn btn-xs btn-ghost" onclick="F.intCredits.splice(${i},1);render()">✕</button></td></tr>`).join('');
+    h+=`<div class="hint">Each actual credit is split pro-rata between base cash and the contributions by balance share immediately before the credit — only the contributions’ share offsets the loss.</div>
+      <table class="data sched-table" style="max-width:420px"><thead><tr><th>Credit date</th><th>Amount $</th><th class="no-print"></th></tr></thead><tbody>${rows}</tbody></table>
+      <button class="btn btn-sm" style="margin-top:6px" onclick="F.intCredits.push({date:'',amount:0});render()">+ Add credit</button>`;
+  } else if(m==='rate'){
+    h+=`<div class="hint">Flat-rate mode accrues daily (rate ÷ 365) on the idle balance and credits monthly — interest on any pre-existing base cash is earned in both scenarios and cancels out.</div>`;
+  }
+  return h;
+}
+function body_lump(){
+  const feeOn=F.feeOn==='yes';
+  return `<div class="grid g3">
+      ${fld('Lump sum amount ($)',inp('lumpAmt','number','step="1000" min="0"'))}
+      ${fld('Advice fee deducted?',sel('feeOn',[['no','No — invested in full'],['yes','Yes — fee comes out first']]))}
+      ${feeOn?fld('Advice fee ($)',inp('advFee','number','step="0.01" min="0"')):''}
+    </div>
+    <div class="info">The dates on the previous step are: <strong>start</strong> = the day it should have been invested; <strong>end</strong> = the day it was actually invested (the loss crystallises there). The lump is invested in full unless you deduct a fee.</div>`;
+}
+function body_holdings(){
+  return `<div class="grid g2">
+      ${fld('Opening units at period start',inp('openUnits','number','step="0.0001" min="0"'))}
+      ${fld('Actual units held at period end',inp('actualUnits','number','step="0.0001" min="0"'))}
+    </div>
+    <div class="info">Tie these to platform valuation reports. If the closing valuation post-dates the comparison date, back out purchases made in between (Wilson: 2,845.50 valuation less the 10-Feb purchase of 255.45 = 2,590.05 at 04 Feb).</div>`;
+}
+function body_switch(){
+  const unitsMode=F.swMode==='units';
+  return `<div class="grid g3">
+      ${fld('Amount switched, expressed as…',sel('swMode',[['units','Units sold'],['dollars','Dollar value ($)']]))}
+      ${fld(unitsMode?'Units sold':'Dollar value ($)',inp('swAmt','number','step="1" min="0"'))}
+      ${fld('Interest on the cash during the gap (% p.a.)',inp('swRate','number','step="0.05" min="0"'))}
+      ${fld('Sell date (settled to cash)',inp('swSell','date'))}
+      ${fld('Buy-back date (re-invested)',inp('swBuy','date'))}
+    </div>
+    <div class="info">Sells at the <strong>Sell</strong> price, sits in cash over the gap, buys back at the <strong>Buy</strong> price. The loss captures the round-trip spread plus market drift, less interest earned, plus any distribution missed while out.</div>`;
+}
+function body_phasing(){
+  const rows=F.phInst.map((r,i)=>`<tr>
+    <td><input type="date" value="${e(r.date)}" onchange="F.phInst[${i}].date=this.value;render()"></td>
+    <td><input type="number" step="0.01" value="${e(r.amount)}" onchange="F.phInst[${i}].amount=parseNum(this.value)||0;render()"></td>
+    <td class="no-print"><button class="btn btn-xs btn-ghost" onclick="F.phInst.splice(${i},1);render()">✕</button></td></tr>`).join('');
+  return `<div class="grid g3">
+      ${fld('Lump sum available ($)',inp('phLump','number','step="1000" min="0"'))}
+      ${fld('Number of instalments (actual)',inp('phN','number','min="1" max="60"'))}
+      ${fld('Months between instalments',inp('phEvery','number','min="1" max="12"'))}
+      ${fld('Interest on un-invested cash (% p.a.)',inp('phRate','number','step="0.05" min="0"'))}
+      <div class="field"><label>&nbsp;</label><button class="btn btn-blue" style="width:100%" onclick="genPhasing()">Build phasing schedule</button></div>
+    </div>
+    <div class="info">Counterfactual = the whole lump invested on the <strong>start</strong> date. Actual = the instalments below (edit freely), with the un-invested remainder held in cash. Comparison at the <strong>end</strong> date.</div>
+    <table class="data sched-table" style="margin-top:6px"><thead><tr><th>Instalment date</th><th>Amount $</th><th class="no-print"></th></tr></thead><tbody>${rows}</tbody></table>
+    <button class="btn btn-sm" style="margin-top:6px" onclick="F.phInst.push({date:F.tomStart||'',amount:0});render()">+ Add instalment</button>`;
+}
+
+/* ---- results step ---- */
+function body_results(){
+  const R=state.result;
+  if(!R||R.error){ return `<div class="warn">${e(R&&R.error&&R.error!=='no prices'?R.error:'Complete the earlier steps (load prices and fill the inputs) to see a result.')}</div>`; }
+  let cards='',bw='';
+  if(R.kind==='cash'){
+    const sign=R.net>=0?'neg':'pos'; const bLabel=R.sc==='lumpCash'?`${fmt$(R.totalNet)} lump + ${fmt$(R.interestTotal)} interest`:`${fmt$(R.totalNet)} contributions + ${fmt$(R.interestTotal)} interest`;
+    cards=`<div class="stat"><div class="lbl">A · Counterfactual (invested)</div><div class="val">${fmt$(R.A)}</div><div class="sub2">invested on receipt, distributions reinvested</div></div>
       <div class="stat"><div class="lbl">B · Actual (sat in cash)</div><div class="val">${fmt$(R.B)}</div><div class="sub2">${bLabel}</div></div>
-      <div class="stat hero"><div class="lbl">Net opportunity cost (A − B)</div><div class="val ${sign}">${fmt$(R.net)}</div><div class="sub2">${fmtDate(R.start)} – ${fmtDate(R.end)} · ${R.basis.toUpperCase()} basis</div></div>`;
-    bw.innerHTML=`<table style="max-width:560px">
-      <tr><td>Market growth foregone (excl. distributions)</td><td>${fmt$(R.growthForegone)}</td></tr>
+      <div class="stat hero-stat"><div class="lbl">Net opportunity cost (A − B)</div><div class="val ${sign}">${fmt$(R.net)}</div><div class="sub2">${fmtDate(R.start)} – ${fmtDate(R.end)} · ${R.basis.toUpperCase()} basis</div></div>`;
+    bw=`<table class="data" style="max-width:560px"><tr><td>Market growth foregone (excl. distributions)</td><td>${fmt$(R.growthForegone)}</td></tr>
       <tr><td>Missed distributions on the counterfactual units</td><td>${fmt$(R.distTotal)}</td></tr>
       <tr><td>Less: interest earned on the idle cash${R.intMode==='actual'?' (apportioned)':''}</td><td>${fmt$(-R.interestTotal)}</td></tr>
       <tr><th>Net opportunity cost</th><th>${fmt$(R.net)}</th></tr></table>`;
-    $('chartTitle').textContent='Counterfactual invested value vs actual cash balance';
-  }
-  else if (R.kind==='units'){
+  } else if(R.kind==='units'){
     const sign=R.loss>=0?'neg':'pos';
-    cards.innerHTML=`
-      <div class="stat"><div class="lbl">A · Counterfactual units</div><div class="val">${fmtU(R.A)}</div><div class="sub2">${fmtU(R.openUnits)} opening + ${fmtU(R.boughtUnits)} bought + ${fmtU(R.distUnitsTotal)} dist</div></div>
+    cards=`<div class="stat"><div class="lbl">A · Counterfactual units</div><div class="val">${fmtU(R.A)}</div><div class="sub2">${fmtU(R.openUnits)} opening + ${fmtU(R.boughtUnits)} bought + ${fmtU(R.distUnitsTotal)} dist</div></div>
       <div class="stat"><div class="lbl">B · Actual units held</div><div class="val">${fmtU(R.B)}</div><div class="sub2">at ${fmtDate(R.end)}</div></div>
-      <div class="stat hero"><div class="lbl">Opportunity loss (shortfall × ${fmt$(R.endPrice,4)})</div><div class="val ${sign}">${fmt$(R.loss)}</div><div class="sub2">${fmtU(R.shortfall)} unit shortfall</div></div>`;
-    $('chartTitle').textContent='Counterfactual portfolio value (units × price)';
-  }
-  else if (R.kind==='switch'){
+      <div class="stat hero-stat"><div class="lbl">Opportunity loss</div><div class="val ${sign}">${fmt$(R.loss)}</div><div class="sub2">${fmtU(R.shortfall)} shortfall × ${fmt$(R.endPrice,4)}</div></div>`;
+  } else if(R.kind==='switch'){
     const sign=R.loss>=0?'neg':'pos';
-    cards.innerHTML=`
-      <div class="stat"><div class="lbl">If never sold</div><div class="val">${fmtU(R.unitsNeverSold)} u</div><div class="sub2">${R.gapDays} days out · sold @ ${fmt$(R.Ssell,4)}, back @ ${fmt$(R.Bbuy,4)}</div></div>
-      <div class="stat"><div class="lbl">After the round trip</div><div class="val">${fmtU(R.unitsBack)} u</div><div class="sub2">${fmt$(R.P)} proceeds${R.interest?` + ${fmt$(R.interest)} interest`:''} ÷ Buy</div></div>
-      <div class="stat hero"><div class="lbl">Opportunity loss</div><div class="val ${sign}">${fmt$(R.loss)}</div><div class="sub2">${fmtU(R.shortfall)} unit shortfall × ${fmt$(R.valPrice,4)}</div></div>`;
-    bw.innerHTML=`<table style="max-width:560px">
-      <tr><td>Re-entry cost — sold at ${fmt$(R.Ssell,4)}, bought back at ${fmt$(R.Bbuy,4)} (spread + drift over the gap)</td><td>${fmt$(R.reentryCost)}</td></tr>
+    cards=`<div class="stat"><div class="lbl">If never sold</div><div class="val">${fmtU(R.unitsNeverSold)}</div><div class="sub2">${R.gapDays} days out · sold @ ${fmt$(R.Ssell,4)}, back @ ${fmt$(R.Bbuy,4)}</div></div>
+      <div class="stat"><div class="lbl">After the round trip</div><div class="val">${fmtU(R.unitsBack)}</div><div class="sub2">${fmt$(R.P)} proceeds${R.interest?` + ${fmt$(R.interest)} int`:''} ÷ Buy</div></div>
+      <div class="stat hero-stat"><div class="lbl">Opportunity loss</div><div class="val ${sign}">${fmt$(R.loss)}</div><div class="sub2">${fmtU(R.shortfall)} shortfall × ${fmt$(R.valPrice,4)}</div></div>`;
+    bw=`<table class="data" style="max-width:560px"><tr><td>Re-entry cost — sold at ${fmt$(R.Ssell,4)}, bought at ${fmt$(R.Bbuy,4)} (spread + drift)</td><td>${fmt$(R.reentryCost)}</td></tr>
       <tr><td>Distribution missed while in cash</td><td>${fmt$(R.distMissed)}</td></tr>
       <tr><td>Less: interest earned in cash</td><td>${fmt$(R.interestOffset)}</td></tr>
       <tr><th>Opportunity loss</th><th>${fmt$(R.loss)}</th></tr></table>
-      <div class="note">For reference, the pure bid-ask spread at the sell date alone is ${fmt$(R.spreadAtSell)} — the rest of the re-entry cost is market drift during the ${R.gapDays}-day gap.</div>`;
-    $('chartTitle').textContent='Staying invested vs selling to cash and buying back';
-  }
-  else if (R.kind==='phasing'){
-    const sign=R.advantage>=0?'pos':'neg';
-    const verdict=R.advantage>=0?'Lump-sum would have won':'Phasing would have won';
-    cards.innerHTML=`
-      <div class="stat"><div class="lbl">Lump sum invested day 1</div><div class="val">${fmt$(R.cfValue)}</div><div class="sub2">${fmtU(R.cfUnits)} units</div></div>
-      <div class="stat"><div class="lbl">Phased in (actual)</div><div class="val">${fmt$(R.acValue)}</div><div class="sub2">${fmtU(R.acUnits)} units + ${fmt$(R.uninvested)} cash</div></div>
-      <div class="stat hero"><div class="lbl">Lump-sum advantage</div><div class="val ${sign}">${fmt$(R.advantage)}</div><div class="sub2">${verdict} · ${fmtDate(R.start)} – ${fmtDate(R.end)}</div></div>`;
-    $('chartTitle').textContent='Lump sum (day 1) vs phased entry — portfolio value';
-  }
-
-  if (R.warnings&&R.warnings.length) bw.innerHTML+=`<div class="warn">${R.warnings.map(w=>'• '+w).join('<br>')}</div>`;
-  if (R.dists&&R.dists.length) bw.innerHTML+=`<div class="note">Distributions modelled: ${R.dists.map(d=>`${fmtDate(d.ex)} @ ${d.cpu} c/u → ${R.kind==='cash'?fmt$(d.cash||0):(fmtU(d.unitsCredited||0)+' units')} credited ${fmtDate(R.rows[d.creditIdx].date)}`).join(' · ')}</div>`;
-
-  drawChart(); renderLedger(); renderMeth();
-}
-
-/* ================= chart ================= */
-function drawChart(){
-  const R=S.result, box=$('chartbox'), svg=$('chart');
-  const W=Math.max(560, box.clientWidth||900), H=340, m={t:16,r:120,b:34,l:70};
-  const iw=W-m.l-m.r, ih=H-m.t-m.b, two=R.twoSeries;
-  const ys=R.series.map(s=>s.a).concat(two?R.series.map(s=>s.b):[]);
-  const ymin=0, ymax=Math.max(...ys)*1.06||1, n=R.series.length;
-  const x=i=> m.l+(n<=1?0:i/(n-1)*iw), y=v=> m.t+ih-(v-ymin)/(ymax-ymin)*ih;
-  const css=getComputedStyle(document.documentElement);
-  const c1=css.getPropertyValue('--series-1').trim(), c2=css.getPropertyValue('--series-2').trim();
-  const grid=css.getPropertyValue('--border').trim(), tmut=css.getPropertyValue('--text-muted').trim(), tsec=css.getPropertyValue('--text-secondary').trim(), cardc=css.getPropertyValue('--card').trim();
-  const unitsChart = R.kind==='units';
-  const labels = {
-    cash:['Counterfactual','Actual'], switch:['Stayed invested','Round trip'], phasing:['Lump sum','Phased'], units:['Counterfactual','Actual (end)'],
-  }[R.kind];
-
-  let el='<g>'; const steps=4;
-  for (let k=0;k<=steps;k++){ const v=ymin+(ymax-ymin)*k/steps; el+=`<line x1="${m.l}" x2="${m.l+iw}" y1="${y(v)}" y2="${y(v)}" stroke="${grid}" stroke-width="1"/>`; el+=`<text x="${m.l-8}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="${tmut}">$${Math.round(v).toLocaleString()}</text>`; }
-  const ticks=Math.min(6,n);
-  for (let k=0;k<ticks;k++){ const i=Math.round(k*(n-1)/(ticks-1||1)); el+=`<text x="${x(i)}" y="${H-10}" text-anchor="middle" font-size="11" fill="${tmut}">${fmtDate(R.series[i].date).slice(0,6)}</text>`; }
-  const path=key=> R.series.map((s,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(s[key]).toFixed(1)).join('');
-  if (two) el+=`<path d="${path('b')}" fill="none" stroke="${c2}" stroke-width="2" stroke-linejoin="round"/>`;
-  el+=`<path d="${path('a')}" fill="none" stroke="${c1}" stroke-width="2" stroke-linejoin="round"/>`;
-  const li=n-1;
-  el+=`<text x="${x(li)+6}" y="${y(R.series[li].a)+4}" font-size="12" font-weight="600" fill="${tsec}">${labels[0]}</text>`;
-  if (two){ let yb=y(R.series[li].b); if (Math.abs(yb-y(R.series[li].a))<16) yb=y(R.series[li].a)+(yb>=y(R.series[li].a)?16:-16); el+=`<text x="${x(li)+6}" y="${yb+4}" font-size="12" font-weight="600" fill="${tsec}">${labels[1]}</text>`; }
-  else { const ep=R.B*R.endPrice; el+=`<circle cx="${x(li)}" cy="${y(ep)}" r="5" fill="${c2}" stroke="${cardc}" stroke-width="2"/>`; el+=`<text x="${x(li)+6}" y="${y(ep)+20}" font-size="12" font-weight="600" fill="${tsec}">${labels[1]}</text>`; }
-  el+=`<line id="xhair" x1="0" x2="0" y1="${m.t}" y2="${m.t+ih}" stroke="${tmut}" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/>`;
-  el+=`<circle id="dotA" r="4.5" fill="${c1}" stroke="${cardc}" stroke-width="2" visibility="hidden"/>`;
-  if (two) el+=`<circle id="dotB" r="4.5" fill="${c2}" stroke="${cardc}" stroke-width="2" visibility="hidden"/>`;
-  el+=`<rect id="hover" x="${m.l}" y="${m.t}" width="${iw}" height="${ih}" fill="transparent"/></g>`;
-  svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.innerHTML=el;
-
-  $('legend').innerHTML = two
-    ? `<span><span class="sw" style="background:${c1}"></span>${labels[0]}</span><span><span class="sw" style="background:${c2}"></span>${labels[1]}</span>`
-    : `<span><span class="sw" style="background:${c1}"></span>${labels[0]}</span><span><span class="sw" style="background:${c2}"></span>${labels[1]}</span>`;
-
-  const tt=$('tooltip'), hover=svg.querySelector('#hover'), xh=svg.querySelector('#xhair'), dA=svg.querySelector('#dotA'), dB=svg.querySelector('#dotB');
-  hover.addEventListener('mousemove', e=>{
-    const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY; const sp=pt.matrixTransform(svg.getScreenCTM().inverse());
-    const i=Math.max(0,Math.min(n-1,Math.round((sp.x-m.l)/(iw||1)*(n-1)))); const s=R.series[i];
-    xh.setAttribute('x1',x(i)); xh.setAttribute('x2',x(i)); xh.setAttribute('visibility','visible');
-    dA.setAttribute('cx',x(i)); dA.setAttribute('cy',y(s.a)); dA.setAttribute('visibility','visible');
-    if (dB){ dB.setAttribute('cx',x(i)); dB.setAttribute('cy',y(s.b)); dB.setAttribute('visibility','visible'); }
-    let html=`<div class="tt-date">${fmtDate(s.date)}</div><div class="tt-row"><span><span class="sw" style="background:${c1}"></span>${labels[0]}</span><strong>${fmt$(s.a)}</strong></div>`;
-    if (two) html+=`<div class="tt-row"><span><span class="sw" style="background:${c2}"></span>${labels[1]}</span><strong>${fmt$(s.b)}</strong></div><div class="tt-row" style="margin-top:3px; border-top:1px solid var(--border); padding-top:3px"><span>Gap</span><strong>${fmt$(s.a-s.b)}</strong></div>`;
-    else html+=`<div class="tt-row"><span>Units</span><strong>${fmtU(s.units)}</strong></div>`;
-    tt.innerHTML=html; tt.style.display='block';
-    const bb=box.getBoundingClientRect(); let lx=e.clientX-bb.left+16; if (lx+220>bb.width) lx=e.clientX-bb.left-230;
-    tt.style.left=lx+'px'; tt.style.top=(e.clientY-bb.top-20)+'px';
-  });
-  hover.addEventListener('mouseleave', ()=>{ tt.style.display='none'; xh.setAttribute('visibility','hidden'); dA.setAttribute('visibility','hidden'); if (dB) dB.setAttribute('visibility','hidden'); });
-}
-window.addEventListener('resize', ()=>{ if (S.result) drawChart(); });
-
-/* ================= ledger ================= */
-function renderLedger(){
-  const R=S.result, head=$('ledgerHead'), body=$('ledgerBody');
-  const pct=v=> v==null?'':(v*100).toFixed(3)+'%';
-  if (R.kind==='cash'){
-    head.innerHTML=`<tr><th>Date</th><th>${R.basis.toUpperCase()} $</th><th>Return</th><th>Contribution</th><th>Dist credit</th><th>Counterfactual $</th><th>Interest</th><th>Actual cash $</th></tr>`;
-    body.innerHTML=R.ledger.map(l=>`<tr><td>${fmtDate(l.date)}</td><td>${l.price.toFixed(4)}</td><td>${pct(l.ret)}</td><td>${l.contrib?fmt$(l.contrib):''}</td><td>${l.distCredit?fmt$(l.distCredit):''}</td><td>${fmt$(l.cf)}</td><td>${l.int?fmt$(l.int):''}</td><td>${fmt$(l.actual)}</td></tr>`).join('');
-  } else if (R.kind==='units'){
-    head.innerHTML=`<tr><th>Date</th><th>${R.basis.toUpperCase()} $</th><th>Contribution</th><th>Units bought</th><th>Dist units</th><th>Cumulative units</th><th>Value $</th></tr>`;
-    body.innerHTML=R.ledger.map(l=>`<tr><td>${fmtDate(l.date)}</td><td>${l.price.toFixed(4)}</td><td>${l.contrib?fmt$(l.contrib):''}</td><td>${l.bought?fmtU(l.bought):''}</td><td>${l.distU?fmtU(l.distU):''}</td><td>${fmtU(l.units)}</td><td>${fmt$(l.value)}</td></tr>`).join('');
-  } else if (R.kind==='switch'){
-    head.innerHTML=`<tr><th>Date</th><th>${R.basis.toUpperCase()} $</th><th>Stayed invested $</th><th>Round-trip $</th></tr>`;
-    body.innerHTML=R.ledger.map(l=>`<tr><td>${fmtDate(l.date)}</td><td>${l.price.toFixed(4)}</td><td>${fmt$(l.stayed)}</td><td>${fmt$(l.roundtrip)}</td></tr>`).join('');
+      <div class="hint">The pure bid-ask spread at the sell date alone is ${fmt$(R.spreadAtSell)} — the rest is market drift over the ${R.gapDays}-day gap.</div>`;
   } else {
-    head.innerHTML=`<tr><th>Date</th><th>${R.basis.toUpperCase()} $</th><th>Invested (actual)</th><th>Lump units</th><th>Phased units</th><th>Cash</th><th>Lump $</th><th>Phased $</th></tr>`;
-    body.innerHTML=R.ledger.map(l=>`<tr><td>${fmtDate(l.date)}</td><td>${l.price.toFixed(4)}</td><td>${l.invested?fmt$(l.invested):''}</td><td>${fmtU(l.cfUnits)}</td><td>${fmtU(l.acUnits)}</td><td>${fmt$(l.cash)}</td><td>${fmt$(l.cfVal)}</td><td>${fmt$(l.acVal)}</td></tr>`).join('');
+    const sign=R.advantage>=0?'pos':'neg'; const verdict=R.advantage>=0?'Lump-sum would have won':'Phasing would have won';
+    cards=`<div class="stat"><div class="lbl">Lump sum invested day 1</div><div class="val">${fmt$(R.cfValue)}</div><div class="sub2">${fmtU(R.cfUnits)} units</div></div>
+      <div class="stat"><div class="lbl">Phased in (actual)</div><div class="val">${fmt$(R.acValue)}</div><div class="sub2">${fmtU(R.acUnits)} units + ${fmt$(R.uninvested)} cash</div></div>
+      <div class="stat hero-stat"><div class="lbl">Lump-sum advantage</div><div class="val ${sign}">${fmt$(R.advantage)}</div><div class="sub2">${verdict}</div></div>`;
   }
-}
+  if(R.warnings&&R.warnings.length)bw+=`<div class="warn">${R.warnings.map(w=>'• '+e(w)).join('<br>')}</div>`;
+  if(R.dists&&R.dists.length)bw+=`<div class="hint" style="margin-top:8px">Distributions modelled: ${R.dists.map(d=>`${fmtDate(d.ex)} @ ${d.cpu} c/u → ${R.kind==='cash'?fmt$(d.cash||0):(fmtU(d.unitsCredited||0)+' units')} credited ${fmtDate(R.rows[d.creditIdx].date)}`).join(' · ')}</div>`;
 
-/* ================= methodology ================= */
-function renderMeth(){
-  const R=S.result, client=$('clientName').value||'(client)', fund=$('fundName').value||'(fund)';
-  const today=new Date().toISOString().slice(0,10);
-  const feeOn=$('feeOn').value==='yes';
-  const feeTxt = feeOn ? `The adviser fee of ${fmt$(parseNum($('advFee').value)??0)}/contribution${(parseNum($('adminFee').value)??0)>0?` plus ${fmt$(parseNum($('adminFee').value)??0)} admin/platform charges`:''} is debited from the contributions, so the counterfactual invests the NET amount; the fees are payable in both scenarios and are not recoverable.` : `No advice fee is deducted from the contributions — the full amount is modelled as investable.`;
+  return `<div class="cards">${cards}</div>${bw}
+    <h3 style="margin-top:16px;font-family:var(--hf);color:var(--heading)">${chartTitle(R)}</h3>
+    <div class="chartbox" id="chartbox"><svg id="chart" role="img" aria-label="Counterfactual vs actual over the period"></svg><div class="tooltip" id="tooltip"></div></div>
+    <div class="legend" id="legend"></div>
+    <div class="row no-print" style="margin-top:12px"><button class="btn btn-sm" onclick="csvExport()">Download ledger CSV</button><button class="btn btn-sm" onclick="window.print()">Print / save PDF</button></div>
+    <details style="margin-top:14px"><summary>Daily ledger</summary><div class="ledger-wrap">${ledgerHTML(R)}</div></details>
+    <details style="margin-top:8px" open><summary>Methodology &amp; assumptions</summary><div class="meth">${methHTML(R)}</div></details>`;
+}
+function chartTitle(R){ return {cash:'Counterfactual invested value vs actual cash balance',units:'Counterfactual portfolio value (units × price)',switch:'Staying invested vs selling to cash and buying back',phasing:'Lump sum (day 1) vs phased entry'}[R.kind]; }
+function ledgerHTML(R){
+  const pct=v=>v==null?'':(v*100).toFixed(3)+'%';
+  if(R.kind==='cash')return `<table class="data"><thead><tr><th>Date</th><th>${R.basis.toUpperCase()} $</th><th>Return</th><th>Contribution</th><th>Dist credit</th><th>Counterfactual $</th><th>Interest</th><th>Actual cash $</th></tr></thead><tbody>${R.ledger.map(l=>`<tr><td>${fmtDate(l.date)}</td><td>${l.price.toFixed(4)}</td><td>${pct(l.ret)}</td><td>${l.contrib?fmt$(l.contrib):''}</td><td>${l.distCredit?fmt$(l.distCredit):''}</td><td>${fmt$(l.cf)}</td><td>${l.int?fmt$(l.int):''}</td><td>${fmt$(l.actual)}</td></tr>`).join('')}</tbody></table>`;
+  if(R.kind==='units')return `<table class="data"><thead><tr><th>Date</th><th>${R.basis.toUpperCase()} $</th><th>Contribution</th><th>Units bought</th><th>Dist units</th><th>Cumulative units</th><th>Value $</th></tr></thead><tbody>${R.ledger.map(l=>`<tr><td>${fmtDate(l.date)}</td><td>${l.price.toFixed(4)}</td><td>${l.contrib?fmt$(l.contrib):''}</td><td>${l.bought?fmtU(l.bought):''}</td><td>${l.distU?fmtU(l.distU):''}</td><td>${fmtU(l.units)}</td><td>${fmt$(l.value)}</td></tr>`).join('')}</tbody></table>`;
+  if(R.kind==='switch')return `<table class="data"><thead><tr><th>Date</th><th>${R.basis.toUpperCase()} $</th><th>Stayed invested $</th><th>Round-trip $</th></tr></thead><tbody>${R.ledger.map(l=>`<tr><td>${fmtDate(l.date)}</td><td>${l.price.toFixed(4)}</td><td>${fmt$(l.stayed)}</td><td>${fmt$(l.roundtrip)}</td></tr>`).join('')}</tbody></table>`;
+  return `<table class="data"><thead><tr><th>Date</th><th>${R.basis.toUpperCase()} $</th><th>Invested</th><th>Lump units</th><th>Phased units</th><th>Cash</th><th>Lump $</th><th>Phased $</th></tr></thead><tbody>${R.ledger.map(l=>`<tr><td>${fmtDate(l.date)}</td><td>${l.price.toFixed(4)}</td><td>${l.invested?fmt$(l.invested):''}</td><td>${fmtU(l.cfUnits)}</td><td>${fmtU(l.acUnits)}</td><td>${fmt$(l.cash)}</td><td>${fmt$(l.cfVal)}</td><td>${fmt$(l.acVal)}</td></tr>`).join('')}</tbody></table>`;
+}
+function methHTML(R){
+  const client=F.clientName||'(client)',fund=F.fundName||'(fund)',today=new Date().toISOString().slice(0,10);
+  const feeOn=F.feeOn==='yes';
+  const feeTxt=feeOn?`The adviser fee of ${fmt$(num('advFee'))}/contribution${num('adminFee')>0?` plus ${fmt$(num('adminFee'))} admin/platform charges`:''} is debited from the contributions, so the counterfactual invests the NET amount; the fees are payable in both scenarios and are not recoverable.`:`No advice fee is deducted — the full amount is modelled as investable.`;
   let core='';
-  if (R.kind==='cash'){
-    const intTxt={ none:'No interest is credited on the idle cash.', rate:`Interest is accrued daily at ${(R.rate*100).toFixed(2)}% p.a. on the idle balance and credited monthly (total ${fmt$(R.interestTotal)}); interest on any pre-existing base cash is earned in both scenarios and cancels out.`, actual:`Actual interest credits are apportioned to the idle money pro-rata by balance share before each credit (base cash at start ${fmt$(R.baseCash0)}); the apportioned ${fmt$(R.interestTotal)} is the valid offset.` }[R.intMode];
-    core=`<p><strong>Counterfactual (A):</strong> ${R.sc==='lumpCash'?'the lump sum is':'each net contribution is'} invested on ${R.sc==='lumpCash'?'the start date':'its date'}; daily returns use the ${R.basis.toUpperCase()} price. Value<sub>t</sub> = (Value<sub>t−1</sub> + Contribution<sub>t</sub>)×(1+r<sub>t</sub>) + DistributionCredit<sub>t</sub>. Distributions = units held at the ex-date × CPU, credited on the reinvest date. A = ${fmt$(R.A)}.</p>
+  if(R.kind==='cash'){
+    const intTxt={none:'No interest is credited on the idle cash.',rate:`Interest is accrued daily at ${(R.rate*100).toFixed(2)}% p.a. on the idle balance and credited monthly (total ${fmt$(R.interestTotal)}); interest on any pre-existing base cash is earned in both scenarios and cancels out.`,actual:`Actual interest credits are apportioned to the idle money pro-rata by balance share before each credit (base cash at start ${fmt$(R.baseCash0)}); the apportioned ${fmt$(R.interestTotal)} is the valid offset.`}[R.intMode];
+    core=`<p><strong>Counterfactual (A):</strong> ${R.sc==='lumpCash'?'the lump sum is':'each net contribution is'} invested on ${R.sc==='lumpCash'?'the start date':'its date'}; daily returns use the ${R.basis.toUpperCase()} price. Value<sub>t</sub> = (Value<sub>t−1</sub> + Contribution<sub>t</sub>)×(1+r<sub>t</sub>) + DistributionCredit<sub>t</sub>. A = ${fmt$(R.A)}.</p>
       <p><strong>Actual (B):</strong> the money sat in cash. ${intTxt} B = ${fmt$(R.B)}.</p>
       <p><strong>Net opportunity cost (A − B) = ${fmt$(R.net)}</strong> = growth foregone ${fmt$(R.growthForegone)} + missed distributions ${fmt$(R.distTotal)} − interest earned ${fmt$(R.interestTotal)}.</p>`;
-  } else if (R.kind==='units'){
-    core=`<p><strong>Counterfactual (A):</strong> from ${fmtU(R.openUnits)} opening units, the net contribution buys units at each date's ${R.basis.toUpperCase()} price; distributions (units × CPU at each ex-date, converted at the reinvest price) compound into later ex-dates. A = ${fmtU(R.A)} units.</p>
+  } else if(R.kind==='units'){
+    core=`<p><strong>Counterfactual (A):</strong> from ${fmtU(R.openUnits)} opening units, the net contribution buys units at each date's ${R.basis.toUpperCase()} price; distributions compound into later ex-dates. A = ${fmtU(R.A)} units.</p>
       <p><strong>Actual (B):</strong> ${fmtU(R.B)} units held at ${fmtDate(R.end)} per platform valuation.</p>
-      <p><strong>Opportunity loss = ${fmtU(R.shortfall)} units × ${fmt$(R.endPrice,4)} = ${fmt$(R.loss)}</strong>, excluding fees (payable either way).</p>`;
-  } else if (R.kind==='switch'){
+      <p><strong>Opportunity loss = ${fmtU(R.shortfall)} × ${fmt$(R.endPrice,4)} = ${fmt$(R.loss)}</strong>, excluding fees (payable either way).</p>`;
+  } else if(R.kind==='switch'){
     core=`<p><strong>Round trip:</strong> ${fmtU(R.unitsSold)} units sold at the ${fmtDate(R.start)} Sell price ${fmt$(R.Ssell,4)} → ${fmt$(R.P)} cash${R.interest?` (earning ${fmt$(R.interest)} over ${R.gapDays} days)`:''}, bought back at the ${fmtDate(R.end)} Buy price ${fmt$(R.Bbuy,4)} → ${fmtU(R.unitsBack)} units.</p>
-      <p><strong>Had the units never been sold</strong> they'd be ${fmtU(R.unitsNeverSold)} units${R.distMissed?` (including a distribution reinvested while out)`:''}. Shortfall ${fmtU(R.shortfall)} units × ${fmt$(R.valPrice,4)} = <strong>${fmt$(R.loss)}</strong> = re-entry cost ${fmt$(R.reentryCost)} + missed distribution ${fmt$(R.distMissed)} − interest ${fmt$(R.interest)}.</p>`;
+      <p><strong>Never sold</strong> = ${fmtU(R.unitsNeverSold)} units. Shortfall ${fmtU(R.shortfall)} × ${fmt$(R.valPrice,4)} = <strong>${fmt$(R.loss)}</strong> = re-entry cost ${fmt$(R.reentryCost)} + missed distribution ${fmt$(R.distMissed)} − interest ${fmt$(R.interest)}.</p>`;
   } else {
-    core=`<p><strong>Lump sum (counterfactual):</strong> ${fmt$(R.lump)} invested in full on ${fmtDate(R.start)} at the ${R.basis.toUpperCase()} price → ${fmtU(R.cfUnits)} units → ${fmt$(R.cfValue)} at ${fmtDate(R.end)}.</p>
-      <p><strong>Phased (actual):</strong> the same ${fmt$(R.lump)} drip-fed in ${S.phInst.length} instalment(s); the un-invested remainder held in cash. ${fmtU(R.acUnits)} units + ${fmt$(R.uninvested)} cash → ${fmt$(R.acValue)}.</p>
-      <p><strong>Lump-sum advantage = ${fmt$(R.advantage)}.</strong> Positive means investing at once beat phasing over this window; negative means phasing (lower average entry price) won. Distributions reinvested on both sides; tax ignored.</p>`;
+    core=`<p><strong>Lump sum:</strong> ${fmt$(R.lump)} invested in full on ${fmtDate(R.start)} → ${fmtU(R.cfUnits)} units → ${fmt$(R.cfValue)} at ${fmtDate(R.end)}.</p>
+      <p><strong>Phased:</strong> the same ${fmt$(R.lump)} drip-fed in ${F.phInst.length} instalment(s), remainder in cash → ${fmtU(R.acUnits)} units + ${fmt$(R.uninvested)} cash → ${fmt$(R.acValue)}.</p>
+      <p><strong>Lump-sum advantage = ${fmt$(R.advantage)}.</strong> Positive means investing at once beat phasing over this window.</p>`;
   }
-  $('methBox').innerHTML=`
-    <p><strong>${client}</strong> · ${fund} · ${fmtDate(R.start)} – ${fmtDate(R.end)} · ${R.rows.length} pricing days · prepared ${fmtDate(today)}</p>
-    <p><strong>Scenario:</strong> ${SCEN[R.scenario].desc}</p>
+  return `<p><strong>${e(client)}</strong> · ${e(fund)} · ${fmtDate(R.start)} – ${fmtDate(R.end)} · ${R.rows.length} pricing days · prepared ${fmtDate(today)}</p>
+    <p><strong>Scenario:</strong> ${e(SCEN[R.scenario].full)}</p>
     ${(R.kind==='cash'||R.kind==='units')?`<p><strong>Fees:</strong> ${feeTxt}</p>`:''}
     ${core}
     <p><strong>Assumptions &amp; limitations:</strong> same-day investment with no processing lag; contributions on non-pricing days move to the next pricing day; ${R.basis.toUpperCase()}-price basis is a stated convention (Sell/NAV would change the result immaterially); distributions assumed reinvested; tax ignored on both sides; fund management costs are embedded in unit prices; adviser/platform fees are only ever modelled as reductions of the investable amount, never as recoverable.</p>`;
 }
 
-/* ================= export / print ================= */
-$('csvBtn').addEventListener('click', ()=>{
-  const R=S.result; if (!R) return; let csv;
-  if (R.kind==='cash') csv='Date,Price,Return,Contribution,Distribution credit,Counterfactual,Interest,Actual cash\n'+R.ledger.map(l=>[l.date,l.price,l.ret??'',l.contrib||'',l.distCredit||'',l.cf.toFixed(2),l.int?l.int.toFixed(2):'',l.actual.toFixed(2)].join(',')).join('\n');
-  else if (R.kind==='units') csv='Date,Price,Contribution,Units bought,Distribution units,Cumulative units,Value\n'+R.ledger.map(l=>[l.date,l.price,l.contrib||'',l.bought?l.bought.toFixed(4):'',l.distU?l.distU.toFixed(4):'',l.units.toFixed(4),l.value.toFixed(2)].join(',')).join('\n');
-  else if (R.kind==='switch') csv='Date,Price,Stayed invested,Round-trip\n'+R.ledger.map(l=>[l.date,l.price,l.stayed.toFixed(2),l.roundtrip.toFixed(2)].join(',')).join('\n');
-  else csv='Date,Price,Invested,Lump units,Phased units,Cash,Lump value,Phased value\n'+R.ledger.map(l=>[l.date,l.price,l.invested||'',l.cfUnits.toFixed(4),l.acUnits.toFixed(4),l.cash.toFixed(2),l.cfVal.toFixed(2),l.acVal.toFixed(2)].join(',')).join('\n');
-  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='tom-ledger.csv'; a.click();
-});
-$('printBtn').addEventListener('click', ()=> window.print());
+/* ================= CHART ================= */
+function drawChart(){
+  const R=state.result; if(!R||R.error)return; const box=$('chartbox'),svg=$('chart'); if(!box||!svg)return;
+  const W=Math.max(560,box.clientWidth-24||900),H=340,m={t:16,r:120,b:34,l:70};
+  const iw=W-m.l-m.r,ih=H-m.t-m.b,two=R.twoSeries;
+  const ys=R.series.map(s=>s.a).concat(two?R.series.map(s=>s.b):[]); const ymin=0,ymax=Math.max(...ys)*1.06||1,n=R.series.length;
+  const x=i=>m.l+(n<=1?0:i/(n-1)*iw),y=v=>m.t+ih-(v-ymin)/(ymax-ymin)*ih;
+  const css=getComputedStyle(document.documentElement);
+  const c1=css.getPropertyValue('--series-1').trim(),c2=css.getPropertyValue('--series-2').trim(),grid=css.getPropertyValue('--border').trim(),tmut=css.getPropertyValue('--text-muted').trim(),tsec=css.getPropertyValue('--text-dim').trim(),cardc=css.getPropertyValue('--surface').trim();
+  const labels={cash:['Counterfactual','Actual'],switch:['Stayed invested','Round trip'],phasing:['Lump sum','Phased'],units:['Counterfactual','Actual (end)']}[R.kind];
+  let el='<g>'; const steps=4;
+  for(let k=0;k<=steps;k++){const v=ymin+(ymax-ymin)*k/steps;el+=`<line x1="${m.l}" x2="${m.l+iw}" y1="${y(v)}" y2="${y(v)}" stroke="${grid}" stroke-width="1"/><text x="${m.l-8}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="${tmut}">$${Math.round(v).toLocaleString()}</text>`;}
+  const ticks=Math.min(6,n);
+  for(let k=0;k<ticks;k++){const i=Math.round(k*(n-1)/(ticks-1||1));el+=`<text x="${x(i)}" y="${H-10}" text-anchor="middle" font-size="11" fill="${tmut}">${fmtDate(R.series[i].date).slice(0,6)}</text>`;}
+  const path=key=>R.series.map((s,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(s[key]).toFixed(1)).join('');
+  if(two)el+=`<path d="${path('b')}" fill="none" stroke="${c2}" stroke-width="2" stroke-linejoin="round"/>`;
+  el+=`<path d="${path('a')}" fill="none" stroke="${c1}" stroke-width="2" stroke-linejoin="round"/>`;
+  const li=n-1;
+  el+=`<text x="${x(li)+6}" y="${y(R.series[li].a)+4}" font-size="12" font-weight="700" fill="${tsec}">${labels[0]}</text>`;
+  if(two){let yb=y(R.series[li].b);if(Math.abs(yb-y(R.series[li].a))<16)yb=y(R.series[li].a)+(yb>=y(R.series[li].a)?16:-16);el+=`<text x="${x(li)+6}" y="${yb+4}" font-size="12" font-weight="700" fill="${tsec}">${labels[1]}</text>`;}
+  else{const ep=R.B*R.endPrice;el+=`<circle cx="${x(li)}" cy="${y(ep)}" r="5" fill="${c2}" stroke="${cardc}" stroke-width="2"/><text x="${x(li)+6}" y="${y(ep)+20}" font-size="12" font-weight="700" fill="${tsec}">${labels[1]}</text>`;}
+  el+=`<line id="xhair" x1="0" x2="0" y1="${m.t}" y2="${m.t+ih}" stroke="${tmut}" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/>`;
+  el+=`<circle id="dotA" r="4.5" fill="${c1}" stroke="${cardc}" stroke-width="2" visibility="hidden"/>`;
+  if(two)el+=`<circle id="dotB" r="4.5" fill="${c2}" stroke="${cardc}" stroke-width="2" visibility="hidden"/>`;
+  el+=`<rect id="hover" x="${m.l}" y="${m.t}" width="${iw}" height="${ih}" fill="transparent"/></g>`;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.innerHTML=el;
+  $('legend').innerHTML=`<span><span class="sw" style="background:${c1}"></span>${labels[0]}</span><span><span class="sw" style="background:${c2}"></span>${labels[1]}</span>`;
+  const tt=$('tooltip'),hover=svg.querySelector('#hover'),xh=svg.querySelector('#xhair'),dA=svg.querySelector('#dotA'),dB=svg.querySelector('#dotB');
+  hover.addEventListener('mousemove',ev=>{
+    const pt=svg.createSVGPoint();pt.x=ev.clientX;pt.y=ev.clientY;const sp=pt.matrixTransform(svg.getScreenCTM().inverse());
+    const i=Math.max(0,Math.min(n-1,Math.round((sp.x-m.l)/(iw||1)*(n-1))));const s=R.series[i];
+    xh.setAttribute('x1',x(i));xh.setAttribute('x2',x(i));xh.setAttribute('visibility','visible');
+    dA.setAttribute('cx',x(i));dA.setAttribute('cy',y(s.a));dA.setAttribute('visibility','visible');
+    if(dB){dB.setAttribute('cx',x(i));dB.setAttribute('cy',y(s.b));dB.setAttribute('visibility','visible');}
+    let html=`<div class="tt-date">${fmtDate(s.date)}</div><div class="tt-row"><span><span class="sw" style="background:${c1}"></span>${labels[0]}</span><strong>${fmt$(s.a)}</strong></div>`;
+    if(two)html+=`<div class="tt-row"><span><span class="sw" style="background:${c2}"></span>${labels[1]}</span><strong>${fmt$(s.b)}</strong></div><div class="tt-row" style="margin-top:3px;border-top:1px solid var(--border);padding-top:3px"><span>Gap</span><strong>${fmt$(s.a-s.b)}</strong></div>`;
+    else html+=`<div class="tt-row"><span>Units</span><strong>${fmtU(s.units)}</strong></div>`;
+    tt.innerHTML=html;tt.style.display='block';
+    const bb=box.getBoundingClientRect();let lx=ev.clientX-bb.left+16;if(lx+220>bb.width)lx=ev.clientX-bb.left-230;tt.style.left=lx+'px';tt.style.top=(ev.clientY-bb.top-20)+'px';
+  });
+  hover.addEventListener('mouseleave',()=>{tt.style.display='none';xh.setAttribute('visibility','hidden');dA.setAttribute('visibility','hidden');if(dB)dB.setAttribute('visibility','hidden');});
+}
 
-/* ================= init ================= */
-setScenario('contribCash');
-updateIntUI();
-updateFeeUI();
-renderDists();
+/* ================= MAIN RENDER ================= */
+function render(){
+  recordUndo(); saveDraftSoon();
+  const ae=document.activeElement; let fk=null,selS=null,selE=null;
+  if(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA')&&ae.dataset&&ae.dataset.fk){ fk=ae.dataset.fk; try{selS=ae.selectionStart;selE=ae.selectionEnd;}catch(_){} }
+  let html=renderTopbar();
+  html += state.page==='picker' ? renderPicker() : renderWizard();
+  $('app').innerHTML=html;
+  // wire drops on the relevant step
+  wireDropIfPresent('priceDrop','priceFile',handlePriceText);
+  wireDropIfPresent('distDrop','distFile',handleDistText);
+  if(state.needChart&&$('chart')){ drawChart(); state.needChart=false; }
+  // restore focus/caret
+  if(fk){ const el=document.querySelector(`[data-fk="${fk}"]`); if(el){ el.focus(); try{if(selS!=null)el.setSelectionRange(selS,selE);}catch(_){} } }
+}
+function wireDropIfPresent(dropId,fileId,onText){
+  const drop=$(dropId),file=$(fileId); if(!drop||!file)return;
+  drop.addEventListener('click',()=>file.click());
+  drop.addEventListener('dragover',ev=>{ev.preventDefault();drop.classList.add('over');});
+  drop.addEventListener('dragleave',()=>drop.classList.remove('over'));
+  drop.addEventListener('drop',ev=>{ev.preventDefault();drop.classList.remove('over');if(ev.dataTransfer.files[0])readFile(ev.dataTransfer.files[0],onText);});
+  file.addEventListener('change',ev=>{if(ev.target.files[0])readFile(ev.target.files[0],onText);});
+}
+
+/* keyboard shortcuts */
+document.addEventListener('keydown',ev=>{
+  const t=ev.target,tag=(t&&t.tagName||'').toLowerCase();
+  if(tag==='input'||tag==='textarea'||tag==='select'||(t&&t.isContentEditable))return;
+  const k=(ev.key||'').toLowerCase();
+  if((ev.ctrlKey||ev.metaKey)&&!ev.shiftKey&&k==='z'){ev.preventDefault();undoAction();}
+  else if(((ev.ctrlKey||ev.metaKey)&&k==='y')||((ev.ctrlKey||ev.metaKey)&&ev.shiftKey&&k==='z')){ev.preventDefault();redoAction();}
+});
+
+/* ================= INIT ================= */
+(function init(){
+  try{ const t=localStorage.getItem('tom_theme'); if(t)F.theme=t; }catch(_){}
+  applyTheme();
+  try{
+    const raw=localStorage.getItem(DRAFT_KEY);
+    if(raw){ const d=JSON.parse(raw); if(d&&d.F&&(d.F.prices&&d.F.prices.length || (d.F.clientName||'').trim())){
+      if(confirm('Restore your previous Time Out of Market working draft in this tab?')){ F=Object.assign(DEFAULTS(),d.F); state.page=d.page||'picker'; state.wizardStep=d.wizardStep||0; applyTheme(); }
+    } }
+  }catch(_){}
+  __undo.last=__snap();
+  render();
+})();
 </script>
 </body>
 </html>
