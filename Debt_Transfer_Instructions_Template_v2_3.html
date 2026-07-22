@@ -4623,35 +4623,52 @@
             var ctx = { pageBreak: false };
             convertChildren(previewClone, kids, ctx);
 
-            var headerImg = new D.Paragraph({
-                children: [new D.ImageRun({
-                    data: b64ToU8(bannerBase64.split(',')[1]),
-                    transformation: { width: 794, height: Math.round(794 * 701 / 2480) },
-                    floating: {
-                        horizontalPosition: { relative: D.HorizontalPositionRelativeFrom.PAGE, align: D.HorizontalPositionAlign.CENTER },
-                        verticalPosition: { relative: D.VerticalPositionRelativeFrom.PAGE, align: D.VerticalPositionAlign.TOP },
-                        wrap: { type: D.TextWrappingType.NONE }, behindDocument: true
-                    }
-                })]
-            });
-            var footerImg = new D.Paragraph({
-                children: [new D.ImageRun({
-                    data: b64ToU8(buildOfficeFooter().split(',')[1]),
-                    transformation: { width: 794, height: Math.round(794 * 261 / 2480) },
-                    floating: {
-                        horizontalPosition: { relative: D.HorizontalPositionRelativeFrom.PAGE, align: D.HorizontalPositionAlign.CENTER },
-                        verticalPosition: { relative: D.VerticalPositionRelativeFrom.PAGE, align: D.VerticalPositionAlign.BOTTOM },
-                        wrap: { type: D.TextWrappingType.NONE }, behindDocument: true
-                    }
-                })]
-            });
-
+            // The cover gets a tighter top margin so the title tucks up under the
+            // banner (its lower-right waves leave the left side clear); following
+            // pages keep a margin that clears the full artwork. The second section
+            // is CONTINUOUS, so its margin only takes effect from page 2.
+            var coverKids = kids.splice(0, 2); // title + "Prepared for ..." subtitle
+            var mkHeader = function () {
+                return new D.Header({
+                    children: [new D.Paragraph({
+                        children: [new D.ImageRun({
+                            data: b64ToU8(bannerBase64.split(',')[1]),
+                            transformation: { width: 794, height: Math.round(794 * 701 / 2480) },
+                            floating: {
+                                horizontalPosition: { relative: D.HorizontalPositionRelativeFrom.PAGE, align: D.HorizontalPositionAlign.CENTER },
+                                verticalPosition: { relative: D.VerticalPositionRelativeFrom.PAGE, align: D.VerticalPositionAlign.TOP },
+                                wrap: { type: D.TextWrappingType.NONE }, behindDocument: true
+                            }
+                        })]
+                    })]
+                });
+            };
+            var mkFooter = function () {
+                return new D.Footer({
+                    children: [new D.Paragraph({
+                        children: [new D.ImageRun({
+                            data: b64ToU8(buildOfficeFooter().split(',')[1]),
+                            transformation: { width: 794, height: Math.round(794 * 261 / 2480) },
+                            floating: {
+                                horizontalPosition: { relative: D.HorizontalPositionRelativeFrom.PAGE, align: D.HorizontalPositionAlign.CENTER },
+                                verticalPosition: { relative: D.VerticalPositionRelativeFrom.PAGE, align: D.VerticalPositionAlign.BOTTOM },
+                                wrap: { type: D.TextWrappingType.NONE }, behindDocument: true
+                            }
+                        })]
+                    })]
+                });
+            };
             var doc = new D.Document({
                 styles: { default: { document: { run: { font: BODY_FONT, size: 19 } } } },
                 sections: [{
-                    properties: { page: { margin: { top: 3460, bottom: 1650, left: 1100, right: 1100 } } },
-                    headers: { default: new D.Header({ children: [headerImg] }) },
-                    footers: { default: new D.Footer({ children: [footerImg] }) },
+                    properties: { page: { margin: { top: 2950, bottom: 1650, left: 1100, right: 1100 } } },
+                    headers: { default: mkHeader() },
+                    footers: { default: mkFooter() },
+                    children: coverKids
+                }, {
+                    properties: { type: D.SectionType.CONTINUOUS, page: { margin: { top: 3460, bottom: 1650, left: 1100, right: 1100 } } },
+                    headers: { default: mkHeader() },
+                    footers: { default: mkFooter() },
                     children: kids
                 }]
             });
