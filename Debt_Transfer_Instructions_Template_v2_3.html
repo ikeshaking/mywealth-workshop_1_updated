@@ -2745,7 +2745,7 @@
                 let fPT = 0; document.querySelectorAll('.propLoanBalance').forEach(function(inp){fPT += parseFloat(inp.value)||0;});
                 const fPD = formatCurrency(fPT);
 
-                return '<div class="doc-section fc-section" style="padding:25px;background:#fff;">'
+                return '<div class="doc-section fc-section" style="padding:25px 0;background:#fff;">'
                 + '<h2>Flowchart</h2>'
                 + '<p style="margin-bottom:15px;color:#666;font-size:0.9em;">How your money flows through the strategy:</p>'
 
@@ -2866,7 +2866,7 @@
                     var pathwayTextY = hasStrategy ? stratBoxY + 96 : strategySectionStart + 32;
                     var totalHeight = pathwayTextY + 26;
 
-                    var svg = '<svg viewBox="0 0 780 ' + totalHeight + '" xmlns="http://www.w3.org/2000/svg" style="width:97%;max-width:740px;height:auto;display:block;margin:0 auto;font-family:Nunito,sans-serif;">';
+                    var svg = '<svg viewBox="0 0 780 ' + totalHeight + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;font-family:Nunito,sans-serif;">';
                     svg += '<defs>';
                     svg += '<linearGradient id="fcBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + BG1 + '"/><stop offset="1" stop-color="' + BG2 + '"/></linearGradient>';
                     svg += '<radialGradient id="fcGlowC" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="rgba(245,106,90,0.08)"/><stop offset="1" stop-color="rgba(245,106,90,0)"/></radialGradient>';
@@ -3222,9 +3222,9 @@
                             var pngData = canvas.toDataURL('image/png');
                             var imgTag = document.createElement('img');
                             imgTag.src = pngData;
-                            var dispW = 585, dispH = Math.round(585 * h / w);
+                            var dispW = 640, dispH = Math.round(640 * h / w);
                             imgTag.setAttribute('width', dispW); imgTag.setAttribute('height', dispH);
-                            imgTag.style.cssText = 'width:6.1in;height:auto;display:block;margin:0 auto;';
+                            imgTag.style.cssText = 'width:6.67in;height:auto;display:block;margin:0 auto;';
                             if (svg.parentNode) svg.parentNode.replaceChild(imgTag, svg);
                         } catch(e) {
                             console.log('Canvas error', e);
@@ -3432,7 +3432,7 @@
                             ctx.scale(2, 2); ctx.drawImage(img, 0, 0, w, h);
                             var png = canvas.toDataURL('image/png');
                             var it = document.createElement('img');
-                            it.src = png; it.setAttribute('width', '585'); it.setAttribute('height', String(Math.round(585 * h / w))); it.style.cssText = 'width:100%;max-width:585px;height:auto;display:block;';
+                            it.src = png; it.setAttribute('width', '640'); it.setAttribute('height', String(Math.round(640 * h / w))); it.style.cssText = 'width:100%;max-width:640px;height:auto;display:block;';
                             if (svg.parentNode) svg.parentNode.replaceChild(it, svg);
                         } catch (e) { if (svg.parentNode) svg.parentNode.removeChild(svg); }
                         URL.revokeObjectURL(bUrl);
@@ -4733,7 +4733,7 @@
                             x.scale(2, 2); x.drawImage(img, 0, 0, w, h);
                             var it = document.createElement('img');
                             it.src = c.toDataURL('image/png');
-                            it.setAttribute('width', '585'); it.setAttribute('height', String(Math.round(585 * h / w)));
+                            it.setAttribute('width', '640'); it.setAttribute('height', String(Math.round(640 * h / w)));
                             if (svg.parentNode) svg.parentNode.replaceChild(it, svg);
                         } catch (e) { if (svg.parentNode) svg.parentNode.removeChild(svg); }
                         URL.revokeObjectURL(url); mark();
