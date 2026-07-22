@@ -4530,7 +4530,7 @@
                 if (tag === 'img') { var ip = convertImg(el); if (ip) out.push(ip); return; }
                 if (tag === 'svg') return;
                 if (tag === 'h1') {
-                    out.push(new D.Paragraph({ pageBreakBefore: pb, spacing: { before: 80, after: 60 }, children: [new D.TextRun({ text: el.textContent.trim(), font: HEAD_FONT, size: 40, color: '333333' })] }));
+                    out.push(new D.Paragraph({ pageBreakBefore: pb, spacing: { before: 0, after: 60 }, children: [new D.TextRun({ text: el.textContent.trim(), font: HEAD_FONT, size: 40, color: '333333' })] }));
                     return;
                 }
                 if (tag === 'h2') {
@@ -4649,7 +4649,7 @@
             var doc = new D.Document({
                 styles: { default: { document: { run: { font: BODY_FONT, size: 19 } } } },
                 sections: [{
-                    properties: { page: { margin: { top: 3560, bottom: 1650, left: 1100, right: 1100 } } },
+                    properties: { page: { margin: { top: 3460, bottom: 1650, left: 1100, right: 1100 } } },
                     headers: { default: new D.Header({ children: [headerImg] }) },
                     footers: { default: new D.Footer({ children: [footerImg] }) },
                     children: kids
