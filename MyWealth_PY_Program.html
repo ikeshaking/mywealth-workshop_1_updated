@@ -679,6 +679,48 @@ td input,td select{padding:5px 7px;font-size:11px}
 .signoff-meta-row{display:grid;grid-template-columns:1fr 120px;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)}
 .signoff-meta-row input{font-family:var(--bf);font-size:11px;padding:5px 7px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text);width:100%}
 
+/* Supervisor signature — signed state */
+.signoff-block.signed{background:var(--green-light);border:1px solid rgba(39,174,96,.4);border-style:solid}
+.signoff-tick-line{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:11px;color:var(--text-dim)}
+.signoff-tick-line .box{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--border-strong);display:inline-flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;background:var(--surface)}
+.signoff-block.signed .signoff-tick-line .box{background:var(--green);border-color:var(--green);color:#fff}
+.signoff-signbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px dashed var(--border)}
+.signoff-await{font-size:10.5px;color:var(--text-muted);font-style:italic}
+.sig-stamp{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;padding:10px 12px;border-radius:8px;background:rgba(39,174,96,.1);border:1px solid rgba(39,174,96,.35)}
+.sig-stamp .sig-mark{font-family:'Playfair Display',var(--hf);font-size:20px;font-style:italic;font-weight:600;color:var(--green-dark,#2e7d32);line-height:1;white-space:nowrap}
+.sig-stamp .sig-info{font-size:10.5px;color:var(--text-dim);line-height:1.4}
+.sig-stamp .sig-info b{color:var(--text);font-weight:700}
+.btn-sign{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-sign:hover{background:var(--navy-deep);color:#fff}
+
+/* Proof-of-evidence note on milestones */
+.proof-note{margin-top:10px;padding:9px 11px;border-radius:8px;background:var(--blue-light);border:1px solid rgba(43,111,214,.25);font-size:11px;color:var(--text-dim);line-height:1.5}
+.proof-note b{color:var(--blue);font-weight:700;text-transform:uppercase;letter-spacing:.4px;font-size:9.5px;display:block;margin-bottom:3px}
+.proof-note .proof-date{color:var(--text-muted);font-style:italic;font-size:9.5px}
+
+/* Autosave status pill in the top bar */
+.save-status{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;color:rgba(255,255,255,.7);padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);white-space:nowrap;transition:color .2s,background .2s}
+.save-status .dot{width:7px;height:7px;border-radius:50%;background:#5bd08a;box-shadow:0 0 0 0 rgba(91,208,138,.5)}
+.save-status.saving .dot{background:var(--lime);animation:savePulse 1s infinite}
+.save-status.saving{color:#fff}
+@keyframes savePulse{0%{box-shadow:0 0 0 0 rgba(207,232,127,.5)}70%{box-shadow:0 0 0 5px rgba(207,232,127,0)}100%{box-shadow:0 0 0 0 rgba(207,232,127,0)}}
+@media(max-width:1080px){.save-status .txt{display:none}}
+
+/* Lightweight branded modal (proof confirmation + supervisor sign) */
+.modal-backdrop{position:fixed;inset:0;background:rgba(12,46,63,.55);backdrop-filter:blur(2px);z-index:200;display:flex;align-items:center;justify-content:center;padding:18px}
+.modal-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-lg);width:100%;max-width:460px;overflow:hidden;animation:modalIn .16s ease-out}
+@keyframes modalIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+.modal-head{background:var(--chrome);color:#fff;padding:15px 20px}
+.modal-head h3{color:#fff;font-size:16px;margin:0}
+.modal-head .modal-sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:3px;font-family:var(--bf)}
+.modal-body{padding:18px 20px;font-size:12.5px;color:var(--text-dim);line-height:1.6}
+.modal-body label.field>span{display:block;font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.modal-body .field{margin-bottom:12px}
+.modal-body .modal-check{display:flex;gap:9px;align-items:flex-start;padding:7px 0;font-size:12px;color:var(--text);cursor:pointer}
+.modal-body .modal-check input{width:16px;height:16px;margin:1px 0 0;flex-shrink:0}
+.modal-err{color:var(--red);font-size:11px;font-weight:600;margin-top:2px;min-height:15px}
+.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:0 20px 18px}
+
 /* ============ TICKABLE SUB-ITEMS ============ */
 .tick-list{list-style:none;padding:0;margin:0 0 10px 0}
 .tick-item{padding:5px 0;border-bottom:1px solid var(--surface-2);font-size:13px;line-height:1.5}
@@ -894,6 +936,7 @@ body.edit-mode #editToggleBtn{ background:var(--coral); border-color:var(--coral
         <input type="text" id="searchInput" placeholder="Search milestones, modules, key concepts..." autocomplete="off">
         <div class="search-panel" id="searchPanel"></div>
       </div>
+      <span class="save-status" id="saveStatus" title="Your work saves automatically to this browser"><span class="dot"></span><span class="txt">Saved</span></span>
       <button class="theme-toggle" id="editToggleBtn" data-action="edit-toggle" title="Edit content (password)">✏️</button>
       <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
       <button class="menu-btn" id="menuBtn">☰</button>
@@ -918,6 +961,14 @@ const fmtDate = iso => {
   if (parts.length !== 3) return iso;
   const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return `${parseInt(parts[2])} ${m[parseInt(parts[1])-1]} ${parts[0]}`;
+};
+const fmtDateTime = iso => {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  try {
+    return d.toLocaleString(undefined, { day:'numeric', month:'short', year:'numeric', hour:'numeric', minute:'2-digit' });
+  } catch (_) { return d.toString(); }
 };
 const addMonths = (iso, months) => {
   if (!iso) return '';
@@ -2890,7 +2941,7 @@ function seedState() {
   const milestones = {};
   CONTENT.quarters.forEach(q => {
     q.milestones.forEach((m, idx) => {
-      milestones[`${q.id}_${idx}`] = { done: false, note: '' };
+      milestones[`${q.id}_${idx}`] = { done: false, note: '', proof: '', proofDate: '' };
     });
   });
   const modulesDone = {};
@@ -2900,7 +2951,7 @@ function seedState() {
     (q.trainingModules || []).forEach(m => {
       modulesDone[m.id] = { done: false, hours: 0, notes: '' };
       moduleChecks[m.id] = {};
-      signoffState[m.id] = { ticks:{}, name:'', date:'' };
+      signoffState[m.id] = { ticks:{}, name:'', date:'', signed:false, signedBy:'', signedAt:'' };
     });
   });
   const competencyScores = {};
@@ -3208,7 +3259,7 @@ const Store = (() => {
   let state = loadState() || seedState();
   const subscribers = new Set();
   function persist() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); window.__lastSaved = Date.now(); if (typeof flashSaved === 'function') flashSaved(); }
     catch (e) { console.warn('persist failed', e); }
   }
   function loadState() {
@@ -3218,7 +3269,9 @@ const Store = (() => {
       const s = JSON.parse(raw);
       const seed = seedState();
       // migrations — backfill new keys
-      for (const k in seed.milestones) if (!s.milestones?.[k]) { s.milestones = s.milestones||{}; s.milestones[k] = { done: false, note: '' }; }
+      for (const k in seed.milestones) if (!s.milestones?.[k]) { s.milestones = s.milestones||{}; s.milestones[k] = { done: false, note: '', proof: '', proofDate: '' }; }
+      // backfill proof fields on existing milestones
+      for (const k in (s.milestones||{})) { const m = s.milestones[k]; if (m && typeof m.proof !== 'string') m.proof = ''; if (m && typeof m.proofDate !== 'string') m.proofDate = ''; }
       for (const k in seed.competencyScores) if (!s.competencyScores?.[k]) { s.competencyScores = s.competencyScores||{}; s.competencyScores[k] = { candidate: 0, supervisor: 0 }; }
       for (const k in seed.modulesDone) if (!s.modulesDone?.[k]) { s.modulesDone = s.modulesDone||{}; s.modulesDone[k] = { done: false, hours: 0, notes: '' }; }
       if (!s.ui) s.ui = seed.ui;
@@ -3242,7 +3295,8 @@ const Store = (() => {
       CONTENT.quarters.forEach(q => {
         (q.trainingModules || []).forEach(m => {
           if (!s.moduleChecks[m.id]) s.moduleChecks[m.id] = {};
-          if (!s.signoffState[m.id]) s.signoffState[m.id] = { ticks:{}, name:'', date:'' };
+          if (!s.signoffState[m.id]) s.signoffState[m.id] = { ticks:{}, name:'', date:'', signed:false, signedBy:'', signedAt:'' };
+          else { const ss = s.signoffState[m.id]; if (typeof ss.signed !== 'boolean') ss.signed = false; if (typeof ss.signedBy !== 'string') ss.signedBy = ''; if (typeof ss.signedAt !== 'string') ss.signedAt = ''; }
         });
       });
       if (!s.reflections) s.reflections = seed.reflections;
@@ -3285,6 +3339,22 @@ const Derived = {
   totalWork() { return ['q1','q2','q3','q4','q5','q6'].reduce((a,q)=>a+Derived.quarterWork(q),0); },
   totalStructured() { return ['q1','q2','q3','q4','q5','q6'].reduce((a,q)=>a+Derived.quarterStructured(q),0); },
   totalHours() { return Derived.totalWork() + Derived.totalStructured(); },
+  // Hours entered against training modules (structured training). These roll up
+  // to the dashboard structured-training total so module hours tally on the main page.
+  moduleHoursTotal() {
+    const md = Store.getState().modulesDone || {};
+    return Object.values(md).reduce((a, m) => a + (Number(m && m.hours) || 0), 0);
+  },
+  moduleHoursForQuarter(qId) {
+    const s = Store.getState();
+    const q = CONTENT.quarters.find(x => x.id === qId);
+    if (!q) return 0;
+    const custom = (s.customModules && s.customModules[qId]) || [];
+    const mods = [...(q.trainingModules || []), ...custom];
+    return mods.reduce((a, m) => a + (Number(s.modulesDone[m.id] && s.modulesDone[m.id].hours) || 0), 0);
+  },
+  // Structured training total that INCLUDES module hours (manual quarter entry + module logs).
+  structuredTotal() { return Derived.totalStructured() + Derived.moduleHoursTotal(); },
   milestoneProgress(qId = null) {
     const ms = Store.getState().milestones;
     const keys = Object.keys(ms).filter(k => !qId || k.startsWith(qId + '_'));
@@ -3305,7 +3375,7 @@ const Derived = {
     return out.filter(c => !c.optional);
   },
   overallPct() {
-    const workH = Derived.totalWork(), structH = Derived.totalStructured();
+    const workH = Derived.totalWork(), structH = Derived.structuredTotal();
     const hoursPct = Math.min(100, (workH / 1500) * 50 + (structH / 100) * 50);
     const mp = Derived.milestoneProgress();
     // only count mandatory quarters (q1-q4) for mandatory-requirement progress
@@ -3329,6 +3399,92 @@ const Derived = {
 const Actions = {
   toggleMilestone(key) { Store.mutate(s => { s.milestones[key].done = !s.milestones[key].done; }); },
   setMilestoneNote(key, note) { Store.mutate(s => { s.milestones[key].note = note; }); },
+  // Ticking a milestone requires the candidate to confirm evidence is on file and
+  // describe the proof. Un-ticking simply reopens it (the proof note is kept on record).
+  handleMilestoneToggle(key) {
+    const s = Store.getState();
+    const m = s.milestones[key];
+    if (!m) return;
+    if (m.done) { Store.mutate(st => { st.milestones[key].done = false; }); return; }
+    Modal.open({
+      title: '📎 Confirm evidence of completion',
+      sub: 'Milestones can only be ticked once proof is saved.',
+      confirmText: 'Confirm & mark complete',
+      confirmClass: 'btn-blue',
+      bodyHTML: `
+        <p style="margin-bottom:12px">Before marking this complete, confirm you have <b>saved a record of proof</b> that verifies it — a file note, certificate, email, screenshot or logbook entry. Describe what the proof is and where it is saved; it becomes a note on this milestone.</p>
+        <label class="field"><span>Proof / evidence note</span><textarea id="mProof" placeholder="e.g. ASIC exam pass email saved in SharePoint › PY › Exams (12 Mar 2026)">${esc(m.proof || '')}</textarea></label>
+        <label class="modal-check"><input type="checkbox" id="mConfirm"><span>I confirm a record of this proof has been saved and can be produced on request.</span></label>
+        <div class="modal-err" id="mErr"></div>`,
+      onConfirm: (root) => {
+        const proof = root.querySelector('#mProof').value.trim();
+        const conf = root.querySelector('#mConfirm').checked;
+        const err = root.querySelector('#mErr');
+        if (!proof) { err.textContent = 'Please describe the proof you have saved.'; return false; }
+        if (!conf) { err.textContent = 'Please tick the confirmation box.'; return false; }
+        Store.mutate(st => { const mm = st.milestones[key]; mm.done = true; mm.proof = proof; mm.proofDate = todayISO(); });
+        return true;
+      }
+    });
+  },
+  // Supervisor signs a module sign-off: records name + exact date-time stamp, sets
+  // the four review confirmations, and locks the block. Protected by the supervisor PIN
+  // so the candidate cannot self-complete it.
+  signModule(modId) {
+    const s = Store.getState();
+    const ss = s.signoffState[modId] || {};
+    const hasPin = !!s.signoffPasswordHash;
+    const lines = ['Key concepts covered & understood','Practical scenarios discussed','Questions answered; Q&A completed','Candidate demonstrated applied understanding'];
+    Modal.open({
+      title: '✍️ Supervisor sign-off',
+      sub: hasPin ? 'Enter the supervisor PIN to sign and date-stamp.' : 'Set a supervisor PIN, then sign.',
+      confirmText: 'Sign & date-stamp',
+      confirmClass: 'btn-sign',
+      bodyHTML: `
+        <p style="margin-bottom:12px">Signing confirms the supervisor reviewed this module with the candidate. It records the supervisor name and an exact date &amp; time stamp, then locks the section.</p>
+        <div style="margin-bottom:12px">${lines.map(t => `<div class="signoff-tick-line"><span class="box">✓</span><span>${t}</span></div>`).join('')}</div>
+        <label class="field"><span>Supervisor name</span><input type="text" id="sgName" value="${esc(ss.name || s.profile.supervisorName || '')}" placeholder="Full name"></label>
+        <label class="field"><span>${hasPin ? 'Supervisor PIN' : 'Create a supervisor PIN (min 4 characters)'}</span><input type="password" id="sgPin" placeholder="••••" autocomplete="off"></label>
+        ${hasPin ? '' : '<label class="field"><span>Confirm PIN</span><input type="password" id="sgPin2" placeholder="••••" autocomplete="off"></label>'}
+        <label class="modal-check"><input type="checkbox" id="sgConfirm"><span>I am the supervisor and I attest to the above.</span></label>
+        <div class="modal-err" id="sgErr"></div>`,
+      onConfirm: async (root) => {
+        const err = root.querySelector('#sgErr');
+        const name = root.querySelector('#sgName').value.trim();
+        const pin = root.querySelector('#sgPin').value;
+        const conf = root.querySelector('#sgConfirm').checked;
+        if (!name) { err.textContent = 'Enter the supervisor name.'; return false; }
+        if (!pin || pin.length < 4) { err.textContent = 'PIN must be at least 4 characters.'; return false; }
+        if (!conf) { err.textContent = 'Please tick the attestation box.'; return false; }
+        let hash;
+        if (hasPin) {
+          hash = await Actions._hash(pin);
+          if (hash !== s.signoffPasswordHash) { err.textContent = 'Incorrect supervisor PIN.'; return false; }
+        } else {
+          const pin2 = root.querySelector('#sgPin2').value;
+          if (pin !== pin2) { err.textContent = 'PINs do not match.'; return false; }
+          hash = await Actions._hash(pin);
+        }
+        const nowIso = new Date().toISOString();
+        Store.mutate(st => {
+          if (!st.signoffPasswordHash) st.signoffPasswordHash = hash;
+          const t = st.signoffState[modId] || (st.signoffState[modId] = { ticks:{}, name:'', date:'' });
+          t.signed = true; t.signedBy = name; t.signedAt = nowIso; t.name = name; t.date = todayISO();
+          t.ticks = { 0:true, 1:true, 2:true, 3:true };
+        });
+        return true;
+      }
+    });
+  },
+  async unlockModuleSign(modId) {
+    const s = Store.getState();
+    if (!s.signoffPasswordHash) { Store.mutate(st => { const t = st.signoffState[modId]; if (t) t.signed = false; }); return; }
+    const pin = prompt('Enter the supervisor PIN to amend / revoke this signature:');
+    if (!pin) return;
+    const hash = await Actions._hash(pin);
+    if (hash !== s.signoffPasswordHash) { alert('❌ Incorrect PIN.'); return; }
+    Store.mutate(st => { const t = st.signoffState[modId]; if (t) t.signed = false; });
+  },
   setWorkshopNote(key, note) {
     // key format: "modId:idx"
     const [modId, idx] = key.split(':');
@@ -3704,7 +3860,8 @@ const Views = {
     const mp = Derived.milestoneProgress();
     const overallPct = Derived.overallPct();
     const totalW = Derived.totalWork();
-    const totalS = Derived.totalStructured();
+    const modH = Derived.moduleHoursTotal();
+    const totalS = Derived.structuredTotal();
     const critical = Derived.criticalMilestones();
     const dQ3 = Derived.dilemmaCount(3);
     const dQ4 = Derived.dilemmaCount(4);
@@ -3786,10 +3943,11 @@ const Views = {
         <div class="value">${totalW}<span style="font-size:13px;color:var(--text-muted)"> / 1,500</span></div>
         <div class="progress slim" style="margin-top:8px"><div style="width:${Math.min(100,totalW/15)}%;background:var(--navy)"></div></div>
       </div>
-      <div class="stat" data-tip="Structured training = measurable, assessed learning that leads to further qualification. Includes Ethics bridging unit, product accreditation, licensee compliance modules. Min 100 hours required.">
-        <div class="label">Structured training <span style="font-size:9px;color:var(--text-muted);font-weight:400">· manual entry</span></div>
+      <div class="stat" data-tip="Structured training = measurable, assessed learning that leads to further qualification. Includes Ethics bridging unit, product accreditation, licensee compliance modules. Min 100 hours required. This total = per-quarter manual entry PLUS hours logged against training modules.">
+        <div class="label">Structured training <span style="font-size:9px;color:var(--text-muted);font-weight:400">· incl. module hours</span></div>
         <div class="value">${totalS}<span style="font-size:13px;color:var(--text-muted)"> / 100</span></div>
         <div class="progress slim" style="margin-top:8px"><div style="width:${Math.min(100,totalS)}%;background:var(--coral)"></div></div>
+        ${modH ? `<div class="sub">${modH} hr from modules${totalS>modH?` · ${totalS-modH} hr manual`:''}</div>` : '<div class="sub">Add hours in module cards to tally here</div>'}
       </div>
       <div class="stat ${mp.pct >= 75 ? 'ok' : mp.pct >= 40 ? '' : 'warn'}">
         <div class="label">Milestones done</div>
@@ -4227,6 +4385,7 @@ const Views = {
               <div class="milestone-body">
                 <div>${esc(m.b)}</div>
                 ${m.ref ? `<span class="ref" data-tip="Cite this source in your logbook and SOA paperwork — click through to Resources for the authoritative version">📎 ${esc(m.ref)}</span>` : ''}
+                ${ms.proof ? `<div class="proof-note"><b>📎 Evidence on file</b>${esc(ms.proof)}${ms.proofDate ? `<div class="proof-date">Confirmed ${fmtDate(ms.proofDate)}</div>` : ''}</div>` : ''}
                 <label class="field" style="margin-top:10px"><span>My notes</span><textarea data-milestone-note="${key}" placeholder="Notes, evidence locations, dates..." style="min-height:50px">${esc(ms.note||'')}</textarea></label>
               </div>
             </li>
@@ -4349,23 +4508,32 @@ const Views = {
                 ${isCustom ? `<button class="btn btn-sm btn-ghost" data-action="delete-module" data-module="${m.id}" style="color:var(--red);margin-left:auto">🗑 Delete module</button>` : ''}
               </div>
 
-              <div class="signoff-block">
-                <div class="signoff-label">
-                  <span>📋 Supervisor sign-off <span class="signoff-meta">— to be completed with supervisor at quarterly review</span></span>
-                  ${s.signoffLocked ? '<span class="signoff-lock" data-tip="Sign-off is locked. Unlock with the supervisor password to edit.">🔒 Locked</span>' : ''}
-                </div>
-                ${['Key concepts covered &amp; understood','Practical scenarios discussed','Questions answered; Q&amp;A completed','Candidate demonstrated applied understanding'].map((txt,ci) => {
-                  const done = !!signoff.ticks?.[ci];
-                  return `<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:11px;color:var(--text-dim)">
-                    <input type="checkbox" data-signoff-tick="${m.id}:${ci}" ${done?'checked':''} ${s.signoffLocked?'disabled':''}>
-                    <span>${txt}</span>
-                  </label>`;
-                }).join('')}
-                <div class="signoff-meta-row">
-                  <input type="text" data-signoff-name="${m.id}" placeholder="Supervisor name" value="${esc(signoff.name || s.profile.supervisorName || '')}" ${s.signoffLocked?'disabled':''}>
-                  <input type="date" data-signoff-date="${m.id}" value="${esc(signoff.date||'')}" ${s.signoffLocked?'disabled':''}>
-                </div>
-              </div>
+              ${(() => {
+                const signed = !!signoff.signed;
+                const lines = ['Key concepts covered & understood','Practical scenarios discussed','Questions answered; Q&A completed','Candidate demonstrated applied understanding'];
+                const ticks = lines.map(txt =>
+                  `<div class="signoff-tick-line"><span class="box">${signed?'✓':''}</span><span>${txt}</span></div>`
+                ).join('');
+                if (signed) {
+                  return `<div class="signoff-block signed">
+                    <div class="signoff-label"><span>📋 Supervisor sign-off</span><span class="signoff-lock" style="background:var(--green-light);color:var(--green-dark,#2e7d32)">✔ Signed</span></div>
+                    ${ticks}
+                    <div class="sig-stamp">
+                      <span class="sig-mark">${esc(signoff.signedBy || signoff.name || 'Supervisor')}</span>
+                      <span class="sig-info">Signed by <b>${esc(signoff.signedBy || signoff.name || '—')}</b><br>${fmtDateTime(signoff.signedAt)}</span>
+                      <button class="btn btn-sm btn-ghost" data-action="unlock-module-sign" data-module="${m.id}" style="margin-left:auto">🔓 Amend</button>
+                    </div>
+                  </div>`;
+                }
+                return `<div class="signoff-block">
+                  <div class="signoff-label"><span>📋 Supervisor sign-off <span class="signoff-meta">— to be completed with supervisor at quarterly review</span></span></div>
+                  ${ticks}
+                  <div class="signoff-signbar">
+                    <span class="signoff-await">🔒 Awaiting supervisor signature — the candidate cannot self-complete this section.</span>
+                    <button class="btn btn-sm btn-sign" data-action="sign-module" data-module="${m.id}" style="margin-left:auto">✍️ Supervisor: Sign &amp; date-stamp</button>
+                  </div>
+                </div>`;
+              })()}
             </div>
           </div>
           `;
@@ -5346,11 +5514,12 @@ const App = {
         return;
       }
 
-      // Milestone checkbox
+      // Milestone checkbox — requires proof-of-evidence confirmation before ticking.
       const msChk = e.target.closest('[data-milestone-check]');
       if (msChk && msChk.tagName === 'INPUT') {
         e.stopPropagation();
-        Actions.toggleMilestone(msChk.getAttribute('data-milestone-check'));
+        e.preventDefault(); // don't visually toggle until confirmed; state drives the checkbox
+        Actions.handleMilestoneToggle(msChk.getAttribute('data-milestone-check'));
         return;
       }
 
@@ -5389,6 +5558,8 @@ const App = {
         else if (a === 'add-dilemma') Actions.addDilemma();
         else if (a === 'recalc-dates') Actions.recalcDates();
         else if (a === 'export') Actions.exportJSON();
+        else if (a === 'sign-module') Actions.signModule(act.getAttribute('data-module'));
+        else if (a === 'unlock-module-sign') Actions.unlockModuleSign(act.getAttribute('data-module'));
         else if (a === 'lock-signoff') Actions.lockSignoff();
         else if (a === 'unlock-signoff') Actions.unlockSignoff();
         else if (a === 'clear-signoff-password') Actions.clearSignoffPassword();
@@ -5563,6 +5734,77 @@ function setPath(path, value) {
   });
 }
 
+/* ============================================================
+   AUTOSAVE INDICATOR
+   State already persists on every change; this flashes a visible
+   "Saving… / Saved" pill and a periodic flush guarantees anything
+   typed but not yet blurred is written every couple of seconds.
+============================================================ */
+let __saveTimer = null;
+function flashSaved() {
+  const el = document.getElementById('saveStatus');
+  if (!el) return;
+  el.classList.add('saving');
+  const t = el.querySelector('.txt');
+  if (t) t.textContent = 'Saving…';
+  clearTimeout(__saveTimer);
+  __saveTimer = setTimeout(() => {
+    el.classList.remove('saving');
+    if (t) t.textContent = 'Saved';
+    try { el.title = 'All changes saved · ' + new Date().toLocaleTimeString(); } catch (_) {}
+  }, 500);
+}
+// Every 2s, flush the field currently being edited so in-progress typing
+// isn't lost if the tab is closed before the field blurs.
+function flushActiveField() {
+  const t = document.activeElement;
+  if (!t || (t.tagName !== 'TEXTAREA' && t.tagName !== 'INPUT')) return;
+  const v = t.value;
+  const mn = t.getAttribute('data-milestone-note');
+  if (mn) { Store.mutateSilent(s => { if (s.milestones[mn]) s.milestones[mn].note = v; }); return; }
+  const wn = t.getAttribute('data-workshop-note');
+  if (wn) { const [modId, idx] = wn.split(':'); Store.mutateSilent(s => { (s.workshopNotes[modId] = s.workshopNotes[modId] || {})[idx] = v; }); return; }
+  const bind = t.getAttribute('data-bind');
+  if (bind) { Store.mutateSilent(s => { const k = bind.split('.'); let o = s; for (let i=0;i<k.length-1;i++){ o[k[i]] = o[k[i]] || {}; o = o[k[i]]; } o[k[k.length-1]] = v; }); return; }
+}
+
+/* ============================================================
+   MODAL — lightweight branded dialog (proof + supervisor sign)
+============================================================ */
+const Modal = {
+  el: null,
+  open(opts) {
+    this.close();
+    const back = document.createElement('div');
+    back.className = 'modal-backdrop';
+    back.innerHTML = `<div class="modal-card" role="dialog" aria-modal="true">
+      <div class="modal-head"><h3>${opts.title || ''}</h3>${opts.sub ? `<div class="modal-sub">${opts.sub}</div>` : ''}</div>
+      <div class="modal-body">${opts.bodyHTML || ''}</div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" data-mclose>${opts.cancelText || 'Cancel'}</button>
+        <button class="btn ${opts.confirmClass || 'btn-primary'}" data-mconfirm>${opts.confirmText || 'Confirm'}</button>
+      </div></div>`;
+    document.body.appendChild(back);
+    this.el = back;
+    const finish = () => this.close();
+    back.addEventListener('click', e => { if (e.target === back) finish(); });
+    back.querySelector('[data-mclose]').addEventListener('click', finish);
+    const confirmBtn = back.querySelector('[data-mconfirm]');
+    confirmBtn.addEventListener('click', async () => {
+      if (opts.onConfirm) { const ok = await opts.onConfirm(back); if (ok === false) return; }
+      finish();
+    });
+    back.addEventListener('keydown', e => {
+      if (e.key === 'Escape') finish();
+      if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') { e.preventDefault(); confirmBtn.click(); }
+    });
+    const f = back.querySelector('input,textarea');
+    if (f) setTimeout(() => f.focus(), 30);
+    return back;
+  },
+  close() { if (this.el) { this.el.remove(); this.el = null; } }
+};
+
 /* BOOTSTRAP */
 (function bootstrap() {
   const saved = Store.getState();
@@ -5576,6 +5818,12 @@ function setPath(path, value) {
   if (!location.hash) location.hash = '#/dashboard';
 
   App.mount(document.getElementById('mainContent'), document.getElementById('topnav'));
+
+  // Autosave heartbeat — flush any in-progress edit every 2 seconds.
+  setInterval(flushActiveField, 2000);
+  // Save before the tab is closed / hidden so nothing is lost.
+  window.addEventListener('beforeunload', flushActiveField);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) flushActiveField(); });
 })();
 
 </script>
