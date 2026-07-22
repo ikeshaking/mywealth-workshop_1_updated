@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_25";
+const APP_VERSION = "v8.a_26";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","Acenda","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -9727,7 +9727,7 @@ function confirmResetAll(){
 function builderSectionStatus(s){
   const blank = v => !(v||'').trim() || /^\[.*\]$/.test((v||'').trim());
   try{
-    switch(s.k){
+    switch(String(s.k||'').replace(/^s3_\d+$/, 's3')){
       case 'client': {
         if(blank(F.client1Name)) return {state:'todo', hint:'Client 1 name is blank.'};
         if((F.clientType==='joint'||F.clientType==='joint_entity') && blank(F.client2Name)) return {state:'todo', hint:'Client 2 name is blank.'};
@@ -17444,7 +17444,16 @@ function renderBuilder(){
     </div>`;
   }});
   sections.push({k:'s2',      l:'Section 2: What You Want To Achieve', pageNum:2, pageLabel:'Sections 1 & 2', vis:'objectives', removable:true, render:renderSection2});
-  sections.push({k:'s3',      l:'Section 3: My Advice to You', pageNum:3, pageLabel:'Section 3: Advice', vis:'recommendations', removable:true, render:renderSection3ByStrategy});
+  const __s3Pages = roaS3Pages();
+  if(__s3Pages.length > 1){
+    // Combo ROA — each advice category gets its own wizard page.
+    __s3Pages.forEach((pg, i) => {
+      sections.push({k:'s3_'+i, l:'Section 3: ' + pg.label + ' Advice', pageNum:3, pageLabel:'Section 3: Advice', vis: i===0 ? 'recommendations' : undefined, removable:false,
+        render: () => renderSection3ByStrategy({cat: pg.cat, first: i===0})});
+    });
+  } else {
+    sections.push({k:'s3',      l:'Section 3: My Advice to You', pageNum:3, pageLabel:'Section 3: Advice', vis:'recommendations', removable:true, render:renderSection3ByStrategy});
+  }
   if(hasIns)  sections.push({k:'insurance', l:'Insurance Cover', pageNum:3, pageLabel:'Section 3: Advice', vis:'insurance', removable:true, render:renderInsuranceSection});
   if(hasBdbn) sections.push({k:'bdbn',      l:'Death Benefit Nomination', pageNum:3, pageLabel:'Section 3: Advice', vis:'bdbn', removable:true, render:renderBdbnSection});
   if(!hasIns) sections.push({k:'s4',      l:'Section 4: Annexure', pageNum:4, pageLabel:'Section 4, 5 & Ack', vis:'projection', removable:true, render:renderProjectionSection});
@@ -18172,13 +18181,20 @@ function renderSection2(){
 //   "We recommend..." bullets → allocation table → variation table → benefits & risks
 // then move to the next strategy. General (non-portfolio) strategies render after.
 // ═══════════════════════════════════════════════════════════
-function renderSection3ByStrategy(){
+function renderSection3ByStrategy(opts){
+  // On a combo ROA the wizard splits Section 3 into one page per advice
+  // category (opts = {cat, first}): each page renders only its category's
+  // strategy blocks; cat '__general' is the non-portfolio strategies page.
+  opts = opts || {};
+  const onlyCat = opts.cat || '';
+  const showHead = !onlyCat || opts.first;
   // "Add another portfolio" only makes sense for portfolio-based advice (super /
   // investment / pension) or a revised-terms 2-option insurance ROA (which has a
   // super recommendation). For all other insurance ROAs it's hidden.
   const showAddPortfolio = anyNeed('super') || anyNeed('inv') || anyNeed('pension') ||
     (isRevisedTermsRoa() && selectedScenarios.some(id => SCENARIOS[id]?.needs?.hasOptions));
-  let h = `<div class="card">
+  let h = '';
+  if(showHead) h += `<div class="card">
     <div class="card-sub" style="margin-bottom:10px">For each strategy: the recommendations, allocation table, variation table and benefits &amp; risks are grouped together — matching exactly how the Word document will flow.</div>
     <div class="mt-sm">
       <button class="btn btn-sm" onclick="regenerateWording()" title="Rebuild all recommendations, benefits and risks from the scenario library — any hand edits to the generated wording are discarded">↻ Regenerate all from scenarios</button>
@@ -18189,7 +18205,7 @@ function renderSection3ByStrategy(){
   // On an insurance-only ROA the Current / Recommended cover tables have their
   // own drop zones, so the general card is left out to keep the section clean.
   const __insOnly = selectedScenarios.length && selectedScenarios.every(id => (SCENARIOS[id]?.cat||'') === 'Insurance');
-  if(!__insOnly) h += renderSmartImportCard();
+  if(showHead && !__insOnly) h += renderSmartImportCard();
 
   // Strategy blocks grouped by advice category, mirroring the document flow:
   //   Superannuation tables (each portfolio: recs + allocation + variation)
@@ -18197,8 +18213,16 @@ function renderSection3ByStrategy(){
   //   → Investment table(s) → ONE Investment Benefits & Risks block, etc.
   // Each category's wording bucket lives on its FIRST portfolio (see
   // consolidateScenarios) — that is what the editors below bind to.
+  const __allGroups = portfolioRenderGroups();
+  let __groups = __allGroups;
+  if(onlyCat === '__general') __groups = [];
+  else if(onlyCat) __groups = __allGroups.filter(g => g.cat === onlyCat);
+  // Strategy numbering stays global across the split pages.
   let __stratNum = 0;
-  portfolioRenderGroups().forEach(group => {
+  if(onlyCat && onlyCat !== '__general'){
+    for(const g of __allGroups){ if(g.cat === onlyCat) break; __stratNum += g.items.length; }
+  }
+  __groups.forEach(group => {
     h += `<div class="page-separator" style="margin-top:14px">
       <span class="page-separator-num">${e(group.cat)}</span>
     </div>`;
@@ -18250,7 +18274,8 @@ function renderSection3ByStrategy(){
     const s = SCENARIOS[id];
     return s && !portfolioForScenario(id, s);
   });
-  if(nonPortfolioIds.length || F.recommendationBullets.length || F.benefits.length || F.risks.length){
+  const __showGeneral = (!onlyCat || onlyCat === '__general');
+  if(__showGeneral && (nonPortfolioIds.length || F.recommendationBullets.length || F.benefits.length || F.risks.length)){
     h += `<div class="strategy-block">
       <div class="strategy-block-head">
         <span class="strategy-block-badge" style="background:var(--teal);color:var(--navy)">General</span>
@@ -18272,10 +18297,26 @@ function renderSection3ByStrategy(){
     h += `</div></div>`;
   }
 
-  if(!F.portfolios.length && !nonPortfolioIds.length){
+  if(!onlyCat && !F.portfolios.length && !nonPortfolioIds.length){
     h += `<div class="helper" style="padding:14px;background:var(--blue-light);border-radius:11px">Select some scenarios first — strategies will appear here grouped by portfolio.</div>`;
   }
   return h;
+}
+// The advice-category pages Section 3 splits into on a combo ROA: one entry
+// per portfolio category, plus '__general' when non-portfolio strategies
+// (insurance, BDBN, MCAA…) are selected.
+function roaS3Pages(){
+  try{
+    const pages = portfolioRenderGroups().map(g => ({cat: g.cat, label: g.cat}));
+    const hasGeneral = selectedScenarios.some(id => { const s = SCENARIOS[id]; return s && !portfolioForScenario(id, s); })
+      || (F.recommendationBullets||[]).length || (F.benefits||[]).length || (F.risks||[]).length;
+    if(hasGeneral){
+      const insOnlyGeneral = selectedScenarios.filter(id => { const s = SCENARIOS[id]; return s && !portfolioForScenario(id, s); })
+        .every(id => (SCENARIOS[id]?.cat||'') === 'Insurance');
+      pages.push({cat:'__general', label: insOnlyGeneral && pages.length ? 'Insurance' : 'Other Strategies'});
+    }
+    return pages;
+  }catch(_){ return []; }
 }
 
 // Category-level recommendation bullets (held on the category's first
