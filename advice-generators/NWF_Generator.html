@@ -322,6 +322,15 @@ details.row-override[open] > summary::before{transform:rotate(90deg)}
 .howto-table th,.howto-table td{border:1px solid var(--border-soft);padding:7px 10px;text-align:left;vertical-align:top}
 .howto-table th{background:var(--surface-2);color:var(--heading);font-weight:700}
 
+/* Brand cover adviser box (preview twin of the Word cover box) */
+.preview-doc .nwf-adviserbox{border-left:2px solid #5EA6FF;border-right:2px solid #5EA6FF;padding:12px 18px;margin-top:26px;color:#0C2E3F}
+.preview-doc .nwf-adviserbox .acb-head{font-weight:800;font-size:11px;letter-spacing:.02em;margin-bottom:12px}
+.preview-doc .nwf-adviserbox .acb-name{color:#0D6BE0;font-weight:700;font-size:17px;margin-bottom:9px}
+.preview-doc .nwf-adviserbox .acb-rep{font-style:italic;font-size:11px;margin-bottom:8px}
+.preview-doc .nwf-adviserbox .acb-arrow{font-size:10.5px;margin:3px 0 3px 16px}
+.preview-doc .nwf-adviserbox .acb-arrow span{color:#5EA6FF;font-weight:800;margin-right:7px}
+.preview-doc .nwf-adviserbox .acb-small{font-size:8.5px;color:#6b7a86;line-height:1.5;margin-top:5px}
+
 /* Document-type tabs (ROA / Strategy Paper) */
 .doctype-tabs{
   display:grid;grid-template-columns:1fr 1fr;gap:10px;
@@ -907,7 +916,7 @@ details.collapse-card > div{margin-top:8px;padding-top:8px;border-top:1px solid 
 .preview-doc .nwf-cover-adviser{background:#F3F3F3;padding:10px 12px;border-radius:4px;color:#003B56;font-size:10px;display:flex;flex-direction:column;gap:3px}
 .preview-doc h1.nwf-h1{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif!important;font-size:19px;color:#0C6AE1;font-weight:400;border:none;margin:22px 0 10px;padding:0}
 .preview-doc h2.nwf-h2{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif!important;font-size:15px;color:#5EA6FF;font-weight:400;border:none;margin:16px 0 8px;padding:0}
-.preview-doc table.nwf-tbl td{background:#DDE5ED;border:2px solid #fff;color:#0C2E3F;text-align:center;padding:5px 8px}
+.preview-doc table.nwf-tbl td{background:#E5F4F6;border:2px solid #fff;color:#0C2E3F;text-align:center;padding:5px 8px}
 .preview-doc table.nwf-tbl td.nwf-lbl{text-align:left}
 .preview-doc table.nwf-tbl tr.nwf-band td{background:#0C2E3F!important;color:#fff!important;font-weight:700;text-align:left}
 .preview-doc table.nwf-tbl tr.nwf-band td:not(:first-child){text-align:center}
@@ -15313,6 +15322,23 @@ function buildAdviserCoverBox(D, TBLW){
   });
   return new Table({columnWidths:[TBLW], width:{size:TBLW, type:WidthType.DXA}, rows:[new TableRow({children:[cell]})]});
 }
+// HTML twin of buildAdviserCoverBox — used by the on-screen previews so they
+// mirror the exported Word cover exactly.
+function adviserCoverBoxHTML(){
+  const a = adviserCoverDetails();
+  const arrow = (t,u) => `<div class="acb-arrow"><span>➤</span>${u?`<u>${e(t)}</u>`:e(t)}</div>`;
+  return `<div class="nwf-adviserbox">
+    <div class="acb-head">YOUR FINANCIAL ADVISER:</div>
+    <div class="acb-name">${e(a.name)}</div>
+    <div class="acb-rep">is an Authorised Representative</div>
+    ${a.phone?arrow(a.phone):''}
+    ${a.email?arrow(a.email,true):''}
+    ${a.address?arrow(a.address):''}
+    ${arrow(a.website,true)}
+    <div class="acb-small" style="margin-top:10px">${e(a.carLine)}<br>${e(a.licLine)}</div>
+    <div class="acb-small">${e(a.postalLine)}</div>
+  </div>`;
+}
 
 // ── Suggested wording editor — edit scenario objectives / recommendation /
 //    benefits / risks without re-running the file through Claude. ──
@@ -17579,17 +17605,15 @@ function renderStrategyPreview(){
   </section>`;
 
   // Render each strategy paper
-  h += `<div class="paper-doc" style="padding:36px;border-radius:14px;max-width:820px;margin:0 auto;font-family:var(--bf)">`;
+  h += `<div class="preview-wrap"><div class="preview-doc" id="preview-doc">`;
 
   // Build a unified list of papers — each is either text-based (sp), modelling-based (with computed values), or portfolio (dynamic sections)
   const papers = selectedScenarios.map(id => {
     if(PORTFOLIO_SCENARIOS[id]){
-      // Portfolio paper — dynamically build sections from current portfolioData
       const tpl = PORTFOLIO_SCENARIOS[id];
       return buildPortfolioPaperForPreview(id, tpl);
     }
     if(MODELLING_SCENARIOS[id]){
-      // Modelling paper — fetch template, compute values
       const tpl = MODELLING_SCENARIOS[id];
       const values = computeModellingValues(id);
       return { id, isModelling:true, title: tpl.title, intro: tpl.intro, sections: tpl.sections || [], values };
@@ -17599,78 +17623,69 @@ function renderStrategyPreview(){
     return { id, isModelling:false, title: sp.title, intro: sp.intro, sections: sp.sections || [] };
   }).filter(Boolean);
 
-  // Helper to fill a string using either modelling values or plain spFill.
-  // Portfolio papers are pre-filled during buildPortfolioPaperForPreview().
   const fillFn = (paper, str) => {
     if(paper.isPortfolio) return str || '';
     return paper.isModelling ? modellingFill(str, paper.values) : spFill(str);
   };
 
+  // Rendered with the same NWF Template v1 branding as the exported Word
+  // document (nwf-cover / nwf-h1 / nwf-h2 / nwf-tbl), so preview = output.
   papers.forEach((sp, pi) => {
     if(pi>0) h += `<div style="page-break-before:always;border-top:1px dashed #ccc;margin:30px 0;padding-top:30px"></div>`;
 
-    // Cover-style heading
-    h += `<div style="text-align:center;padding:40px 0;border-bottom:3px solid var(--navy);margin-bottom:24px">
-      <div style="font-family:var(--hf);font-size:32px;color:var(--navy);font-weight:700">${e(getFullClientName()||'[Client Name]')}</div>
-      <div style="font-family:var(--hf);font-size:24px;color:var(--navy);margin-top:8px">${e(sp.title||'Strategy Paper')}</div>
-      <div style="font-size:11px;color:var(--text-dim);margin-top:20px;letter-spacing:1.5px">PREPARED ON ${e(ordD(F.roaDate))}</div>
-      <div style="margin-top:20px;font-size:11px;color:var(--text-dim)">
-        YOUR FINANCIAL ADVISER<br>
-        <span style="color:var(--navy);font-weight:600">${e(F.adviserName||'[Adviser Name]')}</span><br>
-        ${e(F.adviserPhone||'')} · ${e(F.adviserEmail||'')}
-      </div>
+    // Cover — brand layout, mirrors the Word cover page
+    h += `<div class="nwf-cover">
+      <div class="nwf-cover-name">${e(getFullClientName()||'[Client Name]')}</div>
+      <div class="nwf-cover-title">${e(fillFn(sp, sp.title||'Strategy Paper').toUpperCase())}</div>
+      <div class="nwf-cover-date">PREPARED ON ${e(((F.roaDate ? ordD(F.roaDate) : ordD(todayLocalISO())) || '').toUpperCase())}</div>
+      ${adviserCoverBoxHTML()}
     </div>`;
 
-    // Intro
-    if(sp.intro){
-      h += `<p style="font-size:13px;line-height:1.6">${e(fillFn(sp, sp.intro))}</p>`;
-    }
+    // Body — paper title then intro, as in the Word doc
+    h += `<h1 class="nwf-h1">${e(fillFn(sp, sp.title||'Strategy Paper'))}</h1>`;
+    if(sp.intro) h += nwfTextHTML(fillFn(sp, sp.intro));
 
-    // Sections
     (sp.sections||[]).forEach(sec => {
-      h += `<h2 style="font-family:var(--hf);color:var(--navy);font-size:20px;margin-top:28px;padding-bottom:4px;border-bottom:2px solid var(--blue)">${e(fillFn(sp, sec.heading||''))}</h2>`;
+      h += `<h2 class="nwf-h2">${e(fillFn(sp, sec.heading||''))}</h2>`;
 
-      (sec.body||[]).forEach(b => {
-        if(b) h += `<p style="font-size:13px;line-height:1.6;margin:10px 0">${e(fillFn(sp, b))}</p>`;
-      });
+      (sec.body||[]).forEach(b => { if(b) h += nwfTextHTML(fillFn(sp, b)); });
 
       if(sec.bullets && sec.bullets.length){
-        h += `<ul style="font-size:13px;line-height:1.6;padding-left:22px">`;
+        h += `<ul style="font-size:11px;line-height:1.6;padding-left:22px">`;
         sec.bullets.forEach(b => { if(b) h += `<li style="margin-bottom:4px">${e(fillFn(sp, b))}</li>`; });
         h += `</ul>`;
       }
 
       (sec.tables||[]).forEach(t => {
-        h += `<div style="margin:16px 0">`;
-        if(t.title) h += `<div style="font-weight:700;font-size:12px;color:var(--navy);margin-bottom:4px">${e(fillFn(sp, t.title))}</div>`;
-        h += `<table style="width:100%;border-collapse:collapse;font-size:11.5px">`;
+        h += `<div style="margin:14px 0">`;
+        if(t.title) h += `<div style="font-weight:700;font-size:11.5px;color:#0C2E3F;margin-bottom:5px">${e(fillFn(sp, t.title))}</div>`;
+        h += `<table class="nwf-tbl" style="width:100%;border-collapse:collapse;font-size:11px">`;
         if(t.headers && t.headers.length){
-          h += `<thead><tr>`;
-          t.headers.forEach(hd => h += `<th style="background:var(--navy);color:#fff;padding:6px 8px;text-align:left;border:1px solid var(--navy)">${e(fillFn(sp, hd))}</th>`);
-          h += `</tr></thead>`;
+          h += `<tr class="nwf-cols">`;
+          t.headers.forEach((hd, hi) => h += `<td class="${hi===0?'nwf-lbl':''}">${e(fillFn(sp, hd))}</td>`);
+          h += `</tr>`;
         }
-        h += `<tbody>`;
-        (t.rows||[]).forEach((r, ri) => {
-          h += `<tr style="background:${ri%2?'#E5F4F6':'#fff'}">`;
-          r.forEach(c => h += `<td style="padding:6px 8px;border:1px solid #D4E2EE">${e(fillFn(sp, c))}</td>`);
+        (t.rows||[]).forEach(r => {
+          h += `<tr>`;
+          r.forEach((c, ci) => h += `<td class="${ci===0?'nwf-lbl':''}">${e(fillFn(sp, c))}</td>`);
           h += `</tr>`;
         });
-        h += `</tbody></table>`;
-        if(t.note) h += `<div style="font-size:10.5px;color:var(--text-dim);font-style:italic;margin-top:4px">${e(fillFn(sp, t.note))}</div>`;
+        h += `</table>`;
+        if(t.note) h += `<p class="nwf-note">${e(fillFn(sp, t.note))}</p>`;
         h += `</div>`;
       });
 
       if(sec.screenshot){
-        h += `<div style="border:2px dashed #b5cbd8;background:#f0f7fa;padding:24px;text-align:center;color:var(--navy);font-size:12px;font-style:italic;margin:16px 0;border-radius:9px">[insert screenshot: ${e(fillFn(sp, sec.screenshot))}]</div>`;
+        h += `<div style="border:2px dashed #DDE5ED;background:#F3F3F3;padding:24px;text-align:center;color:#003B56;font-size:12px;font-style:italic;margin:16px 0;border-radius:9px">[insert screenshot: ${e(fillFn(sp, sec.screenshot))}]</div>`;
       }
     });
 
-    // Standard disclaimer
-    h += `<h2 style="font-family:var(--hf);color:var(--navy);font-size:20px;margin-top:28px;padding-bottom:4px;border-bottom:2px solid var(--blue)">Disclaimer</h2>
-    <p style="font-size:11px;line-height:1.5;color:#444;font-style:italic">The information provided in this document has been provided as general advice only and are forward looking estimates only. We have not formalised the advice, and in the future when we are ready to pursue this, we will consider your financial circumstances, needs or objectives in full. You should seek the assistance of your GPS Wealth Limited (GPS) Adviser before you make any decision regarding any products mentioned in this communication. Whilst all care has been taken in the preparation of this material, no warranty is given in respect of the information provided and accordingly neither GPS nor its related entities, employees or agents shall be liable on any ground whatsoever with respect to decisions or actions taken as a result of you acting upon such information.</p>`;
+    // Standard disclaimer — same wording and placement as the Word export
+    h += `<h1 class="nwf-h1">Disclaimer</h1>
+    <p style="font-size:10px;line-height:1.5;font-style:italic">The information provided in this document has been provided as general advice only and are forward looking estimates only. We have not formalised the advice, and in the future when we are ready to pursue this, we will consider your financial circumstances, needs or objectives in full. You should seek the assistance of your GPS Wealth Limited (GPS) Adviser before you make any decision regarding any products mentioned in this communication. Whilst all care has been taken in the preparation of this material, no warranty is given in respect of the information provided and accordingly neither GPS nor its related entities, employees or agents shall be liable on any ground whatsoever with respect to decisions or actions taken as a result of you acting upon such information.</p>`;
   });
 
-  h += `</div>`;
+  h += `</div></div>`;
 
   // Floating buttons
   h += `<button class="floating-back-btn" onclick="page='builder';render();window.scrollTo(0,0)">
@@ -21492,12 +21507,7 @@ function renderNWFDocHTML(){
     <div class="nwf-cover-name">${e(cn)}</div>
     <div class="nwf-cover-title">NEXT WEALTH FOCUS</div>
     <div class="nwf-cover-date">PREPARED ON ${e((F.roaDate ? ordD(F.roaDate) : ordD(todayLocalISO())) || '').toUpperCase()}</div>
-    <div class="nwf-cover-adviser">
-      <div style="font-weight:700">YOUR FINANCIAL ADVISER:</div>
-      <div>${e(F.adviserName||'[Adviser]')}</div>
-      <div class="text-xs">My Wealth Solutions · 1/18 Masters Street, Newstead, Brisbane 4006 · 07 3852 4114 · www.mywealthsolutions.com.au</div>
-      <div class="text-xs">My Wealth Solutions Pty Ltd ABN 66 153 751 832 is a Corporate Authorised Representative 414145 of GPS Wealth Ltd | Australian Financial Services Licence 254544 | ABN 17 005 482 726</div>
-    </div>
+    ${adviserCoverBoxHTML()}
   </div>`;
 
   // Standard opening pages
