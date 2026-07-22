@@ -14347,29 +14347,24 @@ async function importInsuranceFileToTable(file, fKey){
     const existing = (F[fKey]||[]).filter(r => r && (r.coverType || r.provider));
     // Rewrite imported names to the spelling the table (or the ROA client
     // fields) already uses — a quote saying "Timothy" must land on the "Tim"
-    // rows as an update, not append a duplicate person underneath them.
+    // rows as an update, not sit underneath them as a second person. An
+    // insurance ROA only ever covers ONE life insured, so on a single-client
+    // ROA any leftover unmatched name is the client too (an initialled or
+    // reformatted spelling) and takes the client's first name.
     const canonNames = existing.map(r => (r.lifeInsured||'').trim()).filter(Boolean)
       .concat(roaClientNames().map(n => n.split(/\s+/)[0]));
+    const singleClient = !(F.clientType === 'joint' || F.clientType === 'joint_entity');
+    const clientFirst = ((F.client1Name||'').trim().split(/\s+/)[0]) || '';
     rows.forEach(r => {
       const n = (r.lifeInsured||'').trim();
       if(!n) return;
       const hit = canonNames.find(c => sameGivenName(c, n));
       if(hit && hit.toLowerCase() !== n.toLowerCase()) r.lifeInsured = hit;
+      else if(!hit && singleClient && clientFirst) r.lifeInsured = clientFirst;
     });
     let mode = 'replace';
     if(existing.length && !insuranceTableIsPristine(F[fKey])){
-      // A different person's document (e.g. the partner's quote landing after
-      // client 1's) appends under the existing rows automatically — no
-      // update/replace question, both people end up in the one table.
-      const exNames = [...new Set(existing.map(r => (r.lifeInsured||'').trim()).filter(Boolean))];
-      const inNames = [...new Set(rows.map(r => (r.lifeInsured||'').trim()).filter(Boolean))];
-      const differentPerson = exNames.length && inNames.length
-        && !inNames.some(n => exNames.some(x => sameGivenName(x, n)));
-      if(differentPerson){
-        mode = 'append';
-      } else {
-        mode = confirm('The ' + tableNice + ' table already has ' + existing.length + ' cover line(s).\n\nOK — UPDATE the matching covers with the imported figures (covers not in the table yet are added underneath).\nCancel — REPLACE the whole table with the imported lines.') ? 'update' : 'replace';
-      }
+      mode = confirm('The ' + tableNice + ' table already has ' + existing.length + ' cover line(s).\n\nOK — UPDATE the matching covers with the imported figures (covers not in the table yet are added underneath).\nCancel — REPLACE the whole table with the imported lines.') ? 'update' : 'replace';
     }
 
     let summary = 'Found ' + rows.length + ' cover line(s) via ' + source + ':\n\n';
@@ -14390,8 +14385,6 @@ async function importInsuranceFileToTable(file, fKey){
     }
     summary += '\n' + (mode === 'update'
       ? 'UPDATE the matching covers in the ' + tableNice + ' table with these?'
-      : mode === 'append'
-      ? 'ADD these under the existing rows in the ' + tableNice + ' table? (A different person\'s cover — the existing rows are kept.)'
       : 'Prefill the ' + tableNice + ' table with these? Its existing rows will be replaced') + ' (you can still edit every cell afterwards).';
     if(!confirm(summary)){ return; }
 
@@ -14447,8 +14440,6 @@ async function importInsuranceFileToTable(file, fKey){
         }
       });
       F[fKey] = existing;
-    } else if(mode === 'append'){
-      F[fKey] = existing.concat(rows);
     } else {
       F[fKey] = rows;
     }
