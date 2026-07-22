@@ -903,7 +903,10 @@ details.collapse-card > div{margin-top:8px;padding-top:8px;border-top:1px solid 
 /* Insurance body rows: vertical alignment on top so visually-merged cells with rowspan align with text */
 .preview-doc h3.cat-head{font-family:'ABC Arizona Flare','Playfair Display',Georgia,serif;font-size:17px;color:#0C2E3F;font-weight:700;margin:26px 0 10px}
 .preview-doc p.bnr-head{margin-top:18px}
-.preview-doc table.insurance-table td{vertical-align:top;overflow-wrap:break-word;word-break:normal}
+.preview-doc table.insurance-table td{vertical-align:middle;text-align:center;overflow-wrap:break-word;word-break:normal}
+.preview-doc table.insurance-table td:first-child{text-align:left}
+.preview-doc table.insurance-table th{text-align:center;vertical-align:middle}
+.preview-doc table.insurance-table th:first-child{text-align:left}
 .preview-doc table.insurance-table tr td{background:#E4F3F5}
 .preview-doc table.insurance-table td.alt{background:#E4F3F5}
 .preview-doc table.insurance-table td.alt2{background:#E4F3F5}
@@ -9880,9 +9883,27 @@ function insuranceTableIsPristine(rows){
 // (e.g. Brighter Super) keeps its blue band instead of inheriting the new
 // insurer's default. Rows already present as Retain aren't duplicated.
 function addRetainedFromCurrent(destKey){
-  const srcRows = (F.insuranceCurrent || []).filter(r => r && (r.coverType || r.provider));
+  // Only rows with real content count — the Current table's default starter
+  // rows carry a cover type but no amounts, and copying those helps nobody.
+  const hasReal = r => r && ((r.benefitAmount||'').trim() || (r.provider||'').trim() || (r.premiumNote||'').trim() || (r.monthlyPremium||'').trim());
+  let srcRows = (F.insuranceCurrent || []).filter(hasReal);
+  // The Current table is often untouched on a revised-terms ROA — fall back to
+  // the existing-cover lines remembered from the last imported document (the
+  // SOA's current cover / replacement-implications table), kept to this ROA's
+  // client only.
+  if(!srcRows.length && Array.isArray(F.soaExistingCover) && F.soaExistingCover.length){
+    srcRows = F.soaExistingCover.filter(hasReal);
+    const clients = roaClientNames();
+    if(clients.length){
+      const mine = srcRows.filter(r => {
+        const n = (r.lifeInsured||'').trim();
+        return !n || clients.some(c => nameMatchesClient(n, c));
+      });
+      if(mine.length) srcRows = mine;
+    }
+  }
   if(!srcRows.length){
-    alert('The Current Insurance table is empty — fill it in (or import the existing cover / SOA replacement-implications table into it) first, then add the retained rows here.');
+    alert('No existing cover found yet.\n\nEither fill in the Current Insurance table, or import the SOA on this table\'s "Import / drop document" (its existing-cover / Replacement Implications table is read and remembered automatically), then click this again.');
     return;
   }
   const curDef = (F.insuranceDefaults && F.insuranceDefaults.current) || {};
@@ -10949,15 +10970,16 @@ function provisionPortfolios(scns){
   // own small table automatically (labelled from the "from fund" field), so the
   // two-account situation is always shown: the Hub24 destination table plus the
   // retained fund holding the minimum balance for insurance.
-  if(selectedScenarios.includes('super_rollover_partial')){
+  if(selectedScenarios.includes('super_rollover_partial') || revisedTermsRetainsExisting()){
     let ret = existingBy["Retained Fund (Insurance)"];
     if(!ret){
-      ret = mkPortfolio("Retained Fund (Insurance)", (F.fromFund||'').trim() || "External Super Fund", "Retained");
+      ret = mkPortfolio("Retained Fund (Insurance)", (F.fromFund||'').trim() || (F.originalInsurer||'').trim() || "External Super Fund", "Retained");
       ret.careType = 'Super';   // always a super account, whatever the fund is called
       // Print as the SECOND platform section of the main super table (SOA
       // style): Portfolio (1) = destination, Portfolio (2) = retained fund
-      // "(Retain)", then a Complete Portfolio (1+2) combined total.
-      ret.combineWithPrev = true;
+      // "(Retain)", then a Complete Portfolio (1+2) combined total. On a
+      // revised-terms ROA with no other super table it stands alone instead.
+      ret.combineWithPrev = kept.some(p => /super|pension/i.test(p.careType || p.label || ''));
       ret.rows = [
         {n:"Existing investment option — retained minimum balance", a:"", icr:"", isFee:false},
         {n:"", a:"", icr:"", isFee:false}
@@ -10967,9 +10989,10 @@ function provisionPortfolios(scns){
       ret.note = "Minimum balance retained in this fund to maintain your existing insurance cover — review annually that it remains sufficient.";
       ret._autoPlatform = ret.platform;
     }
-    // Keep the platform in sync with the "from fund" field until the adviser
-    // types their own platform value.
-    const ff = (F.fromFund||'').trim();
+    // Keep the platform in sync with the "from fund" field (or, on a
+    // revised-terms ROA, the Original/Existing Insurer field) until the
+    // adviser types their own platform value.
+    const ff = (F.fromFund||'').trim() || (F.originalInsurer||'').trim();
     if(ff && ret._autoPlatform !== undefined && ret.platform === ret._autoPlatform && ret.platform !== ff){
       ret.platform = ff; ret._autoPlatform = ff;
     }
@@ -11478,6 +11501,17 @@ function isRevisedTermsRoa(){
   return selectedScenarios.some(id =>
     /^ins_revised/.test(id) || SCENARIOS[id]?.needs?.insuranceTable === 'revised'
   );
+}
+// A revised-terms ROA that KEEPS the existing cover in place (retain + top-up /
+// retain + apply in full, or the generic revised scenario on its default
+// "Retain Existing + Top-Up" approach). The retained cover usually lives in an
+// external super fund, so these ROAs also show a Super section with the
+// retained fund. The Hub24-takeover variant moves the cover instead, so it
+// doesn't count.
+function revisedTermsRetainsExisting(){
+  if(selectedScenarios.includes('ins_revised_retain_topup') || selectedScenarios.includes('ins_revised_retain_apply_full')) return true;
+  if(selectedScenarios.includes('ins_revised_transfer_hub24')) return false;
+  return isRevisedTermsRoa() && (F.revisedTermsApproach||'retain_topup') === 'retain_topup';
 }
 
 // Some "alter"-type scenarios (e.g. New Cover via SOA alternative insurer) want the
@@ -14347,6 +14381,13 @@ async function importInsuranceFileToTable(file, fKey){
       // cover in its first data column — read it as current-cover tables.
       const wide = parseSoaReplacementWide(text);
       if(wide.length) found.push(...wide);
+      // Remember the document's existing-cover lines (all people — filtered to
+      // the ROA's client at use time) so "＋ Retained cover from Current" works
+      // even when the Current table itself was never filled in.
+      try{
+        const exCur = found.filter(t => t.section === 'current').reduce((a,t)=>a.concat(t.rows), []);
+        if(exCur.length) F.soaExistingCover = exCur.map(r => Object.assign({}, r));
+      }catch(_){}
       if(found.length){
         // On a revised-terms ROA the Original table is filled from a prior
         // SOA, whose product tables are headed "Recommended" — same thing.
@@ -18039,7 +18080,14 @@ function renderMetaSection(){
   // Insurance — revised terms after underwriting
   if(isRevisedTermsRoa()){
     h += `<h4 style="margin-top:14px;margin-bottom:6px;font-size:11px;color:var(--navy);font-weight:700">Insurance — Revised Terms Details</h4>
-    ${(['ins_revised_retain_topup','ins_revised_transfer_hub24','ins_revised_retain_apply_full'].some(id => selectedScenarios.includes(id))
+    ${(revisedTermsRetainsExisting() && !selectedScenarios.some(id => (SCENARIOS[id]||{}).cat === 'Superannuation')) ? `
+      <div class="helper" style="padding:10px 12px;background:var(--blue-light);border-left:3px solid var(--blue);border-radius:10px;margin-bottom:10px">
+        <strong>Retained cover held in a super fund:</strong> a "Retained Fund (Insurance)" Super section is included
+        automatically (fund name from the Original / Existing Insurer field below) so the ROA shows where the retained
+        cover lives. Add the full scenario instead if the ROA should also cover the rollover itself:
+        <button class="btn btn-xs btn-blue" style="margin-left:8px" onclick="toggleScenario('super_rollover_partial')">＋ "Partial Rollover (Retain Insurance)"</button>
+      </div>`
+    : (selectedScenarios.includes('ins_revised_transfer_hub24')
        && !selectedScenarios.some(id => (SCENARIOS[id]||{}).cat === 'Superannuation')) ? `
       <div class="helper" style="padding:10px 12px;background:var(--amber-light);border-left:3px solid var(--amber);border-radius:10px;margin-bottom:10px">
         <strong>Retaining cover held in a super fund?</strong> The ROA should also show the retained fund in a Super section
@@ -20116,7 +20164,13 @@ function renderInsurancePreviewTable(rows, defsKey){
       // Premium cell: split each field on "/" / newlines so hybrid premiums land on
       // separate lines (matching the Word doc), with a blank-line gap for readability.
       const premLines = splitPremiumDisplayLines(coverKind(r.coverType)==='trauma' ? [r.monthlyPremium, r.premiumNote] : [r.monthlyPremium, r.premiumNote, r.monthlyPremiumAfterTax]);
-      const premiumHtml = premLines.map((s, idx) => `<div${idx < premLines.length - 1 ? ' style="margin-bottom:6px"' : ''}>${e(s)}</div>`).join('');
+      // "(before tax)" / "(after tax)" hug the figure above them; the blank-line
+      // gap only separates the premium groups (and the funding-split note).
+      const isTaxLbl = s => /^\((?:before|after|pre|post)[-\s]?tax\)$/i.test((s||'').trim());
+      const premiumHtml = premLines.map((s, idx) => {
+        const gap = idx < premLines.length - 1 && !isTaxLbl(premLines[idx+1]);
+        return `<div${gap ? ' style="margin-bottom:6px"' : ''}>${e(s)}</div>`;
+      }).join('');
       // Benefit cell: main amount on line 1, waiting/benefit period on line 2.
       const periodBits = insPeriodsDisplay(r);
       const scoTxt = (r.superContribution||'').trim();
@@ -23870,6 +23924,8 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
   // don't expose VerticalMergeType but accept the string forms.
   const VM_RESTART  = (VerticalMergeType && VerticalMergeType.RESTART)  || "restart";
   const VM_CONTINUE = (VerticalMergeType && VerticalMergeType.CONTINUE) || "continue";
+  // Data cells sit centre of the row height (matches the firm's template).
+  const VA_CENTER = (D.VerticalAlign && D.VerticalAlign.CENTER) || "center";
 
   // Column widths (DXA, total 9950). Provider made skinnier and Monthly Premium wider so
   // the premium column (which can hold before/after-tax + split-funding notes) has room.
@@ -23901,8 +23957,10 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
     const runs = [];
     valid.forEach((ln, idx) => {
       // opts.gap leaves a blank line between the entries (used by the premium
-      // cell so before-tax / funding-split / after-tax read as separate blocks).
-      if(idx > 0) runs.push(new TextRun({text:"", break: opts.gap ? 2 : 1, font:"Nunito", size:opts.size||18}));
+      // cell so before-tax / funding-split / after-tax read as separate blocks)
+      // — but a "(before tax)" / "(after tax)" label hugs the figure above it.
+      const tight = /^\((?:before|after|pre|post)[-\s]?tax\)$/i.test(ln.trim());
+      if(idx > 0) runs.push(new TextRun({text:"", break: (opts.gap && !tight) ? 2 : 1, font:"Nunito", size:opts.size||18}));
       runs.push(new TextRun({
         text: ln,
         font:"Nunito", size:opts.size||18,
@@ -23920,6 +23978,7 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
         left:{color:BORD, space:0, style:BorderStyle.SINGLE, size:4},
         right:{color:BORD, space:0, style:BorderStyle.SINGLE, size:4},
       },
+      verticalAlign: VA_CENTER,
       children:[new Paragraph({alignment: opts.align||AlignmentType.LEFT, spacing:{before:0,after:0}, children: runs})]
     };
     if(opts.verticalMerge) cellSpec.verticalMerge = opts.verticalMerge;
@@ -24075,10 +24134,10 @@ function insuranceDocxTable(children, rows, ctx, defsKey){
       else premStructCell = mergedCellTxt(r.premiumStructure||"", {w:colW[5], shade, align:C});
 
       drows.push(new TableRow({children:[
-        cellTxt(r.coverType, {w:colW[0], shade}),
+        mergedCellTxt(r.coverType, {w:colW[0], shade}),
         buildMergedCell('lifeInsured', r.lifeInsured||""),
         buildMergedCell('owner', r.owner||""),
-        cellTxt(r.status, {w:colW[3], shade, align:C}),
+        mergedCellTxt(r.status, {w:colW[3], shade, align:C}),
         multiCell(benefitLines, {w:colW[4], shade, align:C}),
         premStructCell,
         premiumCell,
