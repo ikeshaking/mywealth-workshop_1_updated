@@ -298,20 +298,29 @@ details.row-override[open] > summary::before{transform:rotate(90deg)}
 /* Template bar */
 .tpl-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:11px}
 
-/* How-to guide panel (dedicated generator builds) */
-.howto{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:18px;overflow:hidden}
-.howto summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;padding:14px 18px;font-family:var(--hf);font-size:16px;font-weight:700;color:var(--heading);user-select:none}
-.howto summary::-webkit-details-marker{display:none}
-.howto summary .howto-chev{margin-left:auto;font-size:11px;color:var(--text-muted);transition:transform .15s}
-.howto[open] summary .howto-chev{transform:rotate(90deg)}
-.howto-body{padding:0 18px 16px;font-size:13px;color:var(--text-dim);line-height:1.55}
-.howto-body ol{margin:8px 0 12px 20px;padding:0}
-.howto-body ol li{margin-bottom:7px}
-.howto-body ol li strong{color:var(--heading)}
-.howto-important{background:var(--lime-light);border:1px solid var(--lime);border-left:4px solid var(--lime-dark);border-radius:8px;padding:12px 14px;margin-top:10px;color:var(--text)}
+/* How-to / SOP page (dedicated generator builds) */
+.howto{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:16px;overflow:hidden;max-width:980px}
+.howto-body{padding:16px 20px;font-size:13.5px;color:var(--text-dim);line-height:1.6}
+.howto-body h3{font-family:var(--hf);font-size:17px;font-weight:700;color:var(--heading);margin:0 0 10px}
+.howto-body h4{font-family:var(--hf);font-size:13px;font-weight:700;color:var(--heading);margin:0 0 6px}
+.howto-body p{margin:0 0 9px}
+.howto-body ul{margin:6px 0 10px 20px;padding:0}
+.howto-body ul li{margin-bottom:6px}
+.sop-check li::marker{content:'✓  ';color:var(--green)}
+.sop-cross li::marker{content:'✕  ';color:var(--red)}
+.sop-step{border:1px solid var(--border-soft);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--surface-2)}
+.sop-step-head{font-family:var(--hf);font-size:14px;font-weight:700;color:var(--heading);display:flex;align-items:center;gap:9px;margin-bottom:6px}
+.sop-step-num{background:var(--navy);color:#fff;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex:none}
+.sop-dodont{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){.sop-dodont{grid-template-columns:1fr}}
+.howto-important{background:var(--lime-light);border:1px solid var(--lime);border-left:4px solid var(--lime-dark);border-radius:8px;padding:12px 14px;margin:0 0 10px;color:var(--text)}
 .howto-important strong{color:var(--lime-dark)}
 .howto-note{margin-top:10px;font-size:12px;color:var(--text-muted);font-style:italic}
 .howto code{background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:1px 5px;font-size:12px}
+.howto-table-wrap{overflow-x:auto;margin:4px 0 8px}
+.howto-table{border-collapse:collapse;width:100%;font-size:12.5px}
+.howto-table th,.howto-table td{border:1px solid var(--border-soft);padding:7px 10px;text-align:left;vertical-align:top}
+.howto-table th{background:var(--surface-2);color:var(--heading);font-weight:700}
 
 /* Document-type tabs (ROA / Strategy Paper) */
 .doctype-tabs{
@@ -14694,6 +14703,7 @@ function renderTopbar(){
         <a class="${page==='picker'?'active':''}" onclick="page='picker';render()">1 · Scenarios</a>
         <a class="${page==='builder'?'active':''}" onclick="if(selectedScenarios.length){if(docType==='ROA')consolidateScenarios();page='builder';render()}">2 · Build</a>
         <a class="${page==='preview'?'active':''}" onclick="if(selectedScenarios.length){page='preview';render()}">3 · Preview</a>
+        <a class="${page==='howto'?'active':''}" onclick="page='howto';render()" title="How to use this generator">📘 How to</a>
       </div>
       ${status ? `<span class="topbar-status">${status}</span>` : ''}
     </div>
@@ -14804,7 +14814,7 @@ function renderAdmin(){
     <button class="floating-back-btn" onclick="leaveAdmin()" title="Back to Scenarios">← Back</button>
     <div class="card">
       <h2>⚙ Admin / Back-End Settings</h2>
-      <div class="card-sub">Manage the adviser roster, licensee details, default dates and the suggested wording used to pre-fill every new ROA. Edit freely, then press <strong>Save changes</strong>. Use "Export settings file" to share the updated defaults with your team.</div>
+      <div class="card-sub">Manage the adviser roster, licensee details, default dates and the suggested wording used to pre-fill every new Strategy Paper. Edit freely, then press <strong>Save changes</strong>. Use "Export settings file" to share the updated defaults with your team.</div>
     </div>`;
 
   // ── Sticky save bar ──
@@ -14956,8 +14966,8 @@ function renderAdmin(){
     <div class="helper" style="margin-top:6px">Tip: use the tokens below in any scenario wording (Suggested wording editor) and they'll be replaced with the live figures: {concessionalCap}, {nonConcessionalCap}, {bringForward3yr}, {transferBalanceCap}, {superGuaranteeRate}, {upcomingChanges}, {legAsAt}, {financialYear}.</div>
   </div>`;
 
-  // ── Suggested wording editor ──
-  h += renderAdminWording();
+  // ── Suggested wording editor (this build: Strategy Paper only) ──
+  h += renderAdminWordingStrategy();
 
   // ── Export / reset ──
   h += `<div class="card">
@@ -14973,6 +14983,284 @@ function renderAdmin(){
     </div>
   </div>`;
 
+  h += `</div>`;
+  return h;
+}
+
+// ═══════════════════════════════════════════════════════════
+// PER-DOCUMENT-TYPE WORDING OVERRIDES (dedicated builds)
+// Each dedicated generator's Admin panel edits only its own
+// document type's wording. Overrides live in SETTINGS (so they
+// export/import with the settings file) and are applied when a
+// document or scenario is seeded.
+// ═══════════════════════════════════════════════════════════
+
+// ── Strategy Paper wording (title / intro / sections) ──
+let adminStratScenario = "";
+function ensureStratOverride(id){
+  if(!SETTINGS.strategyWordingOverrides) SETTINGS.strategyWordingOverrides = {};
+  if(!SETTINGS.strategyWordingOverrides[id]){
+    const t = STRATEGY_PAPERS[id] || {};
+    SETTINGS.strategyWordingOverrides[id] = JSON.parse(JSON.stringify({title:t.title||'', intro:t.intro||'', sections:t.sections||[]}));
+  }
+  return SETTINGS.strategyWordingOverrides[id];
+}
+function adminSetStrat(field, val){ ensureStratOverride(adminStratScenario)[field] = val; adminMarkDirty(); }
+function adminSetStratSection(si, field, val){
+  const ov = ensureStratOverride(adminStratScenario);
+  if(!ov.sections[si]) return;
+  if(field === 'body') ov.sections[si].body = val.split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean);
+  else if(field === 'bullets') ov.sections[si].bullets = val.split('\n').map(x=>x.trim()).filter(Boolean);
+  else ov.sections[si][field] = val;
+  adminMarkDirty();
+}
+function adminResetStratWording(id){
+  if(!confirm('Reset this paper\'s wording back to the built-in default? Your custom wording for it will be removed.')) return;
+  if(SETTINGS.strategyWordingOverrides) delete SETTINGS.strategyWordingOverrides[id];
+  adminMarkDirty(); render();
+}
+function renderAdminWordingStrategy(){
+  const ids = Object.keys(STRATEGY_PAPERS);
+  const byCat = {};
+  ids.forEach(id => { const c = STRATEGY_PAPERS[id].cat || 'Other'; (byCat[c] = byCat[c] || []).push(id); });
+  let opts = `<option value="">— Select a strategy paper to edit its wording —</option>`;
+  Object.keys(byCat).sort().forEach(cat => {
+    opts += `<optgroup label="${e(cat)}">`;
+    byCat[cat].forEach(id => {
+      const ov = SETTINGS.strategyWordingOverrides && SETTINGS.strategyWordingOverrides[id];
+      opts += `<option value="${e(id)}" ${id===adminStratScenario?'selected':''}>${e(STRATEGY_PAPERS[id].label||id)}${ov?'  ✎':''}</option>`;
+    });
+    opts += `</optgroup>`;
+  });
+  let h = `<div class="card">
+    <h3 style="margin:0 0 6px">Suggested Wording (Strategy Papers)</h3>
+    <div class="card-sub" style="margin-top:0">Edit the default title, introduction and section wording for any text-based strategy paper — your edits pre-fill every new paper. Tokens like <code>{name}</code>, <code>{amount}</code>, <code>{invPlatform}</code> and <code>{superPlatform}</code> fill automatically — leave them in place. Modelling and portfolio papers compute their text from your inputs, so they are edited per document in the builder. A ✎ marks papers you've customised.</div>
+    <div class="field"><label>Strategy paper</label>
+      <select data-fk="strat-wording" onchange="adminStratScenario=this.value;render()">${opts}</select>
+    </div>`;
+  if(adminStratScenario && STRATEGY_PAPERS[adminStratScenario]){
+    const base = STRATEGY_PAPERS[adminStratScenario];
+    const ov = SETTINGS.strategyWordingOverrides && SETTINGS.strategyWordingOverrides[adminStratScenario];
+    const cur = ov || base;
+    h += `<div style="border:1px solid var(--border);border-radius:11px;padding:12px;margin-top:6px">
+      <div class="flex" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        <strong style="font-size:13px">${e(base.label||adminStratScenario)}</strong>
+        ${ov ? '<span class="badge" style="background:var(--lime);color:var(--lime-dark)">Customised</span>' : '<span class="badge" style="background:var(--blue-light);color:var(--blue)">Built-in default</span>'}
+        ${ov ? `<button class="btn btn-xs btn-danger" style="margin-left:auto" onclick="adminResetStratWording('${e(adminStratScenario)}')">Reset to built-in</button>` : ''}
+      </div>
+      <div class="field"><label>Paper title</label>
+        <input data-fk="sw-title" value="${e(cur.title||'')}" oninput="adminSetStrat('title',this.value)"></div>
+      <div class="field"><label>Introduction</label>
+        <textarea style="min-height:90px" data-fk="sw-intro" oninput="adminSetStrat('intro',this.value)">${e(cur.intro||'')}</textarea></div>`;
+    (cur.sections||[]).forEach((sec, si) => {
+      h += `<div style="border:1px solid var(--border-soft);border-radius:9px;padding:10px;margin-top:8px;background:var(--surface-2)">
+        <div class="field"><label>Section ${si+1} heading</label>
+          <input data-fk="sw-h-${si}" value="${e(sec.heading||'')}" oninput="adminSetStratSection(${si},'heading',this.value)"></div>
+        <div class="field"><label>Paragraphs (separate with a blank line)</label>
+          <textarea style="min-height:60px" data-fk="sw-b-${si}" oninput="adminSetStratSection(${si},'body',this.value)">${e((sec.body||[]).join('\n\n'))}</textarea></div>
+        <div class="field"><label>Bullets (one per line)</label>
+          <textarea style="min-height:60px" data-fk="sw-l-${si}" oninput="adminSetStratSection(${si},'bullets',this.value)">${e((sec.bullets||[]).join('\n'))}</textarea></div>
+        ${sec.screenshot !== undefined ? `<div class="field"><label>Screenshot placeholder label</label><input data-fk="sw-s-${si}" value="${e(sec.screenshot||'')}" oninput="adminSetStratSection(${si},'screenshot',this.value)"></div>` : ''}
+      </div>`;
+    });
+    h += `<div class="helper" style="margin-top:8px">Press <strong>Save changes</strong> (top of page) to keep these edits. They pre-fill papers selected after saving.</div>
+    </div>`;
+  }
+  h += `</div>`;
+  return h;
+}
+
+// ── NAA wording (per transaction type — token templates) ──
+const NAA_WORDING_DEFAULTS = {
+  purchase: {
+    scope: 'purchase {amt} worth of {sec} through your {acct} account',
+    summary: 'Client-directed purchase of {sec}.',
+    letterIntro: 'You have advised us that you would like our assistance purchasing {amt} worth of {sec} through your {acct} account.',
+    details: '{ctx}our assistance purchasing {amt} worth of {sec} through your {acct} account. You have requested this to be actioned as soon as possible.'
+  },
+  selldown: {
+    scope: 'sell and withdraw investments from your {acct} account',
+    summary: 'Investment Sale and Withdrawal',
+    letterIntro: 'You have advised us that you would like us to sell and withdraw the following investments held within your {acct} account{forWhy}.',
+    details: '{ctx}us to sell and withdraw the following investments held within your {acct} account{forWhy}. You have requested this to be actioned as soon as possible. The investments to be sold are:\n- [25,000 Units of Fund Name (currently valued at $X)]\n- [All Units of Fund Name (currently valued at $X)]\n\nTax Considerations:\nAs part of this transaction, you may be liable for capital gains tax payable upon the sale of your investments. As at today we estimate you will crystallise capital gains of $XX and tax payable of $XX. We recommend that you seek confirmation from your accountant regarding the capital gains tax (CGT) implications associated with this transaction to determine your final tax position.'
+  },
+  selldown_partial: {
+    scope: 'partially sell down your {desc} held in {acct} and withdraw {amt}',
+    summary: 'Partial Selldown and Withdrawal',
+    letterIntro: 'You have advised us that you would like to partially sell down your {desc} held within your {acct} account and withdraw {amt}{forWhy}.',
+    details: '{ctx}to partially sell down your {desc} held within your {acct} account and withdraw {amt}{forWhy}. You have requested this to be actioned as soon as possible.\n\nTax Considerations:\nAs part of this transaction, you may be liable for capital gains tax payable upon the sale of your investments. As at today we estimate you will crystallise capital gains of $XX and tax payable of $XX. We recommend that you seek confirmation from your accountant regarding the capital gains tax (CGT) implications associated with this transaction to determine your final tax position.'
+  },
+  selldown_full: {
+    scope: 'sell down the entirety of your {desc} held in {acct} and withdraw the full amount',
+    summary: 'Full Portfolio Selldown and Withdrawal',
+    letterIntro: 'You have advised us that you would like to sell down the entirety of your {desc} currently held in {acct} and withdraw the full amount{forWhy}.',
+    details: '{ctx}to sell down the entirety of your {desc} currently held in {acct}. You decided to fully close this account and withdraw 100% of the funds{valued}. You have requested this to be actioned as soon as possible.\n\nTax Considerations:\nAs part of this transaction, you may be liable for capital gains tax payable upon the sale of your investments. As at today we estimate you will crystallise capital gains of $XX and tax payable of $XX. We recommend that you seek confirmation from your accountant regarding the capital gains tax (CGT) implications associated with this transaction to determine your final tax position.'
+  },
+  pension_withdrawal: {
+    scope: 'withdraw {amt} from your {acct} account',
+    summary: 'Pension Withdrawal',
+    letterIntro: 'You have advised us that you would like to withdraw {amt} from your {acct} account{toFundWhy}.',
+    details: '{ctx}to withdraw {amt} of your {acct} account{usingSrc}. You have requested this to be immediately actioned.'
+  }
+};
+const NAA_WORDING_FIELDS = [
+  ['letterIntro','Letter introduction'],
+  ['summary','Transaction summary'],
+  ['scope','Scope phrase (completes "you would like to <scope>")'],
+  ['details','Section 1 — transaction details']
+];
+function naaWordingTokens(t){
+  const why = String(F.naaSellPurpose||'').trim();
+  const wdWhy = String(F.naaWdPurpose||'').trim();
+  const srcp = String(F.naaWdSource||'').trim();
+  const val = String(F.naaFullValue||'').trim();
+  return {
+    ctx: (typeof naaInstructionContext === 'function' ? naaInstructionContext() : ''),
+    amt: t === 'purchase' ? (F.naaBuyAmount||'$[amount]') : (F.naaWdAmount||'$[amount]'),
+    sec: F.naaBuySecurity||'[security]',
+    acct: t === 'purchase' ? (F.naaBuyAccount||'[platform] investment')
+        : t === 'pension_withdrawal' ? (F.naaWdAccount||'[platform] pension')
+        : t === 'selldown' ? (F.naaSellAccount||'[platform] investment')
+        : (F.naaSellAccount||'[platform]'),
+    desc: String(F.naaFullDesc||'portfolio').trim(),
+    val: val, why: why, srcp: srcp,
+    forWhy: why ? ' for ' + why : '',
+    toFundWhy: wdWhy ? ' to help fund ' + wdWhy : '',
+    usingSrc: srcp ? ' using the ' + srcp : '',
+    valued: val ? ' (valued at ' + val + ' at the time)' : ''
+  };
+}
+function naaInterp(tpl, tok){ return String(tpl).replace(/\{(\w+)\}/g, (m,k) => (k in tok ? tok[k] : m)); }
+function applyNaaWordingOverrides(t){
+  const ov = SETTINGS.naaWordingOverrides && SETTINGS.naaWordingOverrides[t];
+  if(!ov) return;
+  const tok = naaWordingTokens(t);
+  if(ov.scope) F.naaScopePhrase = naaInterp(ov.scope, tok);
+  if(ov.summary) F.naaTransactionSummary = naaInterp(ov.summary, tok);
+  if(ov.letterIntro) F.naaLetterIntro = naaInterp(ov.letterIntro, tok);
+  if(ov.details) F.naaTransactionDetails = naaInterp(ov.details, tok);
+}
+let adminNaaType = "";
+function adminSetNaaWording(field, val){
+  if(!SETTINGS.naaWordingOverrides) SETTINGS.naaWordingOverrides = {};
+  if(!SETTINGS.naaWordingOverrides[adminNaaType]) SETTINGS.naaWordingOverrides[adminNaaType] = {};
+  SETTINGS.naaWordingOverrides[adminNaaType][field] = val;
+  adminMarkDirty();
+}
+function adminResetNaaWording(t){
+  if(!confirm('Reset this transaction type\'s wording back to the built-in default? Your custom wording for it will be removed.')) return;
+  if(SETTINGS.naaWordingOverrides) delete SETTINGS.naaWordingOverrides[t];
+  adminMarkDirty(); render();
+}
+function renderAdminWordingNAA(){
+  const labels = { purchase:'Purchase (Execution Only)', selldown:'Sell Specific Holdings & Withdrawal', selldown_partial:'Partial Selldown & Withdrawal', selldown_full:'Full Selldown & Withdrawal', pension_withdrawal:'Pension / Super Withdrawal' };
+  let opts = `<option value="">— Select a transaction type to edit its wording —</option>`;
+  Object.keys(NAA_WORDING_DEFAULTS).forEach(t => {
+    const ov = SETTINGS.naaWordingOverrides && SETTINGS.naaWordingOverrides[t];
+    opts += `<option value="${t}" ${t===adminNaaType?'selected':''}>${e(labels[t]||t)}${ov?'  ✎':''}</option>`;
+  });
+  let h = `<div class="card">
+    <h3 style="margin:0 0 6px">Suggested Wording (NAA Transaction Types)</h3>
+    <div class="card-sub" style="margin-top:0">Edit the wording templates seeded into each NAA transaction type. Tokens fill from the fields entered in the builder — leave them in place: <code>{ctx}</code> instruction context, <code>{amt}</code> amount, <code>{sec}</code> security, <code>{acct}</code> account, <code>{desc}</code> portfolio description, <code>{forWhy}</code> / <code>{toFundWhy}</code> purpose clause, <code>{usingSrc}</code> withdrawal source, <code>{valued}</code> value clause. The "Other Instruction" type is free-form and has no template. A ✎ marks types you've customised.</div>
+    <div class="field"><label>Transaction type</label>
+      <select data-fk="naa-wording" onchange="adminNaaType=this.value;render()">${opts}</select>
+    </div>`;
+  if(adminNaaType && NAA_WORDING_DEFAULTS[adminNaaType]){
+    const def = NAA_WORDING_DEFAULTS[adminNaaType];
+    const ov = (SETTINGS.naaWordingOverrides && SETTINGS.naaWordingOverrides[adminNaaType]) || {};
+    const isCustom = !!(SETTINGS.naaWordingOverrides && SETTINGS.naaWordingOverrides[adminNaaType]);
+    h += `<div style="border:1px solid var(--border);border-radius:11px;padding:12px;margin-top:6px">
+      <div class="flex" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        <strong style="font-size:13px">${e(labels[adminNaaType]||adminNaaType)}</strong>
+        ${isCustom ? '<span class="badge" style="background:var(--lime);color:var(--lime-dark)">Customised</span>' : '<span class="badge" style="background:var(--blue-light);color:var(--blue)">Built-in default</span>'}
+        ${isCustom ? `<button class="btn btn-xs btn-danger" style="margin-left:auto" onclick="adminResetNaaWording('${adminNaaType}')">Reset to built-in</button>` : ''}
+      </div>`;
+    NAA_WORDING_FIELDS.forEach(pair => {
+      const f = pair[0], label = pair[1];
+      const cur = (ov[f] !== undefined) ? ov[f] : def[f];
+      h += `<div class="field"><label>${e(label)}</label>
+        <textarea style="min-height:${f==='details'?'110px':'48px'}" data-fk="naa-w-${f}" oninput="adminSetNaaWording('${f}',this.value)">${e(cur||'')}</textarea></div>`;
+    });
+    h += `<div class="helper" style="margin-top:8px">Press <strong>Save changes</strong> (top of page) to keep these edits. They apply the next time that type's wording seeds or re-seeds in the builder.</div>
+    </div>`;
+  }
+  h += `</div>`;
+  return h;
+}
+
+// ── NWF wording (per scenario — seeded titles / intros) ──
+const NWF_WORDING_DEFAULTS = {
+  first_home: {title: 'Future Home Purchase Scenario', intro: '{names}, during your Discovery Appointment, you mentioned your goal of purchasing your first home as soon as possible.\n\nWe have explored different options for saving for your home deposit, including cashflow management and the First Home Super Saver Scheme (FHSSS).\n\nThis Next Wealth Focus document depicts a potential future scenario in which you purchase a home to live in worth $XXX,XXX with a 20% deposit. This assumes a 6.50% interest rate over a 30-year loan term for your mortgage.', calcHeading: 'Home Purchase Scenario with Different Deposit %', calcIntro: 'The table below illustrates the home purchase with different deposit amounts.', calcOutro: 'Based on the different deposit amounts, you will be able to purchase your first home in approximately XX months’ time with a 20% deposit.\n\nPlease note, this will result in a new budget after factoring in your estimated mortgage repayments and property expenses.'},
+  inv_property: {title: 'Future Property Purchase Scenario', intro: '{names}, during your Discovery Appointment, you advised you have a goal of purchasing an investment property.\n\nThis Next Wealth Focus document depicts a potential future scenario in which you purchase an investment property worth $XXX,XXX with a 20% deposit. This assumes a 6.50% interest rate over a 30-year loan term for your mortgage.', calcHeading: 'Property Purchase Scenarios with Different Deposit %', calcIntro: 'The table below illustrates the investment property purchase with different deposit amounts and shows how long it will take to save based on your current surplus.', calcOutro: '*Notes:\n- This assumes the repayments are interest-only.\n- We have excluded ongoing property costs from the table as this will be captured in the wealth projections.\n\nBased on the different deposit amounts, you will be able to purchase the investment property in approximately XX months’ time with a 20% deposit.'},
+  second_property_equity: {title: 'Future Investment Scenario', intro: '{names}, during your discovery appointment, you mentioned your goal is to have a plan to build assets and wealth, stay on track, and feel secure about your financial future.\n\nThis Next Wealth Focus document depicts a potential scenario in X years’ time where:\n- You use the equity in your home to refinance your existing home loan.\n- You use the available equity to purchase an investment property worth $XXX,XXX (plus costs).\n- You implement a debt recycling strategy using the remaining available equity.'},
+  upgrade_convert: {title: 'Future Home Upgrade Scenario', intro: '{names}, one of your goals in your discovery appointment was to purchase a new home which you will move into, converting your existing home into an investment property.\n\nWe have modelled our projections of this scenario below.\n\nThe following scenario assumes that:\n- you are able to borrow enough for your purchase, and\n- you use cash within your offset to assist with your deposit.\n\nNote: the following projections assume you proceed with recommendations made throughout your Statement of Advice.'},
+  sell_ip: {title: 'Future Property & Investment Scenario', intro: '{names}, during your discovery appointment, you mentioned your goal of focusing on wealth creation strategies.\n\nThe attached Next Wealth Focus document outlines a scenario where you:\n- Sell your investment property.\n- Use the sale proceeds to pay down your home loan.\n- Implement a debt recycling strategy using available equity and surplus cash flow.'},
+  sell_shares: {title: 'Alternative Future Scenario', intro: '{names}, during your discovery appointment, we discussed the options for achieving a diversified and long-term investment strategy. You informed us that you have existing shares that you are considering selling to help achieve this goal.\n\nThis Next Wealth Focus document depicts a potential alternative scenario where you use a portion of the sale proceeds to pay down your home loan and increase your available equity for your ongoing investment strategy.'},
+  convert_rentvest: {title: 'Future Property Scenario', intro: '{names}, in your Discovery Appointment you advised that you would like to explore the option of renting out your home and understand what impact that has.\n\nThis Next Wealth Focus document depicts a future scenario in which you convert your current property (primary residence) to an investment property and live elsewhere. This scenario is based on the projected growth of your home and savings left in the offset account.'}
+};
+const NWF_WORDING_FIELDS = [
+  ['title','Scenario title'],
+  ['intro','Scenario introduction ({names} = client name(s))'],
+  ['calcHeading','Deposit calculator — table heading'],
+  ['calcIntro','Deposit calculator — intro'],
+  ['calcOutro','Deposit calculator — outro / notes']
+];
+function applyNwfWordingOverrides(t){
+  const ov = SETTINGS.nwfWordingOverrides && SETTINGS.nwfWordingOverrides[t];
+  if(!ov) return;
+  const n = (typeof nwfNames === 'function' ? nwfNames() : '');
+  if(ov.title) F.nwfScenTitle = ov.title;
+  if(ov.intro) F.nwfScenIntro = String(ov.intro).split('{names}').join(n);
+  if(ov.calcHeading) F.nwfCalcHeading = ov.calcHeading;
+  if(ov.calcIntro) F.nwfCalcIntro = ov.calcIntro;
+  if(ov.calcOutro) F.nwfCalcOutro = ov.calcOutro;
+}
+let adminNwfType = "";
+function adminSetNwfWording(field, val){
+  if(!SETTINGS.nwfWordingOverrides) SETTINGS.nwfWordingOverrides = {};
+  if(!SETTINGS.nwfWordingOverrides[adminNwfType]) SETTINGS.nwfWordingOverrides[adminNwfType] = {};
+  SETTINGS.nwfWordingOverrides[adminNwfType][field] = val;
+  adminMarkDirty();
+}
+function adminResetNwfWording(t){
+  if(!confirm('Reset this scenario\'s wording back to the built-in default? Your custom wording for it will be removed.')) return;
+  if(SETTINGS.nwfWordingOverrides) delete SETTINGS.nwfWordingOverrides[t];
+  adminMarkDirty(); render();
+}
+function renderAdminWordingNWF(){
+  let opts = `<option value="">— Select an NWF scenario to edit its wording —</option>`;
+  NWF_TYPES.forEach(pair => {
+    const v = pair[0], l = pair[1];
+    if(!NWF_WORDING_DEFAULTS[v]) return;
+    const ov = SETTINGS.nwfWordingOverrides && SETTINGS.nwfWordingOverrides[v];
+    opts += `<option value="${v}" ${v===adminNwfType?'selected':''}>${e(l)}${ov?'  ✎':''}</option>`;
+  });
+  let h = `<div class="card">
+    <h3 style="margin:0 0 6px">Suggested Wording (NWF Scenarios)</h3>
+    <div class="card-sub" style="margin-top:0">Edit the default scenario title, introduction and deposit-calculator wording seeded into each NWF scenario. The <code>{names}</code> token fills with the client name(s) — leave it in place. Tables and figures are edited per document in the builder. The "Custom Scenario" type is free-form and has no template. A ✎ marks scenarios you've customised.</div>
+    <div class="field"><label>NWF scenario</label>
+      <select data-fk="nwf-wording" onchange="adminNwfType=this.value;render()">${opts}</select>
+    </div>`;
+  if(adminNwfType && NWF_WORDING_DEFAULTS[adminNwfType]){
+    const def = NWF_WORDING_DEFAULTS[adminNwfType];
+    const ov = (SETTINGS.nwfWordingOverrides && SETTINGS.nwfWordingOverrides[adminNwfType]) || {};
+    const isCustom = !!(SETTINGS.nwfWordingOverrides && SETTINGS.nwfWordingOverrides[adminNwfType]);
+    h += `<div style="border:1px solid var(--border);border-radius:11px;padding:12px;margin-top:6px">
+      <div class="flex" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        <strong style="font-size:13px">${e(NWF_TYPE_LABELS[adminNwfType]||adminNwfType)}</strong>
+        ${isCustom ? '<span class="badge" style="background:var(--lime);color:var(--lime-dark)">Customised</span>' : '<span class="badge" style="background:var(--blue-light);color:var(--blue)">Built-in default</span>'}
+        ${isCustom ? `<button class="btn btn-xs btn-danger" style="margin-left:auto" onclick="adminResetNwfWording('${adminNwfType}')">Reset to built-in</button>` : ''}
+      </div>`;
+    NWF_WORDING_FIELDS.forEach(pair => {
+      const f = pair[0], label = pair[1];
+      if(def[f] === undefined && ov[f] === undefined) return;
+      const cur = (ov[f] !== undefined) ? ov[f] : def[f];
+      h += `<div class="field"><label>${e(label)}</label>
+        <textarea style="min-height:${f==='intro'?'110px':'48px'}" data-fk="nwf-w-${f}" oninput="adminSetNwfWording('${f}',this.value)">${e(cur||'')}</textarea></div>`;
+    });
+    h += `<div class="helper" style="margin-top:8px">Press <strong>Save changes</strong> (top of page) to keep these edits. They apply the next time that scenario is picked from the Scenarios page.</div>
+    </div>`;
+  }
   h += `</div>`;
   return h;
 }
@@ -15310,30 +15598,172 @@ function exportSettingsFile(){
 // RENDER: SCENARIO PICKER
 // ═══════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════
-// HOW-TO GUIDE — shown at the top of the scenario picker.
+// HOW-TO / SOP — its own tab ("📘 How to" in the top nav).
 // ═══════════════════════════════════════════════════════════
-function renderHowToGuide(){
-  return `<details class="howto" open>
-    <summary>📘 How to use the Strategy Paper Generator <span class="howto-chev">▶</span></summary>
-    <div class="howto-body">
-      <ol>
-      <li><strong>Choose your strategy papers</strong> — tap one or more cards below — text-based strategy papers, calculation-driven modelling scenarios and portfolio modelling can be combined into one document.</li>
-      <li><strong>Build the content</strong> — click <strong>Continue</strong> to open the builder, then fill in the client details and tailor the wording and modelling inputs for each paper.</li>
-      <li><strong>Preview &amp; export</strong> — check the live preview, then download the finished Strategy Paper as a .docx file.</li>
-      <li><strong>Save a JSON working copy</strong> — see the important note below — do this every time before you close the page.</li>
-      </ol>
-      <div class="howto-important">
-        <strong>💾 Important — always download a JSON copy of your work.</strong>
-        Before you close this page, click <strong>💾 Save JSON</strong> (in the top bar, and on the Preview page).
-        It downloads a small <code>.json</code> working file containing everything you have entered.
-        <strong>The JSON file is named exactly the same as your exported Strategy Paper Word document — it just ends in <code>.json</code></strong> —
-        save it in the client's folder next to the Word file.
-        To pick up where you left off, open this page again and use <strong>📂 Load JSON</strong> (or drag the .json file onto the page).
-        The browser auto-draft is a convenience only — it lives on this device and can be lost; the JSON file is your reliable copy.
+function renderHowToPage(){
+  return `<main class="main">
+  <section class="hero" style="min-height:90px;padding:16px 20px">
+    <div class="hero-inner">
+      <div class="hero-left">
+        <div class="hero-sub">Standard Operating Procedure</div>
+        <h1>📘 How to use the Strategy Paper Generator</h1>
       </div>
-      <div class="howto-note">This file only produces Strategy Paper documents. The ROA Generator, NAA Generator and NWF Generator are separate files — open the matching generator for other document types.</div>
+      <div class="hero-right">
+        <button class="hero-btn ghost" onclick="page='picker';render()">← Back to Scenarios</button>
+      </div>
     </div>
-  </details>`;
+  </section>
+
+  <div class="howto"><div class="howto-body">
+    <h3>1 · Purpose &amp; scope</h3>
+    <p>The Strategy Paper Generator produces a <strong>Strategy Paper</strong> as a Word (.docx) document — a high-level discussion document that explores strategies and modelled outcomes with a client, without making formal advice recommendations.</p>
+      <p><strong>Use this generator for:</strong> text-based strategy papers (e.g. inheritance, redundancy, estate equalisation), calculation-driven modelling scenarios (surplus allocation, projections) and multi-property portfolio modelling — combined into a single paper when needed.</p>
+      <p><strong>Do not use it for:</strong> formal advice documents (use the <em>ROA Generator</em>), execution-only instructions (use the <em>NAA Generator</em>) or an SOA companion scenario (use the <em>NWF Generator</em>).</p>
+    <div class="howto-note">This file only produces Strategy Paper documents. The ROA Generator, NAA Generator and NWF Generator are separate files — open the matching generator for other document types.</div>
+  </div></div>
+
+  <div class="howto"><div class="howto-body">
+    <h3>2 · Before you start</h3>
+    <ul class="sop-check">
+        <li>Client details — names, risk profile, platforms (the {invPlatform} / {superPlatform} tokens fill from these).</li>
+        <li>The figures you plan to model — amounts, balances, surplus cashflow, property values and loans.</li>
+        <li>Nestegg (or equivalent) projection screenshots ready to paste into the exported Word document where the paper marks a screenshot placeholder.</li>
+        <li>Check <strong>⚙ Admin</strong> is set up — advisers, licensee details and legislation figures.</li>
+        <li>Open the file in a current browser (Chrome or Edge recommended) with an internet connection — the Word-export library loads from the web on first open.</li>
+    </ul>
+  </div></div>
+
+  <div class="howto"><div class="howto-body">
+    <h3>3 · Step-by-step procedure</h3>
+      <div class="sop-step">
+        <div class="sop-step-head"><span class="sop-step-num">1</span>Select the strategy papers</div>
+<ul>
+        <li>On <strong>1 · Scenarios</strong>, tap one or more cards — text-based strategy papers, modelling scenarios (calculated tables) and portfolio / property modelling can be combined into one document.</li>
+        <li>Use the ◀ ▶ arrows on the selected chips to set the order the papers appear in the document, then click <strong>Continue</strong>.</li>
+      </ul>
+      </div>
+      <div class="sop-step">
+        <div class="sop-step-head"><span class="sop-step-num">2</span>Complete the client details</div>
+<ul>
+        <li>Enter the client type, names, adviser and date — the adviser's details auto-fill from Admin.</li>
+        <li>Set the risk profile and platform fields — tokens like {name}, {amount}, {invPlatform} and {superPlatform} in the paper wording fill from these automatically.</li>
+      </ul>
+      </div>
+      <div class="sop-step">
+        <div class="sop-step-head"><span class="sop-step-num">3</span>Build each paper</div>
+<ul>
+        <li><strong>Text-based papers:</strong> edit the title, introduction and each section's wording directly — everything is editable.</li>
+        <li><strong>Modelling papers:</strong> enter the inputs (amounts, rates, years) — the tables and outcome figures compute automatically.</li>
+        <li><strong>Portfolio papers:</strong> enter the properties (values, loans, rent, purchase history) and compare scenarios — the comparison tables build themselves.</li>
+        <li>Undo / Redo with Ctrl+Z / Ctrl+Y if you change your mind.</li>
+      </ul>
+      </div>
+      <div class="sop-step">
+        <div class="sop-step-head"><span class="sop-step-num">4</span>Review and export</div>
+<ul>
+        <li>Open <strong>3 · Preview</strong> and check the full paper against the QA checklist below.</li>
+        <li>Click <strong>📥 Download Word Doc</strong>, then paste the projection screenshots into the marked places in Word.</li>
+      </ul>
+      </div>
+      <div class="sop-step">
+        <div class="sop-step-head"><span class="sop-step-num">5</span>Save the JSON working copy</div>
+<ul>
+        <li>Click <strong>💾 Save JSON</strong> and file the .json next to the exported Word document — same file name, ending .json.</li>
+        <li>Do this every time you finish a session, even mid-draft.</li>
+      </ul>
+      </div>
+  </div></div>
+
+  <div class="howto"><div class="howto-body">
+    <h3>4 · Review checklist (before every export)</h3>
+    <ul class="sop-check">
+        <li>Client names and risk profile are correct throughout.</li>
+        <li>All tokens have resolved — no literal {name} or {amount} left in the text.</li>
+        <li>No leftover placeholder text — scan for “XXX” and [square brackets].</li>
+        <li>Modelled figures are sensible and match your source calculations.</li>
+        <li>Screenshot placeholders are still marked so you remember to paste the projections in Word.</li>
+        <li>Adviser and licensee details are correct.</li>
+    </ul>
+  </div></div>
+
+  <div class="howto"><div class="howto-body">
+    <h3>5 · Saving your work — the JSON working copy</h3>
+    <div class="howto-important">
+      <strong>💾 Important — always download a JSON copy of your work.</strong>
+      Before you close this page, click <strong>💾 Save JSON</strong> (in the top bar, and on the Preview page).
+      It downloads a small <code>.json</code> working file containing everything you have entered.
+      <strong>The JSON file is named exactly the same as your exported Strategy Paper Word document — it just ends in <code>.json</code></strong> —
+      save it in the client's folder next to the Word file.
+      To pick up where you left off, open this page again and use <strong>📂 Load JSON</strong> (or drag the .json file onto the page).
+      The browser auto-draft is a convenience only — it lives on this device and can be lost; the JSON file is your reliable copy.
+    </div>
+    <div class="howto-important" style="background:var(--blue-light);border-color:var(--blue-soft);border-left-color:var(--blue)">
+      <strong style="color:var(--blue)">JSON vs HTML save — what's the difference?</strong><br>
+      <strong>💾 Save JSON / 📂 Load JSON</strong> is your everyday working file: a small data-only file with everything you've typed. Load it back into this generator to keep working. Use it for every client document.<br>
+      <strong>💾 Save HTML / 📂 Load HTML</strong> saves a complete copy of this whole tool with your work embedded inside it (a much bigger file). Use it when you want one self-contained file that opens anywhere — e.g. handing the tool plus a work-in-progress to a colleague — or to archive a frozen copy. For day-to-day saving, prefer JSON.
+    </div>
+    <p>Notes: a JSON saved by one generator only opens in that generator — if you pick the wrong one, a message tells you which to use. Both the JSON and HTML files contain client information — store and share them per the firm's client-data policy.</p>
+  </div></div>
+
+  <div class="howto"><div class="howto-body">
+    <h3>6 · File naming</h3>
+    <div class="howto-table-wrap"><table class="howto-table">
+      <thead><tr><th>File</th><th>Format</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>Word document</td><td><code>StrategyPaper_Client_Name_date.docx</code></td><td><code>StrategyPaper_Jane_Citizen_2026-07-22.docx</code></td></tr>
+        <tr><td>JSON working copy</td><td><code>Same name as the Word document, ending .json</code></td><td><code>StrategyPaper_Jane_Citizen_2026-07-22.json</code></td></tr>
+        <tr><td>HTML self-save (optional)</td><td><code>Strategy_ClientName_date.html</code></td><td><code>Strategy_Jane_Citizen_2026-07-22.html</code></td></tr>
+      </tbody>
+    </table></div>
+    <p>The name is built from the client name and the paper date set on the cover details. The Word file and its JSON working copy share the same name so they stay paired in the client's folder.</p>
+  </div></div>
+
+  <div class="howto"><div class="howto-body">
+    <h3>7 · Admin (back-end) settings</h3>
+    <p>The <strong>⚙ Admin</strong> panel holds the firm-wide defaults: the adviser roster grouped by office (shared phone / address, per-adviser email and dates), licensee details, default dates, and the suggested wording templates. Changes apply to <em>new</em> documents; press <strong>Save changes</strong> to keep them.</p>
+    <p>In this build the Suggested Wording editor lists <strong>only Strategy Papers</strong> — for each text-based paper you can edit the default title, introduction and section wording used to pre-fill every new paper. (Modelling and portfolio papers are calculated from your inputs, so their text is edited per document in the builder.)</p>
+    <p>Admin settings save to this device only. To roll them out to the team, use <strong>Export settings file</strong> (Admin → Save / Share Settings) and share the exported copy — or export/import the settings JSON. A soft password can be set to deter casual edits.</p>
+  </div></div>
+
+  <div class="howto"><div class="howto-body">
+    <h3>8 · Troubleshooting</h3>
+    <div class="howto-table-wrap"><table class="howto-table">
+      <thead><tr><th>Problem</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td>“docx library not loaded” / Export to Word does nothing</td><td>The Word-export library loads from the internet on first open — check the connection and refresh the page (your auto-draft survives a refresh).</td></tr>
+        <tr><td>Dropped CARE / insurance file doesn't prefill the table</td><td>Export the source as Word (.docx) — a PDF export loses the table structure. Scanned/image PDFs can't be read at all.</td></tr>
+        <tr><td>“This saved file is a … document” when loading a JSON</td><td>That JSON was saved by a different generator — open it in the generator named in the message.</td></tr>
+        <tr><td>Lost work / page was closed</td><td>Use <strong>📂 Load JSON</strong> with your saved working copy. If you didn't save one, reopen the file in the same browser on the same computer — it offers to restore the auto-draft.</td></tr>
+        <tr><td>Admin changes aren't showing for teammates</td><td>Settings save per device. Export the settings file from Admin and have the team open that copy.</td></tr>
+        <tr><td>Typed into the wrong field / broke some wording</td><td>Undo with Ctrl+Z (⌘Z), redo with Ctrl+Y (⌘⇧Z), or the ↶ ↷ buttons in the top bar.</td></tr>
+      </tbody>
+    </table></div>
+  </div></div>
+
+  <div class="howto"><div class="howto-body">
+    <h3>9 · Do &amp; don't</h3>
+    <div class="sop-dodont">
+      <div>
+        <h4>Do</h4>
+        <ul class="sop-check">
+          <li>Save a JSON copy at the end of every session — named the same as the Word file.</li>
+          <li>Keep the JSON next to the exported Word document in the client's folder.</li>
+          <li>Use Word (.docx) source documents for table imports.</li>
+          <li>Press Save changes after editing Admin settings.</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Don't</h4>
+        <ul class="sop-cross">
+          <li>Don't rely on the browser auto-draft as your only copy — it lives on one device.</li>
+          <li>Don't export before working through the review checklist.</li>
+          <li>Don't leave placeholder text (XXX, [brackets], $X) in a finished document.</li>
+          <li>Don't email working files outside the firm's client-data policy — they contain client information.</li>
+        </ul>
+      </div>
+    </div>
+  </div></div>
+  </main>`;
 }
 
 function renderPicker(){
@@ -15343,8 +15773,8 @@ function renderPicker(){
   const isStrategy = docType === "Strategy";
   let h = `<main class="main">`;
 
-  // How-to guide — this build is dedicated to one document type
-  h += renderHowToGuide();
+  // (Document-type tabs removed — this build is dedicated to one document type.
+  //  The how-to guide lives on its own tab, see renderHowToPage.)
 
   // NWF — scenario cards, one per common scenario from the firm's exemplars.
   if(isNWF){
@@ -15607,7 +16037,7 @@ function initStrategyPaperState(){
   selectedScenarios.forEach(id => {
     // Text-based strategy paper
     if(STRATEGY_PAPERS[id] && !F.strategyPapers[id]){
-      const tpl = STRATEGY_PAPERS[id];
+      const tpl = (SETTINGS.strategyWordingOverrides && SETTINGS.strategyWordingOverrides[id]) || STRATEGY_PAPERS[id];
       F.strategyPapers[id] = JSON.parse(JSON.stringify({
         title: tpl.title,
         intro: tpl.intro,
@@ -20576,6 +21006,7 @@ function selectNwfType(t){
   if(F.nwfType !== t) initNWFState();
   F.nwfType = t;
   nwfSeedType(t);
+  applyNwfWordingOverrides(t);
   page = 'builder';
   activeSection = 'client';
   wizardStep = 0;
@@ -21822,6 +22253,7 @@ function naaSyncType(){
     F.naaLetterIntro = `You have advised us that you would like to withdraw ${amt} from your ${acct} account${why ? ' to help fund ' + why : ''}.`;
     F.naaTransactionDetails = ctx + `to withdraw ${amt} of your ${acct} account${srcp ? ' using the ' + srcp : ''}. You have requested this to be immediately actioned.`;
   }
+  applyNaaWordingOverrides(t);
   render();
 }
 async function exportNAADocx(){
@@ -22319,6 +22751,7 @@ function render(){
   let html = renderTopbar();
   html += renderDatalists();
   if(page==='picker') html += renderPicker();
+  else if(page==='howto') html += renderHowToPage();
   else if(page==='admin') html += renderAdmin();
   else if(page==='builder') {
     if(docType === 'Strategy') html += renderStrategyBuilder();

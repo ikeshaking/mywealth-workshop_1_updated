@@ -14,11 +14,12 @@ browser, no install needed.
 Each generator only produces its own document type — the document-type tabs from the combined
 tool have been removed. Open the matching file for the document you need.
 
-## How-to guide
+## How-to guide (SOP)
 
-Every generator now has a **📘 How to use** guide at the top of its first page (the scenario
-picker), walking through the workflow: pick scenario(s) → build the content → preview &
-export to Word → save a JSON working copy.
+Every generator has a **📘 How to** tab in the top navigation with a full standard operating
+procedure: purpose & scope, before-you-start checklist, detailed step-by-step procedure,
+pre-export review checklist, saving/JSON workflow, file-naming conventions, Admin setup and
+troubleshooting.
 
 ## Important — always download a JSON copy
 
@@ -42,5 +43,11 @@ it into the wrong generator shows a message pointing to the right one.
 - Auto-draft localStorage keys are per generator (`roa_draft_v1`, `roa_draft_v1_strategy`,
   `roa_draft_v1_naa`, `roa_draft_v1_nwf`) so the four tools don't overwrite each other's
   drafts when hosted on the same domain.
-- Admin settings (advisers, licensee details, default wording) work the same in every file
+- Admin settings (advisers, licensee details, default dates) work the same in every file
   and can still be exported/imported as `roa_settings.json`.
+- The Admin **Suggested Wording** editor is scoped per generator: the ROA build lists only
+  ROA scenarios, the Strategy build edits Strategy Paper titles/intros/sections
+  (`SETTINGS.strategyWordingOverrides`), the NAA build edits the transaction-type templates
+  with tokens like `{amt}`/`{acct}` (`SETTINGS.naaWordingOverrides`), and the NWF build edits
+  the scenario titles/intros with a `{names}` token (`SETTINGS.nwfWordingOverrides`).
+  Overrides ride along with exported settings files and apply when a document is seeded.
