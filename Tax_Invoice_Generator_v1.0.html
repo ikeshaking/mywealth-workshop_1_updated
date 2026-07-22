@@ -21160,14 +21160,16 @@ function impCompute(){
     const inFY = !fyStart || (dt && dt >= fyStart && dt <= fyEnd);
     if(inFY) fyTotal += amt;
     let g = groups.get(client);
-    if(!g){ g = {name:client, count:0, totalFY:0, totalAll:0, advisers:new Set()}; groups.set(client, g); }
+    if(!g){ g = {name:client, count:0, totalFY:0, totalAll:0, maxSingle:0, advisers:new Set()}; groups.set(client, g); }
     g.totalAll += amt;
     if(ffAdviser) g.advisers.add(ffAdviser);
-    if(inFY){ g.count++; g.totalFY += amt; }
+    if(inFY){ g.count++; g.totalFY += amt; g.maxSingle = Math.max(g.maxSingle, amt); }
   });
   IMP.groups = [...groups.values()].sort((a,b) => b.totalFY - a.totalFY);
-  IMP.totals = {reportTotal, fyTotal, exclCount, noDate,
-    groupsInFY: IMP.groups.filter(g => g.totalFY > 0).length};
+  const fyTots = IMP.groups.filter(g => g.totalFY > 0).map(g => g.totalFY).sort((a,b)=>a-b);
+  const median = fyTots.length ? fyTots[Math.floor(fyTots.length/2)] : 0;
+  IMP.totals = {reportTotal, fyTotal, exclCount, noDate, medianFY: median,
+    groupsInFY: fyTots.length};
 }
 /* "John Blackburn & Christine Whitfield" → [c1, c2] */
 function impSplitClients(name){
@@ -21271,6 +21273,7 @@ function renderImport(){
       <div class="sumtile"><div class="st-l">Report total (all dates)</div><div class="st-v">${money(T.reportTotal)}</div></div>
       <div class="sumtile hl"><div class="st-l">Total ${IMP.fy==='all'?'(all dates)':'in FY'+IMP.fy.slice(2)+'/'+String(parseInt(IMP.fy,10)+1).slice(2)}</div><div class="st-v">${money(T.fyTotal)}</div></div>
       <div class="sumtile"><div class="st-l">Client groups with FY payments</div><div class="st-v">${T.groupsInFY}</div></div>
+      <div class="sumtile"><div class="st-l">Median per client group</div><div class="st-v">${money(r2(T.medianFY||0))}</div></div>
       ${T.exclCount?`<div class="sumtile"><div class="st-l">Excluded (not approved)</div><div class="st-v">${T.exclCount}</div></div>`:''}
       ${T.noDate?`<div class="sumtile"><div class="st-l">Rows without a date</div><div class="st-v">${T.noDate}</div></div>`:''}
     </div>`;
@@ -21282,12 +21285,17 @@ function renderImport(){
     const visible = IMP.groups.filter(g => g.totalFY > 0 &&
       (!advSel || g.advisers.has(advSel)) &&
       (!q || (g.name + ' ' + [...g.advisers].join(' ')).toLowerCase().includes(q)));
+    if((IMP.sort||'name') === 'name') visible.sort((a,b)=>a.name.localeCompare(b.name));
     const filteredTotal = visible.reduce((a,g)=>a+g.totalFY,0);
     h += `<div class="cs-toolbar">
       <input id="impSearch" placeholder="🔎 Search client group or adviser…" value="${e(IMP.filter||'')}" oninput="IMP.filter=this.value;render()">
       <select onchange="IMP.advFilter=this.value;render()" style="padding:8px 12px;font-size:12px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);font-family:var(--bf)">
         <option value="">All advisers (${advNames.length})</option>
         ${advNames.map(a=>`<option value="${e(a)}" ${advSel===a?'selected':''}>${e(impShortAdviser(a))}</option>`).join('')}
+      </select>
+      <select onchange="IMP.sort=this.value;render()" style="padding:8px 12px;font-size:12px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);font-family:var(--bf)">
+        <option value="name" ${(IMP.sort||'name')==='name'?'selected':''}>Sort: client name A–Z</option>
+        <option value="total" ${IMP.sort==='total'?'selected':''}>Sort: highest total first</option>
       </select>
       <span style="font-size:11px;color:var(--text-muted)">${visible.length} of ${IMP.groups.filter(g=>g.totalFY>0).length} groups${(advSel||q)?` · filtered total <b>${money(r2(filteredTotal))}</b>`:''}</span>
     </div>`;
@@ -21301,7 +21309,7 @@ function renderImport(){
         const gi = IMP.groups.indexOf(g);
         const done = IMP.drafted.has(g.name);
         h += `<tr>
-          <td><b>${e(g.name)}</b></td>
+          <td><b>${e(g.name)}</b>${g.maxSingle >= 5000 ? ` <span class="s25-note" title="This group includes a single payment of ${money(r2(g.maxSingle))} — verify it is an advice fee (not e.g. an insurance premium or other payment) before invoicing">⚠ ${money(r2(g.maxSingle))} single payment</span>`:''}</td>
           <td>${e([...new Set([...g.advisers].map(impShortAdviser))].join(', '))}</td>
           <td style="text-align:right">${g.count}</td>
           <td style="text-align:right;font-weight:700">${money(r2(g.totalFY))}</td>
