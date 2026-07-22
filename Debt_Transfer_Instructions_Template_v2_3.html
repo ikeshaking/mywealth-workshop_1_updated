@@ -2818,14 +2818,14 @@
                     var hasInitial = initAmtFC > 0;
 
                     var mcmaBottom = 335;
-                    var costsLineY = mcmaBottom + 15;
-                    var costsLabelY = costsLineY + 22;
-                    var costBoxY = costsLineY + 58;
+                    var costsLineY = mcmaBottom + 35;
+                    var costsLabelY = costsLineY + 26;
+                    var costBoxY = costsLineY + 74;
 
-                    var propSectionStart = costBoxY + 65;
-                    var propSectionEnd = hasPropFC ? propSectionStart + 165 : propSectionStart;
+                    var propSectionStart = costBoxY + 85;
+                    var propSectionEnd = hasPropFC ? propSectionStart + 185 : propSectionStart;
 
-                    var strategySectionStart = hasPropFC ? propSectionEnd + 5 : costBoxY + 65;
+                    var strategySectionStart = hasPropFC ? propSectionEnd + 15 : costBoxY + 85;
 
                     // Collect strategy items (scheme = brand colour family)
                     var stratItems = [];
@@ -2854,8 +2854,8 @@
                     });
 
                     var hasStrategy = stratItems.length > 0;
-                    var stratBoxY = strategySectionStart + 40;
-                    var pathwayTextY = hasStrategy ? stratBoxY + 80 : strategySectionStart + 30;
+                    var stratBoxY = strategySectionStart + 45;
+                    var pathwayTextY = hasStrategy ? stratBoxY + 90 : strategySectionStart + 35;
                     var totalHeight = pathwayTextY + 34;
 
                     var svg = '<svg viewBox="0 0 780 ' + totalHeight + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:Nunito,sans-serif;">';
@@ -2949,12 +2949,13 @@
 
                     // === COSTS SECTION ===
                     svg += _div(costsLineY);
-                    svg += _head(390, costsLabelY, 'ONGOING PLAN COSTS — PAID FROM MCMA', '#D9503C');
+                    svg += '<text x="60" y="' + costsLabelY + '" font-size="13.5" font-weight="400" fill="#D9503C" letter-spacing="3" font-family="' + SERIF + '">ONGOING PLAN COSTS</text>';
+                    svg += '<text x="60" y="' + (costsLabelY + 16) + '" font-size="8.5" font-weight="800" fill="#E85540" letter-spacing="1.4">PAID FROM MCMA</text>';
 
-                    // Dotted MCMA -> costs line, swooping wide at x=680 so it stays clear
-                    // of the section heading text (which ends around x=640).
-                    var clearY = costsLineY + 44;
-                    svg += '<path d="M556,' + (mcmaBottom - 4) + ' C650,' + (mcmaBottom + 6) + ' 680,' + (clearY - 30) + ' 680,' + (clearY - 10) + ' C680,' + clearY + ' 655,' + clearY + ' 620,' + clearY + ' L345,' + clearY + ' L345,' + (costBoxY - 4) + '" stroke="' + CORAL_A + '" stroke-width="1.6" fill="none" stroke-dasharray="5,4" marker-end="url(#mC)" opacity="0.75"/>';
+                    // Dotted MCMA -> costs line: drops down the LEFT of the hub into the
+                    // Insurance & Advice Fees card — the rental-income line owns the right
+                    // lane, so the two dashed lines never overlap.
+                    svg += '<path d="M415,' + (mcmaBottom - 2) + ' C365,' + (mcmaBottom + 30) + ' 345,' + (mcmaBottom + 48) + ' 345,' + (costBoxY - 6) + '" stroke="' + CORAL_A + '" stroke-width="1.6" fill="none" stroke-dasharray="5,4" marker-end="url(#mC)" opacity="0.75"/>';
 
                     var inclInterestRedirect = document.getElementById('includeStep7InterestRedirect') ? document.getElementById('includeStep7InterestRedirect').checked : true;
                     var interestNotPossible = document.getElementById('step7InterestStatus') ? document.getElementById('step7InterestStatus').value === 'notpossible' : false;
@@ -3006,10 +3007,10 @@
 
                         if (propModeD === 'mcma') {
                             var arrowRightX = 668;
-                            var arrowTopY = mcmaBottom - 10;
+                            var arrowTopY = mcmaBottom + 2;
                             var arrowBottomY = houseTopY + 52;
                             var arrowMidY = (arrowTopY + arrowBottomY) / 2;
-                            svg += '<path d="M285,' + arrowBottomY + ' C360,' + arrowBottomY + ' ' + arrowRightX + ',' + (arrowBottomY - 30) + ' ' + arrowRightX + ',' + arrowMidY + ' C' + arrowRightX + ',' + (arrowTopY + 20) + ' 580,' + arrowTopY + ' 560,' + arrowTopY + '" stroke="' + LIME_A + '" stroke-width="1.8" fill="none" marker-end="url(#mL)" stroke-dasharray="6,4" opacity="0.85"/>';
+                            svg += '<path d="M285,' + arrowBottomY + ' C360,' + arrowBottomY + ' ' + arrowRightX + ',' + (arrowBottomY - 30) + ' ' + arrowRightX + ',' + arrowMidY + ' C' + arrowRightX + ',' + (arrowTopY + 20) + ' 565,' + arrowTopY + ' 545,' + arrowTopY + '" stroke="' + LIME_A + '" stroke-width="1.8" fill="none" marker-end="url(#mL)" stroke-dasharray="6,4" opacity="0.85"/>';
                             svg += '<text x="300" y="' + (houseTopY + 80) + '" font-size="9" fill="#5F7F1F" font-weight="700">rental income &#8594; MCMA</text>';
                             svg += '<text x="300" y="' + (houseTopY + 93) + '" font-size="8.5" fill="#7C8894" font-style="italic">expenses paid from MCMA</text>';
                         } else {
