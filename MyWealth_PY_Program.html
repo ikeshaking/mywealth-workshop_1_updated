@@ -114,9 +114,9 @@ html[data-theme="dark"]{
 html,body{margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:var(--bf);line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
 h1,h2,h3,h4,h5,h6{font-family:var(--hf)!important;color:var(--text);margin:0;letter-spacing:-.01em}
-h1{font-size:32px;font-weight:700;line-height:1.1}
-h2{font-size:22px;font-weight:700;line-height:1.2}
-h3{font-size:16px;font-weight:700;line-height:1.3}
+h1{font-size:30px;font-weight:600;line-height:1.1}
+h2{font-size:20px;font-weight:600;line-height:1.2}
+h3{font-size:15px;font-weight:700;line-height:1.3}
 h4{font-size:13px;font-weight:700}
 p{margin:0}
 a{color:var(--blue);text-decoration:none}
@@ -206,7 +206,7 @@ html[data-theme="dark"] .topnav a.active{background:var(--blue);color:#0f1820}
 .hero-inner{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
 .hero-left{flex:1;min-width:260px}
 .hero-sub{font-family:var(--bf);font-size:10px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:2px;font-weight:700;margin-bottom:6px}
-.hero h1{font-size:34px;color:#fff;line-height:1.08;font-weight:700;letter-spacing:-.02em}
+.hero h1{font-size:30px;color:#fff;line-height:1.08;font-weight:600;letter-spacing:-.01em}
 .hero h1 em{font-style:italic;color:var(--coral);font-weight:400}
 .hero-tag{font-size:13px;color:rgba(255,255,255,.85);margin-top:10px;max-width:620px;line-height:1.55}
 .hero-right{display:flex;flex-direction:column;gap:5px;min-width:260px}
@@ -226,7 +226,7 @@ html[data-theme="dark"] .topnav a.active{background:var(--blue);color:#0f1820}
 ============================================================ */
 .page-head{margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
 .breadcrumb{font-family:var(--bf);font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:5px}
-.page-head h1{font-size:28px;line-height:1.1;font-weight:700}
+.page-head h1{font-size:28px;line-height:1.1;font-weight:600}
 .page-head .subtitle{color:var(--text-dim);font-size:13px;margin-top:6px;max-width:680px;line-height:1.55;font-family:var(--bf)}
 
 /* ============================================================
@@ -378,7 +378,7 @@ label.field>span{display:block;font-size:10px;font-weight:700;color:var(--text-m
 ============================================================ */
 .stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
 .stat .label{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
-.stat .value{font-family:var(--hf);font-size:28px;font-weight:700;color:var(--text);line-height:1.05;letter-spacing:-.02em}
+.stat .value{font-family:var(--hf);font-size:28px;font-weight:600;color:var(--text);line-height:1.05;letter-spacing:-.02em}
 .stat .sub{font-size:11px;color:var(--text-muted);margin-top:3px;font-family:var(--bf)}
 .stat.accent{background:var(--blue-light);border-color:rgba(13,107,224,.15)}
 .stat.accent .value{color:var(--blue)}
@@ -517,11 +517,11 @@ html[data-theme="dark"] .subnav button.active{color:var(--navy-deep)}
 .quarter-chip.q5{background:var(--coral)}
 .quarter-chip.q6{background:var(--text-muted)}
 .quarter-head .info{flex:1;min-width:200px}
-.quarter-head h2{font-size:24px;line-height:1.1;margin:0;font-weight:700}
+.quarter-head h2{font-size:24px;line-height:1.1;margin:0;font-weight:600}
 .quarter-head .tagline{font-size:12px;color:var(--text-muted);margin-top:4px;font-family:var(--bf)}
 .quarter-head .progress-box{text-align:right;min-width:100px}
 .quarter-head .progress-box .label{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;font-family:var(--bf)}
-.quarter-head .progress-box .big{font-family:var(--hf);font-size:22px;font-weight:700;line-height:1.2;margin-top:2px}
+.quarter-head .progress-box .big{font-family:var(--hf);font-size:22px;font-weight:600;line-height:1.2;margin-top:2px}
 
 /* Focus tiles */
 .focus-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:12px}
@@ -642,14 +642,44 @@ td input,td select{padding:5px 7px;font-size:11px}
 
 /* PRINT */
 @media print{
-  .topbar,.menu-btn,.theme-toggle,.role-switch,.card-actions,.btn,.subnav{display:none!important}
-  .main{padding:0;max-width:100%}
-  body{background:#fff;color:#000}
-  .card,.quarter-head,.stat{box-shadow:none;border-color:#ccc;break-inside:avoid}
-  .hero{background:var(--navy)!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .module-body{display:block!important}
-  .milestone-body{display:block!important}
+  @page{ margin:13mm 11mm; }
+  /* Print every colour exactly — so the pack looks like the on-screen version, not stripped B&W. */
+  *{ -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
+  .topbar,.menu-btn,.theme-toggle,.role-switch,.card-actions,.btn,.subnav,
+  .global-search,.search-panel,.journey-strip,.save-status,.modal-backdrop{display:none!important}
+  html,body{background:#fff!important}
+  body{color:var(--text)}
+  .main{padding:0!important;max-width:100%!important;margin:0!important}
+  /* Keep whole components together across page breaks. */
+  .card,.quarter-head,.stat,.module,.milestone,.signoff-block,.timeline,.gm-card,
+  .value-pill,.focus-tile,.workshop-item,.alert,.intro-banner,.other-training-tile{
+    break-inside:avoid;box-shadow:none!important;
+  }
+  .hero{background:linear-gradient(135deg,#0C2E3F,#0a2433)!important;color:#fff!important}
+  /* Show collapsed content and hide interactive-only chrome. */
+  .module-body,.milestone-body{display:block!important}
+  .module-arrow,.milestone-arrow,.tl-click-hint,.item-del,.card::before{display:none!important}
+  a{color:var(--blue)!important;text-decoration:none}
+  input,textarea,select{background:#fff!important;border:1px solid #cfd8e2!important;color:#16242e!important}
 }
+
+/* ===== PRINT PACK CHROME (the combined per-quarter document) ===== */
+.print-quarter-wrapper{font-family:var(--bf);color:var(--text)}
+.print-quarter-header{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:18px;
+  background:linear-gradient(135deg,#0C2E3F 0%,#0a2433 100%);color:#fff;
+  padding:20px 24px;border-radius:14px;margin-bottom:20px;position:relative;overflow:hidden;
+}
+.print-quarter-header::before{content:'';position:absolute;top:-40%;right:-6%;width:320px;height:320px;background:radial-gradient(circle,rgba(245,106,90,.18),transparent 65%);pointer-events:none}
+.print-quarter-header .pqh-brand{font-family:var(--hf);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.6);font-weight:700;margin-bottom:8px}
+.print-quarter-header h1{color:#fff!important;font-size:26px;font-weight:600;line-height:1.1}
+.print-quarter-header .pqh-meta{text-align:right;font-size:10.5px;color:rgba(255,255,255,.82);line-height:1.6;white-space:nowrap;position:relative;z-index:1}
+.print-quarter-header .pqh-meta b{color:#fff}
+.print-quarter-wrapper > h2{
+  font-family:var(--hf);font-size:19px;font-weight:600;color:#0C2E3F;
+  border-bottom:2px solid #2B6FD6;padding-bottom:6px;margin:26px 0 14px;letter-spacing:-.01em;
+}
+.print-quarter-wrapper > h2:first-of-type{margin-top:6px}
 
 /* ============ GLOBAL SEARCH BAR ============ */
 .global-search{position:relative;margin-right:8px}
@@ -799,7 +829,7 @@ body.printing-quarter .global-search{display:none!important}
 .dilemma-row{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:10px 12px;background:var(--surface-2);border-radius:8px;border-left:3px solid var(--coral);position:relative}
 .dilemma-row.done{border-left-color:var(--green);background:var(--green-light)}
 .dilemma-label{font-size:12px;font-weight:600;color:var(--text);font-family:var(--hf)}
-.dilemma-count{font-family:var(--hf);font-size:20px;font-weight:700;color:var(--text)}
+.dilemma-count{font-family:var(--hf);font-size:20px;font-weight:600;color:var(--text)}
 .dilemma-status{font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;letter-spacing:.3px}
 .dilemma-status.ok{background:var(--green);color:#fff}
 .dilemma-status.warn{background:var(--coral);color:#fff}
@@ -3742,18 +3772,22 @@ const Actions = {
 
     // Build a print-only HTML blob combining all quarter content
     const prevHTML = document.getElementById('app').innerHTML;
+    // Force the light professional theme for the printout regardless of on-screen mode.
+    const prevTheme = document.documentElement.getAttribute('data-theme');
+    document.documentElement.setAttribute('data-theme', 'light');
     const combined = `
       <div class="print-quarter-wrapper">
         <div class="print-quarter-header">
           <div>
-            <div style="font-size:10px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;font-weight:700">Quarter ${q.number}</div>
-            <h1 style="margin:2px 0 0">${esc(q.title)}</h1>
-            <div style="font-size:12px;color:var(--text-dim);font-style:italic">${esc(q.tagline)}</div>
+            <div class="pqh-brand">MyWealth Solutions · Professional Year</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:2px;text-transform:uppercase;font-weight:700">Quarter ${q.number}</div>
+            <h1 style="margin:3px 0 0">${esc(q.title)}</h1>
+            <div style="font-size:12px;color:rgba(255,255,255,.82);font-style:italic;margin-top:3px">${esc(q.tagline)}</div>
           </div>
-          <div style="text-align:right;font-size:10px;color:var(--text-muted)">
+          <div class="pqh-meta">
             Printed ${new Date().toLocaleDateString('en-AU')}<br>
-            Candidate: ${esc(s.profile.candidateName || '—')}<br>
-            Supervisor: ${esc(s.profile.supervisorName || '—')}
+            Candidate: <b>${esc(s.profile.candidateName || '—')}</b><br>
+            Supervisor: <b>${esc(s.profile.supervisorName || '—')}</b>
           </div>
         </div>
 
@@ -3791,6 +3825,7 @@ const Actions = {
       window.print();
       setTimeout(() => {
         document.body.classList.remove('printing-quarter');
+        if (prevTheme) document.documentElement.setAttribute('data-theme', prevTheme);
         document.getElementById('app').innerHTML = prevHTML;
         App.render();
       }, 400);
