@@ -2427,44 +2427,44 @@
 
                 <div class="doc-section">
                     <h2>Your Account Structure</h2>
-                    <table style="width:100%;border-collapse:collapse;font-size:9pt;margin:10px 0 10px 0;table-layout:fixed;margin-left:0;margin-right:auto;text-align:left;">
+                    <table cellspacing="0" cellpadding="0" style="width:100%;border-collapse:collapse;mso-cellspacing:0cm;font-size:9pt;margin:10px 0 10px 0;table-layout:fixed;margin-left:0;margin-right:auto;text-align:left;">
                         <thead><tr>
-                            <th style="text-align:left;padding:4px 6px;background:#0C2E3F;color:white;font-family:ABC Arizona Flare,Georgia,serif;font-weight:normal;font-size:8pt;letter-spacing:0.3px;width:28%;">ACCOUNT</th>
-                            <th style="text-align:right;padding:4px 6px;background:#0C2E3F;color:white;font-family:ABC Arizona Flare,Georgia,serif;font-weight:normal;font-size:8pt;width:20%;">BALANCE</th>
-                            <th style="text-align:center;padding:4px 6px;background:#0C2E3F;color:white;font-family:ABC Arizona Flare,Georgia,serif;font-weight:normal;font-size:8pt;width:10%;">RATE</th>
-                            <th style="text-align:right;padding:4px 6px;background:#0C2E3F;color:white;font-family:ABC Arizona Flare,Georgia,serif;font-weight:normal;font-size:8pt;width:22%;">REPAYMENT</th>
-                            <th style="text-align:right;padding:4px 6px;background:#0C2E3F;color:white;font-family:ABC Arizona Flare,Georgia,serif;font-weight:normal;font-size:8pt;width:20%;">ACCOUNT #</th>
+                            <th style="text-align:left;padding:9px 10px;background:#0C2E3F;color:white;font-family:ABC Arizona Flare,Georgia,serif;font-weight:normal;font-size:8pt;letter-spacing:0.3px;width:28%;">ACCOUNT</th>
+                            <th style="text-align:right;padding:9px 10px;background:#0C2E3F;color:white;font-family:ABC Arizona Flare,Georgia,serif;font-weight:normal;font-size:8pt;width:20%;">BALANCE</th>
+                            <th style="text-align:center;padding:9px 10px;background:#0C2E3F;color:white;font-family:ABC Arizona Flare,Georgia,serif;font-weight:normal;font-size:8pt;width:10%;">RATE</th>
+                            <th style="text-align:right;padding:9px 10px;background:#0C2E3F;color:white;font-family:ABC Arizona Flare,Georgia,serif;font-weight:normal;font-size:8pt;width:22%;">REPAYMENT</th>
+                            <th style="text-align:right;padding:9px 10px;background:#0C2E3F;color:white;font-family:ABC Arizona Flare,Georgia,serif;font-weight:normal;font-size:8pt;width:20%;">ACCOUNT #</th>
                         </tr></thead>
                         <tbody>
                             <tr>
-                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">Home Loan</td>
-                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;">${formatCurrency(document.getElementById('homeLoanBalance').value)}</td>
-                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:center;font-size:8.5pt;">${document.getElementById('homeLoanRate').value}%</td>
-                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;">${homeLoanPayment} per month</td>
-                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ${last4(document.getElementById('homeLoanAccount').value)}</td>
+                                <td style="padding:9px 10px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">Home Loan</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;font-size:8.5pt;">${formatCurrency(document.getElementById('homeLoanBalance').value)}</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:center;font-size:8.5pt;">${document.getElementById('homeLoanRate').value}%</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;font-size:8.5pt;">${homeLoanPayment} per month</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;color:#888;font-size:8.5pt;">ending ${last4(document.getElementById('homeLoanAccount').value)}</td>
                             </tr>
                             <tr>
-                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">Home Loan Offset</td>
-                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;">${formatCurrency(document.getElementById('homeLoanOffsetBalance').value)}</td>
-                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td>
-                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ${homeLoanOffsetAccount}</td>
+                                <td style="padding:9px 10px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">Home Loan Offset</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;font-size:8.5pt;">${formatCurrency(document.getElementById('homeLoanOffsetBalance').value)}</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;color:#888;font-size:8.5pt;">ending ${homeLoanOffsetAccount}</td>
                             </tr>
                             <tr>
-                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;vertical-align:top;">Share Investment Loan${(document.querySelectorAll('#shareLoanContainer .nested-section').length > 0) ? ' 1' : ''}</td>
-                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;vertical-align:top;line-height:1.5;">
+                                <td style="padding:9px 10px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;vertical-align:top;">Share Investment Loan${(document.querySelectorAll('#shareLoanContainer .nested-section').length > 0) ? ' 1' : ''}</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;font-size:8.5pt;vertical-align:top;line-height:1.5;">
                                     <span style="color:#888;">Limit</span> <strong>${invLoanLimitDisplay}</strong><br/>
                                     <span style="color:#888;">Balance</span> ${invLoanDrawnDisplay}<br/>
                                     <span style="color:#888;">Available</span> <strong>${invLoanAvailableDisplay}</strong>
                                 </td>
-                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:center;font-size:8.5pt;vertical-align:top;">${invLoanRate}%</td>
-                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;vertical-align:top;">${invLoanPayment} per month*</td>
-                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;vertical-align:top;">ending ${invLoanAccount}</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:center;font-size:8.5pt;vertical-align:top;">${invLoanRate}%</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;font-size:8.5pt;vertical-align:top;">${invLoanPayment} per month*</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;color:#888;font-size:8.5pt;vertical-align:top;">ending ${invLoanAccount}</td>
                             </tr>
                             <tr>
-                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">Investment Loan Offset</td>
-                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;">${invOffsetBalanceDisplay}</td>
-                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td>
-                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ${invOffsetAccount}</td>
+                                <td style="padding:9px 10px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">Investment Loan Offset</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;font-size:8.5pt;">${invOffsetBalanceDisplay}</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;color:#888;font-size:8.5pt;">ending ${invOffsetAccount}</td>
                             </tr>
                             ${(() => {
                                 // Additional share investment loans
@@ -2482,26 +2482,26 @@
                                     var defaultName = 'Share Investment Loan ' + (idx + 2);
                                     var label = (desc && desc !== defaultName) ? escapeHtml(desc) : defaultName;
                                     var payment = formatCurrency((lim * (parseFloat(rate)||0) / 100) / 12);
-                                    sRows += '<tr><td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;vertical-align:top;">' + label + '</td>'
-                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;vertical-align:top;line-height:1.5;">'
+                                    sRows += '<tr><td style="padding:9px 10px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;vertical-align:top;">' + label + '</td>'
+                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;font-size:8.5pt;vertical-align:top;line-height:1.5;">'
                                         + '<span style="color:#888;">Limit</span> <strong>' + formatCurrency(lim) + '</strong><br/>'
                                         + '<span style="color:#888;">Balance</span> ' + formatCurrency(drw) + '<br/>'
                                         + '<span style="color:#888;">Available</span> <strong>' + formatCurrency(avail) + '</strong>'
                                         + '</td>'
-                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:center;font-size:8.5pt;vertical-align:top;">' + (rate||'0') + '%</td>'
-                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;vertical-align:top;">' + payment + ' per month*</td>'
-                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;vertical-align:top;">ending ' + last4(acct) + '</td></tr>';
-                                    sRows += '<tr><td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">Share Loan ' + (idx+2) + ' Offset</td>'
-                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;">' + formatCurrency(offBal) + '</td>'
-                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td>'
-                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ' + last4(offAcct) + '</td></tr>';
+                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:center;font-size:8.5pt;vertical-align:top;">' + (rate||'0') + '%</td>'
+                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;font-size:8.5pt;vertical-align:top;">' + payment + ' per month*</td>'
+                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;color:#888;font-size:8.5pt;vertical-align:top;">ending ' + last4(acct) + '</td></tr>';
+                                    sRows += '<tr><td style="padding:9px 10px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">Share Loan ' + (idx+2) + ' Offset</td>'
+                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;font-size:8.5pt;">' + formatCurrency(offBal) + '</td>'
+                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td>'
+                                        + '<td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;color:#888;font-size:8.5pt;">ending ' + last4(offAcct) + '</td></tr>';
                                 });
                                 return sRows;
                             })()}
                             <tr>
-                                <td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">MCMA</td>
-                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#999;font-size:8.5pt;" colspan="3">&mdash;</td>
-                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ${mcmaAccount}</td>
+                                <td style="padding:9px 10px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">MCMA</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;color:#999;font-size:8.5pt;" colspan="3">&mdash;</td>
+                                <td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;color:#888;font-size:8.5pt;">ending ${mcmaAccount}</td>
                             </tr>
                             ${(() => {
                                 var rows = '';
@@ -2518,10 +2518,10 @@
                                         var label = (desc && desc.value) ? escapeHtml(desc.value) : 'Inv. Property ' + (idx+1);
                                         var rowNum = baseRowCount + idx;
                                         var bg = rowNum % 2 !== 0 ? 'background-color:#f0f2f5;' : '';
-                                        rows += '<tr style="' + bg + '"><td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">' + label + '</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;">' + formatCurrency(bal.value) + '</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:center;font-size:8.5pt;">' + (rate ? rate.value : '0') + '%</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;">' + formatCurrency(payment ? payment.value : '0') + ' per month</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ' + last4(acct ? acct.value : '') + '</td></tr>';
+                                        rows += '<tr style="' + bg + '"><td style="padding:9px 10px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">' + label + '</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;font-size:8.5pt;">' + formatCurrency(bal.value) + '</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:center;font-size:8.5pt;">' + (rate ? rate.value : '0') + '%</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;font-size:8.5pt;">' + formatCurrency(payment ? payment.value : '0') + ' per month</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;color:#888;font-size:8.5pt;">ending ' + last4(acct ? acct.value : '') + '</td></tr>';
                                         var offBalVal = offBal ? (parseFloat(offBal.value)||0) : 0;
                                         var offAcctVal = offAcct ? (offAcct.value || 'TBC') : 'TBC';
-                                        rows += '<tr style="' + bg + '"><td style="padding:5px 8px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">' + label + ' Offset</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;font-size:8.5pt;">' + formatCurrency(offBalVal) + '</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:5px 8px;text-align:right;color:#888;font-size:8.5pt;">ending ' + last4(offAcctVal) + '</td></tr>';
+                                        rows += '<tr style="' + bg + '"><td style="padding:9px 10px;font-weight:700;font-size:8.5pt;background:#5EA6FF;color:#ffffff;border-bottom:0.5pt solid #D4E2EE;">' + label + ' Offset</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;font-size:8.5pt;">' + formatCurrency(offBalVal) + '</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:center;color:#999;font-size:8.5pt;" colspan="2">&mdash;</td><td style="background:#E4F3F5;border-bottom:0.5pt solid #D4E2EE;padding:9px 10px;text-align:right;color:#888;font-size:8.5pt;">ending ' + last4(offAcctVal) + '</td></tr>';
                                     }
                                 });
                                 return rows;
@@ -3250,9 +3250,9 @@
                 + '.highlight-box { background-color: #EAF4FB; padding: 15px; margin: 10px 0; border: none; font-size: 9.5pt; }'
                 + '.key-point { background-color: #EAF4FB; padding: 15px; margin: 10px 0; border: none; font-size: 9.5pt; }'
                 + '.warning { background-color: #fff3cd; padding: 12px; margin: 10px 0; border-left: 4px solid #ffc107; }'
-                + 'table { width: 100%; border-collapse: collapse; font-size: 9pt; margin: 10px 0; word-wrap: break-word; table-layout: fixed; margin-left: 0; text-align: left; }'
-                + 'table th { background-color: #0C2E3F; color: white; padding: 5px 6px; text-align: left; font-family: "ABC Arizona Flare", Georgia, serif; font-weight: normal; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.5px; border: none; }'
-                + 'table td { padding: 5px 8px; border: none; border-bottom: 0.5pt solid #D4E2EE; font-size: 8.5pt; }'
+                + 'table { width: 100%; border-collapse: collapse; mso-cellspacing: 0cm; font-size: 9pt; margin: 10px 0; word-wrap: break-word; table-layout: fixed; margin-left: 0; text-align: left; }'
+                + 'table th { background-color: #0C2E3F; color: white; padding: 9px 10px; text-align: left; font-family: "ABC Arizona Flare", Georgia, serif; font-weight: normal; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.5px; border: none; }'
+                + 'table td { padding: 9px 10px; border: none; border-bottom: 0.5pt solid #D4E2EE; font-size: 8.5pt; }'
                 + 'ol, ul { font-size: 9.5pt; line-height: 1.35; margin: 1px 0 3px 0; padding-left: 20px; }'
                 + 'li { margin: 0; mso-margin-top-alt: 0; mso-margin-bottom-alt: 0; }'
                 + 'strong { color: #333; font-weight: 700; }'
@@ -3262,9 +3262,10 @@
                 + '</style></head><body>'
                 + '<div class="WordSection1">'
                 + previewContent
+                + '</div>'
                 + '<div style="mso-element:header" id="h1"><p class="MsoHeader" style="margin:0 0 0 -1.8cm;line-height:0;"><img width="794" height="224" src="' + bannerBase64 + '" alt="My Wealth Solutions"></p></div>'
                 + '<div style="mso-element:footer" id="f1"><p class="MsoFooter" style="margin:0 0 0 -1.8cm;line-height:0;"><img width="794" height="84" src="' + buildOfficeFooter() + '" alt="My Wealth Solutions"></p></div>'
-                + '</div></body></html>';
+                + '</body></html>';
 
             var blob = new Blob(['\ufeff' + wordHTML], { type: 'application/msword' });
             var url2 = URL.createObjectURL(blob);
