@@ -18878,7 +18878,13 @@ function renderInsuranceTable(title, key, mirrorSourceKey){
   // Per-table Total Premium Cost (super-funded + cashflow-funded). Stored per table so
   // every table (Current, Original, Altered, Recommended, Alternative…) shows its own
   // total beneath it. Can be auto-calculated from the rows or entered manually.
-  const isAuto = !!(F.insuranceTotalsAuto && F.insuranceTotalsAuto[key]);
+  // Auto-calc is ON by default — no button press needed. It switches off when
+  // the adviser types a manual total (explicit false), and older saved drafts
+  // that already hold manual totals without a flag keep their figures.
+  const _atFlag = F.insuranceTotalsAuto ? F.insuranceTotalsAuto[key] : undefined;
+  const _hasManual = !!(F.insuranceTotals && F.insuranceTotals[key]
+    && (String(F.insuranceTotals[key].super||'').trim() || String(F.insuranceTotals[key].cashflow||'').trim()));
+  const isAuto = _atFlag === undefined ? !_hasManual : _atFlag !== false;
   // When auto is on, recompute from the current rows on each render so it stays in sync.
   if(isAuto){
     if(!F.insuranceTotals) F.insuranceTotals = {};
@@ -18888,9 +18894,9 @@ function renderInsuranceTable(title, key, mirrorSourceKey){
   h += `<div style="margin-top:12px;padding:10px 12px;background:var(--blue-light);border:1px solid var(--blue-soft);border-radius:11px">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
       <div style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px">Total Premium Cost for this table</div>
-      <button class="btn btn-xs" style="margin-left:auto" onclick="autoCalcInsTableTotals('${key}')" title="Add up the before-tax premiums from the rows above — super-owned cover into the Super total, everything else into the Cashflow total.">∑ Auto-calculate from rows</button>
+      ${isAuto ? '' : `<button class="btn btn-xs" style="margin-left:auto" onclick="autoCalcInsTableTotals('${key}')" title="Turn auto-calculation back on — adds up the before-tax premiums from the rows above (super-owned cover into the Super total, everything else into Cashflow), replacing your manual figures.">∑ Auto-calculate from rows</button>`}
     </div>
-    ${isAuto ? `<div class="helper" style="margin:0 0 6px;color:var(--blue)">✓ Auto-calculated from the rows above (updates as you edit premiums). Type in a box to override and switch off auto.</div>` : ''}
+    ${isAuto ? `<div class="helper" style="margin:0 0 6px;color:var(--blue)">✓ Auto-calculated from the rows above (updates as you edit premiums). Type in a box to override and switch off auto.</div>` : `<div class="helper" style="margin:0 0 6px">Manual figures — auto-calculation is off for this table.</div>`}
     <div class="grid-2">
       <div class="field" style="margin:0"><label>Super-Funded Premium Total</label><input value="${e(tot.super||'')}" onchange="setInsTableTotal('${key}','super',this.value)" placeholder="$X pm"></div>
       <div class="field" style="margin:0"><label>Cashflow-Funded Premium Total</label><input value="${e(tot.cashflow||'')}" onchange="setInsTableTotal('${key}','cashflow',this.value)" placeholder="$X pm"></div>
@@ -18907,7 +18913,8 @@ function setInsTableTotal(tableKey, which, value){
   if(!F.insuranceTotals[tableKey]) F.insuranceTotals[tableKey] = {};
   F.insuranceTotals[tableKey][which] = value;
   // A manual edit turns off auto-calc for this table so we don't overwrite the figure.
-  if(F.insuranceTotalsAuto && F.insuranceTotalsAuto[tableKey]) F.insuranceTotalsAuto[tableKey] = false;
+  if(!F.insuranceTotalsAuto) F.insuranceTotalsAuto = {};
+  F.insuranceTotalsAuto[tableKey] = false;
   render();
 }
 
