@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_27";
+const APP_VERSION = "v8.a_28";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","Acenda","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -13315,6 +13315,159 @@ function parseOnePathQuoteRoa(text){
 // ── MetLife Protect new-business quote ("Quote Illustration for …") ────────
 // Section blocks ("Section 1 . Non-Super policy structure") with per-cover
 // field lists: "Cover amount $X", "Total <cover> Premium $Y", WP/BP labels.
+// TAL "Policy Alteration Illustration" — POLICY DETAILS (the current policy,
+// often stepped + level layers of the same cover) vs QUOTE 1 (the proposed
+// restructure). Layers sum per the firm's presentation; Life+TPD are linked
+// with the policy TOTAL PREMIUM combined on the Life row.
+function parseTalAlterationRoa(text){
+  if(!/Policy Alteration Illustration/i.test(text) || !/QUOTE\s*1/i.test(text)) return null;
+  const flat = text.replace(/\s+/g,' ');
+  const money = s => parseFloat(String(s||'').replace(/[$,]/g,''))||0;
+  const fmtW = n => '$' + Math.round(n).toLocaleString('en-AU');
+  const curFlat = flat.split(/QUOTE\s*1\b/i)[0];
+  const qFlat = (flat.split(/QUOTE\s*1\b/i)[1]||'').split(/Things you should know/i)[0];
+  if(!qFlat) return null;
+  const curRaw = text.split(/QUOTE\s*1\b/i)[0];
+  const qRaw = (text.split(/QUOTE\s*1\b/i)[1]||'').split(/Things you should know/i)[0];
+  const clientM = curFlat.match(/INSURED PERSON DETAILS\s+([A-Z][A-Za-z'’\- ]+?)\s+(?:Smoker|Date|BENEFIT)/);
+  const client = clientM ? clientM[1].trim() : '';
+  const first = client.split(/\s+/)[0] || '';
+  const inSuper = /Policy Owner:?\s[^]{0,80}?Superannuation/i.test(curFlat);
+  const side = (seg, raw) => {
+    // Benefit layers are matched LINE-WISE — pdf.js sometimes flips the amount
+    // onto the line above its label, and flattened matching would double-count
+    // an amount sitting between two labels.
+    const layers = {Death:{amts:[], structs:[]}, TPD:{amts:[], structs:[]}};
+    const lines = String(raw||'').split('\n').map(x => x.trim()).filter(Boolean);
+    const add = (kind, structTok, amt) => {
+      const L = layers[kind]; if(!L) return;
+      L.amts.push(money(amt));
+      const st = /level/i.test(structTok) ? 'Level' : 'Stepped';
+      if(!L.structs.includes(st)) L.structs.push(st);
+    };
+    lines.forEach((ln, i) => {
+      let m = ln.match(/^(Death|TPD) Benefit (Stepped|Level ?\d*)\t?\s*\$([\d,]+)$/);
+      if(m){ add(m[1], m[2], m[3]); return; }
+      m = ln.match(/^\$([\d,]+)$/);
+      if(m && lines[i+1]){
+        const lm = lines[i+1].match(/^(Death|TPD) Benefit (Stepped|Level ?\d*)$/);
+        if(lm) add(lm[1], lm[2], m[1]);
+      }
+    });
+    const death = {sum: layers.Death.amts.reduce((a,b)=>a+b,0), structs: layers.Death.structs};
+    const tpd = {sum: layers.TPD.amts.reduce((a,b)=>a+b,0), structs: layers.TPD.structs};
+    if(!death.sum && !tpd.sum) return null;
+    const occ = /TPD Definition\s+Own/i.test(seg) ? 'Own-Occupation' : 'Any-Occupation';
+    const totM = seg.match(/TOTAL PREMIUM\s+\$([\d,.]+)/i);
+    const yearly = /Premium Frequency\s+Yearly/i.test(seg);
+    const totMo = totM ? (yearly ? money(totM[1])/12 : money(totM[1])) : 0;
+    const struct = arr => arr.length > 1 ? arr.join('/') : (arr[0]||'Stepped');
+    const rows = [];
+    if(death.sum){
+      rows.push({provider:'TAL', coverType: tpd.sum ? 'Life (Linked)' : 'Life', lifeInsured:first,
+        owner: inSuper?'Super':(first||'Self-Owned'),
+        benefitAmount: fmtW(death.sum), premiumStructure: struct(death.structs),
+        monthlyPremium: totMo ? (fmtW(totMo) + (inSuper ? ' pm (before tax)' : ' pm')) : '',
+        monthlyPremiumAfterTax: (totMo && inSuper) ? fmtW(totMo*0.85) + ' pm (after tax)' : ''});
+    }
+    if(tpd.sum){
+      rows.push({provider:'TAL', coverType: 'TPD (' + (death.sum?'Linked':'Standalone') + ' & ' + occ + ')', lifeInsured:first,
+        owner: inSuper?'Super':(first||'Self-Owned'), benefitAmount: fmtW(tpd.sum),
+        premiumStructure: struct(tpd.structs), sharedPremiumWithPrev: !!death.sum});
+    }
+    return rows;
+  };
+  const current = side(curFlat, curRaw);
+  const proposed = side(qFlat, qRaw);
+  if(!current && !proposed) return null;
+  return {current: current||[], proposed: proposed||[], client};
+}
+// NEOS "Your inforce quote summary" — the Current vs New columns per cover,
+// with the NEW cover's full details in the "Your cover details" blocks.
+// Summary rows pair with their cover block by (new sum insured, new premium);
+// the ordinary SuperlinkOwn Split TPD folds into the linked Life+TPD premium.
+function parseNeosInforceSummaryRoa(text){
+  if(!/Your inforce quote summary/i.test(text)) return null;
+  const money = s => parseFloat(String(s||'').replace(/[$,]/g,''))||0;
+  const fmtW = n => '$' + Math.round(n).toLocaleString('en-AU');
+  const clientM = text.match(/Name\s+([A-Z][A-Za-z'’\- ]+)/);
+  const client = clientM ? clientM[1].trim() : '';
+  const first = client.split(/\s+/)[0] || '';
+  const sumSec = ((text.split(/Your inforce quote summary/i)[1]||'').split(/Your plan details/i)[0]||'').replace(/\s+/g,' ');
+  const runs = [...sumSec.matchAll(/\$([\d,]+(?:\.\d{2})?)\s+\$([\d,]+(?:\.\d{2})?)\s+\$([\d,]+(?:\.\d{2})?)\s+\$([\d,]+(?:\.\d{2})?)/g)]
+    .map(m => ({curSum:money(m[1]), curPrem:money(m[2]), newSum:money(m[3]), newPrem:money(m[4])}));
+  const covers = [];
+  text.split(/\n(?=Cover\t)/).slice(1).forEach(bk => {
+    const flat = bk.replace(/\s+/g,' ');
+    const name = (flat.match(/^Cover\s+([A-Za-z ]+?Cover)\b/)||[])[1] || '';
+    if(!name) return;
+    const f = re => (flat.match(re)||[])[1] || '';
+    const moM = flat.match(/Monthly premium\s+\$([\d,.]+)/i);
+    const yrM = flat.match(/Yearly premium\s+\$([\d,.]+)/i);
+    covers.push({
+      name,
+      ownership: f(/Ownership\s+(Super|Ordinary|SMSF)/i),
+      sum: money(f(/Sum insured\s+\$([\d,]+)/i)),
+      premRaw: moM ? money(moM[1]) : (yrM ? money(yrM[1]) : 0),
+      monthlyBasis: !!moM,
+      struct: f(/Premium type\s+(Stepped|Level|Optimal)/i) || 'Stepped',
+      tpdDef: f(/TPD definition\s+(\w+)/i),
+      wait: (f(/Waiting period\s+([\w ]+?)(?= Benefit| Optional| Occupation| Loadings)/i)||'').trim(),
+      bp: (f(/Benefit period\s+([\w ]+?)(?= Optional| Occupation| Loadings| IP)/i)||'').trim(),
+      contract: f(/Contract type\s+(\w+)/i),
+      level: f(/Cover level\s+(\w+)/i)
+    });
+  });
+  if(!covers.length) return null;
+  const used = new Set();
+  covers.forEach(c => {
+    const i = runs.findIndex((r, ri) => !used.has(ri) && r.newSum === c.sum && Math.abs(r.newPrem - c.premRaw) < 0.02);
+    if(i >= 0){ used.add(i); c.curSum = runs[i].curSum; c.curPremRaw = runs[i].curPrem; }
+  });
+  const life = covers.find(c => /^Life Cover/i.test(c.name));
+  const atpd = covers.find(c => /Attached TPD/i.test(c.name));
+  const stpd = covers.find(c => /Split TPD/i.test(c.name));
+  const ci = covers.find(c => /Critical Illness/i.test(c.name));
+  const ip = covers.find(c => /Income Protection/i.test(c.name));
+  const build = side => {
+    const S = c => side==='new' ? c.sum : (c.curSum != null ? c.curSum : c.sum);
+    const P = c => { const raw = side==='new' ? c.premRaw : (c.curPremRaw != null ? c.curPremRaw : c.premRaw); return c.monthlyBasis ? raw : raw/12; };
+    const rows = [];
+    const ownOcc = stpd && /own/i.test(stpd.tpdDef||'');
+    if(life){
+      const superMo = P(life) + (atpd ? P(atpd) : 0);
+      const persMo = stpd ? P(stpd) : 0;
+      rows.push({provider:'NEOS', coverType:'Life (Linked)', lifeInsured:first, owner:'Super',
+        benefitAmount:fmtW(S(life)), premiumStructure:life.struct,
+        monthlyPremium: fmtW(Math.round(superMo)+Math.round(persMo)) + ' pm (before tax)',
+        premiumNote: persMo ? ('('+fmtW(superMo)+' from super plus '+fmtW(persMo)+' from personal cashflow)') : '',
+        monthlyPremiumAfterTax: fmtW(Math.round(superMo*0.85)+Math.round(persMo)) + ' pm (after tax)'});
+    }
+    if(atpd || stpd){
+      const t = atpd || stpd;
+      rows.push({provider:'NEOS', coverType:'TPD (Linked & ' + (ownOcc?'Own-Occupation':'Any-Occupation') + ')', lifeInsured:first,
+        owner: atpd ? 'Super' : (first||'Self-Owned'), benefitAmount: fmtW(S(t)),
+        premiumStructure: t.struct, sharedPremiumWithPrev: !!life});
+    }
+    if(ip){
+      rows.push({provider:'NEOS', coverType:'IP ('+(/agreed/i.test(ip.contract||'')?'Agreed':'Indemnity')+' & Standard Contract)', lifeInsured:first,
+        owner: /super/i.test(ip.ownership)?'Super':(first||'Self-Owned'),
+        benefitAmount: fmtW(S(ip)) + ' pm', waitingPeriod: ip.wait, benefitPeriod: ip.bp,
+        premiumStructure: ip.struct,
+        monthlyPremium: /super/i.test(ip.ownership) ? (fmtW(P(ip)) + ' pm (before tax)') : (fmtW(P(ip)) + ' pm'),
+        monthlyPremiumAfterTax: /super/i.test(ip.ownership) ? fmtW(P(ip)*0.85)+' pm (after tax)' : ''});
+    }
+    if(ci){
+      rows.push({provider:'NEOS', coverType:'Trauma (Linked' + (ci.level?' & '+ci.level:'') + ')', lifeInsured:first,
+        owner: /super/i.test(ci.ownership)?'Super':(first||'Self-Owned'),
+        benefitAmount: fmtW(S(ci)), premiumStructure: ci.struct, monthlyPremium: fmtW(P(ci)) + ' pm'});
+    }
+    return rows;
+  };
+  const current = build('cur'), proposed = build('new');
+  if(!current.length && !proposed.length) return null;
+  return {current, proposed, client};
+}
 // MetLife Protect "Policy Alteration Quote" EMAIL — one or more policies per
 // client (the super policy plus, sometimes, an ordinary Own-Occupation
 // superlink policy), each with a PROPOSED COVERS table. Builds firm-style rows
@@ -13401,7 +13554,10 @@ function parseMetlifeInforceEmailRoa(text){
       rows.push({provider:'MetLife', coverType:'IP (Indemnity & Standard Contract)',
         lifeInsured:first, owner: P.ip.inSuper ? 'Super' : first,
         benefitAmount: fmtW(P.ip.amt) + ' pm', waitingPeriod: P.ip.wp, benefitPeriod: P.ip.bp,
-        superContribution: P.sco ? fmtW(P.sco) : '',
+        // The SCO amount is part of the insured benefit (a monthly super
+        // contribution paid on claim), NOT a premium — it prints in the
+        // benefit cell as "… plus $654 pm Super Contribution Option".
+        superContribution: P.sco ? fmtW(P.sco) + ' pm' : '',
         premiumStructure: struct,
         monthlyPremium: fmtW(P.ip.premMo) + ' pm (before tax)',
         monthlyPremiumAfterTax: fmtW(P.ip.premMo * (P.ip.inSuper ? 0.85 : 1)) + ' pm (after tax)'});
@@ -14312,6 +14468,22 @@ async function importInsuranceFileToTable(file, fKey, forcedPerson){
         rows = (dk === 'current') ? opt.current : opt.proposed;
         cdmClient = cva.client || '';
         source = (dk === 'current') ? 'the ClearView alteration quote (current cover)' : 'the ClearView alteration quote (amended vs current — changes flagged)';
+      }
+    }
+    if(!rows.length){
+      const tal = parseTalAlterationRoa(text);
+      if(tal){
+        rows = (dk === 'current') ? tal.current : tal.proposed;
+        cdmClient = tal.client || '';
+        source = (dk === 'current') ? 'the TAL alteration illustration (current policy)' : 'the TAL alteration illustration (Quote 1 vs current)';
+      }
+    }
+    if(!rows.length){
+      const nsm = parseNeosInforceSummaryRoa(text);
+      if(nsm){
+        rows = (dk === 'current') ? nsm.current : nsm.proposed;
+        cdmClient = nsm.client || '';
+        source = (dk === 'current') ? 'the NEOS in-force quote (current cover)' : 'the NEOS in-force quote (new cover vs current)';
       }
     }
     if(!rows.length){
@@ -22517,6 +22689,10 @@ async function classifySmartImportFile(file){
   }catch(ex){
     return {type:'unknown', label:'Unreadable — '+(ex && ex.message ? ex.message : ex), order:9, error:String(ex && ex.message ? ex.message : ex)};
   }
+  if(/policy alteration illustration/i.test(text) && /QUOTE\s*1\b/i.test(text) && /TAL Life/i.test(text))
+    return __wp({type:'alt-dual', label:'TAL alteration illustration (current + quote)', order:3});
+  if(/Your inforce quote summary/i.test(text))
+    return __wp({type:'alt-dual', label:'NEOS in-force quote (current + new)', order:3});
   if(/policy alteration illustration/i.test(text) || (/current details/i.test(text) && /quote\s*\d/i.test(text)))
     return __wp({type:'insurance-recommended', label:'Insurer alteration quote', order:3});
   if(/INSURANCE\s+SCHEDULE/i.test(text) && /POLICY\s*NO/i.test(text))
