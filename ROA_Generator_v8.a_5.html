@@ -9873,6 +9873,40 @@ function insuranceTableIsPristine(rows){
 // Used by the "Mirror from X" buttons so advisers don't have to re-key the Recommended
 // (or Altered, or Alternative, or Option 2) table when it starts as a near-copy of the
 // source table with just amounts/status changed afterwards.
+// Revised-terms / partial-replacement ROAs: the recommended (altered) table
+// shows the NEW cover plus the EXISTING cover being retained. This appends the
+// Current table's rows underneath as "Retain" rows — the provider is resolved
+// explicitly (from the Current group default) so the retained fund's own name
+// (e.g. Brighter Super) keeps its blue band instead of inheriting the new
+// insurer's default. Rows already present as Retain aren't duplicated.
+function addRetainedFromCurrent(destKey){
+  const srcRows = (F.insuranceCurrent || []).filter(r => r && (r.coverType || r.provider));
+  if(!srcRows.length){
+    alert('The Current Insurance table is empty — fill it in (or import the existing cover / SOA replacement-implications table into it) first, then add the retained rows here.');
+    return;
+  }
+  const curDef = (F.insuranceDefaults && F.insuranceDefaults.current) || {};
+  const dest = F[destKey] || (F[destKey] = []);
+  // Drop the untouched blank starter rows so the retained lines don't land
+  // beneath a wall of empties.
+  while(dest.length && !((dest[dest.length-1].coverType||'').trim() || (dest[dest.length-1].provider||'').trim() || (dest[dest.length-1].benefitAmount||'').trim())) dest.pop();
+  const sig = r => [(r.provider || '').trim().toLowerCase(), (r.coverType||'').trim().toLowerCase(), (r.lifeInsured||'').trim().toLowerCase()].join('|');
+  const already = new Set(dest.filter(r => /retain/i.test(r.status||'')).map(sig));
+  let added = 0;
+  srcRows.forEach(r => {
+    const copy = Object.assign(mkInsurance(), JSON.parse(JSON.stringify(r)));
+    if(!(copy.provider||'').trim()) copy.provider = (curDef.provider||'').trim();
+    if(!(copy.lifeInsured||'').trim()) copy.lifeInsured = (curDef.lifeInsured||'').trim();
+    if(!(copy.owner||'').trim()) copy.owner = (curDef.owner||'').trim();
+    copy.status = 'Retain';
+    if(already.has(sig(copy))) return;
+    already.add(sig(copy));
+    dest.push(copy);
+    added++;
+  });
+  if(!added){ alert('Every Current cover line is already in this table as a Retain row — nothing added.'); return; }
+  render();
+}
 function mirrorInsuranceTable(sourceKey, destKey){
   const dkMap = {insuranceCurrent:'current', insuranceRecommended:'recommended', insuranceAlternative:'alternative', insuranceOriginal:'original', insuranceAltered:'altered', insuranceOption1:'option1', insuranceOption2:'option2'};
   const srcRows = F[sourceKey] || [];
@@ -12351,6 +12385,11 @@ function ex_classifySection(heading){
   if(!heading) return null;
   const h = heading.toLowerCase();
   if(/current (cover|polic|insurance)/.test(h)) return 'current';
+  // The SOA's "insurance replacement implications" table lists the EXISTING
+  // cover being replaced (levels, types, premiums) — that is current cover,
+  // and on a revised-terms ROA it feeds the retained "Retain" rows.
+  if(/replacement/.test(h) && /(insur|cover|polic|product|implication)/.test(h)) return 'current';
+  if(/existing (cover|polic|insurance)/.test(h)) return 'current';
   if(/recommended (cover|insurance)/.test(h) && !/original/.test(h)) return 'recommended';
   if(/original recommendation/.test(h)) return 'original';
   if(/altered recommendation/.test(h)) return 'altered';
@@ -14215,6 +14254,19 @@ async function importInsuranceFileToTable(file, fKey){
         const match = found.find(t => t.section === dk);
         if(match){ rows = match.rows.slice(); source = 'the "' + tableNice + '" table in the document'; }
         else { rows = found.reduce((a,t)=>a.concat(t.rows), []); source = found.length + ' cover table(s) in the document'; }
+        // Revised-terms ROAs show retained existing cover ALONGSIDE the new
+        // cover in the one table. If the document (e.g. the original SOA) also
+        // holds a current / replacement-implications table, offer to carry
+        // those existing-cover lines in underneath as "Retain" rows.
+        if(match && (dk === 'altered' || dk === 'recommended')){
+          const keepRows = found.filter(t => t !== match && t.section === 'current')
+            .reduce((a,t)=>a.concat(t.rows), []);
+          if(keepRows.length && confirm('This document also contains ' + keepRows.length + ' EXISTING cover line(s) (current cover / insurance replacement implications).\n\nOK — add them under the ' + tableNice + ' lines as "Retain" rows (retained existing cover, e.g. cover kept in the old super fund).\nCancel — import only the ' + tableNice + ' lines.')){
+            keepRows.forEach(r => { r.status = 'Retain'; });
+            rows = rows.concat(keepRows);
+            source += ' plus the existing-cover table (as Retain rows)';
+          }
+        }
       }
       // A PDF of the firm's own "Insurance Products" table splits its two-line
       // header cells across text lines, so the column mapping comes out
@@ -14293,14 +14345,26 @@ async function importInsuranceFileToTable(file, fKey){
     // row's figures) and adds covers the table doesn't have yet — so a second quote
     // (super + non-super) drops in cleanly too. Cancel = wipe and replace instead.
     const existing = (F[fKey]||[]).filter(r => r && (r.coverType || r.provider));
+    // Rewrite imported names to the spelling the table (or the ROA client
+    // fields) already uses — a quote saying "Timothy" must land on the "Tim"
+    // rows as an update, not append a duplicate person underneath them.
+    const canonNames = existing.map(r => (r.lifeInsured||'').trim()).filter(Boolean)
+      .concat(roaClientNames().map(n => n.split(/\s+/)[0]));
+    rows.forEach(r => {
+      const n = (r.lifeInsured||'').trim();
+      if(!n) return;
+      const hit = canonNames.find(c => sameGivenName(c, n));
+      if(hit && hit.toLowerCase() !== n.toLowerCase()) r.lifeInsured = hit;
+    });
     let mode = 'replace';
     if(existing.length && !insuranceTableIsPristine(F[fKey])){
       // A different person's document (e.g. the partner's quote landing after
       // client 1's) appends under the existing rows automatically — no
       // update/replace question, both people end up in the one table.
-      const exNames = new Set(existing.map(r => (r.lifeInsured||'').trim().toLowerCase()).filter(Boolean));
-      const inNames = new Set(rows.map(r => (r.lifeInsured||'').trim().toLowerCase()).filter(Boolean));
-      const differentPerson = exNames.size && inNames.size && ![...inNames].some(n => exNames.has(n));
+      const exNames = [...new Set(existing.map(r => (r.lifeInsured||'').trim()).filter(Boolean))];
+      const inNames = [...new Set(rows.map(r => (r.lifeInsured||'').trim()).filter(Boolean))];
+      const differentPerson = exNames.length && inNames.length
+        && !inNames.some(n => exNames.some(x => sameGivenName(x, n)));
       if(differentPerson){
         mode = 'append';
       } else {
@@ -18712,6 +18776,12 @@ function renderInsuranceTable(title, key, mirrorSourceKey){
   const mirrorBtn = mirrorSourceKey
     ? `<button class="btn btn-xs" onclick="mirrorInsuranceTable('${mirrorSourceKey}','${key}')" title="Copy every row and group default from the ${e(srcLabel)} table into this one. Existing rows will be replaced.">⇄ Mirror from ${e(srcLabel)}</button>`
     : '';
+  // Revised-terms / partial-replacement ROAs keep some existing cover: this
+  // appends the Current table's rows underneath as "Retain" rows (provider
+  // kept — e.g. the old super fund), without touching the new-cover lines.
+  const retainBtn = (key === 'insuranceAltered' || key === 'insuranceRecommended')
+    ? `<button class="btn btn-xs" onclick="addRetainedFromCurrent('${key}')" title="Append the Current table's cover lines under this table as retained cover — status 'Retain', existing provider kept (e.g. cover staying in the old super fund). New-cover rows already here are left alone.">＋ Retained cover from Current</button>`
+    : '';
   const importBtn = `<label class="btn btn-xs" style="cursor:pointer;margin:0" title="Prefill this table from an uploaded document — e.g. the CDM insurance summary for current cover, or the new insurance quote for recommended cover. Reads the cover lines and replaces the rows below (works like the CARE doc import for the super table). You can also just drag the file onto this table.">📥 Import / drop document
     <input type="file" accept=".pdf,.docx,.txt,.png,.jpg,.jpeg" style="display:none" onchange="handleInsuranceTableImport(this,'${key}')">
   </label>`;
@@ -18721,6 +18791,7 @@ function renderInsuranceTable(title, key, mirrorSourceKey){
       <span style="margin-left:auto;display:inline-flex;gap:6px;flex-wrap:wrap;align-items:center">
         ${importBtn}
         ${mirrorBtn}
+        ${retainBtn}
       </span>
     </div>
     <div class="card-sub" style="margin-top:6px">Laid out exactly like the table in the ROA document — same columns, blue provider bands and merged premium cells. Click any cell to edit it. Set the provider on the blue band (it applies to every cover row beneath it); a blank Life Insured automatically uses the client's first name.</div>`;
@@ -22100,6 +22171,17 @@ function loadTemplate(name){
 // other person's lines out. Fill in the client name(s) BEFORE importing
 // for this to engage — with no client name set, everything imports.
 // ───────────────────────────────────────────────────────────
+// "Tim" and "Timothy" are the same person — insurer quotes carry the formal
+// given name while the ROA (and CDM tables) use the short form. First tokens
+// match when equal, or when one is a prefix of the other (3+ characters each,
+// so "Al"/"Alan" doesn't false-positive against "Alice").
+function sameGivenName(a, b){
+  const fa = (String(a||'').trim().toLowerCase().split(/\s+/)[0]) || '';
+  const fb = (String(b||'').trim().toLowerCase().split(/\s+/)[0]) || '';
+  if(!fa || !fb) return false;
+  if(fa === fb) return true;
+  return fa.length >= 3 && fb.length >= 3 && (fa.startsWith(fb) || fb.startsWith(fa));
+}
 function nameMatchesClient(label, clientName){
   if(!label || !clientName) return false;
   const l = String(label).trim().toLowerCase();
