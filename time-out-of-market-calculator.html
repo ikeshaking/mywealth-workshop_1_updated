@@ -4,7 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Time Out of Market Calculator — My Wealth Solutions</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Nunito+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Nunito+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" onerror="var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';document.head.appendChild(s)"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>if(typeof pdfjsLib!=='undefined'){pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}</script>
 <style>
 @import url('https://fonts.cdnfonts.com/css/abc-arizona-flare');
 @import url('https://fonts.cdnfonts.com/css/abc-arizona-serif');
@@ -38,8 +41,11 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--text);font-family:var(--bf);font-size:14px;line-height:1.5;min-height:100vh}
-h1,h2,h3{font-family:var(--hf);color:var(--heading);margin:0;font-weight:600}
+body{background:var(--bg);color:var(--text);font-family:var(--bf);font-size:13px;line-height:1.55;min-height:100vh;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--hf)!important;color:var(--text);margin:0;letter-spacing:-.01em}
+h1{font-size:30px;font-weight:600;line-height:1.1}
+h2{font-size:20px;font-weight:600;line-height:1.2}
+h3{font-size:15px;font-weight:700;line-height:1.3}
 a{color:inherit}
 em{font-style:italic}
 
@@ -65,8 +71,8 @@ em{font-style:italic}
 .theme-toggle-icon{font-size:14px;line-height:1}
 
 /* ============ BUTTONS ============ */
-.btn{background:var(--surface);color:var(--text);border:1px solid var(--border);padding:7px 14px;border-radius:10px;font-family:var(--bf);font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;text-decoration:none}
-.btn:hover{background:var(--surface-2);border-color:var(--border-strong)}
+.btn{background:var(--surface);color:var(--text-dim);border:1px solid var(--border);padding:8px 15px;border-radius:11px;font-family:var(--bf);font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;text-decoration:none}
+.btn:hover{background:var(--surface-2);border-color:var(--border-strong);color:var(--text)}
 .btn-primary{background:var(--navy);color:#fff;border-color:var(--navy)}
 .btn-primary:hover{background:var(--navy-deep);color:#fff}
 .btn-blue{background:var(--blue);color:#fff;border-color:var(--blue)}
@@ -88,62 +94,63 @@ em{font-style:italic}
 .card-sub{font-size:11.5px;color:var(--text-muted);margin-bottom:12px}
 
 /* ============ HERO ============ */
-.hero{background:linear-gradient(135deg,var(--chrome) 0%,var(--chrome-deep) 100%);border:1px solid var(--chrome-deep);color:#fff;padding:22px 24px 20px;border-radius:16px;margin-bottom:16px;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;top:-30%;right:-10%;width:420px;height:420px;background:radial-gradient(circle,rgba(255,101,80,.14),transparent 65%);pointer-events:none}
+.hero{background:linear-gradient(135deg,var(--chrome) 0%,var(--chrome-deep) 100%);color:#fff;padding:26px 28px 24px;border-radius:18px;margin-bottom:18px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-30%;right:-8%;width:460px;height:460px;background:radial-gradient(circle,rgba(255,101,80,.12),transparent 65%);pointer-events:none}
 .hero-inner{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
 .hero-left{flex:1;min-width:240px}
-.hero-sub{font-family:var(--bf);font-size:10px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:2px;font-weight:700;margin-bottom:5px}
-.hero h1{font-size:28px;color:#fff;line-height:1.08;font-weight:600;letter-spacing:-.01em}
+.hero-sub{font-family:var(--bf);font-size:10px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:2.4px;font-weight:600;margin-bottom:7px}
+.hero h1{font-size:30px;color:#fff;line-height:1.06;font-weight:500;letter-spacing:-.015em}
 .hero h1 em{font-style:italic;color:var(--coral);font-weight:400}
-.hero-tag{font-size:12px;color:rgba(255,255,255,.85);margin-top:8px;max-width:640px;line-height:1.55}
+.hero-tag{font-size:12.5px;color:rgba(255,255,255,.82);margin-top:10px;max-width:660px;line-height:1.6;font-weight:300}
 
 /* ============ PICKER ============ */
-.picker-intro{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 18px;margin-bottom:14px}
-.picker-intro h3{font-size:14px;margin-bottom:2px}
-.picker-intro p{font-size:11.5px;color:var(--text-dim)}
-.scenario-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:12px}
-.scenario-card{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:14px 15px;cursor:pointer;text-align:left;transition:all .15s;position:relative;user-select:none;display:flex;flex-direction:column;gap:5px}
-.scenario-card:hover{border-color:var(--blue);box-shadow:var(--shadow)}
-.scenario-card.selected{border-color:var(--blue);background:var(--blue-light);box-shadow:var(--shadow-md)}
-.scenario-card.selected::after{content:'✓';position:absolute;top:8px;right:10px;width:18px;height:18px;background:var(--blue);color:#fff;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
-.scenario-card .sc-tag{font-size:9px;text-transform:uppercase;letter-spacing:1px;font-weight:700;color:var(--blue)}
-.scenario-card .sc-name{font-family:var(--hf);font-size:15px;font-weight:700;color:var(--heading);line-height:1.15;padding-right:14px}
-.scenario-card .sc-desc{font-size:11px;color:var(--text-muted);line-height:1.4}
+.picker-intro{background:transparent;padding:2px 4px 12px;margin-bottom:4px}
+.picker-intro h3{font-size:15px;font-weight:600;margin-bottom:2px}
+.picker-intro p{font-size:12px;color:var(--text-muted);font-weight:300}
+.scenario-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:11px;margin-bottom:14px}
+.scenario-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:14px;padding:15px 16px;cursor:pointer;text-align:left;transition:all .18s;position:relative;user-select:none;display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow-sm)}
+.scenario-card:hover{border-color:var(--blue-soft);box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.scenario-card.selected{border-color:var(--blue);background:linear-gradient(135deg,var(--blue-light) 0%,var(--surface) 100%);box-shadow:var(--shadow-md)}
+.scenario-card.selected::after{content:'✓';position:absolute;top:10px;right:12px;width:18px;height:18px;background:var(--blue);color:#fff;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.scenario-card .sc-tag{font-size:8.5px;text-transform:uppercase;letter-spacing:1.3px;font-weight:700;color:var(--blue)}
+.scenario-card .sc-name{font-family:var(--hf);font-size:15px;font-weight:600;color:var(--heading);line-height:1.18;padding-right:14px}
+.scenario-card .sc-desc{font-size:11.5px;color:var(--text-muted);line-height:1.45;font-weight:300}
 
 /* ============ WIZARD ============ */
-.wizard-wrap{margin:0 auto;padding:14px 0 90px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:18px;align-items:start;max-width:1180px}
-.wizard-side{position:sticky;top:66px;background:var(--surface);border:1px solid var(--border-soft);border-radius:14px;padding:10px 8px;box-shadow:0 1px 3px rgba(0,0,0,.04);max-height:calc(100vh - 86px);overflow:auto}
-.sidebar-page-heading{font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:800;color:var(--text-faint);margin:2px 4px 8px}
-.wizard-steps-v{display:flex;flex-direction:column;gap:4px}
-.wizard-step{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:transparent;border:1px solid transparent;border-radius:10px;padding:7px 9px;cursor:pointer;font-size:12px;color:var(--text-dim);font-family:var(--bf)}
-.wizard-step .ws-dot{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-2);border:1px solid var(--border-strong);font-size:10.5px;font-weight:700;color:var(--text-dim);flex:0 0 auto}
+.wizard-wrap{margin:0 auto;padding:16px 0 96px;display:grid;grid-template-columns:236px minmax(0,1fr);gap:22px;align-items:start;max-width:1180px}
+.wizard-side{position:sticky;top:70px;background:var(--surface);border:1px solid var(--border-soft);border-radius:16px;padding:12px 10px;box-shadow:var(--shadow-sm);max-height:calc(100vh - 90px);overflow:auto}
+.sidebar-page-heading{font-size:9.5px;text-transform:uppercase;letter-spacing:1.4px;font-weight:700;color:var(--text-faint);margin:4px 6px 10px}
+.wizard-steps-v{display:flex;flex-direction:column;gap:3px}
+.wizard-step{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:transparent;border:1px solid transparent;border-radius:11px;padding:8px 10px;cursor:pointer;font-size:12px;color:var(--text-dim);font-family:var(--bf);font-weight:500;transition:all .12s}
+.wizard-step .ws-dot{width:21px;height:21px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-2);border:1px solid var(--border-soft);font-size:10.5px;font-weight:700;color:var(--text-muted);flex:0 0 auto}
 .wizard-step .ws-label{white-space:normal;line-height:1.25}
 .wizard-step.done .ws-dot{background:var(--green-light);border-color:var(--green);color:var(--green-dark)}
-.wizard-step.todo .ws-dot{background:var(--amber-light);border-color:var(--amber);color:var(--amber)}
-.wizard-step.current{border-color:var(--blue);background:var(--blue-light);color:var(--heading);font-weight:700}
+.wizard-step.todo .ws-dot{background:var(--surface-2);border-color:var(--border-strong);color:var(--text-faint)}
+.wizard-step.current{border-color:transparent;background:var(--blue-light);color:var(--heading);font-weight:700}
 .wizard-step.current .ws-dot{background:var(--blue);border-color:var(--blue);color:#fff}
-.wizard-step:hover{border-color:var(--blue-soft)}
-.wizard-side-foot{margin-top:12px;padding:10px 9px;border-top:1px solid var(--border-soft)}
-.wizard-side-foot .wf-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-faint);font-weight:800}
-.wizard-side-foot .wf-val{font-family:var(--hf);font-size:20px;font-weight:700;color:var(--heading);margin-top:2px}
-.section-block{background:var(--surface);border:1px solid var(--border-soft);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);overflow:visible}
-.section-block-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding:16px 20px 6px;border-bottom:2px solid var(--blue);margin:0 20px;flex-wrap:wrap}
-.section-block-title{font-family:var(--hf);font-size:17px;font-weight:600;letter-spacing:-.01em;color:var(--heading);line-height:1.2}
-.section-block-body{padding:16px 20px 18px}
-.page-separator{display:flex;align-items:baseline;gap:10px;margin:0 0 10px}
-.page-separator-num{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--blue);background:var(--blue-light);padding:3px 9px;border-radius:8px}
-.page-separator-label{font-size:11px;color:var(--text-muted)}
-.wizard-hint{background:var(--amber-light);border:1px solid var(--amber);color:var(--amber);border-radius:10px;padding:9px 13px;font-size:12.5px;font-weight:600;margin:12px 0 0}
-.wizard-nav{display:flex;align-items:center;gap:12px;margin-top:18px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:14px;position:sticky;bottom:12px;box-shadow:0 6px 22px rgba(0,0,0,.12);z-index:5}
-.wizard-nav .wizard-nav-mid{flex:1;text-align:center;font-size:12px;color:var(--text-muted)}
+.wizard-step:hover{background:var(--surface-2)}
+.wizard-step.current:hover{background:var(--blue-light)}
+.wizard-side-foot{margin-top:14px;padding:12px 10px 4px;border-top:1px solid var(--border-soft)}
+.wizard-side-foot .wf-lbl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text-faint);font-weight:700}
+.wizard-side-foot .wf-val{font-family:var(--hf);font-size:22px;font-weight:600;color:var(--heading);margin-top:3px}
+.section-block{background:var(--surface);border:1px solid var(--border-soft);border-radius:16px;box-shadow:var(--shadow-sm);overflow:visible}
+.section-block-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:18px 24px 12px;margin:0;flex-wrap:wrap}
+.section-block-title{font-family:var(--hf);font-size:19px;font-weight:500;letter-spacing:-.015em;color:var(--heading);line-height:1.2}
+.section-block-body{padding:6px 24px 22px}
+.page-separator{display:flex;align-items:baseline;gap:10px;margin:0 0 12px}
+.page-separator-num{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--blue);background:var(--blue-light);padding:4px 10px;border-radius:999px}
+.page-separator-label{font-size:11.5px;color:var(--text-muted);font-weight:300}
+.wizard-hint{background:var(--amber-light);border:1px solid transparent;color:var(--amber);border-radius:11px;padding:10px 14px;font-size:12.5px;font-weight:600;margin:12px 24px 0}
+.wizard-nav{display:flex;align-items:center;gap:12px;margin-top:20px;padding:12px 14px;background:var(--surface);border:1px solid var(--border-soft);border-radius:16px;position:sticky;bottom:14px;box-shadow:var(--shadow-lg);z-index:5}
+.wizard-nav .wizard-nav-mid{flex:1;text-align:center;font-size:11.5px;color:var(--text-muted);font-weight:300}
 
 /* ============ FIELDS ============ */
-.field{margin-bottom:11px}
-.field label{font-family:var(--bf);font-size:11px;font-weight:600;color:var(--heading);display:block;margin-bottom:3px}
-.field input,.field select,.field textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:9px;background:var(--input-bg);color:var(--text);font-family:var(--bf);font-size:13px;transition:all .12s}
-.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--blue);background:var(--surface);box-shadow:0 0 0 2px rgba(43,111,214,.15)}
+.field{margin-bottom:13px}
+.field label{font-family:var(--bf);font-size:10.5px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:5px;letter-spacing:.2px}
+.field input,.field select,.field textarea{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);font-family:var(--bf);font-size:13px;transition:all .12s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--blue);background:var(--surface);box-shadow:0 0 0 3px rgba(43,111,214,.12)}
 .field textarea{min-height:64px;resize:vertical;line-height:1.5;font-family:ui-monospace,Consolas,monospace;font-size:12px}
-.field .hint{font-size:10.5px;color:var(--text-muted);margin-top:4px;line-height:1.4}
+.field .hint{font-size:11px;color:var(--text-muted);margin-top:5px;line-height:1.45;font-weight:300}
 .grid{display:grid;gap:12px}
 .g2{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
 .g3{grid-template-columns:repeat(auto-fit,minmax(155px,1fr))}
@@ -166,11 +173,11 @@ table.data th:first-child,table.data td:first-child{text-align:left}
 .ledger-wrap th{position:sticky;top:0;background:var(--surface);z-index:1}
 
 /* ============ RESULTS ============ */
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:14px}
-.stat{background:var(--surface-2);border:1px solid var(--border-soft);border-radius:12px;padding:14px 16px}
-.stat .lbl{font-size:10.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;font-weight:700}
-.stat .val{font-family:var(--hf);font-size:26px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums;color:var(--heading)}
-.stat .sub2{font-size:11px;color:var(--text-muted);margin-top:3px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:var(--surface-2);border:1px solid var(--border-soft);border-radius:14px;padding:16px 18px}
+.stat .lbl{font-size:9.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;font-weight:700}
+.stat .val{font-family:var(--hf);font-size:28px;font-weight:600;margin-top:5px;font-variant-numeric:tabular-nums;color:var(--heading);letter-spacing:-.01em}
+.stat .sub2{font-size:11px;color:var(--text-muted);margin-top:4px;font-weight:300}
 .stat.hero-stat{background:linear-gradient(135deg,var(--blue-light) 0%,var(--surface) 100%);border-color:var(--blue-soft)}
 .neg{color:var(--red)} .pos{color:var(--green-dark)}
 .chartbox{position:relative;margin:8px 0 4px;background:var(--surface);border:1px solid var(--border-soft);border-radius:12px;padding:12px}
@@ -185,6 +192,18 @@ table.data th:first-child,table.data td:first-child{text-align:left}
 details summary{cursor:pointer;font-weight:700;color:var(--heading);margin:10px 0 8px}
 code{background:var(--surface-2);padding:1px 5px;border-radius:4px;font-size:11.5px}
 .hidden{display:none!important}
+
+/* ============ NIGHT-THEME OVERRIDES (match the ROA generator's default look) ============ */
+[data-theme="night"] .topnav a.active{background:var(--lime);color:#16304a}
+[data-theme="night"] .field label{color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;font-size:10px;font-weight:700}
+[data-theme="night"] .field input,[data-theme="night"] .field select,[data-theme="night"] .field textarea{background:var(--surface-2);border-color:var(--border)}
+[data-theme="night"] .field input:focus,[data-theme="night"] .field select:focus,[data-theme="night"] .field textarea:focus{background:var(--surface)}
+[data-theme="night"] .btn-blue{background:#3d6f9e;border-color:#3d6f9e;color:#fff}
+[data-theme="night"] .btn-blue:hover{background:#4a80b3;color:#fff}
+[data-theme="night"] .btn-green{background:#3f7a4a;border-color:#3f7a4a}
+[data-theme="night"] .sched-table input{background:var(--surface-2);border-color:var(--border);color:var(--text)}
+[data-theme="night"] .stat .val{color:var(--heading)}
+[data-theme="night"] .hero{background:linear-gradient(135deg,#15293c 0%,#1a3346 100%)}
 
 @media(max-width:1080px){
   .topbar{grid-template-columns:1fr auto;padding:10px 14px;gap:8px}
@@ -211,11 +230,13 @@ code{background:var(--surface-2);padding:1px 5px;border-radius:4px;font-size:11.
 
 /* ================= STATE ================= */
 const DEFAULTS = () => ({
-  scenario:'contribCash', basis:'buy', theme:'day',
+  scenario:'contribCash', basis:'buy', theme:'night',
   clientName:'', fundName:'',
   tomStart:'', tomEnd:'',
   grossContrib:'2300', contribDay:'6', feeOn:'no', advFee:'187.50', adminFee:'0',
-  intMode:'rate', intRate:'4.0', baseCash:'0',
+  intMode:'actual', intRate:'4.0', baseCash:'0',
+  startCash:'', startInv:'', endCash:'', endInv:'',
+  cashTx:[],
   openUnits:'0', actualUnits:'0',
   lumpAmt:'100000',
   swMode:'units', swAmt:'10000', swRate:'0', swSell:'', swBuy:'',
@@ -279,6 +300,40 @@ function parseDists(text){
   if(!out.length)return{error:'No parsable distribution rows found.'};
   return{rows:out};
 }
+/* Cash-transactions report parser — Date, Description, Credit/Debit (or signed Amount) */
+function parseCashTx(text){
+  const rows=splitRows(text); if(!rows.length)return{error:'No rows found.'};
+  let hi=-1,cols=null;
+  for(let i=0;i<Math.min(rows.length,12);i++){ const low=rows[i].map(c=>c.toLowerCase());
+    const di=low.findIndex(c=>/date/.test(c)); if(di<0)continue;
+    const ai=low.findIndex(c=>/^amount|amount$|amount|value/.test(c)&&!/balance/.test(c));
+    const ci=low.findIndex(c=>/credit|money in|paid in|deposit/.test(c));
+    const dbi=low.findIndex(c=>/debit|money out|paid out|withdraw/.test(c));
+    const dsi=low.findIndex(c=>/desc|detail|narrat|transaction|type|particular|reference/.test(c));
+    if(ai>=0||ci>=0||dbi>=0){ hi=i; cols={di,dsi,ai,ci,dbi}; break; }
+  }
+  if(hi<0)return{error:'Could not find a Date and an Amount/Credit/Debit column in that file.'};
+  const out=[];
+  for(let i=hi+1;i<rows.length;i++){ const r=rows[i]; const date=parseDateStr(r[cols.di]); if(!date)continue;
+    const desc=cols.dsi>=0?(r[cols.dsi]||''):'';
+    let amount=null;
+    if(cols.ai>=0&&parseNum(r[cols.ai])!=null) amount=parseNum(r[cols.ai]);
+    else { const cr=cols.ci>=0?parseNum(r[cols.ci]):null, db=cols.dbi>=0?parseNum(r[cols.dbi]):null; if(cr!=null||db!=null) amount=(cr||0)-(Math.abs(db||0)); }
+    if(amount==null)continue;
+    out.push({date,desc:String(desc).trim(),amount});
+  }
+  if(!out.length)return{error:'No transaction rows parsed — check the Date and amount columns.'};
+  return{rows:out};
+}
+function txCategory(desc){
+  const d=(desc||'').toLowerCase();
+  if(/interest/.test(d))return 'interest';
+  if(/fee|adviser|advice|admin|platform|management|commission/.test(d))return 'fee';
+  if(/deposit|contribution|direct debit|\bdd\b|transfer in|bpay|eft|received/.test(d))return 'contribution';
+  if(/buy|purchase|invest|subscription|application/.test(d))return 'investment';
+  if(/sell|redem|withdrawal|redeem/.test(d))return 'redemption';
+  return 'other';
+}
 function setPrices(rows){
   F.prices=rows;
   if(!F.tomStart)F.tomStart=rows[0].date;
@@ -310,9 +365,9 @@ const SCEN={
 function wizardSteps(){
   const base=[{k:'prices',l:'Price history'},{k:'dists',l:'Distributions'}];
   const sc=F.scenario; let mid;
-  if(sc==='contribCash')mid=[{k:'setup',l:'Client & period'},{k:'contrib',l:'Contributions & fees'},{k:'interest',l:'Cash interest'}];
-  else if(sc==='lumpCash')mid=[{k:'setup',l:'Client & period'},{k:'lump',l:'The lump sum & fees'},{k:'interest',l:'Cash interest'}];
-  else if(sc==='feeDrag')mid=[{k:'setup',l:'Client & period'},{k:'contrib',l:'Contributions & fees'},{k:'holdings',l:'Unit holdings'}];
+  if(sc==='contribCash')mid=[{k:'setup',l:'Client & period'},{k:'balances',l:'Account balances'},{k:'contrib',l:'Contributions & fees'},{k:'interest',l:'Cash interest offset'}];
+  else if(sc==='lumpCash')mid=[{k:'setup',l:'Client & period'},{k:'balances',l:'Account balances'},{k:'lump',l:'The lump sum & fees'},{k:'interest',l:'Cash interest offset'}];
+  else if(sc==='feeDrag')mid=[{k:'setup',l:'Client & period'},{k:'balances',l:'Account balances'},{k:'contrib',l:'Contributions & fees'},{k:'holdings',l:'Unit holdings'}];
   else if(sc==='switch')mid=[{k:'setup',l:'Client & fund'},{k:'switch',l:'The switch'}];
   else mid=[{k:'setup',l:'Client & period'},{k:'phasing',l:'Lump vs phasing'}];
   return base.concat(mid,[{k:'results',l:'Results'}]);
@@ -323,6 +378,7 @@ function stepStatus(k){
     case 'prices': return F.prices.length?'ok':'todo';
     case 'dists': return 'ok';
     case 'setup': return (has(F.clientName)&&has(F.fundName)&&(F.scenario==='switch'||(has(F.tomStart)&&has(F.tomEnd))))?'ok':'todo';
+    case 'balances': return has(F.startCash)?'ok':'todo';
     case 'contrib': return effectiveSchedule().length?'ok':'todo';
     case 'interest': return 'ok';
     case 'lump': return num('lumpAmt')>0?'ok':'todo';
@@ -385,7 +441,7 @@ function runCash(basis,sc){
   const dists=F.dists.filter(d=>d.ex&&d.cpu>0&&d.ex>=rows[0].date&&d.ex<=rows[rows.length-1].date).map(d=>{const exIdx=lastIdxOnOrBefore(rows,d.ex);let creditIdx=d.reinvest?firstIdxOnOrAfter(rows,d.reinvest):(exIdx+1<rows.length?exIdx+1:exIdx);if(creditIdx===-1)creditIdx=rows.length-1;return{...d,exIdx,creditIdx};});
   const intMode=F.intMode,creditsByIdx={};
   if(intMode==='actual'){for(const cr of F.intCredits.filter(c=>c.date&&c.amount>0)){let idx=firstIdxOnOrAfter(rows,cr.date);if(idx===-1)idx=rows.length-1;(creditsByIdx[idx]=creditsByIdx[idx]||[]).push(cr);}}
-  const rate=num('intRate')/100,baseCash0=num('baseCash');
+  const rate=num('intRate')/100,baseCash0=(parseNum(F.startCash)??num('baseCash'));
   const series=[],ledger=[]; let cf=0,M=0,G=baseCash0,prevP=null,prevDate=null,accrued=0,interestTotal=0,distTotal=0; const pending={};
   for(let i=0;i<rows.length;i++){
     const p=rows[i][basis],contrib=contribByIdx[i]||0,r=i>0?(p-prevP)/prevP:0,distCredit=pending[i]||0;
@@ -460,10 +516,65 @@ function setFnr(k,v){ F[k]=v; } // no re-render (for live typing where needed)
 function pickScenario(sc){ F.scenario=sc; state.wizardStep=0; state.result=null; state.page='wizard'; render(); window.scrollTo(0,0); }
 function gotoStep(i){ const steps=wizardSteps(); state.wizardStep=Math.max(0,Math.min(steps.length-1,i)); render(); window.scrollTo(0,0); }
 
-/* file helpers */
-function readFile(f,onText){ if(/\.xlsx?$/i.test(f.name)){alert('Excel files can’t be read by this offline page. Open the export in Excel, copy the rows (with headers) and paste them instead — or save as CSV.');return;} const rd=new FileReader();rd.onload=()=>onText(rd.result);rd.readAsText(f); }
+/* file helpers — accept CSV/TSV text, Excel (.xlsx via SheetJS) and PDF (via pdf.js) */
+function readFile(f,onText){
+  if(/\.xlsx?$/i.test(f.name)||/\.xlsm$/i.test(f.name)){ readExcel(f,onText); return; }
+  const rd=new FileReader(); rd.onload=()=>onText(rd.result); rd.readAsText(f);
+}
+function excelToTSV(ab){
+  if(typeof XLSX==='undefined')return null;
+  const wb=XLSX.read(ab,{type:'array',cellDates:true});
+  let best=null,bestRows=0;
+  for(const name of wb.SheetNames){ const ws=wb.Sheets[name]; const arr=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,dateNF:'dd mmm yyyy',blankrows:false}); if(arr.length>bestRows){bestRows=arr.length;best=arr;} }
+  if(!best)return '';
+  return best.map(r=>r.map(c=>c==null?'':String(c)).join('\t')).join('\n');
+}
+function readExcel(f,onText){
+  if(typeof XLSX==='undefined'){ alert('The Excel reader (SheetJS) hasn’t loaded — check your connection, or paste the rows from Excel instead.'); return; }
+  const rd=new FileReader(); rd.onload=()=>{ try{ const tsv=excelToTSV(new Uint8Array(rd.result)); onText(tsv); }catch(err){ alert('Could not read that Excel file: '+err.message+'. Try copy-pasting the rows instead.'); } }; rd.readAsArrayBuffer(f);
+}
 function handlePriceText(t){ const res=parsePrices(t); if(res.error){alert(res.error);return;} setPrices(res.rows); render(); }
 function handleDistText(t){ const res=parseDists(t); if(res.error){alert(res.error);return;} F.dists=res.rows; render(); }
+function handleCashTxText(t){
+  const res=parseCashTx(t); if(res.error){alert(res.error);return;}
+  F.cashTx=res.rows.map(r=>({...r,cat:txCategory(r.desc)}));
+  // extract interest credits (positive interest lines) as the offset source
+  const interest=F.cashTx.filter(r=>r.cat==='interest'&&r.amount>0).map(r=>({date:r.date,amount:+r.amount.toFixed(2)}));
+  F.intCredits=interest; F.intMode='actual';
+  const n=F.cashTx.length, ni=interest.length, tot=interest.reduce((a,b)=>a+b.amount,0);
+  render();
+  alert(`Read ${n} transactions. Found ${ni} interest credit${ni===1?'':'s'} totalling ${fmt$(tot)}, now set as the cash-interest offset (apportioned to the uninvested money). Review the categorised list below and adjust if any line was mis-tagged.`);
+}
+
+/* PDF account-statement reader — extract text, then best-effort scrape cash / investment / total balances */
+async function readAccountPdf(f,which){
+  if(typeof pdfjsLib==='undefined'){ alert('The PDF reader (pdf.js) hasn’t loaded — check your connection, or type the balances in manually.'); return; }
+  try{
+    const ab=await f.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+    let text='';
+    for(let i=1;i<=pdf.numPages;i++){ const pg=await pdf.getPage(i); const c=await pg.getTextContent(); text+=' '+c.items.map(it=>it.str).join(' '); }
+    const g=scrapeBalances(text);
+    const pfx=which==='start'?'start':'end';
+    if(g.cash!=null)F[pfx+'Cash']=String(g.cash);
+    if(g.inv!=null)F[pfx+'Inv']=String(g.inv);
+    if(g.cash==null&&g.inv==null&&g.total!=null&&g.inv==null){ /* only total found */ }
+    render();
+    const found=[g.cash!=null?'cash '+fmt$(g.cash):'',g.inv!=null?'investment '+fmt$(g.inv):'',g.total!=null?'total '+fmt$(g.total):''].filter(Boolean).join(', ');
+    alert(found?`Read from ${f.name}:\n${found}\n\nCheck the figures below and edit if the statement layout confused the parser.`:`Couldn’t confidently read balances from ${f.name}. Please type them in below.`);
+  }catch(err){ alert('Could not read that PDF: '+err.message+'. Please type the balances in manually.'); }
+}
+function scrapeBalances(text){
+  const t=text.replace(/\s+/g,' ');
+  const amt=s=>{ const m=String(s).replace(/[,$\s]/g,'').match(/-?\d+(?:\.\d+)?/); return m?parseFloat(m[0]):null; };
+  // capture the first $ amount appearing shortly after a label keyword
+  const near=(kw)=>{ const re=new RegExp(kw+'[^$\\d-]{0,40}(\\$?\\s?-?[\\d,]+(?:\\.\\d{2})?)','i'); const m=t.match(re); return m?amt(m[1]):null; };
+  const cash=near('cash account balance')??near('cash balance')??near('cash holding')??near('\\bcash\\b');
+  const inv=near('investment balance')??near('invested')??near('portfolio value')??near('managed funds')??near('market value')??near('investments');
+  const total=near('total portfolio value')??near('total account value')??near('total balance')??near('total value')??near('account value')??near('portfolio total');
+  return {cash,inv,total};
+}
+function balTotal(cashK,invK){ const c=parseNum(F[cashK]),i=parseNum(F[invK]); if(c==null&&i==null)return null; return (c||0)+(i||0); }
 function loadSample(){
   const rows=[]; let p=1.60; let d=new Date('2025-04-01'); const end=new Date('2025-08-29'); let seed=42;
   const rand=()=>{seed=(seed*1103515245+12345)%2147483648;return seed/2147483648;};
@@ -471,6 +582,7 @@ function loadSample(){
   setPrices(rows);
   F.dists=[{ex:'2025-06-30',cpu:1.9694,reinvest:'2025-07-01',price:rows.find(r=>r.date>='2025-07-01').buy}];
   if(!F.clientName)F.clientName='Sample Client'; if(!F.fundName)F.fundName='Sample Growth Fund (synthetic prices)';
+  if(!F.startCash)F.startCash='5271.93'; if(!F.startInv)F.startInv='157871.10';
   if(F.scenario==='contribCash'||F.scenario==='feeDrag'){F.sched=[];genSchedule();return;}
   if(F.scenario==='phasing'){genPhasing();return;}
   render();
@@ -598,7 +710,7 @@ function renderWizard(){
   return `<div class="main"><div class="wizard-wrap">${side}${main}</div></div>`;
 }
 function stepHint(k){
-  const m={prices:'Load the price history to unlock the calculation.',setup:'Enter the client, fund and the period dates.',contrib:'Generate or add at least one contribution.',lump:'Enter the lump-sum amount.',holdings:'Enter the actual units held at the end date.',switch:'Set the sell and buy-back dates.',phasing:'Build the phasing schedule.',results:'Complete the earlier steps to see a result.'};
+  const m={prices:'Load the price history to unlock the calculation.',setup:'Enter the client, fund and the period dates.',balances:'Enter the starting cash balance (upload the account statement, or type it in).',contrib:'Generate or add at least one contribution.',lump:'Enter the lump-sum amount.',holdings:'Enter the actual units held at the end date.',switch:'Set the sell and buy-back dates.',phasing:'Build the phasing schedule.',results:'Complete the earlier steps to see a result.'};
   return m[k]?`<div class="wizard-hint">⚠ Still to do: ${e(m[k])}</div>`:'';
 }
 function heroValue(R){
@@ -617,6 +729,7 @@ function stepBody(k){
   if(k==='prices')return body_prices();
   if(k==='dists')return body_dists();
   if(k==='setup')return body_setup();
+  if(k==='balances')return body_balances();
   if(k==='contrib')return body_contrib();
   if(k==='interest')return body_interest();
   if(k==='lump')return body_lump();
@@ -631,9 +744,9 @@ function body_prices(){
   return `<div class="row" style="justify-content:space-between"><div style="font-size:12.5px;color:var(--text-muted)">Buy / Sell / NAV daily prices from the Vanguard price-history export.</div>${st}</div>
     <div class="grid g2" style="margin-top:12px">
       <div>
-        <div class="drop" id="priceDrop">Drop the price-history export here (.csv / .txt)<br>or click to choose a file</div>
-        <input type="file" id="priceFile" accept=".csv,.txt,.tsv" class="hidden">
-        <div class="hint">Columns: Date, Buy, Sell, NAV (extras ignored). Dates like <code>22 Apr 2025</code>, <code>22/04/2025</code> or <code>2025-04-22</code> all work. For .xlsx, copy-paste from Excel.</div>
+        <div class="drop" id="priceDrop">Drop the price-history export here<br><strong>Excel (.xlsx)</strong>, .csv or .txt — or click to choose</div>
+        <input type="file" id="priceFile" accept=".xlsx,.xlsm,.xls,.csv,.txt,.tsv" class="hidden">
+        <div class="hint">Columns: Date, Buy, Sell, NAV (extras ignored). Dates like <code>22 Apr 2025</code>, <code>22/04/2025</code> or <code>2025-04-22</code> all work. The Vanguard <code>.xlsx</code> export is read directly.</div>
       </div>
       <div>
         ${fld('…or paste rows copied from Excel (with the header row)',`<textarea id="pricePaste" rows="6" placeholder="Date&#9;Buy&#9;Sell&#9;NAV&#10;22 Apr 2025&#9;$1.5554&#9;$1.5549&#9;$1.5549"></textarea>`)}
@@ -653,8 +766,8 @@ function body_dists(){
     <td class="no-print"><button class="btn btn-xs btn-ghost" onclick="F.dists.splice(${i},1);render()">✕</button></td></tr>`).join('');
   return `<div class="grid g2">
       <div>
-        <div class="drop" id="distDrop">Drop the distribution-history export here (.csv / .txt)<br>or click to choose a file</div>
-        <input type="file" id="distFile" accept=".csv,.txt,.tsv" class="hidden">
+        <div class="drop" id="distDrop">Drop the distribution-history export here<br><strong>Excel (.xlsx)</strong>, .csv or .txt — or click to choose</div>
+        <input type="file" id="distFile" accept=".xlsx,.xlsm,.xls,.csv,.txt,.tsv" class="hidden">
         <div class="hint">Columns: Ex-date, CPU (cents/unit), Reinvest date, Reinvest price. Leave empty if none fell in the period.</div>
       </div>
       <div>
@@ -678,6 +791,32 @@ function body_setup(){
   if(!isSwitch)h+=`<div class="grid g2">${fld(startLbl,inp('tomStart','date'))}${fld(endLbl,inp('tomEnd','date'))}</div>`;
   else h+=`<div class="info">Switch dates are set on the next step. Here just name the client and fund and pick the price basis.</div>`;
   return h;
+}
+function body_balances(){
+  const startTotal=balTotal('startCash','startInv'), endTotal=balTotal('endCash','endInv');
+  const grew=(startTotal!=null&&endTotal!=null)?`<div class="hint" style="margin-top:2px">Total moved from ${fmt$(startTotal)} to ${fmt$(endTotal)} over the period.</div>`:'';
+  return `<div class="info">These are the account parameters that scope the calculation. The <strong>invested balance</strong> grew in both the actual and counterfactual worlds, so it carries no opportunity cost. The <strong>cash balance</strong> is the crux: because the contributions sat in cash, the actual cash balance was higher — and cash interest is paid on that balance, so the client earned <em>more</em> interest than they would have if the money had been invested. The starting cash balance is the base cash that earns interest either way; the extra interest on top is the offset applied on the next step.</div>
+    <h3 style="font-family:var(--hf);color:var(--heading);margin:14px 0 8px">Start of period — ${F.tomStart?fmtDate(F.tomStart):'(set the start date)'}</h3>
+    <div class="grid g2" style="margin-bottom:4px">
+      <label class="import-btn btn-sm" style="justify-content:center" title="Upload the account statement/valuation PDF for the START of the period">📄 Upload start-of-period statement (PDF)<input type="file" id="pdfStart" accept=".pdf" style="display:none"></label>
+      <div style="align-self:center;font-size:11px;color:var(--text-muted)">Upload the PDF to auto-fill, or type the figures below (both work; the parser fills what it can find and you confirm).</div>
+    </div>
+    <div class="grid g3">
+      ${fld('Cash balance ($)',inp('startCash','number','step="0.01" min="0" placeholder="e.g. 5271.93"'))}
+      ${fld('Investment balance ($)',inp('startInv','number','step="0.01" min="0" placeholder="e.g. 157871.10"'))}
+      ${fld('Total balance ($)',`<input type="text" value="${startTotal!=null?fmt$(startTotal):''}" disabled style="opacity:.75">`,'auto: cash + investment')}
+    </div>
+    <h3 style="font-family:var(--hf);color:var(--heading);margin:16px 0 8px">End of period — ${F.tomEnd?fmtDate(F.tomEnd):'(set the end date)'}</h3>
+    <div class="grid g2" style="margin-bottom:4px">
+      <label class="import-btn btn-sm" style="justify-content:center" title="Upload the account statement/valuation PDF for the END of the period">📄 Upload end-of-period statement (PDF)<input type="file" id="pdfEnd" accept=".pdf" style="display:none"></label>
+      <div></div>
+    </div>
+    <div class="grid g3">
+      ${fld('Cash balance ($)',inp('endCash','number','step="0.01" min="0"'))}
+      ${fld('Investment balance ($)',inp('endInv','number','step="0.01" min="0"'))}
+      ${fld('Total balance ($)',`<input type="text" value="${endTotal!=null?fmt$(endTotal):''}" disabled style="opacity:.75">`,'auto: cash + investment')}
+    </div>
+    ${grew}`;
 }
 function body_contrib(){
   const feeOn=F.feeOn==='yes';
@@ -704,25 +843,38 @@ function body_contrib(){
       <span class="hint" style="margin:0">One-off deposits invest in full. Contributions on a non-pricing day move to the next pricing day. Untick “Include” for contributions invested correctly.</span></div>`;
 }
 function body_interest(){
-  const m=F.intMode;
-  let h=`<div class="grid g3">
-    ${fld('Interest treatment',sel('intMode',[['none','None'],['rate','Flat annual rate on the idle balance'],['actual','Actual credits (apportioned, Sibly method)']]))}
-    ${m==='rate'?fld('Cash account rate (% p.a.)',inp('intRate','number','step="0.05" min="0"')):''}
-    ${m==='actual'?fld('Pre-existing base cash at start ($)',inp('baseCash','number','step="0.01" min="0"')):''}
-  </div>`;
-  if(m==='actual'){
-    const rows=F.intCredits.map((r,i)=>`<tr>
+  const base=parseNum(F.startCash);
+  const off=F.intMode==='none'?0:F.intCredits.reduce((a,b)=>a+(parseNum(b.amount)||0),0);
+  const credRows=F.intCredits.map((r,i)=>`<tr>
       <td><input type="date" value="${e(r.date)}" onchange="F.intCredits[${i}].date=this.value;render()"></td>
       <td><input type="number" step="0.01" value="${e(r.amount)}" onchange="F.intCredits[${i}].amount=parseNum(this.value)||0;render()"></td>
       <td class="no-print"><button class="btn btn-xs btn-ghost" onclick="F.intCredits.splice(${i},1);render()">✕</button></td></tr>`).join('');
-    h+=`<div class="hint">Each actual credit is split pro-rata between base cash and the contributions by balance share immediately before the credit — only the contributions’ share offsets the loss.</div>
-      <table class="data sched-table" style="max-width:420px"><thead><tr><th>Credit date</th><th>Amount $</th><th class="no-print"></th></tr></thead><tbody>${rows}</tbody></table>
-      <button class="btn btn-sm" style="margin-top:6px" onclick="F.intCredits.push({date:'',amount:0});render()">+ Add credit</button>`;
-  } else if(m==='rate'){
-    h+=`<div class="hint">Flat-rate mode accrues daily (rate ÷ 365) on the idle balance and credits monthly — interest on any pre-existing base cash is earned in both scenarios and cancels out.</div>`;
-  }
+  let h=`<div class="info">The cash-interest offset is <strong>inferred from the actual cash-transactions report</strong> — the interest the account genuinely paid. Because the contributions sat in cash, the balance was higher than it would have been if invested, so the client earned <em>more</em> interest than the counterfactual. Each credit is apportioned pro-rata between the ${base!=null?fmt$(base)+' ':''}base cash (which earns its interest either way) and the uninvested contributions; only the contributions’ share is the offset.</div>
+    <div class="grid g2" style="margin:4px 0 2px">
+      <label class="import-btn btn-blue btn-sm" style="justify-content:center" title="Upload the cash-account transactions export — the calculator picks out the interest credits">⬆ Upload cash transactions (Excel / CSV)<input type="file" id="cashTxFile" accept=".xlsx,.xlsm,.xls,.csv,.txt,.tsv" style="display:none"></label>
+      <div style="align-self:center">${fld('Or paste the transactions',`<textarea id="cashTxPaste" rows="2" placeholder="Date&#9;Description&#9;Credit&#9;Debit&#10;01 May 2025&#9;Interest&#9;4.29&#9;"></textarea>`)}<button class="btn btn-sm" onclick="handleCashTxText($('cashTxPaste').value)">Parse pasted transactions</button></div>
+    </div>`;
+  h+=`<div class="grid g2" style="margin-top:6px">
+      <div>
+        <div class="field"><label>Interest credits used as the offset (total ${fmt$(off)})</label></div>
+        <table class="data sched-table" style="max-width:420px"><thead><tr><th>Credit date</th><th>Amount $</th><th class="no-print"></th></tr></thead><tbody>${credRows||'<tr><td colspan="3" style="color:var(--text-muted)">None yet — upload the transactions report above.</td></tr>'}</tbody></table>
+        <div class="row" style="margin-top:6px"><button class="btn btn-sm" onclick="F.intCredits.push({date:'',amount:0});render()">+ Add credit manually</button>
+          <button class="btn btn-sm btn-ghost" onclick="F.intMode='${F.intMode==='none'?'actual':'none'}';render()">${F.intMode==='none'?'Enable offset':'Ignore interest'}</button></div>
+      </div>
+      <div>${cashTxSummary()}</div>
+    </div>`;
   return h;
 }
+function cashTxSummary(){
+  if(!F.cashTx.length)return `<div class="hint">No transactions loaded yet. The report typically has Date, Description and Credit/Debit (or a signed Amount) columns — the parser categorises each line and pulls the interest credits automatically.</div>`;
+  const cats={}; for(const t of F.cashTx){cats[t.cat]=(cats[t.cat]||0)+t.amount;}
+  const order=['interest','contribution','fee','investment','redemption','other'];
+  const chip=c=>cats[c]!=null?`<tr><td style="text-transform:capitalize">${c}</td><td>${fmt$(cats[c])}</td><td style="color:var(--text-muted)">${F.cashTx.filter(t=>t.cat===c).length}</td></tr>`:'';
+  return `<div class="field"><label>Loaded transactions — ${F.cashTx.length} rows, categorised</label></div>
+    <table class="data"><thead><tr><th>Category</th><th>Net $</th><th># </th></tr></thead><tbody>${order.map(chip).join('')}</tbody></table>
+    <details style="margin-top:6px"><summary style="font-size:11px">Show all transactions</summary><div class="ledger-wrap" style="max-height:220px;margin-top:6px"><table class="data"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead><tbody>${F.cashTx.map((t,i)=>`<tr><td>${fmtDate(t.date)}</td><td style="text-align:left;max-width:180px;overflow:hidden;text-overflow:ellipsis">${e(t.desc)}</td><td><select onchange="F.cashTx[${i}].cat=this.value;syncInterestFromTx();render()" style="font-size:11px;padding:2px 4px">${['interest','contribution','fee','investment','redemption','other'].map(c=>`<option ${t.cat===c?'selected':''}>${c}</option>`).join('')}</select></td><td>${fmt$(t.amount)}</td></tr>`).join('')}</tbody></table></div></details>`;
+}
+function syncInterestFromTx(){ const interest=F.cashTx.filter(r=>r.cat==='interest'&&r.amount>0).map(r=>({date:r.date,amount:+r.amount.toFixed(2)})); F.intCredits=interest; if(interest.length)F.intMode='actual'; }
 function body_lump(){
   const feeOn=F.feeOn==='yes';
   return `<div class="grid g3">
@@ -904,6 +1056,9 @@ function render(){
   // wire drops on the relevant step
   wireDropIfPresent('priceDrop','priceFile',handlePriceText);
   wireDropIfPresent('distDrop','distFile',handleDistText);
+  const ps=$('pdfStart'); if(ps)ps.addEventListener('change',ev=>{if(ev.target.files[0])readAccountPdf(ev.target.files[0],'start');});
+  const pe=$('pdfEnd'); if(pe)pe.addEventListener('change',ev=>{if(ev.target.files[0])readAccountPdf(ev.target.files[0],'end');});
+  const ct=$('cashTxFile'); if(ct)ct.addEventListener('change',ev=>{if(ev.target.files[0])readFile(ev.target.files[0],handleCashTxText);});
   if(state.needChart&&$('chart')){ drawChart(); state.needChart=false; }
   // restore focus/caret
   if(fk){ const el=document.querySelector(`[data-fk="${fk}"]`); if(el){ el.focus(); try{if(selS!=null)el.setSelectionRange(selS,selE);}catch(_){} } }
