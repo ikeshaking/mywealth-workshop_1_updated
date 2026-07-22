@@ -2547,7 +2547,7 @@
                             var stepsHtml = '';
                             function addStep(title, body) {
                                 stepNum++;
-                                stepsHtml += '<div style="margin-bottom:12px;"><span style="font-weight:700;color:#0066cc;">' + stepNum + '.&nbsp;&nbsp;</span><strong class="step-title" style="color:#0066cc;">' + title + '</strong><br/>' + body + '</div>';
+                                stepsHtml += '<div class="setup-step" style="margin-bottom:16px;"><span style="font-weight:700;color:#0066cc;">' + stepNum + '.&nbsp;&nbsp;</span><strong class="step-title" style="color:#0066cc;">' + title + '</strong><br/>' + body + '</div>';
                             }
 
                             // Step: MCMA Buffer
@@ -4589,6 +4589,10 @@
                 // carry a pending page break down to the first block inside.
                 ctx.pageBreak = pb;
                 convertChildren(el, out, ctx);
+                if (/setup-step/.test(cls)) {
+                    // breathing room between the numbered setup steps
+                    out.push(new D.Paragraph({ spacing: { before: 0, after: 40 }, children: [new D.TextRun({ text: ' ', size: 4 })] }));
+                }
             }
 
             function convertChildren(el, out, ctx) {
