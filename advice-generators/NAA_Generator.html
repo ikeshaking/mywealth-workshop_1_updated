@@ -17386,27 +17386,8 @@ function addPortfolioScenario(paperId){
 // ═══════════════════════════════════════════════════════════
 // RENDER: STRATEGY PAPER BUILDER
 // ═══════════════════════════════════════════════════════════
-function renderStrategyBuilder(){
-  // Safety net — make sure state is initialised (in case user navigates via topbar)
-  initStrategyPaperState();
-  let h = `<main class="main">`;
-  h += `<section class="hero" style="min-height:90px;padding:16px 20px">
-    <div class="hero-inner">
-      <div class="hero-left">
-        <div class="hero-sub">Step 2 of 3 · Strategy Paper · Build Content</div>
-        <h1>${e(getFullClientName()||'Strategy Paper')}</h1>
-        <div class="hero-tag">${selectedScenarios.map(id => {
-          const s = STRATEGY_PAPERS[id] || MODELLING_SCENARIOS[id];
-          return s ? `<span class="badge lime">${e(s.label)}</span>` : '';
-        }).join(' ')}</div>
-      </div>
-      <div class="hero-right">
-        <button class="hero-btn" onclick="page='preview';render()">Preview →</button>
-        <button class="hero-btn ghost" onclick="page='picker';render()">← Back to Scenarios</button>
-      </div>
-    </div>
-  </section>`;
-
+function stratBlockClient(){
+  let h = '';
   // Simple client / adviser details — strategy papers need far less than an ROA
   h += `<div class="card">
     <h2>Client & Adviser Details</h2>
@@ -17469,21 +17450,16 @@ function renderStrategyBuilder(){
     </div>
   </div>`;
 
-  // One card per selected strategy paper — either a text-based editor, modelling input panel, or portfolio modelling
-  selectedScenarios.forEach((id, pi) => {
-    // Portfolio scenario — dynamic properties + per-property actions
-    if(PORTFOLIO_SCENARIOS[id]){
-      h += renderPortfolioPaperInputs(id, pi);
-      return;
-    }
-    // Modelling scenario — render an input form with live-computed values
-    if(MODELLING_SCENARIOS[id]){
-      h += renderModellingPaperInputs(id, pi);
-      return;
-    }
+  return h;
+}
+
+function renderStrategyPaperCard(id, pi){
+  if(PORTFOLIO_SCENARIOS[id]) return renderPortfolioPaperInputs(id, pi);
+  if(MODELLING_SCENARIOS[id]) return renderModellingPaperInputs(id, pi);
+  let h = '';
     // Text-based strategy paper — original editor
     const sp = F.strategyPapers?.[id];
-    if(!sp) return;
+    if(!sp) return '';
     h += `<div class="card" id="sp-card-${pi}">
       <h2>${e(sp.title || STRATEGY_PAPERS[id]?.label || id)}</h2>
       <div class="card-sub">Edit the title, intro and sections below. Tokens like {name}, {amount}, {invPlatform}, {riskProfile} will be substituted with your values.</div>
@@ -17559,17 +17535,86 @@ function renderStrategyBuilder(){
     h += `<button class="add-inline" onclick="(F.strategyPapers['${id}'].sections=F.strategyPapers['${id}'].sections||[]).push({heading:'New section',body:['']});render()">+ Add new section</button>
       </div>
     </div>`;
+  return h;
+}
+
+function renderStrategyBuilder(){
+  // Safety net — make sure state is initialised (in case user navigates via topbar)
+  initStrategyPaperState();
+
+  // Wizard steps: client details first, then one step per selected paper —
+  // same layout as the NWF builder, with the hideable live preview panel.
+  const steps = [{k:'client', l:'Client & Adviser Details', render: stratBlockClient}];
+  selectedScenarios.forEach((id, pi) => {
+    const tpl = STRATEGY_PAPERS[id] || MODELLING_SCENARIOS[id] || PORTFOLIO_SCENARIOS[id];
+    const label = (F.strategyPapers && F.strategyPapers[id] && F.strategyPapers[id].title) || (tpl && (tpl.label || tpl.title)) || id;
+    steps.push({k:'paper-'+id, l:label, render: () => renderStrategyPaperCard(id, pi)});
   });
+  if(wizardStep >= steps.length) wizardStep = steps.length - 1;
+  if(wizardStep < 0) wizardStep = 0;
+  const cur = steps[wizardStep];
 
-  // Floating buttons
-  h += `<button class="floating-back-btn" onclick="page='picker';render();window.scrollTo(0,0)" title="Back to Scenarios">
-    <span class="fb-arrow">←</span><span>Scenarios</span>
-  </button>`;
-  h += `<button class="floating-preview-btn" onclick="page='preview';render();window.scrollTo(0,0)" title="Preview at any time">
-    <span>Preview</span><span class="fp-arrow">→</span>
-  </button>`;
+  let h = `<main class="main builder-main-wide">`;
+  h += `<section class="hero" style="min-height:90px;padding:16px 20px">
+    <div class="hero-inner">
+      <div class="hero-left">
+        <div class="hero-sub">Step 2 of 3 · Strategy Paper · Build Content</div>
+        <h1>${e(getFullClientName()||'Strategy Paper')}</h1>
+        <div class="hero-tag">${selectedScenarios.map(id => {
+          const s = STRATEGY_PAPERS[id] || MODELLING_SCENARIOS[id] || PORTFOLIO_SCENARIOS[id];
+          return s ? `<span class="badge lime">${e(s.label||s.title||id)}</span>` : '';
+        }).join(' ')}</div>
+      </div>
+      <div class="hero-right">
+        <button class="hero-btn" onclick="page='preview';render()">Preview →</button>
+        <button class="hero-btn ghost" onclick="page='picker';render()">← Back to Scenarios</button>
+      </div>
+    </div>
+  </section>`;
 
-  h += `</main>`;
+  h += `<div class="wizard-wrap ${livePreviewOn ? 'with-preview' : ''}">`;
+  h += `<aside class="wizard-side"><div class="wizard-steps-v">
+    <div class="sidebar-page-heading" style="margin:2px 4px 6px">Strategy paper steps</div>`;
+  steps.forEach((s, i) => {
+    h += `<button class="wizard-step ${i === wizardStep ? 'current' : 'todo'}" onclick="wizardStep=${i};render();window.scrollTo(0,0)">
+      <span class="ws-dot">${i + 1}</span>
+      <span class="ws-label">${e(s.l)}</span>
+    </button>`;
+  });
+  h += `</div>
+    <button class="btn btn-sm" style="width:100%;margin-top:10px" onclick="toggleLivePreview()">${livePreviewOn ? '✕ Hide live preview' : '👁 Show live preview'}</button>
+  </aside>`;
+
+  h += `<div class="builder-single-column wizard-main" style="width:100%">`;
+  h += `<div class="page-separator">
+    <span class="page-separator-num">Step ${wizardStep + 1} of ${steps.length}</span>
+    <span class="page-separator-label">${e(cur.l)}</span>
+  </div>`;
+  h += cur.render();
+  h += `<div class="wizard-nav">
+    ${wizardStep > 0
+      ? `<button class="btn" onclick="wizardStep--;render();window.scrollTo(0,0)">← ${e(steps[wizardStep - 1].l)}</button>`
+      : `<button class="btn" onclick="page='picker';render();window.scrollTo(0,0)">← Scenarios</button>`}
+    <span class="wizard-nav-mid">Step ${wizardStep + 1} of ${steps.length}</span>
+    ${wizardStep < steps.length - 1
+      ? `<button class="btn btn-blue" onclick="wizardStep++;render();window.scrollTo(0,0)">Next: ${e(steps[wizardStep + 1].l)}</button>`
+      : `<button class="btn btn-green" onclick="page='preview';render();window.scrollTo(0,0)">Finish → Preview</button>`}
+  </div>`;
+  h += `</div>`;
+
+  if(livePreviewOn){
+    h += `<aside class="wizard-preview">
+      <div class="wizard-preview-head">
+        <span style="font-weight:700;font-size:12px">Live preview</span>
+        <span class="text-xs text-muted">updates as you type</span>
+        <span style="flex:1"></span>
+        <button class="btn btn-xs" onclick="page='preview';render()" title="Open the full-size preview page">⛶ Full</button>
+        <button class="btn btn-xs" onclick="toggleLivePreview()" title="Hide the preview panel">✕ Hide</button>
+      </div>
+      <div class="wizard-preview-scroll"><div class="preview-doc wizard-preview-doc">${renderStrategyDocHTML()}</div></div>
+    </aside>`;
+  }
+  h += `</div></main>`;
   return h;
 }
 
@@ -17586,28 +17631,10 @@ function moveStrategySection(id, idx, dir){
 // ═══════════════════════════════════════════════════════════
 // RENDER: STRATEGY PAPER PREVIEW
 // ═══════════════════════════════════════════════════════════
-function renderStrategyPreview(){
-  let h = `<main class="main">`;
-  h += `<section class="hero" style="min-height:90px;padding:16px 20px">
-    <div class="hero-inner">
-      <div class="hero-left">
-        <div class="hero-sub">Step 3 of 3 · Preview</div>
-        <h1>Strategy Paper — Preview</h1>
-        <div class="hero-tag">${e(getFullClientName()||'')}</div>
-      </div>
-      <div class="hero-right">
-        <button class="hero-btn" onclick="exportStrategyPaperDocx()">📥 Download Word Doc</button>
-        <button class="hero-btn ghost" onclick="exportRoaJson()" title="Save this document's data as a .json file — named the same as the Word export — so you can reopen and keep working on it later.">💾 Save (JSON)</button>
-        <label class="hero-btn ghost" title="Load a previously-saved .json working file." style="cursor:pointer">📂 Load (JSON)
-          <input type="file" accept=".json,application/json" style="display:none" onchange="importRoaJson(this)">
-        </label>
-        <button class="hero-btn ghost" onclick="page='builder';render()">← Back to Builder</button>
-      </div>
-    </div>
-  </section>`;
-
-  // Render each strategy paper
-  h += `<div class="preview-wrap"><div class="preview-doc" id="preview-doc">`;
+// Document HTML — shared by the full preview page and the wizard live preview,
+// rendered with the same NWF Template v1 branding as the exported Word file.
+function renderStrategyDocHTML(){
+  let h = '';
 
   // Build a unified list of papers — each is either text-based (sp), modelling-based (with computed values), or portfolio (dynamic sections)
   const papers = selectedScenarios.map(id => {
@@ -17687,7 +17714,31 @@ function renderStrategyPreview(){
     <p style="font-size:10px;line-height:1.5;font-style:italic">The information provided in this document has been provided as general advice only and are forward looking estimates only. We have not formalised the advice, and in the future when we are ready to pursue this, we will consider your financial circumstances, needs or objectives in full. You should seek the assistance of your GPS Wealth Limited (GPS) Adviser before you make any decision regarding any products mentioned in this communication. Whilst all care has been taken in the preparation of this material, no warranty is given in respect of the information provided and accordingly neither GPS nor its related entities, employees or agents shall be liable on any ground whatsoever with respect to decisions or actions taken as a result of you acting upon such information.</p>`;
   });
 
-  h += `</div></div>`;
+  return h;
+}
+
+function renderStrategyPreview(){
+  let h = `<main class="main">`;
+  h += `<section class="hero" style="min-height:90px;padding:16px 20px">
+    <div class="hero-inner">
+      <div class="hero-left">
+        <div class="hero-sub">Step 3 of 3 · Preview</div>
+        <h1>Strategy Paper — Preview</h1>
+        <div class="hero-tag">${e(getFullClientName()||'')}</div>
+      </div>
+      <div class="hero-right">
+        <button class="hero-btn" onclick="exportStrategyPaperDocx()">📥 Download Word Doc</button>
+        <button class="hero-btn ghost" onclick="exportRoaJson()" title="Save this document's data as a .json file — named the same as the Word export — so you can reopen and keep working on it later.">💾 Save (JSON)</button>
+        <label class="hero-btn ghost" title="Load a previously-saved .json working file." style="cursor:pointer">📂 Load (JSON)
+          <input type="file" accept=".json,application/json" style="display:none" onchange="importRoaJson(this)">
+        </label>
+        <button class="hero-btn ghost" onclick="page='builder';render()">← Back to Builder</button>
+      </div>
+    </div>
+  </section>`;
+
+  // Render each strategy paper
+  h += `<div class="preview-wrap"><div class="preview-doc" id="preview-doc">` + renderStrategyDocHTML() + `</div></div>`;
 
   // Floating buttons
   h += `<button class="floating-back-btn" onclick="page='builder';render();window.scrollTo(0,0)">
