@@ -622,7 +622,6 @@
 
         .account-box strong{color:#0066cc;font-weight:700}
 
-        .fc-section{page-break-before:always}
 
         /* =======================================================
            INTERFACE EXTRAS
@@ -674,7 +673,6 @@
             .preview-panel{box-shadow:none;border:none;padding:0;border-radius:0}
             .preview-content{padding:0;max-height:none;overflow:visible;background-color:white}
             .doc-section{page-break-inside:avoid}
-            .fc-section{page-break-before:always}
         }
 
         ::-webkit-scrollbar{width:8px}
@@ -3122,7 +3120,7 @@
                 + 'li { margin-bottom: 2px; }'
                 + 'strong { color: #333; }'
                 + 'svg { max-width: 100%; height: auto; }'
-                + '.fc-section { page-break-before: always; }'
+                + '.fc-section { page-break-inside: avoid; }'
                 + '.footer-doc { text-align: center; font-size: 9pt; color: #888; padding: 15px 0; border-top: 2px solid #8fafd4; margin-top: 20px; }'
                 + '@media print { body { padding: 0; margin: 0; } .pdf-wrap { padding: 10px 20px; } .no-print { display: none !important; } }'
                 + '</style></head><body>'
@@ -3275,7 +3273,7 @@
                 + 'li { margin: 0; mso-margin-top-alt: 0; mso-margin-bottom-alt: 0; }'
                 + 'strong { color: #333; font-weight: 700; }'
                 + '.footer-doc { text-align: center; font-size: 9pt; color: #888; padding: 15px 0; border-top: 2px solid #8fafd4; margin-top: 25px; }'
-                + '.fc-section { page-break-before: always; margin: 0; padding: 10px 0; }'
+                + '.fc-section { page-break-inside: avoid; margin: 0; padding: 10px 0; }'
                 + 'svg { max-width: 100%; height: auto; }'
                 + '</style></head><body>'
                 + '<div class="WordSection1">'
@@ -4599,7 +4597,6 @@
                     var t = n.tagName.toLowerCase();
                     if (t === 'span' || t === 'strong' || t === 'b' || t === 'em' || t === 'i' || t === 'a' || t === 'br') { inline.push(n); return; }
                     flush();
-                    if (/fc-section/.test(n.className || '')) ctx.pageBreak = true;
                     convertBlock(n, out, ctx);
                 });
                 flush();
