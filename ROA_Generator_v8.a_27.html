@@ -1185,7 +1185,7 @@ const cloneCare = () => {
   return CARE_ROWS.map(r => ({...r}));
 };
 
-const APP_VERSION = "v8.a_26";
+const APP_VERSION = "v8.a_27";
 
 const INSURERS=["ClearView","ClearView ClearChoice","NEOS","NEOS Protect","Zurich","Zurich Wealth Protection","AIA","MLC","Acenda","TAL","MetLife","MetLife Protect","Resolution Life","OnePath","BT","Australian Super","AMP Super","AMP Signature Super","REST","Hostplus","QSuper","Other"];
 // Map a full insurer/product string to just the provider brand for use in body text
@@ -13322,41 +13322,51 @@ function parseOnePathQuoteRoa(text){
 // premium folded in as the personal-cashflow portion), and the Income Cover
 // with waiting/benefit period + Superannuation Contribution Option.
 function parseMetlifeInforceEmailRoa(text){
-  if(!/MetLife/i.test(text) || !/Policy Alteration Quote/i.test(text) || !/PROPOSED COVERS/i.test(text)) return null;
+  if(!/MetLife|auprotect/i.test(text) || !/Policy Alteration Quote/i.test(text) || !/PROPOSED COVERS/i.test(text)) return null;
   const money = s => parseFloat(String(s||'').replace(/[$,]/g,''))||0;
   const fmtW = n => '$' + Math.round(n).toLocaleString('en-AU');
-  const parts = text.split(/Policy Number:/i).slice(1);
+  const parts = text.split(/Policy Number:?/i).slice(1);
   if(!parts.length) return null;
   const people = {};   // first name → accumulated policy data
   const order = [];
   parts.forEach(part => {
-    const insM = part.match(/P[SN]\d{6,}\s*\t([A-Za-z'’\- ]+)/);
-    if(!insM) return;
-    const insured = insM[1].trim();
+    // Gmail-printed quotes wrap fields across lines — all matching runs on a
+    // whitespace-flattened view so both the tabbed and the wrapped layouts read.
+    const flat = part.replace(/\s+/g, ' ');
+    let insured = '';
+    let m = flat.match(/Life Insured\s+([A-Z][A-Za-z'’\- ]+?)\s+(?:Policy Owner|DOB|PROPOSED)/);
+    if(m) insured = m[1].trim();
+    if(!insured){ m = part.match(/P[SN]\d{6,}\s*\t([A-Za-z'’\- ]+)/); if(m) insured = m[1].trim(); }
+    if(!insured) return;
     const first = insured.split(/\s+/)[0];
     if(!people[first]){ people[first] = {insured, life:null, tpd:null, ip:null, sco:0, ownOccMo:0, struct:''}; order.push(first); }
     const P = people[first];
-    const head = part.split(/PROPOSED COVERS/i)[0] || '';
-    const body = (part.split(/PROPOSED COVERS/i).slice(1).join(' ') || '').split(/Insurance premiums paid|The information contained/i)[0];
+    const head = flat.split(/PROPOSED COVERS/i)[0] || flat;
+    const body = (flat.split(/PROPOSED COVERS/i).slice(1).join(' ') || '').split(/Insurance premiums paid|We.re here to help|The information contained/i)[0];
     const inSuper = /Equity Trustees|Superannuation Limited|Superannuation Fund/i.test(head);
-    const yearly = /Payment frequency\s*Yearly/i.test(part);
+    const yearly = /Payment frequency\s*Yearly/i.test(flat);
     const mo = v => yearly ? v/12 : v;
-    const lifeM = body.match(/^Life\t\$([\d,]+)\t([A-Za-z]+)\t\$([\d,.]+)/m);
-    const tpdM = body.match(/^TPD[^\t\n]*\t\$([\d,]+)\t[A-Za-z]+\t\$([\d,.]+)/m);
-    const ipM = body.match(/(\d+)\s*Days?\s*WP,?\s*To Age\s*(\d+)\s*BP\t\$([\d,]+)\t[A-Za-z]+\t\$([\d,.]+)/);
-    const scoM = body.match(/Superannuation Contribution Option\s*\$([\d,]+)/);
-    const ownM = body.match(/^Own Occupation \(Linked to TPD\)\t[A-Za-z]+\t\$([\d,.]+)/m);
-    const totM = body.match(/Total premium \(Excl\.?\s*Stamp duty\)\s*\$([\d,.]+)/i);
+    const lifeM = body.match(/\bLife\s+\$([\d,.]+)\s+(Stepped|Level|Optimal)\s+\$([\d,.]+)/);
+    const tpdM = body.match(/\bTPD[^$]{0,30}\$([\d,.]+)\s+(?:Stepped|Level|Optimal)\s+\$([\d,.]+)/);
+    const ipM = body.match(/Income Cover[^$]{0,80}\$([\d,.]+)\s+(?:Stepped|Level|Optimal)\s+\$([\d,.]+)/);
+    const wpM = body.match(/(\d+)\s*Days?\s*WP/i) || body.match(/WP\s*(\d+)\s*Days?/i);
+    const bpAgeM = body.match(/To Age\s*(\d+)/i);
+    const bpYrM = body.match(/BP\s*(\d+)\s*Years?/i) || body.match(/(\d+)\s*Years?\s*BP/i);
+    const scoM = body.match(/Superannuation Contribution Option\s*\$([\d,.]+)/i);
+    const ownM = body.match(/Own Occupation(?:\s*\(Linked to TPD\))?\s*(?:Stepped|Level|Optimal)?\s*\$([\d,.]+)/i);
+    const totM = body.match(/Total premium\s*(?:\(Excl[^)]*\)\s*)?\$([\d,.]+)/i);
     if(lifeM){ P.life = {amt:money(lifeM[1]), premMo:mo(money(lifeM[3])), inSuper}; P.struct = lifeM[2]; }
     if(tpdM){ P.tpd = {amt:money(tpdM[1]), premMo:mo(money(tpdM[2])), inSuper}; }
     if(ipM){
       // IP premium = everything income-related in this policy (income cover +
       // claim indexation + super contribution option) = total − life − tpd.
-      const ipPremAnnualish = totM ? (money(totM[1]) - (lifeM?money(lifeM[3]):0) - (tpdM?money(tpdM[2]):0)) : money(ipM[4]);
-      P.ip = {wp: ipM[1]+' days', bp: 'To Age '+ipM[2], amt: money(ipM[3]), premMo: mo(ipPremAnnualish), inSuper};
+      const ipPrem = totM ? (money(totM[1]) - (lifeM?money(lifeM[3]):0) - (tpdM?money(tpdM[2]):0)) : money(ipM[2]);
+      P.ip = {wp: wpM ? wpM[1]+' days' : '', bp: bpAgeM ? 'To Age '+bpAgeM[1] : (bpYrM ? bpYrM[1]+' years' : ''), amt: money(ipM[1]), premMo: mo(ipPrem), inSuper};
     }
     if(scoM) P.sco = money(scoM[1]);
-    if(ownM) P.ownOccMo = mo(money(ownM[1]));
+    // The little ordinary Own-Occupation superlink policy is its own block
+    // holding ONLY that cover.
+    if(ownM && !lifeM && !tpdM && !ipM) P.ownOccMo = mo(money(ownM[1]));
   });
   const rows = [];
   order.forEach(first => {
