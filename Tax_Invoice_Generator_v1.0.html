@@ -21196,6 +21196,14 @@ function impMatchAdviser(names){
   }
   return surnameOnly;
 }
+/* Display an adviser name from the report without middle names — the
+   roster name where it matches, otherwise first + last name */
+function impShortAdviser(nm){
+  const m = impMatchAdviser(new Set([nm]));
+  if(m) return m.name;
+  const p = String(nm).trim().split(/\s+/);
+  return p.length > 2 ? p[0] + ' ' + p[p.length-1] : String(nm).trim();
+}
 function impDraft(idx){
   const g = IMP.groups[idx];
   if(!g) return;
@@ -21268,11 +21276,20 @@ function renderImport(){
     </div>`;
 
     const q = (IMP.filter||'').trim().toLowerCase();
+    const advSel = IMP.advFilter || '';
+    /* distinct adviser names appearing in the report (FY groups only) */
+    const advNames = [...new Set(IMP.groups.filter(g=>g.totalFY>0).flatMap(g=>[...g.advisers]))].sort();
     const visible = IMP.groups.filter(g => g.totalFY > 0 &&
+      (!advSel || g.advisers.has(advSel)) &&
       (!q || (g.name + ' ' + [...g.advisers].join(' ')).toLowerCase().includes(q)));
+    const filteredTotal = visible.reduce((a,g)=>a+g.totalFY,0);
     h += `<div class="cs-toolbar">
       <input id="impSearch" placeholder="🔎 Search client group or adviser…" value="${e(IMP.filter||'')}" oninput="IMP.filter=this.value;render()">
-      <span style="font-size:11px;color:var(--text-muted)">${visible.length} of ${IMP.groups.filter(g=>g.totalFY>0).length} groups</span>
+      <select onchange="IMP.advFilter=this.value;render()" style="padding:8px 12px;font-size:12px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);font-family:var(--bf)">
+        <option value="">All advisers (${advNames.length})</option>
+        ${advNames.map(a=>`<option value="${e(a)}" ${advSel===a?'selected':''}>${e(impShortAdviser(a))}</option>`).join('')}
+      </select>
+      <span style="font-size:11px;color:var(--text-muted)">${visible.length} of ${IMP.groups.filter(g=>g.totalFY>0).length} groups${(advSel||q)?` · filtered total <b>${money(r2(filteredTotal))}</b>`:''}</span>
     </div>`;
     if(!visible.length){
       h += `<div class="card" style="text-align:center;color:var(--text-muted)">${q ? 'No client groups match your search.' : 'No payments found in the selected financial year — check the date column mapping or pick a different year.'}</div>`;
@@ -21285,7 +21302,7 @@ function renderImport(){
         const done = IMP.drafted.has(g.name);
         h += `<tr>
           <td><b>${e(g.name)}</b></td>
-          <td>${e([...g.advisers].join(', '))}</td>
+          <td>${e([...new Set([...g.advisers].map(impShortAdviser))].join(', '))}</td>
           <td style="text-align:right">${g.count}</td>
           <td style="text-align:right;font-weight:700">${money(r2(g.totalFY))}</td>
           <td style="text-align:right">${money(r2(g.totalAll))}</td>
@@ -22241,7 +22258,7 @@ function renderGuide(){
     <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Totals, the s8-1 / s25-5 split, per-client amounts for couples, and a validation list. Errors (weights ≠ 100%, super &gt; total, no strategies) should be fixed; warnings are judgment flags to document in the file note.</p></div>
   <div class="card"><h3 style="font-family:var(--bf)!important">5 · Export</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-top:4px">The invoice wording is standardised — no customisation needed. Export as a branded Word document or print to PDF, copy a plain-text summary or ready-made SoA disclosure text, and save the inputs as a JSON client file to re-load next year.</p></div>
-  <div class="card"><h3 style="font-family:var(--bf)!important">The tax framework in 30 seconds</h3>
+  <div class="card"><h3 style="font-family:var(--bf)!important">The tax framework</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-top:4px"><b>s8-1 ITAA 1997</b> — deductible to the extent the fee is incurred in gaining or producing assessable income: typically ongoing management of an existing income-producing portfolio, income-protection premiums advice, deductible-debt (gearing) management.<br><br>
     <b>s25-5 ITAA 1997</b> — deductible to the extent the fee is for managing the client's tax affairs: tax (financial) advice such as CGT planning, salary sacrifice, contribution deductibility, structuring. Only available where the advice is provided by a <b>recognised tax adviser</b> — a registered tax agent or a Qualified Tax Relevant Provider (QTRP) registered with ASIC.<br><br>
     <b>Not deductible</b> — capital or private advice: establishing new portfolios, non-deductible debt, budgeting, estate planning, most personal insurance.<br><br>
