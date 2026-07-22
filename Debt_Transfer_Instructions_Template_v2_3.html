@@ -547,11 +547,12 @@
         .key-point{
             background-color:#EAF4FB;
             border:none;
-            padding:8px 12px;
-            margin:6px 0;
+            padding:6px 10px;
+            margin:4px 0;
             border-radius:9px;
-            font-size:9.5pt;
+            font-size:9pt;
         }
+        .key-point p{font-size:9pt;margin-bottom:4px}
 
         .preview-content table{
             width:100%;
@@ -2865,7 +2866,7 @@
                     var pathwayTextY = hasStrategy ? stratBoxY + 110 : strategySectionStart + 35;
                     var totalHeight = pathwayTextY + 34;
 
-                    var svg = '<svg viewBox="0 0 780 ' + totalHeight + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:Nunito,sans-serif;">';
+                    var svg = '<svg viewBox="0 0 780 ' + totalHeight + '" xmlns="http://www.w3.org/2000/svg" style="width:92%;max-width:700px;height:auto;display:block;margin:0 auto;font-family:Nunito,sans-serif;">';
                     svg += '<defs>';
                     svg += '<linearGradient id="fcBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + BG1 + '"/><stop offset="1" stop-color="' + BG2 + '"/></linearGradient>';
                     svg += '<radialGradient id="fcGlowC" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="rgba(245,106,90,0.08)"/><stop offset="1" stop-color="rgba(245,106,90,0)"/></radialGradient>';
@@ -3110,7 +3111,7 @@
                 + '.doc-section h3 { font-family: "ABC Arizona Flare", Georgia, serif; color: #0066cc; font-size: 1.1em; margin: 10px 0 6px 0; }'
                 + '.doc-section p { margin: 0 0 8px 0; font-size: 9.5pt; }'
                 + '.highlight-box { background-color: #EAF4FB; padding: 12px; margin: 8px 0; border: none; border-radius: 6px; font-size: 9.5pt; }'
-                + '.key-point { background-color: #EAF4FB; padding: 7px 10px; margin: 4px 0; border: none; border-radius: 6px; font-size: 9.5pt; }'
+                + '.key-point { background-color: #EAF4FB; padding: 5px 9px; margin: 3px 0; border: none; border-radius: 6px; font-size: 9pt; }'
                 + '.warning { background-color: #fff3cd; padding: 12px; margin: 10px 0; border-left: 4px solid #ffc107; border-radius: 6px; }'
                 + 'table { width: 90%; border-collapse: collapse; font-size: 8.5pt; margin: 8px 0; }'
                 + 'table th { background-color: #0078D4; color: white; padding: 4px 5px; text-align: left; font-weight: 700; font-size: 8pt; }'
@@ -3219,9 +3220,9 @@
                             var pngData = canvas.toDataURL('image/png');
                             var imgTag = document.createElement('img');
                             imgTag.src = pngData;
-                            var dispW = 600, dispH = Math.round(600 * h / w);
+                            var dispW = 540, dispH = Math.round(540 * h / w);
                             imgTag.setAttribute('width', dispW); imgTag.setAttribute('height', dispH);
-                            imgTag.style.cssText = 'width:6.25in;height:auto;display:block;margin:0 auto;';
+                            imgTag.style.cssText = 'width:5.6in;height:auto;display:block;margin:0 auto;';
                             if (svg.parentNode) svg.parentNode.replaceChild(imgTag, svg);
                         } catch(e) {
                             console.log('Canvas error', e);
@@ -3264,7 +3265,7 @@
                 + '.doc-section h3 { font-family: "ABC Arizona Flare", Georgia, serif; color: #0066cc; font-size: 11pt; margin: 12px 0 8px 0; font-weight: normal; }'
                 + '.doc-section p { margin: 0 0 10px 0; font-size: 9.5pt; line-height: 1.6; }'
                 + '.highlight-box { background-color: #EAF4FB; padding: 15px; margin: 10px 0; border: none; font-size: 9.5pt; }'
-                + '.key-point { background-color: #EAF4FB; padding: 7px 10px; margin: 4px 0; border: none; font-size: 9.5pt; }'
+                + '.key-point { background-color: #EAF4FB; padding: 5px 9px; margin: 3px 0; border: none; font-size: 9pt; }'
                 + '.warning { background-color: #fff3cd; padding: 12px; margin: 10px 0; border-left: 4px solid #ffc107; }'
                 + 'table { width: 100%; border-collapse: collapse; mso-cellspacing: 0cm; font-size: 9pt; margin: 10px 0; word-wrap: break-word; table-layout: fixed; margin-left: 0; text-align: left; }'
                 + 'table th { background-color: #0C2E3F; color: white; padding: 6px 9px; text-align: left; font-family: "ABC Arizona Flare", Georgia, serif; font-weight: normal; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.5px; border: none; }'
@@ -3429,7 +3430,7 @@
                             ctx.scale(2, 2); ctx.drawImage(img, 0, 0, w, h);
                             var png = canvas.toDataURL('image/png');
                             var it = document.createElement('img');
-                            it.src = png; it.setAttribute('width', '600'); it.setAttribute('height', String(Math.round(600 * h / w))); it.style.cssText = 'width:100%;max-width:600px;height:auto;display:block;';
+                            it.src = png; it.setAttribute('width', '540'); it.setAttribute('height', String(Math.round(540 * h / w))); it.style.cssText = 'width:100%;max-width:540px;height:auto;display:block;';
                             if (svg.parentNode) svg.parentNode.replaceChild(it, svg);
                         } catch (e) { if (svg.parentNode) svg.parentNode.removeChild(svg); }
                         URL.revokeObjectURL(bUrl);
@@ -4436,10 +4437,13 @@
                 nodes.forEach(function (n) { holder.appendChild(n.cloneNode(true)); });
                 runsFrom(holder, inh, runs);
                 if (!runs.length) return null;
-                return new D.Paragraph(Object.assign({ children: runs, spacing: { after: 120 } }, opts || {}));
+                var po = Object.assign({}, opts || {});
+                var after = (po.after != null) ? po.after : 120;
+                delete po.after;
+                return new D.Paragraph(Object.assign({ children: runs, spacing: { after: after } }, po));
             }
 
-            function shadedBoxTable(fill, children) {
+            function shadedBoxTable(fill, children, tight) {
                 return new D.Table({
                     width: { size: 100, type: D.WidthType.PERCENTAGE },
                     borders: noBorder,
@@ -4447,7 +4451,7 @@
                         children: [new D.TableCell({
                             borders: noBorder,
                             shading: { fill: fill, type: D.ShadingType.CLEAR, color: 'auto' },
-                            margins: { top: 70, bottom: 70, left: 150, right: 150 },
+                            margins: { top: tight ? 40 : 70, bottom: tight ? 40 : 70, left: tight ? 120 : 150, right: tight ? 120 : 150 },
                             children: children.length ? children : [new D.Paragraph('')]
                         })]
                     })]
@@ -4553,16 +4557,20 @@
                 if (tag === 'p') {
                     var align = /text-align:\s*center/.test(st) ? D.AlignmentType.CENTER : undefined;
                     var color = dtParseColor((st.match(/(?:^|;)\s*color:\s*([^;]+)/) || [])[1]);
-                    var p = paraFromInline(Array.prototype.slice.call(el.childNodes), { color: color, size: dtSizeHalfPt((st.match(/font-size:\s*([^;]+)/) || [])[1], 19) }, { alignment: align, pageBreakBefore: pb });
+                    var p = paraFromInline(Array.prototype.slice.call(el.childNodes), { color: color, size: dtSizeHalfPt((st.match(/font-size:\s*([^;]+)/) || [])[1], ctx.runSize || 19) }, { alignment: align, pageBreakBefore: pb, after: ctx.paraAfter });
                     if (p) out.push(p);
                     return;
                 }
                 if (/highlight-box|key-point|step-box|warning|account-box/.test(cls)) {
                     var fill = /warning/.test(cls) ? 'FFF3CD' : /step-box/.test(cls) ? 'F8FAFC' : 'EAF4FB';
+                    var isKP = /key-point/.test(cls);
+                    var pSize = ctx.runSize, pAfter = ctx.paraAfter;
+                    if (isKP) { ctx.runSize = 18; ctx.paraAfter = 20; }
                     var inner = [];
                     convertChildren(el, inner, ctx);
-                    out.push(shadedBoxTable(fill, inner));
-                    out.push(new D.Paragraph({ spacing: { before: 0, after: 20 }, children: [new D.TextRun({ text: ' ', size: 4 })] }));
+                    ctx.runSize = pSize; ctx.paraAfter = pAfter;
+                    out.push(shadedBoxTable(fill, inner, isKP));
+                    out.push(new D.Paragraph({ spacing: { before: 0, after: isKP ? 10 : 20 }, children: [new D.TextRun({ text: ' ', size: 4 })] }));
                     return;
                 }
                 if (/cta-section/.test(cls)) {
@@ -4587,7 +4595,7 @@
                 var inline = [];
                 function flush() {
                     if (!inline.length) return;
-                    var p = paraFromInline(inline, {}, {});
+                    var p = paraFromInline(inline, { size: ctx.runSize }, { after: ctx.paraAfter });
                     if (p) out.push(p);
                     inline = [];
                 }
@@ -4699,7 +4707,7 @@
                             x.scale(2, 2); x.drawImage(img, 0, 0, w, h);
                             var it = document.createElement('img');
                             it.src = c.toDataURL('image/png');
-                            it.setAttribute('width', '620'); it.setAttribute('height', String(Math.round(620 * h / w)));
+                            it.setAttribute('width', '540'); it.setAttribute('height', String(Math.round(540 * h / w)));
                             if (svg.parentNode) svg.parentNode.replaceChild(it, svg);
                         } catch (e) { if (svg.parentNode) svg.parentNode.removeChild(svg); }
                         URL.revokeObjectURL(url); mark();
