@@ -21191,6 +21191,9 @@ function impCompute(){
     });
     g.upFY = up;
     g.ongFY = g.totalFY - up;
+    /* monthly debits should mean at most 12 recurring payments per FY —
+       more suggests duplicated schedules or catch-up runs worth checking */
+    g.recCount = m.recur >= 0 ? g.pays.filter(p => p.hasRec === true).length : g.pays.length;
     delete g.pays;
   });
   IMP.groups = [...groups.values()].sort((a,b) => b.totalFY - a.totalFY);
@@ -21345,7 +21348,7 @@ function renderImport(){
         const gi = IMP.groups.indexOf(g);
         const done = IMP.drafted.has(g.name);
         h += `<tr>
-          <td><b>${e(g.name)}</b>${g.maxSingle >= 5000 ? ` <span class="s25-note" title="This group includes a single payment of ${money(r2(g.maxSingle))} — verify it is an advice fee (not e.g. an insurance premium or other payment) before invoicing">⚠ ${money(r2(g.maxSingle))} single payment</span>`:''}</td>
+          <td><b>${e(g.name)}</b>${g.maxSingle >= 5000 ? ` <span class="s25-note" title="This group includes a single payment of ${money(r2(g.maxSingle))} — verify it is an advice fee (not e.g. an insurance premium or other payment) before invoicing">⚠ ${money(r2(g.maxSingle))} single payment</span>`:''}${g.recCount > 12 ? ` <span class="s25-note" title="${g.recCount} recurring payments in the financial year — monthly debits should mean at most 12. Check for duplicated schedules, catch-up runs or a mid-year fee change before invoicing">⚠ ${g.recCount} recurring payments</span>`:''}</td>
           <td>${e([...new Set([...g.advisers].map(impShortAdviser))].join(', '))}</td>
           <td style="text-align:right">${g.count}</td>
           <td style="text-align:right">${money(r2(g.ongFY||0))}</td>
