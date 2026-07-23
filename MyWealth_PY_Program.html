@@ -478,6 +478,20 @@ html[data-theme="dark"] .badge.navy{color:var(--navy-deep)}
 .ns-progress .label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)}
 .ns-progress b{font-family:var(--hf);font-size:15px;color:var(--heading)}
 .ns-progress .progress{flex:1;min-width:160px}
+/* Share-with-supervisor flow */
+.share-flow{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:6px}
+@media(max-width:820px){.share-flow{grid-template-columns:1fr}}
+.share-step{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column}
+.share-step-h{font-family:var(--hf);font-size:14px;font-weight:700;color:var(--heading);display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.share-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:12px;font-weight:700;flex-shrink:0}
+.share-step-p{font-size:12px;color:var(--text-dim);line-height:1.5;margin-bottom:10px;flex:1}
+.share-step .btn{width:100%}
+/* Shared-copy banner */
+.shared-banner{display:flex;align-items:flex-start;gap:12px;background:var(--blue-light);border:1px solid var(--blue);border-radius:12px;padding:12px 16px;margin-bottom:16px}
+.shared-banner .sbi{font-size:20px;line-height:1}
+.shared-banner b{color:var(--heading)}
+.shared-banner-body{flex:1;font-size:12.5px;line-height:1.5;color:var(--text-dim)}
+.shared-banner .btn{flex-shrink:0}
 .measure-reasons{margin:6px 0 0;padding-left:18px;font-size:11.5px;color:var(--text-dim);line-height:1.6}
 /* Quarter entry / exit readiness criteria */
 .readiness{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -3667,15 +3681,12 @@ const Actions = {
     a.href = url; a.download = `mywealth_py_${safeName}_${todayISO()}.json`;
     a.click(); URL.revokeObjectURL(url);
   },
-  exportShareableHTML() {
-    // Bake the current state into a fresh, self-contained copy of this HTML file.
-    // Anyone can open the downloaded file on any device/browser and see these
-    // edits as the starting point — and keep editing (their changes save to
-    // their own browser). __PRISTINE_HTML__ is the app shell captured at load.
+  // Build and download a self-contained HTML copy with the given state baked in.
+  _downloadShareable(stateObj, filename) {
     try {
       // Escape every "<" so a stray closing-script sequence inside the data
       // can't prematurely terminate the embedded script tag.
-      const json = JSON.stringify(Store.getState()).replace(/</g, '\\u003c');
+      const json = JSON.stringify(stateObj).replace(/</g, '\\u003c');
       // Match the marker slot whatever it currently holds (null in the master
       // file, or a prior baked-in state) so re-exporting a shared copy works too.
       const markerRe = /window\.__EMBEDDED_STATE__=[\s\S]*?;\/\*EMBED_STATE_MARKER\*\//;
@@ -3684,12 +3695,59 @@ const Actions = {
       const blob = new Blob([html], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      const p = Store.getState().profile;
-      const safeName = (p.candidateName || 'shared').replace(/[^a-zA-Z0-9-]/g, '_');
-      a.href = url; a.download = `MyWealth_PY_Program_${safeName}_${todayISO()}.html`;
+      a.href = url; a.download = filename;
       a.click(); URL.revokeObjectURL(url);
     } catch (e) { alert('Export failed: ' + e.message); }
   },
+  exportShareableHTML() {
+    // Bake the current state into a fresh, self-contained copy of this HTML file.
+    const safeName = (Store.getState().profile.candidateName || 'shared').replace(/[^a-zA-Z0-9-]/g, '_');
+    Actions._downloadShareable(Store.getState(), `MyWealth_PY_Program_${safeName}_${todayISO()}.html`);
+  },
+  exportForSupervisor() {
+    // Same self-contained copy, but opened straight into Supervisor mode and
+    // flagged as a review copy so the supervisor knows to sign off and send back.
+    const live = Store.getState();
+    const st = JSON.parse(JSON.stringify(live));
+    st.ui = st.ui || {};
+    st.ui.role = 'supervisor';
+    st.sharedMeta = { role: 'supervisor', by: (live.profile.candidateName || 'Candidate'), at: todayISO(), dir: 'to-supervisor' };
+    const safeName = (live.profile.candidateName || 'candidate').replace(/[^a-zA-Z0-9-]/g, '_');
+    Actions._downloadShareable(st, `MyWealth_PY_for_supervisor_${safeName}_${todayISO()}.html`);
+  },
+  exportForCandidate() {
+    // Supervisor sends the reviewed copy back — opens in Candidate mode.
+    const live = Store.getState();
+    const st = JSON.parse(JSON.stringify(live));
+    st.ui = st.ui || {};
+    st.ui.role = 'candidate';
+    st.sharedMeta = { role: 'candidate', by: (live.profile.supervisorName || 'Supervisor'), at: todayISO(), dir: 'to-candidate' };
+    const safeName = (live.profile.candidateName || 'candidate').replace(/[^a-zA-Z0-9-]/g, '_');
+    Actions._downloadShareable(st, `MyWealth_PY_returned_${safeName}_${todayISO()}.html`);
+  },
+  importSharedHTML(file) {
+    // Pull the baked-in state out of a shared HTML copy and load it into THIS
+    // browser — this is how the loop closes (e.g. a candidate pulling their
+    // supervisor's sign-offs back in). Replaces the current data.
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const text = String(reader.result || '');
+        const m = text.match(/window\.__EMBEDDED_STATE__=([\s\S]*?);\/\*EMBED_STATE_MARKER\*\//);
+        if (!m || m[1].trim() === 'null') throw new Error('No shared data found in that file. Use a copy made with “Export shareable / for supervisor”.');
+        const obj = JSON.parse(m[1]);
+        if (!obj.schemaVersion) throw new Error('That file does not contain a valid PY dataset.');
+        const who = (obj.sharedMeta && obj.sharedMeta.by) ? obj.sharedMeta.by : (file.name || 'shared file');
+        if (!confirm('Load the data from this shared copy? This replaces the PY data currently in this browser.\n\nFrom: ' + who)) return;
+        delete obj.sharedMeta;
+        Store.replace(obj);
+        Store.mutate(s => pushAudit(s, 'Data imported from shared copy', 'State replaced from "' + (file.name || 'shared.html') + '"', { cat:'data' }));
+        alert('Loaded. Your view now reflects the shared copy.');
+      } catch (e) { alert('Import failed: ' + e.message); }
+    };
+    reader.readAsText(file);
+  },
+  dismissSharedBanner() { Store.mutate(s => { if (s.sharedMeta) s.sharedMeta.dismissed = true; }); },
   importJSON(file) {
     const reader = new FileReader();
     reader.onload = () => {
@@ -3748,7 +3806,19 @@ const Views = {
     const curQ = CONTENT.quarters.find(q => q.number === currentQ) || CONTENT.quarters[0];
     const openCrit = critical.filter(c => !c.done);
     const overall = Derived.overallPct();
+    const sm = s.sharedMeta;
+    const sharedBanner = (sm && !sm.dismissed) ? `
+      <div class="shared-banner">
+        <span class="sbi">${sm.dir === 'to-candidate' ? '↩︎' : '🤝'}</span>
+        <div class="shared-banner-body">
+          ${sm.dir === 'to-candidate'
+            ? `<b>Reviewed copy returned by ${esc(sm.by || 'your supervisor')}.</b> Review the sign-offs, competency ratings and feedback added here. To pull these changes into your own working copy on another device, use <b>Settings → Load a shared/returned copy</b>.`
+            : `<b>Supervisor review copy from ${esc(sm.by || 'the candidate')}.</b> You're in <b>Supervisor mode</b> — add your sign-offs, competency ratings and feedback, then go to <b>Settings → Send the reviewed copy back</b> to return it.`}
+        </div>
+        <button class="btn btn-ghost btn-sm" data-action="dismiss-shared-banner">Dismiss</button>
+      </div>` : '';
     return `
+    ${sharedBanner}
     <div class="hero">
       <div class="hero-inner">
         <div class="hero-left">
@@ -5223,8 +5293,28 @@ const Views = {
 
     <div class="grid grid-2">
       <div class="card card-accent" style="grid-column:1/-1;border-left:4px solid var(--blue)">
-        <div class="card-header"><div><h3>📤 Share a copy (with your edits baked in)</h3><div class="subtitle">Downloads a single self-contained HTML file that already contains everything you've entered and edited. Send it to anyone — they open it on their own device/browser, see your changes, and can keep editing (their edits save to their browser). Note: if they've opened a copy in that browser before, their existing data is kept instead.</div></div></div>
-        <button class="btn btn-primary" data-action="export-shareable">📤 Download shareable HTML</button>
+        <div class="card-header"><div><h3>🤝 Share with your supervisor (or anyone)</h3><div class="subtitle">Each button downloads one self-contained HTML file with everything you've entered baked in. The recipient opens it on their own device/browser, sees your work, and can keep editing (their changes save to their browser). To pull a returned copy's changes back in, use <b>Load a shared/returned copy</b> below.</div></div></div>
+        <div class="share-flow">
+          <div class="share-step">
+            <div class="share-step-h"><span class="share-num">1</span> Candidate → Supervisor</div>
+            <p class="share-step-p">Send your PY to your supervisor for review. Opens straight into <b>Supervisor mode</b> so they can add sign-offs, competency ratings and feedback.</p>
+            <button class="btn btn-primary btn-sm" data-action="export-supervisor">📤 Export a copy for my supervisor</button>
+          </div>
+          <div class="share-step">
+            <div class="share-step-h"><span class="share-num">2</span> Supervisor → Candidate</div>
+            <p class="share-step-p">Once you've added your sign-offs, send it back. Opens in <b>Candidate mode</b> for the candidate to continue.</p>
+            <button class="btn btn-secondary btn-sm" data-action="export-candidate">↩︎ Send the reviewed copy back</button>
+          </div>
+          <div class="share-step">
+            <div class="share-step-h"><span class="share-num">3</span> Load a shared/returned copy</div>
+            <p class="share-step-p">Already have data in this browser? Opening a shared file keeps your own data. Use this to pull the shared copy's changes in instead (replaces this browser's data).</p>
+            <input type="file" accept="text/html,.html" id="importSharedInput" style="margin-bottom:8px;display:block;width:100%">
+            <button class="btn btn-secondary btn-sm" data-action="import-shared">📥 Load a shared/returned copy</button>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+          <button class="btn btn-ghost btn-sm" data-action="export-shareable">📤 Or just download a plain shareable copy (keeps current mode)</button>
+        </div>
       </div>
       <div class="card">
         <div class="card-header"><div><h3>Export</h3><div class="subtitle">Download a JSON snapshot of everything.</div></div></div>
@@ -5648,6 +5738,14 @@ const App = {
         else if (a === 'recalc-dates') Actions.recalcDates();
         else if (a === 'export') Actions.exportJSON();
         else if (a === 'export-shareable') Actions.exportShareableHTML();
+        else if (a === 'export-supervisor') Actions.exportForSupervisor();
+        else if (a === 'export-candidate') Actions.exportForCandidate();
+        else if (a === 'dismiss-shared-banner') Actions.dismissSharedBanner();
+        else if (a === 'import-shared') {
+          const f = document.getElementById('importSharedInput');
+          if (f && f.files[0]) Actions.importSharedHTML(f.files[0]);
+          else alert('Choose a shared .html copy first.');
+        }
         else if (a === 'add-dev-action') Actions.addDevAction(act.getAttribute('data-quarter'));
         else if (a === 'del-dev-action') { if (confirm('Delete this development action?')) Actions.deleteDevAction(act.getAttribute('data-id')); }
         else if (a === 'sign-module') Actions.signModule(act.getAttribute('data-module'));
