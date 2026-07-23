@@ -1082,6 +1082,7 @@ body.edit-mode .edit-target:focus{
   background:rgba(255,107,107,.08);
 }
 body.edit-mode #editToggleBtn{ background:var(--coral); border-color:var(--coral); }
+.kind-select{width:auto!important;flex:0 0 auto;font-family:var(--bf);font-size:10.5px;font-weight:700;padding:3px 6px;border:1px dashed var(--coral);border-radius:8px;background:var(--surface);color:var(--text);cursor:pointer}
 #editToolbar{
   position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
   z-index:9999; display:flex; align-items:center; gap:12px;
@@ -3236,6 +3237,7 @@ function seedState() {
     supervisorChecks: {},
     holdingBack: { initial: '', q1: '', q2: '', q3: '', q4: '' },
     contentOverrides: {},
+    milestoneKindOverride: {},
     editPasswordHash: '',
     ui: { theme: 'light', role: 'candidate', compQuarter: 'q1' }
   };
@@ -3540,6 +3542,7 @@ const Store = (() => {
       if (!s.openModules) s.openModules = {};
       if (!s.holdingBack) s.holdingBack = { initial:'', q1:'', q2:'', q3:'', q4:'' };
       if (!s.contentOverrides) s.contentOverrides = {};
+      if (!s.milestoneKindOverride) s.milestoneKindOverride = {};
       if (typeof s.editPasswordHash !== 'string') s.editPasswordHash = '';
       CONTENT.quarters.forEach(q => {
         (q.trainingModules || []).forEach(m => {
@@ -3609,12 +3612,20 @@ const Derived = {
   //   critical  -> Mandatory PY gate (legal requirement; failing it blocks progression)
   //   req       -> MyWealth capability standard
   //   otherwise -> Development activity
-  milestoneKind(m) {
-    if (m.critical) return { key:'gate', label:'PY Gate', cls:'gate', tip:'Mandatory legal PY requirement — a gate that can block progression or completion.' };
-    // Observation / shadowing / mock / workshop activities are development, even where flagged required.
+  MILESTONE_KINDS: {
+    gate: { key:'gate', label:'PY Gate', cls:'gate', tip:'Mandatory legal PY requirement — a gate that can block progression or completion.' },
+    std:  { key:'std',  label:'MyWealth Standard', cls:'std', tip:'A MyWealth capability standard — expected performance during the PY.' },
+    dev:  { key:'dev',  label:'Development', cls:'dev', tip:'A development activity — valuable exposure, not a hard gate. Exposure varies with client flow.' }
+  },
+  // Classify a milestone. An explicit per-milestone override (set in Edit mode) wins;
+  // otherwise it's derived from the content flags.
+  milestoneKind(m, key) {
+    const ov = key && Store.getState().milestoneKindOverride && Store.getState().milestoneKindOverride[key];
+    if (ov && Derived.MILESTONE_KINDS[ov]) return Derived.MILESTONE_KINDS[ov];
+    if (m.critical) return Derived.MILESTONE_KINDS.gate;
     const isDev = /(observ|shadow|\bmock\b|workshop)/i.test(m.t || '');
-    if (m.req && !isDev) return { key:'std', label:'MyWealth Standard', cls:'std', tip:'A MyWealth capability standard — expected performance during the PY.' };
-    return { key:'dev', label:'Development', cls:'dev', tip:'A development activity — valuable exposure, not a hard gate. Exposure varies with client flow.' };
+    if (m.req && !isDev) return Derived.MILESTONE_KINDS.std;
+    return Derived.MILESTONE_KINDS.dev;
   },
   kindProgress() {
     const ms = Store.getState().milestones;
@@ -3622,7 +3633,7 @@ const Derived = {
     CONTENT.quarters.forEach(q => {
       if (q.optional) return; // exclude optional Q5/Q6 extensions from core progress
       q.milestones.forEach((m, idx) => {
-        const k = Derived.milestoneKind(m).key;
+        const k = Derived.milestoneKind(m, `${q.id}_${idx}`).key;
         out[k].total++;
         if (ms[`${q.id}_${idx}`] && ms[`${q.id}_${idx}`].done) out[k].done++;
       });
@@ -3879,6 +3890,13 @@ const Actions = {
     Store.mutate(s => { s.editPasswordHash = ''; });
     alert('Edit password removed.');
   },
+  setMilestoneKind(key, kind) {
+    Store.mutate(s => {
+      if (!s.milestoneKindOverride) s.milestoneKindOverride = {};
+      if (kind) s.milestoneKindOverride[key] = kind; else delete s.milestoneKindOverride[key];
+      pushAudit(s, 'Milestone reclassified', milestoneTitleByKey(key) + ' → ' + ((Derived.MILESTONE_KINDS[kind]||{}).label || kind), { cat:'milestone', to: kind });
+    });
+  },
   saveContentOverride(key, value, orig) {
     Store.mutateSilent(s => {
       if (!s.contentOverrides) s.contentOverrides = {};
@@ -3887,9 +3905,9 @@ const Actions = {
     });
   },
   resetContentOverrides() {
-    if (!confirm('Reset ALL your text edits back to the original wording? This cannot be undone.')) return;
-    Store.mutate(s => { s.contentOverrides = {}; });
-    alert('All text edits reset.');
+    if (!confirm('Reset ALL your text edits and milestone reclassifications back to the originals? This cannot be undone.')) return;
+    Store.mutate(s => { s.contentOverrides = {}; s.milestoneKindOverride = {}; });
+    alert('All edits reset.');
   },
   toggleModule(id) { Store.mutate(s => { const nv = !s.modulesDone[id].done; s.modulesDone[id].done = nv; pushAudit(s, 'Module content ' + (nv ? 'completed' : 'reopened'), moduleTitleById(id), { cat:'module', from: !nv, to: nv }); }); },
   // Assessment record — text/select fields persist silently (no flicker); the pass toggle re-renders the status.
@@ -4781,11 +4799,17 @@ const Views = {
                 <input type="checkbox" ${ms.done?'checked':''} data-milestone-check="${key}">
                 <span class="milestone-title">${esc(m.t)}</span>
                 <span class="milestone-target">${esc(m.tg)}</span>
-                ${(() => { const k = Derived.milestoneKind(m); return `<span class="badge ${k.cls}" data-tip="${esc(k.tip)}">${k.label}</span>`; })()}
+                ${(() => {
+                  const k = Derived.milestoneKind(m, key);
+                  if (EditMode.active) {
+                    return `<select class="kind-select" data-milestone-kind="${key}" onclick="event.stopPropagation()">${['gate','std','dev'].map(kk => `<option value="${kk}" ${k.key===kk?'selected':''}>${Derived.MILESTONE_KINDS[kk].label}</option>`).join('')}</select>`;
+                  }
+                  return `<span class="badge ${k.cls}" data-tip="${esc(k.tip)}">${k.label}</span>`;
+                })()}
                 <span class="milestone-arrow">▶</span>
               </div>
               <div class="milestone-body">
-                <div>${esc(m.b)}</div>
+                <div class="md-desc">${esc(m.b)}</div>
                 ${m.ref ? `<span class="ref" data-tip="Cite this source in your logbook and SOA paperwork — click through to Resources for the authoritative version">📎 ${esc(m.ref)}</span>` : ''}
                 ${ms.proof ? `<div class="proof-note"><b>📎 Evidence on file</b>${esc(ms.proof)}${ms.proofDate ? `<div class="proof-date">Confirmed ${fmtDate(ms.proofDate)}</div>` : ''}</div>` : ''}
                 <label class="field" style="margin-top:10px"><span>My notes</span><textarea data-milestone-note="${key}" placeholder="Notes, evidence locations, dates..." style="min-height:50px">${esc(ms.note||'')}</textarea></label>
@@ -5777,7 +5801,7 @@ const Views = {
 const EditMode = {
   active: false,
   // Leaf-text elements that are safe to edit in place.
-  SELECTOR: 'h1,h2,h3,h4,h5,p,li,td,th,blockquote,.tagline,.subtitle,.desc,.name,.ot-title,.ot-meta,.milestone-title,.badge,.card-inner-hint,.breadcrumb,.attention-title',
+  SELECTOR: 'h1,h2,h3,h4,h5,p,li,td,th,blockquote,.tagline,.subtitle,.desc,.name,.ot-title,.ot-meta,.milestone-title,.milestone-target,.md-desc,.tick-item span,.badge,.card-inner-hint,.breadcrumb,.attention-title,.hero-tag,.hero-sub,.gm-tag,.gm-body,.intro-title,.intro-body,.gate-pill-title,.gate-pill-sub,.assess-label,.lvl-label,.workshop-q,.value-pill-text,.session-flag,.sc-name,.sc-desc',
   _hash(str) {
     let h = 0;
     for (let i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) | 0; }
@@ -5842,7 +5866,7 @@ const EditMode = {
     if (!bar) {
       bar = document.createElement('div');
       bar.id = 'editToolbar';
-      bar.innerHTML = `<span class="et-label">✏️ Edit mode — click any text to change it</span>
+      bar.innerHTML = `<span class="et-label">✏️ Edit mode — click any text to change it; use the dropdown on a milestone to reclassify it</span>
         <button class="btn btn-sm btn-ghost" data-action="reset-edits">↩︎ Reset edits</button>
         <button class="btn btn-sm btn-primary" data-action="exit-edit">Done</button>`;
       document.body.appendChild(bar);
@@ -6205,6 +6229,8 @@ const App = {
         Actions.toggleReadiness(qid, phase, Number(idx), rdChk.checked);
         return;
       }
+      const mKind = e.target.closest('[data-milestone-kind]');
+      if (mKind) { Actions.setMilestoneKind(mKind.getAttribute('data-milestone-kind'), mKind.value); return; }
       const refMeta = e.target.closest('[data-refmeta]');
       if (refMeta) { const [qid, field] = refMeta.getAttribute('data-refmeta').split(':'); Actions.setReflectionMeta(qid, field, refMeta.value); return; }
       const actField = e.target.closest('[data-actfield]');
