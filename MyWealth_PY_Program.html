@@ -3742,7 +3742,7 @@ const Actions = {
       confirmClass: 'btn-blue',
       bodyHTML: `
         <p style="margin-bottom:12px">Before marking this complete, confirm you have <b>saved a record of proof</b> that verifies it — a file note, certificate, email, screenshot or logbook entry. Describe what the proof is and where it is saved; it becomes a note on this milestone.</p>
-        <label class="field"><span>Proof / evidence note</span><textarea id="mProof" placeholder="e.g. ASIC exam pass email saved in SharePoint › PY › Exams (12 Mar 2026)">${esc(m.proof || '')}</textarea></label>
+        <label class="field"><span>Proof / evidence note</span><textarea id="mProof" placeholder="e.g. ASIC exam pass email sent to PY Manager and saved in employee folder in gdrive">${esc(m.proof || '')}</textarea></label>
         <label class="modal-check"><input type="checkbox" id="mConfirm"><span>I confirm a record of this proof has been saved and can be produced on request.</span></label>
         <div class="modal-err" id="mErr"></div>`,
       onConfirm: (root) => {
@@ -3963,6 +3963,13 @@ const Actions = {
     Store.mutate(s => {
       if (!s.moduleChecks[modId]) s.moduleChecks[modId] = {};
       if (val) s.moduleChecks[modId][key] = true; else delete s.moduleChecks[modId][key];
+      // 'Content completed' is derived: auto-tick only when every sub-item is ticked.
+      const st = moduleItemsStatusFor(modId);
+      if (st.total > 0 && s.modulesDone[modId]) {
+        const was = !!s.modulesDone[modId].done;
+        s.modulesDone[modId].done = st.allDone;
+        if (st.allDone && !was) pushAudit(s, 'Module content completed', moduleTitleById(modId) + ' (all items ticked)', { cat:'module', to:true });
+      }
     });
   },
   setSignoffTick(modId, idx, val) {
@@ -4873,9 +4880,6 @@ const Views = {
           const checks = (s.moduleChecks && s.moduleChecks[m.id]) || {};
           const signoff = (s.signoffState && s.signoffState[m.id]) || {ticks:{},name:'',date:''};
           const asmt = md.assessment || {};
-          const st3 = { content: !!md.done, assess: !!asmt.passed, verified: !!signoff.signed };
-          st3.stepsDone = (st3.content?1:0) + (st3.assess?1:0) + (st3.verified?1:0);
-          const allDone3 = st3.content && st3.assess && st3.verified;
           const isCustom = customMods.some(c => c.id === m.id);
           const isOpen = !!open[m.id];
           const customSecs = (s.customSections?.[m.id] || []);
@@ -4890,6 +4894,11 @@ const Views = {
             for (let ii=0; ii<total; ii++) if (checks[si+'_'+ii]) mDone++;
           });
           const mPct = mItems ? Math.round(mDone/mItems*100) : 0;
+          // Content completed is derived from the sub-items: auto-ticks only when all are ticked.
+          const contentDone = mItems > 0 ? (mDone === mItems) : !!md.done;
+          const st3 = { content: contentDone, assess: !!asmt.passed, verified: !!signoff.signed };
+          st3.stepsDone = (st3.content?1:0) + (st3.assess?1:0) + (st3.verified?1:0);
+          const allDone3 = st3.content && st3.assess && st3.verified;
           return `
           <div class="module" data-module-id="${m.id}">
             <div class="module-head" data-toggle-module="${m.id}">
@@ -4937,8 +4946,8 @@ const Views = {
               <button class="btn btn-sm btn-secondary" data-action="add-section" data-module="${m.id}" style="margin-top:8px">＋ Add section</button>
 
               <div class="row" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);gap:16px;flex-wrap:wrap">
-                <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600" data-tip="Step 1 of 3 — you've worked through the module content.">
-                  <input type="checkbox" data-module-done="${m.id}" ${md.done?'checked':''}> Content completed
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600" data-tip="${mItems>0 ? 'Auto-completes when all '+mItems+' sub-items above are ticked — can\\'t be set manually.' : 'Mark the content complete.'}">
+                  <input type="checkbox" ${mItems>0 ? 'disabled' : `data-module-done="${m.id}"`} ${st3.content?'checked':''}> Content completed${mItems>0 ? ` <span style="font-weight:400;color:var(--text-muted)">(auto · ${mDone}/${mItems} ticked)</span>` : ''}
                 </label>
                 <span style="font-size:11px;color:var(--text-muted)">⏱️ Log any training hours in the <b>PY portal</b>, not here.</span>
                 ${isCustom ? `<button class="btn btn-sm btn-ghost" data-action="delete-module" data-module="${m.id}" style="color:var(--red);margin-left:auto">🗑 Delete module</button>` : ''}
@@ -6359,6 +6368,25 @@ function moduleTitleById(id) {
 function moduleTagFor(m) {
   const ov = Store.getState().moduleTagOverride || {};
   return ov[m.id] || m.tag || 'core';
+}
+// Total vs ticked sub-items for a module (across base + custom sections/items).
+function moduleItemsStatusFor(modId) {
+  const s = Store.getState();
+  let mdef = null;
+  for (const q of CONTENT.quarters) { for (const m of (q.trainingModules || [])) { if (m.id === modId) mdef = m; } }
+  if (!mdef) { for (const qid in (s.customModules || {})) { for (const m of (s.customModules[qid] || [])) { if (m.id === modId) mdef = m; } } }
+  const checks = (s.moduleChecks && s.moduleChecks[modId]) || {};
+  const baseSections = (mdef && mdef.sections) || [];
+  const customSecs = (s.customSections && s.customSections[modId]) || [];
+  const allSections = [...baseSections, ...customSecs];
+  let total = 0, done = 0;
+  allSections.forEach((sec, si) => {
+    const base = (sec.items || []).length;
+    const custom = ((s.customItems && s.customItems[modId] && s.customItems[modId][si]) || []).length;
+    const t = base + custom; total += t;
+    for (let ii = 0; ii < t; ii++) if (checks[si + '_' + ii]) done++;
+  });
+  return { total, done, allDone: total > 0 && done === total };
 }
 function competencyLabelByKey(key) {
   const [di, ii] = String(key).split('_');
