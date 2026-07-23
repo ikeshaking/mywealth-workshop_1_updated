@@ -128,10 +128,11 @@ a:hover{text-decoration:underline}
 #app{min-height:100vh;display:flex;flex-direction:column}
 
 .topbar{
-  display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:20px;
-  padding:10px 24px;background:var(--chrome);border-bottom:1px solid var(--chrome-deep);
+  display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;
+  padding:10px 18px;background:var(--chrome);border-bottom:1px solid var(--chrome-deep);
   position:sticky;top:0;z-index:50;
 }
+.top-actions{min-width:0}
 .brand{
   font-family:var(--hf)!important;font-size:20px;font-weight:700;color:#fff;
   display:flex;align-items:center;gap:8px;cursor:pointer;letter-spacing:-.02em;
@@ -141,7 +142,7 @@ a:hover{text-decoration:underline}
 
 .topnav{display:flex;gap:2px;align-items:center;justify-content:center}
 .topnav a{
-  padding:7px 13px;font-size:12px;font-weight:600;color:rgba(255,255,255,.75);
+  padding:7px 10px;font-size:12px;font-weight:600;color:rgba(255,255,255,.75);
   text-decoration:none;border-radius:11px;cursor:pointer;transition:all .12s;white-space:nowrap;
 }
 .topnav a:hover{background:rgba(255,255,255,.1);color:#fff;text-decoration:none}
@@ -169,7 +170,9 @@ html[data-theme="dark"] .topnav a.active{background:var(--blue);color:#0f1820}
   border-radius:10px;cursor:pointer;font-size:16px;color:#fff;
 }
 
-@media(max-width:1080px){
+/* Hide the decorative brand tag before things get tight */
+@media(max-width:1300px){ .brand-sub{display:none} }
+@media(max-width:1240px){
   .topbar{grid-template-columns:1fr auto;padding:10px 16px;gap:8px}
   .topnav{display:none}
   .topnav.open{
@@ -179,7 +182,6 @@ html[data-theme="dark"] .topnav a.active{background:var(--blue);color:#0f1820}
   }
   .topnav.open a{padding:10px 14px;border-radius:10px;width:100%}
   .main{padding:16px!important}
-  .brand-sub{display:none}
   .menu-btn{display:block}
 }
 
@@ -721,6 +723,21 @@ td input,td select{padding:5px 7px;font-size:11px}
 .lvl-detail ol{margin:0;padding-left:20px;font-size:11px;color:var(--text-dim);line-height:1.5}
 .lvl-detail li{margin-bottom:3px}
 .lvl-detail li b{color:var(--text)}
+/* Change history (audit) list */
+.audit-list{list-style:none;margin:0;padding:0}
+.audit-item{display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border-bottom:1px solid var(--border-soft)}
+.audit-item:last-child{border-bottom:none}
+.audit-icon{font-size:16px;line-height:1.3;flex-shrink:0;width:22px;text-align:center}
+.audit-main{flex:1;min-width:0}
+.audit-action{font-size:12.5px;font-weight:700;color:var(--text);line-height:1.4}
+.audit-delta{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10.5px;font-weight:600;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:1px 6px;margin-left:4px;white-space:nowrap}
+.audit-detail{font-size:11.5px;color:var(--text-dim);line-height:1.5;margin-top:2px}
+.audit-meta{font-size:10.5px;color:var(--text-muted);margin-top:3px}
+/* Role switch on the dark chrome header */
+.topbar .role-switch{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.18)}
+.topbar .role-switch button{color:rgba(255,255,255,.7)}
+.topbar .role-switch button.active{background:#fff;color:var(--chrome)}
+@media(max-width:1500px){.topbar .role-switch{display:none}}
 
 /* Signoff box */
 .signoff{padding:14px;border-radius:8px;background:var(--lime-light);border:1px dashed var(--lime-dark);display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -786,8 +803,8 @@ td input,td select{padding:5px 7px;font-size:11px}
 
 /* ============ GLOBAL SEARCH BAR ============ */
 .global-search{position:relative;margin-right:8px}
-.global-search input{font-family:var(--bf);font-size:12px;padding:6px 10px 6px 30px;width:220px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);transition:width .15s}
-.global-search input:focus{outline:none;border-color:var(--blue);width:300px;box-shadow:0 0 0 3px rgba(13,107,224,.1)}
+.global-search input{font-family:var(--bf);font-size:12px;padding:6px 10px 6px 30px;width:150px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);transition:width .15s}
+.global-search input:focus{outline:none;border-color:var(--blue);width:230px;box-shadow:0 0 0 3px rgba(13,107,224,.1)}
 .global-search::before{content:"🔍";position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:12px;opacity:.55;pointer-events:none}
 .search-panel{position:absolute;top:calc(100% + 6px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;width:460px;max-width:92vw;max-height:60vh;overflow-y:auto;box-shadow:var(--shadow-lg);z-index:100;display:none;padding:8px}
 .search-panel.open{display:block}
@@ -798,7 +815,7 @@ td input,td select{padding:5px 7px;font-size:11px}
 .search-result .sr-title{font-weight:600;color:var(--text);margin-bottom:2px}
 .search-result .sr-ctx{font-size:10px;color:var(--text-muted)}
 .search-empty{padding:20px;text-align:center;color:var(--text-muted);font-size:12px}
-@media(max-width:900px){.global-search{display:none}}
+@media(max-width:1200px){.global-search{display:none}}
 
 /* ============ TOOLTIPS ============ */
 [data-tip]{position:relative;cursor:help;border-bottom:1px dotted var(--text-muted)}
@@ -1068,6 +1085,10 @@ body.edit-mode #editToggleBtn{ background:var(--coral); border-color:var(--coral
       <div class="global-search" id="globalSearch">
         <input type="text" id="searchInput" placeholder="Search milestones, modules, key concepts..." autocomplete="off">
         <div class="search-panel" id="searchPanel"></div>
+      </div>
+      <div class="role-switch" title="Who is using the app — this attributes changes in the history log">
+        <button data-role-set="candidate">Candidate</button>
+        <button data-role-set="supervisor">Supervisor</button>
       </div>
       <span class="save-status" id="saveStatus" title="Your work saves automatically to this browser"><span class="dot"></span><span class="txt">Saved</span></span>
       <button class="theme-toggle" id="editToggleBtn" data-action="edit-toggle" title="Edit content (password)">✏️</button>
@@ -3239,6 +3260,7 @@ function seedState() {
     customResources: [],
     workshopNotes: {},
     quarterReadiness: {},
+    auditLog: [],
     signoffLocked: false,
     signoffPasswordHash: '',
     openModules: {},
@@ -3537,6 +3559,7 @@ const Store = (() => {
       if (!s.customSections) s.customSections = {};
       if (!s.workshopNotes) s.workshopNotes = {};
       if (!s.quarterReadiness) s.quarterReadiness = {};
+      if (!Array.isArray(s.auditLog)) s.auditLog = [];
       if (typeof s.signoffLocked !== 'boolean') s.signoffLocked = false;
       if (typeof s.signoffPasswordHash !== 'string') s.signoffPasswordHash = '';
       if (!s.customResources) s.customResources = [];
@@ -3711,6 +3734,9 @@ const Actions = {
       if (!s.quarterReadiness[qId]) s.quarterReadiness[qId] = { entry:{}, exit:{} };
       if (!s.quarterReadiness[qId][phase]) s.quarterReadiness[qId][phase] = {};
       if (val) s.quarterReadiness[qId][phase][idx] = true; else delete s.quarterReadiness[qId][phase][idx];
+      const q = CONTENT.quarters.find(x => x.id === qId);
+      const crit = q && q[phase] && q[phase][idx] ? q[phase][idx] : (phase + ' #' + (Number(idx)+1));
+      pushAudit(s, (phase === 'entry' ? 'Entry' : 'Exit') + ' criterion ' + (val ? 'confirmed' : 'un-confirmed'), (qId ? qId.toUpperCase() + ' — ' : '') + crit, { cat:'readiness', to: val ? 'confirmed' : 'cleared' });
     });
   },
   // Ticking a milestone requires the candidate to confirm evidence is on file and
@@ -3719,7 +3745,7 @@ const Actions = {
     const s = Store.getState();
     const m = s.milestones[key];
     if (!m) return;
-    if (m.done) { Store.mutate(st => { st.milestones[key].done = false; }); return; }
+    if (m.done) { Store.mutate(st => { st.milestones[key].done = false; pushAudit(st, 'Milestone reopened', milestoneTitleByKey(key), { cat:'milestone', from:'complete', to:'incomplete' }); }); return; }
     Modal.open({
       title: '📎 Confirm evidence of completion',
       sub: 'Milestones can only be ticked once proof is saved.',
@@ -3736,7 +3762,7 @@ const Actions = {
         const err = root.querySelector('#mErr');
         if (!proof) { err.textContent = 'Please describe the proof you have saved.'; return false; }
         if (!conf) { err.textContent = 'Please tick the confirmation box.'; return false; }
-        Store.mutate(st => { const mm = st.milestones[key]; mm.done = true; mm.proof = proof; mm.proofDate = todayISO(); });
+        Store.mutate(st => { const mm = st.milestones[key]; mm.done = true; mm.proof = proof; mm.proofDate = todayISO(); pushAudit(st, 'Milestone completed', milestoneTitleByKey(key) + ' — proof: ' + proof, { cat:'milestone', from:'incomplete', to:'complete' }); });
         return true;
       }
     });
@@ -3785,6 +3811,7 @@ const Actions = {
           const t = st.signoffState[modId] || (st.signoffState[modId] = { ticks:{}, name:'', date:'' });
           t.signed = true; t.signedBy = name; t.signedAt = nowIso; t.name = name; t.date = todayISO();
           t.ticks = { 0:true, 1:true, 2:true, 3:true };
+          pushAudit(st, 'Supervisor sign-off signed', moduleTitleById(modId), { cat:'signoff', actor: 'Supervisor (' + name + ')', to:'signed' });
         });
         return true;
       }
@@ -3792,12 +3819,12 @@ const Actions = {
   },
   async unlockModuleSign(modId) {
     const s = Store.getState();
-    if (!s.signoffPasswordHash) { Store.mutate(st => { const t = st.signoffState[modId]; if (t) t.signed = false; }); return; }
+    if (!s.signoffPasswordHash) { Store.mutate(st => { const t = st.signoffState[modId]; if (t) { const who = t.signedBy; t.signed = false; pushAudit(st, 'Supervisor sign-off revoked', moduleTitleById(modId), { cat:'signoff', actor: who ? 'Supervisor (' + who + ')' : undefined, from:'signed', to:'revoked' }); } }); return; }
     const pin = prompt('Enter the supervisor PIN to amend / revoke this signature:');
     if (!pin) return;
     const hash = await Actions._hash(pin);
     if (hash !== s.signoffPasswordHash) { alert('❌ Incorrect PIN.'); return; }
-    Store.mutate(st => { const t = st.signoffState[modId]; if (t) t.signed = false; });
+    Store.mutate(st => { const t = st.signoffState[modId]; if (t) { const who = t.signedBy; t.signed = false; pushAudit(st, 'Supervisor sign-off revoked', moduleTitleById(modId), { cat:'signoff', actor: who ? 'Supervisor (' + who + ')' : undefined, from:'signed', to:'revoked' }); } });
   },
   setWorkshopNote(key, note) {
     // key format: "modId:idx"
@@ -3890,7 +3917,7 @@ const Actions = {
     Store.mutate(s => { s.contentOverrides = {}; });
     alert('All text edits reset.');
   },
-  toggleModule(id) { Store.mutate(s => { s.modulesDone[id].done = !s.modulesDone[id].done; }); },
+  toggleModule(id) { Store.mutate(s => { const nv = !s.modulesDone[id].done; s.modulesDone[id].done = nv; pushAudit(s, 'Module content ' + (nv ? 'completed' : 'reopened'), moduleTitleById(id), { cat:'module', from: !nv, to: nv }); }); },
   // Assessment record — text/select fields persist silently (no flicker); the pass toggle re-renders the status.
   setModuleAssessment(id, field, val) {
     Store.mutateSilent(s => {
@@ -3904,6 +3931,7 @@ const Actions = {
       const md = s.modulesDone[id] || (s.modulesDone[id] = { done:false, hours:0, notes:'' });
       if (!md.assessment) md.assessment = {};
       md.assessment.passed = val;
+      pushAudit(s, 'Assessment ' + (val ? 'passed' : 'marked not passed'), moduleTitleById(id) + (md.assessment.result ? ' — result: ' + md.assessment.result : ''), { cat:'assessment', from: !val, to: val });
     });
   },
   setModuleHours(id, h) { Store.mutate(s => { s.modulesDone[id].hours = Number(h) || 0; }); },
@@ -4131,7 +4159,7 @@ const Actions = {
     }, 150);
   },
   setReflection(q, v) { Store.mutate(s => { s.reflections[q] = v; }); },
-  setCompetencyScore(key, who, v) { Store.mutate(s => { s.competencyScores[key][who] = Number(v) || 0; }); },
+  setCompetencyScore(key, who, v) { Store.mutate(s => { const prev = s.competencyScores[key][who] || 0; s.competencyScores[key][who] = Number(v) || 0; pushAudit(s, 'Competency rating set (' + who + ')', competencyLabelByKey(key) + ' → Level ' + (Number(v)||0), { cat:'competency', from:'L'+prev, to:'L'+(Number(v)||0) }); }); },
   setSupervisorSignoff(k, v) { Store.mutate(s => { s.supervisorSignoffs[k] = v; }); },
   setSupervisorCheck(k, v) { Store.mutate(s => { s.supervisorChecks[k] = v; }); },
   setTheme(t) { Store.mutate(s => { s.ui.theme = t; }); document.documentElement.setAttribute('data-theme', t); },
@@ -4149,7 +4177,11 @@ const Actions = {
   importJSON(file) {
     const reader = new FileReader();
     reader.onload = () => {
-      try { const obj = JSON.parse(reader.result); if (!obj.schemaVersion) throw new Error('Not a valid backup'); Store.replace(obj); }
+      try {
+        const obj = JSON.parse(reader.result); if (!obj.schemaVersion) throw new Error('Not a valid backup');
+        Store.replace(obj);
+        Store.mutate(s => pushAudit(s, 'Data imported from JSON backup', 'State replaced from file "' + (file.name || 'backup.json') + '"', { cat:'data' }));
+      }
       catch (e) { alert('Import failed: ' + e.message); }
     };
     reader.readAsText(file);
@@ -4176,9 +4208,10 @@ const NAV = [
   { path: 'dashboard', label: 'Dashboard', roles: ['candidate','supervisor'] },
   { path: 'quarters', label: 'Quarters', roles: ['candidate','supervisor'] },
   { path: 'competency', label: 'Competency', roles: ['candidate','supervisor'] },
-  { path: 'approach', label: 'MWS Approach', roles: ['candidate','supervisor'] },
-  { path: 'code', label: 'Code of Ethics', roles: ['candidate','supervisor'] },
+  { path: 'approach', label: 'Approach', roles: ['candidate','supervisor'] },
+  { path: 'code', label: 'Ethics', roles: ['candidate','supervisor'] },
   { path: 'resources', label: 'Resources', roles: ['candidate','supervisor'] },
+  { path: 'history', label: 'History', roles: ['candidate','supervisor'] },
   { path: 'settings', label: 'Settings', roles: ['candidate','supervisor'] }
 ];
 
@@ -5506,6 +5539,62 @@ const Views = {
     `;
   },
 
+  history() {
+    const s = Store.getState();
+    const log = s.auditLog || [];
+    const cats = [
+      { key:'all', label:'All' },
+      { key:'milestone', label:'Milestones' },
+      { key:'module', label:'Modules' },
+      { key:'assessment', label:'Assessments' },
+      { key:'signoff', label:'Sign-offs' },
+      { key:'competency', label:'Competency' },
+      { key:'readiness', label:'Readiness' },
+      { key:'gate', label:'Gates' },
+      { key:'data', label:'Data' }
+    ];
+    const active = s.ui.historyFilter || 'all';
+    const filtered = active === 'all' ? log : log.filter(e => e.cat === active);
+    const catIcon = { milestone:'📎', module:'📘', assessment:'📝', signoff:'✍️', competency:'🎯', readiness:'✅', gate:'🚦', data:'💾', general:'•' };
+    return `
+    <div class="page-head">
+      <div>
+        <div class="breadcrumb">Program · History</div>
+        <h1>Change history</h1>
+        <p class="subtitle">An append-only record of key changes — completions, assessments, sign-offs, ratings and gates — with who made them and when.</p>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-secondary btn-sm" data-action="export">⬇ Export backup</button>
+      </div>
+    </div>
+
+    <div class="alert alert-warn" style="margin-bottom:16px">
+      <span class="icon">⚠️</span>
+      <div><strong>Local record — not tamper-proof.</strong> This history is stored in this browser alongside the data, so it is a convenience trail, not an authenticated system of record. For formal reliance, export a backup regularly and keep the authoritative record in your licensee system.</div>
+    </div>
+
+    <div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      ${cats.map(c => `<button class="btn btn-sm ${active===c.key?'btn-blue':'btn-ghost'}" data-history-filter="${c.key}">${c.label} <span style="opacity:.7">${c.key==='all'?log.length:log.filter(e=>e.cat===c.key).length}</span></button>`).join('')}
+    </div>
+
+    ${filtered.length === 0 ? `<div class="empty"><h3>Nothing logged yet</h3><p>As you complete milestones, pass assessments, sign off modules and rate competencies, each change is recorded here.</p></div>` : `
+    <div class="card" style="padding:0">
+      <ul class="audit-list">
+        ${filtered.slice(0, 400).map(e => `
+          <li class="audit-item">
+            <span class="audit-icon">${catIcon[e.cat] || '•'}</span>
+            <div class="audit-main">
+              <div class="audit-action">${esc(e.action)}${(e.from||e.to) ? ` <span class="audit-delta">${e.from?esc(e.from)+' → ':''}${esc(e.to)}</span>` : ''}</div>
+              ${e.detail ? `<div class="audit-detail">${esc(e.detail)}</div>` : ''}
+              <div class="audit-meta">${esc(e.actor||'—')} · ${fmtDateTime(e.ts)}</div>
+            </div>
+          </li>`).join('')}
+      </ul>
+      ${filtered.length > 400 ? `<div style="padding:10px 16px;font-size:11px;color:var(--text-muted)">Showing the most recent 400 of ${filtered.length} entries. Export a backup for the full log.</div>` : ''}
+    </div>`}
+    `;
+  },
+
   settings() {
     return `
     <div class="page-head">
@@ -5830,6 +5919,7 @@ const App = {
       else if (section === 'approach') html = Views.approach();
       else if (section === 'code') html = Views.code();
       else if (section === 'resources') html = Views.resources();
+      else if (section === 'history') html = Views.history();
       else if (section === 'settings') html = Views.settings();
       else html = `<div class="empty"><h3>Page not found</h3><p>No such route: <code>${esc(location.hash)}</code></p><a class="btn btn-primary" href="#/dashboard">Go to Dashboard</a></div>`;
     } catch (e) {
@@ -5877,6 +5967,10 @@ const App = {
       if (lvlBtn) { const [key, who, n] = lvlBtn.getAttribute('data-lvl').split(':'); Actions.setCompetencyScore(key, who, Number(n)); return; }
       const lvlInfo = e.target.closest('[data-lvlinfo]');
       if (lvlInfo) { const d = document.getElementById('lvld_' + lvlInfo.getAttribute('data-lvlinfo')); if (d) d.hidden = !d.hidden; return; }
+      const histF = e.target.closest('[data-history-filter]');
+      if (histF) { const v = histF.getAttribute('data-history-filter'); Store.mutate(s => { s.ui.historyFilter = v; }); return; }
+      const roleBtn = e.target.closest('[data-role-set]');
+      if (roleBtn) { const r = roleBtn.getAttribute('data-role-set'); Store.mutate(s => { s.ui.role = r; }); document.querySelectorAll('.role-switch button').forEach(b => b.classList.toggle('active', b.getAttribute('data-role-set') === r)); return; }
 
       // Top nav
       const navLink = e.target.closest('[data-nav]');
@@ -6135,7 +6229,56 @@ const App = {
   }
 };
 
+// ============================================================
+//  CHANGE HISTORY (in-app audit log)
+//  A local, append-only record of who changed what, and when.
+//  NOTE: this is a convenience record stored in the same browser as the
+//  data, so it is NOT a tamper-proof system of record. Export regularly.
+// ============================================================
+let __auditSeq = 0;
+function currentActor(s) {
+  const role = (s.ui && s.ui.role) || 'candidate';
+  const nm = role === 'supervisor' ? (s.profile && s.profile.supervisorName) : (s.profile && s.profile.candidateName);
+  return (role === 'supervisor' ? 'Supervisor' : 'Candidate') + (nm ? ' (' + nm + ')' : '');
+}
+function pushAudit(s, action, detail, meta) {
+  meta = meta || {};
+  if (!Array.isArray(s.auditLog)) s.auditLog = [];
+  s.auditLog.unshift({
+    id: 'a' + Date.now().toString(36) + '_' + (__auditSeq++),
+    ts: new Date().toISOString(),
+    actor: meta.actor || currentActor(s),
+    cat: meta.cat || 'general',
+    action: action,
+    detail: detail || '',
+    from: (meta.from === undefined || meta.from === null) ? '' : String(meta.from),
+    to: (meta.to === undefined || meta.to === null) ? '' : String(meta.to)
+  });
+  if (s.auditLog.length > 3000) s.auditLog.length = 3000;
+}
+function milestoneTitleByKey(key) {
+  const parts = String(key).split('_'); const idx = Number(parts.pop()); const qid = parts.join('_');
+  const q = CONTENT.quarters.find(x => x.id === qid);
+  return (q && q.milestones[idx]) ? q.milestones[idx].t : key;
+}
+function moduleTitleById(id) {
+  for (const q of CONTENT.quarters) { for (const m of (q.trainingModules || [])) { if (m.id === id) return m.title; } }
+  return id;
+}
+function competencyLabelByKey(key) {
+  const [di, ii] = String(key).split('_');
+  const dom = CONTENT.competencies[Number(di)];
+  return (dom && dom.items[Number(ii)]) ? dom.items[Number(ii)] : key;
+}
+
 function setPath(path, value) {
+  const gateLabels = {
+    'profile.degreeVerified':'Approved degree verified',
+    'profile.examPassed':'ASIC Financial Adviser Exam passed',
+    'profile.farUpdatedProvisional':'FAR status → Provisional',
+    'profile.finalCertificateIssued':'Final Completion Certificate issued',
+    'profile.farUpdatedFullProvider':'FAR status → Relevant Provider'
+  };
   Store.mutate(s => {
     const keys = path.split('.');
     let obj = s;
@@ -6143,7 +6286,11 @@ function setPath(path, value) {
       if (!(keys[i] in obj)) obj[keys[i]] = {};
       obj = obj[keys[i]];
     }
+    const prev = obj[keys[keys.length - 1]];
     obj[keys[keys.length - 1]] = value;
+    if (gateLabels[path] && prev !== value) {
+      pushAudit(s, 'Regulatory gate ' + (value ? 'ticked' : 'unticked'), gateLabels[path], { cat:'gate', from: prev ? 'ticked' : 'unticked', to: value ? 'ticked' : 'unticked' });
+    }
   });
 }
 
@@ -6225,7 +6372,7 @@ const Modal = {
   const tt = document.getElementById('themeToggle');
   if (tt) tt.textContent = (saved.ui.theme === 'dark') ? '☀️' : '🌙';
   document.querySelectorAll('.role-switch button').forEach(b => {
-    b.classList.toggle('active', b.getAttribute('data-role') === saved.ui.role);
+    b.classList.toggle('active', b.getAttribute('data-role-set') === saved.ui.role);
   });
 
   if (!location.hash) location.hash = '#/dashboard';
