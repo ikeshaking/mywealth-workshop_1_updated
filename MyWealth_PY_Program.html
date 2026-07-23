@@ -3617,7 +3617,7 @@ const Derived = {
   //   req       -> MyWealth capability standard
   //   otherwise -> Development activity
   MILESTONE_KINDS: {
-    gate: { key:'gate', label:'PY Gate', cls:'gate', tip:'Mandatory legal PY requirement — a gate that can block progression or completion.' },
+    gate: { key:'gate', label:'Mandatory', cls:'gate', tip:'Mandatory legal PY requirement that can block progression or completion.' },
     std:  { key:'std',  label:'MyWealth Standard', cls:'std', tip:'A MyWealth capability standard — expected performance during the PY.' },
     dev:  { key:'dev',  label:'Development', cls:'dev', tip:'A development activity — valuable exposure, not a hard gate. Exposure varies with client flow.' }
   },
@@ -4347,7 +4347,7 @@ const Views = {
     <!-- Separate measures — legal gates, MyWealth standards and development kept distinct -->
     <div class="grid grid-4" style="margin-bottom:16px">
       <div class="stat ${critDone === critical.length ? 'ok' : 'warn'}" data-tip="Mandatory legal PY gates (exam, hours logged in the portal, ethical dilemmas, 5-file audit, competency attestation). These override everything.">
-        <div class="label">Mandatory PY gates</div>
+        <div class="label">Mandatory requirements</div>
         <div class="value">${critDone}<span style="font-size:13px;color:var(--text-muted)"> / ${critical.length}</span></div>
         <div class="progress slim" style="margin-top:8px"><div style="width:${critical.length?Math.round(critDone/critical.length*100):0}%;background:var(--red)"></div></div>
       </div>
@@ -4793,7 +4793,7 @@ const Views = {
             <h3>Milestones & deliverables</h3>
             <div class="subtitle">Click a milestone to expand for detail and notes.</div>
             <div class="kind-legend">
-              <span data-tip="Mandatory legal PY requirement — a gate that can block progression or completion."><i class="k-gate"></i>PY Gate</span>
+              <span data-tip="Mandatory legal PY requirement that can block progression or completion."><i class="k-gate"></i>Mandatory</span>
               <span data-tip="A MyWealth capability standard — expected performance during the PY."><i class="k-std"></i>MyWealth Standard</span>
               <span data-tip="A development activity — valuable exposure, not a hard gate."><i class="k-dev"></i>Development</span>
             </div>
@@ -4819,7 +4819,6 @@ const Views = {
               </div>
               <div class="milestone-body">
                 <div class="md-desc">${esc(m.b)}</div>
-                ${m.ref ? `<span class="ref" data-tip="Cite this source in your logbook and SOA paperwork — click through to Resources for the authoritative version">📎 ${esc(m.ref)}</span>` : ''}
                 ${ms.proof ? `<div class="proof-note"><b>📎 Evidence on file</b>${esc(ms.proof)}${ms.proofDate ? `<div class="proof-date">Confirmed ${fmtDate(ms.proofDate)}</div>` : ''}</div>` : ''}
                 <label class="field" style="margin-top:10px"><span>My notes</span><textarea data-milestone-note="${key}" placeholder="Notes, evidence locations, dates..." style="min-height:50px">${esc(ms.note||'')}</textarea></label>
               </div>
