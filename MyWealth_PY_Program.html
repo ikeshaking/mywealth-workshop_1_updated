@@ -1150,11 +1150,17 @@ html[data-theme="dark"] [data-tip]::before{border-top-color:#2a3d52}
   </header>
   <main class="main" id="mainContent"></main>
 </div>
+<script>window.__EMBEDDED_STATE__=null;/*EMBED_STATE_MARKER*/</script>
 <script>
 /* ============================================================
    MyWealth PY Program v2 — redesigned with MyWealth brand
    All data stored locally in browser (localStorage)
 ============================================================ */
+
+// Capture a pristine copy of the page HTML now, before the app renders into it.
+// "Export shareable copy" reuses this to produce a fresh, self-contained HTML
+// file with the current edits baked into the __EMBEDDED_STATE__ slot above.
+const __PRISTINE_HTML__ = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
 
 // Utilities
 const $ = s => document.querySelector(s);
@@ -2939,8 +2945,13 @@ const Store = (() => {
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return null;
-      const s = JSON.parse(raw);
+      // Precedence: this browser's own saved data first; otherwise a state
+      // baked into the file via "Export shareable copy" (so a recipient opening
+      // a shared copy sees the sharer's edits); otherwise a blank seed.
+      let s;
+      if (raw) s = JSON.parse(raw);
+      else if (window.__EMBEDDED_STATE__) s = JSON.parse(JSON.stringify(window.__EMBEDDED_STATE__));
+      else return null;
       const seed = seedState();
       // migrations — backfill new keys
       for (const k in seed.milestones) if (!s.milestones?.[k]) { s.milestones = s.milestones||{}; s.milestones[k] = { done: false, note: '', proof: '', proofDate: '' }; }
@@ -3655,6 +3666,29 @@ const Actions = {
     const safeName = (p.candidateName || 'candidate').replace(/[^a-zA-Z0-9-]/g, '_');
     a.href = url; a.download = `mywealth_py_${safeName}_${todayISO()}.json`;
     a.click(); URL.revokeObjectURL(url);
+  },
+  exportShareableHTML() {
+    // Bake the current state into a fresh, self-contained copy of this HTML file.
+    // Anyone can open the downloaded file on any device/browser and see these
+    // edits as the starting point — and keep editing (their changes save to
+    // their own browser). __PRISTINE_HTML__ is the app shell captured at load.
+    try {
+      // Escape every "<" so a stray closing-script sequence inside the data
+      // can't prematurely terminate the embedded script tag.
+      const json = JSON.stringify(Store.getState()).replace(/</g, '\\u003c');
+      // Match the marker slot whatever it currently holds (null in the master
+      // file, or a prior baked-in state) so re-exporting a shared copy works too.
+      const markerRe = /window\.__EMBEDDED_STATE__=[\s\S]*?;\/\*EMBED_STATE_MARKER\*\//;
+      if (!markerRe.test(__PRISTINE_HTML__)) { alert('Could not prepare shareable copy (marker missing).'); return; }
+      const html = __PRISTINE_HTML__.replace(markerRe, 'window.__EMBEDDED_STATE__=' + json + ';/*EMBED_STATE_MARKER*/');
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const p = Store.getState().profile;
+      const safeName = (p.candidateName || 'shared').replace(/[^a-zA-Z0-9-]/g, '_');
+      a.href = url; a.download = `MyWealth_PY_Program_${safeName}_${todayISO()}.html`;
+      a.click(); URL.revokeObjectURL(url);
+    } catch (e) { alert('Export failed: ' + e.message); }
   },
   importJSON(file) {
     const reader = new FileReader();
@@ -5188,6 +5222,10 @@ const Views = {
     </div>
 
     <div class="grid grid-2">
+      <div class="card card-accent" style="grid-column:1/-1;border-left:4px solid var(--blue)">
+        <div class="card-header"><div><h3>📤 Share a copy (with your edits baked in)</h3><div class="subtitle">Downloads a single self-contained HTML file that already contains everything you've entered and edited. Send it to anyone — they open it on their own device/browser, see your changes, and can keep editing (their edits save to their browser). Note: if they've opened a copy in that browser before, their existing data is kept instead.</div></div></div>
+        <button class="btn btn-primary" data-action="export-shareable">📤 Download shareable HTML</button>
+      </div>
       <div class="card">
         <div class="card-header"><div><h3>Export</h3><div class="subtitle">Download a JSON snapshot of everything.</div></div></div>
         <button class="btn btn-primary" data-action="export">📥 Download JSON backup</button>
@@ -5609,6 +5647,7 @@ const App = {
         else if (a === 'add-dilemma') Actions.addDilemma();
         else if (a === 'recalc-dates') Actions.recalcDates();
         else if (a === 'export') Actions.exportJSON();
+        else if (a === 'export-shareable') Actions.exportShareableHTML();
         else if (a === 'add-dev-action') Actions.addDevAction(act.getAttribute('data-quarter'));
         else if (a === 'del-dev-action') { if (confirm('Delete this development action?')) Actions.deleteDevAction(act.getAttribute('data-id')); }
         else if (a === 'sign-module') Actions.signModule(act.getAttribute('data-module'));
