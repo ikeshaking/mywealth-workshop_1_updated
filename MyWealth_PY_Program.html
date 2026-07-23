@@ -625,6 +625,27 @@ html[data-theme="dark"] .module-head h4{color:var(--navy-deep)}
 .module-body{display:none;padding:0 16px 16px;border-top:1px solid var(--border);margin-top:0;padding-top:14px;font-family:var(--bf)}
 .module-body.open{display:block}
 .module-body h5{font-family:var(--hf);font-size:12px;font-weight:700;color:var(--navy);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.5px}
+/* Module three-status indicator (Content / Assessment / Verified) */
+.mod-status{display:inline-flex;gap:3px;margin-left:8px;vertical-align:middle}
+.mod-status i{width:17px;height:17px;border-radius:5px;font-style:normal;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-2);color:var(--text-faint);border:1px solid var(--border)}
+.mod-status i.on{background:var(--green);color:#fff;border-color:var(--green)}
+/* Assessment block */
+.assessment-block{margin-top:14px;padding:14px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border)}
+.assessment-head{font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.assessment-head .assessment-sub{font-size:9px;font-weight:400;letter-spacing:.4px;text-transform:none;color:var(--text-muted);font-style:italic}
+.assessment-grid{display:grid;grid-template-columns:1.4fr 1fr .7fr 1fr .9fr;gap:10px}
+@media(max-width:760px){.assessment-grid{grid-template-columns:1fr 1fr}}
+.assessment-block .field{margin:0}
+.asmt-pass{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:12px;font-weight:600;color:var(--text)}
+.asmt-pass input{width:16px;height:16px;accent-color:var(--green)}
+.asmt-remediation{margin-top:10px}
+.asmt-remediation > summary{cursor:pointer;font-size:11px;font-weight:700;color:var(--text-muted);list-style:none}
+.asmt-remediation > summary::-webkit-details-marker{display:none}
+.asmt-remediation > summary::before{content:'▶';font-size:8px;margin-right:6px;color:var(--text-muted);display:inline-block;transition:transform .15s}
+.asmt-remediation[open] > summary::before{transform:rotate(90deg)}
+.asmt-remediation .field{margin-top:10px}
+.status-key{display:flex;gap:14px;flex-wrap:wrap;font-size:10px;color:var(--text-muted);margin-top:2px}
+.status-key b{color:var(--text-dim);font-weight:700}
 html[data-theme="dark"] .module-body h5{color:var(--navy-deep)}
 .module-body h5:first-child{margin-top:0}
 .module-body ul{list-style:none;padding:0;margin:0}
@@ -3102,7 +3123,7 @@ function seedState() {
   const signoffState = {};
   CONTENT.quarters.forEach(q => {
     (q.trainingModules || []).forEach(m => {
-      modulesDone[m.id] = { done: false, hours: 0, notes: '' };
+      modulesDone[m.id] = { done: false, hours: 0, notes: '', assessment: { format:'', result:'', attempt:1, assessor:'', date:'', passed:false, remediation:'', reassessment:'' } };
       moduleChecks[m.id] = {};
       signoffState[m.id] = { ticks:{}, name:'', date:'', signed:false, signedBy:'', signedAt:'' };
     });
@@ -3428,6 +3449,8 @@ const Store = (() => {
       for (const k in (s.milestones||{})) { const m = s.milestones[k]; if (m && typeof m.proof !== 'string') m.proof = ''; if (m && typeof m.proofDate !== 'string') m.proofDate = ''; }
       for (const k in seed.competencyScores) if (!s.competencyScores?.[k]) { s.competencyScores = s.competencyScores||{}; s.competencyScores[k] = { candidate: 0, supervisor: 0 }; }
       for (const k in seed.modulesDone) if (!s.modulesDone?.[k]) { s.modulesDone = s.modulesDone||{}; s.modulesDone[k] = { done: false, hours: 0, notes: '' }; }
+      // backfill assessment record on existing modules
+      for (const k in (s.modulesDone||{})) { const md = s.modulesDone[k]; if (md && !md.assessment) md.assessment = { format:'', result:'', attempt:1, assessor:'', date:'', passed:false, remediation:'', reassessment:'' }; }
       if (!s.ui) s.ui = seed.ui;
       if (!s.dilemmas) s.dilemmas = [];
       if (!s.logbook) s.logbook = [];
@@ -3794,6 +3817,21 @@ const Actions = {
     alert('All text edits reset.');
   },
   toggleModule(id) { Store.mutate(s => { s.modulesDone[id].done = !s.modulesDone[id].done; }); },
+  // Assessment record — text/select fields persist silently (no flicker); the pass toggle re-renders the status.
+  setModuleAssessment(id, field, val) {
+    Store.mutateSilent(s => {
+      const md = s.modulesDone[id] || (s.modulesDone[id] = { done:false, hours:0, notes:'' });
+      if (!md.assessment) md.assessment = {};
+      md.assessment[field] = (field === 'attempt') ? (Math.max(1, Number(val) || 1)) : val;
+    });
+  },
+  setModuleAssessmentPass(id, val) {
+    Store.mutate(s => {
+      const md = s.modulesDone[id] || (s.modulesDone[id] = { done:false, hours:0, notes:'' });
+      if (!md.assessment) md.assessment = {};
+      md.assessment.passed = val;
+    });
+  },
   setModuleHours(id, h) { Store.mutate(s => { s.modulesDone[id].hours = Number(h) || 0; }); },
   updateProfile(patch) { Store.mutate(s => { Object.assign(s.profile, patch); }); },
   recalcDates() {
@@ -4687,6 +4725,9 @@ const Views = {
           const md = s.modulesDone[m.id] || { done: false, hours: 0 };
           const checks = (s.moduleChecks && s.moduleChecks[m.id]) || {};
           const signoff = (s.signoffState && s.signoffState[m.id]) || {ticks:{},name:'',date:''};
+          const asmt = md.assessment || {};
+          const st3 = { content: !!md.done, assess: !!asmt.passed, verified: !!signoff.signed };
+          const allDone3 = st3.content && st3.assess && st3.verified;
           const isCustom = customMods.some(c => c.id === m.id);
           const isOpen = !!open[m.id];
           const customSecs = (s.customSections?.[m.id] || []);
@@ -4705,7 +4746,7 @@ const Views = {
           <div class="module" data-module-id="${m.id}">
             <div class="module-head" data-toggle-module="${m.id}">
               <div class="module-icon">${m.icon || '📘'}</div>
-              <h4>${esc(m.title)}${md.done?' <span class="badge ok" style="margin-left:6px">✓</span>':''}</h4>
+              <h4>${esc(m.title)}<span class="mod-status" data-tip="Module completion = Content completed + Assessment passed + Supervisor verified"><i class="${st3.content?'on':''}">C</i><i class="${st3.assess?'on':''}">A</i><i class="${st3.verified?'on':''}">V</i></span>${allDone3?' <span class="badge ok" style="margin-left:4px">✓ Complete</span>':''}</h4>
               <span class="module-tag ${m.tag || 'core'}">${String(m.tag||'core').toUpperCase()}</span>
               <span class="module-meta">${esc(m.duration || '')}</span>
               <span class="module-meta" style="color:var(--blue);font-weight:700">${mDone}/${mItems} · ${mPct}%</span>
@@ -4745,11 +4786,41 @@ const Views = {
               <button class="btn btn-sm btn-secondary" data-action="add-section" data-module="${m.id}" style="margin-top:8px">＋ Add section</button>
 
               <div class="row" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);gap:16px;flex-wrap:wrap">
-                <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600">
-                  <input type="checkbox" data-module-done="${m.id}" ${md.done?'checked':''}> Module completed
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600" data-tip="Step 1 of 3 — you've worked through the module content.">
+                  <input type="checkbox" data-module-done="${m.id}" ${md.done?'checked':''}> Content completed
                 </label>
                 <span style="font-size:11px;color:var(--text-muted)">⏱️ Log any training hours in the <b>PY portal</b>, not here.</span>
                 ${isCustom ? `<button class="btn btn-sm btn-ghost" data-action="delete-module" data-module="${m.id}" style="color:var(--red);margin-left:auto">🗑 Delete module</button>` : ''}
+              </div>
+              <div class="status-key">
+                <span><b>Completion =</b></span>
+                <span><b>C</b> Content completed</span>
+                <span><b>A</b> Assessment passed</span>
+                <span><b>V</b> Supervisor verified</span>
+              </div>
+
+              <div class="assessment-block">
+                <div class="assessment-head">
+                  <span>📝 Assessment <span class="assessment-sub">— capture the assessment evidence and result</span></span>
+                  ${asmt.passed ? '<span class="badge ok">Passed</span>' : '<span class="badge">Not yet passed</span>'}
+                </div>
+                <div class="assessment-grid">
+                  <label class="field"><span>Format</span>
+                    <select data-asmt="${m.id}:format">
+                      ${['','10-question quiz','Written case study','Calculation exercise','File review','Observed client role-play','Recorded presentation','Supervisor questioning','Self-audit exercise'].map(o => `<option value="${esc(o)}" ${(asmt.format||'')===o?'selected':''}>${o?esc(o):'— select —'}</option>`).join('')}
+                    </select>
+                  </label>
+                  <label class="field"><span>Result</span><input type="text" data-asmt="${m.id}:result" value="${esc(asmt.result||'')}" placeholder="e.g. 9/10 or Competent"></label>
+                  <label class="field"><span>Attempt</span><input type="number" min="1" step="1" data-asmt="${m.id}:attempt" value="${Number(asmt.attempt)||1}"></label>
+                  <label class="field"><span>Assessor</span><input type="text" data-asmt="${m.id}:assessor" value="${esc(asmt.assessor||'')}" placeholder="Supervisor / assessor"></label>
+                  <label class="field"><span>Date</span><input type="date" data-asmt="${m.id}:date" value="${esc(asmt.date||'')}"></label>
+                </div>
+                <label class="asmt-pass" data-tip="Step 2 of 3 — the assessment has been passed to the required standard."><input type="checkbox" data-asmt-pass="${m.id}" ${asmt.passed?'checked':''}> Assessment passed to standard</label>
+                <details class="asmt-remediation"${(asmt.remediation||asmt.reassessment)?' open':''}>
+                  <summary>Remediation / reassessment</summary>
+                  <label class="field"><span>Remediation required</span><textarea data-asmt="${m.id}:remediation" style="min-height:44px" placeholder="What needs to improve before a re-attempt?">${esc(asmt.remediation||'')}</textarea></label>
+                  <label class="field"><span>Reassessment result</span><input type="text" data-asmt="${m.id}:reassessment" value="${esc(asmt.reassessment||'')}" placeholder="Result on re-attempt"></label>
+                </details>
               </div>
 
               ${(() => {
@@ -5691,7 +5762,7 @@ const App = {
   },
 
   getFocusKey(el) {
-    const attrs = ['data-bind','data-bind-num','data-bind-checkbox','data-log-field','data-log-check','data-dil-field','data-dil-standard','data-soa-field','data-task-field','data-milestone-note','data-milestone-check','data-comp-score','data-signoff','data-supchk','data-module-hours','data-module-done','data-module-check','data-signoff-tick','data-signoff-name','data-signoff-date','data-workshop-note'];
+    const attrs = ['data-bind','data-bind-num','data-bind-checkbox','data-log-field','data-log-check','data-dil-field','data-dil-standard','data-soa-field','data-task-field','data-milestone-note','data-milestone-check','data-comp-score','data-signoff','data-supchk','data-module-hours','data-module-done','data-module-check','data-signoff-tick','data-signoff-name','data-signoff-date','data-workshop-note','data-asmt','data-asmt-pass','data-readiness'];
     for (const a of attrs) {
       const v = el.getAttribute(a);
       if (v) return { attr: a, value: v };
@@ -5846,6 +5917,10 @@ const App = {
         Actions.toggleReadiness(qid, phase, Number(idx), rdChk.checked);
         return;
       }
+      const asmtPass = e.target.closest('[data-asmt-pass]');
+      if (asmtPass) { Actions.setModuleAssessmentPass(asmtPass.getAttribute('data-asmt-pass'), asmtPass.checked); return; }
+      const asmtF = e.target.closest('[data-asmt]');
+      if (asmtF) { const [id, field] = asmtF.getAttribute('data-asmt').split(':'); Actions.setModuleAssessment(id, field, asmtF.value); return; }
       const modChk = e.target.closest('[data-module-check]');
       if (modChk) {
         const [mid, key] = modChk.getAttribute('data-module-check').split(':');
