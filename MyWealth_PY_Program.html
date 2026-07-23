@@ -413,6 +413,40 @@ html[data-theme="dark"] .badge.navy{color:var(--navy-deep)}
 .badge.warn{background:var(--amber-light);color:var(--amber);border-color:rgba(184,134,11,.25)}
 .badge.danger{background:var(--red-light);color:var(--red);border-color:rgba(192,57,43,.25)}
 .badge.purple{background:var(--purple-light);color:var(--purple);border-color:rgba(109,40,217,.25)}
+/* Milestone classification tiers (legal gate vs MyWealth standard vs development) */
+.badge.gate{background:var(--red-light);color:var(--red);border-color:rgba(214,48,49,.3);font-weight:700}
+.badge.std{background:var(--blue-light);color:var(--blue);border-color:rgba(43,111,214,.28)}
+.badge.dev{background:var(--surface-2);color:var(--text-muted);border-color:var(--border)}
+.kind-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--text-muted);margin-top:2px}
+.kind-legend span{display:inline-flex;align-items:center;gap:5px}
+.kind-legend i{width:9px;height:9px;border-radius:3px;display:inline-block}
+.kind-legend .k-gate{background:var(--red)}
+.kind-legend .k-std{background:var(--blue)}
+.kind-legend .k-dev{background:var(--text-faint)}
+/* Draft / placeholder content badge */
+.draft-badge{display:inline-block;background:var(--amber-light);color:var(--amber);border:1px solid rgba(184,134,11,.35);font-size:8.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:1px 6px;border-radius:10px;margin-left:6px;vertical-align:middle;white-space:nowrap}
+/* PY portal hours reminder card */
+.portal-card{background:linear-gradient(135deg,var(--blue-light) 0%,var(--surface) 100%);border:1px solid var(--border);border-left:4px solid var(--blue);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.portal-card .pc-icon{font-size:28px;flex-shrink:0}
+.portal-card .pc-body{flex:1;min-width:220px}
+.portal-card .pc-body h3{font-size:15px;margin-bottom:3px}
+.portal-card .pc-body p{font-size:12px;color:var(--text-dim);line-height:1.5}
+.portal-card .pc-actions{display:flex;flex-direction:column;gap:6px;min-width:220px}
+.portal-card .pc-actions input{font-size:11px;padding:6px 9px}
+/* Program status banner */
+.status-banner{border-radius:14px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;border:1px solid var(--border)}
+.status-banner .sb-badge{font-family:var(--hf);font-size:18px;font-weight:600;padding:6px 16px;border-radius:999px;white-space:nowrap}
+.status-banner .sb-detail{flex:1;min-width:240px;font-size:12px;line-height:1.55}
+.status-banner .sb-detail b{font-weight:700}
+.status-ontrack{background:var(--green-light);border-color:rgba(39,174,96,.35)}
+.status-ontrack .sb-badge{background:var(--green);color:#fff}
+.status-attention{background:var(--amber-light);border-color:rgba(184,134,11,.35)}
+.status-attention .sb-badge{background:var(--amber);color:#fff}
+.status-blocked{background:var(--red-light);border-color:rgba(214,48,49,.4)}
+.status-blocked .sb-badge{background:var(--red);color:#fff}
+.status-ready{background:var(--blue-light);border-color:rgba(43,111,214,.4)}
+.status-ready .sb-badge{background:var(--blue);color:#fff}
+.measure-reasons{margin:6px 0 0;padding-left:18px;font-size:11.5px;color:var(--text-dim);line-height:1.6}
 
 /* ============================================================
    ALERTS
@@ -983,6 +1017,10 @@ body.edit-mode #editToggleBtn{ background:var(--coral); border-color:var(--coral
 // Utilities
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Turn any "[placeholder — …]" marker (in already-escaped text) into a visible "Draft content" badge,
+// so unfinished MWS content is never mistaken for approved process.
+const draftify = html => String(html).replace(/\s*\[placeholder[^\]]*\]/gi, ' <span class="draft-badge">Draft content</span>');
+const hasDraft = s => /\[placeholder/i.test(String(s || ''));
 const uid = p => p + '_' + Math.random().toString(36).slice(2, 10);
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const fmtDate = iso => {
@@ -1069,8 +1107,8 @@ const CONTENT = {
         { t: "Start Ethics for Professional Advisers bridging unit (if not in approved degree)", tg: "Enrol Q1", req: false,
           b: "Required unless your approved degree is listed in Schedule 1 of the 2021 Determination as not requiring the bridging unit. Counts toward structured training hours.",
           ref: "Det. 2021 Schedule 2" },
-        { t: "Keep work & structured-training hours up to date", tg: "Updated regularly", req: true, critical: true,
-          b: "Record your work activity and structured-training hours as you go — track them on the dashboard and in each quarter. Your official record is maintained via the TAL system for GPS. Each entry should capture date, duration, activity type (observe/assist/led) and a short description. Records are retained for 7 years.",
+        { t: "Keep your PY hours up to date in the licensee portal", tg: "Updated regularly", req: true, critical: true,
+          b: "Record your work-activity and structured-training hours as you go, in the licensee PY portal — the official record. Each entry should capture date, duration, activity type (observe/assist/led) and a short description. Records are retained for 7 years. This program does not track hours, to avoid double handling.",
           ref: "PY Standard Det. 2018 s8" },
         { t: "Adviser Project — baseline (inception)", tg: "Week 1–2", req: true,
           b: "At the very start of your PY, write your baseline answers to the adviser project: the kind of adviser you want to become, the value you want to deliver to clients, and the gaps between where you are now and there. You'll revisit this at year-end to measure how far you've come.",
@@ -2048,10 +2086,7 @@ const CONTENT = {
           b: "Second tranche of the two-per-quarter dilemma requirement. Documentation standard: would this stand up to FSCP review?",
           ref: "PY Standard Det. 2018 s6" },
         { t: "Mock DA + Mock SOA delivery — end-to-end rehearsal", tg: "Min 2 DAs + 2 SOAs", req: true,
-          b: "Full end-to-end rehearsal: Discovery, strategy build, SOA draft, delivery meeting, Authority to Proceed, implementation. Supervisor assesses against client-ready standard. Feedback loop before real client files land.",
-          ref: "" },
-                { t: "Mock DAs & Mock SOAs — full presentation loop", tg: "Multiple, independently", req: true,
-          b: "Present mock DA and mock SOA independently to supervisor and peer panel. Foundation and Wealth scenarios. Receive structured feedback; iterate. Objective: supervisor confidence you can deliver solo post-PY.",
+          b: "Full end-to-end rehearsal: Discovery, strategy build, SOA draft, delivery meeting, Authority to Proceed, implementation. Present the mock DA and SOA independently to your supervisor and peer panel (Foundation and Wealth scenarios), receive structured feedback and iterate. Supervisor assesses against a client-ready standard — the objective is supervisor confidence that you can deliver solo post-PY, before real client files land.",
           ref: "Licensee structured training" },
         { t: "Licensee file audit — minimum 5 files", tg: "5 PASS", req: true, critical: true,
           b: "Before Final Completion Certificate, Licensee must have audited at least 5 client files you worked on during PY. Licensee must be satisfied (having regard to the work) that you can be relied on to comply with applicable law when giving personal advice.",
@@ -2994,7 +3029,7 @@ function seedState() {
     schemaVersion: 2,
     profile: {
       candidateName: '', supervisorName: '', supervisorFar: '',
-      licensee: 'GPS Wealth Ltd (AFSL 254544)', afsl: '254544',
+      licensee: 'GPS Wealth Ltd (AFSL 254544)', afsl: '254544', pyPortalUrl: '',
       startDate: '', year: String(new Date().getFullYear()),
       currentQuarter: 1,
       q1Start: '', q2Start: '', q3Start: '', q4Start: '', completionTarget: '',
@@ -3344,6 +3379,7 @@ const Store = (() => {
       if (!s.supervisorSignoffs) s.supervisorSignoffs = seed.supervisorSignoffs;
       if (!s.supervisorChecks) s.supervisorChecks = {};
       if (!s.hours) s.hours = seed.hours;
+      if (s.profile && typeof s.profile.pyPortalUrl !== 'string') s.profile.pyPortalUrl = '';
       ['q1','q2','q3','q4','q5','q6'].forEach(q => { if (!s.hours[q]) s.hours[q] = { work:0, structured:0 }; });
       return s;
     } catch (e) { console.warn(e); return null; }
@@ -3385,6 +3421,58 @@ const Derived = {
   },
   // Structured training total that INCLUDES module hours (manual quarter entry + module logs).
   structuredTotal() { return Derived.totalStructured() + Derived.moduleHoursTotal(); },
+  // Classify a milestone into the three tiers from its existing flags:
+  //   critical  -> Mandatory PY gate (legal requirement; failing it blocks progression)
+  //   req       -> MyWealth capability standard
+  //   otherwise -> Development activity
+  milestoneKind(m) {
+    if (m.critical) return { key:'gate', label:'PY Gate', cls:'gate', tip:'Mandatory legal PY requirement — a gate that can block progression or completion.' };
+    // Observation / shadowing / mock / workshop activities are development, even where flagged required.
+    const isDev = /(observ|shadow|\bmock\b|workshop)/i.test(m.t || '');
+    if (m.req && !isDev) return { key:'std', label:'MyWealth Standard', cls:'std', tip:'A MyWealth capability standard — expected performance during the PY.' };
+    return { key:'dev', label:'Development', cls:'dev', tip:'A development activity — valuable exposure, not a hard gate. Exposure varies with client flow.' };
+  },
+  kindProgress() {
+    const ms = Store.getState().milestones;
+    const out = { gate:{done:0,total:0}, std:{done:0,total:0}, dev:{done:0,total:0} };
+    CONTENT.quarters.forEach(q => {
+      if (q.optional) return; // exclude optional Q5/Q6 extensions from core progress
+      q.milestones.forEach((m, idx) => {
+        const k = Derived.milestoneKind(m).key;
+        out[k].total++;
+        if (ms[`${q.id}_${idx}`] && ms[`${q.id}_${idx}`].done) out[k].done++;
+      });
+    });
+    return out;
+  },
+  // Program status — critical gates OVERRIDE percentages so a high completion % can never
+  // mask an incomplete legal gate. Returns { key, label, cls, reasons[] }.
+  programStatus() {
+    const s = Store.getState(); const p = s.profile; const currentQ = Derived.getCurrentQuarter();
+    const crit = Derived.criticalMilestones();
+    const blockers = [];
+    const regGates = [
+      { ok: p.degreeVerified,        due: 3, label: 'Approved degree not yet verified (required before Q3).' },
+      { ok: p.examPassed,            due: 3, label: 'ASIC Financial Adviser Exam not yet passed (required before Q3).' },
+      { ok: p.farUpdatedProvisional, due: 3, label: 'FAR status not yet updated to Provisional (start of Q3).' },
+    ];
+    regGates.forEach(g => { if (!g.ok && currentQ >= g.due) blockers.push(g.label); });
+    crit.filter(c => !c.done && c.qNum < currentQ).forEach(c => blockers.push(`Overdue critical gate (Q${c.qNum}): ${c.title}`));
+
+    if (p.finalCertificateIssued && crit.every(c => c.done)) {
+      return { key:'ready', label:'Completion ready', cls:'status-ready',
+        reasons:['All mandatory gates and critical milestones are complete — ready for the Final Completion Certificate and FAR update.'] };
+    }
+    if (blockers.length) return { key:'blocked', label:'Progression blocked', cls:'status-blocked', reasons: blockers };
+
+    const attn = [];
+    if (!p.examPassed && currentQ >= 2) attn.push('Book and sit the ASIC Financial Adviser Exam — required before Q3.');
+    crit.filter(c => !c.done && c.qNum === currentQ).forEach(c => attn.push(`Critical gate due this quarter: ${c.title}`));
+    if (attn.length) return { key:'attention', label:'Attention required', cls:'status-attention', reasons: attn };
+
+    return { key:'ontrack', label:'On track', cls:'status-ontrack',
+      reasons:['No outstanding gates for your current quarter — keep progressing through your milestones and modules.'] };
+  },
   milestoneProgress(qId = null) {
     const ms = Store.getState().milestones;
     const keys = Object.keys(ms).filter(k => !qId || k.startsWith(qId + '_'));
@@ -3893,11 +3981,10 @@ const Views = {
     const role = s.ui.role;
     const currentQ = Derived.getCurrentQuarter();
     const mp = Derived.milestoneProgress();
-    const overallPct = Derived.overallPct();
-    const totalW = Derived.totalWork();
-    const modH = Derived.moduleHoursTotal();
-    const totalS = Derived.structuredTotal();
+    const status = Derived.programStatus();
+    const kp = Derived.kindProgress();
     const critical = Derived.criticalMilestones();
+    const critDone = critical.filter(c => c.done).length;
     const dQ3 = Derived.dilemmaCount(3);
     const dQ4 = Derived.dilemmaCount(4);
     return `
@@ -3966,28 +4053,50 @@ const Views = {
       </div>
     </div>
 
-    <div class="grid grid-4" style="margin-bottom:20px">
-      <div class="stat accent">
-        <div class="label">Overall progress</div>
-        <div class="value">${overallPct}%</div>
-        <div class="progress slim" style="margin-top:8px"><div style="width:${overallPct}%"></div></div>
-        <div class="sub">Hours + mandatory milestones</div>
+    <!-- Program status — critical gates override percentages so a high % can't mask a missing gate -->
+    <div class="status-banner ${status.cls}">
+      <span class="sb-badge">${status.label}</span>
+      <div class="sb-detail">
+        ${status.key === 'blocked' || status.key === 'attention'
+          ? `<b>${status.key === 'blocked' ? 'Resolve before progressing:' : 'Needs attention:'}</b><ul class="measure-reasons">${status.reasons.map(r => `<li>${esc(r)}</li>`).join('')}</ul>`
+          : esc(status.reasons[0] || '')}
       </div>
-      <div class="stat" data-tip="Total 'work activity' hours across all quarters, pulled from your Logbook. PY Standard requires min 1,500 hours.">
-        <div class="label">Work hours <span style="font-size:9px;color:var(--text-muted);font-weight:400">· manual entry</span></div>
-        <div class="value">${totalW}<span style="font-size:13px;color:var(--text-muted)"> / 1,500</span></div>
-        <div class="progress slim" style="margin-top:8px"><div style="width:${Math.min(100,totalW/15)}%;background:var(--navy)"></div></div>
+    </div>
+
+    <!-- Separate measures — legal gates, MyWealth standards and development kept distinct -->
+    <div class="grid grid-4" style="margin-bottom:16px">
+      <div class="stat ${critDone === critical.length ? 'ok' : 'warn'}" data-tip="Mandatory legal PY gates (exam, hours logged in the portal, ethical dilemmas, 5-file audit, competency attestation). These override everything.">
+        <div class="label">Mandatory PY gates</div>
+        <div class="value">${critDone}<span style="font-size:13px;color:var(--text-muted)"> / ${critical.length}</span></div>
+        <div class="progress slim" style="margin-top:8px"><div style="width:${critical.length?Math.round(critDone/critical.length*100):0}%;background:var(--red)"></div></div>
       </div>
-      <div class="stat" data-tip="Structured training = measurable, assessed learning that leads to further qualification. Includes Ethics bridging unit, product accreditation, licensee compliance modules. Min 100 hours required. This total = per-quarter manual entry PLUS hours logged against training modules.">
-        <div class="label">Structured training <span style="font-size:9px;color:var(--text-muted);font-weight:400">· incl. module hours</span></div>
-        <div class="value">${totalS}<span style="font-size:13px;color:var(--text-muted)"> / 100</span></div>
-        <div class="progress slim" style="margin-top:8px"><div style="width:${Math.min(100,totalS)}%;background:var(--coral)"></div></div>
-        ${modH ? `<div class="sub">${modH} hr from modules${totalS>modH?` · ${totalS-modH} hr manual`:''}</div>` : '<div class="sub">Add hours in module cards to tally here</div>'}
+      <div class="stat accent" data-tip="MyWealth capability standards — leading meetings, preparing advice requests, presenting SOAs, managing implementation.">
+        <div class="label">MyWealth standards</div>
+        <div class="value">${kp.std.done}<span style="font-size:13px;color:var(--text-muted)"> / ${kp.std.total}</span></div>
+        <div class="progress slim" style="margin-top:8px"><div style="width:${kp.std.total?Math.round(kp.std.done/kp.std.total*100):0}%;background:var(--blue)"></div></div>
       </div>
-      <div class="stat ${mp.pct >= 75 ? 'ok' : mp.pct >= 40 ? '' : 'warn'}">
-        <div class="label">Milestones done</div>
-        <div class="value">${mp.done}<span style="font-size:13px;color:var(--text-muted)"> / ${mp.total}</span></div>
-        <div class="progress slim" style="margin-top:8px"><div style="width:${mp.pct}%"></div></div>
+      <div class="stat" data-tip="Development activities — observation, mock scenarios, workshops, reading. Valuable exposure rather than hard gates.">
+        <div class="label">Development</div>
+        <div class="value">${kp.dev.done}<span style="font-size:13px;color:var(--text-muted)"> / ${kp.dev.total}</span></div>
+        <div class="progress slim" style="margin-top:8px"><div style="width:${kp.dev.total?Math.round(kp.dev.done/kp.dev.total*100):0}%;background:var(--text-muted)"></div></div>
+      </div>
+      <div class="stat ${(dQ3+dQ4)>=4 ? 'ok' : ''}" data-tip="Minimum 2 ethical dilemmas per quarter across Q3 and Q4 (4 total) must be identified, resolved and logged.">
+        <div class="label">Ethical dilemmas</div>
+        <div class="value">${dQ3+dQ4}<span style="font-size:13px;color:var(--text-muted)"> / 4</span></div>
+        <div class="progress slim" style="margin-top:8px"><div style="width:${Math.min(100,(dQ3+dQ4)/4*100)}%;background:var(--purple)"></div></div>
+      </div>
+    </div>
+
+    <!-- Hours are logged in the licensee PY portal — not here — to avoid double handling -->
+    <div class="portal-card" style="margin-bottom:20px">
+      <div class="pc-icon">⏱️</div>
+      <div class="pc-body">
+        <h3>Log your PY hours in the licensee portal</h3>
+        <p>Work-activity and structured-training hours are recorded in your <b>licensee PY portal</b> (the official record). This program does <b>not</b> track hours, so you never have to enter them twice.</p>
+      </div>
+      <div class="pc-actions">
+        <label class="field" style="margin:0"><span>PY portal link</span><input type="url" data-bind="profile.pyPortalUrl" value="${esc(p.pyPortalUrl||'')}" placeholder="https://portal.yourlicensee.com.au"></label>
+        ${p.pyPortalUrl ? `<a class="btn btn-blue btn-sm" href="${esc(p.pyPortalUrl)}" target="_blank" rel="noopener">Open PY portal ↗</a>` : ''}
       </div>
     </div>
 
@@ -4060,30 +4169,8 @@ const Views = {
       </div>
     </div>
 
-    <!-- MANUAL HOURS + HOLDING BACK -->
-    <div class="grid grid-2" style="margin-bottom:20px">
-      <div class="card">
-        <div class="card-header">
-          <div><h3>⏱️ Training &amp; work hours</h3><div class="subtitle">Manual entry — update anytime. Your official record goes via the TAL system for GPS.</div></div>
-        </div>
-        <div class="stack" style="gap:8px">
-          ${['q1','q2','q3','q4','q5','q6'].map((q,i) => {
-            const ext = i >= 4;
-            const hv = (s.hours && s.hours[q]) || { work:0, structured:0 };
-            return `<div style="display:grid;grid-template-columns:64px 1fr 1fr;gap:10px;align-items:center">
-              <span style="font-size:12px;font-weight:700;color:${ext?'var(--text-muted)':'var(--navy)'}">Q${i+1}${ext?'*':''}</span>
-              <label style="font-size:11px;color:var(--text-dim)">Work
-                <input type="number" min="0" step="1" inputmode="numeric" data-bind-num="hours.${q}.work" value="${Number(hv.work)||0}" style="width:100%;margin-top:2px">
-              </label>
-              <label style="font-size:11px;color:var(--text-dim)">Structured
-                <input type="number" min="0" step="1" inputmode="numeric" data-bind-num="hours.${q}.structured" value="${Number(hv.structured)||0}" style="width:100%;margin-top:2px">
-              </label>
-            </div>`;
-          }).join('')}
-        </div>
-        <div class="card-inner-hint">Totals: <strong>${totalW}</strong> work / <strong>${totalS}</strong> structured. Targets: 1,500 work &amp; 100 structured. <span style="color:var(--text-muted)">*Q5/Q6 are optional extension quarters.</span></div>
-      </div>
-
+    <!-- HOLDING BACK -->
+    <div style="margin-bottom:20px">
       <div class="card">
         <div class="card-header">
           <div><h3>🤔 What's holding you back?</h3><div class="subtitle">What's holding you back from becoming a great adviser? Answer at the start, then revisit each quarter.</div></div>
@@ -4227,7 +4314,7 @@ const Views = {
       <button class="${subPage==='milestones'?'active':''}" data-subpage="milestones">Milestones <span class="tab-count">${mp.done}/${mp.total}</span></button>
       <button class="${subPage==='training'?'active':''}" data-subpage="training">Training <span class="tab-count">${(quarter.trainingModules||[]).length}</span></button>
       <button class="${subPage==='workshop'?'active':''}" data-subpage="workshop">Workshop Questions</button>
-      <button class="${subPage==='hours'?'active':''}" data-subpage="hours">Hours &amp; Reflection</button>
+      <button class="${subPage==='hours'?'active':''}" data-subpage="hours">Reflection</button>
     </div>
 
     ${this._quarterSubpage(quarter, subPage, s, active)}
@@ -4401,7 +4488,15 @@ const Views = {
     return `
       <div class="card ${q.id}">
         <div class="card-header">
-          <div><h3>Milestones & deliverables</h3><div class="subtitle">Click a milestone to expand for detail and notes.</div></div>
+          <div>
+            <h3>Milestones & deliverables</h3>
+            <div class="subtitle">Click a milestone to expand for detail and notes.</div>
+            <div class="kind-legend">
+              <span data-tip="Mandatory legal PY requirement — a gate that can block progression or completion."><i class="k-gate"></i>PY Gate</span>
+              <span data-tip="A MyWealth capability standard — expected performance during the PY."><i class="k-std"></i>MyWealth Standard</span>
+              <span data-tip="A development activity — valuable exposure, not a hard gate."><i class="k-dev"></i>Development</span>
+            </div>
+          </div>
           <div class="card-actions"><span class="badge ${active}">${mp.done}/${mp.total} done · ${mp.pct}%</span></div>
         </div>
         <ul class="milestone-list">
@@ -4414,7 +4509,7 @@ const Views = {
                 <input type="checkbox" ${ms.done?'checked':''} data-milestone-check="${key}">
                 <span class="milestone-title">${esc(m.t)}</span>
                 <span class="milestone-target">${esc(m.tg)}</span>
-                ${m.critical ? '<span class="badge danger">Critical</span>' : m.req ? '<span class="badge navy">Required</span>' : '<span class="badge">Recommended</span>'}
+                ${(() => { const k = Derived.milestoneKind(m); return `<span class="badge ${k.cls}" data-tip="${esc(k.tip)}">${k.label}</span>`; })()}
                 <span class="milestone-arrow">▶</span>
               </div>
               <div class="milestone-body">
@@ -4455,14 +4550,11 @@ const Views = {
     });
     const itemsPct = totalItems ? Math.round(doneItems/totalItems*100) : 0;
     const doneCount = mods.filter(m => s.modulesDone[m.id]?.done).length;
-    const totalHours = mods.reduce((sum, m) => sum + (s.modulesDone[m.id]?.hours || 0), 0);
-
     return `
-      <div class="grid grid-4" style="margin-bottom:16px">
+      <div class="grid grid-3" style="margin-bottom:16px">
         <div class="stat accent"><div class="label">Modules</div><div class="value">${mods.length}</div></div>
         <div class="stat ok"><div class="label">Completed</div><div class="value">${doneCount}</div></div>
         <div class="stat"><div class="label">Items ticked</div><div class="value">${doneItems}<span style="font-size:13px;color:var(--text-muted)"> / ${totalItems}</span></div><div class="progress slim" style="margin-top:6px"><div style="width:${itemsPct}%;background:var(--blue)"></div></div></div>
-        <div class="stat coral"><div class="label">Hours logged</div><div class="value">${totalHours}</div><div class="sub">From module hours</div></div>
       </div>
 
       <div class="row" style="gap:8px;margin-bottom:14px;flex-wrap:wrap">
@@ -4510,7 +4602,7 @@ const Views = {
                 return `
                 <div class="mod-section${sec._custom?' mod-section-custom':''}" data-section-idx="${si}">
                   <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-                    <h5 style="margin-bottom:6px">${sec._custom ? '<span style="color:var(--blue);font-size:10px;font-weight:700;margin-right:6px">ADDED</span>' : ''}${esc(sec.h)}</h5>
+                    <h5 style="margin-bottom:6px">${sec._custom ? '<span style="color:var(--blue);font-size:10px;font-weight:700;margin-right:6px">ADDED</span>' : ''}${draftify(esc(sec.h))}</h5>
                     <div style="display:flex;gap:6px">
                       <button class="btn btn-sm btn-ghost" data-action="add-key-concept" data-module="${m.id}" data-section="${si}" style="font-size:10px">＋ Key concept</button>
                       ${sec._custom ? `<button class="btn btn-sm btn-ghost" data-action="delete-custom-section" data-module="${m.id}" data-idx="${customSecIdx}" title="Delete this added section" style="font-size:10px;color:var(--red)">✕</button>` : ''}
@@ -4524,7 +4616,7 @@ const Views = {
                     return `<li class="tick-item ${done?'done':''}">
                       <label>
                         <input type="checkbox" data-module-check="${m.id}:${key}" ${done?'checked':''}>
-                        <span>${esc(it)}</span>
+                        <span>${draftify(esc(it))}</span>
                         ${isCustomItem ? `<button class="item-del" data-action="delete-key-concept" data-module="${m.id}" data-section="${si}" data-idx="${customItemIdx}" title="Delete this key concept">✕</button>` : ''}
                       </label>
                     </li>`;
@@ -4537,9 +4629,7 @@ const Views = {
                 <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600">
                   <input type="checkbox" data-module-done="${m.id}" ${md.done?'checked':''}> Module completed
                 </label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:12px">
-                  Hours logged: <input type="number" min="0" step="0.5" data-module-hours="${m.id}" value="${md.hours}" style="width:80px;padding:4px 6px">
-                </label>
+                <span style="font-size:11px;color:var(--text-muted)">⏱️ Log any training hours in the <b>PY portal</b>, not here.</span>
                 ${isCustom ? `<button class="btn btn-sm btn-ghost" data-action="delete-module" data-module="${m.id}" style="color:var(--red);margin-left:auto">🗑 Delete module</button>` : ''}
               </div>
 
@@ -4634,70 +4724,59 @@ const Views = {
   },
 
   _qHours(q, s, active) {
-    const qW = Derived.quarterWork(active);
-    const qS = Derived.quarterStructured(active);
-    const qT = qW + qS;
-    const hv = (s.hours && s.hours[active]) || { work:0, structured:0 };
+    const p = s.profile;
     return `
-      <div class="alert alert-info" style="margin-bottom:16px">
-        <span class="icon">⏱️</span>
-        <div><strong>Hours are manual entry.</strong> Update your Q${q.number} work and structured-training hours below at any time. The official record is kept via the <strong>TAL system for GPS</strong>.</div>
+      <div class="portal-card" style="margin-bottom:16px">
+        <div class="pc-icon">⏱️</div>
+        <div class="pc-body">
+          <h3>Log your Q${q.number} hours in the PY portal</h3>
+          <p>Work-activity and structured-training hours are recorded in your <b>licensee PY portal</b> — the official record. This program no longer tracks hours, so there's no double handling.</p>
+        </div>
+        <div class="pc-actions">
+          ${p.pyPortalUrl ? `<a class="btn btn-blue btn-sm" href="${esc(p.pyPortalUrl)}" target="_blank" rel="noopener">Open PY portal ↗</a>` : `<label class="field" style="margin:0"><span>PY portal link</span><input type="url" data-bind="profile.pyPortalUrl" value="" placeholder="Set on the dashboard"></label>`}
+        </div>
       </div>
 
-      <div class="grid grid-3" style="margin-bottom:16px">
-        <div class="stat"><div class="label">Q${q.number} Work activity</div><div class="value">${qW.toFixed(1).replace(/\.0$/,'')}</div><div class="sub">hours</div></div>
-        <div class="stat coral"><div class="label">Q${q.number} Structured</div><div class="value">${qS.toFixed(1).replace(/\.0$/,'')}</div><div class="sub">hours</div></div>
-        <div class="stat accent"><div class="label">Q${q.number} Total</div><div class="value">${qT.toFixed(1).replace(/\.0$/,'')}</div><div class="sub">work + structured</div></div>
-      </div>
-
-      <div class="grid grid-2">
-        <div class="card ${q.id}">
-          <div class="card-header">
-            <div><h3>Q${q.number} hours — manual entry</h3><div class="subtitle">Type your running totals for this quarter. Saved automatically.</div></div>
-          </div>
-          <label class="field" style="margin-bottom:14px"><span>Work activity hours</span>
-            <input type="number" min="0" step="1" inputmode="numeric" data-bind-num="hours.${active}.work" value="${Number(hv.work)||0}">
-          </label>
-          <label class="field" style="margin-bottom:4px"><span>Structured training hours</span>
-            <input type="number" min="0" step="1" inputmode="numeric" data-bind-num="hours.${active}.structured" value="${Number(hv.structured)||0}">
-          </label>
-          <div class="card-inner-hint">Program targets across all quarters: 1,500 work &amp; 100 structured.</div>
-        </div>
-
-        <div class="card ${q.id}">
-          <div class="card-header"><div><h3>Q${q.number} Reflection</h3><div class="subtitle">Work through each prompt — ~80–120 words per answer. Bring gaps to your next Supervisor 1:1.</div></div></div>
-          ${(Views._reflectionPrompts(active) || []).map(p => {
-            const val = Views._getReflectionValue(s, active, p.key);
-            return `<label class="field" style="margin-bottom:14px"><span>${esc(p.q)}</span><textarea data-bind="reflections.${active}.${p.key}" style="min-height:110px" placeholder="${esc(p.placeholder || '')}">${esc(val)}</textarea></label>`;
-          }).join('')}
-        </div>
+      <div class="card ${q.id}">
+        <div class="card-header"><div><h3>Q${q.number} Reflection</h3><div class="subtitle">Work through each prompt — ~80–120 words per answer. Bring gaps to your next Supervisor 1:1.</div></div></div>
+        ${(Views._reflectionPrompts(active) || []).map(p2 => {
+          const val = Views._getReflectionValue(s, active, p2.key);
+          return `<label class="field" style="margin-bottom:14px"><span>${esc(p2.q)}</span><textarea data-bind="reflections.${active}.${p2.key}" style="min-height:110px" placeholder="${esc(p2.placeholder || '')}">${esc(val)}</textarea></label>`;
+        }).join('')}
       </div>
     `;
   },
 
   logbook() {
     const s = Store.getState();
+    const p = s.profile;
     const entries = s.logbook;
-    const totalHours = entries.reduce((sum, e) => sum + (Number(e.hours)||0), 0);
-    const structuredHours = entries.filter(e => e.structured).reduce((sum, e) => sum + (Number(e.hours)||0), 0);
-    const workHours = totalHours - structuredHours;
 
     return `
     <div class="page-head">
       <div>
-        <div class="breadcrumb">Program · Logbook</div>
-        <h1>Activity logbook</h1>
-        <p class="subtitle">Required under s8 of the PY Standard — records kept for 7 years by candidate, supervisor and licensee. Every entry includes date, duration, activity and description.</p>
+        <div class="breadcrumb">Program · Activity log</div>
+        <h1>Activity log</h1>
+        <p class="subtitle">An optional space to note observations, file work, meetings and training as evidence for reflections and sign-offs. Your official <b>hours and s8 logbook live in the licensee PY portal</b> — record them there, not here.</p>
       </div>
       <div class="card-actions">
         <button class="btn btn-primary" data-action="add-log">＋ Add entry</button>
       </div>
     </div>
 
+    <div class="portal-card" style="margin-bottom:20px">
+      <div class="pc-icon">⏱️</div>
+      <div class="pc-body">
+        <h3>Hours are recorded in the PY portal</h3>
+        <p>To avoid double handling, this program does not tally your PY hours. Log work-activity and structured-training hours in your <b>licensee PY portal</b> — the official 7-year record.</p>
+      </div>
+      <div class="pc-actions">
+        ${p.pyPortalUrl ? `<a class="btn btn-blue btn-sm" href="${esc(p.pyPortalUrl)}" target="_blank" rel="noopener">Open PY portal ↗</a>` : `<span style="font-size:11px;color:var(--text-muted)">Set your portal link on the dashboard.</span>`}
+      </div>
+    </div>
+
     <div class="grid grid-3" style="margin-bottom:20px">
       <div class="stat"><div class="label">Entries logged</div><div class="value">${entries.length}</div></div>
-      <div class="stat accent"><div class="label">Work hours <span style="font-size:9px;color:var(--text-muted);font-weight:400">· from Logbook</span></div><div class="value">${workHours.toFixed(1)}</div><div class="sub">min 1,500 required</div></div>
-      <div class="stat coral"><div class="label">Structured training <span style="font-size:9px;color:var(--text-muted);font-weight:400">· from Logbook</span></div><div class="value">${structuredHours.toFixed(1)}</div><div class="sub">min 100 required</div></div>
     </div>
 
     <div class="card">
