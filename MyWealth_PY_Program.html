@@ -453,6 +453,31 @@ html[data-theme="dark"] .badge.navy{color:var(--navy-deep)}
 .status-blocked .sb-badge{background:var(--red);color:#fff}
 .status-ready{background:var(--blue-light);border-color:rgba(43,111,214,.4)}
 .status-ready .sb-badge{background:var(--blue);color:#fff}
+/* Your next steps — the hybrid dashboard's lead panel */
+.ns-status{font-family:var(--hf);font-size:13px;font-weight:600;padding:5px 14px;border-radius:999px;white-space:nowrap}
+.status-ontrack.ns-status{background:var(--green);color:#fff}
+.status-attention.ns-status{background:var(--amber);color:#fff}
+.status-blocked.ns-status{background:var(--red);color:#fff}
+.status-ready.ns-status{background:var(--blue);color:#fff}
+.ns-grid{display:grid;grid-template-columns:minmax(220px,1fr) 1.4fr;gap:16px;margin-top:4px}
+@media(max-width:760px){.ns-grid{grid-template-columns:1fr}}
+.ns-current{display:flex;flex-direction:column;gap:3px;padding:16px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);border-left:4px solid var(--blue);text-decoration:none;color:inherit;transition:transform .15s,box-shadow .15s,background .15s}
+.ns-current:hover{background:var(--blue-light);transform:translateY(-1px);box-shadow:var(--shadow)}
+.ns-current-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)}
+.ns-current-q{font-family:var(--hf);font-size:21px;font-weight:700;color:var(--heading);line-height:1.15}
+.ns-current-tag{font-size:12px;color:var(--text-dim);line-height:1.45;margin-top:2px}
+.ns-focuses{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.ns-focus{font-size:11px;font-weight:600;color:var(--text-dim);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:3px 9px;white-space:nowrap}
+.ns-current-open{margin-top:auto;padding-top:12px;font-size:12px;font-weight:700;color:var(--blue)}
+.ns-actions-h{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:9px}
+.ns-actions .attention-row{margin-bottom:8px}
+.ns-actions .attention-row:last-child{margin-bottom:0}
+.ns-done{padding:14px;border-radius:10px;background:var(--green-light);color:var(--green-dark);font-weight:700;font-size:13px;line-height:1.5}
+.ns-more{font-size:11px;color:var(--text-muted);padding:6px 2px 0}
+.ns-progress{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.ns-progress .label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)}
+.ns-progress b{font-family:var(--hf);font-size:15px;color:var(--heading)}
+.ns-progress .progress{flex:1;min-width:160px}
 .measure-reasons{margin:6px 0 0;padding-left:18px;font-size:11.5px;color:var(--text-dim);line-height:1.6}
 /* Quarter entry / exit readiness criteria */
 .readiness{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -3686,6 +3711,9 @@ const Views = {
     const critDone = critical.filter(c => c.done).length;
     const dQ3 = Derived.dilemmaCount(3);
     const dQ4 = Derived.dilemmaCount(4);
+    const curQ = CONTENT.quarters.find(q => q.number === currentQ) || CONTENT.quarters[0];
+    const openCrit = critical.filter(c => !c.done);
+    const overall = Derived.overallPct();
     return `
     <div class="hero">
       <div class="hero-inner">
@@ -3705,6 +3733,42 @@ const Views = {
           <div class="hf-row"><label>Supervisor</label><input data-bind="profile.supervisorName" value="${esc(p.supervisorName)}" placeholder="Supervisor"></div>
           <div class="hf-row"><label>Start Date</label><input type="date" data-bind="profile.startDate" value="${esc(p.startDate)}" onchange="Actions.recalcDates()"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- YOUR NEXT STEPS — the hybrid dashboard's lead panel -->
+    <div class="card card-accent" style="margin-bottom:20px;border-left:4px solid var(--blue)">
+      <div class="card-header">
+        <div>
+          <h3>Your next steps</h3>
+          <div class="subtitle">Pick up where you left off — your current quarter and what needs your attention now.</div>
+        </div>
+        <div class="card-actions"><span class="ns-status ${status.cls}">${status.label}</span></div>
+      </div>
+      <div class="ns-grid">
+        <a class="ns-current" href="#/quarters/${curQ.id}/overview" style="border-left-color:var(--${['blue','green','amber','purple','coral','navy'][currentQ-1]||'blue'})">
+          <span class="ns-current-label">You're in${curQ.optional ? ' (optional)' : ''}</span>
+          <span class="ns-current-q">Q${currentQ} · ${esc(curQ.title)}</span>
+          <span class="ns-current-tag">${esc(curQ.tagline || '')}</span>
+          <span class="ns-focuses">${(curQ.focuses || []).map(f => `<span class="ns-focus" data-tip="${esc(f.desc || '')}">${f.emoji} ${esc(f.name)}</span>`).join('')}</span>
+          <span class="ns-current-open">Open this quarter →</span>
+        </a>
+        <div class="ns-actions">
+          <div class="ns-actions-h">Do next${status.key === 'blocked' ? ' — resolve before progressing' : ''}</div>
+          ${openCrit.length === 0
+            ? `<div class="ns-done">🎉 All mandatory checkpoints are complete — keep progressing through your quarter modules and milestones.</div>`
+            : openCrit.slice(0, 4).map(c => `
+              <a class="attention-row" href="#/quarters/q${c.qNum}/milestones">
+                <span class="attention-marker q${c.qNum}">Q${c.qNum}</span>
+                <span class="attention-title">${esc(c.title)}</span>
+                <span class="attention-arrow">→</span>
+              </a>`).join('') + (openCrit.length > 4 ? `<div class="ns-more">+${openCrit.length - 4} more mandatory item${openCrit.length - 4 > 1 ? 's' : ''} across your quarters</div>` : '')}
+        </div>
+      </div>
+      <div class="ns-progress">
+        <span class="label">Overall</span><b>${overall}%</b>
+        <div class="progress"><div style="width:${overall}%;background:var(--blue)"></div></div>
+        <span class="label" style="margin-left:auto">Milestones</span><b>${mp.done}/${mp.total}</b>
       </div>
     </div>
 
@@ -3749,16 +3813,6 @@ const Views = {
             <strong>When you begin to see clients independently is also subject to career development</strong>, the position of the business, and your own personal readiness based on what your supervisor recommends.
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Program status — critical gates override percentages so a high % can't mask a missing gate -->
-    <div class="status-banner ${status.cls}">
-      <span class="sb-badge">${status.label}</span>
-      <div class="sb-detail">
-        ${status.key === 'blocked' || status.key === 'attention'
-          ? `<b>${status.key === 'blocked' ? 'Resolve before progressing:' : 'Needs attention:'}</b><ul class="measure-reasons">${status.reasons.map(r => `<li>${esc(r)}</li>`).join('')}</ul>`
-          : esc(status.reasons[0] || '')}
       </div>
     </div>
 
@@ -3921,24 +3975,8 @@ const Views = {
       </div>
     </div>
 
-    <!-- WHAT NEEDS MY ATTENTION — unified critical/dilemmas panel -->
-    <div class="grid grid-2" style="margin-bottom:20px">
-      <div class="card">
-        <div class="card-header">
-          <div><h3>What needs your attention</h3><div class="subtitle">Critical milestones and gates still open, in recommended order.</div></div>
-        </div>
-        <div class="stack">
-          ${critical.filter(c => !c.done).slice(0, 6).map(c => `
-            <a class="attention-row" href="#/quarters/q${c.qNum}/milestones">
-              <span class="attention-marker q${c.qNum}">Q${c.qNum}</span>
-              <span class="attention-title">${esc(c.title)}</span>
-              <span class="attention-arrow">→</span>
-            </a>
-          `).join('')}
-          ${critical.filter(c => !c.done).length === 0 ? '<div class="empty" style="padding:16px;text-align:center"><p style="color:var(--green);font-weight:700">🎉 All critical milestones done!</p></div>' : ''}
-        </div>
-      </div>
-
+    <!-- SUPERVISOR 1:1s (full width; critical items now live in Your next steps) -->
+    <div style="margin-bottom:20px">
       <div class="card">
         <div class="card-header">
           <div><h3>Supervisor 1:1s</h3><div class="subtitle">${esc(CONTENT.oneOnOneAgenda.cadence)} · come prepared with notes.</div></div>
