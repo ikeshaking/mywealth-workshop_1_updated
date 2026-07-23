@@ -447,6 +447,24 @@ html[data-theme="dark"] .badge.navy{color:var(--navy-deep)}
 .status-ready{background:var(--blue-light);border-color:rgba(43,111,214,.4)}
 .status-ready .sb-badge{background:var(--blue);color:#fff}
 .measure-reasons{margin:6px 0 0;padding-left:18px;font-size:11.5px;color:var(--text-dim);line-height:1.6}
+/* Quarter entry / exit readiness criteria */
+.readiness{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.readiness{grid-template-columns:1fr}}
+.readiness-col{border:1px solid var(--border);border-radius:12px;padding:14px 16px;background:var(--surface);transition:background .15s,border-color .15s}
+.readiness-col.entry{border-left:4px solid var(--blue)}
+.readiness-col.exit{border-left:4px solid var(--green)}
+.readiness-head{font-family:var(--hf);font-size:13px;font-weight:700;color:var(--heading);display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.readiness-count{margin-left:auto;font-family:var(--bf);font-size:10px;font-weight:700;color:var(--text-muted);background:var(--surface-2);border-radius:16px;padding:2px 9px;letter-spacing:.3px}
+.readiness-col.complete.entry{background:var(--blue-light);border-color:rgba(43,111,214,.4)}
+.readiness-col.complete.entry .readiness-count{background:var(--blue);color:#fff}
+.readiness-col.complete.exit{background:var(--green-light);border-color:rgba(39,174,96,.4)}
+.readiness-col.complete.exit .readiness-count{background:var(--green);color:#fff}
+.readiness ul{list-style:none;padding:0;margin:0}
+.readiness li{padding:5px 0;border-top:1px solid var(--border-soft)}
+.readiness li:first-child{border-top:none}
+.readiness li label{display:flex;gap:9px;align-items:flex-start;font-size:12px;color:var(--text-dim);cursor:pointer;line-height:1.5}
+.readiness li input{width:15px;height:15px;margin-top:2px;flex-shrink:0;accent-color:var(--blue)}
+.readiness li.on label{color:var(--text)}
 
 /* ============================================================
    ALERTS
@@ -1078,6 +1096,21 @@ const CONTENT = {
       id: 'q1', number: 1, title: 'The Grind',
       tagline: "Client observation & direct supervision",
       summary: "You observe how advice actually gets made. Shadow client meetings, learn systems, build technical foundations. All work is under direct supervision — a Senior Adviser approves any client deliverable you touch. Clients must be told in writing that you are a PY candidate.",
+      entry: [
+        "PY Plan signed with your Supervisor and Licensee (quarterly competencies, work activities, structured-training plan and supervision arrangements recorded)",
+        "Supervisor confirmed and eligible (2+ years as a Relevant Provider)",
+        "Licensee compliance induction scheduled",
+        "Systems access arranged (XPLAN/CRM, email, document store)",
+        "Hours logging set up in the licensee PY portal"
+      ],
+      exit: [
+        "Licensee compliance induction completed",
+        "Code of Ethics read and annotated — all 12 Standards",
+        "Observed Discovery, SOA and Review meetings",
+        "Comfortable navigating core systems (XPLAN/CRM, calculators)",
+        "PY hours being logged in the portal",
+        "Supervisor satisfied with your engagement, professionalism and file-note basics"
+      ],
       focuses: [
         { emoji: '👀', name: 'Observation', desc: 'Shadow advisers' },
         { emoji: '🏢', name: 'Systems', desc: 'XPLAN / CRM' },
@@ -1308,6 +1341,20 @@ const CONTENT = {
       id: 'q2', number: 2, title: 'Develop & Grow',
       tagline: "Supervised engagement — exam PASS required",
       summary: "You begin supervised client engagement: structured data collection, risk profile interviews, assisting in SOA preparation. You MUST pass the ASIC Financial Adviser Exam this quarter. The Supervisor still approves and signs every advice deliverable.",
+      entry: [
+        "Q1 exit criteria met",
+        "Technical foundation modules underway (super, insurance, debt & cashflow, tax)",
+        "ASIC exam study plan agreed with your Supervisor"
+      ],
+      exit: [
+        "ASIC Financial Adviser Exam passed",
+        "Approved degree verified (or bridging pathway confirmed)",
+        "Licensee has updated FAR status to Provisional Relevant Provider",
+        "Provisional-status client disclosure process understood",
+        "Can draft a standard SOA to the review standard",
+        "Supervisor agrees you can lead a Discovery meeting",
+        "File notes and data collection meet standard"
+      ],
       focuses: [
         { emoji: '📝', name: 'ASIC Exam', desc: 'Must PASS' },
         { emoji: '🛡️', name: 'Risk insurance', desc: 'Life, TPD, IP' },
@@ -1842,6 +1889,21 @@ const CONTENT = {
       id: 'q3', number: 3, title: 'Train to Play',
       tagline: "Indirect supervision — Provisional Financial Adviser",
       summary: "FAR status updated to 'Provisional Relevant Provider' (title: Provisional Financial Adviser). Deliver advice under indirect supervision — Supervisor signs SOAs but need not be present. Min 2 ethical dilemmas resolved. Q3 CANNOT be accelerated.",
+      entry: [
+        "Exam passed",
+        "Degree confirmed",
+        "FAR status updated",
+        "Provisional disclosure process understood",
+        "Supervisor agrees candidate can lead a Discovery meeting",
+        "File notes and data collection meet standard"
+      ],
+      exit: [
+        "Minimum agreed number of real client engagements completed",
+        "Two ethical dilemmas satisfactorily assessed",
+        "At least one SOA presentation assessed as competent",
+        "No unresolved material compliance concerns",
+        "Supervisor approves progression"
+      ],
       focuses: [
         { emoji: '🎙️', name: 'DA delivery', desc: 'You lead' },
         { emoji: '📋', name: 'SOA sign-off', desc: 'Supervisor' },
@@ -2071,6 +2133,18 @@ const CONTENT = {
       id: 'q4', number: 4, title: 'Train to Win',
       tagline: "Final quarter — licensee audit & completion",
       summary: "Near-full independence. Licensee audits minimum 5 client files. Supervisor attests competency across 4 domains. Further 2 ethical dilemmas resolved. Q4 CANNOT be accelerated. On completion, licensee issues Final Completion Certificate and notifies ASIC within 30 business days.",
+      entry: [
+        "Q3 exit criteria met",
+        "Operating under indirect supervision — you own the client journey; Supervisor signs SOAs",
+        "Mock DA/SOA rehearsal cadence agreed with your Supervisor"
+      ],
+      exit: [
+        "A further two ethical dilemmas satisfactorily assessed (four in total across Q3–Q4)",
+        "Licensee file audit passed — minimum five client files",
+        "Supervisor competency attestation across all four domains",
+        "No unresolved material compliance concerns",
+        "Supervisor and Licensee approve completion → Final Completion Certificate issued"
+      ],
       focuses: [
         { emoji: '📁', name: 'File audit', desc: '5+ files' },
         { emoji: '🎓', name: 'Competency', desc: 'Sign-off' },
@@ -2520,6 +2594,14 @@ const CONTENT = {
       tagline: "Q5 — Optional extension for wealth management track",
       optional: true,
       summary: "Optional extension quarter for candidates moving into advanced wealth management. Not required by the PY Standard but recommended by MyWealth for candidates transitioning to full-service wealth clients. Assumes Final Completion Certificate issued.",
+      entry: [
+        "Final Completion Certificate issued and FAR updated to Relevant Provider",
+        "COO/Supervisor agree you are ready to take first clients"
+      ],
+      exit: [
+        "Agreed capability goals for advanced wealth clients met",
+        "Supervisor confirms readiness to continue independently"
+      ],
       focuses: [
         { emoji: '💼', name: 'WM clients', desc: 'Complex cases' },
         { emoji: '🌍', name: 'Int\'l assets', desc: 'Cross-border' },
@@ -2631,6 +2713,12 @@ const CONTENT = {
       tagline: "Q6 — Path to senior adviser and mentoring",
       optional: true,
       summary: "Final optional extension: path to senior adviser, mentoring future PY candidates, building toward specialisation or partnership. Also appropriate for candidates entering paraplanning, compliance, or management roles.",
+      entry: [
+        "Q5 goals met (or direct entry agreed with your leader)"
+      ],
+      exit: [
+        "Development goals for your chosen track (leadership, specialisation or mentoring) met"
+      ],
       focuses: [
         { emoji: '👥', name: 'Mentoring', desc: 'PY candidates' },
         { emoji: '🏆', name: 'Specialty', desc: 'CFP® path' },
@@ -3055,6 +3143,7 @@ function seedState() {
     customSections: {},
     customResources: [],
     workshopNotes: {},
+    quarterReadiness: {},
     signoffLocked: false,
     signoffPasswordHash: '',
     openModules: {},
@@ -3350,6 +3439,7 @@ const Store = (() => {
       if (!s.customItems) s.customItems = {};
       if (!s.customSections) s.customSections = {};
       if (!s.workshopNotes) s.workshopNotes = {};
+      if (!s.quarterReadiness) s.quarterReadiness = {};
       if (typeof s.signoffLocked !== 'boolean') s.signoffLocked = false;
       if (typeof s.signoffPasswordHash !== 'string') s.signoffPasswordHash = '';
       if (!s.customResources) s.customResources = [];
@@ -3517,6 +3607,15 @@ const Derived = {
 const Actions = {
   toggleMilestone(key) { Store.mutate(s => { s.milestones[key].done = !s.milestones[key].done; }); },
   setMilestoneNote(key, note) { Store.mutate(s => { s.milestones[key].note = note; }); },
+  // Quarter entry/exit readiness ticks (phase = 'entry' | 'exit')
+  toggleReadiness(qId, phase, idx, val) {
+    Store.mutate(s => {
+      if (!s.quarterReadiness) s.quarterReadiness = {};
+      if (!s.quarterReadiness[qId]) s.quarterReadiness[qId] = { entry:{}, exit:{} };
+      if (!s.quarterReadiness[qId][phase]) s.quarterReadiness[qId][phase] = {};
+      if (val) s.quarterReadiness[qId][phase][idx] = true; else delete s.quarterReadiness[qId][phase][idx];
+    });
+  },
   // Ticking a milestone requires the candidate to confirm evidence is on file and
   // describe the proof. Un-ticking simply reopens it (the proof note is kept on record).
   handleMilestoneToggle(key) {
@@ -4331,6 +4430,18 @@ const Views = {
   },
 
   _qOverview(q) {
+    const s = Store.getState();
+    const rd = (s.quarterReadiness && s.quarterReadiness[q.id]) || { entry:{}, exit:{} };
+    const readinessCol = (phase, items, icon, title) => {
+      if (!items || !items.length) return '';
+      const ticks = rd[phase] || {};
+      const done = items.filter((_, i) => ticks[i]).length;
+      const complete = done === items.length;
+      return `<div class="readiness-col ${phase} ${complete?'complete':''}">
+        <div class="readiness-head">${icon} ${title} <span class="readiness-count">${done}/${items.length}</span></div>
+        <ul>${items.map((c, i) => `<li class="${ticks[i]?'on':''}"><label><input type="checkbox" data-readiness="${q.id}:${phase}:${i}" ${ticks[i]?'checked':''}><span>${esc(c)}</span></label></li>`).join('')}</ul>
+      </div>`;
+    };
     const gateAlert = {
       q1: `<div class="alert alert-navy"><span class="icon">📘</span><div><strong>Client disclosure — Q1 onwards</strong>Before any client interaction (observation or otherwise), the client must be informed in writing that you are a PY candidate and that your supervisor is responsible for any personal advice. Keep the signed acknowledgement on file.</div></div>`,
       q2: `<div class="alert alert-warn"><span class="icon">⚠️</span><div><strong>Gate to Q3</strong>You CANNOT commence Q3 work activities or structured training until (a) you pass the ASIC Financial Adviser Exam, (b) your approved degree is verified, and (c) the licensee updates your FAR status to 'Provisional Relevant Provider'.</div></div>`,
@@ -4401,6 +4512,14 @@ const Views = {
           }).join('')}
         </div>
       </div>
+      ${(q.entry || q.exit) ? `
+      <div class="card" style="margin-top:16px">
+        <div class="card-header"><div><h3>Quarter readiness</h3><div class="subtitle">Confirm each criterion with your Supervisor. <b>Entry</b> = ready to commence Q${q.number}; <b>Exit</b> = ready to progress. These make progression defensible beyond a completion %.</div></div></div>
+        <div class="readiness">
+          ${readinessCol('entry', q.entry, '✅', `Ready to commence Q${q.number}`)}
+          ${readinessCol('exit', q.exit, '🎯', `Ready to progress from Q${q.number}`)}
+        </div>
+      </div>` : ''}
       <div style="margin-top:16px">${gateAlert[q.id] || ''}</div>
       ${(BOOKS_BANK[q.id] && BOOKS_BANK[q.id].length) ? `
       <div class="card" style="margin-top:16px">
@@ -5721,6 +5840,12 @@ const App = {
 
     // CHANGE event
     document.addEventListener('change', (e) => {
+      const rdChk = e.target.closest('[data-readiness]');
+      if (rdChk) {
+        const [qid, phase, idx] = rdChk.getAttribute('data-readiness').split(':');
+        Actions.toggleReadiness(qid, phase, Number(idx), rdChk.checked);
+        return;
+      }
       const modChk = e.target.closest('[data-module-check]');
       if (modChk) {
         const [mid, key] = modChk.getAttribute('data-module-check').split(':');
