@@ -133,12 +133,11 @@ a:hover{text-decoration:underline}
   position:sticky;top:0;z-index:50;
 }
 .top-actions{min-width:0}
-.brand{
-  font-family:var(--hf)!important;font-size:20px;font-weight:700;color:#fff;
-  display:flex;align-items:center;gap:8px;cursor:pointer;letter-spacing:-.02em;
-}
-.brand-dot{width:8px;height:8px;border-radius:50%;background:var(--coral);box-shadow:0 0 0 3px rgba(245,106,90,.28)}
-.brand-sub{font-size:10px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:1.2px;font-weight:600;padding-left:12px;border-left:1px solid rgba(255,255,255,.15);margin-left:10px}
+.brand{display:flex;align-items:center;cursor:pointer}
+.brand-stack{display:flex;flex-direction:column;line-height:1}
+.brand-name{font-family:var(--hf)!important;font-size:19px;font-weight:700;color:#fff;letter-spacing:-.02em}
+.brand-solutions{font-size:7px;letter-spacing:3.4px;color:rgba(255,255,255,.55);font-weight:700;margin-top:3px;text-transform:uppercase}
+.tool-label{font-size:9px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:1.6px;font-weight:700;line-height:1.5;padding-left:14px;margin-left:14px;border-left:1px solid rgba(255,255,255,.15)}
 
 .topnav{display:flex;gap:2px;align-items:center;justify-content:center}
 .topnav a{
@@ -171,7 +170,7 @@ html[data-theme="dark"] .topnav a.active{background:var(--blue);color:#0f1820}
 }
 
 /* Hide the decorative brand tag before things get tight */
-@media(max-width:1300px){ .brand-sub{display:none} }
+@media(max-width:1080px){ .tool-label{display:none} }
 @media(max-width:1240px){
   .topbar{grid-template-columns:1fr auto;padding:10px 16px;gap:8px}
   .topnav{display:none}
@@ -234,7 +233,7 @@ html[data-theme="dark"] .topnav a.active{background:var(--blue);color:#0f1820}
 /* ============================================================
    CARDS
 ============================================================ */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;box-shadow:var(--shadow-sm);position:relative}
 .card-accent{border-left:4px solid var(--blue);background:linear-gradient(135deg,var(--blue-light) 0%,var(--surface) 100%)}
 html[data-theme="dark"] .card-accent{background:linear-gradient(135deg,rgba(93,166,255,.1) 0%,var(--surface) 100%)}
 
@@ -310,7 +309,7 @@ html[data-theme="dark"] .other-training-tile .ot-title{color:var(--blue)}
 .other-training-tile .ot-meta{font-family:var(--bf);font-size:9px;color:var(--text-muted);line-height:1.3}
 .other-training-tile .ot-meta a{color:var(--blue-link);text-decoration:none;font-weight:600}
 .other-training-tile .ot-meta a:hover{text-decoration:underline}
-.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:transparent}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:transparent;border-radius:10px 10px 0 0}
 .card.q1::before{background:var(--blue)}
 .card.q2::before{background:var(--green)}
 .card.q3::before{background:var(--amber)}
@@ -723,6 +722,16 @@ td input,td select{padding:5px 7px;font-size:11px}
 .lvl-detail ol{margin:0;padding-left:20px;font-size:11px;color:var(--text-dim);line-height:1.5}
 .lvl-detail li{margin-bottom:3px}
 .lvl-detail li b{color:var(--text)}
+/* Per-quarter competency progression grid */
+.comp-progress{border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.cp-row{display:grid;grid-template-columns:1fr 60px 60px 60px 60px;border-top:1px solid var(--border-soft)}
+.cp-row:first-child{border-top:none}
+.cp-head{background:var(--surface-2);font-weight:700}
+.cp-dom{padding:8px 12px;font-size:11.5px;color:var(--text-dim);display:flex;align-items:center}
+.cp-head .cp-dom{color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-size:10px}
+.cp-cell{padding:8px 6px;text-align:center;font-family:var(--hf);font-size:13px;font-weight:700;color:var(--text);border-left:1px solid var(--border-soft)}
+.cp-head .cp-cell{font-family:var(--bf);font-size:11px;color:var(--text-muted)}
+.cp-cell.cur{background:var(--blue-light);color:var(--blue)}
 /* Development actions + progression decision (reflection tab) */
 .dev-action{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
 .dev-action.carried{background:var(--amber-light);border-color:rgba(184,134,11,.3)}
@@ -832,8 +841,8 @@ td input,td select{padding:5px 7px;font-size:11px}
 
 /* ============ TOOLTIPS ============ */
 [data-tip]{position:relative;cursor:help;border-bottom:1px dotted var(--text-muted)}
-[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:6px 10px;border-radius:6px;font-size:11px;font-weight:500;white-space:normal;max-width:280px;width:max-content;z-index:50;line-height:1.4;box-shadow:var(--shadow-lg);pointer-events:none;font-family:var(--bf)}
-[data-tip]:hover::before{content:'';position:absolute;bottom:calc(100% + 1px);left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:var(--navy);z-index:50;pointer-events:none}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:6px 10px;border-radius:6px;font-size:11px;font-weight:500;white-space:normal;max-width:min(280px,80vw);width:max-content;z-index:200;line-height:1.4;box-shadow:var(--shadow-lg);pointer-events:none;font-family:var(--bf)}
+[data-tip]:hover::before{content:'';position:absolute;bottom:calc(100% + 1px);left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:var(--navy);z-index:200;pointer-events:none}
 
 /* ============ SIGN-OFF SECTIONS ============ */
 .signoff-block{margin-top:14px;padding:12px;border-radius:8px;background:var(--surface-2);border:1px dashed var(--border-strong)}
@@ -1090,8 +1099,13 @@ body.edit-mode #editToggleBtn{ background:var(--coral); border-color:var(--coral
 <div id="app">
   <header class="topbar">
     <div style="display:flex;align-items:center">
-      <div class="brand" id="brandLink"><span class="brand-dot"></span>MyWealth <em style="font-style:italic;color:var(--coral);font-weight:400">.</em> PY</div>
-      <div class="brand-sub">Professional Year Program</div>
+      <div class="brand" id="brandLink">
+        <span class="brand-stack">
+          <span class="brand-name">MyWealth</span>
+          <span class="brand-solutions">Solutions</span>
+        </span>
+      </div>
+      <span class="tool-label">Professional Year<br>Program</span>
     </div>
     <nav class="topnav" id="topnav"></nav>
     <div class="top-actions">
@@ -1120,9 +1134,8 @@ body.edit-mode #editToggleBtn{ background:var(--coral); border-color:var(--coral
 // Utilities
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-// Turn any "[placeholder — …]" marker (in already-escaped text) into a visible "Draft content" badge,
-// so unfinished MWS content is never mistaken for approved process.
-const draftify = html => String(html).replace(/\s*\[placeholder[^\]]*\]/gi, ' <span class="draft-badge">Draft content</span>');
+// Strip any "[placeholder — …]" marker so the text reads cleanly (no badge).
+const draftify = html => String(html).replace(/\s*\[placeholder[^\]]*\]/gi, '');
 const hasDraft = s => /\[placeholder/i.test(String(s || ''));
 
 // Behavioural competency scale — rate what someone can DO, not just what they know.
@@ -1347,59 +1360,6 @@ const CONTENT = {
             { h: 'Looking ahead', items: [
               'This is the foundation only — comprehensive property strategy is covered in Q3/Q4',
               'Note questions to revisit in the comprehensive module'
-            ]}
-          ]
-        },
-        {
-          id: 'q1m1', title: 'Financial planning regulatory framework', icon: '⚖️', tag: 'core',
-          duration: '8 hours (structured training)', tagline: 'The laws that govern what we do and why',
-          sections: [
-            { h: 'Key legislation to know cold', items: [
-              'Corporations Act 2001 (Cth) — Chapter 7 (financial services): Pt 7.6 licensing; Pt 7.7 conduct and disclosure; Pt 7.7A best interests; Pt 7.8A DDO; Pt 7.9 PDS and FSG',
-              'SIS Act 1993 — superannuation regulation',
-              'Income Tax Assessment Act 1936/1997 — taxation framework',
-              'Australian Privacy Principles under Privacy Act 1988 (APPs 1–13)',
-              'AML/CTF Act 2006 — customer due diligence, ongoing monitoring',
-              'Tax Agent Services Act 2009 — tax (financial) advice services'
-            ]},
-            { h: 'The regulators', items: [
-              'ASIC — single regulator for financial advice conduct and licensing',
-              'AFCA — external dispute resolution (replaced FOS 2018)',
-              'FSCP (Financial Services and Credit Panel) — single disciplinary body since 1 Jan 2022',
-              'ATO — tax; APRA — prudential supervision of super funds; AUSTRAC — AML/CTF',
-              'TPB (Tax Practitioners Board) — tax (financial) advisers'
-            ]},
-            { h: 'Key ASIC Regulatory Guides', items: [
-              'RG 175 — Licensing: Financial product advisers — Conduct and disclosure',
-              'RG 244 — Giving information, general advice and scaled advice',
-              'RG 274 — Product design and distribution obligations',
-              'RG 271 — Internal dispute resolution',
-              'RG 90 / RG 175 — SOA content and format'
-            ]}
-          ]
-        },
-        {
-          id: 'q1m2', title: 'The Code of Ethics 2019 — deep dive', icon: '📖', tag: 'ethics',
-          duration: '10 hours (structured training)', tagline: 'Ethical duties above the law',
-          sections: [
-            { h: 'Four categories of standards', items: [
-              'Ethical behaviour (Standards 1–3): laws, integrity, conflicts of interest',
-              'Client care (Standards 4–6): informed consent, valued advice, long-term interests',
-              'Quality process (Standards 7–9): fair remuneration, records, good faith',
-              'Professional commitment (Standards 10–12): competence, cooperation, ethical uphold'
-            ]},
-            { h: 'Five core values', items: [
-              'Trustworthiness — clients must be able to rely on you',
-              'Competence — skills and knowledge for the advice you give',
-              'Honesty — openness, frankness, no deception',
-              'Fairness — free, prior, informed consent; no hidden conflicts',
-              'Diligence — thorough, careful, accurate work'
-            ]},
-            { h: 'Interplay with law', items: [
-              'The Code imposes duties ABOVE the Corporations Act — not below or alternative',
-              'Standard 3 (conflicts) goes further than the statutory conflicts priority rule (s961J)',
-              'Standard 7 effectively prohibits referral fees otherwise permitted by law',
-              'Breaches monitored by ASIC; enforced by FSCP; sanctions include written warnings, directions, infringement notices, suspension'
             ]}
           ]
         },
@@ -2176,39 +2136,6 @@ const CONTENT = {
               'ESG ratings providers — MSCI, Morningstar Sustainalytics',
               'Client preference mapping — avoid greenwashing',
               'Corporations Act requires disclosure of labour standards / environmental considerations in PDS'
-            ]}
-          ]
-        },
-        {
-          id: 'q3m3', title: 'Ethical decision-making framework', icon: '⚖️', tag: 'ethics',
-          duration: '6 hours (structured training)', tagline: 'The Q3/Q4 dilemma requirement — resolved properly',
-          sections: [
-            { h: '4-step framework', items: [
-              'Step 1 — IDENTIFY: what is the ethical issue? Who is affected? Which Standards are in play?',
-              'Step 2 — ANALYSE: what options exist? What do the Values tell you (Trustworthiness, Competence, Honesty, Fairness, Diligence)?',
-              'Step 3 — DECIDE: what is the course of action? What would a reasonable, informed peer say?',
-              'Step 4 — DOCUMENT: facts, analysis, decision, rationale, Supervisor discussion'
-            ]},
-            { h: 'Common dilemma scenarios', items: [
-              'Client wants to exclude superannuation from scope even though clearly beneficial',
-              'Related-party referral — receive commission, Standard 3 implications',
-              'Client wants product held by adviser personally — perceived conflict',
-              'Client pressures urgent action — BID thoroughness vs deadline',
-              'Family member as client — objectivity, confidentiality',
-              'Former client seeks fresh advice after poor self-implementation',
-              'Colleague\'s behaviour you\'re uncomfortable with — Standard 11/12'
-            ]},
-            { h: 'Where the Code bites hardest', items: [
-              'Standard 3 — "you must not act" if conflicted — disclosure is NOT a cure',
-              'Standard 6 — long-term interests even if narrow scope',
-              'Standard 7 — "value for money" test; referral fees effectively prohibited',
-              'Standard 12 — call out colleagues; silence can breach'
-            ]},
-            { h: 'Documentation standard', items: [
-              'Factual, contemporaneous, dated',
-              'Written with a regulator\'s eye — would this satisfy the FSCP?',
-              'Signed or acknowledged by Supervisor',
-              'Filed in central dilemmas log (this tool) AND in the client file where relevant'
             ]}
           ]
         },
@@ -3234,7 +3161,7 @@ const BOOKS_BANK = {
 /* ============================================================
    STORE — reactive state + localStorage
 ============================================================ */
-const STORAGE_KEY = 'mywealth_py_v2';
+const STORAGE_KEY = 'mywealth_py_v3';
 
 function seedState() {
   const milestones = {};
@@ -3253,10 +3180,13 @@ function seedState() {
       signoffState[m.id] = { ticks:{}, name:'', date:'', signed:false, signedBy:'', signedAt:'' };
     });
   });
+  // Competency is assessed once per quarter (a stored snapshot per quarter).
+  const COMP_QUARTERS = ['q1','q2','q3','q4'];
   const competencyScores = {};
+  COMP_QUARTERS.forEach(q => { competencyScores[q] = {}; });
   CONTENT.competencies.forEach((dom, di) => {
     dom.items.forEach((it, ii) => {
-      competencyScores[`${di}_${ii}`] = { candidate: 0, supervisor: 0 };
+      COMP_QUARTERS.forEach(q => { competencyScores[q][`${di}_${ii}`] = { candidate: 0, supervisor: 0 }; });
     });
   });
   return {
@@ -3307,7 +3237,7 @@ function seedState() {
     holdingBack: { initial: '', q1: '', q2: '', q3: '', q4: '' },
     contentOverrides: {},
     editPasswordHash: '',
-    ui: { theme: 'light', role: 'candidate' }
+    ui: { theme: 'light', role: 'candidate', compQuarter: 'q1' }
   };
 }
 
@@ -3575,7 +3505,16 @@ const Store = (() => {
       for (const k in seed.milestones) if (!s.milestones?.[k]) { s.milestones = s.milestones||{}; s.milestones[k] = { done: false, note: '', proof: '', proofDate: '' }; }
       // backfill proof fields on existing milestones
       for (const k in (s.milestones||{})) { const m = s.milestones[k]; if (m && typeof m.proof !== 'string') m.proof = ''; if (m && typeof m.proofDate !== 'string') m.proofDate = ''; }
-      for (const k in seed.competencyScores) if (!s.competencyScores?.[k]) { s.competencyScores = s.competencyScores||{}; s.competencyScores[k] = { candidate: 0, supervisor: 0 }; }
+      // Competency scores are now per-quarter { q1:{...}, q2:{...}, q3:{...}, q4:{...} }
+      if (!s.competencyScores || typeof s.competencyScores !== 'object') s.competencyScores = {};
+      const compHasQuarters = ['q1','q2','q3','q4'].some(q => s.competencyScores[q]);
+      if (!compHasQuarters) {
+        const legacy = {};
+        for (const k in s.competencyScores) { if (/^\d+_\d+$/.test(k)) legacy[k] = s.competencyScores[k]; }
+        s.competencyScores = { q1: legacy, q2:{}, q3:{}, q4:{} };
+      }
+      ['q1','q2','q3','q4'].forEach(q => { if (!s.competencyScores[q]) s.competencyScores[q] = {}; });
+      for (const q of ['q1','q2','q3','q4']) for (const k in seed.competencyScores.q1) { if (!s.competencyScores[q][k]) s.competencyScores[q][k] = { candidate: 0, supervisor: 0 }; }
       for (const k in seed.modulesDone) if (!s.modulesDone?.[k]) { s.modulesDone = s.modulesDone||{}; s.modulesDone[k] = { done: false, hours: 0, notes: '' }; }
       // backfill assessment record on existing modules
       for (const k in (s.modulesDone||{})) { const md = s.modulesDone[k]; if (md && !md.assessment) md.assessment = { format:'', result:'', attempt:1, assessor:'', date:'', passed:false, remediation:'', reassessment:'' }; }
@@ -4221,7 +4160,16 @@ const Actions = {
   deleteDevAction(id) {
     Store.mutate(s => { s.devActions = (s.devActions || []).filter(x => x.id !== id); });
   },
-  setCompetencyScore(key, who, v) { Store.mutate(s => { const prev = s.competencyScores[key][who] || 0; s.competencyScores[key][who] = Number(v) || 0; pushAudit(s, 'Competency rating set (' + who + ')', competencyLabelByKey(key) + ' → Level ' + (Number(v)||0), { cat:'competency', from:'L'+prev, to:'L'+(Number(v)||0) }); }); },
+  setCompetencyScore(quarter, key, who, v) {
+    Store.mutate(s => {
+      if (!s.competencyScores[quarter]) s.competencyScores[quarter] = {};
+      if (!s.competencyScores[quarter][key]) s.competencyScores[quarter][key] = { candidate:0, supervisor:0 };
+      const prev = s.competencyScores[quarter][key][who] || 0;
+      s.competencyScores[quarter][key][who] = Number(v) || 0;
+      pushAudit(s, 'Competency rating set (' + who + ', ' + String(quarter).toUpperCase() + ')', competencyLabelByKey(key) + ' → Level ' + (Number(v)||0), { cat:'competency', from:'L'+prev, to:'L'+(Number(v)||0) });
+    });
+  },
+  setCompQuarter(q) { Store.mutate(s => { s.ui.compQuarter = q; }); },
   setSupervisorSignoff(k, v) { Store.mutate(s => { s.supervisorSignoffs[k] = v; }); },
   setSupervisorCheck(k, v) { Store.mutate(s => { s.supervisorChecks[k] = v; }); },
   setTheme(t) { Store.mutate(s => { s.ui.theme = t; }); document.documentElement.setAttribute('data-theme', t); },
@@ -4270,8 +4218,6 @@ const NAV = [
   { path: 'dashboard', label: 'Dashboard', roles: ['candidate','supervisor'] },
   { path: 'quarters', label: 'Quarters', roles: ['candidate','supervisor'] },
   { path: 'competency', label: 'Competency', roles: ['candidate','supervisor'] },
-  { path: 'approach', label: 'Approach', roles: ['candidate','supervisor'] },
-  { path: 'code', label: 'Ethics', roles: ['candidate','supervisor'] },
   { path: 'resources', label: 'Resources', roles: ['candidate','supervisor'] },
   { path: 'history', label: 'History', roles: ['candidate','supervisor'] },
   { path: 'settings', label: 'Settings', roles: ['candidate','supervisor'] }
@@ -5360,6 +5306,9 @@ const Views = {
   competency() {
     const s = Store.getState();
     const role = s.ui.role;
+    const COMPQ = ['q1','q2','q3','q4'];
+    const cq = COMPQ.includes(s.ui.compQuarter) ? s.ui.compQuarter : 'q1';
+    const scoresFor = q => s.competencyScores[q] || {};
 
     return `
     <div class="page-head">
@@ -5385,10 +5334,28 @@ const Views = {
       </div>
     </div>
 
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><div><h3>Quarterly competency assessment</h3><div class="subtitle">Complete an assessment at the end of each quarter — each quarter is stored separately so you can see progression across the PY.</div></div></div>
+      <div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:14px">
+        ${COMPQ.map(q => `<button class="btn btn-sm ${cq===q?'btn-blue':'btn-ghost'}" data-compq="${q}">Q${q.slice(1)}</button>`).join('')}
+        <span class="muted small" style="margin-left:auto;align-self:center">Editing: <b>Q${cq.slice(1)}</b></span>
+      </div>
+      <div class="comp-progress">
+        <div class="cp-row cp-head"><div class="cp-dom">Domain — supervisor avg by quarter</div>${COMPQ.map(q=>`<div class="cp-cell ${q===cq?'cur':''}">Q${q.slice(1)}</div>`).join('')}</div>
+        ${CONTENT.competencies.map((dom,di)=>`<div class="cp-row"><div class="cp-dom">${esc(dom.domain)}</div>${COMPQ.map(q=>{
+          const sc=scoresFor(q), items=dom.items;
+          const tot=items.reduce((a,_,ii)=>a+((sc[`${di}_${ii}`]&&sc[`${di}_${ii}`].supervisor)||0),0);
+          const avg=items.length?tot/items.length:0;
+          return `<div class="cp-cell ${q===cq?'cur':''}">${avg?avg.toFixed(1):'—'}</div>`;
+        }).join('')}</div>`).join('')}
+      </div>
+    </div>
+
     ${CONTENT.competencies.map((dom, di) => {
+      const sc0 = scoresFor(cq);
       const items = dom.items;
-      const totalCand = items.reduce((sum, _, ii) => sum + (s.competencyScores[`${di}_${ii}`]?.candidate || 0), 0);
-      const totalSup = items.reduce((sum, _, ii) => sum + (s.competencyScores[`${di}_${ii}`]?.supervisor || 0), 0);
+      const totalCand = items.reduce((sum, _, ii) => sum + ((sc0[`${di}_${ii}`] && sc0[`${di}_${ii}`].candidate) || 0), 0);
+      const totalSup = items.reduce((sum, _, ii) => sum + ((sc0[`${di}_${ii}`] && sc0[`${di}_${ii}`].supervisor) || 0), 0);
       const avgCand = items.length ? (totalCand / items.length).toFixed(1) : '0.0';
       const avgSup = items.length ? (totalSup / items.length).toFixed(1) : '0.0';
       return `
@@ -5396,28 +5363,23 @@ const Views = {
           <div class="card-header">
             <div>
               <h3>Domain ${di+1}: ${esc(dom.domain)}</h3>
-              <div class="subtitle">${items.length} items · Candidate avg: <strong>${avgCand}</strong> · Supervisor avg: <strong>${avgSup}</strong></div>
+              <div class="subtitle">Q${cq.slice(1)} · ${items.length} items · Candidate avg: <strong>${avgCand}</strong> · Supervisor avg: <strong>${avgSup}</strong></div>
             </div>
           </div>
           <div>
             ${items.map((it, ii) => {
               const key = `${di}_${ii}`;
-              const sc = s.competencyScores[key] || { candidate: 0, supervisor: 0 };
-              const ex = competencyExamples(it);
+              const sc = sc0[key] || { candidate: 0, supervisor: 0 };
               const variance = (sc.candidate && sc.supervisor) ? Math.abs(sc.candidate - sc.supervisor) : 0;
-              const btns = (who) => `<div class="lvl-btns">${[1,2,3,4,5].map(n => {
-                const tip = ex ? `Level ${n} — ${ex[n-1]}` : `${COMPETENCY_SCALE[n-1].name} — ${COMPETENCY_SCALE[n-1].desc}`;
-                return `<button data-lvl="${key}:${who}:${n}" class="${sc[who]===n?'sel':''}" data-tip="${esc(tip)}">${n}</button>`;
-              }).join('')}</div>`;
+              const btns = (who) => `<div class="lvl-btns">${[1,2,3,4,5].map(n => `<button data-lvl="${cq}:${key}:${who}:${n}" class="${sc[who]===n?'sel':''}" data-tip="${esc(COMPETENCY_SCALE[n-1].name + ' — ' + COMPETENCY_SCALE[n-1].desc)}">${n}</button>`).join('')}</div>`;
               return `
                 <div class="lvl-row">
-                  <div class="lvl-label">${esc(it)}${ex ? ` <button class="lvl-info" data-lvlinfo="${key}">observable levels ▾</button>` : ''}</div>
+                  <div class="lvl-label">${esc(it)}</div>
                   <div class="lvl-pickers">
                     <div class="lvl-pick cand"><span class="lvl-who">Candidate</span>${btns('candidate')}</div>
                     <div class="lvl-pick sup"><span class="lvl-who">Supervisor</span>${btns('supervisor')}</div>
                     ${variance >= 2 ? `<span class="lvl-var" data-tip="Candidate and supervisor differ by ${variance} levels — discuss at the 1:1 and align on evidence.">Δ ${variance} · discuss</span>` : ''}
                   </div>
-                  ${ex ? `<div class="lvl-detail" id="lvld_${key}" hidden><ol>${ex.map((d, idx) => `<li><b>Level ${idx+1} (${COMPETENCY_SCALE[idx].name}):</b> ${esc(d)}</li>`).join('')}</ol></div>` : ''}
                 </div>
               `;
             }).join('')}
@@ -6089,7 +6051,9 @@ const App = {
 
       // Competency behavioural level buttons + observable-levels toggle
       const lvlBtn = e.target.closest('[data-lvl]');
-      if (lvlBtn) { const [key, who, n] = lvlBtn.getAttribute('data-lvl').split(':'); Actions.setCompetencyScore(key, who, Number(n)); return; }
+      if (lvlBtn) { const [quarter, key, who, n] = lvlBtn.getAttribute('data-lvl').split(':'); Actions.setCompetencyScore(quarter, key, who, Number(n)); return; }
+      const compQ = e.target.closest('[data-compq]');
+      if (compQ) { Actions.setCompQuarter(compQ.getAttribute('data-compq')); return; }
       const lvlInfo = e.target.closest('[data-lvlinfo]');
       if (lvlInfo) { const d = document.getElementById('lvld_' + lvlInfo.getAttribute('data-lvlinfo')); if (d) d.hidden = !d.hidden; return; }
       const refRate = e.target.closest('[data-refrate]');
@@ -6311,12 +6275,6 @@ const App = {
       }
 
 
-      const comp = t.getAttribute('data-comp-score');
-      if (comp) {
-        const [key, who] = comp.split(':');
-        Actions.setCompetencyScore(key, who, Number(t.value));
-        return;
-      }
 
       const so = t.getAttribute('data-signoff');
       if (so) { Actions.setSupervisorSignoff(so, t.value); return; }
