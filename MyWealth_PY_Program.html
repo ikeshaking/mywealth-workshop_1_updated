@@ -723,6 +723,19 @@ td input,td select{padding:5px 7px;font-size:11px}
 .lvl-detail ol{margin:0;padding-left:20px;font-size:11px;color:var(--text-dim);line-height:1.5}
 .lvl-detail li{margin-bottom:3px}
 .lvl-detail li b{color:var(--text)}
+/* Development actions + progression decision (reflection tab) */
+.dev-action{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.dev-action.carried{background:var(--amber-light);border-color:rgba(184,134,11,.3)}
+.dev-action-head{font-size:12.5px;color:var(--text);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dev-action-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:640px){.dev-action-grid{grid-template-columns:1fr}}
+.dev-action .field{margin:0}
+.decision-btns{display:flex;gap:10px;flex-wrap:wrap}
+.decision-btn{flex:1;min-width:200px;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;font-family:var(--bf);font-size:12.5px;font-weight:600;color:var(--text-dim);cursor:pointer;transition:all .12s}
+.decision-btn:hover{border-color:var(--border-strong)}
+.decision-btn.sel.ok{border-color:var(--green);background:var(--green-light);color:var(--green-dark,#2e7d32)}
+.decision-btn.sel.warn{border-color:var(--amber);background:var(--amber-light);color:var(--amber)}
+.decision-btn.sel.danger{border-color:var(--red);background:var(--red-light);color:var(--red)}
 /* Change history (audit) list */
 .audit-list{list-style:none;margin:0;padding:0}
 .audit-item{display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border-bottom:1px solid var(--border-soft)}
@@ -1155,6 +1168,23 @@ function competencyExamples(itemText) {
   for (const key in COMPETENCY_EXAMPLES) { if (String(itemText).includes(key)) return COMPETENCY_EXAMPLES[key]; }
   return null;
 }
+
+// Reflection model — the same six core questions each quarter, then quarter-specific prompts.
+const CORE_REFLECTION = [
+  { key:'core_did',       q:'1. What did I do?' },
+  { key:'core_learn',     q:'2. What did I learn?' },
+  { key:'core_support',   q:'3. Where did I require support?' },
+  { key:'core_evidence',  q:'4. What evidence demonstrates improvement?' },
+  { key:'core_different',  q:'5. What will I do differently next quarter?' },
+  { key:'core_ask',       q:'6. What support do I need from my supervisor?' }
+];
+const EVIDENCE_TYPES = ['', 'File / SOA', 'Meeting observation', 'Assessment result', 'Supervisor feedback', 'Ethical dilemma', 'Calculation / modelling', 'Client interaction', 'Rework example'];
+const DEV_STATUS = ['Not started', 'In progress', 'Complete', 'Blocked'];
+const PROGRESSION_DECISIONS = [
+  { key:'ready',     label:'Ready to progress', cls:'ok' },
+  { key:'ready-dev', label:'Ready to progress with development actions', cls:'warn' },
+  { key:'not-ready', label:'Not yet ready — remediation required', cls:'danger' }
+];
 const uid = p => p + '_' + Math.random().toString(36).slice(2, 10);
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const fmtDate = iso => {
@@ -3269,6 +3299,8 @@ function seedState() {
     soaLog: [],
     taskLog: [],
     reflections: { q1: {}, q2: {}, q3: {}, q4: {}, q5: {}, q6: {}, final: '' },
+    reflectionMeta: { q1: {}, q2: {}, q3: {}, q4: {}, q5: {}, q6: {} },
+    devActions: [],
     competencyScores,
     supervisorSignoffs: { technical: '', clientCare: '', regulatory: '', ethics: '', finalCertificate: '', q1Notes:'', q2Notes:'', q3Notes:'', q4Notes:'' },
     supervisorChecks: {},
@@ -3559,6 +3591,9 @@ const Store = (() => {
       if (!s.customSections) s.customSections = {};
       if (!s.workshopNotes) s.workshopNotes = {};
       if (!s.quarterReadiness) s.quarterReadiness = {};
+      if (!s.reflectionMeta) s.reflectionMeta = { q1:{}, q2:{}, q3:{}, q4:{}, q5:{}, q6:{} };
+      ['q1','q2','q3','q4','q5','q6'].forEach(q => { if (!s.reflectionMeta[q]) s.reflectionMeta[q] = {}; });
+      if (!Array.isArray(s.devActions)) s.devActions = [];
       if (!Array.isArray(s.auditLog)) s.auditLog = [];
       if (typeof s.signoffLocked !== 'boolean') s.signoffLocked = false;
       if (typeof s.signoffPasswordHash !== 'string') s.signoffPasswordHash = '';
@@ -4159,6 +4194,33 @@ const Actions = {
     }, 150);
   },
   setReflection(q, v) { Store.mutate(s => { s.reflections[q] = v; }); },
+  // Reflection meta — text fields persist silently; ratings/decisions re-render (variance + conditional UI).
+  setReflectionMeta(qId, field, val) {
+    Store.mutateSilent(s => { if (!s.reflectionMeta[qId]) s.reflectionMeta[qId] = {}; s.reflectionMeta[qId][field] = val; });
+  },
+  setReflectionRating(qId, who, n) {
+    Store.mutate(s => { if (!s.reflectionMeta[qId]) s.reflectionMeta[qId] = {}; s.reflectionMeta[qId][who === 'supervisor' ? 'supervisorRating' : 'candidateRating'] = n; });
+  },
+  setReflectionDecision(qId, key) {
+    Store.mutate(s => {
+      if (!s.reflectionMeta[qId]) s.reflectionMeta[qId] = {};
+      s.reflectionMeta[qId].decision = key;
+      const label = (PROGRESSION_DECISIONS.find(d => d.key === key) || {}).label || key;
+      pushAudit(s, 'Quarter progression decision', qId.toUpperCase() + ' — ' + label, { cat:'readiness', to: label });
+    });
+  },
+  addDevAction(qId) {
+    Store.mutate(s => {
+      if (!s.devActions) s.devActions = [];
+      s.devActions.unshift({ id: uid('act'), quarter: qId, action:'', owner: s.profile.candidateName || '', due:'', measure:'', status:'Not started', nextReview:'', progress:'' });
+    });
+  },
+  updateDevAction(id, field, val) {
+    Store.mutateSilent(s => { const a = (s.devActions || []).find(x => x.id === id); if (a) a[field] = val; });
+  },
+  deleteDevAction(id) {
+    Store.mutate(s => { s.devActions = (s.devActions || []).filter(x => x.id !== id); });
+  },
   setCompetencyScore(key, who, v) { Store.mutate(s => { const prev = s.competencyScores[key][who] || 0; s.competencyScores[key][who] = Number(v) || 0; pushAudit(s, 'Competency rating set (' + who + ')', competencyLabelByKey(key) + ' → Level ' + (Number(v)||0), { cat:'competency', from:'L'+prev, to:'L'+(Number(v)||0) }); }); },
   setSupervisorSignoff(k, v) { Store.mutate(s => { s.supervisorSignoffs[k] = v; }); },
   setSupervisorCheck(k, v) { Store.mutate(s => { s.supervisorChecks[k] = v; }); },
@@ -5023,25 +5085,88 @@ const Views = {
   },
 
   _qHours(q, s, active) {
-    const p = s.profile;
+    const qNum = q.number;
+    const meta = (s.reflectionMeta && s.reflectionMeta[active]) || {};
+    const specific = Views._reflectionPrompts(active) || [];
+    // Closed loop — actions committed to in earlier quarters that aren't complete yet.
+    const carried = (s.devActions || []).filter(a => a.quarter && a.quarter < active && a.status !== 'Complete');
+    const thisQ = (s.devActions || []).filter(a => a.quarter === active);
+    const candR = meta.candidateRating || 0, supR = meta.supervisorRating || 0;
+    const variance = (candR && supR) ? Math.abs(candR - supR) : 0;
+    const ratingBtns = (who, cur) => `<div class="lvl-btns">${[1,2,3,4,5].map(n => `<button data-refrate="${active}:${who}:${n}" class="${cur===n?'sel':''}">${n}</button>`).join('')}</div>`;
+    const statusBadge = st => `<span class="badge ${st==='Complete'?'ok':st==='Blocked'?'danger':st==='In progress'?'blue':''}">${esc(st)}</span>`;
+
     return `
-      <div class="portal-card" style="margin-bottom:16px">
-        <div class="pc-icon">⏱️</div>
-        <div class="pc-body">
-          <h3>Log your Q${q.number} hours in the PY portal</h3>
-          <p>Work-activity and structured-training hours are recorded in your <b>licensee PY portal</b> — the official record. This program no longer tracks hours, so there's no double handling.</p>
+      ${(qNum > 1 && carried.length) ? `
+      <div class="card" style="margin-bottom:16px;border-left:4px solid var(--amber)">
+        <div class="card-header"><div><h3>↩︎ Carried forward</h3><div class="subtitle">You committed to these development actions in an earlier quarter. What evidence shows whether this occurred?</div></div></div>
+        <div class="stack">
+          ${carried.map(a => `
+            <div class="dev-action carried">
+              <div class="dev-action-head">${statusBadge(a.status)} <b>${esc(a.action || '(untitled action)')}</b> <span class="muted small">from ${esc((a.quarter||'').toUpperCase())}${a.measure?' · target: '+esc(a.measure):''}</span></div>
+              <div class="grid grid-2" style="margin-top:8px">
+                <label class="field" style="grid-column:1/-1"><span>Progress / evidence this quarter</span><textarea data-actfield="${a.id}:progress" style="min-height:48px" placeholder="What evidence shows whether this improved?">${esc(a.progress||'')}</textarea></label>
+                <label class="field"><span>Status</span><select data-actfield="${a.id}:status">${DEV_STATUS.map(st=>`<option ${a.status===st?'selected':''}>${st}</option>`).join('')}</select></label>
+                <label class="field"><span>Next review</span><input type="date" data-actfield="${a.id}:nextReview" value="${esc(a.nextReview||'')}"></label>
+              </div>
+            </div>`).join('')}
         </div>
-        <div class="pc-actions">
-          ${p.pyPortalUrl ? `<a class="btn btn-blue btn-sm" href="${esc(p.pyPortalUrl)}" target="_blank" rel="noopener">Open PY portal ↗</a>` : `<label class="field" style="margin:0"><span>PY portal link</span><input type="url" data-bind="profile.pyPortalUrl" value="" placeholder="Set on the dashboard"></label>`}
+      </div>` : ''}
+
+      <div class="card ${q.id}" style="margin-bottom:16px">
+        <div class="card-header"><div><h3>Q${qNum} Reflection</h3><div class="subtitle">Answer the six core questions each quarter, then the quarter-specific prompts. ~60–100 words each. Bring gaps to your next Supervisor 1:1.</div></div></div>
+        <h5 style="margin:4px 0 8px">Core reflection</h5>
+        ${CORE_REFLECTION.map(c => `<label class="field" style="margin-bottom:14px"><span>${esc(c.q)}</span><textarea data-bind="reflections.${active}.${c.key}" style="min-height:80px">${esc(Views._getReflectionValue(s, active, c.key))}</textarea></label>`).join('')}
+        ${specific.length ? `<h5 style="margin:16px 0 8px;padding-top:12px;border-top:1px solid var(--border)">Quarter-specific</h5>
+        ${specific.map(p2 => `<label class="field" style="margin-bottom:14px"><span>${esc(p2.q)}</span><textarea data-bind="reflections.${active}.${p2.key}" style="min-height:90px" placeholder="${esc(p2.placeholder || '')}">${esc(Views._getReflectionValue(s, active, p2.key))}</textarea></label>`).join('')}` : ''}
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><div><h3>Evidence of development</h3><div class="subtitle">Link your reflection to something concrete — a file, observation, assessment or rework example.</div></div></div>
+        <div class="grid grid-2">
+          <label class="field"><span>Evidence type</span><select data-refmeta="${active}:evidenceType">${EVIDENCE_TYPES.map(t=>`<option value="${esc(t)}" ${meta.evidenceType===t?'selected':''}>${t?esc(t):'— select —'}</option>`).join('')}</select></label>
+          <label class="field"><span>Reference / location</span><input type="text" data-refmeta="${active}:evidenceRef" value="${esc(meta.evidenceRef||'')}" placeholder="e.g. XPLAN client ABC · SOA v2 · SharePoint/PY"></label>
+        </div>
+        <label class="field" style="margin-bottom:0"><span>Describe one file where your initial approach changed following review — what was the issue, what changed, and how will you recognise it earlier next time?</span><textarea data-bind="reflections.${active}.evidence_example" style="min-height:80px">${esc(Views._getReflectionValue(s, active, 'evidence_example'))}</textarea></label>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><div><h3>Development actions — Q${qNum}</h3><div class="subtitle">Turn feedback into actions with an owner, due date and success measure. Open actions carry into next quarter.</div></div><div class="card-actions"><button class="btn btn-primary btn-sm" data-action="add-dev-action" data-quarter="${active}">＋ Add action</button></div></div>
+        ${thisQ.length === 0 ? `<div class="muted small">No actions yet. Add the development areas from your supervisor feedback.</div>` : `<div class="stack">${thisQ.map(a => `
+          <div class="dev-action">
+            <div class="dev-action-grid">
+              <label class="field" style="grid-column:1/-1"><span>Action required</span><input data-actfield="${a.id}:action" value="${esc(a.action||'')}" placeholder="What will you do?"></label>
+              <label class="field"><span>Owner</span><input data-actfield="${a.id}:owner" value="${esc(a.owner||'')}"></label>
+              <label class="field"><span>Due date</span><input type="date" data-actfield="${a.id}:due" value="${esc(a.due||'')}"></label>
+              <label class="field"><span>Success measure</span><input data-actfield="${a.id}:measure" value="${esc(a.measure||'')}" placeholder="How you'll know it's done"></label>
+              <label class="field"><span>Status</span><select data-actfield="${a.id}:status">${DEV_STATUS.map(st=>`<option ${a.status===st?'selected':''}>${st}</option>`).join('')}</select></label>
+              <label class="field"><span>Next review</span><input type="date" data-actfield="${a.id}:nextReview" value="${esc(a.nextReview||'')}"></label>
+            </div>
+            <button class="btn btn-sm btn-ghost" data-action="del-dev-action" data-id="${a.id}" style="color:var(--red);margin-top:8px">🗑 Delete action</button>
+          </div>`).join('')}</div>`}
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><div><h3>Overall quarter rating</h3><div class="subtitle">Candidate and supervisor rate separately (1 = major concerns, 5 = excellent). A flag appears where you differ by 2+ — discuss before agreeing.</div></div></div>
+        <div class="lvl-pickers">
+          <div class="lvl-pick cand"><span class="lvl-who">Candidate</span>${ratingBtns('candidate', candR)}</div>
+          <div class="lvl-pick sup"><span class="lvl-who">Supervisor</span>${ratingBtns('supervisor', supR)}</div>
+          ${variance >= 2 ? `<span class="lvl-var" data-tip="Candidate and supervisor differ by ${variance} — discuss and align on evidence at the 1:1.">Δ ${variance} · discuss</span>` : ''}
         </div>
       </div>
 
-      <div class="card ${q.id}">
-        <div class="card-header"><div><h3>Q${q.number} Reflection</h3><div class="subtitle">Work through each prompt — ~80–120 words per answer. Bring gaps to your next Supervisor 1:1.</div></div></div>
-        ${(Views._reflectionPrompts(active) || []).map(p2 => {
-          const val = Views._getReflectionValue(s, active, p2.key);
-          return `<label class="field" style="margin-bottom:14px"><span>${esc(p2.q)}</span><textarea data-bind="reflections.${active}.${p2.key}" style="min-height:110px" placeholder="${esc(p2.placeholder || '')}">${esc(val)}</textarea></label>`;
-        }).join('')}
+      <div class="card" style="border-left:4px solid var(--navy)">
+        <div class="card-header"><div><h3>Quarter progression decision</h3><div class="subtitle">Completed by the supervisor at the quarterly review.</div></div></div>
+        <div class="decision-btns">
+          ${PROGRESSION_DECISIONS.map(d => `<button class="decision-btn ${d.cls} ${meta.decision===d.key?'sel':''}" data-refdecision="${active}:${d.key}">${esc(d.label)}</button>`).join('')}
+        </div>
+        ${meta.decision === 'not-ready' ? `
+        <div class="grid grid-2" style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--border)">
+          <label class="field" style="grid-column:1/-1"><span>Reason remediation is required</span><textarea data-refmeta="${active}:remReason" style="min-height:48px">${esc(meta.remReason||'')}</textarea></label>
+          <label class="field" style="grid-column:1/-1"><span>Required actions</span><textarea data-refmeta="${active}:remActions" style="min-height:48px">${esc(meta.remActions||'')}</textarea></label>
+          <label class="field"><span>Review date</span><input type="date" data-refmeta="${active}:remReviewDate" value="${esc(meta.remReviewDate||'')}"></label>
+          <label class="field"><span>Outcome</span><input type="text" data-refmeta="${active}:remOutcome" value="${esc(meta.remOutcome||'')}" placeholder="Result at review"></label>
+        </div>` : ''}
       </div>
     `;
   },
@@ -5945,7 +6070,7 @@ const App = {
   },
 
   getFocusKey(el) {
-    const attrs = ['data-bind','data-bind-num','data-bind-checkbox','data-log-field','data-log-check','data-dil-field','data-dil-standard','data-soa-field','data-task-field','data-milestone-note','data-milestone-check','data-comp-score','data-signoff','data-supchk','data-module-hours','data-module-done','data-module-check','data-signoff-tick','data-signoff-name','data-signoff-date','data-workshop-note','data-asmt','data-asmt-pass','data-readiness'];
+    const attrs = ['data-bind','data-bind-num','data-bind-checkbox','data-log-field','data-log-check','data-dil-field','data-dil-standard','data-soa-field','data-task-field','data-milestone-note','data-milestone-check','data-comp-score','data-signoff','data-supchk','data-module-hours','data-module-done','data-module-check','data-signoff-tick','data-signoff-name','data-signoff-date','data-workshop-note','data-asmt','data-asmt-pass','data-readiness','data-refmeta','data-actfield'];
     for (const a of attrs) {
       const v = el.getAttribute(a);
       if (v) return { attr: a, value: v };
@@ -5967,6 +6092,10 @@ const App = {
       if (lvlBtn) { const [key, who, n] = lvlBtn.getAttribute('data-lvl').split(':'); Actions.setCompetencyScore(key, who, Number(n)); return; }
       const lvlInfo = e.target.closest('[data-lvlinfo]');
       if (lvlInfo) { const d = document.getElementById('lvld_' + lvlInfo.getAttribute('data-lvlinfo')); if (d) d.hidden = !d.hidden; return; }
+      const refRate = e.target.closest('[data-refrate]');
+      if (refRate) { const [qid, who, n] = refRate.getAttribute('data-refrate').split(':'); Actions.setReflectionRating(qid, who, Number(n)); return; }
+      const refDec = e.target.closest('[data-refdecision]');
+      if (refDec) { const [qid, key] = refDec.getAttribute('data-refdecision').split(':'); Actions.setReflectionDecision(qid, key); return; }
       const histF = e.target.closest('[data-history-filter]');
       if (histF) { const v = histF.getAttribute('data-history-filter'); Store.mutate(s => { s.ui.historyFilter = v; }); return; }
       const roleBtn = e.target.closest('[data-role-set]');
@@ -6055,6 +6184,8 @@ const App = {
         else if (a === 'add-dilemma') Actions.addDilemma();
         else if (a === 'recalc-dates') Actions.recalcDates();
         else if (a === 'export') Actions.exportJSON();
+        else if (a === 'add-dev-action') Actions.addDevAction(act.getAttribute('data-quarter'));
+        else if (a === 'del-dev-action') { if (confirm('Delete this development action?')) Actions.deleteDevAction(act.getAttribute('data-id')); }
         else if (a === 'sign-module') Actions.signModule(act.getAttribute('data-module'));
         else if (a === 'unlock-module-sign') Actions.unlockModuleSign(act.getAttribute('data-module'));
         else if (a === 'lock-signoff') Actions.lockSignoff();
@@ -6110,6 +6241,10 @@ const App = {
         Actions.toggleReadiness(qid, phase, Number(idx), rdChk.checked);
         return;
       }
+      const refMeta = e.target.closest('[data-refmeta]');
+      if (refMeta) { const [qid, field] = refMeta.getAttribute('data-refmeta').split(':'); Actions.setReflectionMeta(qid, field, refMeta.value); return; }
+      const actField = e.target.closest('[data-actfield]');
+      if (actField) { const [id, field] = actField.getAttribute('data-actfield').split(':'); Actions.updateDevAction(id, field, actField.value); return; }
       const asmtPass = e.target.closest('[data-asmt-pass]');
       if (asmtPass) { Actions.setModuleAssessmentPass(asmtPass.getAttribute('data-asmt-pass'), asmtPass.checked); return; }
       const asmtF = e.target.closest('[data-asmt]');
