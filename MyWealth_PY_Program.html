@@ -461,11 +461,11 @@ html[data-theme="dark"] .badge.navy{color:var(--navy-deep)}
 .readiness-col.complete.exit{background:var(--green-light);border-color:rgba(39,174,96,.4)}
 .readiness-col.complete.exit .readiness-count{background:var(--green);color:#fff}
 .readiness ul{list-style:none;padding:0;margin:0}
-.readiness li{padding:5px 0;border-top:1px solid var(--border-soft)}
+.readiness li{padding:5px 0;border-top:1px solid var(--border-soft);display:flex;gap:9px;align-items:flex-start;font-size:12px;color:var(--text-dim);line-height:1.5}
 .readiness li:first-child{border-top:none}
-.readiness li label{display:flex;gap:9px;align-items:flex-start;font-size:12px;color:var(--text-dim);cursor:pointer;line-height:1.5}
+.readiness li .readiness-crit{flex:1;min-width:0}
 .readiness li input{width:15px;height:15px;margin-top:2px;flex-shrink:0;accent-color:var(--blue)}
-.readiness li.on label{color:var(--text)}
+.readiness li.on{color:var(--text)}
 
 /* ============================================================
    ALERTS
@@ -4620,8 +4620,8 @@ const Views = {
       const done = items.filter((_, i) => ticks[i]).length;
       const complete = done === items.length;
       return `<div class="readiness-col ${phase} ${complete?'complete':''}">
-        <div class="readiness-head">${icon} ${title} <span class="readiness-count">${done}/${items.length}</span></div>
-        <ul>${items.map((c, i) => `<li class="${ticks[i]?'on':''}"><label><input type="checkbox" data-readiness="${q.id}:${phase}:${i}" ${ticks[i]?'checked':''}><span>${esc(c)}</span></label></li>`).join('')}</ul>
+        <div class="readiness-head">${icon} <span class="readiness-title">${title}</span> <span class="readiness-count">${done}/${items.length}</span></div>
+        <ul>${items.map((c, i) => `<li class="${ticks[i]?'on':''}"><input type="checkbox" data-readiness="${q.id}:${phase}:${i}" ${ticks[i]?'checked':''}><span class="readiness-crit">${esc(c)}</span></li>`).join('')}</ul>
       </div>`;
     };
     const gateAlert = {
@@ -5806,7 +5806,7 @@ const Views = {
 const EditMode = {
   active: true,
   // Leaf-text elements that are safe to edit in place.
-  SELECTOR: 'h1,h2,h3,h4,h5,p,li,td,th,blockquote,.tagline,.subtitle,.desc,.name,.ot-title,.ot-meta,.milestone-title,.milestone-target,.md-desc,.tick-item .ti-text,.card-inner-hint,.breadcrumb,.attention-title,.hero-tag,.hero-sub,.gm-tag,.gm-body,.intro-title,.intro-body,.gate-pill-title,.gate-pill-sub,.assess-label,.lvl-label,.workshop-q,.value-pill-text,.session-flag,.sc-name,.sc-desc,.module-duration,.module-body>p,.badge',
+  SELECTOR: 'h1,h2,h3,h4,h5,p,li,td,th,blockquote,.tagline,.subtitle,.desc,.name,.ot-title,.ot-meta,.milestone-title,.milestone-target,.md-desc,.tick-item .ti-text,.card-inner-hint,.breadcrumb,.attention-title,.hero-tag,.hero-sub,.gm-tag,.gm-body,.intro-title,.intro-body,.gate-pill-title,.gate-pill-sub,.assess-label,.lvl-label,.workshop-q,.value-pill-text,.session-flag,.sc-name,.sc-desc,.module-duration,.module-body>p,.badge,.readiness-title,.readiness-crit,.alert>div,.comp-scale .nm,.comp-scale .ds,.sb-detail,.status-key span,.dev-action-head,.mstep,.hf-row label,.pc-body h3,.pc-body p,.hero h1',
   _hash(str) {
     let h = 0;
     for (let i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) | 0; }
