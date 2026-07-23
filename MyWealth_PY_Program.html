@@ -625,10 +625,15 @@ html[data-theme="dark"] .module-head h4{color:var(--navy-deep)}
 .module-body{display:none;padding:0 16px 16px;border-top:1px solid var(--border);margin-top:0;padding-top:14px;font-family:var(--bf)}
 .module-body.open{display:block}
 .module-body h5{font-family:var(--hf);font-size:12px;font-weight:700;color:var(--navy);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.5px}
-/* Module three-status indicator (Content / Assessment / Verified) */
-.mod-status{display:inline-flex;gap:3px;margin-left:8px;vertical-align:middle}
-.mod-status i{width:17px;height:17px;border-radius:5px;font-style:normal;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-2);color:var(--text-faint);border:1px solid var(--border)}
-.mod-status i.on{background:var(--green);color:#fff;border-color:var(--green)}
+/* Module completion progress pill (in the module header) */
+.mod-progress{margin-left:8px;font-family:var(--bf);font-size:10px;font-weight:700;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:16px;padding:2px 9px;vertical-align:middle;white-space:nowrap}
+/* Module completion step tracker (in the module body) — clearly labelled */
+.mod-steps-track{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.mstep{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:4px 12px 4px 6px}
+.mstep i{width:18px;height:18px;border-radius:50%;font-style:normal;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;background:var(--border);color:var(--text-muted)}
+.mstep.done{color:var(--green-dark,#2e7d32);background:var(--green-light);border-color:rgba(39,174,96,.35)}
+.mstep.done i{background:var(--green);color:#fff}
+.mstep-arrow{color:var(--text-faint);font-size:13px}
 /* Assessment block */
 .assessment-block{margin-top:14px;padding:14px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border)}
 .assessment-head{font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -4727,6 +4732,7 @@ const Views = {
           const signoff = (s.signoffState && s.signoffState[m.id]) || {ticks:{},name:'',date:''};
           const asmt = md.assessment || {};
           const st3 = { content: !!md.done, assess: !!asmt.passed, verified: !!signoff.signed };
+          st3.stepsDone = (st3.content?1:0) + (st3.assess?1:0) + (st3.verified?1:0);
           const allDone3 = st3.content && st3.assess && st3.verified;
           const isCustom = customMods.some(c => c.id === m.id);
           const isOpen = !!open[m.id];
@@ -4746,7 +4752,7 @@ const Views = {
           <div class="module" data-module-id="${m.id}">
             <div class="module-head" data-toggle-module="${m.id}">
               <div class="module-icon">${m.icon || '📘'}</div>
-              <h4>${esc(m.title)}<span class="mod-status" data-tip="Module completion = Content completed + Assessment passed + Supervisor verified"><i class="${st3.content?'on':''}">C</i><i class="${st3.assess?'on':''}">A</i><i class="${st3.verified?'on':''}">V</i></span>${allDone3?' <span class="badge ok" style="margin-left:4px">✓ Complete</span>':''}</h4>
+              <h4>${esc(m.title)}${allDone3 ? ' <span class="badge ok" style="margin-left:6px">✓ Complete</span>' : (st3.stepsDone ? `<span class="mod-progress" data-tip="Content completed → Assessment passed → Supervisor verified">${st3.stepsDone}/3 steps</span>` : '')}</h4>
               <span class="module-tag ${m.tag || 'core'}">${String(m.tag||'core').toUpperCase()}</span>
               <span class="module-meta">${esc(m.duration || '')}</span>
               <span class="module-meta" style="color:var(--blue);font-weight:700">${mDone}/${mItems} · ${mPct}%</span>
@@ -4792,11 +4798,12 @@ const Views = {
                 <span style="font-size:11px;color:var(--text-muted)">⏱️ Log any training hours in the <b>PY portal</b>, not here.</span>
                 ${isCustom ? `<button class="btn btn-sm btn-ghost" data-action="delete-module" data-module="${m.id}" style="color:var(--red);margin-left:auto">🗑 Delete module</button>` : ''}
               </div>
-              <div class="status-key">
-                <span><b>Completion =</b></span>
-                <span><b>C</b> Content completed</span>
-                <span><b>A</b> Assessment passed</span>
-                <span><b>V</b> Supervisor verified</span>
+              <div class="mod-steps-track" data-tip="A module is fully complete only when all three steps are done.">
+                <span class="mstep ${st3.content?'done':''}"><i>${st3.content?'✓':'1'}</i> Content completed</span>
+                <span class="mstep-arrow">›</span>
+                <span class="mstep ${st3.assess?'done':''}"><i>${st3.assess?'✓':'2'}</i> Assessment passed</span>
+                <span class="mstep-arrow">›</span>
+                <span class="mstep ${st3.verified?'done':''}"><i>${st3.verified?'✓':'3'}</i> Supervisor verified</span>
               </div>
 
               <div class="assessment-block">
