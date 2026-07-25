@@ -27,7 +27,8 @@ export async function openaiChat(
   if (!apiKey) return null;
 
   const client = new OpenAI({ apiKey });
-  const model = process.env.OPENAI_MODEL || "gpt-4o";
+  // Cheap + capable by default; set OPENAI_MODEL=gpt-4o for higher quality.
+  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
   const system = [
     "You are Mabel — a warm, capable personal assistant who helps with everyday life: thinking things through, weighing pros and cons, comparing options, generating ideas, finding things, and planning (parties, holidays, meals, movie nights, purchases, life admin).",
