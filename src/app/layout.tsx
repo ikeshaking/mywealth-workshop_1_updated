@@ -1,5 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
+
+// Mabel's typeface: modern, characterful, warm — used across the whole app.
+const display = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Mabel — Life admin, handled.",
@@ -16,7 +24,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={display.variable}>
       <body>
         <a
           href="#main"
