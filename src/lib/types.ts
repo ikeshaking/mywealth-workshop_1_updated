@@ -200,6 +200,7 @@ export interface Conversation {
 
 export type HouseholdType = "solo" | "couple" | "family" | "shared";
 export type NotificationPreference = "all" | "important" | "quiet";
+export type MabelTone = "friend" | "calm" | "witty" | "concise";
 
 export interface UserPreferences {
   preferred_name: string;
@@ -209,6 +210,8 @@ export interface UserPreferences {
   proactive_suggestions: boolean;
   permission_level: PermissionLevel;
   currency: string;
+  /** Mabel's selectable voice/personality. */
+  tone: MabelTone;
   onboarded: boolean;
 }
 

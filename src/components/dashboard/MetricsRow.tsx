@@ -17,15 +17,15 @@ export function MetricsRow() {
   ];
 
   return (
-    <div className="-mx-4 overflow-x-auto px-4">
-      <div className="flex min-w-max gap-2">
+    <div>
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
         {tiles.map((t) => (
           <div
             key={t.label}
-            className="min-w-[92px] flex-1 rounded-2xl bg-white p-3 text-center shadow-soft"
+            className="rounded-2xl bg-white p-3 text-center shadow-soft"
           >
-            <p className="text-lg font-semibold text-ink">{t.value}</p>
-            <p className="mt-0.5 text-[11px] text-ink-faint">{t.label}</p>
+            <p className="truncate text-lg font-semibold text-ink">{t.value}</p>
+            <p className="mt-0.5 text-[11px] leading-tight text-ink-faint">{t.label}</p>
           </div>
         ))}
       </div>
