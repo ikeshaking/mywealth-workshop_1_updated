@@ -25,14 +25,14 @@ export function RecommendationCard({
     <article
       className={cn(
         "rounded-2xl border bg-white p-4 shadow-soft transition-opacity",
-        option.is_best_match ? "border-lavender-400 ring-1 ring-lavender-200" : "border-black/[0.05]",
+        option.is_best_match ? "border-eucalypt-400 ring-1 ring-eucalypt-200" : "border-black/[0.05]",
         option.rejected && "opacity-50",
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div>
           {option.is_best_match && (
-            <Badge className="mb-1 bg-lavender-600 text-white">✦ Best match</Badge>
+            <Badge className="mb-1 bg-eucalypt-600 text-white">✦ Best match</Badge>
           )}
           <h3 className="text-base font-semibold text-ink">{option.title}</h3>
         </div>
@@ -80,11 +80,11 @@ export function RecommendationCard({
           </ul>
         </div>
         <div>
-          <p className="mb-1 font-medium text-berry-600">Trade-offs</p>
+          <p className="mb-1 font-medium text-clay-600">Trade-offs</p>
           <ul className="space-y-0.5 text-ink-soft">
             {option.trade_offs.map((t) => (
               <li key={t} className="flex gap-1">
-                <X size={13} className="mt-0.5 shrink-0 text-berry-500" />
+                <X size={13} className="mt-0.5 shrink-0 text-clay-500" />
                 {t}
               </li>
             ))}
@@ -100,7 +100,7 @@ export function RecommendationCard({
           href={option.retailer_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-lavender-700"
+          className="inline-flex items-center gap-1 text-eucalypt-700"
         >
           {option.retailer_label} <ExternalLink size={12} />
         </a>

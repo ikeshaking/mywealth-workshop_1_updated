@@ -39,7 +39,7 @@ export default function ItemDetailPage() {
         <AppHeader back title="Not found" />
         <div className="container-app py-10 text-center text-ink-soft">
           <p>That item doesn&apos;t exist.</p>
-          <Link href="/dashboard" className="mt-3 inline-block text-lavender-700">
+          <Link href="/dashboard" className="mt-3 inline-block text-eucalypt-700">
             Back to home
           </Link>
         </div>
@@ -87,7 +87,7 @@ export default function ItemDetailPage() {
         {/* Header card */}
         <Card>
           <div className="flex items-start gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-lavender-50 text-2xl" aria-hidden>
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-eucalypt-50 text-2xl" aria-hidden>
               {categoryMeta[item.category].emoji}
             </div>
             <div className="min-w-0 flex-1">
@@ -121,11 +121,11 @@ export default function ItemDetailPage() {
         </Card>
 
         {/* Mabel's understanding */}
-        <Card className="bg-lavender-50/60">
+        <Card className="bg-eucalypt-50/60">
           <div className="flex items-start gap-2">
             <MabelAvatar size={26} />
             <div>
-              <p className="text-xs font-medium text-lavender-700">Mabel&apos;s understanding</p>
+              <p className="text-xs font-medium text-eucalypt-700">Mabel&apos;s understanding</p>
               <p className="mt-1 text-sm text-ink">
                 You said: <span className="italic">&ldquo;{item.original_input}&rdquo;</span>
               </p>
@@ -228,7 +228,7 @@ export default function ItemDetailPage() {
             <p className="text-xs font-medium text-amber-700">Waiting for your approval</p>
             <p className="mt-1 text-sm font-medium text-ink">{approval.action}</p>
             <p className="mt-1 text-sm text-ink-soft">{approval.reason}</p>
-            <Link href="/approvals" className="mt-2 inline-block text-sm font-medium text-lavender-700">
+            <Link href="/approvals" className="mt-2 inline-block text-sm font-medium text-eucalypt-700">
               Review in Approvals →
             </Link>
           </Card>
@@ -285,10 +285,10 @@ export default function ItemDetailPage() {
         {/* Timeline */}
         <Card className="space-y-3">
           <CardTitle className="text-sm">Timeline</CardTitle>
-          <ol className="relative space-y-3 border-l border-lavender-200 pl-4">
+          <ol className="relative space-y-3 border-l border-eucalypt-200 pl-4">
             {events.map((e) => (
               <li key={e.id} className="relative">
-                <span className="absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full bg-lavender-400" />
+                <span className="absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full bg-eucalypt-400" />
                 <p className="text-sm text-ink">{e.message}</p>
                 <p className="text-[11px] text-ink-faint">{formatDateTime(e.created_at)}</p>
               </li>

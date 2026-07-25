@@ -1,6 +1,6 @@
 import type { Category, Priority } from "../types";
 import type { Extraction } from "../schemas";
-import { addDays } from "../utils";
+import { addDays, currencySymbol } from "../utils";
 
 /**
  * Deterministic, offline natural-language parser.
@@ -103,15 +103,16 @@ const DECISION_HINT =
 const URGENT_HINT = /\b(urgent|asap|today|now|overdue|immediately)\b/i;
 const SOON_HINT = /\b(soon|this week|shortly)\b/i;
 
-/** Parse an explicit budget like "under £2,000", "less than $1000", "under 80". */
+/** Parse an explicit budget like "under $2,000", "less than $1000", "under 80". */
 function parseBudget(input: string): { budget: number | null; currency: string } {
   const currencyMatch = input.match(/([£$€])/);
+  // Default to AUD; "$" means AUD in an Australian context.
   const currency =
-    currencyMatch?.[1] === "$"
-      ? "USD"
+    currencyMatch?.[1] === "£"
+      ? "GBP"
       : currencyMatch?.[1] === "€"
         ? "EUR"
-        : "GBP";
+        : "AUD";
   const m = input.match(/(?:under|less than|below|max(?:imum)?|budget of|around)\s*[£$€]?\s*([\d,]+)/i);
   if (m) {
     const n = Number(m[1].replace(/,/g, ""));
@@ -211,7 +212,7 @@ export function fallbackExtract(input: string, today: string): Extraction {
       : null;
 
   const summary = isDecision
-    ? `You'd like Mabel to research options${budget ? ` under ${currency === "USD" ? "$" : currency === "EUR" ? "€" : "£"}${budget.toLocaleString()}` : ""} and recommend the best fit.`
+    ? `You'd like Mabel to research options${budget ? ` under ${currencySymbol(currency)}${budget.toLocaleString()}` : ""} and recommend the best fit.`
     : `Mabel understood this as a ${rule.category} to keep on top of.`;
 
   // Confidence: high when a rule matched cleanly and few details are missing.

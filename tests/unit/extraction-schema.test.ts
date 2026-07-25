@@ -55,12 +55,12 @@ describe("extraction schema", () => {
     };
     const parsed = extractionSchema.parse(minimal);
     expect(parsed.missing_information).toEqual([]);
-    expect(parsed.currency).toBe("GBP");
+    expect(parsed.currency).toBe("AUD");
     expect(parsed.is_decision).toBe(false);
   });
 
   it("validates the extract request body", () => {
     expect(() => extractRequestSchema.parse({ input: "" })).toThrow();
-    expect(extractRequestSchema.parse({ input: "hello" }).currency).toBe("GBP");
+    expect(extractRequestSchema.parse({ input: "hello" }).currency).toBe("AUD");
   });
 });

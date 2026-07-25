@@ -25,7 +25,7 @@ export function ItemCard({
     <div className="group relative rounded-2xl border border-black/[0.04] bg-white p-3.5 shadow-soft transition-shadow hover:shadow-lift">
       <div className="flex items-start gap-3">
         <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-lavender-50 text-lg"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-eucalypt-50 text-lg"
           aria-hidden
         >
           {cat.emoji}

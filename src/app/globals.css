@@ -16,7 +16,7 @@
   }
   /* Visible focus states everywhere for keyboard users. */
   :focus-visible {
-    @apply outline-none ring-2 ring-lavender-400 ring-offset-2 ring-offset-canvas;
+    @apply outline-none ring-2 ring-eucalypt-400 ring-offset-2 ring-offset-canvas;
   }
   h1,
   h2,

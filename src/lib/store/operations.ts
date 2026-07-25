@@ -11,7 +11,7 @@ import type {
   RecommendationSet,
 } from "../types";
 import type { Extraction } from "../schemas";
-import { id, nowIso, todayIso, addDays } from "../utils";
+import { id, nowIso, todayIso, addDays, currencySymbol } from "../utils";
 import { recommendFor } from "../ai/recommend";
 
 /**
@@ -86,7 +86,7 @@ export function createItemFromExtraction(
       item_id: null,
       request: input,
       preferences: extraction.budget
-        ? [`Under ${extraction.currency === "USD" ? "$" : extraction.currency === "EUR" ? "€" : "£"}${extraction.budget.toLocaleString()}`]
+        ? [`Under ${currencySymbol(extraction.currency)}${extraction.budget.toLocaleString()}`]
         : [],
       currency: extraction.currency,
       budget: extraction.budget,

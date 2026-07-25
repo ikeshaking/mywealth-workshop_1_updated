@@ -5,36 +5,37 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Warm neutral canvas
+        // Warm neutral canvas — soft, calm, a little sunlit.
         canvas: {
-          DEFAULT: "#faf7f2",
-          soft: "#f4efe7",
+          DEFAULT: "#f7f5f0",
+          soft: "#efece4",
         },
-        // Soft lavender / muted berry accents
-        lavender: {
-          50: "#f6f4fb",
-          100: "#ece7f7",
-          200: "#d9d0ef",
-          300: "#bfb0e2",
-          400: "#a189d1",
-          500: "#8468bd",
-          600: "#6f52a6",
-          700: "#5b4287",
-          800: "#4a376c",
-          900: "#3d2f58",
+        // Primary accent: eucalyptus / sage green. Calm, natural, Australian.
+        eucalypt: {
+          50: "#eef4f0",
+          100: "#dcebe2",
+          200: "#bcd7c7",
+          300: "#93bda4",
+          400: "#6aa082",
+          500: "#4b8366",
+          600: "#3a6b52",
+          700: "#305644",
+          800: "#284638",
+          900: "#22392f",
         },
-        berry: {
-          100: "#f7e9f0",
-          200: "#efc9db",
-          300: "#e0a0c0",
-          400: "#cd6f9d",
-          500: "#b64d80",
-          600: "#973b66",
+        // Secondary / warm alert accent: terracotta clay.
+        clay: {
+          100: "#f6e7df",
+          200: "#eccab8",
+          300: "#dda588",
+          400: "#cd7f5b",
+          500: "#bd6440",
+          600: "#9c4f31",
         },
         ink: {
-          DEFAULT: "#2f2a3a",
-          soft: "#5c5568",
-          faint: "#8a8394",
+          DEFAULT: "#2b2f2c",
+          soft: "#585d58",
+          faint: "#868b86",
         },
       },
       fontFamily: {
@@ -46,8 +47,8 @@ const config: Config = {
         "3xl": "1.75rem",
       },
       boxShadow: {
-        soft: "0 1px 2px rgba(47,42,58,0.04), 0 8px 24px rgba(47,42,58,0.06)",
-        lift: "0 2px 4px rgba(47,42,58,0.05), 0 12px 32px rgba(47,42,58,0.10)",
+        soft: "0 1px 2px rgba(43,47,44,0.04), 0 8px 24px rgba(43,47,44,0.06)",
+        lift: "0 2px 4px rgba(43,47,44,0.05), 0 12px 32px rgba(43,47,44,0.10)",
       },
       keyframes: {
         "fade-in": {

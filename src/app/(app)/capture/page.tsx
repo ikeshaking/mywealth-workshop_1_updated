@@ -27,7 +27,7 @@ interface ChatMsg {
 const QUICK_PROMPTS = [
   "I need to sort my car rego soon.",
   "Remind me to pay my electricity bill tomorrow.",
-  "Find me an outdoor dining set under £2,000 that seats six.",
+  "Find me an outdoor dining set under $2,000 that seats six.",
   "I keep paying for a gym membership I don't use.",
   "I need to book the kids into the dentist.",
 ];
@@ -36,7 +36,7 @@ function CapturePreview({ msg }: { msg: ChatMsg }) {
   const { item, extraction } = msg;
   if (!item || !extraction) return null;
   return (
-    <div className="mt-2 rounded-2xl border border-lavender-200 bg-lavender-50/60 p-3">
+    <div className="mt-2 rounded-2xl border border-eucalypt-200 bg-eucalypt-50/60 p-3">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-semibold text-ink">{item.title}</p>
         <StatusBadge status={item.status} />
@@ -61,14 +61,14 @@ function CapturePreview({ msg }: { msg: ChatMsg }) {
       <div className="mt-3 flex flex-wrap gap-2">
         <Link
           href={`/items/${item.id}`}
-          className="rounded-lg bg-lavender-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-lavender-700"
+          className="rounded-lg bg-eucalypt-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-eucalypt-700"
         >
           Open item
         </Link>
         {msg.decisionId && (
           <Link
             href={`/decisions/${msg.decisionId}`}
-            className="rounded-lg border border-lavender-300 bg-white px-3 py-1.5 text-xs font-medium text-lavender-700 hover:bg-lavender-50"
+            className="rounded-lg border border-eucalypt-300 bg-white px-3 py-1.5 text-xs font-medium text-eucalypt-700 hover:bg-eucalypt-50"
           >
             View options
           </Link>
@@ -82,7 +82,7 @@ function Bubble({ msg }: { msg: ChatMsg }) {
   if (msg.role === "user") {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[80%] rounded-2xl rounded-br-md bg-lavender-600 px-3.5 py-2.5 text-sm text-white">
+        <div className="max-w-[80%] rounded-2xl rounded-br-md bg-eucalypt-600 px-3.5 py-2.5 text-sm text-white">
           {msg.body}
         </div>
       </div>
@@ -182,7 +182,7 @@ function CaptureInner() {
               <button
                 key={p}
                 onClick={() => send(p)}
-                className="rounded-full border border-lavender-200 bg-white px-3 py-1.5 text-xs text-ink-soft hover:bg-lavender-50"
+                className="rounded-full border border-eucalypt-200 bg-white px-3 py-1.5 text-xs text-ink-soft hover:bg-eucalypt-50"
               >
                 {p}
               </button>

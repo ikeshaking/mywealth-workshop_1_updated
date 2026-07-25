@@ -84,7 +84,7 @@ function outdoorDining(currency: string): Bundle[] {
         "The premium pick if you sometimes host more than six — the extension leaf earns its place.",
       retailer_label: "Outdoor Living (mock retailer)",
       retailer_url: "https://example.com/porto-premium",
-      delivery: "Delivery in 7–10 days, assembly £49 extra",
+      delivery: "Delivery in 7–10 days, assembly $49 extra",
       sizing_notes: "Extends 180 → 240 cm. Check you have 260 cm of clearance.",
     },
   ];
@@ -104,7 +104,7 @@ function wardrobe(currency: string): Bundle[] {
       ],
       advantages: ["Fits a standard wall", "Soft-close doors", "Assembly included"],
       trade_offs: ["150 cm may leave a gap on a wider wall"],
-      why_it_suits: "A complete storage solution well under £1,000, assembled for you.",
+      why_it_suits: "A complete storage solution well under $1,000, assembled for you.",
       retailer_label: "HomeStore (mock retailer)",
       retailer_url: "https://example.com/nord-wardrobe",
       delivery: "Delivery in 7–10 days, assembly included",
@@ -138,10 +138,10 @@ function internetPlan(currency: string): Bundle[] {
       total_price: 32,
       currency,
       items: [{ name: "500 Mbps fibre, 24-month", price: 32, note: "per month" }],
-      advantages: ["£18/mo cheaper than your current plan", "No setup fee", "Faster speed"],
+      advantages: ["$18/mo cheaper than your current plan", "No setup fee", "Faster speed"],
       trade_offs: ["24-month contract"],
       why_it_suits:
-        "Saves an estimated £216 a year for faster speed — the clear best switch.",
+        "Saves an estimated $216 a year for faster speed — the clear best switch.",
       retailer_label: "FibreFast (mock provider)",
       retailer_url: "https://example.com/fibrefast-500",
       delivery: "Switch scheduled with no downtime",
@@ -154,7 +154,7 @@ function internetPlan(currency: string): Bundle[] {
       currency,
       items: [{ name: "150 Mbps, rolling monthly", price: 26, note: "per month" }],
       advantages: ["Cheapest", "No fixed contract", "Cancel anytime"],
-      trade_offs: ["Slower speed", "£25 setup fee"],
+      trade_offs: ["Slower speed", "$25 setup fee"],
       why_it_suits: "Lowest monthly cost with total flexibility if you might move.",
       retailer_label: "ValueNet (mock provider)",
       retailer_url: "https://example.com/valuenet-150",
@@ -218,7 +218,7 @@ function repairOrReplace(currency: string): Bundle[] {
         { name: "Delivery, install & old-appliance removal", price: 50 },
       ],
       advantages: [
-        "Cheaper than a likely £180 repair over 2 years",
+        "Cheaper than a likely $180 repair over 2 years",
         "A-rated — lower running costs",
         "2-year warranty resets the clock",
       ],
@@ -254,7 +254,7 @@ function repairOrReplace(currency: string): Bundle[] {
 export function recommendFor(
   request: string,
   budget: number | null,
-  currency = "GBP",
+  currency = "AUD",
 ): { summary: string; options: RecommendationOption[] } {
   const q = request.toLowerCase();
   let bundles: Bundle[];

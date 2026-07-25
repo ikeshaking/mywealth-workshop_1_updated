@@ -43,7 +43,7 @@ test.describe("Mabel core demo flows", () => {
 
   test("Flow 3: Shopping decision — get bundles, best match, approve", async ({ page }) => {
     await page.goto("/capture");
-    await tellMabel(page, "Find me an outdoor dining set under £2,000 that seats six.");
+    await tellMabel(page, "Find me an outdoor dining set under $2,000 that seats six.");
 
     const options = page.getByRole("link", { name: /view options/i }).first();
     await expect(options).toBeVisible();

@@ -8,7 +8,7 @@ export function EmptyState({
   body?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-dashed border-lavender-200 bg-white/60 px-4 py-8 text-center">
+    <div className="rounded-2xl border border-dashed border-eucalypt-200 bg-white/60 px-4 py-8 text-center">
       <div className="text-2xl" aria-hidden>
         {icon}
       </div>

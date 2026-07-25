@@ -25,13 +25,13 @@ export default function ForgotPasswordPage() {
       title="Reset your password"
       subtitle="We&apos;ll send you a link to get back in."
       footer={
-        <Link href="/login" className="font-medium text-lavender-700">
+        <Link href="/login" className="font-medium text-eucalypt-700">
           Back to log in
         </Link>
       }
     >
       {sent ? (
-        <div className="rounded-2xl border border-lavender-200 bg-white p-5 text-center">
+        <div className="rounded-2xl border border-eucalypt-200 bg-white p-5 text-center">
           <div className="text-2xl" aria-hidden>
             📬
           </div>

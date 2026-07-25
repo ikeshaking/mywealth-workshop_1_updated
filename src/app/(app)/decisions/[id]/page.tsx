@@ -28,7 +28,7 @@ export default function DecisionDetailPage() {
         <AppHeader back title="Decision" />
         <div className="container-app py-10 text-center text-ink-soft">
           <p>That decision doesn&apos;t exist.</p>
-          <Link href="/decisions" className="mt-3 inline-block text-lavender-700">
+          <Link href="/decisions" className="mt-3 inline-block text-eucalypt-700">
             Back to decisions
           </Link>
         </div>
@@ -46,7 +46,7 @@ export default function DecisionDetailPage() {
       <AppHeader back title="Options" />
       <div className="container-app space-y-4 py-4">
         {/* Request */}
-        <Card className="bg-lavender-50/60">
+        <Card className="bg-eucalypt-50/60">
           <div className="flex items-start gap-2">
             <MabelAvatar size={26} />
             <div>
@@ -58,7 +58,7 @@ export default function DecisionDetailPage() {
           </div>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {dr.preferences.map((p) => (
-              <Badge key={p} className="bg-white text-lavender-700">
+              <Badge key={p} className="bg-white text-eucalypt-700">
                 {p}
               </Badge>
             ))}
@@ -75,7 +75,7 @@ export default function DecisionDetailPage() {
             role="tab"
             aria-selected={tab === "picks"}
             onClick={() => setTab("picks")}
-            className={`flex-1 rounded-lg py-1.5 font-medium ${tab === "picks" ? "bg-white text-lavender-700 shadow-soft" : "text-ink-soft"}`}
+            className={`flex-1 rounded-lg py-1.5 font-medium ${tab === "picks" ? "bg-white text-eucalypt-700 shadow-soft" : "text-ink-soft"}`}
           >
             Top picks
           </button>
@@ -83,7 +83,7 @@ export default function DecisionDetailPage() {
             role="tab"
             aria-selected={tab === "compare"}
             onClick={() => setTab("compare")}
-            className={`flex-1 rounded-lg py-1.5 font-medium ${tab === "compare" ? "bg-white text-lavender-700 shadow-soft" : "text-ink-soft"}`}
+            className={`flex-1 rounded-lg py-1.5 font-medium ${tab === "compare" ? "bg-white text-eucalypt-700 shadow-soft" : "text-ink-soft"}`}
           >
             Compare
           </button>
@@ -119,7 +119,7 @@ export default function DecisionDetailPage() {
                     <td className="p-2 font-medium text-ink">
                       {o.title}
                       {o.is_best_match && (
-                        <Badge className="ml-1 bg-lavender-600 text-white">Best</Badge>
+                        <Badge className="ml-1 bg-eucalypt-600 text-white">Best</Badge>
                       )}
                     </td>
                     <td className="p-2 text-ink">{formatMoney(o.total_price, o.currency)}</td>

@@ -41,8 +41,8 @@ export default function ApprovalsPage() {
       <AppHeader title="Approvals" />
       <div className="container-app space-y-4 py-4">
         {/* Trust banner */}
-        <div className="flex items-start gap-2 rounded-2xl bg-lavender-50 p-3">
-          <ShieldCheck size={18} className="mt-0.5 shrink-0 text-lavender-600" />
+        <div className="flex items-start gap-2 rounded-2xl bg-eucalypt-50 p-3">
+          <ShieldCheck size={18} className="mt-0.5 shrink-0 text-eucalypt-600" />
           <p className="text-xs text-ink-soft">
             Mabel never takes an external action without your say-so. Everything here is{" "}
             <span className="font-medium text-ink">simulated</span> in demo mode — no real payments,
@@ -56,7 +56,7 @@ export default function ApprovalsPage() {
             role="tab"
             aria-selected={tab === "pending"}
             onClick={() => setTab("pending")}
-            className={`flex-1 rounded-lg py-1.5 font-medium ${tab === "pending" ? "bg-white text-lavender-700 shadow-soft" : "text-ink-soft"}`}
+            className={`flex-1 rounded-lg py-1.5 font-medium ${tab === "pending" ? "bg-white text-eucalypt-700 shadow-soft" : "text-ink-soft"}`}
           >
             Pending {pending.length > 0 && `(${pending.length})`}
           </button>
@@ -64,7 +64,7 @@ export default function ApprovalsPage() {
             role="tab"
             aria-selected={tab === "history"}
             onClick={() => setTab("history")}
-            className={`flex-1 rounded-lg py-1.5 font-medium ${tab === "history" ? "bg-white text-lavender-700 shadow-soft" : "text-ink-soft"}`}
+            className={`flex-1 rounded-lg py-1.5 font-medium ${tab === "history" ? "bg-white text-eucalypt-700 shadow-soft" : "text-ink-soft"}`}
           >
             History
           </button>
@@ -82,7 +82,7 @@ export default function ApprovalsPage() {
                     <div className="min-w-0 flex-1">
                       <Link
                         href={`/items/${a.item_id}`}
-                        className="text-xs font-medium text-lavender-700"
+                        className="text-xs font-medium text-eucalypt-700"
                       >
                         {itemTitle(a)}
                       </Link>
@@ -100,7 +100,7 @@ export default function ApprovalsPage() {
                           {a.reversible ? (
                             <span className="text-emerald-700">Yes — can be undone</span>
                           ) : (
-                            <span className="text-berry-600">No</span>
+                            <span className="text-clay-600">No</span>
                           )}
                         </Detail>
                       </dl>
@@ -148,7 +148,7 @@ export default function ApprovalsPage() {
                       a.status === "approved"
                         ? "bg-emerald-50 text-emerald-700"
                         : a.status === "rejected"
-                          ? "bg-berry-100 text-berry-600"
+                          ? "bg-clay-100 text-clay-600"
                           : "bg-canvas-soft text-ink-soft"
                     }
                   >
@@ -159,7 +159,7 @@ export default function ApprovalsPage() {
                       title="Undo simulated action"
                       aria-label="Undo simulated action"
                       onClick={() => resolveApproval(a.id, "snoozed")}
-                      className="rounded-lg p-1.5 text-ink-faint hover:bg-lavender-50"
+                      className="rounded-lg p-1.5 text-ink-faint hover:bg-eucalypt-50"
                     >
                       <RotateCcw size={15} />
                     </button>

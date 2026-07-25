@@ -27,7 +27,7 @@ export function AppHeader({
             <button
               onClick={() => router.back()}
               aria-label="Go back"
-              className="-ml-1 rounded-lg p-1.5 text-ink-soft hover:bg-lavender-50"
+              className="-ml-1 rounded-lg p-1.5 text-ink-soft hover:bg-eucalypt-50"
             >
               <ArrowLeft size={20} />
             </button>

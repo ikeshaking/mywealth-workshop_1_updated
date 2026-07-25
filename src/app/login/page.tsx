@@ -39,7 +39,7 @@ export default function LoginPage() {
       footer={
         <>
           New here?{" "}
-          <Link href="/signup" className="font-medium text-lavender-700">
+          <Link href="/signup" className="font-medium text-eucalypt-700">
             Create an account
           </Link>
         </>
@@ -53,7 +53,7 @@ export default function LoginPage() {
           <Input type="password" autoComplete="current-password" placeholder="••••••••" {...register("password")} />
         </Field>
         <div className="text-right">
-          <Link href="/forgot-password" className="text-xs text-lavender-700">
+          <Link href="/forgot-password" className="text-xs text-eucalypt-700">
             Forgot password?
           </Link>
         </div>

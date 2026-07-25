@@ -73,10 +73,10 @@ export default function SettingsPage() {
               value={prefs.currency}
               onChange={(e) => updatePreferences({ currency: e.target.value })}
             >
-              <option value="GBP">£ GBP</option>
+              <option value="AUD">$ AUD</option>
               <option value="USD">$ USD</option>
+              <option value="GBP">£ GBP</option>
               <option value="EUR">€ EUR</option>
-              <option value="AUD">A$ AUD</option>
             </Select>
           </Field>
         </Card>
@@ -101,15 +101,15 @@ export default function SettingsPage() {
                   className={cn(
                     "flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-colors",
                     active
-                      ? "border-lavender-400 bg-lavender-50"
-                      : "border-lavender-200 bg-white hover:bg-lavender-50",
+                      ? "border-eucalypt-400 bg-eucalypt-50"
+                      : "border-eucalypt-200 bg-white hover:bg-eucalypt-50",
                     disabled && "cursor-not-allowed opacity-60",
                   )}
                 >
                   <span
                     className={cn(
                       "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2",
-                      active ? "border-lavender-600 bg-lavender-600" : "border-lavender-300",
+                      active ? "border-eucalypt-600 bg-eucalypt-600" : "border-eucalypt-300",
                     )}
                   >
                     {active && <span className="h-2 w-2 rounded-full bg-white" />}
@@ -150,7 +150,7 @@ export default function SettingsPage() {
             <span className="text-sm text-ink">Proactive suggestions</span>
             <input
               type="checkbox"
-              className="h-5 w-5 rounded border-lavender-300 text-lavender-600 focus-visible:ring-lavender-300"
+              className="h-5 w-5 rounded border-eucalypt-300 text-eucalypt-600 focus-visible:ring-eucalypt-300"
               checked={prefs.proactive_suggestions}
               onChange={(e) => updatePreferences({ proactive_suggestions: e.target.checked })}
             />

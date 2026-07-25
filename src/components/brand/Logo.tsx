@@ -11,8 +11,8 @@ export function MabelAvatar({ className, size = 40 }: { className?: string; size
       <svg viewBox="0 0 40 40" width={size} height={size} role="img">
         <defs>
           <linearGradient id="mabelBlob" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#bfb0e2" />
-            <stop offset="100%" stopColor="#8468bd" />
+            <stop offset="0%" stopColor="#93bda4" />
+            <stop offset="100%" stopColor="#3a6b52" />
           </linearGradient>
         </defs>
         <path

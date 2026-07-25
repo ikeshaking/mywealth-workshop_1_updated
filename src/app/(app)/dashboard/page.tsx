@@ -80,7 +80,7 @@ export default function DashboardPage() {
     <div>
       <AppHeader
         right={
-          <Link href="/settings" aria-label="Settings" className="text-sm text-lavender-700">
+          <Link href="/settings" aria-label="Settings" className="text-sm text-eucalypt-700">
             {data.preferences.preferred_name}
           </Link>
         }
@@ -122,7 +122,7 @@ export default function DashboardPage() {
                   <p className="text-xs text-ink-faint">{section.subtitle}</p>
                 </div>
                 {items.length > 0 && (
-                  <span className="rounded-full bg-lavender-100 px-2 py-0.5 text-xs font-medium text-lavender-700">
+                  <span className="rounded-full bg-eucalypt-100 px-2 py-0.5 text-xs font-medium text-eucalypt-700">
                     {items.length}
                   </span>
                 )}
@@ -146,12 +146,12 @@ export default function DashboardPage() {
                       {!showCompleted ? (
                         <button
                           onClick={() => setShowCompleted(true)}
-                          className="text-sm font-medium text-lavender-700"
+                          className="text-sm font-medium text-eucalypt-700"
                         >
                           View all {items.length}
                         </button>
                       ) : (
-                        <Link href="/completed" className="text-sm font-medium text-lavender-700">
+                        <Link href="/completed" className="text-sm font-medium text-eucalypt-700">
                           Go to Completed
                         </Link>
                       )}
@@ -164,7 +164,7 @@ export default function DashboardPage() {
         })}
 
         {/* Calm sign-off */}
-        <div className="flex items-center gap-3 rounded-2xl bg-lavender-50 p-4">
+        <div className="flex items-center gap-3 rounded-2xl bg-eucalypt-50 p-4">
           <MabelAvatar size={32} />
           <p className="text-sm text-ink-soft">
             That&apos;s everything for now. Tell me anything and I&apos;ll quietly handle it.

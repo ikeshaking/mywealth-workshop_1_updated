@@ -79,7 +79,7 @@ npm run verify      # lint + typecheck + unit tests + build
 
 1. **Car registration** — capture with an unknown due date, add it, prepare for approval.
 2. **Bill reminder** — capture a reminder, mark it paid, see it in Completed.
-3. **Shopping decision** — outdoor dining bundles under £2,000, best match, approve.
+3. **Shopping decision** — outdoor dining bundles under $2,000, best match, approve.
 4. **Subscription cancellation** — gym cancellation prepared, approved, completed.
 5. **Family appointment** — dentist booking; Mabel asks who and when.
 

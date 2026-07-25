@@ -2,7 +2,7 @@ import { forwardRef, useId } from "react";
 import { cn } from "@/lib/utils";
 
 const controlBase =
-  "w-full rounded-xl border border-lavender-200 bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-lavender-400 focus-visible:ring-2 focus-visible:ring-lavender-300";
+  "w-full rounded-xl border border-eucalypt-200 bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-eucalypt-400 focus-visible:ring-2 focus-visible:ring-eucalypt-300";
 
 export const Input = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
   function Input({ className, ...props }, ref) {
@@ -48,7 +48,7 @@ export function Field({
       {hint && <p className="text-xs text-ink-faint">{hint}</p>}
       {children}
       {error && (
-        <p role="alert" className="text-xs text-berry-600">
+        <p role="alert" className="text-xs text-clay-600">
           {error}
         </p>
       )}

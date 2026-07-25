@@ -30,7 +30,7 @@ export default function PreviewPage() {
         <h1 className="mb-1 text-2xl font-semibold text-ink">Screen preview</h1>
         <p className="mb-6 text-sm text-ink-soft">
           Jump to any major screen. In-app screens require a demo session — use{" "}
-          <Link href="/login" className="text-lavender-700">
+          <Link href="/login" className="text-eucalypt-700">
             Explore the demo
           </Link>{" "}
           first.
@@ -46,7 +46,7 @@ export default function PreviewPage() {
                   <span className="block text-sm font-semibold text-ink">{s.label}</span>
                   <span className="block text-xs text-ink-faint">{s.note}</span>
                 </span>
-                <span className="text-xs text-lavender-700">{s.href}</span>
+                <span className="text-xs text-eucalypt-700">{s.href}</span>
               </Link>
             </li>
           ))}

@@ -34,7 +34,7 @@ describe("life item creation", () => {
 
   it("creates a decision request + recommendations for a shopping ask", () => {
     const data = freshData();
-    const input = "Find me an outdoor dining set under £2,000 that seats six.";
+    const input = "Find me an outdoor dining set under $2,000 that seats six.";
     const { data: next, item, decisionRequestId } = ops.createItemFromExtraction(
       data,
       input,

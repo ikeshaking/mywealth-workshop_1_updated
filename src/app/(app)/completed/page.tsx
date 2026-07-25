@@ -52,7 +52,7 @@ export default function CompletedPage() {
                     </span>
                   ) : null}
                   {item.time_saved_minutes ? (
-                    <span className="rounded-full bg-lavender-50 px-2 py-0.5 font-medium text-lavender-700">
+                    <span className="rounded-full bg-eucalypt-50 px-2 py-0.5 font-medium text-eucalypt-700">
                       {formatMinutes(item.time_saved_minutes)} saved
                     </span>
                   ) : null}

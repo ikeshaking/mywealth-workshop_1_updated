@@ -30,7 +30,7 @@ describe("fallback parser", () => {
   });
 
   it("detects a shopping decision with a budget", () => {
-    const e = fallbackExtract("Find me an outdoor dining set under £2,000 that seats six.", TODAY);
+    const e = fallbackExtract("Find me an outdoor dining set under $2,000 that seats six.", TODAY);
     expect(e.is_decision).toBe(true);
     expect(e.budget).toBe(2000);
     expect(e.approval_required).toBe(true);

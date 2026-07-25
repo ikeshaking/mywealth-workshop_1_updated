@@ -31,14 +31,14 @@ export function NudgeToaster() {
     <div className="pointer-events-none fixed inset-x-0 bottom-16 z-40 flex justify-center px-4">
       <div
         role="status"
-        className="pointer-events-auto flex w-full max-w-md items-start gap-2.5 rounded-2xl border border-lavender-200 bg-white p-3 shadow-lift animate-fade-in"
+        className="pointer-events-auto flex w-full max-w-md items-start gap-2.5 rounded-2xl border border-eucalypt-200 bg-white p-3 shadow-lift animate-fade-in"
       >
         <MabelAvatar size={28} />
         <p className="flex-1 text-sm text-ink">{latest.message}</p>
         <button
           aria-label="Dismiss nudge"
           onClick={() => setDismissed((d) => [...d, latest.id])}
-          className="rounded-lg p-1 text-ink-faint hover:bg-lavender-50"
+          className="rounded-lg p-1 text-ink-faint hover:bg-eucalypt-50"
         >
           <X size={16} />
         </button>

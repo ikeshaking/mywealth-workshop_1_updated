@@ -36,7 +36,7 @@ export function Composer({
         e.preventDefault();
         submit();
       }}
-      className="flex items-end gap-2 rounded-2xl border border-lavender-200 bg-white p-2 shadow-soft"
+      className="flex items-end gap-2 rounded-2xl border border-eucalypt-200 bg-white p-2 shadow-soft"
     >
       <div className="flex gap-1 pb-1">
         <button
@@ -83,7 +83,7 @@ export function Composer({
         aria-label="Send to Mabel"
         disabled={busy || !value.trim()}
         className={cn(
-          "mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-lavender-600 text-white transition-colors hover:bg-lavender-700 disabled:opacity-40",
+          "mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-eucalypt-600 text-white transition-colors hover:bg-eucalypt-700 disabled:opacity-40",
         )}
       >
         {busy ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}

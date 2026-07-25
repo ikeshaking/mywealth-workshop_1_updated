@@ -15,7 +15,7 @@ export async function extractClient(input: string): Promise<ExtractResponse> {
     const res = await fetch("/api/extract", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ input, today, currency: "GBP" }),
+      body: JSON.stringify({ input, today, currency: "AUD" }),
     });
     if (!res.ok) throw new Error("extract failed");
     const json = await res.json();

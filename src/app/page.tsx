@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 const useCases = [
   "I need to sort my car rego soon.",
   "Remind me to pay this bill.",
-  "Find me an outdoor dining set under £2,000.",
+  "Find me an outdoor dining set under $2,000.",
   "I need to book the kids into the dentist.",
   "My internet bill seems expensive.",
   "Cancel the gym membership I never use.",
@@ -73,7 +73,7 @@ export default function LandingPage() {
             Mabel turns your thoughts, emails and intentions into completed outcomes — without
             asking you to manage another system.
           </p>
-          <p className="mt-4 text-base font-medium text-lavender-700">
+          <p className="mt-4 text-base font-medium text-eucalypt-700">
             Tell Mabel once. She handles the rest.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -120,7 +120,7 @@ export default function LandingPage() {
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {features.map((f) => (
                 <Card key={f.title}>
-                  <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-lavender-100 text-xl">
+                  <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-eucalypt-100 text-xl">
                     <span aria-hidden>{f.emoji}</span>
                   </div>
                   <h3 className="text-base font-semibold text-ink">{f.title}</h3>
@@ -136,7 +136,7 @@ export default function LandingPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {benefits.map((b) => (
               <div key={b.title} className="rounded-2xl bg-white p-5 shadow-soft">
-                <h3 className="text-sm font-semibold text-lavender-700">{b.title}</h3>
+                <h3 className="text-sm font-semibold text-eucalypt-700">{b.title}</h3>
                 <p className="mt-1 text-sm text-ink-soft">{b.body}</p>
               </div>
             ))}
@@ -145,11 +145,11 @@ export default function LandingPage() {
 
         {/* CTA */}
         <section className="container-wide pb-20">
-          <Card className="bg-lavender-600 p-8 text-center text-white sm:p-12">
+          <Card className="bg-eucalypt-600 p-8 text-center text-white sm:p-12">
             <h2 className="text-2xl font-semibold sm:text-3xl">
               Mabel handles the life stuff.
             </h2>
-            <p className="mt-2 text-lavender-100">You get your time back.</p>
+            <p className="mt-2 text-eucalypt-100">You get your time back.</p>
             <div className="mt-6 flex justify-center">
               <Link href="/signup">
                 <Button variant="secondary" size="lg" className="min-w-52">

@@ -34,9 +34,9 @@ export const extractionSchema = z.object({
   follow_up_question: z.string().nullable().default(null),
   /** True when the request is a research/shopping/decision ask. */
   is_decision: z.boolean().default(false),
-  /** Parsed budget if the user named one (e.g. "under £2,000"). */
+  /** Parsed budget if the user named one (e.g. "under $2,000"). */
   budget: z.number().nonnegative().nullable().default(null),
-  currency: z.string().length(3).default("GBP"),
+  currency: z.string().length(3).default("AUD"),
 });
 
 export type Extraction = z.infer<typeof extractionSchema>;
@@ -44,7 +44,7 @@ export type Extraction = z.infer<typeof extractionSchema>;
 /** Request body accepted by POST /api/extract. */
 export const extractRequestSchema = z.object({
   input: z.string().min(1, "Tell Mabel something first.").max(2000),
-  currency: z.string().length(3).default("GBP"),
+  currency: z.string().length(3).default("AUD"),
   /** ISO date of "today" so the fallback parser can resolve relative dates. */
   today: z
     .string()

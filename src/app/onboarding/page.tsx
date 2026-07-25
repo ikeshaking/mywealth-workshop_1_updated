@@ -102,8 +102,8 @@ export default function OnboardingPage() {
                         className={cn(
                           "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
                           active
-                            ? "border-lavender-400 bg-lavender-100 text-lavender-700"
-                            : "border-lavender-200 bg-white text-ink-soft hover:bg-lavender-50",
+                            ? "border-eucalypt-400 bg-eucalypt-100 text-eucalypt-700"
+                            : "border-eucalypt-200 bg-white text-ink-soft hover:bg-eucalypt-50",
                         )}
                       >
                         <span aria-hidden>{categoryMeta[c].emoji}</span>
@@ -124,10 +124,10 @@ export default function OnboardingPage() {
             </Select>
           </Field>
 
-          <label className="flex items-start gap-3 rounded-2xl border border-lavender-200 bg-white p-4">
+          <label className="flex items-start gap-3 rounded-2xl border border-eucalypt-200 bg-white p-4">
             <input
               type="checkbox"
-              className="mt-0.5 h-5 w-5 rounded border-lavender-300 text-lavender-600 focus-visible:ring-lavender-300"
+              className="mt-0.5 h-5 w-5 rounded border-eucalypt-300 text-eucalypt-600 focus-visible:ring-eucalypt-300"
               {...register("proactive_suggestions")}
             />
             <span>

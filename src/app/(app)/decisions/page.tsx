@@ -32,7 +32,7 @@ export default function DecisionsPage() {
           <EmptyState
             icon="🧭"
             title="No decisions yet"
-            body="Try “Find me an outdoor dining set under £2,000 that seats six.”"
+            body="Try “Find me an outdoor dining set under $2,000 that seats six.”"
           />
         ) : (
           <div className="space-y-3">
@@ -46,7 +46,7 @@ export default function DecisionsPage() {
                     <p className="text-sm font-semibold text-ink">{dr.request}</p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {dr.preferences.map((p) => (
-                        <Badge key={p} className="bg-lavender-50 text-lavender-600">
+                        <Badge key={p} className="bg-eucalypt-50 text-eucalypt-600">
                           {p}
                         </Badge>
                       ))}

@@ -30,13 +30,13 @@ export function BottomNav({ approvalsCount = 0 }: { approvalsCount?: number }) {
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "relative flex flex-col items-center gap-0.5 rounded-lg py-1.5 text-[11px] font-medium transition-colors",
-                  active ? "text-lavender-700" : "text-ink-faint hover:text-ink-soft",
+                  active ? "text-eucalypt-700" : "text-ink-faint hover:text-ink-soft",
                 )}
               >
                 <Icon size={20} strokeWidth={active ? 2.4 : 2} aria-hidden />
                 {label}
                 {href === "/approvals" && approvalsCount > 0 && (
-                  <span className="absolute right-2 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-berry-500 px-1 text-[10px] font-semibold text-white">
+                  <span className="absolute right-2 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-clay-500 px-1 text-[10px] font-semibold text-white">
                     {approvalsCount}
                   </span>
                 )}

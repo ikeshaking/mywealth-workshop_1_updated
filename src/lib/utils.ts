@@ -33,7 +33,7 @@ export function addDays(isoDate: string, days: number): string {
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso.length <= 10 ? iso + "T00:00:00" : iso);
-  return d.toLocaleDateString("en-GB", {
+  return d.toLocaleDateString("en-AU", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -43,7 +43,7 @@ export function formatDate(iso: string | null | undefined): string {
 export function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
-  return d.toLocaleDateString("en-GB", {
+  return d.toLocaleDateString("en-AU", {
     day: "numeric",
     month: "short",
     hour: "2-digit",
@@ -64,11 +64,12 @@ export function relativeDay(iso: string | null | undefined, today = todayIso()):
   return `${Math.abs(days)} days ago`;
 }
 
-export function formatMoney(amount: number | null | undefined, currency = "GBP"): string {
+export function formatMoney(amount: number | null | undefined, currency = "AUD"): string {
   if (amount === null || amount === undefined) return "—";
-  return new Intl.NumberFormat("en-GB", {
+  return new Intl.NumberFormat("en-AU", {
     style: "currency",
     currency,
+    currencyDisplay: "narrowSymbol",
     maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
   }).format(amount);
 }
@@ -81,4 +82,4 @@ export function formatMinutes(mins: number | null | undefined): string {
 }
 
 export const currencySymbol = (currency: string): string =>
-  ({ GBP: "£", USD: "$", EUR: "€", AUD: "A$" })[currency] ?? currency + " ";
+  ({ AUD: "$", USD: "$", GBP: "£", EUR: "€" })[currency] ?? currency + " ";

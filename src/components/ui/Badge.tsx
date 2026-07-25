@@ -4,17 +4,17 @@ import { statusMeta, priorityMeta, categoryMeta } from "@/lib/catalog";
 
 const statusTone: Record<string, string> = {
   neutral: "bg-canvas-soft text-ink-soft",
-  attention: "bg-berry-100 text-berry-600",
-  progress: "bg-lavender-100 text-lavender-700",
+  attention: "bg-clay-100 text-clay-600",
+  progress: "bg-eucalypt-100 text-eucalypt-700",
   ready: "bg-amber-50 text-amber-700",
   done: "bg-emerald-50 text-emerald-700",
 };
 
 const priorityTone: Record<string, string> = {
   low: "bg-canvas-soft text-ink-faint",
-  medium: "bg-lavender-50 text-lavender-600",
+  medium: "bg-eucalypt-50 text-eucalypt-600",
   high: "bg-amber-50 text-amber-700",
-  urgent: "bg-berry-100 text-berry-600",
+  urgent: "bg-clay-100 text-clay-600",
 };
 
 export function Badge({
@@ -56,7 +56,7 @@ export function CategoryBadge({ category }: { category: Category }) {
 export function InferredTag({ label = "inferred" }: { label?: string }) {
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full bg-lavender-50 px-1.5 py-0.5 text-[10px] font-medium text-lavender-600"
+      className="inline-flex items-center gap-1 rounded-full bg-eucalypt-50 px-1.5 py-0.5 text-[10px] font-medium text-eucalypt-600"
       title="Mabel inferred this — tap to confirm or change it."
     >
       <span aria-hidden>✦</span>
