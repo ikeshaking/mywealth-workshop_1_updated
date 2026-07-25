@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/Badge";
 import { useMabel } from "@/lib/store/MabelProvider";
 import { permissionMeta } from "@/lib/catalog";
 import { PERMISSION_LEVELS } from "@/lib/types";
-import type { PermissionLevel } from "@/lib/types";
+import type { PermissionLevel, MabelTone } from "@/lib/types";
+import { TONES, toneMeta } from "@/lib/tone";
 import { signOut } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
@@ -50,6 +51,49 @@ export default function SettingsPage() {
             />
           </Field>
           <p className="text-xs text-ink-faint">Signed in as {data.user.email}</p>
+        </Card>
+
+        {/* Mabel's voice */}
+        <Card className="space-y-3">
+          <CardTitle className="text-sm">Mabel&apos;s voice</CardTitle>
+          <p className="text-xs text-ink-soft">
+            How should Mabel talk to you? You can change this anytime.
+          </p>
+          <div className="space-y-2">
+            {TONES.map((t: MabelTone) => {
+              const meta = toneMeta[t];
+              const active = prefs.tone === t;
+              return (
+                <button
+                  key={t}
+                  aria-pressed={active}
+                  onClick={() => updatePreferences({ tone: t })}
+                  className={cn(
+                    "flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-colors",
+                    active
+                      ? "border-eucalypt-400 bg-eucalypt-50"
+                      : "border-eucalypt-200 bg-white hover:bg-eucalypt-50",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2",
+                      active ? "border-eucalypt-600 bg-eucalypt-600" : "border-eucalypt-300",
+                    )}
+                  >
+                    {active && <span className="h-2 w-2 rounded-full bg-white" />}
+                  </span>
+                  <span className="flex-1">
+                    <span className="block text-sm font-medium text-ink">{meta.label}</span>
+                    <span className="mt-0.5 block text-xs text-ink-soft">{meta.description}</span>
+                    <span className="mt-1 block text-xs italic text-ink-faint">
+                      &ldquo;{meta.sample}&rdquo;
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </Card>
 
         {/* Household */}

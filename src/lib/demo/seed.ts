@@ -371,6 +371,7 @@ export function buildSeed(today: string): MabelData {
       proactive_suggestions: true,
       permission_level: "approve",
       currency: "AUD",
+      tone: "calm",
       onboarded: true,
     },
     items,
