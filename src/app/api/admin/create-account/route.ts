@@ -4,10 +4,10 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /**
  * Live-mode account creation. Only reachable when Supabase is configured.
- * The PY manager (verified via their session + profile role) creates a
- * candidate/supervisor login here; the auth user is created with the
- * service-role key (server-only), then a matching profile + blank program_state
- * row is inserted. A temporary password is returned for the manager to relay.
+ * The PY manager (verified via their session + profile role) invites a
+ * candidate/supervisor here: the service-role key (server-only) sends Supabase's
+ * invite email, then a matching profile + blank program_state row is inserted.
+ * The recipient sets their own password via the link (see /set-password).
  *
  * In demo mode the client never calls this — accounts are created in-browser.
  */
@@ -45,18 +45,20 @@ export async function POST(req: Request) {
 
   const admin = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
 
-  // 3) Create the auth user with a temporary password.
-  const tempPassword = "PY-" + Math.random().toString(36).slice(2, 10) + "!";
-  const { data: created, error: createErr } = await admin.auth.admin.createUser({
-    email,
-    password: tempPassword,
-    email_confirm: true,
-    user_metadata: { full_name: fullName },
+  // 3) Invite the user by email. Supabase sends its invite email; the recipient
+  //    clicks the link, lands on /set-password, and chooses their own password.
+  const origin = req.headers.get("origin") || new URL(req.url).origin;
+  const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
+    data: { full_name: fullName },
+    redirectTo: `${origin}/set-password`,
   });
-  if (createErr || !created.user) {
-    return NextResponse.json({ error: createErr?.message ?? "Could not create user." }, { status: 400 });
+  if (inviteErr || !invited.user) {
+    return NextResponse.json(
+      { error: inviteErr?.message ?? "Could not send the invite email." },
+      { status: 400 },
+    );
   }
-  const newId = created.user.id;
+  const newId = invited.user.id;
 
   // 4) Insert profile + (for candidates) a blank program_state row.
   const { error: profErr } = await admin.from("profiles").insert({
@@ -88,6 +90,6 @@ export async function POST(req: Request) {
       supervisorId: role === "candidate" ? supervisorId : null,
       createdAt: new Date().toISOString(),
     },
-    tempPassword,
+    invited: true,
   });
 }

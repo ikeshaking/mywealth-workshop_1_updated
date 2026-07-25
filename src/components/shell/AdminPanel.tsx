@@ -46,14 +46,11 @@ export function AdminPanel({ onChanged }: { onChanged?: () => void }) {
         email,
         supervisorId: role === "candidate" ? supervisorId || null : null,
       });
-      const pw = isDemoMode ? DEMO_PASSWORD : (res as unknown as { tempPassword?: string }).tempPassword;
       setMsg(
         `Created ${res.fullName} (${ROLE_LABEL[res.role]}).` +
           (isDemoMode
             ? ` They can sign in with password “${DEMO_PASSWORD}”.`
-            : pw
-              ? ` Temporary password: ${pw}`
-              : ""),
+            : ` An invite email has been sent to ${res.email} — they’ll set their own password from the link.`),
       );
       setFullName("");
       setEmail("");

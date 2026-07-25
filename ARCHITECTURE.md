@@ -92,8 +92,9 @@ in both, so behaviour is identical — only the storage swaps.
 ## Known limitations / next steps
 
 - Demo persistence is per-browser (by design). Live mode removes this.
-- Live account creation returns a temporary password for the manager to relay;
-  wiring Supabase invite emails is a natural next step.
+- Live account creation sends a Supabase **invite email**; the recipient sets
+  their own password at `/set-password` (which handles the invite/recovery token),
+  then lands in the app. No passwords are ever shown to the manager.
 - When a supervisor/manager has a candidate's tracker open and that candidate edits
   from another device, the dashboards live-refresh; the open tracker iframe is not
   hot-patched mid-edit (reopen to see remote changes). A "new updates — refresh"

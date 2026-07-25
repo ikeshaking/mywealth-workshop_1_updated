@@ -70,8 +70,11 @@ own devices, instantly — connect Supabase:
    logins).
 4. Create the PY manager's login (Supabase dashboard → Authentication) and a
    matching `profiles` row with `role = 'py_manager'`. From then on the manager
-   creates everyone else in-app.
-5. Restart the dev server (or redeploy).
+   creates everyone else in-app — each new candidate/supervisor gets a **Supabase
+   invite email** and sets their own password at `/set-password`.
+5. In Supabase → Authentication → URL Configuration, set your Site URL and add
+   `<your-url>/set-password` as a redirect URL so invite links land correctly.
+6. Restart the dev server (or redeploy).
 
 Realtime is respected by RLS, so each device only ever receives the rows it's
 allowed to see.
