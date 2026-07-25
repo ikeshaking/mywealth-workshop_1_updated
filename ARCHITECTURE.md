@@ -1,115 +1,100 @@
-# Mabel — architecture notes
+# Architecture — MyWealth PY Program app
 
-A quick tour of how the app is put together and why.
+How the multi-user app is put together, and why.
 
-## Principles
+## The core idea
 
-- **Capture first, organise second.** The composer never forces a form; it saves the
-  messy input and asks only for genuinely missing details.
-- **One domain, two backends.** The same TypeScript types and the same pure business logic
-  run against the demo store *and* (when configured) Supabase. Screens don’t know or care.
-- **The AI layer can never break the app.** Extraction always returns schema-valid data;
-  OpenAI failures fall back to a deterministic parser.
-- **Trust is UI, not fine print.** Approvals, previews, inferred markers and an undo-able
-  activity log are first-class.
-
-## Layers
+The original Professional Year Program is a large, carefully-branded single-file
+HTML app (`public/py-app.html`). Rather than re-implement thousands of lines of
+bespoke UI and risk losing fidelity, we **preserve it verbatim** and wrap it in a
+real authentication + multi-user shell. The shell owns *who you are* and *whose
+record you're looking at*; the tracker owns *the Professional Year itself*.
 
 ```
-UI (App Router screens, React components)
-static + client components in src/app, src/components
-        │  uses hooks from the store, never touches persistence directly
-        ▼
-State / store  ── src/lib/store/MabelProvider.tsx
-React context + localStorage persistence (demo)
-delegates every mutation to ↓
-        ▼
-Business logic ── src/lib/store/operations.ts   (PURE, framework-free, fully unit-tested)
-createItemFromExtraction · transitionStatus (guarded state machine) ·
-requestApproval · resolveApproval (simulated actions) · fireDueReminders · computeMetrics
-        ▼
-Domain        ── src/lib/types.ts · src/lib/schemas.ts (Zod) · src/lib/catalog.ts
-        │
-AI            ── src/lib/ai/{extract,openai,fallback,recommend,reply,client}.ts
-secure server route: src/app/api/extract/route.ts
-        │
-Data access   ── demo: src/lib/demo/seed.ts   |   live: src/lib/supabase/*, supabase/migrations
+┌─────────────────────────────────────────────────────────────┐
+│ App shell (Next.js)  — src/app, src/components/shell         │
+│  • Login + session (role)                                   │
+│  • Candidate → their own tracker                            │
+│  • Supervisor → list of their candidates → tracker          │
+│  • PY Manager → everyone + admin (create accounts, assign)  │
+│                                                             │
+│   ┌───────────────────────────────────────────────────┐    │
+│   │ <iframe srcDoc>  public/py-app.html (verbatim)     │    │
+│   │  • state + locked role injected before boot        │    │
+│   │  • every save → postMessage up to the shell        │    │
+│   └───────────────────────────────────────────────────┘    │
+│                                                             │
+│ Data layer — src/lib/py/backend.ts (PyBackend interface)    │
+│  • DemoBackend      (in-browser localStorage)               │
+│  • SupabaseBackend  (Auth + Postgres + Realtime, RLS)       │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Why a client store for demo mode?
+## The shell ↔ tracker bridge
 
-The requirement is a *functional* MVP with persistent data and complete flows that work
-with **no external services**. A localStorage-backed React store gives real persistence,
-instant interactions and offline operation, while the pure `operations.ts` module keeps
-all the logic testable and portable to Supabase. The Supabase schema mirrors the same
-shapes column-for-column, so the live path is a drop-in swap rather than a rewrite.
+`public/py-app.html` is the original app with a handful of surgical edits (all
+guarded by a `window.__PY_EMBED__` flag, so the file still runs standalone):
+
+1. **State injection.** The shell builds the iframe with `srcDoc`, replacing a
+   `<!--PY_BOOT_INJECT-->` marker with a boot script that sets
+   `window.__PY_STATE__` (this candidate's record) and `window.__PY_ROLE__`
+   (`candidate` or `supervisor`) before the app's own script runs. The boot script
+   removes itself so it never leaks into an exported copy.
+2. **Persistence.** `persist()` — instead of writing this browser's localStorage
+   (which would blend candidates together) — posts `{type:'py:save', state}` to the
+   parent. `loadState()` ignores localStorage when embedded and hydrates from the
+   injected state.
+3. **Role lock.** On boot the in-app candidate/supervisor toggle is hidden and the
+   role is forced to the server-authorised value, so a candidate can't self-escalate.
+
+The shell's `TrackerFrame` component debounces those `py:save` messages and writes
+them to the backend against the correct candidate id.
+
+## Roles & access
+
+`Profile.role` is one of `candidate | supervisor | py_manager`. A candidate's
+`supervisorId` links them to a supervisor. Visibility is defined once, in
+`canView(viewer, candidate)`:
+
+- **candidate** → only themselves
+- **supervisor** → candidates whose `supervisorId` is them
+- **py_manager** → everyone
+
+The demo backend applies this in `listProfiles` / `getRecord` / `saveRecord`. The
+live backend relies on the **identical policy expressed as Postgres Row-Level
+Security** (`supabase/migrations/0001_init.sql`), so the boundary holds server-side
+even if the UI were bypassed. Both are covered by `tests/unit/py.test.ts`.
 
 ## Data model
 
-`LifeItem` is the spine (id, user_id, title, original_input, summary, category, status,
-priority, due/reminder/follow-up dates, source, context, recommended_action,
-approval_required, confidence_score, inferred-flags, money/time saved, outcome, timestamps).
-Satellites: `ItemEvent` (timeline), `ItemNote`, `Reminder`, `Approval`, `DecisionRequest`,
-`RecommendationSet` + `RecommendationOption`, `Conversation` + `Message`, `Integration`,
-`UserPreferences`, `Household`.
+- **`profiles`** — `id` (= auth user id), `role`, `full_name`, `email`,
+  `supervisor_id`.
+- **`program_state`** — one row per candidate: `candidate_id`, `supervisor_id`
+  (denormalised for cheap RLS), and `state jsonb` (the opaque tracker record — the
+  shell stores and forwards it without needing to understand its internals).
 
-### Status machine
+RLS role lookups go through `security definer` helper functions so a policy on
+`profiles` never re-queries `profiles` under the invoker (avoids infinite
+recursion — a common Supabase pitfall).
 
-`captured → needs_information / needs_attention / researching / scheduled →
-ready_for_approval → in_progress → completed` (plus `dismissed`). Transitions are guarded
-by `canTransition()` so illegal jumps are impossible — this is unit-tested.
+## Demo vs live
 
-### Permission model
+| | Demo (default) | Live (Supabase) |
+| --- | --- | --- |
+| Auth | seeded accounts, password `mywealth` | real email/password |
+| Storage | this browser (localStorage) | Postgres |
+| Cross-device sync | ✗ single device | ✓ real-time (Supabase Realtime) |
+| Account creation | in-browser | `/api/admin/create-account` (service role) |
 
-`observe · prepare · approve · autopilot`. Autopilot is shown as **coming soon**; the MVP
-never performs real external actions — approvals run a **simulated** action and record it
-on the timeline (undo-able).
+The same `PyBackend` interface and the same `computeProgress` / `canView` logic run
+in both, so behaviour is identical — only the storage swaps.
 
-## AI extraction
+## Known limitations / next steps
 
-`POST /api/extract` validates the body with Zod, then `extract()` tries OpenAI (server-side
-key only) and falls back to the offline parser. Both return an object satisfying
-`extractionSchema`. Guardrails: ISO-only dates, nullable unknowns, clamped confidence, a
-short supportive follow-up question only when needed, and preserved original input.
-
-## Recommendations
-
-`recommendFor()` returns 2–3 **complete bundles** (e.g. table + chairs + cover) with a
-single best match, budget-filtered, each with inclusions, advantages, trade-offs, delivery
-and sizing. Realistic mock data — no live retailer calls.
-
-## Nudging
-
-`NudgeToaster` fires any due reminders on an interval and surfaces the newest as a calm,
-dismissible toast — the app-level simulation of proactive nudging (no push infra).
-
-## Testing strategy
-
-- Pure logic (`operations.ts`, parser, schema, recommender) is covered directly — fast and
-  deterministic.
-- One component render test exercises the recommendation display.
-- Playwright drives the real production build through all five core flows on a mobile
-  viewport in demo mode.
-
-<a id="known-limitations"></a>
-## Known limitations
-
-- Demo persistence is per-browser (localStorage), not multi-device. Live mode (Supabase)
-  removes this.
-- Voice input and image/document upload are **placeholders** (clearly labelled “coming soon”).
-- Recommendations are curated mock bundles, not live retailer inventory.
-- Nudges are in-app only; no real push/email notifications yet.
-- Autopilot permission level is intentionally not implemented (shown as coming soon).
-- Live Supabase auth UI is stubbed by the demo session; the client/server Supabase helpers
-  and RLS migrations are in place for the swap, but the sign-in screens currently drive the
-  demo session.
-
-## Recommended next features
-
-1. Real Supabase auth screens + email verification wired to the existing helpers.
-2. OpenAI-powered follow-up dialogue (multi-turn clarification) beyond the single question.
-3. Email/calendar ingestion so items can be captured by forwarding, not just typing.
-4. Live retailer/price APIs behind the same `recommendFor` interface.
-5. Real scheduled nudges (web push + server cron) replacing the in-app simulation.
-6. Household sharing and multi-user approvals.
-7. Autopilot with tightly-scoped, reversible, audited automatic actions.
+- Demo persistence is per-browser (by design). Live mode removes this.
+- Live account creation returns a temporary password for the manager to relay;
+  wiring Supabase invite emails is a natural next step.
+- When a supervisor/manager has a candidate's tracker open and that candidate edits
+  from another device, the dashboards live-refresh; the open tracker iframe is not
+  hot-patched mid-edit (reopen to see remote changes). A "new updates — refresh"
+  affordance inside the tracker is a possible enhancement.

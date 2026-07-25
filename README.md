@@ -1,21 +1,21 @@
-# Mabel
+# MyWealth Solutions — Professional Year Program
 
-**Tell Mabel once. She handles the rest.**
+A multi-user web app version of the MyWealth Solutions **Professional Year (PY)
+Program** tracker. It keeps the exact branding, fonts and content of the original
+single-file tool, and wraps it in real logins with three roles:
 
-Mabel is a warm, calm, mobile-first AI personal assistant for life admin, decisions,
-purchases and household tasks. She absorbs messy thoughts, messages and intentions,
-turns them into structured items, tracks them automatically and moves them towards
-completion — without asking you to maintain lists or manage a system.
+| Role | What they see |
+| --- | --- |
+| **Candidate** | Only their own Professional Year. They log hours, notes, evidence and self-assessments. |
+| **Supervisor** | Only *their* candidates. They open any of them to review progress and sign off milestones & competencies. |
+| **PY Manager** | Everyone — every supervisor and every candidate — plus an admin panel to create accounts and assign candidates to supervisors. |
 
-> Life admin, decisions and everyday tasks — quietly handled.
-
-This repository is a fully working MVP. **It runs with zero configuration in demo
-mode** (seeded data, a deterministic offline AI parser, and simulated actions), and
-upgrades cleanly to live OpenAI + Supabase when you add credentials.
+Role-based visibility is enforced in the data layer (Row-Level Security in live
+mode), so a candidate can never load another candidate's record.
 
 ---
 
-## Quick start (demo mode)
+## Quick start (demo mode — zero config)
 
 ```bash
 npm install
@@ -23,27 +23,58 @@ npm run dev
 # open http://localhost:3000
 ```
 
-On the login screen, tap **“Explore the demo as Alex”** — no account needed. You land
-on a pre-seeded dashboard with a car registration, an electricity bill, a gym
-cancellation awaiting approval, an outdoor-dining decision, and more.
+On the login screen, tap any **demo account** (password `mywealth`):
 
-No environment variables are required. Demo mode is the default.
+- **Priya Anand** — `priya@mywealth.demo` — PY Manager
+- **Sarah Nguyen** — `sarah@mywealth.demo` — Supervisor (candidates: Alex, Jordan)
+- **David Chen** — `david@mywealth.demo` — Supervisor (candidates: Sam, Riya)
+- **Alex Taylor** — `alex@mywealth.demo` — Candidate
+- …and Jordan, Sam, Riya.
 
-### Useful routes
+No environment variables are required. In demo mode all data lives in **this
+browser** (localStorage) — it's for previewing the app, not for real cross-device
+use.
 
-| Route | What it is |
-| --- | --- |
-| `/` | Landing page |
-| `/login`, `/signup`, `/forgot-password` | Auth (demo) |
-| `/onboarding` | Short, essential-only setup |
-| `/dashboard` | Calm home briefing + “Tell Mabel anything…” |
-| `/capture` | Conversational capture (chat with Mabel) |
-| `/items/[id]` | Item detail (timeline, reminders, approvals, notes) |
-| `/decisions`, `/decisions/[id]` | Decisions & shopping recommendations |
-| `/approvals` | Approve / edit / snooze / reject |
-| `/completed` | Outcomes, money & time saved |
-| `/settings` | Profile, permissions, privacy, data export |
-| `/preview` | Index of every major screen (handy for QA/screenshots) |
+---
+
+## How it's built
+
+- **App shell** (`src/app`, `src/components/shell`) — a Next.js 14 app in the
+  MyWealth brand: login, role-aware dashboards, a candidate switcher for
+  supervisors/manager, and the manager admin panel.
+- **The tracker** (`public/py-app.html`) — the original PY Program, preserved
+  verbatim, embedded per candidate. Its persistence is rewired: instead of this
+  browser's localStorage, it posts each save up to the shell, which stores it
+  against that one candidate (scoped by the signed-in user's role).
+- **Data layer** (`src/lib/py`) — one `PyBackend` interface with two
+  implementations: a demo backend (in-browser) and a Supabase backend (live).
+
+See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full tour.
+
+---
+
+## Going live (real logins + cross-device real-time sync)
+
+Demo mode is single-device. To get real accounts and **live sync** — a candidate
+saves on their laptop and their supervisor + the PY manager see it update on their
+own devices, instantly — connect Supabase:
+
+1. Create a project at [supabase.com](https://supabase.com) (free tier is enough
+   to start; ~$25/mo Pro for always-on production use).
+2. Run [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql) in
+   the SQL editor. It creates the `profiles` and `program_state` tables and the
+   Row-Level Security policies that enforce the three roles.
+3. Copy `.env.example` → `.env.local`, set `NEXT_PUBLIC_DEMO_MODE=false`, and fill
+   in `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and
+   `SUPABASE_SERVICE_ROLE_KEY` (server-only — used so the PY manager can create
+   logins).
+4. Create the PY manager's login (Supabase dashboard → Authentication) and a
+   matching `profiles` row with `role = 'py_manager'`. From then on the manager
+   creates everyone else in-app.
+5. Restart the dev server (or redeploy).
+
+Realtime is respected by RLS, so each device only ever receives the rows it's
+allowed to see.
 
 ---
 
@@ -53,138 +84,21 @@ No environment variables are required. Demo mode is the default.
 npm run dev         # start the dev server
 npm run build       # production build
 npm run start       # run the production build
-npm run lint        # ESLint (next lint)
+npm run lint        # ESLint
 npm run typecheck   # tsc --noEmit
-npm run test        # Vitest unit/component tests
-npm run test:e2e    # Playwright end-to-end (five core flows)
-npm run verify      # lint + typecheck + unit tests + build
+npm run test        # Vitest unit tests (progress calc + role access)
+npm run verify      # lint + typecheck + test + build
 ```
 
 ---
 
-## The four core capabilities
+## Security notes
 
-1. **Conversational capture** — type natural language; Mabel converts each message into a
-   structured item and confirms warmly, asking only for genuinely missing details.
-2. **Smart task & obligation engine** — classifies items (bill, renewal, appointment,
-   errand, purchase, decision, subscription, household, family, travel, document, general)
-   with a status machine and priorities. Inferred fields are visibly marked.
-3. **Decision & shopping assistant** — returns 2–3 **complete bundled solutions** (not
-   isolated products) with a clear best match, totals, inclusions, pros/trade-offs,
-   delivery and sizing. Compare, save, reject, approve.
-4. **Proactive nudging** — an app-level reminder simulation surfaces gentle, supportive
-   nudges without you managing anything.
-
-### The five demo flows (all covered by Playwright)
-
-1. **Car registration** — capture with an unknown due date, add it, prepare for approval.
-2. **Bill reminder** — capture a reminder, mark it paid, see it in Completed.
-3. **Shopping decision** — outdoor dining bundles under $2,000, best match, approve.
-4. **Subscription cancellation** — gym cancellation prepared, approved, completed.
-5. **Family appointment** — dentist booking; Mabel asks who and when.
-
----
-
-## Demo mode vs. live services
-
-Everything is designed so the app is fully functional offline, then upgrades in place.
-
-### AI extraction
-
-- **Demo (default):** `POST /api/extract` runs a deterministic **fallback parser**
-  (`src/lib/ai/fallback.ts`). It classifies intent, extracts explicit dates/budgets,
-  and **never invents** dates or costs it wasn’t given.
-- **Live:** set `OPENAI_API_KEY`. The same server route then calls OpenAI with a strict
-  prompt + **Zod-validated** JSON output (`src/lib/ai/openai.ts`). On any failure it
-  silently falls back, so the app never breaks. **The key is read server-side only and
-  is never exposed to the browser.**
-
-### Data & auth
-
-- **Demo (default):** all data lives in an in-browser store
-  (`src/lib/store/MabelProvider.tsx`) seeded from `src/lib/demo/seed.ts` and persisted to
-  `localStorage`. Auth is a lightweight demo session (`src/lib/auth.ts`).
-- **Live:** set the Supabase env vars and `NEXT_PUBLIC_DEMO_MODE=false`. Migrations and
-  RLS policies are in [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql);
-  optional seed in [`supabase/seed.sql`](supabase/seed.sql). Supabase clients are wired in
-  `src/lib/supabase/`. Every user-owned table has **Row Level Security** (`auth.uid() = user_id`).
-
-### Switching to live mode
-
-1. Copy `.env.example` → `.env.local` and fill in values.
-2. Set `NEXT_PUBLIC_DEMO_MODE=false`.
-3. Create a Supabase project and run the migration:
-   ```bash
-   # with the Supabase CLI
-   supabase db push
-   # or paste supabase/migrations/0001_init.sql into the SQL editor
-   ```
-4. (Optional) Add `OPENAI_API_KEY` for real extraction.
-5. Restart the dev server.
-
-> The demo store and live Supabase path share the same domain types (`src/lib/types.ts`)
-> and the same pure business logic (`src/lib/store/operations.ts`), so behaviour is
-> identical across both.
-
----
-
-## Environment variables
-
-See [`.env.example`](.env.example). All are optional in demo mode.
-
-| Variable | Purpose |
-| --- | --- |
-| `NEXT_PUBLIC_DEMO_MODE` | `true` (default) uses the in-browser store + fallback AI. |
-| `OPENAI_API_KEY` | Server-side only. Enables real extraction; omit to use the fallback. |
-| `OPENAI_MODEL` | Defaults to `gpt-4o-mini`. |
-| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Live persistence + auth. |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-only, for trusted jobs. Never exposed to the browser. |
-
----
-
-## Trust & privacy
-
-Trust is visible in the UI, not buried in settings:
-
-- Clear permission levels (Observe · Prepare · Approve · Autopilot-coming-soon).
-- Every external action is previewed and **requires approval**; nothing is ever
-  auto-executed. In demo mode all actions are **simulated and labelled as such** — Mabel
-  never claims a real payment, booking or cancellation happened.
-- Activity timeline per item; simulated actions can be **undone**.
-- Inferred fields are tagged with a ✦ “inferred” marker.
-- Data export and account deletion from Settings.
-
----
-
-## Accessibility
-
-Keyboard navigation, semantic HTML, visible focus rings, skip-to-content link, accessible
-form labels/roles, sufficient contrast, and `prefers-reduced-motion` support.
-
----
-
-## Deployment (Vercel)
-
-1. Import the repo into Vercel.
-2. It builds with the default `npm run build`. **It deploys and runs in demo mode with no
-   env vars.**
-3. To go live, add the environment variables above in the Vercel project settings and set
-   `NEXT_PUBLIC_DEMO_MODE=false`.
-
----
-
-## Testing
-
-- **Unit/component (Vitest):** extraction schema, fallback parser, item creation, status
-  transitions, reminder generation, approval lifecycle, recommendation engine + display,
-  auth guards, and RLS data-access assumptions.
-- **E2E (Playwright):** one test per core flow (five total), mobile viewport, running the
-  real production build in demo mode.
-
-```bash
-npm run test       # 40 unit/component tests
-npm run test:e2e   # 5 end-to-end flows
-```
-
-See [`ARCHITECTURE.md`](ARCHITECTURE.md) for a deeper tour and
-[known limitations / next features](ARCHITECTURE.md#known-limitations).
+- **Record-level access** is the security boundary: candidates only ever load
+  their own record; supervisors only their candidates'; the manager all. In live
+  mode this is enforced by Postgres RLS, not just the UI.
+- The Supabase **service-role key is server-only** (used solely by the admin
+  account-creation route) and is never sent to the browser.
+- The embedded tracker's in-app "who is using this" toggle is removed when
+  embedded — the role comes from the authenticated session, so a candidate can't
+  switch themselves into the supervisor view.
