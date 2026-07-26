@@ -21,13 +21,13 @@ export function Topbar({
       </div>
       <div style={{ flex: 1 }} />
       {backLabel && onBack ? (
-        <button className="chrome-btn" onClick={onBack}>
-          ← {backLabel}
+        <button className="chrome-btn" onClick={onBack} aria-label={`Back to ${backLabel}`}>
+          ←<span className="hide-sm" style={{ marginLeft: 5 }}>{backLabel}</span>
         </button>
       ) : null}
       {profile ? (
         <span
-          className="badge"
+          className="badge hide-sm"
           style={{
             background: "rgba(255,255,255,.12)",
             color: "#fff",
@@ -38,7 +38,10 @@ export function Topbar({
         </span>
       ) : null}
       {profile ? (
-        <span style={{ color: "rgba(255,255,255,.85)", fontSize: 13, fontWeight: 600 }}>
+        <span
+          className="hide-sm"
+          style={{ color: "rgba(255,255,255,.85)", fontSize: 13, fontWeight: 600 }}
+        >
           {profile.fullName}
         </span>
       ) : null}

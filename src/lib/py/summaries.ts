@@ -2,11 +2,13 @@
 
 import { getBackend } from "./backend";
 import { computeProgress } from "./state";
-import type { CandidateSummary, Profile } from "./types";
+import type { CandidateSummary, ProgramState, Profile } from "./types";
 
-/** Load every candidate the signed-in user may see, with computed progress. */
+export type CandidateWithState = CandidateSummary & { state: ProgramState | null };
+
+/** Load every candidate the signed-in user may see, with progress + raw state. */
 export async function loadCandidateSummaries(): Promise<{
-  candidates: CandidateSummary[];
+  candidates: CandidateWithState[];
   supervisors: Profile[];
   all: Profile[];
 }> {
@@ -17,7 +19,7 @@ export async function loadCandidateSummaries(): Promise<{
     (id && all.find((p) => p.id === id)?.fullName) || "Unassigned";
 
   const candProfiles = all.filter((p) => p.role === "candidate");
-  const candidates: CandidateSummary[] = [];
+  const candidates: CandidateWithState[] = [];
   for (const c of candProfiles) {
     let record = null;
     try {
@@ -30,6 +32,7 @@ export async function loadCandidateSummaries(): Promise<{
       supervisorName: supName(c.supervisorId),
       progress: computeProgress(record?.state),
       updatedAt: record?.updatedAt ?? c.createdAt,
+      state: record?.state ?? null,
     });
   }
   candidates.sort((a, b) => a.profile.fullName.localeCompare(b.profile.fullName));

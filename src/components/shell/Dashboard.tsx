@@ -1,10 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getBackend } from "@/lib/py/backend";
-import { loadCandidateSummaries } from "@/lib/py/summaries";
-import type { CandidateSummary, Profile } from "@/lib/py/types";
+import { loadCandidateSummaries, type CandidateWithState } from "@/lib/py/summaries";
+import { deriveActivity, deriveTodo, type Activity, type Todo } from "@/lib/py/actions";
+import { getLastSeen, markSeen } from "@/lib/py/lastSeen";
+import type { Profile } from "@/lib/py/types";
 import { CandidateCard } from "./CandidateCard";
+import { TodoList } from "./TodoList";
+import { ActivityFeed } from "./ActivityFeed";
 
 function Stat({ label, value, tone }: { label: string; value: string | number; tone?: string }) {
   return (
@@ -22,11 +26,16 @@ export function Dashboard({
   onOpenCandidate,
 }: {
   profile: Profile;
-  onOpenCandidate: (id: string, name: string) => void;
+  onOpenCandidate: (id: string, name: string, hash?: string) => void;
 }) {
-  const [candidates, setCandidates] = useState<CandidateSummary[]>([]);
+  const [candidates, setCandidates] = useState<CandidateWithState[]>([]);
   const [supervisors, setSupervisors] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Freeze "last seen" at mount so the feed doesn't empty itself while you read it,
+  // then stamp the new visit time.
+  const sinceIso = useRef<string | undefined>(undefined);
+  if (sinceIso.current === undefined) sinceIso.current = getLastSeen(profile.id) ?? "";
 
   const refresh = useCallback(async () => {
     const { candidates, supervisors } = await loadCandidateSummaries();
@@ -42,6 +51,30 @@ export function Dashboard({
     return unsub;
   }, [refresh]);
 
+  // Mark this visit once the data is in view.
+  useEffect(() => {
+    if (!loading) markSeen(profile.id);
+  }, [loading, profile.id]);
+
+  const todos: Todo[] = useMemo(
+    () =>
+      candidates
+        .map((c) =>
+          deriveTodo(c.profile.id, c.profile.fullName, c.supervisorName, c.state),
+        )
+        .filter((t): t is Todo => t !== null),
+    [candidates],
+  );
+
+  const activity: Activity[] = useMemo(() => {
+    const since = sinceIso.current || undefined;
+    const all = candidates.flatMap((c) =>
+      deriveActivity(c.profile.id, c.profile.fullName, c.state, { sinceIso: since }),
+    );
+    all.sort((a, b) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0));
+    return all.slice(0, 40);
+  }, [candidates]);
+
   const isManager = profile.role === "py_manager";
   const avg =
     candidates.length > 0
@@ -50,7 +83,7 @@ export function Dashboard({
   const examsPassed = candidates.filter((c) => c.progress.examPassed).length;
 
   return (
-    <div style={{ maxWidth: 1400, margin: "0 auto", padding: 24 }}>
+    <div className="app-main" style={{ maxWidth: 1400, margin: "0 auto", padding: 24 }}>
       <div className="hero" style={{ marginBottom: 20 }}>
         <div className="hero-sub">MyWealth Solutions · Professional Year Program</div>
         <h1 style={{ marginTop: 8 }}>
@@ -63,12 +96,26 @@ export function Dashboard({
         </p>
       </div>
 
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 22 }}>
+      <div className="stat-row" style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 22 }}>
         <Stat label="Candidates" value={candidates.length} tone="var(--blue)" />
         {isManager ? <Stat label="Supervisors" value={supervisors.length} /> : null}
         <Stat label="Avg. progress" value={`${avg}%`} tone="var(--blue)" />
         <Stat label="Exams passed" value={`${examsPassed}/${candidates.length}`} tone="var(--green-dark)" />
       </div>
+
+      {!loading && candidates.length > 0 ? (
+        <div className="panel-grid" style={{ marginBottom: 26 }}>
+          <TodoList
+            todos={todos}
+            onOpen={(id, name, hash) => onOpenCandidate(id, name, hash)}
+          />
+          <ActivityFeed
+            activity={activity}
+            sinceIso={sinceIso.current || undefined}
+            onOpen={(id, name) => onOpenCandidate(id, name)}
+          />
+        </div>
+      ) : null}
 
       {loading ? (
         <p className="muted">Loading candidates…</p>
@@ -93,7 +140,7 @@ export function Dashboard({
                   {sup.fullName}
                   <span className="badge badge-muted">{mine.length}</span>
                 </h2>
-                <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))" }}>
+                <div className="cand-grid">
                   {mine.map((c) => (
                     <CandidateCard key={c.profile.id} summary={c} onOpen={() => onOpenCandidate(c.profile.id, c.profile.fullName)} />
                   ))}
@@ -109,7 +156,7 @@ export function Dashboard({
             return (
               <section>
                 <h2 style={{ marginBottom: 12 }}>Unassigned</h2>
-                <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))" }}>
+                <div className="cand-grid">
                   {unassigned.map((c) => (
                     <CandidateCard key={c.profile.id} summary={c} showSupervisor onOpen={() => onOpenCandidate(c.profile.id, c.profile.fullName)} />
                   ))}
@@ -119,7 +166,7 @@ export function Dashboard({
           })()}
         </div>
       ) : (
-        <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))" }}>
+        <div className="cand-grid">
           {candidates.map((c) => (
             <CandidateCard key={c.profile.id} summary={c} onOpen={() => onOpenCandidate(c.profile.id, c.profile.fullName)} />
           ))}
