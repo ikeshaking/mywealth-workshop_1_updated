@@ -89,6 +89,38 @@ recursion — a common Supabase pitfall).
 The same `PyBackend` interface and the same `computeProgress` / `canView` logic run
 in both, so behaviour is identical — only the storage swaps.
 
+## Notifications
+
+The "what to say" logic is pure and unit-tested; the "how it's delivered" is a
+thin shell around it:
+
+```
+risk.ts      assessCandidate()  — pure: flags a candidate against the 1,600-hour
+                                  / 1,500-work / 100-structured requirements and
+                                  the Q3 exam + degree gates
+digest.ts    buildDailyDigest() / buildMonthlySummary() / buildNudge()
+                                — pure: candidate snapshots in, EmailPayload out.
+                                  `now` is always injectable, so tests are exact.
+email/render.ts                 — EmailPayload -> table-based, inline-styled HTML
+                                  (+ a plain-text twin) in MyWealth branding
+email/send.ts                   — Resend; a no-op that logs and returns ok when
+                                  unconfigured, so nothing breaks without a key
+api/cron/*                      — schedules, auth, dedupe and delivery only
+```
+
+Because the payload builders return `null` when there's nothing to report, "don't
+send empty emails" is a property of the logic rather than a check at the call
+site. Duplicate suppression lives in the database: each send writes a
+`dedupe_key` (`signoff:<candidate>:<module>`, `monthly:2026-07`, `nudge:2026-W31`)
+and the unique index rejects repeats, so a retried cron is harmless.
+
+A note on the blank template: the tracker state we seed new candidates from was
+captured from a working copy, so it arrived carrying the previous author's audit
+log, reflections and an edit-password hash. `scripts/sanitise-blank-state.mjs`
+strips everything candidate-specific while keeping the licensee's *content*
+configuration (wording overrides, milestone classifications). Re-run it if the
+template is ever re-extracted from a live file.
+
 ## Known limitations / next steps
 
 - Demo persistence is per-browser (by design). Live mode removes this.

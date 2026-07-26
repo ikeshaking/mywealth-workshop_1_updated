@@ -81,6 +81,52 @@ allowed to see.
 
 ---
 
+## Email notifications & summaries
+
+Once Supabase **and** an email provider are configured, two scheduled jobs run
+(declared in [`vercel.json`](vercel.json)):
+
+| Job | When | What it sends |
+| --- | --- | --- |
+| `/api/cron/daily` | Daily, 20:00 UTC (~6am AEST) | **Daily digest** to each supervisor / PY manager: what became ready to sign off since their last digest, plus any candidate tracking behind. **Candidate nudges** (max one a week) when someone's own PY has stalled. |
+| `/api/cron/monthly` | 1st of the month, 00:30 UTC | **Monthly summary** to every candidate, supervisor and manager — last month's progress, highlights and what's outstanding. |
+
+Nothing is ever sent twice: every send records a `dedupe_key` in
+`notification_log`, and the unique index on it is what prevents duplicates, so
+the jobs are safe to retry. Emails are only sent when there is something to say.
+
+Each person controls their own delivery in-app (🔔 **Notifications**), stored in
+`notification_prefs`.
+
+### At-risk detection
+
+`src/lib/py/risk.ts` flags candidates against the program's real requirements —
+**1,600 total hours (min 1,500 work + 100 structured) over 12 months**, and the
+exam + degree gates before Q3. Flags surface as badges on the dashboard and in
+the digest emails: behind pace, structured training low, exam outstanding,
+degree unverified, sign-off backlog, no recent activity.
+
+### Compliance export
+
+**📄 Export record** opens a print-ready *Record of Completion* for a candidate —
+statutory gates, hours vs the 1,500/100/1,600 requirements, quarter-by-quarter
+milestones and module sign-offs, competency ratings, the full audit trail and a
+signature block. Ctrl/Cmd-P saves it as a PDF for the licensee file. Candidates
+can export their own record; supervisors their candidates'; the manager anyone's.
+
+### Setting email up
+
+1. Create a [Resend](https://resend.com) account, verify your sending domain, and
+   set `RESEND_API_KEY` + `EMAIL_FROM`.
+2. Set `NEXT_PUBLIC_APP_URL` (links inside emails) and `CRON_SECRET` (protects the
+   cron endpoints — they refuse to run in production without it).
+3. Run [`supabase/migrations/0002_notifications.sql`](supabase/migrations/0002_notifications.sql).
+
+Until those are set the jobs still run harmlessly: they log what they *would*
+have sent and skip delivery, so nothing breaks in demo mode.
+
+---
+
 ## Scripts
 
 ```bash

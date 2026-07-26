@@ -1,1 +1,2715 @@
-{"schemaVersion":2,"profile":{"candidateName":"","supervisorName":"","supervisorFar":"","licensee":"GPS Wealth Ltd (AFSL 254544)","afsl":"254544","pyPortalUrl":"","startDate":"","year":"2026","currentQuarter":1,"q1Start":"","q2Start":"","q3Start":"","q4Start":"","completionTarget":"","examPassed":false,"examDate":"","degreeVerified":false,"degreeInstitution":"","farUpdatedProvisional":false,"farUpdatedFullProvider":false,"finalCertificateIssued":false,"finalCertificateDate":""},"hours":{"q1":{"work":0,"structured":0},"q2":{"work":0,"structured":0},"q3":{"work":0,"structured":0},"q4":{"work":0,"structured":0},"q5":{"work":0,"structured":0},"q6":{"work":0,"structured":0}},"milestones":{"q1_0":{"done":false,"note":"","proof":"","proofDate":""},"q1_1":{"done":false,"note":"","proof":"","proofDate":""},"q1_2":{"done":false,"note":"","proof":"","proofDate":""},"q1_3":{"done":false,"note":"","proof":"","proofDate":""},"q1_4":{"done":false,"note":"","proof":"","proofDate":""},"q1_5":{"done":false,"note":"","proof":"","proofDate":""},"q1_6":{"done":false,"note":"","proof":"","proofDate":""},"q1_7":{"done":false,"note":"","proof":"","proofDate":""},"q1_8":{"done":false,"note":"","proof":"","proofDate":""},"q1_9":{"done":false,"note":"","proof":"","proofDate":""},"q2_0":{"done":false,"note":"","proof":"","proofDate":""},"q2_1":{"done":false,"note":"","proof":"","proofDate":""},"q2_2":{"done":false,"note":"","proof":"","proofDate":""},"q2_3":{"done":false,"note":"","proof":"","proofDate":""},"q2_4":{"done":false,"note":"","proof":"","proofDate":""},"q2_5":{"done":false,"note":"","proof":"","proofDate":""},"q2_6":{"done":false,"note":"","proof":"","proofDate":""},"q2_7":{"done":false,"note":"","proof":"","proofDate":""},"q2_8":{"done":false,"note":"","proof":"","proofDate":""},"q3_0":{"done":false,"note":"","proof":"","proofDate":""},"q3_1":{"done":false,"note":"","proof":"","proofDate":""},"q3_2":{"done":false,"note":"","proof":"","proofDate":""},"q3_3":{"done":false,"note":"","proof":"","proofDate":""},"q3_4":{"done":false,"note":"","proof":"","proofDate":""},"q3_5":{"done":false,"note":"","proof":"","proofDate":""},"q3_6":{"done":false,"note":"","proof":"","proofDate":""},"q3_7":{"done":false,"note":"","proof":"","proofDate":""},"q3_8":{"done":false,"note":"","proof":"","proofDate":""},"q4_0":{"done":false,"note":"","proof":"","proofDate":""},"q4_1":{"done":false,"note":"","proof":"","proofDate":""},"q4_2":{"done":false,"note":"","proof":"","proofDate":""},"q4_3":{"done":false,"note":"","proof":"","proofDate":""},"q4_4":{"done":false,"note":"","proof":"","proofDate":""},"q4_5":{"done":false,"note":"","proof":"","proofDate":""},"q4_6":{"done":false,"note":"","proof":"","proofDate":""},"q4_7":{"done":false,"note":"","proof":"","proofDate":""},"q4_8":{"done":false,"note":"","proof":"","proofDate":""},"q4_9":{"done":false,"note":"","proof":"","proofDate":""},"q5_0":{"done":false,"note":"","proof":"","proofDate":""},"q5_1":{"done":false,"note":"","proof":"","proofDate":""},"q5_2":{"done":false,"note":"","proof":"","proofDate":""},"q5_3":{"done":false,"note":"","proof":"","proofDate":""},"q5_4":{"done":false,"note":"","proof":"","proofDate":""},"q5_5":{"done":false,"note":"","proof":"","proofDate":""},"q5_6":{"done":false,"note":"","proof":"","proofDate":""},"q6_0":{"done":false,"note":"","proof":"","proofDate":""},"q6_1":{"done":false,"note":"","proof":"","proofDate":""},"q6_2":{"done":false,"note":"","proof":"","proofDate":""},"q6_3":{"done":false,"note":"","proof":"","proofDate":""},"q6_4":{"done":false,"note":"","proof":"","proofDate":""},"q6_5":{"done":false,"note":"","proof":"","proofDate":""}},"modulesDone":{"q1m_depts":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q1m_leadcalls":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q1m_propfund":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q1m3":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q1m4":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q1m5":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q2m_debtcash":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q2m1":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q2m2":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q2m3":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q2m4":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q2m5":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q2m6":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q2m7":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q3m_propcomp":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q3m1":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q3m2":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q3m4":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q3m5":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q4m1":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q4m2":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q4m3":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q4m4":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q4m5":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q4m6":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q4m7":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q5m1":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q5m2":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q5m3":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q6m1":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q6m2":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q6m3":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q1_journey":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q1_meetings":{"done":false,"hours":0,"notes":"","assessment":{"format":"Self-audit exercise","result":"","attempt":1,"assessor":"","date":"","passed":true,"remediation":"","reassessment":""}},"q1_systems":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q1_leadcalls":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q1_property":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q1_standards":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q2_cashdebt":{"done":false,"hours":0,"notes":"","assessment":{"format":"Supervisor questioning","result":"Generate an advice doc (eg ROA/SOA) & its correct with minimal amendments","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q2_super":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q2_insurance":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q2_docs":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q2_calculators":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q3_investment":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q3_property":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q3_retirement":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q3_tax":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q3_platform":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q3_present":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q4_process":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q4_workflow":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q4_difficult":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q4_ongoing":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q4_referrals":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q4_development":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q5_owning":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q5_meetings":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q5_judgement":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q5_workflow":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q5_comms":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q6_relationships":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q6_bizdev":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q6_complex":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q6_leadership":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q6_project":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}},"q6_identity":{"done":false,"hours":0,"notes":"","assessment":{"format":"","result":"","attempt":1,"assessor":"","date":"","passed":false,"remediation":"","reassessment":""}}},"moduleChecks":{"q1m_depts":{},"q1m_leadcalls":{},"q1m_propfund":{},"q1m3":{},"q1m4":{},"q1m5":{},"q2m_debtcash":{},"q2m1":{},"q2m2":{},"q2m3":{},"q2m4":{},"q2m5":{},"q2m6":{},"q2m7":{},"q3m_propcomp":{},"q3m1":{},"q3m2":{},"q3m4":{},"q3m5":{},"q4m1":{},"q4m2":{},"q4m3":{},"q4m4":{},"q4m5":{},"q4m6":{},"q4m7":{},"q5m1":{},"q5m2":{},"q5m3":{},"q6m1":{},"q6m2":{},"q6m3":{},"q1_journey":{},"q1_meetings":{},"q1_systems":{},"q1_leadcalls":{},"q1_property":{},"q1_standards":{},"q2_cashdebt":{},"q2_super":{},"q2_insurance":{},"q2_docs":{},"q2_calculators":{},"q3_investment":{},"q3_property":{},"q3_retirement":{},"q3_tax":{},"q3_platform":{},"q3_present":{},"q4_process":{},"q4_workflow":{},"q4_difficult":{},"q4_ongoing":{},"q4_referrals":{},"q4_development":{},"q5_owning":{},"q5_meetings":{},"q5_judgement":{},"q5_workflow":{},"q5_comms":{},"q6_relationships":{},"q6_bizdev":{},"q6_complex":{},"q6_leadership":{},"q6_project":{},"q6_identity":{}},"signoffState":{"q1m_depts":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q1m_leadcalls":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q1m_propfund":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q1m3":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q1m4":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q1m5":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q2m_debtcash":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q2m1":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q2m2":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q2m3":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q2m4":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q2m5":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q2m6":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q2m7":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q3m_propcomp":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q3m1":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q3m2":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q3m4":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q3m5":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q4m1":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q4m2":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q4m3":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q4m4":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q4m5":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q4m6":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q4m7":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q5m1":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q5m2":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q5m3":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q6m1":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q6m2":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q6m3":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q1_journey":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q1_meetings":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q1_systems":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q1_leadcalls":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q1_property":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q1_standards":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q2_cashdebt":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q2_super":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q2_insurance":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q2_docs":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q2_calculators":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q3_investment":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q3_property":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q3_retirement":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q3_tax":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q3_platform":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q3_present":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q4_process":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q4_workflow":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q4_difficult":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q4_ongoing":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q4_referrals":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q4_development":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q5_owning":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q5_meetings":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q5_judgement":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q5_workflow":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q5_comms":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q6_relationships":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q6_bizdev":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q6_complex":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q6_leadership":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q6_project":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""},"q6_identity":{"ticks":{},"name":"","date":"","signed":false,"signedBy":"","signedAt":""}},"customModules":{},"customItems":{"q1_meetings":{"3":["Prepare before meeting with the supervisor"]}},"customSections":{},"customResources":[],"workshopNotes":{},"quarterReadiness":{"q1":{"entry":{},"exit":{}}},"auditLog":[{"id":"amrx1hwj0_8","ts":"2026-07-23T04:57:11.916Z","actor":"Candidate","cat":"assessment","action":"Assessment passed","detail":"MyWealth Meeting Foundations","from":"false","to":"true"},{"id":"amrx11x8o_7","ts":"2026-07-23T04:44:46.344Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Book the ASIC Financial Adviser Exam → Mandatory","from":"","to":"gate"},{"id":"amrx11ama_6","ts":"2026-07-23T04:44:17.026Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Observe core client meetings & record what you see → MyWealth Standard","from":"","to":"std"},{"id":"amrx11a6z_5","ts":"2026-07-23T04:44:16.475Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Observe core client meetings & record what you see → Mandatory","from":"","to":"gate"},{"id":"amrx111jf_4","ts":"2026-07-23T04:44:05.259Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Map the MyWealth client journey → MyWealth Standard","from":"","to":"std"},{"id":"amrx11100_3","ts":"2026-07-23T04:44:04.560Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Map the MyWealth client journey → Mandatory","from":"","to":"gate"},{"id":"amrx110ow_2","ts":"2026-07-23T04:44:04.160Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Map the MyWealth client journey → Development","from":"","to":"dev"},{"id":"amrx10zgf_1","ts":"2026-07-23T04:44:02.560Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Map the MyWealth client journey → MyWealth Standard","from":"","to":"std"},{"id":"amrx10yyd_0","ts":"2026-07-23T04:44:01.909Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Map the MyWealth client journey → Mandatory","from":"","to":"gate"},{"id":"amrwyqmzt_15","ts":"2026-07-23T03:40:00.617Z","actor":"Candidate","cat":"module","action":"Module content reopened","detail":"Day in the life of each department","from":"true","to":"false"},{"id":"amrwyqmjj_14","ts":"2026-07-23T03:40:00.031Z","actor":"Candidate","cat":"module","action":"Module content completed","detail":"Day in the life of each department","from":"false","to":"true"},{"id":"amrwypm4c_13","ts":"2026-07-23T03:39:12.828Z","actor":"Candidate","cat":"module","action":"Module content reopened","detail":"Day in the life of each department","from":"true","to":"false"},{"id":"amrwypl5g_12","ts":"2026-07-23T03:39:11.572Z","actor":"Candidate","cat":"module","action":"Module content completed","detail":"Day in the life of each department","from":"false","to":"true"},{"id":"amrwyphpj_11","ts":"2026-07-23T03:39:07.111Z","actor":"Candidate","cat":"module","action":"Module content reopened","detail":"Day in the life of each department","from":"true","to":"false"},{"id":"amrwyphau_10","ts":"2026-07-23T03:39:06.582Z","actor":"Candidate","cat":"module","action":"Module content completed","detail":"Day in the life of each department","from":"false","to":"true"},{"id":"amrwylpx4_9","ts":"2026-07-23T03:36:11.128Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Start Ethics for Professional Advisers bridging unit (if not in approved degree) → Development","from":"","to":"dev"},{"id":"amrwyloj4_8","ts":"2026-07-23T03:36:09.328Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Start Ethics for Professional Advisers bridging unit (if not in approved degree) → MyWealth Standard","from":"","to":"std"},{"id":"amrwylnlj_7","ts":"2026-07-23T03:36:08.119Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Start Ethics for Professional Advisers bridging unit (if not in approved degree) → Mandatory","from":"","to":"gate"},{"id":"amrwylhfb_6","ts":"2026-07-23T03:36:00.119Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Complete licensee compliance induction → Development","from":"","to":"dev"},{"id":"amrwylbir_5","ts":"2026-07-23T03:35:52.467Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Begin ASIC Financial Adviser Exam preparation → Development","from":"","to":"dev"},{"id":"amrwyl9bn_4","ts":"2026-07-23T03:35:49.619Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Shadow paraplanning & SOA drafting → MyWealth Standard","from":"","to":"std"},{"id":"amrwyl8wc_3","ts":"2026-07-23T03:35:49.068Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Shadow paraplanning & SOA drafting → Mandatory","from":"","to":"gate"},{"id":"amrwyl5hk_2","ts":"2026-07-23T03:35:44.648Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Observe Discovery, SOA & Review meetings → MyWealth Standard","from":"","to":"std"},{"id":"amrwyl4w7_1","ts":"2026-07-23T03:35:43.879Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Observe Discovery, SOA & Review meetings → Mandatory","from":"","to":"gate"},{"id":"amrwyl1di_0","ts":"2026-07-23T03:35:39.318Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Read & annotate Code of Ethics 2019 — all 12 standards → Development","from":"","to":"dev"},{"id":"amrwyc859_2","ts":"2026-07-23T03:28:48.189Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Complete MyWealth PY induction & sign PY Plan → PY Gate","from":"","to":"gate"},{"id":"amrwyc7l7_1","ts":"2026-07-23T03:28:47.468Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Complete MyWealth PY induction & sign PY Plan → Development","from":"","to":"dev"},{"id":"amrwyc6aj_0","ts":"2026-07-23T03:28:45.787Z","actor":"Candidate","cat":"milestone","action":"Milestone reclassified","detail":"Complete MyWealth PY induction & sign PY Plan → MyWealth Standard","from":"","to":"std"},{"id":"amrwy3v55_7","ts":"2026-07-23T03:22:18.089Z","actor":"Candidate","cat":"readiness","action":"Entry criterion un-confirmed","detail":"Q1 — PY Plan signed with your Supervisor and Licensee (quarterly competencies, work activities, structured-training plan and supervision arrangements recorded)","from":"","to":"cleared"},{"id":"amrwy3ukb_6","ts":"2026-07-23T03:22:17.339Z","actor":"Candidate","cat":"readiness","action":"Entry criterion confirmed","detail":"Q1 — PY Plan signed with your Supervisor and Licensee (quarterly competencies, work activities, structured-training plan and supervision arrangements recorded)","from":"","to":"confirmed"},{"id":"amrwy3rn9_5","ts":"2026-07-23T03:22:13.557Z","actor":"Candidate","cat":"readiness","action":"Entry criterion un-confirmed","detail":"Q1 — PY Plan signed with your Supervisor and Licensee (quarterly competencies, work activities, structured-training plan and supervision arrangements recorded)","from":"","to":"cleared"},{"id":"amrwy3rj1_4","ts":"2026-07-23T03:22:13.405Z","actor":"Candidate","cat":"readiness","action":"Entry criterion confirmed","detail":"Q1 — PY Plan signed with your Supervisor and Licensee (quarterly competencies, work activities, structured-training plan and supervision arrangements recorded)","from":"","to":"confirmed"},{"id":"amrwy3qvh_3","ts":"2026-07-23T03:22:12.557Z","actor":"Candidate","cat":"readiness","action":"Entry criterion un-confirmed","detail":"Q1 — PY Plan signed with your Supervisor and Licensee (quarterly competencies, work activities, structured-training plan and supervision arrangements recorded)","from":"","to":"cleared"},{"id":"amrwy3qqw_2","ts":"2026-07-23T03:22:12.392Z","actor":"Candidate","cat":"readiness","action":"Entry criterion confirmed","detail":"Q1 — PY Plan signed with your Supervisor and Licensee (quarterly competencies, work activities, structured-training plan and supervision arrangements recorded)","from":"","to":"confirmed"},{"id":"amrwy3qci_1","ts":"2026-07-23T03:22:11.874Z","actor":"Candidate","cat":"readiness","action":"Entry criterion un-confirmed","detail":"Q1 — PY Plan signed with your Supervisor and Licensee (quarterly competencies, work activities, structured-training plan and supervision arrangements recorded)","from":"","to":"cleared"},{"id":"amrwy3pug_0","ts":"2026-07-23T03:22:11.224Z","actor":"Candidate","cat":"readiness","action":"Entry criterion confirmed","detail":"Q1 — PY Plan signed with your Supervisor and Licensee (quarterly competencies, work activities, structured-training plan and supervision arrangements recorded)","from":"","to":"confirmed"},{"id":"amrwy2niu_1","ts":"2026-07-23T03:21:21.558Z","actor":"Candidate","cat":"gate","action":"Regulatory gate unticked","detail":"FAR status → Provisional","from":"ticked","to":"unticked"},{"id":"amrwy2mzv_0","ts":"2026-07-23T03:21:20.875Z","actor":"Candidate","cat":"gate","action":"Regulatory gate ticked","detail":"FAR status → Provisional","from":"unticked","to":"ticked"}],"signoffLocked":false,"signoffPasswordHash":"","openModules":{"q1m_depts":true,"q1_meetings":true,"q1_leadcalls":true,"q3_tax":true,"q3_investment":true,"q3_property":true,"q3_retirement":true},"dilemmas":[],"logbook":[],"soaLog":[],"taskLog":[],"reflections":{"q1":{"supervision":"","evidence_example":""},"q2":{},"q3":{},"q4":{},"q5":{},"q6":{},"final":""},"reflectionMeta":{"q1":{},"q2":{},"q3":{},"q4":{},"q5":{},"q6":{}},"devActions":[],"competencyScores":{"q1":{"0_0":{"candidate":0,"supervisor":0},"0_1":{"candidate":0,"supervisor":0},"0_2":{"candidate":0,"supervisor":0},"0_3":{"candidate":0,"supervisor":0},"0_4":{"candidate":0,"supervisor":0},"0_5":{"candidate":0,"supervisor":0},"0_6":{"candidate":0,"supervisor":0},"0_7":{"candidate":0,"supervisor":0},"0_8":{"candidate":0,"supervisor":0},"0_9":{"candidate":0,"supervisor":0},"1_0":{"candidate":0,"supervisor":0},"1_1":{"candidate":0,"supervisor":0},"1_2":{"candidate":0,"supervisor":0},"1_3":{"candidate":0,"supervisor":0},"1_4":{"candidate":0,"supervisor":0},"1_5":{"candidate":0,"supervisor":0},"1_6":{"candidate":0,"supervisor":0},"1_7":{"candidate":0,"supervisor":0},"1_8":{"candidate":0,"supervisor":0},"1_9":{"candidate":0,"supervisor":0},"2_0":{"candidate":0,"supervisor":0},"2_1":{"candidate":0,"supervisor":0},"2_2":{"candidate":0,"supervisor":0},"2_3":{"candidate":0,"supervisor":0},"2_4":{"candidate":0,"supervisor":0},"2_5":{"candidate":0,"supervisor":0},"2_6":{"candidate":0,"supervisor":0},"2_7":{"candidate":0,"supervisor":0},"2_8":{"candidate":0,"supervisor":0},"2_9":{"candidate":0,"supervisor":0},"3_0":{"candidate":0,"supervisor":0},"3_1":{"candidate":0,"supervisor":0},"3_2":{"candidate":0,"supervisor":0},"3_3":{"candidate":0,"supervisor":0},"3_4":{"candidate":0,"supervisor":0},"3_5":{"candidate":0,"supervisor":0},"3_6":{"candidate":0,"supervisor":0},"3_7":{"candidate":0,"supervisor":0},"3_8":{"candidate":0,"supervisor":0},"3_9":{"candidate":0,"supervisor":0}},"q2":{"0_0":{"candidate":0,"supervisor":0},"0_1":{"candidate":0,"supervisor":0},"0_2":{"candidate":0,"supervisor":0},"0_3":{"candidate":0,"supervisor":0},"0_4":{"candidate":0,"supervisor":0},"0_5":{"candidate":0,"supervisor":0},"0_6":{"candidate":0,"supervisor":0},"0_7":{"candidate":0,"supervisor":0},"0_8":{"candidate":0,"supervisor":0},"0_9":{"candidate":0,"supervisor":0},"1_0":{"candidate":0,"supervisor":0},"1_1":{"candidate":0,"supervisor":0},"1_2":{"candidate":0,"supervisor":0},"1_3":{"candidate":0,"supervisor":0},"1_4":{"candidate":0,"supervisor":0},"1_5":{"candidate":0,"supervisor":0},"1_6":{"candidate":0,"supervisor":0},"1_7":{"candidate":0,"supervisor":0},"1_8":{"candidate":0,"supervisor":0},"1_9":{"candidate":0,"supervisor":0},"2_0":{"candidate":0,"supervisor":0},"2_1":{"candidate":0,"supervisor":0},"2_2":{"candidate":0,"supervisor":0},"2_3":{"candidate":0,"supervisor":0},"2_4":{"candidate":0,"supervisor":0},"2_5":{"candidate":0,"supervisor":0},"2_6":{"candidate":0,"supervisor":0},"2_7":{"candidate":0,"supervisor":0},"2_8":{"candidate":0,"supervisor":0},"2_9":{"candidate":0,"supervisor":0},"3_0":{"candidate":0,"supervisor":0},"3_1":{"candidate":0,"supervisor":0},"3_2":{"candidate":0,"supervisor":0},"3_3":{"candidate":0,"supervisor":0},"3_4":{"candidate":0,"supervisor":0},"3_5":{"candidate":0,"supervisor":0},"3_6":{"candidate":0,"supervisor":0},"3_7":{"candidate":0,"supervisor":0},"3_8":{"candidate":0,"supervisor":0},"3_9":{"candidate":0,"supervisor":0}},"q3":{"0_0":{"candidate":0,"supervisor":0},"0_1":{"candidate":0,"supervisor":0},"0_2":{"candidate":0,"supervisor":0},"0_3":{"candidate":0,"supervisor":0},"0_4":{"candidate":0,"supervisor":0},"0_5":{"candidate":0,"supervisor":0},"0_6":{"candidate":0,"supervisor":0},"0_7":{"candidate":0,"supervisor":0},"0_8":{"candidate":0,"supervisor":0},"0_9":{"candidate":0,"supervisor":0},"1_0":{"candidate":0,"supervisor":0},"1_1":{"candidate":0,"supervisor":0},"1_2":{"candidate":0,"supervisor":0},"1_3":{"candidate":0,"supervisor":0},"1_4":{"candidate":0,"supervisor":0},"1_5":{"candidate":0,"supervisor":0},"1_6":{"candidate":0,"supervisor":0},"1_7":{"candidate":0,"supervisor":0},"1_8":{"candidate":0,"supervisor":0},"1_9":{"candidate":0,"supervisor":0},"2_0":{"candidate":0,"supervisor":0},"2_1":{"candidate":0,"supervisor":0},"2_2":{"candidate":0,"supervisor":0},"2_3":{"candidate":0,"supervisor":0},"2_4":{"candidate":0,"supervisor":0},"2_5":{"candidate":0,"supervisor":0},"2_6":{"candidate":0,"supervisor":0},"2_7":{"candidate":0,"supervisor":0},"2_8":{"candidate":0,"supervisor":0},"2_9":{"candidate":0,"supervisor":0},"3_0":{"candidate":0,"supervisor":0},"3_1":{"candidate":0,"supervisor":0},"3_2":{"candidate":0,"supervisor":0},"3_3":{"candidate":0,"supervisor":0},"3_4":{"candidate":0,"supervisor":0},"3_5":{"candidate":0,"supervisor":0},"3_6":{"candidate":0,"supervisor":0},"3_7":{"candidate":0,"supervisor":0},"3_8":{"candidate":0,"supervisor":0},"3_9":{"candidate":0,"supervisor":0}},"q4":{"0_0":{"candidate":0,"supervisor":0},"0_1":{"candidate":0,"supervisor":0},"0_2":{"candidate":0,"supervisor":0},"0_3":{"candidate":0,"supervisor":0},"0_4":{"candidate":0,"supervisor":0},"0_5":{"candidate":0,"supervisor":0},"0_6":{"candidate":0,"supervisor":0},"0_7":{"candidate":0,"supervisor":0},"0_8":{"candidate":0,"supervisor":0},"0_9":{"candidate":0,"supervisor":0},"1_0":{"candidate":0,"supervisor":0},"1_1":{"candidate":0,"supervisor":0},"1_2":{"candidate":0,"supervisor":0},"1_3":{"candidate":0,"supervisor":0},"1_4":{"candidate":0,"supervisor":0},"1_5":{"candidate":0,"supervisor":0},"1_6":{"candidate":0,"supervisor":0},"1_7":{"candidate":0,"supervisor":0},"1_8":{"candidate":0,"supervisor":0},"1_9":{"candidate":0,"supervisor":0},"2_0":{"candidate":0,"supervisor":0},"2_1":{"candidate":0,"supervisor":0},"2_2":{"candidate":0,"supervisor":0},"2_3":{"candidate":0,"supervisor":0},"2_4":{"candidate":0,"supervisor":0},"2_5":{"candidate":0,"supervisor":0},"2_6":{"candidate":0,"supervisor":0},"2_7":{"candidate":0,"supervisor":0},"2_8":{"candidate":0,"supervisor":0},"2_9":{"candidate":0,"supervisor":0},"3_0":{"candidate":0,"supervisor":0},"3_1":{"candidate":0,"supervisor":0},"3_2":{"candidate":0,"supervisor":0},"3_3":{"candidate":0,"supervisor":0},"3_4":{"candidate":0,"supervisor":0},"3_5":{"candidate":0,"supervisor":0},"3_6":{"candidate":0,"supervisor":0},"3_7":{"candidate":0,"supervisor":0},"3_8":{"candidate":0,"supervisor":0},"3_9":{"candidate":0,"supervisor":0}}},"supervisorSignoffs":{"technical":"","clientCare":"","regulatory":"","ethics":"","finalCertificate":"","q1Notes":"","q2Notes":"","q3Notes":"","q4Notes":""},"supervisorChecks":{},"holdingBack":{"initial":"","q1":"","q2":"","q3":"","q4":""},"contentOverrides":{"dashboard|r7xz3b|0":"While going through your Professional Year training, take time to reflect on what type of clients you are most drawn to helping (is it retirees? Families? HNW?).\n            What advice space do you feel most engaged and attracted towards? This is the first inklings of your potential niche.","quarters|gvoupq|0":"Onboarding with PY Manager. Sign the formal PY Plan alongside Supervisor and Licensee — the document must record quarterly competencies, work activities, structured training plan, supervisor arrangements, and any other agreed arrangements.","quarters|gozrpe|0":"Your Adviser Vision","quarters|1j20lpk|0":"Reflect on the adviser you aspire to become, the value you want to deliver to clients, and the key skills or experiences you want to develop throughout your PY. You'll revisit this reflection at the end of the year to see how far you've come.","quarters|28vfhw|0":"ROB/XPLAN/Xeppo","quarters|1nrtm8j|0":"Cashflow Management & Debt Recycling Strategies - Supervisor + candidate. CM - hypotethical scenario budget, mortgage, CF, goal, is DR appropriaite, when it is vs when not (risk profile, etc)","quarters|e7ohfy|0":"Analyse a client's budget, identifying surplus, shortfall and emergency-fund needs, and one debt-reduction comparison. Evidence: three client-style budgets, a debt comparison and a debt-recycling worked example, explained to your supervisor as though to a client.","quarters|xyrk0q|0":"Book the ASIC Financial Adviser Exam - move this to Q2+ (when ready)","quarters|1nvisvv|0":"Under supervision - with Wilso","quarters|1owzmq9|0":"Complete lead-call training & handle live calls - next point of call is anyone in PY (MWS mandatory)","quarters|1jrax12|0":"Complete MyWealth induction & sign PY Plan - PY Manager + Candidate - ground rules + expectations set. coincide career goals with the PY timeline + business growth + opportunity.","quarters|1ipdrhw|0":"MyWealth Meeting Foundations - Supervisor + Candidate, insurance (Chloe)","quarters|12i16ck|0":"Prepare before meeting with the supervisor - supervisor talks through prep before DA, then 30 mins before DA supervisor says talk me through how you'd prep for the meeting eg snapshot, checking, playing around with PTW, what things you want to highlight, notes about eg family planning so you know to reference that etc. Move this to Q2","quarters|v7ys6x|0":"Property Fundamentals - Move to Q2","quarters|bvjitg|0":"Advice Standards in Practice + Prep for Exam","quarters|11xnj1w|0":"Lead Calls — First Contact & Booking - 2-4 per week & only ones calling through","quarters|70a3pe|0":"Pass the ASIC Financial Adviser Exam - move to Q3 / Add exam prep - refer to the exam prep resources. HB to check with NB if they'll pay for that once they pass the exam (KAPLAN prep)","quarters|1sak49x|0":"Superannuation Strategies (Accumulation + Pension) - retail vs wrap accounts, why more suitable, difference between pooled investments, types of contributions, FHSSS, TTR etc","quarters|g7urqu|0":"Work through the super strategies most common for MyWealth clients — carry-forward, bring-forward, recontribution and spouse strategies — and draft clear recommendation wording. Evidence: worked examples plus draft recommendation wording for two scenarios.What we want to see - ideally ROAs for these tasks + strategy papers + SOAs. Mock example","quarters|bfxqrm|0":"Complete insurance needs analyses & a recommendation - Chloe twice a year - insurance philosophy (associates + PY only + new advisers)+ Damien to do structuring training session (2 a year) - associates, PY only + new asdvisers (either Q2 or 3)+ Ben mock WM DA (Q3)+ Wilso lead calls (Q1)","quarters|1x2vbhq|0":"Build a standard SOA under supervision - FTW + PTW SOAs, inhousing an SOA - associate (Q3 - junior associate 2-3 plans per week, training via associate TL + buddy with senior) / CSO - shadowing advice request (adviser + associate), end to end peer review","quarters|m789xa|0":"Run the core MyWealth tools - PTW/ROB (especially imp)","quarters|1ddskg6|0":"Bi-monthly 1:1 with Supervisor + Q2 reflection - each of these catch ups are training/reflection with supervisor","quarters|13zqc5c|0":"2 Competency passed","quarters|uovzhe|0":"Personal Insurance — Advice & Implementation - do needs analysis & compare with what chloe did - reflection & seeing difference in what we go & where we are. + when doing advice request, putting in notes about what you think for insurance when you send to chloe so she can give feedback","quarters|1ls7op7|0":"Prepare & present an investment recommendation - Q4,","quarters|13itbbr|0":"Apply property, debt, cashflow and tax to common decisions — purchase, sell-down, upgrade, retain vs sell, debt structuring. Evidence: two property case studies with calculations, assumptions, alternatives and client-facing explanations. Property scenarios - strategy paper, 6 year rule, downsizer","quarters|18yypbf|0":"Milestones & deliverables - focusing heavily on technical, but discussing with clients after its already been presented to them by adviser","quarters|1rakhie|0":"Click a milestone to expand for detail and notes. - focus on speaking on","quarters|12ttwdn|0":"Run a complete advice journey - day in the life of an adviser. you do everything they would do and adviser tells you what to do. worksorted, activecampaign, business register, google meet,","quarters|1ywbpil|0":"Second chairing meetings with adviser - day in the life of an adviser, thank you emails, handover, admin. HB to come up with a checklist","quarters|1qjdy95|0":"Deliver a supervised mock DA, SOA, Review presentation (Q3) / Q4 should be done in 3 months if done everything correct in the lead up","quarters|3pwlrk|0":"Develop & Grow - 4-5 mths","quarters|ho326n|0":"Train to Win - 3 mths","quarters|zxfzyz|0":"Presenting Advice & Handling Questions + discuss DISC profile + review (Q3 - if they are new and haven't done it, if we can have the team pay for this and take them through it)","quarters|8yd7x|0":"Manage a defined workload for a set period  - admin best practice","quarters|fnxe8c|0":"Lead a supervised DA, SOA & review meeting","quarters|mtybtn|0":"Complete a platform & product comparison+ imp reviews","quarters|1pwul1r|0":"Complete difficult-conversation role-plays+ CARE investment script as a standalone milestone - adviser takes them through it + sign off. Run through this in DA + SOAs"},"editPasswordHash":"f12bafea58d17aebac7bb5526765f061e9d1361ab410579a414545b7aba1f5a4","ui":{"theme":"light","role":"candidate","compQuarter":"q1"},"milestoneKindOverride":{"q1_0":"gate","q1_2":"std","q1_3":"std","q1_4":"std","q1_5":"gate","q1_1":"std","q1_6":"dev"},"moduleTagOverride":{}}
+{
+  "schemaVersion": 2,
+  "profile": {
+    "candidateName": "",
+    "supervisorName": "",
+    "supervisorFar": "",
+    "licensee": "GPS Wealth Ltd (AFSL 254544)",
+    "afsl": "254544",
+    "pyPortalUrl": "",
+    "startDate": "",
+    "year": "2026",
+    "currentQuarter": 1,
+    "q1Start": "",
+    "q2Start": "",
+    "q3Start": "",
+    "q4Start": "",
+    "completionTarget": "",
+    "examPassed": false,
+    "examDate": "",
+    "degreeVerified": false,
+    "degreeInstitution": "",
+    "farUpdatedProvisional": false,
+    "farUpdatedFullProvider": false,
+    "finalCertificateIssued": false,
+    "finalCertificateDate": ""
+  },
+  "hours": {
+    "q1": {
+      "work": 0,
+      "structured": 0
+    },
+    "q2": {
+      "work": 0,
+      "structured": 0
+    },
+    "q3": {
+      "work": 0,
+      "structured": 0
+    },
+    "q4": {
+      "work": 0,
+      "structured": 0
+    },
+    "q5": {
+      "work": 0,
+      "structured": 0
+    },
+    "q6": {
+      "work": 0,
+      "structured": 0
+    }
+  },
+  "milestones": {
+    "q1_0": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q1_1": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q1_2": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q1_3": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q1_4": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q1_5": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q1_6": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q1_7": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q1_8": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q1_9": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q2_0": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q2_1": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q2_2": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q2_3": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q2_4": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q2_5": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q2_6": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q2_7": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q2_8": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q3_0": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q3_1": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q3_2": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q3_3": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q3_4": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q3_5": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q3_6": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q3_7": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q3_8": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q4_0": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q4_1": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q4_2": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q4_3": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q4_4": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q4_5": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q4_6": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q4_7": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q4_8": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q4_9": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q5_0": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q5_1": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q5_2": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q5_3": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q5_4": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q5_5": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q5_6": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q6_0": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q6_1": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q6_2": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q6_3": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q6_4": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    },
+    "q6_5": {
+      "done": false,
+      "note": "",
+      "proof": "",
+      "proofDate": ""
+    }
+  },
+  "modulesDone": {
+    "q1m_depts": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q1m_leadcalls": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q1m_propfund": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q1m3": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q1m4": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q1m5": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q2m_debtcash": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q2m1": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q2m2": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q2m3": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q2m4": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q2m5": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q2m6": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q2m7": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q3m_propcomp": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q3m1": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q3m2": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q3m4": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q3m5": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q4m1": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q4m2": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q4m3": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q4m4": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q4m5": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q4m6": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q4m7": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q5m1": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q5m2": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q5m3": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q6m1": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q6m2": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q6m3": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q1_journey": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q1_meetings": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q1_systems": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q1_leadcalls": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q1_property": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q1_standards": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q2_cashdebt": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q2_super": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q2_insurance": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q2_docs": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q2_calculators": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q3_investment": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q3_property": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q3_retirement": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q3_tax": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q3_platform": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q3_present": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q4_process": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q4_workflow": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q4_difficult": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q4_ongoing": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q4_referrals": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q4_development": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q5_owning": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q5_meetings": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q5_judgement": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q5_workflow": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q5_comms": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q6_relationships": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q6_bizdev": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q6_complex": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q6_leadership": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q6_project": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    },
+    "q6_identity": {
+      "done": false,
+      "hours": 0,
+      "notes": "",
+      "assessment": {
+        "format": "",
+        "result": "",
+        "attempt": 1,
+        "assessor": "",
+        "date": "",
+        "passed": false,
+        "remediation": "",
+        "reassessment": ""
+      }
+    }
+  },
+  "moduleChecks": {
+    "q1m_depts": {},
+    "q1m_leadcalls": {},
+    "q1m_propfund": {},
+    "q1m3": {},
+    "q1m4": {},
+    "q1m5": {},
+    "q2m_debtcash": {},
+    "q2m1": {},
+    "q2m2": {},
+    "q2m3": {},
+    "q2m4": {},
+    "q2m5": {},
+    "q2m6": {},
+    "q2m7": {},
+    "q3m_propcomp": {},
+    "q3m1": {},
+    "q3m2": {},
+    "q3m4": {},
+    "q3m5": {},
+    "q4m1": {},
+    "q4m2": {},
+    "q4m3": {},
+    "q4m4": {},
+    "q4m5": {},
+    "q4m6": {},
+    "q4m7": {},
+    "q5m1": {},
+    "q5m2": {},
+    "q5m3": {},
+    "q6m1": {},
+    "q6m2": {},
+    "q6m3": {},
+    "q1_journey": {},
+    "q1_meetings": {},
+    "q1_systems": {},
+    "q1_leadcalls": {},
+    "q1_property": {},
+    "q1_standards": {},
+    "q2_cashdebt": {},
+    "q2_super": {},
+    "q2_insurance": {},
+    "q2_docs": {},
+    "q2_calculators": {},
+    "q3_investment": {},
+    "q3_property": {},
+    "q3_retirement": {},
+    "q3_tax": {},
+    "q3_platform": {},
+    "q3_present": {},
+    "q4_process": {},
+    "q4_workflow": {},
+    "q4_difficult": {},
+    "q4_ongoing": {},
+    "q4_referrals": {},
+    "q4_development": {},
+    "q5_owning": {},
+    "q5_meetings": {},
+    "q5_judgement": {},
+    "q5_workflow": {},
+    "q5_comms": {},
+    "q6_relationships": {},
+    "q6_bizdev": {},
+    "q6_complex": {},
+    "q6_leadership": {},
+    "q6_project": {},
+    "q6_identity": {}
+  },
+  "signoffState": {
+    "q1m_depts": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q1m_leadcalls": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q1m_propfund": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q1m3": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q1m4": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q1m5": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q2m_debtcash": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q2m1": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q2m2": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q2m3": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q2m4": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q2m5": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q2m6": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q2m7": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q3m_propcomp": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q3m1": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q3m2": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q3m4": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q3m5": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q4m1": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q4m2": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q4m3": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q4m4": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q4m5": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q4m6": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q4m7": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q5m1": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q5m2": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q5m3": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q6m1": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q6m2": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q6m3": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q1_journey": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q1_meetings": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q1_systems": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q1_leadcalls": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q1_property": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q1_standards": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q2_cashdebt": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q2_super": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q2_insurance": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q2_docs": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q2_calculators": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q3_investment": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q3_property": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q3_retirement": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q3_tax": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q3_platform": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q3_present": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q4_process": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q4_workflow": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q4_difficult": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q4_ongoing": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q4_referrals": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q4_development": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q5_owning": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q5_meetings": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q5_judgement": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q5_workflow": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q5_comms": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q6_relationships": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q6_bizdev": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q6_complex": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q6_leadership": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q6_project": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    },
+    "q6_identity": {
+      "ticks": {},
+      "name": "",
+      "date": "",
+      "signed": false,
+      "signedBy": "",
+      "signedAt": ""
+    }
+  },
+  "customModules": {},
+  "customItems": {
+    "q1_meetings": {
+      "3": [
+        "Prepare before meeting with the supervisor"
+      ]
+    }
+  },
+  "customSections": {},
+  "customResources": [],
+  "workshopNotes": {},
+  "quarterReadiness": {},
+  "auditLog": [],
+  "signoffLocked": false,
+  "signoffPasswordHash": "",
+  "openModules": {},
+  "dilemmas": [],
+  "logbook": [],
+  "soaLog": [],
+  "taskLog": [],
+  "reflections": {
+    "q1": {},
+    "q2": {},
+    "q3": {},
+    "q4": {},
+    "q5": {},
+    "q6": {},
+    "final": ""
+  },
+  "reflectionMeta": {
+    "q1": {},
+    "q2": {},
+    "q3": {},
+    "q4": {},
+    "q5": {},
+    "q6": {}
+  },
+  "devActions": [],
+  "competencyScores": {
+    "q1": {
+      "0_0": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_1": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_2": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_3": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_4": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_5": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_6": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_7": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_8": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_9": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_0": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_1": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_2": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_3": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_4": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_5": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_6": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_7": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_8": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_9": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_0": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_1": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_2": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_3": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_4": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_5": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_6": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_7": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_8": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_9": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_0": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_1": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_2": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_3": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_4": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_5": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_6": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_7": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_8": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_9": {
+        "candidate": 0,
+        "supervisor": 0
+      }
+    },
+    "q2": {
+      "0_0": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_1": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_2": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_3": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_4": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_5": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_6": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_7": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_8": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_9": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_0": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_1": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_2": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_3": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_4": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_5": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_6": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_7": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_8": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_9": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_0": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_1": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_2": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_3": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_4": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_5": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_6": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_7": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_8": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_9": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_0": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_1": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_2": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_3": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_4": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_5": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_6": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_7": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_8": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_9": {
+        "candidate": 0,
+        "supervisor": 0
+      }
+    },
+    "q3": {
+      "0_0": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_1": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_2": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_3": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_4": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_5": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_6": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_7": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_8": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_9": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_0": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_1": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_2": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_3": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_4": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_5": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_6": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_7": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_8": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_9": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_0": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_1": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_2": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_3": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_4": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_5": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_6": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_7": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_8": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_9": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_0": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_1": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_2": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_3": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_4": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_5": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_6": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_7": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_8": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_9": {
+        "candidate": 0,
+        "supervisor": 0
+      }
+    },
+    "q4": {
+      "0_0": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_1": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_2": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_3": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_4": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_5": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_6": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_7": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_8": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "0_9": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_0": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_1": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_2": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_3": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_4": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_5": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_6": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_7": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_8": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "1_9": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_0": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_1": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_2": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_3": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_4": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_5": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_6": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_7": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_8": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "2_9": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_0": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_1": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_2": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_3": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_4": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_5": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_6": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_7": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_8": {
+        "candidate": 0,
+        "supervisor": 0
+      },
+      "3_9": {
+        "candidate": 0,
+        "supervisor": 0
+      }
+    }
+  },
+  "supervisorSignoffs": {
+    "technical": "",
+    "clientCare": "",
+    "regulatory": "",
+    "ethics": "",
+    "finalCertificate": "",
+    "q1Notes": "",
+    "q2Notes": "",
+    "q3Notes": "",
+    "q4Notes": ""
+  },
+  "supervisorChecks": {},
+  "holdingBack": {
+    "initial": "",
+    "q1": "",
+    "q2": "",
+    "q3": "",
+    "q4": ""
+  },
+  "contentOverrides": {
+    "dashboard|r7xz3b|0": "While going through your Professional Year training, take time to reflect on what type of clients you are most drawn to helping (is it retirees? Families? HNW?).\n            What advice space do you feel most engaged and attracted towards? This is the first inklings of your potential niche.",
+    "quarters|gvoupq|0": "Onboarding with PY Manager. Sign the formal PY Plan alongside Supervisor and Licensee — the document must record quarterly competencies, work activities, structured training plan, supervisor arrangements, and any other agreed arrangements.",
+    "quarters|gozrpe|0": "Your Adviser Vision",
+    "quarters|1j20lpk|0": "Reflect on the adviser you aspire to become, the value you want to deliver to clients, and the key skills or experiences you want to develop throughout your PY. You'll revisit this reflection at the end of the year to see how far you've come.",
+    "quarters|28vfhw|0": "ROB/XPLAN/Xeppo",
+    "quarters|1nrtm8j|0": "Cashflow Management & Debt Recycling Strategies - Supervisor + candidate. CM - hypotethical scenario budget, mortgage, CF, goal, is DR appropriaite, when it is vs when not (risk profile, etc)",
+    "quarters|e7ohfy|0": "Analyse a client's budget, identifying surplus, shortfall and emergency-fund needs, and one debt-reduction comparison. Evidence: three client-style budgets, a debt comparison and a debt-recycling worked example, explained to your supervisor as though to a client.",
+    "quarters|xyrk0q|0": "Book the ASIC Financial Adviser Exam - move this to Q2+ (when ready)",
+    "quarters|1nvisvv|0": "Under supervision - with Wilso",
+    "quarters|1owzmq9|0": "Complete lead-call training & handle live calls - next point of call is anyone in PY (MWS mandatory)",
+    "quarters|1jrax12|0": "Complete MyWealth induction & sign PY Plan - PY Manager + Candidate - ground rules + expectations set. coincide career goals with the PY timeline + business growth + opportunity.",
+    "quarters|1ipdrhw|0": "MyWealth Meeting Foundations - Supervisor + Candidate, insurance (Chloe)",
+    "quarters|12i16ck|0": "Prepare before meeting with the supervisor - supervisor talks through prep before DA, then 30 mins before DA supervisor says talk me through how you'd prep for the meeting eg snapshot, checking, playing around with PTW, what things you want to highlight, notes about eg family planning so you know to reference that etc. Move this to Q2",
+    "quarters|v7ys6x|0": "Property Fundamentals - Move to Q2",
+    "quarters|bvjitg|0": "Advice Standards in Practice + Prep for Exam",
+    "quarters|11xnj1w|0": "Lead Calls — First Contact & Booking - 2-4 per week & only ones calling through",
+    "quarters|70a3pe|0": "Pass the ASIC Financial Adviser Exam - move to Q3 / Add exam prep - refer to the exam prep resources. HB to check with NB if they'll pay for that once they pass the exam (KAPLAN prep)",
+    "quarters|1sak49x|0": "Superannuation Strategies (Accumulation + Pension) - retail vs wrap accounts, why more suitable, difference between pooled investments, types of contributions, FHSSS, TTR etc",
+    "quarters|g7urqu|0": "Work through the super strategies most common for MyWealth clients — carry-forward, bring-forward, recontribution and spouse strategies — and draft clear recommendation wording. Evidence: worked examples plus draft recommendation wording for two scenarios.What we want to see - ideally ROAs for these tasks + strategy papers + SOAs. Mock example",
+    "quarters|bfxqrm|0": "Complete insurance needs analyses & a recommendation - Chloe twice a year - insurance philosophy (associates + PY only + new advisers)+ Damien to do structuring training session (2 a year) - associates, PY only + new asdvisers (either Q2 or 3)+ Ben mock WM DA (Q3)+ Wilso lead calls (Q1)",
+    "quarters|1x2vbhq|0": "Build a standard SOA under supervision - FTW + PTW SOAs, inhousing an SOA - associate (Q3 - junior associate 2-3 plans per week, training via associate TL + buddy with senior) / CSO - shadowing advice request (adviser + associate), end to end peer review",
+    "quarters|m789xa|0": "Run the core MyWealth tools - PTW/ROB (especially imp)",
+    "quarters|1ddskg6|0": "Bi-monthly 1:1 with Supervisor + Q2 reflection - each of these catch ups are training/reflection with supervisor",
+    "quarters|13zqc5c|0": "2 Competency passed",
+    "quarters|uovzhe|0": "Personal Insurance — Advice & Implementation - do needs analysis & compare with what chloe did - reflection & seeing difference in what we go & where we are. + when doing advice request, putting in notes about what you think for insurance when you send to chloe so she can give feedback",
+    "quarters|1ls7op7|0": "Prepare & present an investment recommendation - Q4,",
+    "quarters|13itbbr|0": "Apply property, debt, cashflow and tax to common decisions — purchase, sell-down, upgrade, retain vs sell, debt structuring. Evidence: two property case studies with calculations, assumptions, alternatives and client-facing explanations. Property scenarios - strategy paper, 6 year rule, downsizer",
+    "quarters|18yypbf|0": "Milestones & deliverables - focusing heavily on technical, but discussing with clients after its already been presented to them by adviser",
+    "quarters|1rakhie|0": "Click a milestone to expand for detail and notes. - focus on speaking on",
+    "quarters|12ttwdn|0": "Run a complete advice journey - day in the life of an adviser. you do everything they would do and adviser tells you what to do. worksorted, activecampaign, business register, google meet,",
+    "quarters|1ywbpil|0": "Second chairing meetings with adviser - day in the life of an adviser, thank you emails, handover, admin. HB to come up with a checklist",
+    "quarters|1qjdy95|0": "Deliver a supervised mock DA, SOA, Review presentation (Q3) / Q4 should be done in 3 months if done everything correct in the lead up",
+    "quarters|3pwlrk|0": "Develop & Grow - 4-5 mths",
+    "quarters|ho326n|0": "Train to Win - 3 mths",
+    "quarters|zxfzyz|0": "Presenting Advice & Handling Questions + discuss DISC profile + review (Q3 - if they are new and haven't done it, if we can have the team pay for this and take them through it)",
+    "quarters|8yd7x|0": "Manage a defined workload for a set period  - admin best practice",
+    "quarters|fnxe8c|0": "Lead a supervised DA, SOA & review meeting",
+    "quarters|mtybtn|0": "Complete a platform & product comparison+ imp reviews",
+    "quarters|1pwul1r|0": "Complete difficult-conversation role-plays+ CARE investment script as a standalone milestone - adviser takes them through it + sign off. Run through this in DA + SOAs"
+  },
+  "editPasswordHash": "",
+  "ui": {
+    "theme": "light",
+    "role": "candidate",
+    "compQuarter": "q1"
+  },
+  "milestoneKindOverride": {
+    "q1_0": "gate",
+    "q1_2": "std",
+    "q1_3": "std",
+    "q1_4": "std",
+    "q1_5": "gate",
+    "q1_1": "std",
+    "q1_6": "dev"
+  },
+  "moduleTagOverride": {}
+}
