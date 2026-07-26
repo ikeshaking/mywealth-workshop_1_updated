@@ -16,17 +16,25 @@ export interface ChatContext {
   memories?: string[];
 }
 
+export interface ChatOutcome {
+  /** The model's reply, or null if the call failed. */
+  reply: string | null;
+  /** A short error reason when the call failed (for diagnostics). */
+  error: string | null;
+}
+
 /**
- * Real "thinking partner" reply via OpenAI. Runs server-side only. Returns null
- * on any failure so the caller can fall back to the offline suggestion bank.
+ * Real "thinking partner" reply via OpenAI. Runs server-side only. Returns
+ * { reply: null, error } on any failure so the caller can fall back and, when
+ * useful, surface why.
  */
 export async function openaiChat(
   history: ChatTurn[],
   tone: BoTone,
   ctx: ChatContext,
-): Promise<string | null> {
+): Promise<ChatOutcome> {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey) return { reply: null, error: "OPENAI_API_KEY is not set on the server" };
 
   const client = new OpenAI({ apiKey });
   // Cheap + capable by default; set OPENAI_MODEL=gpt-4o for higher quality.
@@ -71,6 +79,7 @@ export async function openaiChat(
 
   // Try up to twice — new OpenAI accounts occasionally return transient errors.
   const maxAttempts = 2;
+  let lastError = "Unknown error";
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       const completion = await client.chat.completions.create({
@@ -80,13 +89,13 @@ export async function openaiChat(
         messages,
       });
       const text = completion.choices[0]?.message?.content?.trim();
-      if (text) return text;
+      if (text) return { reply: text, error: null };
+      lastError = "Model returned an empty response";
     } catch (err) {
+      lastError = err instanceof Error ? err.message : String(err);
       // Surface the reason in Vercel's runtime logs so failures aren't silent.
-      const reason = err instanceof Error ? err.message : String(err);
-      console.error(`[nook] openaiChat attempt ${attempt}/${maxAttempts} failed: ${reason}`);
-      if (attempt === maxAttempts) return null;
+      console.error(`[nook] openaiChat attempt ${attempt}/${maxAttempts} failed: ${lastError}`);
     }
   }
-  return null;
+  return { reply: null, error: lastError };
 }

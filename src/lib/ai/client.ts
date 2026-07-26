@@ -31,6 +31,8 @@ export interface ChatClientResult {
   reply: string;
   saveTitle?: string;
   engine: "openai" | "fallback";
+  /** Present when the OpenAI call failed — the exact reason, for diagnostics. */
+  debug?: string;
 }
 
 export interface ChatClientContext {

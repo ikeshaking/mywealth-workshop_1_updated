@@ -26,6 +26,7 @@ interface ChatMsg {
   decisionId?: string | null;
   saveTitle?: string;
   saved?: boolean;
+  debug?: string;
 }
 
 const QUICK_PROMPTS = [
@@ -201,6 +202,11 @@ function Bubble({ msg, onSave }: { msg: ChatMsg; onSave: (msg: ChatMsg) => void 
         <div className="rounded-2xl rounded-tl-md bg-white px-3.5 py-2.5 text-sm text-ink shadow-soft">
           <RichText text={msg.body} />
         </div>
+        {msg.debug && (
+          <p className="mt-1 rounded-lg bg-clay-100 px-2 py-1 text-[11px] text-clay-600">
+            Diagnostic: {msg.debug}
+          </p>
+        )}
         <div className="flex items-center gap-2">
           <SpeakButton text={msg.body} />
           {msg.saveTitle && !msg.item && (
@@ -278,7 +284,7 @@ function CaptureInner() {
                 content: m.body,
               }),
           );
-        const { reply, saveTitle, engine } = await chatClient(history, tone, {
+        const { reply, saveTitle, engine, debug } = await chatClient(history, tone, {
           preferredName: data.preferences.preferred_name,
           currency: data.preferences.currency,
           household: data.preferences.household_type,
@@ -286,7 +292,7 @@ function CaptureInner() {
         });
         setMessages((m) => [
           ...m,
-          { id: `m_${Date.now()}`, role: "bo", body: reply, saveTitle, engine },
+          { id: `m_${Date.now()}`, role: "bo", body: reply, saveTitle, engine, debug },
         ]);
         return;
       }

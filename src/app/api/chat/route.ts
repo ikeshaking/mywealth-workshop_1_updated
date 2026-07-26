@@ -49,7 +49,7 @@ export async function POST(req: Request) {
   const history = messages as ChatTurn[];
   const latest = history[history.length - 1]?.content ?? "";
 
-  const viaOpenAI = await openaiChat(history, tone, {
+  const outcome = await openaiChat(history, tone, {
     preferredName,
     household,
     currency,
@@ -57,18 +57,21 @@ export async function POST(req: Request) {
     memories,
   });
 
-  if (viaOpenAI) {
-    return NextResponse.json({ reply: viaOpenAI, engine: "openai" }, { status: 200 });
+  if (outcome.reply) {
+    return NextResponse.json({ reply: outcome.reply, engine: "openai" }, { status: 200 });
   }
 
   // A key is configured but the call failed — be honest rather than falling back
-  // to the offline "tell me more" bank (which reads like Nook is stalling).
+  // to the offline "tell me more" bank (which reads like Nook is stalling). The
+  // `debug` field carries the exact reason so the app can show it while we're
+  // getting live mode dialled in.
   if (process.env.OPENAI_API_KEY) {
     return NextResponse.json(
       {
         reply:
           "I hit a snag reaching my brain just then — mind sending that again in a moment? If it keeps happening, it's usually an OpenAI credit or rate-limit issue on the account.",
         engine: "fallback",
+        debug: outcome.error,
       },
       { status: 200 },
     );
