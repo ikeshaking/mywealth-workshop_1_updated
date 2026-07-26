@@ -3,10 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { Copy, Sparkles } from "lucide-react";
 import { AppHeader } from "@/components/app/AppHeader";
 import { BoAvatar } from "@/components/brand/Logo";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { draftClient } from "@/lib/ai/client";
+import type { Draft } from "@/lib/schemas";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { StatusBadge, PriorityBadge, CategoryBadge, InferredTag } from "@/components/ui/Badge";
 import { ItemCard } from "@/components/shared/ItemCard";
@@ -31,6 +34,10 @@ export default function ItemDetailPage() {
 
   const [editing, setEditing] = useState(false);
   const [noteText, setNoteText] = useState("");
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [drafting, setDrafting] = useState(false);
+  const [draftFailed, setDraftFailed] = useState(false);
+  const [copied, setCopied] = useState(false);
   const item = data.items.find((i) => i.id === id);
 
   if (!item) {
@@ -56,6 +63,32 @@ export default function ItemDetailPage() {
   const related = data.items
     .filter((i) => i.id !== item.id && i.category === item.category && i.status !== "dismissed")
     .slice(0, 3);
+
+  const handleThis = async () => {
+    setDrafting(true);
+    setDraftFailed(false);
+    const d = await draftClient(
+      {
+        title: item.title,
+        summary: item.summary ?? undefined,
+        category: item.category,
+        context: item.context ?? undefined,
+        original_input: item.original_input ?? undefined,
+        recommended_action: item.recommended_action ?? undefined,
+      },
+      data.preferences.preferred_name,
+    );
+    setDraft(d);
+    setDraftFailed(!d);
+    setDrafting(false);
+  };
+
+  const copyDraft = () => {
+    if (!draft) return;
+    void navigator.clipboard?.writeText(draft.body);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   const doItNow = () => {
     if (item.decision_request_id) {
@@ -138,6 +171,48 @@ export default function ItemDetailPage() {
             </div>
           </div>
         </Card>
+
+        {/* Do the work — Nook drafts the actual deliverable */}
+        {item.status !== "completed" && item.status !== "dismissed" && (
+          <Card className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <CardTitle className="text-sm">Let Nook handle it</CardTitle>
+                <p className="mt-0.5 text-xs text-ink-soft">
+                  Nook drafts the email, message or steps — you just send it.
+                </p>
+              </div>
+              <Button size="sm" onClick={handleThis} disabled={drafting}>
+                <Sparkles size={14} className="mr-1" />
+                {drafting ? "Working…" : draft ? "Redraft" : "Nook, handle this"}
+              </Button>
+            </div>
+            {draftFailed && (
+              <p className="text-xs text-clay-600">
+                Couldn&apos;t draft this just now — try again in a moment.
+              </p>
+            )}
+            {draft && (
+              <div className="rounded-xl border border-eucalypt-200 bg-eucalypt-50/50 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-eucalypt-700">{draft.label}</p>
+                  <button
+                    onClick={copyDraft}
+                    className="inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5 text-[11px] text-ink-faint hover:text-eucalypt-700"
+                  >
+                    <Copy size={12} /> {copied ? "Copied" : "Copy"}
+                  </button>
+                </div>
+                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink">
+                  {draft.body}
+                </p>
+                <p className="mt-2 text-[11px] text-ink-faint">
+                  Nook prepared this for you to review and send — it hasn&apos;t sent anything.
+                </p>
+              </div>
+            )}
+          </Card>
+        )}
 
         {/* Primary actions */}
         {item.status !== "completed" && item.status !== "dismissed" && (

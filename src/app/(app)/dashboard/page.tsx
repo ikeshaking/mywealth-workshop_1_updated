@@ -8,6 +8,7 @@ import { BoAvatar } from "@/components/brand/Logo";
 import { ItemCard } from "@/components/shared/ItemCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { MetricsRow } from "@/components/dashboard/MetricsRow";
+import { TodayBrief } from "@/components/dashboard/TodayBrief";
 import { Composer } from "@/components/capture/Composer";
 import { Button } from "@/components/ui/Button";
 import { useBo } from "@/lib/store/BoProvider";
@@ -91,8 +92,10 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-semibold text-ink">
             {greeting()}, {data.preferences.preferred_name} 👋
           </h1>
-          <p className="mt-1 text-sm text-ink-soft">Here&apos;s what&apos;s going on today.</p>
         </div>
+
+        {/* Proactive daily brief */}
+        <TodayBrief />
 
         {/* Prominent capture */}
         <div>

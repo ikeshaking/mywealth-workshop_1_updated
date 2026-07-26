@@ -1,6 +1,11 @@
 "use client";
 
-import { extractResponseSchema, type ExtractResponse, type PlannedReminder } from "../schemas";
+import {
+  extractResponseSchema,
+  type ExtractResponse,
+  type PlannedReminder,
+  type Draft,
+} from "../schemas";
 import { fallbackExtract } from "./fallback";
 import { demoSuggest } from "./suggest";
 import { todayIso } from "../utils";
@@ -82,5 +87,58 @@ export async function planClient(conversation: string): Promise<PlannedReminder[
     return json.reminders ?? [];
   } catch {
     return [];
+  }
+}
+
+export interface BriefRequestItem {
+  title: string;
+  category: string;
+  status: string;
+  due_date: string | null;
+}
+
+/** Fetches Nook's proactive daily brief. Returns null on failure. */
+export async function briefClient(input: {
+  name?: string;
+  tone?: BoTone;
+  items: BriefRequestItem[];
+  memories?: string[];
+}): Promise<string | null> {
+  try {
+    const res = await fetch("/api/brief", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...input, today: todayIso() }),
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as { brief?: string };
+    return json.brief ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export interface DraftRequestItem {
+  title: string;
+  summary?: string;
+  category: string;
+  context?: string;
+  original_input?: string;
+  recommended_action?: string;
+}
+
+/** Asks Nook to draft the actual deliverable for a task. Returns null on failure. */
+export async function draftClient(item: DraftRequestItem, name?: string): Promise<Draft | null> {
+  try {
+    const res = await fetch("/api/draft", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ item, name, today: todayIso() }),
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as { draft?: Draft | null };
+    return json.draft ?? null;
+  } catch {
+    return null;
   }
 }

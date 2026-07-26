@@ -60,6 +60,17 @@ export const plannedRemindersSchema = z.object({
   reminders: z.array(plannedReminderSchema).max(25).default([]),
 });
 
+/**
+ * A ready-to-use draft Nook prepares so the user can actually get a task done
+ * (an email to send, a message, a step-by-step) rather than just tracking it.
+ */
+export const draftSchema = z.object({
+  label: z.string().min(1).max(60),
+  format: z.enum(["email", "message", "steps", "note"]).default("note"),
+  body: z.string().min(1).max(3000),
+});
+export type Draft = z.infer<typeof draftSchema>;
+
 /** Request body accepted by POST /api/extract. */
 export const extractRequestSchema = z.object({
   input: z.string().min(1, "Tell Nook something first.").max(2000),
