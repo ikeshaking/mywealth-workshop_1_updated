@@ -36,7 +36,9 @@ export async function openaiChat(
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return { reply: null, error: "OPENAI_API_KEY is not set on the server" };
 
-  const client = new OpenAI({ apiKey });
+  // Explicit timeout + built-in retries make transient connection blips
+  // (which the OpenAI SDK reports as "Connection error.") self-heal.
+  const client = new OpenAI({ apiKey, timeout: 20_000, maxRetries: 3 });
   // Cheap + capable by default; set OPENAI_MODEL=gpt-4o for higher quality.
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
@@ -77,25 +79,38 @@ export async function openaiChat(
     ...history.map((t) => ({ role: t.role, content: t.content }) as const),
   ];
 
-  // Try up to twice — new OpenAI accounts occasionally return transient errors.
-  const maxAttempts = 2;
-  let lastError = "Unknown error";
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      const completion = await client.chat.completions.create({
-        model,
-        temperature: 0.6,
-        max_tokens: 700,
-        messages,
-      });
-      const text = completion.choices[0]?.message?.content?.trim();
-      if (text) return { reply: text, error: null };
-      lastError = "Model returned an empty response";
-    } catch (err) {
-      lastError = err instanceof Error ? err.message : String(err);
-      // Surface the reason in Vercel's runtime logs so failures aren't silent.
-      console.error(`[nook] openaiChat attempt ${attempt}/${maxAttempts} failed: ${lastError}`);
-    }
+  try {
+    const completion = await client.chat.completions.create({
+      model,
+      temperature: 0.6,
+      max_tokens: 700,
+      messages,
+    });
+    const text = completion.choices[0]?.message?.content?.trim();
+    if (text) return { reply: text, error: null };
+    return { reply: null, error: "Model returned an empty response" };
+  } catch (err) {
+    const detail = describeError(err);
+    // Surface the reason in Vercel's runtime logs so failures aren't silent.
+    console.error(`[nook] openaiChat failed: ${detail}`);
+    return { reply: null, error: detail };
   }
-  return { reply: null, error: lastError };
+}
+
+/** Walk an error's cause chain into a single diagnostic string. */
+function describeError(err: unknown): string {
+  const parts: string[] = [];
+  let cur: unknown = err;
+  let depth = 0;
+  while (cur && typeof cur === "object" && depth < 5) {
+    const e = cur as { name?: string; status?: number; code?: string; message?: string; cause?: unknown };
+    const name = e.name || "Error";
+    const status = e.status ? ` ${e.status}` : "";
+    const code = e.code ? ` [${e.code}]` : "";
+    const msg = e.message ? `: ${e.message}` : "";
+    parts.push(`${name}${status}${code}${msg}`.trim());
+    cur = e.cause;
+    depth++;
+  }
+  return parts.length ? parts.join(" <- ") : String(err);
 }

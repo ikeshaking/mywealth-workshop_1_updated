@@ -5,6 +5,7 @@ import { demoSuggest } from "@/lib/ai/suggest";
 import { TONES } from "@/lib/tone";
 
 export const runtime = "nodejs";
+export const maxDuration = 30;
 
 const chatRequestSchema = z.object({
   messages: z
