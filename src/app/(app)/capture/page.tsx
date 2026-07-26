@@ -3,11 +3,11 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Volume2, Bookmark, CalendarClock } from "lucide-react";
+import { Volume2, Bookmark, CalendarClock, ExternalLink } from "lucide-react";
 import { AppHeader } from "@/components/app/AppHeader";
 import { Composer } from "@/components/capture/Composer";
 import { BoAvatar } from "@/components/brand/Logo";
-import { StatusBadge, CategoryBadge, InferredTag } from "@/components/ui/Badge";
+import { StatusBadge, CategoryBadge, InferredTag, Badge } from "@/components/ui/Badge";
 import { useBo } from "@/lib/store/BoProvider";
 import { extractClient, chatClient, planClient, recommendClient } from "@/lib/ai/client";
 import { recommendFor } from "@/lib/ai/recommend";
@@ -15,7 +15,7 @@ import { fallbackExtract } from "@/lib/ai/fallback";
 import { boReply } from "@/lib/ai/reply";
 import type { Extraction } from "@/lib/schemas";
 import type { LifeItem } from "@/lib/types";
-import { relativeDay, formatDate, todayIso } from "@/lib/utils";
+import { relativeDay, formatDate, formatMoney, todayIso, cn } from "@/lib/utils";
 
 interface ChatMsg {
   id: string;
@@ -196,6 +196,74 @@ function CapturePreview({ msg }: { msg: ChatMsg }) {
   );
 }
 
+/** Real shopping options rendered inline in the conversation — no separate screen. */
+function InlineRecommendations({ decisionId }: { decisionId: string }) {
+  const { data, setOptionFlag } = useBo();
+  const set = data.recommendationSets.find((s) => s.decision_request_id === decisionId);
+  const options = data.recommendationOptions.filter((o) => o.set_id === set?.id);
+
+  if (!set) return null;
+  if (options.length === 0) {
+    return (
+      <p className="mt-2 text-sm text-ink-faint">
+        <span className="animate-pulse-soft">Nook is finding real options…</span>
+      </p>
+    );
+  }
+
+  const sorted = [...options].sort((a, b) => Number(b.is_best_match) - Number(a.is_best_match));
+
+  return (
+    <div className="mt-2 space-y-2">
+      {sorted.map((o) => (
+        <div
+          key={o.id}
+          className={cn(
+            "rounded-xl border bg-white p-3 shadow-soft",
+            o.is_best_match ? "border-eucalypt-400 ring-1 ring-eucalypt-200" : "border-black/[0.05]",
+            o.rejected && "opacity-50",
+          )}
+        >
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              {o.is_best_match && (
+                <Badge className="mb-0.5 bg-eucalypt-600 text-white">✦ Best match</Badge>
+              )}
+              <p className="text-sm font-semibold text-ink">{o.title}</p>
+            </div>
+            <p className="shrink-0 text-sm font-semibold text-ink">
+              {formatMoney(o.total_price, o.currency)}
+            </p>
+          </div>
+          <p className="mt-1 text-xs text-ink-soft">{o.why_it_suits}</p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <a
+              href={o.retailer_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-lg bg-eucalypt-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-eucalypt-700"
+            >
+              View at {o.retailer_label} <ExternalLink size={12} />
+            </a>
+            <button
+              onClick={() => setOptionFlag(o.id, "saved", !o.saved)}
+              className="text-xs text-ink-faint hover:text-eucalypt-700"
+            >
+              {o.saved ? "Saved ✓" : "Save"}
+            </button>
+          </div>
+        </div>
+      ))}
+      <Link
+        href={`/decisions/${decisionId}`}
+        className="inline-block text-xs font-medium text-eucalypt-700"
+      >
+        Compare side by side →
+      </Link>
+    </div>
+  );
+}
+
 function Bubble({
   msg,
   onSave,
@@ -254,7 +322,11 @@ function Bubble({
             </button>
           )}
         </div>
-        <CapturePreview msg={msg} />
+        {msg.decisionId ? (
+          <InlineRecommendations decisionId={msg.decisionId} />
+        ) : (
+          <CapturePreview msg={msg} />
+        )}
       </div>
     </div>
   );
