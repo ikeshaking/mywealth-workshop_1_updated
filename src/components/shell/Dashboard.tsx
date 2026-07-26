@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getBackend } from "@/lib/py/backend";
 import { loadCandidateSummaries, type CandidateWithState } from "@/lib/py/summaries";
-import { deriveActivity, deriveTodo, type Activity, type Todo } from "@/lib/py/actions";
+import { deriveActivity, deriveTodo, type Activity, type FocusTarget, type Todo } from "@/lib/py/actions";
 import { assessCandidate, type RiskFlag } from "@/lib/py/risk";
 import { getLastSeen, markSeen } from "@/lib/py/lastSeen";
 import type { Profile } from "@/lib/py/types";
@@ -27,7 +27,7 @@ export function Dashboard({
   onOpenCandidate,
 }: {
   profile: Profile;
-  onOpenCandidate: (id: string, name: string, hash?: string) => void;
+  onOpenCandidate: (id: string, name: string, hash?: string, focus?: FocusTarget) => void;
 }) {
   const [candidates, setCandidates] = useState<CandidateWithState[]>([]);
   const [supervisors, setSupervisors] = useState<Profile[]>([]);
@@ -118,7 +118,7 @@ export function Dashboard({
         <div className="panel-grid" style={{ marginBottom: 26 }}>
           <TodoList
             todos={todos}
-            onOpen={(id, name, hash) => onOpenCandidate(id, name, hash)}
+            onOpen={(id, name, hash, focus) => onOpenCandidate(id, name, hash, focus)}
           />
           <ActivityFeed
             activity={activity}

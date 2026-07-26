@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getBackend } from "@/lib/py/backend";
 import type { ProgramState, Role } from "@/lib/py/types";
+import type { FocusTarget } from "@/lib/py/actions";
 
 let _templateCache: string | null = null;
 async function loadTemplate(): Promise<string> {
@@ -18,14 +19,31 @@ function buildSrcDoc(
   state: ProgramState,
   inAppRole: "candidate" | "supervisor",
   initialHash?: string,
+  focus?: FocusTarget,
 ) {
-  const safeState = JSON.stringify(state).replace(/</g, "\\u003c");
+  // Pre-apply the focus to the injected state so the target renders already
+  // expanded / on the right quarter — no post-render click, no flicker.
+  let seed = state;
+  if (focus?.moduleId || focus?.compQuarter) {
+    seed = { ...state };
+    if (focus.moduleId) {
+      seed.openModules = { ...((state.openModules as object) ?? {}), [focus.moduleId]: true };
+    }
+    if (focus.compQuarter) {
+      seed.ui = { ...((state.ui as object) ?? {}), compQuarter: focus.compQuarter };
+    }
+  }
+
+  const safeState = JSON.stringify(seed).replace(/</g, "\\u003c");
   const hashLine = initialHash
     ? `try{location.hash=${JSON.stringify(initialHash)};}catch(e){}`
     : "";
+  const focusLine = focus?.moduleId
+    ? `window.__PY_FOCUS_MODULE__=${JSON.stringify(focus.moduleId)};`
+    : "";
   const boot = `<script id="pyBoot">window.__PY_EMBED__=true;window.__PY_STATE__=${safeState};window.__PY_ROLE__=${JSON.stringify(
     inAppRole,
-  )};${hashLine}(function(){var e=document.getElementById('pyBoot');if(e&&e.parentNode)e.parentNode.removeChild(e);})();<\/script>`;
+  )};${focusLine}${hashLine}(function(){var e=document.getElementById('pyBoot');if(e&&e.parentNode)e.parentNode.removeChild(e);})();<\/script>`;
   return template.replace("<!--PY_BOOT_INJECT-->", boot);
 }
 
@@ -34,11 +52,13 @@ export function TrackerFrame({
   viewerRole,
   candidateName,
   initialHash,
+  focus,
 }: {
   candidateId: string;
   viewerRole: Role;
   candidateName: string;
   initialHash?: string;
+  focus?: FocusTarget;
 }) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [srcDoc, setSrcDoc] = useState<string | null>(null);
@@ -51,6 +71,11 @@ export function TrackerFrame({
   // supervisor view (sign-off + oversight).
   const inAppRole: "candidate" | "supervisor" = viewerRole === "candidate" ? "candidate" : "supervisor";
 
+  // Depend on the focus *values*, not the object identity — a fresh `{...}` from
+  // the parent on every render would otherwise rebuild the iframe continuously.
+  const focusModuleId = focus?.moduleId;
+  const focusCompQuarter = focus?.compQuarter;
+
   useEffect(() => {
     let cancelled = false;
     setSrcDoc(null);
@@ -61,7 +86,12 @@ export function TrackerFrame({
         const [template, record] = await Promise.all([loadTemplate(), backend.getRecord(candidateId)]);
         if (cancelled) return;
         const state = (record?.state ?? {}) as ProgramState;
-        setSrcDoc(buildSrcDoc(template, state, inAppRole, initialHash));
+        setSrcDoc(
+          buildSrcDoc(template, state, inAppRole, initialHash, {
+            moduleId: focusModuleId,
+            compQuarter: focusCompQuarter,
+          }),
+        );
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Could not load this record.");
       }
@@ -69,7 +99,7 @@ export function TrackerFrame({
     return () => {
       cancelled = true;
     };
-  }, [candidateId, inAppRole, initialHash]);
+  }, [candidateId, inAppRole, initialHash, focusModuleId, focusCompQuarter]);
 
   useEffect(() => {
     function onMessage(ev: MessageEvent) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { totalPending, type Todo } from "@/lib/py/actions";
+import { totalPending, type FocusTarget, type Todo } from "@/lib/py/actions";
 
 /**
  * "What needs you" — the reviewer's action list. Each row deep-links straight
@@ -11,7 +11,7 @@ export function TodoList({
   onOpen,
 }: {
   todos: Todo[];
-  onOpen: (candidateId: string, candidateName: string, hash: string) => void;
+  onOpen: (candidateId: string, candidateName: string, hash: string, focus?: FocusTarget) => void;
 }) {
   const total = todos.reduce((s, t) => s + totalPending(t), 0);
 
@@ -62,6 +62,7 @@ export function TodoList({
                             t.candidateId,
                             t.candidateName,
                             `#/quarters/${m.quarterId}/training`,
+                            { moduleId: m.id },
                           )
                         }
                       >
@@ -84,7 +85,11 @@ export function TodoList({
                     <li>
                       <button
                         className="todo-item"
-                        onClick={() => onOpen(t.candidateId, t.candidateName, "#/competency")}
+                        onClick={() =>
+                          onOpen(t.candidateId, t.candidateName, "#/competency", {
+                            compQuarter: t.competencyQuarter ?? undefined,
+                          })
+                        }
                       >
                         <span className="badge badge-purple">Rate</span>
                         <span className="todo-item-text">
