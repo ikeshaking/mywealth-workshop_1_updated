@@ -13,11 +13,19 @@ async function loadTemplate(): Promise<string> {
 }
 
 /** Build the iframe document with the candidate's state + locked role injected. */
-function buildSrcDoc(template: string, state: ProgramState, inAppRole: "candidate" | "supervisor") {
+function buildSrcDoc(
+  template: string,
+  state: ProgramState,
+  inAppRole: "candidate" | "supervisor",
+  initialHash?: string,
+) {
   const safeState = JSON.stringify(state).replace(/</g, "\\u003c");
+  const hashLine = initialHash
+    ? `try{location.hash=${JSON.stringify(initialHash)};}catch(e){}`
+    : "";
   const boot = `<script id="pyBoot">window.__PY_EMBED__=true;window.__PY_STATE__=${safeState};window.__PY_ROLE__=${JSON.stringify(
     inAppRole,
-  )};(function(){var e=document.getElementById('pyBoot');if(e&&e.parentNode)e.parentNode.removeChild(e);})();<\/script>`;
+  )};${hashLine}(function(){var e=document.getElementById('pyBoot');if(e&&e.parentNode)e.parentNode.removeChild(e);})();<\/script>`;
   return template.replace("<!--PY_BOOT_INJECT-->", boot);
 }
 
@@ -25,10 +33,12 @@ export function TrackerFrame({
   candidateId,
   viewerRole,
   candidateName,
+  initialHash,
 }: {
   candidateId: string;
   viewerRole: Role;
   candidateName: string;
+  initialHash?: string;
 }) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [srcDoc, setSrcDoc] = useState<string | null>(null);
@@ -51,7 +61,7 @@ export function TrackerFrame({
         const [template, record] = await Promise.all([loadTemplate(), backend.getRecord(candidateId)]);
         if (cancelled) return;
         const state = (record?.state ?? {}) as ProgramState;
-        setSrcDoc(buildSrcDoc(template, state, inAppRole));
+        setSrcDoc(buildSrcDoc(template, state, inAppRole, initialHash));
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Could not load this record.");
       }
@@ -59,7 +69,7 @@ export function TrackerFrame({
     return () => {
       cancelled = true;
     };
-  }, [candidateId, inAppRole]);
+  }, [candidateId, inAppRole, initialHash]);
 
   useEffect(() => {
     function onMessage(ev: MessageEvent) {

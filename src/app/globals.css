@@ -210,4 +210,75 @@ html[data-theme="dark"] select{border-color:#436788}
   .divide-soft > * + *{border-top:1px solid var(--border-soft)}
   .muted{color:var(--text-muted)}
   .dim{color:var(--text-dim)}
+
+  /* --- "Needs you" + "Recent activity" panels --- */
+  .panel-grid{display:grid;gap:16px;grid-template-columns:1fr 1fr;align-items:start}
+
+  .todo-row{display:flex;gap:12px;padding:14px 20px;align-items:flex-start}
+  .todo-row + .todo-row{border-top:1px solid var(--border-soft)}
+
+  .todo-item,.activity-row{
+    width:100%;display:flex;align-items:center;gap:9px;text-align:left;cursor:pointer;
+    background:var(--surface-2);border:1px solid var(--border-soft);border-radius:10px;
+    padding:8px 10px;font-family:var(--bf);color:var(--text);transition:all .12s;
+  }
+  .todo-item:hover,.activity-row:hover{background:var(--row-alt);border-color:var(--border)}
+  .todo-item-text{
+    flex:1;min-width:0;font-size:13px;font-weight:600;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .activity-row{border:none;border-radius:0;background:transparent;padding:11px 20px}
+  .activity-row + .activity-row{border-top:1px solid var(--border-soft)}
+
+  /* Card grid used for candidate lists */
+  .cand-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+}
+
+/* ============================================================
+   RESPONSIVE / MOBILE
+============================================================ */
+@media (max-width: 900px){
+  .panel-grid{grid-template-columns:1fr}
+}
+
+@media (max-width: 640px){
+  h1{font-size:23px}
+  h2{font-size:17px}
+
+  /* Compact chrome: keep the brand + essentials, drop decorative bits. */
+  .app-topbar{padding:8px 12px;gap:8px;flex-wrap:nowrap}
+  .app-topbar .tool-label{display:none}
+  .app-topbar .hide-sm{display:none!important}
+  .brand-name{font-size:16px}
+  .brand-solutions{font-size:6px;letter-spacing:2.6px}
+  .chrome-btn{height:30px;padding:0 9px;font-size:11.5px}
+  .chrome-btn.icon{width:30px;padding:0}
+
+  .app-main{padding:14px!important}
+  .card{padding:15px;border-radius:12px}
+  .card-tight{padding:12px}
+  .hero{padding:20px 18px;border-radius:12px}
+  .hero-sub{font-size:10px;letter-spacing:1.8px}
+
+  /* Stats become a 2-up grid instead of a cramped row. */
+  .stat-row{display:grid!important;grid-template-columns:1fr 1fr;gap:10px}
+  .stat-row > *{min-width:0!important}
+
+  .cand-grid{grid-template-columns:1fr}
+
+  .todo-row{padding:12px 14px}
+  .activity-row{padding:10px 14px;gap:8px;align-items:flex-start}
+  .todo-item{padding:9px 10px}
+  /* Let long titles wrap on small screens rather than truncate to nothing. */
+  .todo-item-text{white-space:normal;overflow:visible;line-height:1.35}
+
+  /* Comfortable tap targets. */
+  .btn{padding:11px 16px}
+  .input,.select,.textarea{font-size:16px} /* 16px avoids iOS zoom-on-focus */
+
+  .tracker-head{padding:8px 14px 0!important}
+
+  /* Admin: candidate rows stack, and the supervisor picker goes full width. */
+  .admin-assign{width:100%!important}
+  .admin-row{flex-direction:column;align-items:stretch!important;gap:8px!important}
 }

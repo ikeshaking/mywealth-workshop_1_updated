@@ -155,7 +155,7 @@ export function AdminPanel({ onChanged }: { onChanged?: () => void }) {
         <h2 style={{ marginBottom: 12 }}>Candidates ({candidates.length})</h2>
         <div className="divide-soft">
           {candidates.map((c) => (
-            <div key={c.id} style={{ padding: "10px 0", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <div key={c.id} className="admin-row" style={{ padding: "10px 0", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
               <span className="avatar" style={{ width: 34, height: 34, fontSize: 13 }}>
                 {c.fullName.split(" ").map((w) => w[0]).slice(0, 2).join("")}
               </span>
@@ -163,10 +163,10 @@ export function AdminPanel({ onChanged }: { onChanged?: () => void }) {
                 <div style={{ fontWeight: 700 }}>{c.fullName}</div>
                 <div className="muted" style={{ fontSize: 12 }}>{c.email}</div>
               </div>
-              <div>
+              <div className="admin-assign">
                 <label className="label" style={{ marginBottom: 3 }}>Supervisor</label>
                 <select
-                  className="select"
+                  className="select admin-assign"
                   style={{ width: 200 }}
                   value={c.supervisorId ?? ""}
                   onChange={(e) => reassign(c.id, e.target.value)}

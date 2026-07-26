@@ -13,5 +13,5 @@ export const isDemoMode =
   process.env.NEXT_PUBLIC_DEMO_MODE === "false" && hasSupabase ? false : true;
 
 export const THEME_KEY = "mywealth-py:theme";
-export const DEMO_DB_KEY = "mywealth-py:demo-db:v1";
+export const DEMO_DB_KEY = "mywealth-py:demo-db:v2";
 export const DEMO_SESSION_KEY = "mywealth-py:demo-session:v1";

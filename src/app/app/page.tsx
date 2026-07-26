@@ -11,7 +11,7 @@ import { TrackerFrame } from "@/components/shell/TrackerFrame";
 type View =
   | { kind: "home" }
   | { kind: "admin" }
-  | { kind: "tracker"; candidateId: string; candidateName: string };
+  | { kind: "tracker"; candidateId: string; candidateName: string; hash?: string };
 
 function AppInner() {
   const { profile, loading } = useSession();
@@ -41,20 +41,25 @@ function AppInner() {
   }
 
   // --- Supervisor & PY manager: dashboard, tracker, (manager) admin. ---
-  const openCandidate = (candidateId: string, candidateName: string) =>
-    setView({ kind: "tracker", candidateId, candidateName });
+  const openCandidate = (candidateId: string, candidateName: string, hash?: string) =>
+    setView({ kind: "tracker", candidateId, candidateName, hash });
 
   if (view.kind === "tracker") {
     return (
       <>
         <Topbar backLabel="All candidates" onBack={() => setView({ kind: "home" })} onHome={() => setView({ kind: "home" })} />
-        <div style={{ padding: "10px 24px 0", maxWidth: 1400, margin: "0 auto" }}>
+        <div className="tracker-head" style={{ padding: "10px 24px 0", maxWidth: 1400, margin: "0 auto" }}>
           <h2 style={{ fontSize: 18 }}>{view.candidateName}</h2>
           <p className="muted" style={{ fontSize: 12, marginBottom: 2 }}>
             {profile.role === "py_manager" ? "PY manager view" : "Supervisor view"} · changes save live
           </p>
         </div>
-        <TrackerFrame candidateId={view.candidateId} viewerRole={profile.role} candidateName={view.candidateName} />
+        <TrackerFrame
+          candidateId={view.candidateId}
+          viewerRole={profile.role}
+          candidateName={view.candidateName}
+          initialHash={view.hash}
+        />
       </>
     );
   }
@@ -63,7 +68,7 @@ function AppInner() {
     return (
       <>
         <Topbar backLabel="Dashboard" onBack={() => setView({ kind: "home" })} onHome={() => setView({ kind: "home" })} />
-        <div style={{ maxWidth: 1400, margin: "0 auto", padding: 24 }}>
+        <div className="app-main" style={{ maxWidth: 1400, margin: "0 auto", padding: 24 }}>
           <h1 style={{ marginBottom: 4 }}>Manage accounts</h1>
           <p className="muted" style={{ marginBottom: 22 }}>
             Create candidate and supervisor logins and assign candidates to supervisors.
@@ -78,7 +83,7 @@ function AppInner() {
     <>
       <Topbar />
       {profile.role === "py_manager" ? (
-        <div style={{ maxWidth: 1400, margin: "0 auto", padding: "16px 24px 0", display: "flex", justifyContent: "flex-end" }}>
+        <div className="app-main" style={{ maxWidth: 1400, margin: "0 auto", padding: "16px 24px 0", display: "flex", justifyContent: "flex-end" }}>
           <button className="btn btn-ghost" onClick={() => setView({ kind: "admin" })}>
             ⚙ Manage accounts
           </button>
