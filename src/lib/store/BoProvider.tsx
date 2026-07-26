@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import type { BoData, LifeItem, Status, ApprovalStatus, UserPreferences } from "../types";
-import type { Extraction } from "../schemas";
+import type { Extraction, PlannedReminder } from "../schemas";
 import { buildSeed, buildEmptyState } from "../demo/seed";
 import { STORAGE_KEY, isLive } from "../config";
 import { loadLiveState, saveLiveState } from "../live/state";
@@ -30,6 +30,7 @@ interface BoContextValue {
   metrics: ReturnType<typeof ops.computeMetrics>;
   // actions
   capture: (input: string, extraction: Extraction) => LifeItem;
+  addReminders: (reminders: PlannedReminder[]) => number;
   updateItem: (itemId: string, patch: Partial<LifeItem>) => void;
   transition: (itemId: string, to: Status, message?: string) => void;
   addNote: (itemId: string, body: string) => void;
@@ -154,6 +155,19 @@ export function BoProvider({ children }: { children: React.ReactNode }) {
     [commit],
   );
 
+  const addReminders = useCallback(
+    (reminders: PlannedReminder[]) => {
+      const res = ops.createReminders(
+        dataRef.current,
+        reminders,
+        dataRef.current.preferences.currency,
+      );
+      commit(res.data);
+      return res.count;
+    },
+    [commit],
+  );
+
   const updateItem = useCallback((itemId: string, patch: Partial<LifeItem>) => {
     setData((d) => ops.updateItem(d, itemId, patch));
   }, []);
@@ -243,6 +257,7 @@ export function BoProvider({ children }: { children: React.ReactNode }) {
     ready,
     metrics,
     capture,
+    addReminders,
     updateItem,
     transition,
     addNote,

@@ -1,6 +1,6 @@
 "use client";
 
-import { extractResponseSchema, type ExtractResponse } from "../schemas";
+import { extractResponseSchema, type ExtractResponse, type PlannedReminder } from "../schemas";
 import { fallbackExtract } from "./fallback";
 import { demoSuggest } from "./suggest";
 import { todayIso } from "../utils";
@@ -63,5 +63,24 @@ export async function chatClient(
   } catch {
     const fallback = demoSuggest(latest, tone);
     return { reply: fallback.reply, saveTitle: fallback.saveTitle, engine: "fallback" };
+  }
+}
+
+/**
+ * Turns a planning conversation (a checklist Nook wrote) into structured
+ * reminders via the secure /api/plan route. Returns [] on any failure.
+ */
+export async function planClient(conversation: string): Promise<PlannedReminder[]> {
+  try {
+    const res = await fetch("/api/plan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ conversation, today: todayIso() }),
+    });
+    if (!res.ok) return [];
+    const json = (await res.json()) as { reminders?: PlannedReminder[] };
+    return json.reminders ?? [];
+  } catch {
+    return [];
   }
 }

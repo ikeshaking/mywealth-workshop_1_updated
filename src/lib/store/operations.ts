@@ -11,7 +11,7 @@ import type {
   RecommendationSet,
   Memory,
 } from "../types";
-import type { Extraction } from "../schemas";
+import type { Extraction, PlannedReminder } from "../schemas";
 import { id, nowIso, todayIso, addDays, currencySymbol } from "../utils";
 import { recommendFor } from "../ai/recommend";
 
@@ -156,6 +156,44 @@ export function createItemFromExtraction(
   }
 
   return { data: next, item, decisionRequestId };
+}
+
+/**
+ * Save a set of planned reminders (e.g. from a checklist Nook talked through)
+ * as tracked items with dates. Each becomes a scheduled item that shows up under
+ * "Coming up" and nudges when due.
+ */
+export function createReminders(
+  data: BoData,
+  reminders: PlannedReminder[],
+  currency: string,
+): { data: BoData; count: number } {
+  let next = data;
+  let count = 0;
+  for (const r of reminders) {
+    const title = r.title.trim();
+    if (!title) continue;
+    const extraction: Extraction = {
+      title,
+      summary: r.note && r.note.trim().length ? r.note.trim() : title,
+      category: "errand",
+      priority: "medium",
+      due_date: r.date,
+      reminder_date: r.date,
+      follow_up_date: null,
+      missing_information: [],
+      recommended_action: "Reminder saved by Nook.",
+      approval_required: false,
+      confidence_score: 0.9,
+      follow_up_question: null,
+      is_decision: false,
+      budget: null,
+      currency,
+    };
+    next = createItemFromExtraction(next, title, extraction).data;
+    count += 1;
+  }
+  return { data: next, count };
 }
 
 export function updateItem(

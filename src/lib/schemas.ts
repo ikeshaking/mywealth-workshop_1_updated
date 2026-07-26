@@ -41,6 +41,25 @@ export const extractionSchema = z.object({
 
 export type Extraction = z.infer<typeof extractionSchema>;
 
+/**
+ * A single actionable reminder pulled out of a planning conversation, so a
+ * checklist Nook talks through can be saved as tracked items with dates.
+ */
+export const plannedReminderSchema = z.object({
+  title: z.string().min(1).max(120),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable()
+    .default(null),
+  note: z.string().max(300).optional().default(""),
+});
+export type PlannedReminder = z.infer<typeof plannedReminderSchema>;
+
+export const plannedRemindersSchema = z.object({
+  reminders: z.array(plannedReminderSchema).max(25).default([]),
+});
+
 /** Request body accepted by POST /api/extract. */
 export const extractRequestSchema = z.object({
   input: z.string().min(1, "Tell Nook something first.").max(2000),

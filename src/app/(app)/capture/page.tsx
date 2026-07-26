@@ -3,13 +3,13 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Volume2, Bookmark } from "lucide-react";
+import { Volume2, Bookmark, CalendarClock } from "lucide-react";
 import { AppHeader } from "@/components/app/AppHeader";
 import { Composer } from "@/components/capture/Composer";
 import { BoAvatar } from "@/components/brand/Logo";
 import { StatusBadge, CategoryBadge, InferredTag } from "@/components/ui/Badge";
 import { useBo } from "@/lib/store/BoProvider";
-import { extractClient, chatClient } from "@/lib/ai/client";
+import { extractClient, chatClient, planClient } from "@/lib/ai/client";
 import { fallbackExtract } from "@/lib/ai/fallback";
 import { boReply } from "@/lib/ai/reply";
 import type { Extraction } from "@/lib/schemas";
@@ -27,6 +27,7 @@ interface ChatMsg {
   saveTitle?: string;
   saved?: boolean;
   debug?: string;
+  remindersSaved?: boolean;
 }
 
 const QUICK_PROMPTS = [
@@ -185,7 +186,17 @@ function CapturePreview({ msg }: { msg: ChatMsg }) {
   );
 }
 
-function Bubble({ msg, onSave }: { msg: ChatMsg; onSave: (msg: ChatMsg) => void }) {
+function Bubble({
+  msg,
+  onSave,
+  onSaveReminders,
+  remindersBusy,
+}: {
+  msg: ChatMsg;
+  onSave: (msg: ChatMsg) => void;
+  onSaveReminders: (msg: ChatMsg) => void;
+  remindersBusy: boolean;
+}) {
   if (msg.role === "user") {
     return (
       <div className="flex justify-end">
@@ -207,7 +218,7 @@ function Bubble({ msg, onSave }: { msg: ChatMsg; onSave: (msg: ChatMsg) => void 
             Diagnostic: {msg.debug}
           </p>
         )}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <SpeakButton text={msg.body} />
           {msg.saveTitle && !msg.item && (
             <button
@@ -218,6 +229,20 @@ function Bubble({ msg, onSave }: { msg: ChatMsg; onSave: (msg: ChatMsg) => void 
               <Bookmark size={13} /> {msg.saved ? "Saved" : "Save this"}
             </button>
           )}
+          {msg.engine && !msg.item && (
+            <button
+              onClick={() => onSaveReminders(msg)}
+              disabled={msg.remindersSaved || remindersBusy}
+              className="mt-1 inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5 text-[11px] text-ink-faint hover:text-eucalypt-700 disabled:text-eucalypt-700"
+            >
+              <CalendarClock size={13} />{" "}
+              {msg.remindersSaved
+                ? "Saved to dashboard"
+                : remindersBusy
+                  ? "Saving…"
+                  : "Save as reminders"}
+            </button>
+          )}
         </div>
         <CapturePreview msg={msg} />
       </div>
@@ -226,7 +251,7 @@ function Bubble({ msg, onSave }: { msg: ChatMsg; onSave: (msg: ChatMsg) => void 
 }
 
 function CaptureInner() {
-  const { capture, data } = useBo();
+  const { capture, addReminders, data } = useBo();
   const params = useSearchParams();
   const tone = data.preferences.tone;
   const [messages, setMessages] = useState<ChatMsg[]>([
@@ -237,8 +262,42 @@ function CaptureInner() {
     },
   ]);
   const [busy, setBusy] = useState(false);
+  const [remindersBusyId, setRemindersBusyId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const sentInitial = useRef(false);
+
+  const saveReminders = async (msg: ChatMsg) => {
+    setRemindersBusyId(msg.id);
+    try {
+      const reminders = await planClient(msg.body);
+      if (!reminders.length) {
+        setMessages((m) => [
+          ...m,
+          {
+            id: `m_${Date.now()}`,
+            role: "bo",
+            body: "I couldn't pull clear reminders out of that one. If you give me a checklist with rough timings, I'll save them for you.",
+          },
+        ]);
+        return;
+      }
+      const count = addReminders(reminders);
+      setMessages((m) => m.map((x) => (x.id === msg.id ? { ...x, remindersSaved: true } : x)));
+      const lines = reminders
+        .map((r) => `• ${r.title}${r.date ? ` — ${formatDate(r.date)}` : ""}`)
+        .join("\n");
+      setMessages((m) => [
+        ...m,
+        {
+          id: `m_${Date.now()}`,
+          role: "bo",
+          body: `Done — saved ${count} ${count === 1 ? "reminder" : "reminders"} to your dashboard under **Coming up**:\n${lines}\n\nOpen the **Home** tab to see them, and I'll nudge you as each one comes due.`,
+        },
+      ]);
+    } finally {
+      setRemindersBusyId(null);
+    }
+  };
 
   const saveThought = (msg: ChatMsg) => {
     const title = msg.saveTitle ?? "Thought for Nook";
@@ -341,7 +400,13 @@ function CaptureInner() {
       <div className="flex-1 overflow-y-auto">
         <div className="container-app space-y-4 py-4" aria-live="polite">
           {messages.map((m) => (
-            <Bubble key={m.id} msg={m} onSave={saveThought} />
+            <Bubble
+              key={m.id}
+              msg={m}
+              onSave={saveThought}
+              onSaveReminders={saveReminders}
+              remindersBusy={remindersBusyId === m.id}
+            />
           ))}
           {busy && (
             <div className="flex items-center gap-2 text-sm text-ink-faint">
