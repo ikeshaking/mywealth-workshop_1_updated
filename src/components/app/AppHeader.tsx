@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Settings } from "lucide-react";
 import { BoAvatar } from "@/components/brand/Logo";
 
 /**
@@ -38,7 +38,15 @@ export function AppHeader({
           )}
           {title && <h1 className="truncate text-base font-semibold text-ink">{title}</h1>}
         </div>
-        {right}
+        {right ?? (
+          <Link
+            href="/settings"
+            aria-label="Settings"
+            className="rounded-lg p-1.5 text-ink-soft hover:bg-eucalypt-50"
+          >
+            <Settings size={20} />
+          </Link>
+        )}
       </div>
     </header>
   );

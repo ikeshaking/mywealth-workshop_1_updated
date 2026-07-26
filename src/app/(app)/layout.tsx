@@ -15,7 +15,7 @@ import { NudgeToaster } from "@/components/app/NudgeToaster";
 function Guarded({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [checked, setChecked] = useState(false);
-  const { data, ready } = useBo();
+  const { ready } = useBo();
 
   useEffect(() => {
     let cancelled = false;
@@ -37,15 +37,13 @@ function Guarded({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const pendingApprovals = data.approvals.filter((a) => a.status === "pending").length;
-
   return (
     <div className="flex min-h-dvh flex-col bg-canvas">
       <main id="main" className="flex-1 pb-4">
         {children}
       </main>
       <NudgeToaster />
-      <BottomNav approvalsCount={pendingApprovals} />
+      <BottomNav />
     </div>
   );
 }

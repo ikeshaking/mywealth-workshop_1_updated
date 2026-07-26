@@ -2,18 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, MessageCircle, ShoppingBag, CheckCircle2, Settings } from "lucide-react";
+import { Home, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
-  { href: "/dashboard", label: "Home", icon: Home },
   { href: "/capture", label: "Chat", icon: MessageCircle },
-  { href: "/decisions", label: "Decisions", icon: ShoppingBag },
-  { href: "/approvals", label: "Approvals", icon: CheckCircle2 },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", label: "Home", icon: Home },
 ];
 
-export function BottomNav({ approvalsCount = 0 }: { approvalsCount?: number }) {
+export function BottomNav() {
   const pathname = usePathname();
   return (
     <nav
@@ -35,11 +32,6 @@ export function BottomNav({ approvalsCount = 0 }: { approvalsCount?: number }) {
               >
                 <Icon size={20} strokeWidth={active ? 2.4 : 2} aria-hidden />
                 {label}
-                {href === "/approvals" && approvalsCount > 0 && (
-                  <span className="absolute right-2 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-clay-500 px-1 text-[10px] font-semibold text-white">
-                    {approvalsCount}
-                  </span>
-                )}
               </Link>
             </li>
           );

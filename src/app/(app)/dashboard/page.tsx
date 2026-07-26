@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
+import { ChevronRight, ExternalLink } from "lucide-react";
 import { AppHeader } from "@/components/app/AppHeader";
 import { BoAvatar } from "@/components/brand/Logo";
 import { ItemCard } from "@/components/shared/ItemCard";
@@ -11,8 +12,10 @@ import { MetricsRow } from "@/components/dashboard/MetricsRow";
 import { TodayBrief } from "@/components/dashboard/TodayBrief";
 import { Composer } from "@/components/capture/Composer";
 import { Button } from "@/components/ui/Button";
+import { Card, CardTitle } from "@/components/ui/Card";
 import { useBo } from "@/lib/store/BoProvider";
 import { dashboardSections } from "@/lib/catalog";
+import { formatMoney } from "@/lib/utils";
 import type { LifeItem, Status } from "@/lib/types";
 
 function greeting(): string {
@@ -77,15 +80,12 @@ export default function DashboardPage() {
     return null;
   };
 
+  const savedOptions = data.recommendationOptions.filter((o) => o.saved && !o.rejected);
+  const pendingApprovals = data.approvals.filter((a) => a.status === "pending");
+
   return (
     <div>
-      <AppHeader
-        right={
-          <Link href="/settings" aria-label="Settings" className="text-sm text-eucalypt-700">
-            {data.preferences.preferred_name}
-          </Link>
-        }
-      />
+      <AppHeader />
       <div className="container-app space-y-6 py-4">
         {/* Greeting */}
         <div>
@@ -106,6 +106,22 @@ export default function DashboardPage() {
         </div>
 
         <MetricsRow />
+
+        {/* Waiting on you (approvals folded in) */}
+        {pendingApprovals.length > 0 && (
+          <Link href="/approvals" className="block">
+            <Card className="flex items-center justify-between transition-shadow hover:shadow-lift">
+              <div>
+                <CardTitle className="text-sm">Waiting on you</CardTitle>
+                <p className="mt-0.5 text-xs text-ink-soft">
+                  {pendingApprovals.length} thing{pendingApprovals.length > 1 ? "s" : ""} to review
+                  and approve
+                </p>
+              </div>
+              <ChevronRight size={18} className="shrink-0 text-ink-faint" />
+            </Card>
+          </Link>
+        )}
 
         {/* Sections */}
         {dashboardSections.map((section) => {
@@ -165,6 +181,41 @@ export default function DashboardPage() {
             </section>
           );
         })}
+
+        {/* Saved shopping options */}
+        {savedOptions.length > 0 && (
+          <section aria-labelledby="sec-saved">
+            <div className="mb-2">
+              <h2 id="sec-saved" className="text-base font-semibold text-ink">
+                Saved
+              </h2>
+              <p className="text-xs text-ink-faint">Options you kept to come back to.</p>
+            </div>
+            <div className="space-y-2">
+              {savedOptions.map((o) => (
+                <div
+                  key={o.id}
+                  className="rounded-2xl border border-black/[0.05] bg-white p-3 shadow-soft"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-medium text-ink">{o.title}</p>
+                    <p className="shrink-0 text-sm font-semibold text-ink">
+                      {formatMoney(o.total_price, o.currency)}
+                    </p>
+                  </div>
+                  <a
+                    href={o.retailer_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-eucalypt-700"
+                  >
+                    View at {o.retailer_label} <ExternalLink size={12} />
+                  </a>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Calm sign-off */}
         <div className="flex items-center gap-3 rounded-2xl bg-eucalypt-50 p-4">
