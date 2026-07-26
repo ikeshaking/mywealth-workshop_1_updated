@@ -4,7 +4,7 @@ import { categoryMeta } from "../catalog";
 import { relativeDay } from "../utils";
 
 /**
- * Turns an extraction into Bo's confirmation, in the user's chosen tone.
+ * Turns an extraction into Nook's confirmation, in the user's chosen tone.
  * Never judgemental; always offers a next step. The "calm" tone keeps the
  * original wording ("Got it. I've added your …").
  */

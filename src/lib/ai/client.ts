@@ -40,7 +40,7 @@ export interface ChatClientContext {
 }
 
 /**
- * Calls the secure /api/chat route for Bo's open-ended thinking/suggestion
+ * Calls the secure /api/chat route for Nook's open-ended thinking/suggestion
  * replies. Falls back to the local offline suggestion bank on any failure.
  */
 export async function chatClient(

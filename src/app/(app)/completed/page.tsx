@@ -24,7 +24,7 @@ export default function CompletedPage() {
           <EmptyState
             icon="🌟"
             title="Nothing completed yet"
-            body="As Bo handles things, they'll show up here with what you saved."
+            body="As Nook handles things, they'll show up here with what you saved."
           />
         ) : (
           <div className="space-y-3">

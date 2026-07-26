@@ -16,17 +16,17 @@ const features = [
   {
     emoji: "💬",
     title: "Capture anything, naturally",
-    body: "Type, talk or forward. Bo understands messy thoughts — no forms, no lists.",
+    body: "Type, talk or forward. Nook understands messy thoughts — no forms, no lists.",
   },
   {
     emoji: "✅",
     title: "It gets things done",
-    body: "Bo tracks, follows up and moves each thing towards completion.",
+    body: "Nook tracks, follows up and moves each thing towards completion.",
   },
   {
     emoji: "🧭",
     title: "Smarter decisions",
-    body: "Bo researches complete options and recommends the best fit for you.",
+    body: "Nook researches complete options and recommends the best fit for you.",
   },
   {
     emoji: "💷",
@@ -36,7 +36,7 @@ const features = [
 ];
 
 const benefits = [
-  { title: "Less to think about", body: "Bo remembers and keeps you on track." },
+  { title: "Less to think about", body: "Nook remembers and keeps you on track." },
   { title: "Better decisions", body: "It helps you choose the best option." },
   { title: "Saves you time", body: "Life admin, handled so you don't have to." },
   { title: "Saves you money", body: "Finds better deals and avoids needless costs." },
@@ -70,11 +70,11 @@ export default function LandingPage() {
             Your life, in one place.
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-lg text-ink-soft">
-            Nook is a calm, personal home for everyday life. Inside, Bo remembers what matters,
+            Nook is a calm, personal home for everyday life. Inside, Nook remembers what matters,
             keeps track of what&apos;s coming and quietly helps you get things done.
           </p>
           <p className="mt-4 text-base font-medium text-eucalypt-700">
-            Tell Bo once. It handles the rest.
+            Tell Nook once. It handles the rest.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link href="/signup">
@@ -147,7 +147,7 @@ export default function LandingPage() {
         <section className="container-wide pb-20">
           <Card className="bg-eucalypt-600 p-8 text-center text-white sm:p-12">
             <h2 className="text-2xl font-semibold sm:text-3xl">
-              Bo handles the life stuff.
+              Nook handles the life stuff.
             </h2>
             <p className="mt-2 text-eucalypt-100">You get your time back.</p>
             <div className="mt-6 flex justify-center">

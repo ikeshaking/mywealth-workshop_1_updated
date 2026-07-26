@@ -9,7 +9,7 @@ import type { BoTone } from "../types";
  */
 
 export interface SuggestReply {
-  /** Bo's conversational reply (markdown-light plain text). */
+  /** Nook's conversational reply (markdown-light plain text). */
   reply: string;
   /** Optional short title if the user chooses to save this thought. */
   saveTitle: string;
@@ -106,5 +106,5 @@ export function demoSuggest(text: string, tone: BoTone): SuggestReply {
     "Intriguing. Give me the details and I'll turn it into something useful — shortlist, plan, or a proper pros/cons.",
     "Tell me a bit more (what, budget, timing) and I'll return a short shortlist.",
   );
-  return { reply: head, saveTitle: "Thought for Bo" };
+  return { reply: head, saveTitle: "Thought for Nook" };
 }

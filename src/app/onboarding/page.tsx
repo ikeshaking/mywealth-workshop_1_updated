@@ -59,12 +59,12 @@ export default function OnboardingPage() {
             Hi{data.preferences.preferred_name ? `, ${data.preferences.preferred_name}` : ""} 👋
           </h1>
           <p className="mt-1 text-sm text-ink-soft">
-            Just a few essentials so Bo can help the way you like. You can change these anytime.
+            Just a few essentials so Nook can help the way you like. You can change these anytime.
           </p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
-          <Field label="What should Bo call you?" error={errors.preferred_name?.message}>
+          <Field label="What should Nook call you?" error={errors.preferred_name?.message}>
             <Input placeholder="Alex" {...register("preferred_name")} />
           </Field>
 
@@ -83,7 +83,7 @@ export default function OnboardingPage() {
             render={({ field }) => (
               <Field
                 label="What would you like help with most?"
-                hint="Pick a few — Bo prioritises these."
+                hint="Pick a few — Nook prioritises these."
                 error={errors.focus_areas?.message as string | undefined}
               >
                 <div className="flex flex-wrap gap-2">
@@ -132,7 +132,7 @@ export default function OnboardingPage() {
             />
             <span>
               <span className="block text-sm font-medium text-ink">
-                Let Bo make suggestions proactively
+                Let Nook make suggestions proactively
               </span>
               <span className="block text-xs text-ink-soft">
                 It&apos;ll surface useful nudges and better options. It always asks before taking
@@ -142,7 +142,7 @@ export default function OnboardingPage() {
           </label>
 
           <Button type="submit" fullWidth size="lg" disabled={isSubmitting}>
-            Meet Bo
+            Meet Nook
           </Button>
         </form>
       </main>

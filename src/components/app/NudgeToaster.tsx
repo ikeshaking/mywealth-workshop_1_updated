@@ -8,7 +8,7 @@ import { X } from "lucide-react";
 /**
  * Proactive nudge surface. On mount (and periodically) it fires any reminders
  * whose time has passed and shows the newest one as a calm, dismissible toast.
- * This is the app-level simulation of Bo's proactive nudging — no external
+ * This is the app-level simulation of Nook's proactive nudging — no external
  * push notifications required.
  */
 export function NudgeToaster() {

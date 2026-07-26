@@ -1,5 +1,5 @@
 /**
- * Core domain types for Bo.
+ * Core domain types for Nook.
  *
  * These are the single source of truth for the shape of a "life item" and its
  * satellites (notes, events, reminders, approvals, decisions). The Zod schemas
@@ -42,7 +42,7 @@ export type Priority = (typeof PRIORITIES)[number];
 export const PERMISSION_LEVELS = ["observe", "prepare", "approve", "autopilot"] as const;
 export type PermissionLevel = (typeof PERMISSION_LEVELS)[number];
 
-/** A single field on a life item that Bo inferred rather than being told. */
+/** A single field on a life item that Nook inferred rather than being told. */
 export interface InferredMeta {
   due_date?: boolean;
   reminder_date?: boolean;
@@ -67,7 +67,7 @@ export interface LifeItem {
   recommended_action: string | null;
   approval_required: boolean;
   confidence_score: number; // 0..1
-  /** Which fields were inferred by Bo (shown as "inferred" in the UI). */
+  /** Which fields were inferred by Nook (shown as "inferred" in the UI). */
   inferred: InferredMeta;
   /** Money/time saved once completed — used for the Completed screen + metrics. */
   money_saved: number | null;
@@ -122,7 +122,7 @@ export type ApprovalStatus = "pending" | "approved" | "rejected" | "snoozed";
 export interface Approval {
   id: string;
   item_id: string;
-  /** What Bo wants to do */
+  /** What Nook wants to do */
   action: string;
   /** Why it wants to do it */
   reason: string;
@@ -210,7 +210,7 @@ export interface UserPreferences {
   proactive_suggestions: boolean;
   permission_level: PermissionLevel;
   currency: string;
-  /** Bo's selectable voice/personality. */
+  /** Nook's selectable voice/personality. */
   tone: BoTone;
   onboarded: boolean;
 }
@@ -219,6 +219,19 @@ export interface DemoUser {
   id: string;
   email: string;
   name: string;
+}
+
+/** A thing Nook remembers about you — grouped and always editable/forgettable. */
+export type MemoryCategory = "about" | "preference" | "date" | "fact";
+
+export interface Memory {
+  id: string;
+  category: MemoryCategory;
+  label: string; // e.g. "Car"
+  value: string; // e.g. "Toyota RAV4 · 1ABC23"
+  /** Why Nook remembers this — the source, for transparency. */
+  source: string;
+  created_at: string;
 }
 
 /** The full serialisable demo database persisted to localStorage. */
@@ -235,4 +248,5 @@ export interface BoData {
   recommendationOptions: RecommendationOption[];
   conversations: Conversation[];
   messages: Message[];
+  memories: Memory[];
 }

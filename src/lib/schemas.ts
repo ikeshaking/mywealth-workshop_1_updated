@@ -10,7 +10,7 @@ import { CATEGORIES, PRIORITIES } from "./types";
  *  - dates are nullable and must be ISO `YYYY-MM-DD` when present (the model is
  *    instructed never to invent a precise date it wasn't given);
  *  - confidence is clamped to 0..1;
- *  - `missing_information` captures what Bo still needs to ask about.
+ *  - `missing_information` captures what Nook still needs to ask about.
  */
 
 const isoDate = z
@@ -43,7 +43,7 @@ export type Extraction = z.infer<typeof extractionSchema>;
 
 /** Request body accepted by POST /api/extract. */
 export const extractRequestSchema = z.object({
-  input: z.string().min(1, "Tell Bo something first.").max(2000),
+  input: z.string().min(1, "Tell Nook something first.").max(2000),
   currency: z.string().length(3).default("AUD"),
   /** ISO date of "today" so the fallback parser can resolve relative dates. */
   today: z
@@ -62,7 +62,7 @@ export type ExtractResponse = z.infer<typeof extractResponseSchema>;
 
 /** Onboarding form. */
 export const onboardingSchema = z.object({
-  preferred_name: z.string().min(1, "What should Bo call you?").max(60),
+  preferred_name: z.string().min(1, "What should Nook call you?").max(60),
   household_type: z.enum(["solo", "couple", "family", "shared"]),
   focus_areas: z.array(z.enum(CATEGORIES)).min(1, "Pick at least one area."),
   notification_preference: z.enum(["all", "important", "quiet"]),

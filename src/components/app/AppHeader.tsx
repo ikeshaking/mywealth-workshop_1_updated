@@ -6,7 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { BoAvatar } from "@/components/brand/Logo";
 
 /**
- * Compact top bar. Shows either a back button + title (sub-screens) or Bo's
+ * Compact top bar. Shows either a back button + title (sub-screens) or Nook's
  * avatar + greeting (top-level screens).
  */
 export function AppHeader({

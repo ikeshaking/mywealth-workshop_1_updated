@@ -55,19 +55,19 @@ export const permissionMeta: Record<
 > = {
   observe: {
     label: "Observe",
-    description: "Bo can identify and organise your information.",
+    description: "Nook can identify and organise your information.",
   },
   prepare: {
     label: "Prepare",
-    description: "Bo can draft responses, research options and prepare actions.",
+    description: "Nook can draft responses, research options and prepare actions.",
   },
   approve: {
     label: "Approve",
-    description: "Bo always asks you before taking any external action.",
+    description: "Nook always asks you before taking any external action.",
   },
   autopilot: {
     label: "Autopilot",
-    description: "Bo handles routine actions for you automatically.",
+    description: "Nook handles routine actions for you automatically.",
     comingSoon: true,
   },
 };
@@ -94,13 +94,13 @@ export const dashboardSections: {
   {
     key: "decisions",
     title: "Decisions in progress",
-    subtitle: "Options Bo is weighing up for you.",
+    subtitle: "Options Nook is weighing up for you.",
     statuses: ["researching"],
   },
   {
     key: "approvals",
     title: "Ready for approval",
-    subtitle: "One tap and Bo takes it from here.",
+    subtitle: "One tap and Nook takes it from here.",
     statuses: ["ready_for_approval"],
   },
   {

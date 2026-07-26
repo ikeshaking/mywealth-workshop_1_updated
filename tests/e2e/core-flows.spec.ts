@@ -2,11 +2,11 @@ import { test, expect } from "@playwright/test";
 import { loginAsDemo, tellBo } from "./helpers";
 
 /**
- * End-to-end coverage of Bo's five core demo flows. Runs against the app in
+ * End-to-end coverage of Nook's five core demo flows. Runs against the app in
  * demo mode (seeded data, deterministic fallback AI, simulated actions).
  */
 
-test.describe("Bo core demo flows", () => {
+test.describe("Nook core demo flows", () => {
   test.beforeEach(async ({ page }) => {
     await loginAsDemo(page);
   });
@@ -15,7 +15,7 @@ test.describe("Bo core demo flows", () => {
     await page.goto("/capture");
     await tellBo(page, "I need to sort my car rego soon.");
 
-    // Bo confirms and offers a next step.
+    // Nook confirms and offers a next step.
     await expect(page.getByText(/got it\. i've added your/i)).toBeVisible();
     // A structured preview is shown with a way to open the item.
     const open = page.getByRole("link", { name: /open item/i }).first();
@@ -23,7 +23,7 @@ test.describe("Bo core demo flows", () => {
     await open.click();
 
     await expect(page).toHaveURL(/\/items\//);
-    await expect(page.getByText(/bo.s understanding/i)).toBeVisible();
+    await expect(page.getByText(/nook.s understanding/i)).toBeVisible();
 
     // The due date is unknown; add it via Update details.
     await page.getByRole("button", { name: /update details/i }).click();
@@ -76,11 +76,11 @@ test.describe("Bo core demo flows", () => {
     await expect(page.getByText(/gym|streaming|water/i).first()).toBeVisible();
   });
 
-  test("Flow 5: Family appointment — Bo asks who and when", async ({ page }) => {
+  test("Flow 5: Family appointment — Nook asks who and when", async ({ page }) => {
     await page.goto("/capture");
     await tellBo(page, "I need to book the kids into the dentist.");
 
-    // Bo asks a short follow-up for the missing details.
+    // Nook asks a short follow-up for the missing details.
     await expect(page.getByText(/which of the kids|preferred|who and/i).first()).toBeVisible();
     await page.getByRole("link", { name: /open item/i }).first().click();
     await expect(page).toHaveURL(/\/items\//);

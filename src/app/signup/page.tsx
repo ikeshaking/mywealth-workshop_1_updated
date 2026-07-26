@@ -29,7 +29,7 @@ export default function SignupPage() {
   return (
     <AuthShell
       title="Create your account"
-      subtitle="Tell Bo once. It handles the rest."
+      subtitle="Tell Nook once. It handles the rest."
       footer={
         <>
           Already have an account?{" "}

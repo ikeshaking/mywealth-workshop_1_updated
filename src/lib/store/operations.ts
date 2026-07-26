@@ -9,13 +9,14 @@ import type {
   RecommendationOption,
   DecisionRequest,
   RecommendationSet,
+  Memory,
 } from "../types";
 import type { Extraction } from "../schemas";
 import { id, nowIso, todayIso, addDays, currencySymbol } from "../utils";
 import { recommendFor } from "../ai/recommend";
 
 /**
- * Pure, framework-free operations over the Bo data set. Every function takes
+ * Pure, framework-free operations over the Nook data set. Every function takes
  * the current data and returns a NEW data object (immutably), which makes the
  * whole business layer trivially unit-testable and keeps the React layer thin.
  */
@@ -277,11 +278,11 @@ export function resolveApproval(
   if (status === "approved" && item) {
     pushEvent(next, item.id, "approved", `You approved: ${approval.action}.`);
     pushEvent(next, item.id, "simulated_action", `Simulated: ${approval.action} (no real action taken).`);
-    next = transitionStatus(next, item.id, "in_progress", "Bo is handling it (simulated).");
+    next = transitionStatus(next, item.id, "in_progress", "Nook is handling it (simulated).");
     next = updateItem(next, item.id, {
       money_saved: outcome?.money_saved ?? item.money_saved,
       time_saved_minutes: outcome?.time_saved_minutes ?? 15,
-      outcome_summary: outcome?.summary ?? `${approval.action} — handled by Bo (simulated).`,
+      outcome_summary: outcome?.summary ?? `${approval.action} — handled by Nook (simulated).`,
     });
     next = transitionStatus(next, item.id, "completed", "Done. Quietly handled.");
   } else if (status === "rejected" && item) {
@@ -345,6 +346,37 @@ export function approvePurchaseOption(
     reversible: true,
   });
   opt.saved = true;
+  return next;
+}
+
+// --- Memory (what Nook remembers about you) ---------------------------------
+
+export function addMemory(
+  data: BoData,
+  memory: Pick<Memory, "category" | "label" | "value"> & { source?: string },
+): BoData {
+  const next = clone(data);
+  next.memories.unshift({
+    id: id("mem"),
+    category: memory.category,
+    label: memory.label,
+    value: memory.value,
+    source: memory.source ?? "You told Nook this.",
+    created_at: nowIso(),
+  });
+  return next;
+}
+
+export function updateMemory(data: BoData, memoryId: string, value: string): BoData {
+  const next = clone(data);
+  const mem = next.memories.find((m) => m.id === memoryId);
+  if (mem) mem.value = value;
+  return next;
+}
+
+export function forgetMemory(data: BoData, memoryId: string): BoData {
+  const next = clone(data);
+  next.memories = next.memories.filter((m) => m.id !== memoryId);
   return next;
 }
 

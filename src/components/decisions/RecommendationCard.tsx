@@ -8,7 +8,7 @@ import { Check, X, ExternalLink } from "lucide-react";
 
 /**
  * A complete bundled recommendation. Shows total price, what's included, why
- * Bo recommends it, pros and trade-offs, and save/reject/approve controls.
+ * Nook recommends it, pros and trade-offs, and save/reject/approve controls.
  */
 export function RecommendationCard({
   option,
@@ -62,7 +62,7 @@ export function RecommendationCard({
 
       {/* Why */}
       <p className="mt-3 text-sm text-ink-soft">
-        <span className="font-medium text-ink">Why Bo picks this: </span>
+        <span className="font-medium text-ink">Why Nook picks this: </span>
         {option.why_it_suits}
       </p>
 

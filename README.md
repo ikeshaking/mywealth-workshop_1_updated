@@ -1,6 +1,6 @@
 # Nook
 
-**Tell Bo once. It handles the rest.**
+**Tell Nook once. It handles the rest.**
 
 Nook is a warm, calm, mobile-first AI personal assistant for life admin, decisions,
 purchases and household tasks. She absorbs messy thoughts, messages and intentions,
@@ -36,8 +36,8 @@ No environment variables are required. Demo mode is the default.
 | `/` | Landing page |
 | `/login`, `/signup`, `/forgot-password` | Auth (demo) |
 | `/onboarding` | Short, essential-only setup |
-| `/dashboard` | Calm home briefing + “Tell Bo anything…” |
-| `/capture` | Conversational capture (chat with Bo) |
+| `/dashboard` | Calm home briefing + “Tell Nook anything…” |
+| `/capture` | Conversational capture (chat with Nook) |
 | `/items/[id]` | Item detail (timeline, reminders, approvals, notes) |
 | `/decisions`, `/decisions/[id]` | Decisions & shopping recommendations |
 | `/approvals` | Approve / edit / snooze / reject |

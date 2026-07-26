@@ -63,7 +63,8 @@ export default function ItemDetailPage() {
       return;
     }
     if (item.category === "bill") {
-      completeItem(item.id, { summary: `Paid ${item.title}.`, time_saved_minutes: 15 });
+      // Honest: Nook can't actually pay bills yet — this records that you paid it.
+      completeItem(item.id, { summary: `Marked as paid — you handled this one.`, time_saved_minutes: 15 });
       return;
     }
     if (item.status === "ready_for_approval") {
@@ -73,7 +74,7 @@ export default function ItemDetailPage() {
     // Prepare + send to approval.
     requestApproval(item.id, {
       action: item.recommended_action ?? `Handle ${item.title}`,
-      reason: `You asked Bo to sort this. Here's what it'll do.`,
+      reason: `You asked Nook to sort this. Here's what it'll do.`,
       expected_cost: null,
       shares: "Only the details needed to complete this task.",
       reversible: true,
@@ -120,12 +121,12 @@ export default function ItemDetailPage() {
           <Row label="Confidence">{Math.round(item.confidence_score * 100)}% sure</Row>
         </Card>
 
-        {/* Bo's understanding */}
+        {/* Nook's understanding */}
         <Card className="bg-eucalypt-50/60">
           <div className="flex items-start gap-2">
             <BoAvatar size={26} />
             <div>
-              <p className="text-xs font-medium text-eucalypt-700">Bo&apos;s understanding</p>
+              <p className="text-xs font-medium text-eucalypt-700">Nook&apos;s understanding</p>
               <p className="mt-1 text-sm text-ink">
                 You said: <span className="italic">&ldquo;{item.original_input}&rdquo;</span>
               </p>
@@ -249,7 +250,7 @@ export default function ItemDetailPage() {
               <Textarea
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
-                placeholder="Add a note for Bo…"
+                placeholder="Add a note for Nook…"
                 rows={2}
               />
             </div>

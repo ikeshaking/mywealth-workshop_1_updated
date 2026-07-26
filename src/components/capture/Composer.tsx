@@ -5,7 +5,7 @@ import { Send, Mic, ImagePlus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * The "Tell Bo anything…" composer.
+ * The "Tell Nook anything…" composer.
  *  - Text input (Enter to send, Shift+Enter for newline)
  *  - Mic: live speech-to-text via the browser's Web Speech API (free, on-device
  *    where supported). Gracefully hidden when unsupported.
@@ -33,7 +33,7 @@ function getSpeechRecognition(): (new () => SpeechRecognitionLike) | null {
 export function Composer({
   onSend,
   busy,
-  placeholder = "Tell Bo anything…",
+  placeholder = "Tell Nook anything…",
   autoFocus,
 }: {
   onSend: (text: string) => void;
@@ -110,8 +110,8 @@ export function Composer({
         {micSupported && (
           <button
             type="button"
-            title={listening ? "Stop listening" : "Speak to Bo"}
-            aria-label={listening ? "Stop listening" : "Speak to Bo"}
+            title={listening ? "Stop listening" : "Speak to Nook"}
+            aria-label={listening ? "Stop listening" : "Speak to Nook"}
             aria-pressed={listening}
             onClick={toggleMic}
             className={cn(
@@ -142,7 +142,7 @@ export function Composer({
         />
       </div>
       <label htmlFor="bo-composer" className="sr-only">
-        Tell Bo anything
+        Tell Nook anything
       </label>
       <textarea
         id="bo-composer"
@@ -163,7 +163,7 @@ export function Composer({
       />
       <button
         type="submit"
-        aria-label="Send to Bo"
+        aria-label="Send to Nook"
         disabled={busy || !value.trim()}
         className={cn(
           "mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-eucalypt-600 text-white transition-colors hover:bg-eucalypt-700 disabled:opacity-40",

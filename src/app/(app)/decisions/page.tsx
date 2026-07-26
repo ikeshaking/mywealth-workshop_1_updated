@@ -21,7 +21,7 @@ export default function DecisionsPage() {
       <AppHeader title="Decisions & shopping" />
       <div className="container-app space-y-4 py-4">
         <p className="text-sm text-ink-soft">
-          Ask Bo to research anything — it returns complete options, not a wall of products.
+          Ask Nook to research anything — it returns complete options, not a wall of products.
         </p>
         <Composer
           placeholder="Find me… / Help me choose… / Should I…"

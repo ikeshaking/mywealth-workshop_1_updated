@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-/** Bo's friendly blob avatar — calm, warm, a little bit alive. */
+/** Nook's friendly blob avatar — calm, warm, a little bit alive. */
 export function BoAvatar({ className, size = 40 }: { className?: string; size?: number }) {
   return (
     <span

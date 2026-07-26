@@ -108,7 +108,7 @@ function wardrobe(currency: string): Bundle[] {
       retailer_label: "HomeStore (mock retailer)",
       retailer_url: "https://example.com/nord-wardrobe",
       delivery: "Delivery in 7–10 days, assembly included",
-      sizing_notes: "150 × 210 × 58 cm. Tell Bo your wall width to confirm the fit.",
+      sizing_notes: "150 × 210 × 58 cm. Tell Nook your wall width to confirm the fit.",
     },
     {
       title: "Flex Modular Wardrobe",

@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ChevronRight } from "lucide-react";
 import { AppHeader } from "@/components/app/AppHeader";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -53,11 +55,24 @@ export default function SettingsPage() {
           <p className="text-xs text-ink-faint">Signed in as {data.user.email}</p>
         </Card>
 
-        {/* Bo's voice */}
+        {/* What Nook remembers */}
+        <Link href="/memory" className="block">
+          <Card className="flex items-center justify-between transition-shadow hover:shadow-lift">
+            <div>
+              <CardTitle className="text-sm">What Nook remembers</CardTitle>
+              <p className="mt-0.5 text-xs text-ink-soft">
+                See, correct or forget what Nook knows about you.
+              </p>
+            </div>
+            <ChevronRight size={18} className="shrink-0 text-ink-faint" />
+          </Card>
+        </Link>
+
+        {/* Nook's voice */}
         <Card className="space-y-3">
-          <CardTitle className="text-sm">Bo&apos;s voice</CardTitle>
+          <CardTitle className="text-sm">Nook&apos;s voice</CardTitle>
           <p className="text-xs text-ink-soft">
-            How should Bo talk to you? You can change this anytime.
+            How should Nook talk to you? You can change this anytime.
           </p>
           <div className="space-y-2">
             {TONES.map((t: BoTone) => {
@@ -127,9 +142,9 @@ export default function SettingsPage() {
 
         {/* Permissions */}
         <Card className="space-y-3">
-          <CardTitle className="text-sm">What Bo can do</CardTitle>
+          <CardTitle className="text-sm">What Nook can do</CardTitle>
           <p className="text-xs text-ink-soft">
-            Choose how much Bo handles on its own. You can change this anytime.
+            Choose how much Nook handles on its own. You can change this anytime.
           </p>
           <div className="space-y-2">
             {PERMISSION_LEVELS.map((level: PermissionLevel) => {
@@ -176,7 +191,7 @@ export default function SettingsPage() {
         {/* Notifications */}
         <Card className="space-y-3">
           <CardTitle className="text-sm">Notifications</CardTitle>
-          <Field label="How often should Bo nudge you?">
+          <Field label="How often should Nook nudge you?">
             <Select
               value={prefs.notification_preference}
               onChange={(e) =>
@@ -205,7 +220,7 @@ export default function SettingsPage() {
         <Card className="space-y-2">
           <CardTitle className="text-sm">AI &amp; privacy</CardTitle>
           <p className="text-xs text-ink-soft">
-            Bo processes your messages to structure them. In demo mode this runs locally with a
+            Nook processes your messages to structure them. In demo mode this runs locally with a
             deterministic parser — nothing leaves your browser. With an OpenAI key configured,
             extraction happens on a secure server route; your key is never exposed to the browser.
           </p>
@@ -249,7 +264,7 @@ export default function SettingsPage() {
           Sign out
         </Button>
 
-        <p className="pb-4 text-center text-xs text-ink-faint">Bo · demo build</p>
+        <p className="pb-4 text-center text-xs text-ink-faint">Nook · demo build</p>
       </div>
     </div>
   );

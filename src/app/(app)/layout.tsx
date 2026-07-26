@@ -8,7 +8,7 @@ import { getSession } from "@/lib/auth";
 import { NudgeToaster } from "@/components/app/NudgeToaster";
 
 /**
- * Authenticated app shell. Wraps every in-app screen with the Bo store,
+ * Authenticated app shell. Wraps every in-app screen with the Nook store,
  * enforces the demo auth guard (redirect to /login when signed out), runs the
  * app-level nudge simulation, and renders the persistent bottom navigation.
  */

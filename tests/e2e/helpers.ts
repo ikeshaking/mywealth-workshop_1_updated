@@ -13,8 +13,8 @@ export async function loginAsDemo(page: Page) {
 
 /** Send a message through the composer on whatever screen is active. */
 export async function tellBo(page: Page, text: string) {
-  const box = page.getByPlaceholder(/tell bo anything|find me|help me choose/i).first();
+  const box = page.getByPlaceholder(/tell nook anything|find me|help me choose/i).first();
   await box.click();
   await box.fill(text);
-  await page.getByRole("button", { name: /send to bo/i }).click();
+  await page.getByRole("button", { name: /send to nook/i }).click();
 }

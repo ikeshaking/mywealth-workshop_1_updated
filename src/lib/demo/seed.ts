@@ -9,6 +9,7 @@ import type {
   RecommendationOption,
   Conversation,
   Message,
+  Memory,
 } from "../types";
 import { recommendFor } from "../ai/recommend";
 
@@ -141,7 +142,7 @@ export function buildSeed(today: string): BoData {
     id: "item_internet",
     title: "Review internet plan",
     original_input: "My internet bill seems expensive.",
-    summary: "Bo found a faster plan that saves an estimated $216/year.",
+    summary: "Nook found a faster plan that saves an estimated $216/year.",
     category: "subscription",
     status: "researching",
     priority: "medium",
@@ -160,7 +161,7 @@ export function buildSeed(today: string): BoData {
     id: "item_gym",
     title: "Cancel gym membership",
     original_input: "I keep paying for a gym membership I do not use.",
-    summary: "You haven't used this in 45 days. Bo prepared a cancellation.",
+    summary: "You haven't used this in 45 days. Nook prepared a cancellation.",
     category: "subscription",
     status: "ready_for_approval",
     priority: "medium",
@@ -200,11 +201,11 @@ export function buildSeed(today: string): BoData {
     id: "item_dentist",
     title: "Book the kids' dentist",
     original_input: "I need to book the kids into the dentist.",
-    summary: "Bo needs to know who and when before proposing times.",
+    summary: "Nook needs to know who and when before proposing times.",
     category: "family",
     status: "needs_information",
     priority: "medium",
-    recommended_action: "Tell Bo which children and preferred timing.",
+    recommended_action: "Tell Nook which children and preferred timing.",
     approval_required: true,
     confidence_score: 0.7,
     follow_up_date: addDays(today, 2),
@@ -260,7 +261,7 @@ export function buildSeed(today: string): BoData {
     priority: "medium",
     due_date: addDays(today, 9),
     context: "$1,234.00 · quarterly",
-    recommended_action: "Set aside funds; Bo will remind you.",
+    recommended_action: "Set aside funds; Nook will remind you.",
     confidence_score: 0.92,
   });
   items.push(rates);
@@ -271,12 +272,12 @@ export function buildSeed(today: string): BoData {
     id: "item_travel",
     title: "Organise travel insurance",
     original_input: "I should probably organise travel insurance.",
-    summary: "You mentioned travel insurance. Want Bo to find options?",
+    summary: "You mentioned travel insurance. Want Nook to find options?",
     category: "travel",
     status: "captured",
     priority: "low",
     follow_up_date: addDays(today, 5),
-    recommended_action: "Share your trip dates and Bo will compare policies.",
+    recommended_action: "Share your trip dates and Nook will compare policies.",
     confidence_score: 0.6,
     inferred: { priority: true },
   });
@@ -294,7 +295,7 @@ export function buildSeed(today: string): BoData {
     priority: "high",
     due_date: addDays(today, 2),
     context: "Year 3 museum trip",
-    recommended_action: "Sign the form; Bo can remind you to hand it in.",
+    recommended_action: "Sign the form; Nook can remind you to hand it in.",
     confidence_score: 0.85,
   });
   items.push(permission);
@@ -324,7 +325,7 @@ export function buildSeed(today: string): BoData {
     id: "item_cancelled_stream",
     title: "Cancelled unused streaming plan",
     original_input: "Cancel the streaming service nobody watches",
-    summary: "Bo cancelled a streaming plan you weren't using.",
+    summary: "Nook cancelled a streaming plan you weren't using.",
     category: "subscription",
     status: "completed",
     priority: "low",
@@ -340,7 +341,7 @@ export function buildSeed(today: string): BoData {
   const conversation: Conversation = {
     id: "conv_main",
     user_id: USER_ID,
-    title: "Chat with Bo",
+    title: "Chat with Nook",
     created_at: nowIso,
     updated_at: nowIso,
   };
@@ -360,6 +361,82 @@ export function buildSeed(today: string): BoData {
   const decisionRequests: DecisionRequest[] = [internetDecision, diningDecision];
   const recommendationSets: RecommendationSet[] = [internetSet, diningSet];
   const recommendationOptions: RecommendationOption[] = [...internetOptions, ...diningOptions];
+
+  // Things Nook has picked up — shown on the "What Nook remembers" screen.
+  const memories: Memory[] = [
+    {
+      id: "mem_car",
+      category: "fact",
+      label: "Car",
+      value: "Toyota RAV4 · plate 1ABC23",
+      source: "From your car registration.",
+      created_at: nowIso,
+    },
+    {
+      id: "mem_energy",
+      category: "fact",
+      label: "Electricity provider",
+      value: "Sparked Energy · ~$90/month",
+      source: "From your electricity bill.",
+      created_at: nowIso,
+    },
+    {
+      id: "mem_gym",
+      category: "fact",
+      label: "Gym",
+      value: "Membership unused for 45 days · $29.95/month",
+      source: "Noticed from your activity.",
+      created_at: nowIso,
+    },
+    {
+      id: "mem_mum_bday",
+      category: "date",
+      label: "Mum's birthday",
+      value: "14 August",
+      source: "You mentioned it when shopping for a gift.",
+      created_at: nowIso,
+    },
+    {
+      id: "mem_rego_annual",
+      category: "date",
+      label: "Car rego renewal",
+      value: "Renews yearly, around late May",
+      source: "From last year's renewal.",
+      created_at: nowIso,
+    },
+    {
+      id: "mem_pref_value",
+      category: "preference",
+      label: "When switching plans",
+      value: "Prefers lower cost, no long lock-in",
+      source: "From how you compared internet plans.",
+      created_at: nowIso,
+    },
+    {
+      id: "mem_pref_furniture",
+      category: "preference",
+      label: "Furniture style",
+      value: "Modern, weather-resistant, seats the whole family",
+      source: "From your outdoor dining search.",
+      created_at: nowIso,
+    },
+    {
+      id: "mem_pref_meals",
+      category: "preference",
+      label: "Meals",
+      value: "Cheap and quick on weeknights",
+      source: "You told Nook this.",
+      created_at: nowIso,
+    },
+    {
+      id: "mem_about_household",
+      category: "about",
+      label: "Household",
+      value: "Family with kids",
+      source: "From your onboarding.",
+      created_at: nowIso,
+    },
+  ];
 
   return {
     user: { id: USER_ID, email: "alex@example.com", name: "Alex" },
@@ -384,5 +461,6 @@ export function buildSeed(today: string): BoData {
     recommendationOptions,
     conversations: [conversation],
     messages,
+    memories,
   };
 }

@@ -35,7 +35,7 @@ export default function LoginPage() {
   return (
     <AuthShell
       title="Welcome back"
-      subtitle="Log in and let Bo pick up where it left off."
+      subtitle="Log in and let Nook pick up where it left off."
       footer={
         <>
           New here?{" "}

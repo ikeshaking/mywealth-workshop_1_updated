@@ -5,7 +5,7 @@ import { addDays, currencySymbol } from "../utils";
 /**
  * Deterministic, offline natural-language parser.
  *
- * This is what powers Bo in demo mode (no OpenAI key). It is intentionally
+ * This is what powers Nook in demo mode (no OpenAI key). It is intentionally
  * conservative: it never invents precise dates or costs it wasn't given, marks
  * everything it *does* infer via the caller, and asks a short follow-up when a
  * genuinely required detail is missing. Its output satisfies `extractionSchema`.
@@ -212,8 +212,8 @@ export function fallbackExtract(input: string, today: string): Extraction {
       : null;
 
   const summary = isDecision
-    ? `You'd like Bo to research options${budget ? ` under ${currencySymbol(currency)}${budget.toLocaleString()}` : ""} and recommend the best fit.`
-    : `Bo understood this as a ${rule.category} to keep on top of.`;
+    ? `You'd like Nook to research options${budget ? ` under ${currencySymbol(currency)}${budget.toLocaleString()}` : ""} and recommend the best fit.`
+    : `Nook understood this as a ${rule.category} to keep on top of.`;
 
   // Confidence: high when a rule matched cleanly and few details are missing.
   const matchedRule = rule.category !== "general";

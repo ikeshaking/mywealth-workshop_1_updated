@@ -55,7 +55,7 @@ export default function DashboardPage() {
           variant="secondary"
           onClick={() =>
             completeItem(item.id, {
-              summary: `Paid ${item.title}.`,
+              summary: `Marked as paid — you handled this one.`,
               time_saved_minutes: 15,
             })
           }
@@ -97,7 +97,7 @@ export default function DashboardPage() {
         {/* Prominent capture */}
         <div>
           <Composer
-            placeholder="Tell Bo anything…"
+            placeholder="Tell Nook anything…"
             onSend={(text) => router.push(`/capture?q=${encodeURIComponent(text)}`)}
           />
         </div>
@@ -133,7 +133,7 @@ export default function DashboardPage() {
                   <EmptyState
                     icon="🌿"
                     title="Nothing needs you right now"
-                    body="Bo will surface things here the moment they need attention."
+                    body="Nook will surface things here the moment they need attention."
                   />
                 ) : null
               ) : (

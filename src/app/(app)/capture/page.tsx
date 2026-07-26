@@ -64,7 +64,7 @@ function classify(text: string): { kind: Kind; extraction: Extraction } {
   return { kind: "chat", extraction };
 }
 
-/** Render Bo's light markdown (**bold** and line breaks) safely. */
+/** Render Nook's light markdown (**bold** and line breaks) safely. */
 function RichText({ text }: { text: string }) {
   return (
     <>
@@ -216,11 +216,11 @@ function CaptureInner() {
   const sentInitial = useRef(false);
 
   const saveThought = (msg: ChatMsg) => {
-    const title = msg.saveTitle ?? "Thought for Bo";
+    const title = msg.saveTitle ?? "Thought for Nook";
     const userText = [...messages].reverse().find((m) => m.role === "user")?.body ?? title;
     const extraction: Extraction = {
       title,
-      summary: "Saved from a chat with Bo.",
+      summary: "Saved from a chat with Nook.",
       category: "general",
       priority: "low",
       due_date: null,
@@ -248,7 +248,7 @@ function CaptureInner() {
       const { kind } = classify(text);
 
       if (kind === "chat") {
-        // Open-ended thinking / suggestions — Bo replies, no item created.
+        // Open-ended thinking / suggestions — Nook replies, no item created.
         const history = [...messages, userMsg]
           .filter((m) => m.id !== "seed")
           .slice(-8)
@@ -310,7 +310,7 @@ function CaptureInner() {
 
   return (
     <div className="flex h-dvh flex-col">
-      <AppHeader title="Bo" />
+      <AppHeader title="Nook" />
       <div className="flex-1 overflow-y-auto">
         <div className="container-app space-y-4 py-4" aria-live="polite">
           {messages.map((m) => (
@@ -319,7 +319,7 @@ function CaptureInner() {
           {busy && (
             <div className="flex items-center gap-2 text-sm text-ink-faint">
               <BoAvatar size={28} />
-              <span className="animate-pulse-soft">Bo is thinking…</span>
+              <span className="animate-pulse-soft">Nook is thinking…</span>
             </div>
           )}
           <div ref={bottomRef} />

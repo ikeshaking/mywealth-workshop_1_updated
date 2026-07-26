@@ -46,6 +46,9 @@ interface BoContextValue {
   setOptionFlag: (optionId: string, flag: "saved" | "rejected", value: boolean) => void;
   approvePurchaseOption: (optionId: string) => void;
   updatePreferences: (patch: Partial<UserPreferences>) => void;
+  addMemory: (memory: Parameters<typeof ops.addMemory>[1]) => void;
+  updateMemory: (memoryId: string, value: string) => void;
+  forgetMemory: (memoryId: string) => void;
   runNudges: () => void;
   resetDemo: () => void;
 }
@@ -71,7 +74,10 @@ export function BoProvider({ children }: { children: React.ReactNode }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        commit(JSON.parse(raw) as BoData);
+        const parsed = JSON.parse(raw) as BoData;
+        // Backward-compat: ensure newer collections exist.
+        if (!Array.isArray(parsed.memories)) parsed.memories = [];
+        commit(parsed);
       } else {
         const seed = buildSeed(todayIso());
         localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));
@@ -162,6 +168,18 @@ export function BoProvider({ children }: { children: React.ReactNode }) {
     setData((d) => ({ ...d, preferences: { ...d.preferences, ...patch } }));
   }, []);
 
+  const addMemory = useCallback((memory: Parameters<typeof ops.addMemory>[1]) => {
+    setData((d) => ops.addMemory(d, memory));
+  }, []);
+
+  const updateMemory = useCallback((memoryId: string, value: string) => {
+    setData((d) => ops.updateMemory(d, memoryId, value));
+  }, []);
+
+  const forgetMemory = useCallback((memoryId: string) => {
+    setData((d) => ops.forgetMemory(d, memoryId));
+  }, []);
+
   const runNudges = useCallback(() => {
     setData((d) => ops.fireDueReminders(d).data);
   }, []);
@@ -193,6 +211,9 @@ export function BoProvider({ children }: { children: React.ReactNode }) {
     setOptionFlag,
     approvePurchaseOption,
     updatePreferences,
+    addMemory,
+    updateMemory,
+    forgetMemory,
     runNudges,
     resetDemo,
   };

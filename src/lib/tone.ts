@@ -1,6 +1,6 @@
 /**
- * Bo's selectable voice. Each tone shapes both the demo replies and the
- * system prompt sent to OpenAI, so Bo sounds consistent whether or not the
+ * Nook's selectable voice. Each tone shapes both the demo replies and the
+ * system prompt sent to OpenAI, so Nook sounds consistent whether or not the
  * real AI brain is switched on. Users pick their tone in Settings.
  */
 
@@ -17,7 +17,7 @@ export const toneMeta: Record<
     label: string;
     description: string;
     sample: string;
-    /** Injected into the OpenAI system prompt to steer Bo's voice. */
+    /** Injected into the OpenAI system prompt to steer Nook's voice. */
     system: string;
   }
 > = {

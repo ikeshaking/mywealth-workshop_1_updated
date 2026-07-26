@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 
-// Bo's typeface: modern, characterful, warm — used across the whole app.
+// Nook's typeface: modern, characterful, warm — used across the whole app.
 const display = Bricolage_Grotesque({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -12,7 +12,7 @@ const display = Bricolage_Grotesque({
 export const metadata: Metadata = {
   title: "Nook — Your life, in one place.",
   description:
-    "Nook is a calm, personal home for everyday life. Inside Nook, Bo remembers what matters, keeps track of what's coming and helps you get things done. Tell Bo once. It handles the rest.",
+    "Nook is a calm, personal home for everyday life. It remembers what matters, keeps track of what's coming and helps you get things done. Tell Nook once. It handles the rest.",
   applicationName: "Nook",
 };
 

@@ -44,7 +44,7 @@ export default function ApprovalsPage() {
         <div className="flex items-start gap-2 rounded-2xl bg-eucalypt-50 p-3">
           <ShieldCheck size={18} className="mt-0.5 shrink-0 text-eucalypt-600" />
           <p className="text-xs text-ink-soft">
-            Bo never takes an external action without your say-so. Everything here is{" "}
+            Nook never takes an external action without your say-so. Everything here is{" "}
             <span className="font-medium text-ink">simulated</span> in demo mode — no real payments,
             bookings or cancellations happen.
           </p>

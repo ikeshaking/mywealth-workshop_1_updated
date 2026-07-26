@@ -11,7 +11,7 @@ const screens = [
   { href: "/forgot-password", label: "Forgot password", note: "Reset flow" },
   { href: "/onboarding", label: "Onboarding", note: "Essential questions only" },
   { href: "/dashboard", label: "Home dashboard", note: "Calm briefing + capture" },
-  { href: "/capture", label: "Conversational capture", note: "Chat with Bo" },
+  { href: "/capture", label: "Conversational capture", note: "Chat with Nook" },
   { href: "/items/item_rego", label: "Item detail", note: "Car registration example" },
   { href: "/decisions", label: "Decisions & shopping", note: "Research requests" },
   { href: "/decisions/dr_dining", label: "Recommendations", note: "Outdoor dining bundles" },
