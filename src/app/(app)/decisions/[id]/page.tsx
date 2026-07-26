@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { AppHeader } from "@/components/app/AppHeader";
 import { BoAvatar } from "@/components/brand/Logo";
+import { ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { RecommendationCard } from "@/components/decisions/RecommendationCard";
 import { useBo } from "@/lib/store/BoProvider";
@@ -156,9 +156,15 @@ export default function DecisionDetailPage() {
                     <td className="p-2 text-ink-soft">{o.advantages[0]}</td>
                     <td className="p-2 text-ink-soft">{o.delivery}</td>
                     <td className="p-2">
-                      <Button size="sm" onClick={() => approve(o.id)}>
-                        Approve
-                      </Button>
+                      <a
+                        href={o.retailer_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 whitespace-nowrap font-medium text-eucalypt-700"
+                      >
+                        View at {o.retailer_label}
+                        <ExternalLink size={12} />
+                      </a>
                     </td>
                   </tr>
                 ))}

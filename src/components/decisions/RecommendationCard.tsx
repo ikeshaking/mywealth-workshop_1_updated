@@ -96,23 +96,25 @@ export function RecommendationCard({
       <div className="mt-3 space-y-1 text-xs text-ink-faint">
         <p>🚚 {option.delivery}</p>
         {option.sizing_notes && <p>📐 {option.sizing_notes}</p>}
-        <a
-          href={option.retailer_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-eucalypt-700"
-        >
-          {option.retailer_label} <ExternalLink size={12} />
-        </a>
       </div>
 
+      {/* Go to the store — the real, clickable link */}
+      <a
+        href={option.retailer_url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-eucalypt-600 px-3.5 py-2.5 text-sm font-medium text-white hover:bg-eucalypt-700"
+      >
+        View at {option.retailer_label} <ExternalLink size={15} />
+      </a>
+
       {/* Actions */}
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Button size="sm" onClick={onApprove}>
-          Approve purchase
-        </Button>
+      <div className="mt-2 flex flex-wrap gap-2">
         <Button size="sm" variant="secondary" onClick={onSave}>
           {option.saved ? "Saved ✓" : "Save"}
+        </Button>
+        <Button size="sm" variant="secondary" onClick={onApprove}>
+          Add to approvals
         </Button>
         <Button size="sm" variant="ghost" onClick={onReject}>
           {option.rejected ? "Rejected" : "Not for me"}
