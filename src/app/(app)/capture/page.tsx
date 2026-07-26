@@ -66,12 +66,21 @@ const CHAT_CUES =
 
 type Kind = "task" | "shopping" | "chat";
 
+const BUY_INTENT =
+  /\b(buy|find|get|need|want|looking for|recommend|recommendation|suggest|which|best|shop|cheapest|where can i)\b/i;
+
 function classify(text: string): { kind: Kind; extraction: Extraction } {
   const extraction = fallbackExtract(text, todayIso());
 
-  // 1. A real purchase/shopping decision (has a budget or a concrete product).
-  if (extraction.is_decision && (extraction.budget != null || SHOPPING_NOUNS.test(text))) {
-    return { kind: "shopping", extraction };
+  // 1. A purchase/shopping decision. A named product (couch, tv, dining set…)
+  //    counts as shopping when there's a budget OR clear buy intent — even if
+  //    it's phrased as a description rather than "buy me a…".
+  const shoppingSignal = SHOPPING_NOUNS.test(text);
+  const isShopping =
+    (extraction.is_decision && (extraction.budget != null || shoppingSignal)) ||
+    (shoppingSignal && (extraction.budget != null || BUY_INTENT.test(text)));
+  if (isShopping) {
+    return { kind: "shopping", extraction: { ...extraction, is_decision: true } };
   }
 
   // 2. A genuine life-admin task — only when there's a clear admin action or a
@@ -375,19 +384,28 @@ function CaptureInner() {
 
       // Task or shopping — turn it into a structured item.
       const { extraction, engine } = await extractClient(text);
-      const item = capture(text, extraction);
+      // If routing decided this is shopping, ensure it becomes a decision so the
+      // linked-options flow runs (even when the extractor didn't flag it).
+      const finalExtraction =
+        kind === "shopping" ? { ...extraction, is_decision: true } : extraction;
+      const item = capture(text, finalExtraction);
       // For a shopping/decision, research real options in the background.
       if (item.decision_request_id) {
-        void loadRecommendations(item.decision_request_id, text, extraction.budget, extraction.currency);
+        void loadRecommendations(
+          item.decision_request_id,
+          text,
+          finalExtraction.budget,
+          finalExtraction.currency,
+        );
       }
       setMessages((m) => [
         ...m,
         {
           id: `m_${Date.now()}`,
           role: "bo",
-          body: boReply(extraction, tone),
+          body: boReply(finalExtraction, tone),
           item,
-          extraction,
+          extraction: finalExtraction,
           engine,
           decisionId: item.decision_request_id,
         },
