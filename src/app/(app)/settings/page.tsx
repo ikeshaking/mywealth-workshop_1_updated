@@ -13,7 +13,7 @@ import { permissionMeta } from "@/lib/catalog";
 import { PERMISSION_LEVELS } from "@/lib/types";
 import type { PermissionLevel, BoTone } from "@/lib/types";
 import { TONES, toneMeta } from "@/lib/tone";
-import { signOut } from "@/lib/auth";
+import { signOutUnified } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
 export default function SettingsPage() {
@@ -34,7 +34,7 @@ export default function SettingsPage() {
   const deleteAccount = () => {
     if (confirm("This clears all demo data and signs you out. Continue?")) {
       resetDemo();
-      signOut();
+      void signOutUnified();
       router.push("/");
     }
   };
@@ -257,7 +257,7 @@ export default function SettingsPage() {
           variant="ghost"
           fullWidth
           onClick={() => {
-            signOut();
+            void signOutUnified();
             router.push("/");
           }}
         >

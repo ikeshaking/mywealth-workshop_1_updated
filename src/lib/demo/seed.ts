@@ -30,6 +30,51 @@ function addDays(iso: string, n: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * A fresh, empty starting state for a real (live-mode) account — no demo data,
+ * just the person's name. They go through onboarding, then it's their own life.
+ */
+export function buildEmptyState(name: string, email: string): BoData {
+  const nowIso = new Date().toISOString();
+  return {
+    user: { id: "me", email, name },
+    preferences: {
+      preferred_name: name,
+      household_type: "solo",
+      focus_areas: ["bill", "renewal"],
+      notification_preference: "important",
+      proactive_suggestions: true,
+      permission_level: "approve",
+      currency: "AUD",
+      tone: "calm",
+      onboarded: false,
+    },
+    items: [],
+    events: [],
+    notes: [],
+    reminders: [],
+    approvals: [],
+    decisionRequests: [],
+    recommendationSets: [],
+    recommendationOptions: [],
+    conversations: [
+      { id: "conv_main", user_id: "me", title: "Chat with Nook", created_at: nowIso, updated_at: nowIso },
+    ],
+    messages: [
+      {
+        id: "msg_1",
+        conversation_id: "conv_main",
+        role: "bo",
+        body: `Hi ${name} — I'm Nook. Tell me anything on your mind and I'll help you keep on top of it.`,
+        item_id: null,
+        decision_request_id: null,
+        created_at: nowIso,
+      },
+    ],
+    memories: [],
+  };
+}
+
 export function buildSeed(today: string): BoData {
   const nowIso = today + "T09:00:00.000Z";
   const items: LifeItem[] = [];

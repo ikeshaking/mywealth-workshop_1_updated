@@ -11,8 +11,9 @@ import {
 } from "react";
 import type { BoData, LifeItem, Status, ApprovalStatus, UserPreferences } from "../types";
 import type { Extraction } from "../schemas";
-import { buildSeed } from "../demo/seed";
-import { STORAGE_KEY } from "../config";
+import { buildSeed, buildEmptyState } from "../demo/seed";
+import { STORAGE_KEY, isLive } from "../config";
+import { loadLiveState, saveLiveState } from "../live/state";
 import { todayIso } from "../utils";
 import * as ops from "./operations";
 
@@ -62,6 +63,9 @@ export function BoProvider({ children }: { children: React.ReactNode }) {
   // Mirror of the latest data so imperative actions (like capture) can read
   // the current state synchronously and return derived values reliably.
   const dataRef = useRef(data);
+  // Live mode: the signed-in user id and a debounce timer for saves.
+  const userIdRef = useRef<string | null>(null);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const commit = useCallback((next: BoData) => {
     dataRef.current = next;
@@ -69,13 +73,42 @@ export function BoProvider({ children }: { children: React.ReactNode }) {
     return next;
   }, []);
 
-  // Load from localStorage on mount.
+  // Load on mount — from Supabase (live) or localStorage (demo).
   useEffect(() => {
+    if (isLive) {
+      let cancelled = false;
+      (async () => {
+        try {
+          const loaded = await loadLiveState();
+          if (cancelled) return;
+          if (loaded) {
+            userIdRef.current = loaded.userId;
+            if (loaded.data) {
+              const d = loaded.data;
+              if (!Array.isArray(d.memories)) d.memories = [];
+              commit(d);
+            } else {
+              // First sign-in: create a fresh, empty account (no demo data).
+              const fresh = buildEmptyState(loaded.name, loaded.email);
+              commit(fresh);
+              await saveLiveState(loaded.userId, fresh);
+            }
+          }
+        } catch {
+          // ignore — guard will redirect if not authenticated
+        }
+        if (!cancelled) setReady(true);
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    // Demo mode: localStorage.
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as BoData;
-        // Backward-compat: ensure newer collections exist.
         if (!Array.isArray(parsed.memories)) parsed.memories = [];
         commit(parsed);
       } else {
@@ -89,11 +122,20 @@ export function BoProvider({ children }: { children: React.ReactNode }) {
     setReady(true);
   }, [commit]);
 
-  // Persist on change and keep the imperative ref in sync.
+  // Persist on change — to Supabase (debounced) or localStorage — and keep the ref in sync.
   useEffect(() => {
     dataRef.current = data;
     if (firstLoad.current) {
       firstLoad.current = false;
+      return;
+    }
+    if (isLive) {
+      if (!userIdRef.current) return;
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      const uid = userIdRef.current;
+      saveTimer.current = setTimeout(() => {
+        void saveLiveState(uid, data);
+      }, 600);
       return;
     }
     try {

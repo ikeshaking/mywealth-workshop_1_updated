@@ -8,7 +8,7 @@ import { onboardingSchema, type OnboardingValues } from "@/lib/schemas";
 import { CATEGORIES } from "@/lib/types";
 import { categoryMeta } from "@/lib/catalog";
 import { useBo } from "@/lib/store/BoProvider";
-import { getSession } from "@/lib/auth";
+import { getCurrentSession } from "@/lib/session";
 import { BoAvatar } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Field";
@@ -23,10 +23,15 @@ export default function OnboardingPage() {
   const { updatePreferences, data, ready } = useBo();
 
   useEffect(() => {
-    if (!getSession()) router.replace("/signup");
+    let cancelled = false;
+    getCurrentSession().then((s) => {
+      if (!cancelled && !s) router.replace("/signup");
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
-  const session = getSession();
   const {
     register,
     handleSubmit,
@@ -35,7 +40,7 @@ export default function OnboardingPage() {
   } = useForm<OnboardingValues>({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
-      preferred_name: session?.name ?? "",
+      preferred_name: data.preferences.preferred_name ?? "",
       household_type: "family",
       focus_areas: ["bill", "renewal"],
       notification_preference: "important",

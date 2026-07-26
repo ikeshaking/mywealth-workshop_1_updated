@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,27 +9,30 @@ import { loginSchema, type LoginValues } from "@/lib/schemas";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Field";
-import { signIn } from "@/lib/auth";
+import { signInUnified } from "@/lib/session";
+import { isLive } from "@/lib/config";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [authError, setAuthError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
 
-  const onSubmit = (values: LoginValues) => {
-    signIn(values.email);
-    router.push("/dashboard");
+  const onSubmit = async (values: LoginValues) => {
+    setAuthError(null);
+    const res = await signInUnified(values.email, values.password);
+    if (res.ok) router.push("/dashboard");
+    else setAuthError(res.error ?? "Couldn't sign you in.");
   };
 
-  const continueAsDemo = () => {
-    signIn("alex@example.com", "Alex");
+  const continueAsDemo = async () => {
+    await signInUnified("alex@example.com", "demo1234");
     router.push("/dashboard");
   };
 
@@ -57,32 +61,31 @@ export default function LoginPage() {
             Forgot password?
           </Link>
         </div>
+        {authError && (
+          <p role="alert" className="text-sm text-clay-600">
+            {authError}
+          </p>
+        )}
         <Button type="submit" fullWidth size="lg" disabled={isSubmitting}>
           Log in
         </Button>
       </form>
 
-      <div className="my-5 flex items-center gap-3 text-xs text-ink-faint">
-        <span className="h-px flex-1 bg-black/[0.06]" />
-        or
-        <span className="h-px flex-1 bg-black/[0.06]" />
-      </div>
-
-      <Button
-        variant="secondary"
-        fullWidth
-        size="lg"
-        onClick={() => {
-          // Prefill so the demo path is obvious, then continue.
-          setValue("email", "alex@example.com");
-          continueAsDemo();
-        }}
-      >
-        Explore the demo as Alex
-      </Button>
-      <p className="mt-3 text-center text-xs text-ink-faint">
-        Demo mode — no real account or password needed.
-      </p>
+      {!isLive && (
+        <>
+          <div className="my-5 flex items-center gap-3 text-xs text-ink-faint">
+            <span className="h-px flex-1 bg-black/[0.06]" />
+            or
+            <span className="h-px flex-1 bg-black/[0.06]" />
+          </div>
+          <Button variant="secondary" fullWidth size="lg" onClick={continueAsDemo}>
+            Explore the demo as Alex
+          </Button>
+          <p className="mt-3 text-center text-xs text-ink-faint">
+            Demo mode — no real account or password needed.
+          </p>
+        </>
+      )}
     </AuthShell>
   );
 }

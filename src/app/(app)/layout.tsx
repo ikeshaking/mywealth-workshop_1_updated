@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BoProvider, useBo } from "@/lib/store/BoProvider";
 import { BottomNav } from "@/components/app/BottomNav";
-import { getSession } from "@/lib/auth";
+import { getCurrentSession } from "@/lib/session";
 import { NudgeToaster } from "@/components/app/NudgeToaster";
 
 /**
@@ -18,11 +18,15 @@ function Guarded({ children }: { children: React.ReactNode }) {
   const { data, ready } = useBo();
 
   useEffect(() => {
-    if (!getSession()) {
-      router.replace("/login");
-    } else {
-      setChecked(true);
-    }
+    let cancelled = false;
+    getCurrentSession().then((session) => {
+      if (cancelled) return;
+      if (!session) router.replace("/login");
+      else setChecked(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   if (!checked || !ready) {
