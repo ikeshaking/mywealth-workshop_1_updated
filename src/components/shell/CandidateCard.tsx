@@ -1,7 +1,14 @@
 "use client";
 
 import type { CandidateSummary } from "@/lib/py/types";
+import type { RiskFlag } from "@/lib/py/risk";
 import { formatDateTime } from "@/lib/utils";
+
+const RISK_BADGE: Record<string, string> = {
+  high: "badge-coral",
+  medium: "badge-amber",
+  low: "badge-muted",
+};
 
 function initials(name: string) {
   return name
@@ -16,10 +23,12 @@ export function CandidateCard({
   summary,
   onOpen,
   showSupervisor,
+  risks,
 }: {
   summary: CandidateSummary;
   onOpen: () => void;
   showSupervisor?: boolean;
+  risks?: RiskFlag[];
 }) {
   const { profile, progress, supervisorName, updatedAt } = summary;
   return (
@@ -76,6 +85,20 @@ export function CandidateCard({
           <b style={{ color: "var(--text-dim)" }}>{progress.structuredHours}</b> structured hrs
         </span>
       </div>
+      {risks && risks.length > 0 ? (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 12 }}>
+          {risks.map((r) => (
+            <span
+              key={r.code}
+              className={`badge ${RISK_BADGE[r.severity] ?? "badge-muted"}`}
+              title={r.detail}
+            >
+              {r.label}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
       <div style={{ marginTop: 10, fontSize: 11, color: "var(--text-faint)" }}>
         Updated {formatDateTime(updatedAt)}
       </div>

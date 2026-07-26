@@ -8,10 +8,13 @@ export function Topbar({
   onHome,
   backLabel,
   onBack,
+  extra,
 }: {
   onHome?: () => void;
   backLabel?: string;
   onBack?: () => void;
+  /** Optional action rendered next to the theme/sign-out controls. */
+  extra?: React.ReactNode;
 }) {
   const { profile, theme, toggleTheme, signOut } = useSession();
   return (
@@ -45,6 +48,7 @@ export function Topbar({
           {profile.fullName}
         </span>
       ) : null}
+      {extra}
       <button
         className="chrome-btn icon"
         onClick={toggleTheme}

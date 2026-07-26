@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getBackend } from "@/lib/py/backend";
 import { loadCandidateSummaries, type CandidateWithState } from "@/lib/py/summaries";
 import { deriveActivity, deriveTodo, type Activity, type Todo } from "@/lib/py/actions";
+import { assessCandidate, type RiskFlag } from "@/lib/py/risk";
 import { getLastSeen, markSeen } from "@/lib/py/lastSeen";
 import type { Profile } from "@/lib/py/types";
 import { CandidateCard } from "./CandidateCard";
@@ -75,6 +76,16 @@ export function Dashboard({
     return all.slice(0, 40);
   }, [candidates]);
 
+  // At-risk flags per candidate — same logic the email alerts use.
+  const riskMap = useMemo(() => {
+    const m = new Map<string, RiskFlag[]>();
+    for (const c of candidates) {
+      const r = assessCandidate(c.profile.id, c.profile.fullName, c.state);
+      if (r.flags.length > 0) m.set(c.profile.id, r.flags);
+    }
+    return m;
+  }, [candidates]);
+
   const isManager = profile.role === "py_manager";
   const avg =
     candidates.length > 0
@@ -142,7 +153,7 @@ export function Dashboard({
                 </h2>
                 <div className="cand-grid">
                   {mine.map((c) => (
-                    <CandidateCard key={c.profile.id} summary={c} onOpen={() => onOpenCandidate(c.profile.id, c.profile.fullName)} />
+                    <CandidateCard key={c.profile.id} summary={c} risks={riskMap.get(c.profile.id)} onOpen={() => onOpenCandidate(c.profile.id, c.profile.fullName)} />
                   ))}
                 </div>
               </section>
@@ -158,7 +169,7 @@ export function Dashboard({
                 <h2 style={{ marginBottom: 12 }}>Unassigned</h2>
                 <div className="cand-grid">
                   {unassigned.map((c) => (
-                    <CandidateCard key={c.profile.id} summary={c} showSupervisor onOpen={() => onOpenCandidate(c.profile.id, c.profile.fullName)} />
+                    <CandidateCard key={c.profile.id} summary={c} showSupervisor risks={riskMap.get(c.profile.id)} onOpen={() => onOpenCandidate(c.profile.id, c.profile.fullName)} />
                   ))}
                 </div>
               </section>
@@ -168,7 +179,7 @@ export function Dashboard({
       ) : (
         <div className="cand-grid">
           {candidates.map((c) => (
-            <CandidateCard key={c.profile.id} summary={c} onOpen={() => onOpenCandidate(c.profile.id, c.profile.fullName)} />
+            <CandidateCard key={c.profile.id} summary={c} risks={riskMap.get(c.profile.id)} onOpen={() => onOpenCandidate(c.profile.id, c.profile.fullName)} />
           ))}
         </div>
       )}
