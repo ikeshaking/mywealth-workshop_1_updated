@@ -5,7 +5,7 @@ import { Send, Mic, ImagePlus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * The "Tell Mabel anything…" composer.
+ * The "Tell Bo anything…" composer.
  *  - Text input (Enter to send, Shift+Enter for newline)
  *  - Mic: live speech-to-text via the browser's Web Speech API (free, on-device
  *    where supported). Gracefully hidden when unsupported.
@@ -33,7 +33,7 @@ function getSpeechRecognition(): (new () => SpeechRecognitionLike) | null {
 export function Composer({
   onSend,
   busy,
-  placeholder = "Tell Mabel anything…",
+  placeholder = "Tell Bo anything…",
   autoFocus,
 }: {
   onSend: (text: string) => void;
@@ -110,8 +110,8 @@ export function Composer({
         {micSupported && (
           <button
             type="button"
-            title={listening ? "Stop listening" : "Speak to Mabel"}
-            aria-label={listening ? "Stop listening" : "Speak to Mabel"}
+            title={listening ? "Stop listening" : "Speak to Bo"}
+            aria-label={listening ? "Stop listening" : "Speak to Bo"}
             aria-pressed={listening}
             onClick={toggleMic}
             className={cn(
@@ -141,11 +141,11 @@ export function Composer({
           onChange={onFile}
         />
       </div>
-      <label htmlFor="mabel-composer" className="sr-only">
-        Tell Mabel anything
+      <label htmlFor="bo-composer" className="sr-only">
+        Tell Bo anything
       </label>
       <textarea
-        id="mabel-composer"
+        id="bo-composer"
         ref={inputRef}
         value={value}
         // eslint-disable-next-line jsx-a11y/no-autofocus
@@ -163,7 +163,7 @@ export function Composer({
       />
       <button
         type="submit"
-        aria-label="Send to Mabel"
+        aria-label="Send to Bo"
         disabled={busy || !value.trim()}
         className={cn(
           "mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-eucalypt-600 text-white transition-colors hover:bg-eucalypt-700 disabled:opacity-40",

@@ -24,7 +24,7 @@ const chatRequestSchema = z.object({
 });
 
 /**
- * POST /api/chat — Mabel's open-ended "thinking partner" reply (movies, meals,
+ * POST /api/chat — Bo's open-ended "thinking partner" reply (movies, meals,
  * planning, pros/cons, ideas). Uses OpenAI when configured; otherwise falls
  * back to the offline suggestion bank so demo mode still feels useful.
  */

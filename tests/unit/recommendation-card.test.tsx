@@ -14,7 +14,7 @@ describe("RecommendationCard display", () => {
     expect(screen.getByText(/best match/i)).toBeInTheDocument();
     expect(screen.getByText(best.title)).toBeInTheDocument();
     expect(screen.getByText(/what.s included/i)).toBeInTheDocument();
-    expect(screen.getByText(/why mabel picks this/i)).toBeInTheDocument();
+    expect(screen.getByText(/why bo picks this/i)).toBeInTheDocument();
     // Each included line item is shown.
     expect(screen.getByText(best.items[0].name)).toBeInTheDocument();
   });

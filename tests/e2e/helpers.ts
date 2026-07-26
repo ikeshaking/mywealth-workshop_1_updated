@@ -12,9 +12,9 @@ export async function loginAsDemo(page: Page) {
 }
 
 /** Send a message through the composer on whatever screen is active. */
-export async function tellMabel(page: Page, text: string) {
-  const box = page.getByPlaceholder(/tell mabel anything|find me|help me choose/i).first();
+export async function tellBo(page: Page, text: string) {
+  const box = page.getByPlaceholder(/tell bo anything|find me|help me choose/i).first();
   await box.click();
   await box.fill(text);
-  await page.getByRole("button", { name: /send to mabel/i }).click();
+  await page.getByRole("button", { name: /send to bo/i }).click();
 }

@@ -1,4 +1,4 @@
-import type { MabelTone } from "../types";
+import type { BoTone } from "../types";
 
 /**
  * Offline "thinking partner" replies for demo mode (no OpenAI key). These are
@@ -9,17 +9,17 @@ import type { MabelTone } from "../types";
  */
 
 export interface SuggestReply {
-  /** Mabel's conversational reply (markdown-light plain text). */
+  /** Bo's conversational reply (markdown-light plain text). */
   reply: string;
   /** Optional short title if the user chooses to save this thought. */
   saveTitle: string;
 }
 
-function opener(tone: MabelTone, calm: string, friend: string, witty: string, concise: string) {
+function opener(tone: BoTone, calm: string, friend: string, witty: string, concise: string) {
   return { friend, calm, witty, concise }[tone];
 }
 
-export function demoSuggest(text: string, tone: MabelTone): SuggestReply {
+export function demoSuggest(text: string, tone: BoTone): SuggestReply {
   const q = text.toLowerCase();
 
   // --- Movies -------------------------------------------------------------
@@ -106,5 +106,5 @@ export function demoSuggest(text: string, tone: MabelTone): SuggestReply {
     "Intriguing. Give me the details and I'll turn it into something useful — shortlist, plan, or a proper pros/cons.",
     "Tell me a bit more (what, budget, timing) and I'll return a short shortlist.",
   );
-  return { reply: head, saveTitle: "Thought for Mabel" };
+  return { reply: head, saveTitle: "Thought for Bo" };
 }

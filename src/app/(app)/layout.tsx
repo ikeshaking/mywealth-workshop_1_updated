@@ -2,20 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MabelProvider, useMabel } from "@/lib/store/MabelProvider";
+import { BoProvider, useBo } from "@/lib/store/BoProvider";
 import { BottomNav } from "@/components/app/BottomNav";
 import { getSession } from "@/lib/auth";
 import { NudgeToaster } from "@/components/app/NudgeToaster";
 
 /**
- * Authenticated app shell. Wraps every in-app screen with the Mabel store,
+ * Authenticated app shell. Wraps every in-app screen with the Bo store,
  * enforces the demo auth guard (redirect to /login when signed out), runs the
  * app-level nudge simulation, and renders the persistent bottom navigation.
  */
 function Guarded({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [checked, setChecked] = useState(false);
-  const { data, ready } = useMabel();
+  const { data, ready } = useBo();
 
   useEffect(() => {
     if (!getSession()) {
@@ -48,8 +48,8 @@ function Guarded({ children }: { children: React.ReactNode }) {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <MabelProvider>
+    <BoProvider>
       <Guarded>{children}</Guarded>
-    </MabelProvider>
+    </BoProvider>
   );
 }

@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import type { MabelData, LifeItem, Status, ApprovalStatus, UserPreferences } from "../types";
+import type { BoData, LifeItem, Status, ApprovalStatus, UserPreferences } from "../types";
 import type { Extraction } from "../schemas";
 import { buildSeed } from "../demo/seed";
 import { STORAGE_KEY } from "../config";
@@ -17,14 +17,14 @@ import { todayIso } from "../utils";
 import * as ops from "./operations";
 
 /**
- * MabelProvider holds the entire demo data set in React state, persists it to
+ * BoProvider holds the entire demo data set in React state, persists it to
  * localStorage, and exposes typed action methods that delegate to the pure
  * `operations` module. This is what makes every flow work end-to-end with no
  * backend — refreshes keep your data, and actions are undoable/simulated.
  */
 
-interface MabelContextValue {
-  data: MabelData;
+interface BoContextValue {
+  data: BoData;
   ready: boolean;
   metrics: ReturnType<typeof ops.computeMetrics>;
   // actions
@@ -50,17 +50,17 @@ interface MabelContextValue {
   resetDemo: () => void;
 }
 
-const MabelContext = createContext<MabelContextValue | null>(null);
+const BoContext = createContext<BoContextValue | null>(null);
 
-export function MabelProvider({ children }: { children: React.ReactNode }) {
-  const [data, setData] = useState<MabelData>(() => buildSeed(todayIso()));
+export function BoProvider({ children }: { children: React.ReactNode }) {
+  const [data, setData] = useState<BoData>(() => buildSeed(todayIso()));
   const [ready, setReady] = useState(false);
   const firstLoad = useRef(true);
   // Mirror of the latest data so imperative actions (like capture) can read
   // the current state synchronously and return derived values reliably.
   const dataRef = useRef(data);
 
-  const commit = useCallback((next: MabelData) => {
+  const commit = useCallback((next: BoData) => {
     dataRef.current = next;
     setData(next);
     return next;
@@ -71,7 +71,7 @@ export function MabelProvider({ children }: { children: React.ReactNode }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        commit(JSON.parse(raw) as MabelData);
+        commit(JSON.parse(raw) as BoData);
       } else {
         const seed = buildSeed(todayIso());
         localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));
@@ -178,7 +178,7 @@ export function MabelProvider({ children }: { children: React.ReactNode }) {
 
   const metrics = useMemo(() => ops.computeMetrics(data), [data]);
 
-  const value: MabelContextValue = {
+  const value: BoContextValue = {
     data,
     ready,
     metrics,
@@ -197,11 +197,11 @@ export function MabelProvider({ children }: { children: React.ReactNode }) {
     resetDemo,
   };
 
-  return <MabelContext.Provider value={value}>{children}</MabelContext.Provider>;
+  return <BoContext.Provider value={value}>{children}</BoContext.Provider>;
 }
 
-export function useMabel() {
-  const ctx = useContext(MabelContext);
-  if (!ctx) throw new Error("useMabel must be used within a MabelProvider");
+export function useBo() {
+  const ctx = useContext(BoContext);
+  if (!ctx) throw new Error("useBo must be used within a BoProvider");
   return ctx;
 }

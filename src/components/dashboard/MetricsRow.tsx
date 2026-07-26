@@ -1,11 +1,11 @@
 "use client";
 
-import { useMabel } from "@/lib/store/MabelProvider";
+import { useBo } from "@/lib/store/BoProvider";
 import { formatMoney, formatMinutes } from "@/lib/utils";
 
 /** Calm demo metrics — clearly labelled estimates, not hard promises. */
 export function MetricsRow() {
-  const { metrics, data } = useMabel();
+  const { metrics, data } = useBo();
   const currency = data.preferences.currency;
 
   const tiles = [

@@ -7,9 +7,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { onboardingSchema, type OnboardingValues } from "@/lib/schemas";
 import { CATEGORIES } from "@/lib/types";
 import { categoryMeta } from "@/lib/catalog";
-import { useMabel } from "@/lib/store/MabelProvider";
+import { useBo } from "@/lib/store/BoProvider";
 import { getSession } from "@/lib/auth";
-import { MabelAvatar } from "@/components/brand/Logo";
+import { BoAvatar } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Field";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,7 @@ const focusChoices = CATEGORIES.filter((c) =>
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { updatePreferences, data, ready } = useMabel();
+  const { updatePreferences, data, ready } = useBo();
 
   useEffect(() => {
     if (!getSession()) router.replace("/signup");
@@ -54,17 +54,17 @@ export default function OnboardingPage() {
     <div className="flex min-h-dvh flex-col bg-canvas">
       <main id="main" className="container-app flex flex-1 flex-col py-8">
         <div className="mb-6 flex flex-col items-center text-center">
-          <MabelAvatar size={56} />
+          <BoAvatar size={56} />
           <h1 className="mt-3 text-2xl font-semibold text-ink">
             Hi{data.preferences.preferred_name ? `, ${data.preferences.preferred_name}` : ""} 👋
           </h1>
           <p className="mt-1 text-sm text-ink-soft">
-            Just a few essentials so Mabel can help the way you like. You can change these anytime.
+            Just a few essentials so Bo can help the way you like. You can change these anytime.
           </p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
-          <Field label="What should Mabel call you?" error={errors.preferred_name?.message}>
+          <Field label="What should Bo call you?" error={errors.preferred_name?.message}>
             <Input placeholder="Alex" {...register("preferred_name")} />
           </Field>
 
@@ -83,7 +83,7 @@ export default function OnboardingPage() {
             render={({ field }) => (
               <Field
                 label="What would you like help with most?"
-                hint="Pick a few — Mabel prioritises these."
+                hint="Pick a few — Bo prioritises these."
                 error={errors.focus_areas?.message as string | undefined}
               >
                 <div className="flex flex-wrap gap-2">
@@ -132,17 +132,17 @@ export default function OnboardingPage() {
             />
             <span>
               <span className="block text-sm font-medium text-ink">
-                Let Mabel make suggestions proactively
+                Let Bo make suggestions proactively
               </span>
               <span className="block text-xs text-ink-soft">
-                She&apos;ll surface useful nudges and better options. She always asks before taking
+                It&apos;ll surface useful nudges and better options. It always asks before taking
                 any external action.
               </span>
             </span>
           </label>
 
           <Button type="submit" fullWidth size="lg" disabled={isSubmitting}>
-            Meet Mabel
+            Meet Bo
           </Button>
         </form>
       </main>

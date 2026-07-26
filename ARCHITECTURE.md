@@ -1,4 +1,4 @@
-# Mabel — architecture notes
+# Nook — architecture notes
 
 A quick tour of how the app is put together and why.
 
@@ -20,7 +20,7 @@ UI (App Router screens, React components)
 static + client components in src/app, src/components
         │  uses hooks from the store, never touches persistence directly
         ▼
-State / store  ── src/lib/store/MabelProvider.tsx
+State / store  ── src/lib/store/NookProvider.tsx
 React context + localStorage persistence (demo)
 delegates every mutation to ↓
         ▼

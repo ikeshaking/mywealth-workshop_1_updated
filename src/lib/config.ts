@@ -7,5 +7,5 @@ export const isDemoMode =
 export const hasSupabase =
   !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-export const STORAGE_KEY = "mabel:data:v1";
-export const AUTH_KEY = "mabel:auth:v1";
+export const STORAGE_KEY = "bo:data:v1";
+export const AUTH_KEY = "bo:auth:v1";

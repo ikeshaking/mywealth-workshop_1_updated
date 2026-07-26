@@ -4,18 +4,18 @@ import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { AppHeader } from "@/components/app/AppHeader";
-import { MabelAvatar } from "@/components/brand/Logo";
+import { BoAvatar } from "@/components/brand/Logo";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { RecommendationCard } from "@/components/decisions/RecommendationCard";
-import { useMabel } from "@/lib/store/MabelProvider";
+import { useBo } from "@/lib/store/BoProvider";
 import { formatMoney } from "@/lib/utils";
 
 export default function DecisionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { data, setOptionFlag, approvePurchaseOption } = useMabel();
+  const { data, setOptionFlag, approvePurchaseOption } = useBo();
   const [tab, setTab] = useState<"picks" | "compare">("picks");
 
   const dr = data.decisionRequests.find((d) => d.id === id);
@@ -48,7 +48,7 @@ export default function DecisionDetailPage() {
         {/* Request */}
         <Card className="bg-eucalypt-50/60">
           <div className="flex items-start gap-2">
-            <MabelAvatar size={26} />
+            <BoAvatar size={26} />
             <div>
               <p className="text-sm text-ink">
                 <span className="italic">&ldquo;{dr.request}&rdquo;</span>

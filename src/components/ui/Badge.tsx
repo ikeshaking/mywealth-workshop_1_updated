@@ -52,12 +52,12 @@ export function CategoryBadge({ category }: { category: Category }) {
   );
 }
 
-/** A small pill that marks a value as inferred by Mabel (not user-provided). */
+/** A small pill that marks a value as inferred by Bo (not user-provided). */
 export function InferredTag({ label = "inferred" }: { label?: string }) {
   return (
     <span
       className="inline-flex items-center gap-1 rounded-full bg-eucalypt-50 px-1.5 py-0.5 text-[10px] font-medium text-eucalypt-600"
-      title="Mabel inferred this — tap to confirm or change it."
+      title="Bo inferred this — tap to confirm or change it."
     >
       <span aria-hidden>✦</span>
       {label}

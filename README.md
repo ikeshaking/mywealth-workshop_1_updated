@@ -1,8 +1,8 @@
-# Mabel
+# Nook
 
-**Tell Mabel once. She handles the rest.**
+**Tell Bo once. It handles the rest.**
 
-Mabel is a warm, calm, mobile-first AI personal assistant for life admin, decisions,
+Nook is a warm, calm, mobile-first AI personal assistant for life admin, decisions,
 purchases and household tasks. She absorbs messy thoughts, messages and intentions,
 turns them into structured items, tracks them automatically and moves them towards
 completion — without asking you to maintain lists or manage a system.
@@ -36,8 +36,8 @@ No environment variables are required. Demo mode is the default.
 | `/` | Landing page |
 | `/login`, `/signup`, `/forgot-password` | Auth (demo) |
 | `/onboarding` | Short, essential-only setup |
-| `/dashboard` | Calm home briefing + “Tell Mabel anything…” |
-| `/capture` | Conversational capture (chat with Mabel) |
+| `/dashboard` | Calm home briefing + “Tell Bo anything…” |
+| `/capture` | Conversational capture (chat with Bo) |
 | `/items/[id]` | Item detail (timeline, reminders, approvals, notes) |
 | `/decisions`, `/decisions/[id]` | Decisions & shopping recommendations |
 | `/approvals` | Approve / edit / snooze / reject |
@@ -64,7 +64,7 @@ npm run verify      # lint + typecheck + unit tests + build
 
 ## The four core capabilities
 
-1. **Conversational capture** — type natural language; Mabel converts each message into a
+1. **Conversational capture** — type natural language; Nook converts each message into a
    structured item and confirms warmly, asking only for genuinely missing details.
 2. **Smart task & obligation engine** — classifies items (bill, renewal, appointment,
    errand, purchase, decision, subscription, household, family, travel, document, general)
@@ -81,7 +81,7 @@ npm run verify      # lint + typecheck + unit tests + build
 2. **Bill reminder** — capture a reminder, mark it paid, see it in Completed.
 3. **Shopping decision** — outdoor dining bundles under $2,000, best match, approve.
 4. **Subscription cancellation** — gym cancellation prepared, approved, completed.
-5. **Family appointment** — dentist booking; Mabel asks who and when.
+5. **Family appointment** — dentist booking; Nook asks who and when.
 
 ---
 
@@ -102,7 +102,7 @@ Everything is designed so the app is fully functional offline, then upgrades in 
 ### Data & auth
 
 - **Demo (default):** all data lives in an in-browser store
-  (`src/lib/store/MabelProvider.tsx`) seeded from `src/lib/demo/seed.ts` and persisted to
+  (`src/lib/store/NookProvider.tsx`) seeded from `src/lib/demo/seed.ts` and persisted to
   `localStorage`. Auth is a lightweight demo session (`src/lib/auth.ts`).
 - **Live:** set the Supabase env vars and `NEXT_PUBLIC_DEMO_MODE=false`. Migrations and
   RLS policies are in [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql);
@@ -148,7 +148,7 @@ Trust is visible in the UI, not buried in settings:
 
 - Clear permission levels (Observe · Prepare · Approve · Autopilot-coming-soon).
 - Every external action is previewed and **requires approval**; nothing is ever
-  auto-executed. In demo mode all actions are **simulated and labelled as such** — Mabel
+  auto-executed. In demo mode all actions are **simulated and labelled as such** — Nook
   never claims a real payment, booking or cancellation happened.
 - Activity timeline per item; simulated actions can be **undone**.
 - Inferred fields are tagged with a ✦ “inferred” marker.

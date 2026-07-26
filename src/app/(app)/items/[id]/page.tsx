@@ -4,14 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { AppHeader } from "@/components/app/AppHeader";
-import { MabelAvatar } from "@/components/brand/Logo";
+import { BoAvatar } from "@/components/brand/Logo";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { StatusBadge, PriorityBadge, CategoryBadge, InferredTag } from "@/components/ui/Badge";
 import { ItemCard } from "@/components/shared/ItemCard";
 import { categoryMeta } from "@/lib/catalog";
-import { useMabel } from "@/lib/store/MabelProvider";
+import { useBo } from "@/lib/store/BoProvider";
 import { PRIORITIES } from "@/lib/types";
 import type { Priority } from "@/lib/types";
 import { formatDate, formatDateTime, relativeDay, todayIso, addDays } from "@/lib/utils";
@@ -27,7 +27,7 @@ export default function ItemDetailPage() {
     scheduleReminder,
     requestApproval,
     completeItem,
-  } = useMabel();
+  } = useBo();
 
   const [editing, setEditing] = useState(false);
   const [noteText, setNoteText] = useState("");
@@ -73,7 +73,7 @@ export default function ItemDetailPage() {
     // Prepare + send to approval.
     requestApproval(item.id, {
       action: item.recommended_action ?? `Handle ${item.title}`,
-      reason: `You asked Mabel to sort this. Here's what she'll do.`,
+      reason: `You asked Bo to sort this. Here's what it'll do.`,
       expected_cost: null,
       shares: "Only the details needed to complete this task.",
       reversible: true,
@@ -120,12 +120,12 @@ export default function ItemDetailPage() {
           <Row label="Confidence">{Math.round(item.confidence_score * 100)}% sure</Row>
         </Card>
 
-        {/* Mabel's understanding */}
+        {/* Bo's understanding */}
         <Card className="bg-eucalypt-50/60">
           <div className="flex items-start gap-2">
-            <MabelAvatar size={26} />
+            <BoAvatar size={26} />
             <div>
-              <p className="text-xs font-medium text-eucalypt-700">Mabel&apos;s understanding</p>
+              <p className="text-xs font-medium text-eucalypt-700">Bo&apos;s understanding</p>
               <p className="mt-1 text-sm text-ink">
                 You said: <span className="italic">&ldquo;{item.original_input}&rdquo;</span>
               </p>
@@ -249,7 +249,7 @@ export default function ItemDetailPage() {
               <Textarea
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
-                placeholder="Add a note for Mabel…"
+                placeholder="Add a note for Bo…"
                 rows={2}
               />
             </div>

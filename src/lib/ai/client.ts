@@ -4,7 +4,7 @@ import { extractResponseSchema, type ExtractResponse } from "../schemas";
 import { fallbackExtract } from "./fallback";
 import { demoSuggest } from "./suggest";
 import { todayIso } from "../utils";
-import type { MabelTone } from "../types";
+import type { BoTone } from "../types";
 
 /**
  * Calls the secure /api/extract route from the browser. If the request fails
@@ -40,12 +40,12 @@ export interface ChatClientContext {
 }
 
 /**
- * Calls the secure /api/chat route for Mabel's open-ended thinking/suggestion
+ * Calls the secure /api/chat route for Bo's open-ended thinking/suggestion
  * replies. Falls back to the local offline suggestion bank on any failure.
  */
 export async function chatClient(
   history: { role: "user" | "assistant"; content: string }[],
-  tone: MabelTone,
+  tone: BoTone,
   ctx: ChatClientContext = {},
 ): Promise<ChatClientResult> {
   const latest = history[history.length - 1]?.content ?? "";

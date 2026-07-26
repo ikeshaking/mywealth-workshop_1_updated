@@ -4,13 +4,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
 import { AppHeader } from "@/components/app/AppHeader";
-import { MabelAvatar } from "@/components/brand/Logo";
+import { BoAvatar } from "@/components/brand/Logo";
 import { ItemCard } from "@/components/shared/ItemCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { MetricsRow } from "@/components/dashboard/MetricsRow";
 import { Composer } from "@/components/capture/Composer";
 import { Button } from "@/components/ui/Button";
-import { useMabel } from "@/lib/store/MabelProvider";
+import { useBo } from "@/lib/store/BoProvider";
 import { dashboardSections } from "@/lib/catalog";
 import type { LifeItem, Status } from "@/lib/types";
 
@@ -23,7 +23,7 @@ function greeting(): string {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { data, transition, completeItem } = useMabel();
+  const { data, transition, completeItem } = useBo();
   const [showCompleted, setShowCompleted] = useState(false);
 
   const byStatus = (statuses: Status[]): LifeItem[] =>
@@ -97,7 +97,7 @@ export default function DashboardPage() {
         {/* Prominent capture */}
         <div>
           <Composer
-            placeholder="Tell Mabel anything…"
+            placeholder="Tell Bo anything…"
             onSend={(text) => router.push(`/capture?q=${encodeURIComponent(text)}`)}
           />
         </div>
@@ -133,7 +133,7 @@ export default function DashboardPage() {
                   <EmptyState
                     icon="🌿"
                     title="Nothing needs you right now"
-                    body="Mabel will surface things here the moment they need attention."
+                    body="Bo will surface things here the moment they need attention."
                   />
                 ) : null
               ) : (
@@ -165,7 +165,7 @@ export default function DashboardPage() {
 
         {/* Calm sign-off */}
         <div className="flex items-center gap-3 rounded-2xl bg-eucalypt-50 p-4">
-          <MabelAvatar size={32} />
+          <BoAvatar size={32} />
           <p className="text-sm text-ink-soft">
             That&apos;s everything for now. Tell me anything and I&apos;ll quietly handle it.
           </p>

@@ -6,17 +6,17 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Field";
 import { Badge } from "@/components/ui/Badge";
-import { useMabel } from "@/lib/store/MabelProvider";
+import { useBo } from "@/lib/store/BoProvider";
 import { permissionMeta } from "@/lib/catalog";
 import { PERMISSION_LEVELS } from "@/lib/types";
-import type { PermissionLevel, MabelTone } from "@/lib/types";
+import type { PermissionLevel, BoTone } from "@/lib/types";
 import { TONES, toneMeta } from "@/lib/tone";
 import { signOut } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { data, updatePreferences, resetDemo } = useMabel();
+  const { data, updatePreferences, resetDemo } = useBo();
   const prefs = data.preferences;
 
   const exportData = () => {
@@ -24,7 +24,7 @@ export default function SettingsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "mabel-data.json";
+    a.download = "bo-data.json";
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -53,14 +53,14 @@ export default function SettingsPage() {
           <p className="text-xs text-ink-faint">Signed in as {data.user.email}</p>
         </Card>
 
-        {/* Mabel's voice */}
+        {/* Bo's voice */}
         <Card className="space-y-3">
-          <CardTitle className="text-sm">Mabel&apos;s voice</CardTitle>
+          <CardTitle className="text-sm">Bo&apos;s voice</CardTitle>
           <p className="text-xs text-ink-soft">
-            How should Mabel talk to you? You can change this anytime.
+            How should Bo talk to you? You can change this anytime.
           </p>
           <div className="space-y-2">
-            {TONES.map((t: MabelTone) => {
+            {TONES.map((t: BoTone) => {
               const meta = toneMeta[t];
               const active = prefs.tone === t;
               return (
@@ -127,9 +127,9 @@ export default function SettingsPage() {
 
         {/* Permissions */}
         <Card className="space-y-3">
-          <CardTitle className="text-sm">What Mabel can do</CardTitle>
+          <CardTitle className="text-sm">What Bo can do</CardTitle>
           <p className="text-xs text-ink-soft">
-            Choose how much Mabel handles on her own. You can change this anytime.
+            Choose how much Bo handles on its own. You can change this anytime.
           </p>
           <div className="space-y-2">
             {PERMISSION_LEVELS.map((level: PermissionLevel) => {
@@ -176,7 +176,7 @@ export default function SettingsPage() {
         {/* Notifications */}
         <Card className="space-y-3">
           <CardTitle className="text-sm">Notifications</CardTitle>
-          <Field label="How often should Mabel nudge you?">
+          <Field label="How often should Bo nudge you?">
             <Select
               value={prefs.notification_preference}
               onChange={(e) =>
@@ -205,7 +205,7 @@ export default function SettingsPage() {
         <Card className="space-y-2">
           <CardTitle className="text-sm">AI &amp; privacy</CardTitle>
           <p className="text-xs text-ink-soft">
-            Mabel processes your messages to structure them. In demo mode this runs locally with a
+            Bo processes your messages to structure them. In demo mode this runs locally with a
             deterministic parser — nothing leaves your browser. With an OpenAI key configured,
             extraction happens on a secure server route; your key is never exposed to the browser.
           </p>
@@ -249,7 +249,7 @@ export default function SettingsPage() {
           Sign out
         </Button>
 
-        <p className="pb-4 text-center text-xs text-ink-faint">Mabel · demo build</p>
+        <p className="pb-4 text-center text-xs text-ink-faint">Bo · demo build</p>
       </div>
     </div>
   );

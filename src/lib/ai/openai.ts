@@ -18,7 +18,7 @@ export async function openaiExtract(
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
   const system = [
-    "You are Mabel, a calm, capable personal assistant.",
+    "You are Bo, a calm, capable personal assistant.",
     "Convert the user's messy natural-language message into ONE structured life-admin item.",
     "Rules you MUST follow:",
     `- category is one of: ${CATEGORIES.join(", ")}.`,
@@ -29,7 +29,7 @@ export async function openaiExtract(
     "- If a genuinely required detail is missing, list it in missing_information and write ONE short, supportive follow_up_question. Otherwise follow_up_question is null.",
     "- Set is_decision=true for research/shopping/choice requests (find, recommend, compare, best, repair-or-replace).",
     "- Parse budget only if the user stated one; else null. currency is a 3-letter code (default GBP).",
-    "- approval_required=true when Mabel would take an external action (payment, booking, cancellation, purchase).",
+    "- approval_required=true when Bo would take an external action (payment, booking, cancellation, purchase).",
     "- confidence_score is 0..1 reflecting how sure you are of the classification.",
     "- Be supportive, never judgemental.",
     "Respond with a single JSON object only.",

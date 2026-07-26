@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { MabelAvatar } from "@/components/brand/Logo";
+import { BoAvatar } from "@/components/brand/Logo";
 
 /**
- * Compact top bar. Shows either a back button + title (sub-screens) or Mabel's
+ * Compact top bar. Shows either a back button + title (sub-screens) or Bo's
  * avatar + greeting (top-level screens).
  */
 export function AppHeader({
@@ -32,8 +32,8 @@ export function AppHeader({
               <ArrowLeft size={20} />
             </button>
           ) : (
-            <Link href="/dashboard" aria-label="Mabel home">
-              <MabelAvatar size={32} />
+            <Link href="/dashboard" aria-label="Nook home">
+              <BoAvatar size={32} />
             </Link>
           )}
           {title && <h1 className="truncate text-base font-semibold text-ink">{title}</h1>}

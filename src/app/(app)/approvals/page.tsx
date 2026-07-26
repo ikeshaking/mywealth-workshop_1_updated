@@ -3,18 +3,18 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AppHeader } from "@/components/app/AppHeader";
-import { MabelAvatar } from "@/components/brand/Logo";
+import { BoAvatar } from "@/components/brand/Logo";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { useMabel } from "@/lib/store/MabelProvider";
+import { useBo } from "@/lib/store/BoProvider";
 import { formatMoney, formatDateTime } from "@/lib/utils";
 import type { Approval } from "@/lib/types";
 import { RotateCcw, ShieldCheck } from "lucide-react";
 
 export default function ApprovalsPage() {
-  const { data, resolveApproval } = useMabel();
+  const { data, resolveApproval } = useBo();
   const [tab, setTab] = useState<"pending" | "history">("pending");
 
   const itemTitle = (a: Approval) =>
@@ -44,7 +44,7 @@ export default function ApprovalsPage() {
         <div className="flex items-start gap-2 rounded-2xl bg-eucalypt-50 p-3">
           <ShieldCheck size={18} className="mt-0.5 shrink-0 text-eucalypt-600" />
           <p className="text-xs text-ink-soft">
-            Mabel never takes an external action without your say-so. Everything here is{" "}
+            Bo never takes an external action without your say-so. Everything here is{" "}
             <span className="font-medium text-ink">simulated</span> in demo mode — no real payments,
             bookings or cancellations happen.
           </p>
@@ -78,7 +78,7 @@ export default function ApprovalsPage() {
               {pending.map((a) => (
                 <Card key={a.id}>
                   <div className="flex items-start gap-2">
-                    <MabelAvatar size={26} />
+                    <BoAvatar size={26} />
                     <div className="min-w-0 flex-1">
                       <Link
                         href={`/items/${a.item_id}`}

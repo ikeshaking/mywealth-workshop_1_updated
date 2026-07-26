@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 
-// Mabel's typeface: modern, characterful, warm — used across the whole app.
+// Bo's typeface: modern, characterful, warm — used across the whole app.
 const display = Bricolage_Grotesque({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -10,10 +10,10 @@ const display = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "Mabel — Life admin, handled.",
+  title: "Nook — Your life, in one place.",
   description:
-    "Mabel turns your thoughts, emails and intentions into completed outcomes — without asking you to manage another system. Tell Mabel once. She handles the rest.",
-  applicationName: "Mabel",
+    "Nook is a calm, personal home for everyday life. Inside Nook, Bo remembers what matters, keeps track of what's coming and helps you get things done. Tell Bo once. It handles the rest.",
+  applicationName: "Nook",
 };
 
 export const viewport: Viewport = {

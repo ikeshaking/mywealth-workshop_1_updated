@@ -5,11 +5,11 @@ import { Card } from "@/components/ui/Card";
 import { CategoryBadge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { MetricsRow } from "@/components/dashboard/MetricsRow";
-import { useMabel } from "@/lib/store/MabelProvider";
+import { useBo } from "@/lib/store/BoProvider";
 import { formatDate, formatMoney, formatMinutes } from "@/lib/utils";
 
 export default function CompletedPage() {
-  const { data } = useMabel();
+  const { data } = useBo();
   const completed = data.items
     .filter((i) => i.status === "completed")
     .sort((a, b) => (b.completed_at ?? "").localeCompare(a.completed_at ?? ""));
@@ -24,7 +24,7 @@ export default function CompletedPage() {
           <EmptyState
             icon="🌟"
             title="Nothing completed yet"
-            body="As Mabel handles things, they'll show up here with what you saved."
+            body="As Bo handles things, they'll show up here with what you saved."
           />
         ) : (
           <div className="space-y-3">

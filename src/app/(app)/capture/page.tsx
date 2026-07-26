@@ -6,19 +6,19 @@ import { useSearchParams } from "next/navigation";
 import { Volume2, Bookmark } from "lucide-react";
 import { AppHeader } from "@/components/app/AppHeader";
 import { Composer } from "@/components/capture/Composer";
-import { MabelAvatar } from "@/components/brand/Logo";
+import { BoAvatar } from "@/components/brand/Logo";
 import { StatusBadge, CategoryBadge, InferredTag } from "@/components/ui/Badge";
-import { useMabel } from "@/lib/store/MabelProvider";
+import { useBo } from "@/lib/store/BoProvider";
 import { extractClient, chatClient } from "@/lib/ai/client";
 import { fallbackExtract } from "@/lib/ai/fallback";
-import { mabelReply } from "@/lib/ai/reply";
+import { boReply } from "@/lib/ai/reply";
 import type { Extraction } from "@/lib/schemas";
 import type { LifeItem } from "@/lib/types";
 import { relativeDay, formatDate, todayIso } from "@/lib/utils";
 
 interface ChatMsg {
   id: string;
-  role: "user" | "mabel";
+  role: "user" | "bo";
   body: string;
   item?: LifeItem;
   extraction?: Extraction;
@@ -64,7 +64,7 @@ function classify(text: string): { kind: Kind; extraction: Extraction } {
   return { kind: "chat", extraction };
 }
 
-/** Render Mabel's light markdown (**bold** and line breaks) safely. */
+/** Render Bo's light markdown (**bold** and line breaks) safely. */
 function RichText({ text }: { text: string }) {
   return (
     <>
@@ -177,7 +177,7 @@ function Bubble({ msg, onSave }: { msg: ChatMsg; onSave: (msg: ChatMsg) => void 
   }
   return (
     <div className="flex items-start gap-2">
-      <MabelAvatar size={28} />
+      <BoAvatar size={28} />
       <div className="max-w-[85%]">
         <div className="rounded-2xl rounded-tl-md bg-white px-3.5 py-2.5 text-sm text-ink shadow-soft">
           <RichText text={msg.body} />
@@ -201,13 +201,13 @@ function Bubble({ msg, onSave }: { msg: ChatMsg; onSave: (msg: ChatMsg) => void 
 }
 
 function CaptureInner() {
-  const { capture, data } = useMabel();
+  const { capture, data } = useBo();
   const params = useSearchParams();
   const tone = data.preferences.tone;
   const [messages, setMessages] = useState<ChatMsg[]>([
     {
       id: "seed",
-      role: "mabel",
+      role: "bo",
       body: `Hi ${data.preferences.preferred_name || "there"} — tell me anything on your mind. A task to handle, a decision to weigh up, or just "what should I watch tonight?"`,
     },
   ]);
@@ -216,11 +216,11 @@ function CaptureInner() {
   const sentInitial = useRef(false);
 
   const saveThought = (msg: ChatMsg) => {
-    const title = msg.saveTitle ?? "Thought for Mabel";
+    const title = msg.saveTitle ?? "Thought for Bo";
     const userText = [...messages].reverse().find((m) => m.role === "user")?.body ?? title;
     const extraction: Extraction = {
       title,
-      summary: "Saved from a chat with Mabel.",
+      summary: "Saved from a chat with Bo.",
       category: "general",
       priority: "low",
       due_date: null,
@@ -248,14 +248,14 @@ function CaptureInner() {
       const { kind } = classify(text);
 
       if (kind === "chat") {
-        // Open-ended thinking / suggestions — Mabel replies, no item created.
+        // Open-ended thinking / suggestions — Bo replies, no item created.
         const history = [...messages, userMsg]
           .filter((m) => m.id !== "seed")
           .slice(-8)
           .map(
             (m) =>
               ({
-                role: (m.role === "mabel" ? "assistant" : "user") as "assistant" | "user",
+                role: (m.role === "bo" ? "assistant" : "user") as "assistant" | "user",
                 content: m.body,
               }),
           );
@@ -265,7 +265,7 @@ function CaptureInner() {
         });
         setMessages((m) => [
           ...m,
-          { id: `m_${Date.now()}`, role: "mabel", body: reply, saveTitle, engine },
+          { id: `m_${Date.now()}`, role: "bo", body: reply, saveTitle, engine },
         ]);
         return;
       }
@@ -277,8 +277,8 @@ function CaptureInner() {
         ...m,
         {
           id: `m_${Date.now()}`,
-          role: "mabel",
-          body: mabelReply(extraction, tone),
+          role: "bo",
+          body: boReply(extraction, tone),
           item,
           extraction,
           engine,
@@ -288,7 +288,7 @@ function CaptureInner() {
     } catch {
       setMessages((m) => [
         ...m,
-        { id: `err_${Date.now()}`, role: "mabel", body: "Sorry, something went wrong — try again?" },
+        { id: `err_${Date.now()}`, role: "bo", body: "Sorry, something went wrong — try again?" },
       ]);
     } finally {
       setBusy(false);
@@ -310,7 +310,7 @@ function CaptureInner() {
 
   return (
     <div className="flex h-dvh flex-col">
-      <AppHeader title="Mabel" />
+      <AppHeader title="Bo" />
       <div className="flex-1 overflow-y-auto">
         <div className="container-app space-y-4 py-4" aria-live="polite">
           {messages.map((m) => (
@@ -318,8 +318,8 @@ function CaptureInner() {
           ))}
           {busy && (
             <div className="flex items-center gap-2 text-sm text-ink-faint">
-              <MabelAvatar size={28} />
-              <span className="animate-pulse-soft">Mabel is thinking…</span>
+              <BoAvatar size={28} />
+              <span className="animate-pulse-soft">Bo is thinking…</span>
             </div>
           )}
           <div ref={bottomRef} />

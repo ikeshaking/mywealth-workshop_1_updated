@@ -1,23 +1,23 @@
 /**
- * Mabel's selectable voice. Each tone shapes both the demo replies and the
- * system prompt sent to OpenAI, so Mabel sounds consistent whether or not the
+ * Bo's selectable voice. Each tone shapes both the demo replies and the
+ * system prompt sent to OpenAI, so Bo sounds consistent whether or not the
  * real AI brain is switched on. Users pick their tone in Settings.
  */
 
-import type { MabelTone } from "./types";
+import type { BoTone } from "./types";
 
 export const TONES = ["friend", "calm", "witty", "concise"] as const;
-export type { MabelTone };
+export type { BoTone };
 
-export const DEFAULT_TONE: MabelTone = "calm";
+export const DEFAULT_TONE: BoTone = "calm";
 
 export const toneMeta: Record<
-  MabelTone,
+  BoTone,
   {
     label: string;
     description: string;
     sample: string;
-    /** Injected into the OpenAI system prompt to steer Mabel's voice. */
+    /** Injected into the OpenAI system prompt to steer Bo's voice. */
     system: string;
   }
 > = {

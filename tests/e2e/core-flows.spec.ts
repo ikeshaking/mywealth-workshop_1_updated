@@ -1,21 +1,21 @@
 import { test, expect } from "@playwright/test";
-import { loginAsDemo, tellMabel } from "./helpers";
+import { loginAsDemo, tellBo } from "./helpers";
 
 /**
- * End-to-end coverage of Mabel's five core demo flows. Runs against the app in
+ * End-to-end coverage of Bo's five core demo flows. Runs against the app in
  * demo mode (seeded data, deterministic fallback AI, simulated actions).
  */
 
-test.describe("Mabel core demo flows", () => {
+test.describe("Bo core demo flows", () => {
   test.beforeEach(async ({ page }) => {
     await loginAsDemo(page);
   });
 
   test("Flow 1: Car registration — capture, then add the due date", async ({ page }) => {
     await page.goto("/capture");
-    await tellMabel(page, "I need to sort my car rego soon.");
+    await tellBo(page, "I need to sort my car rego soon.");
 
-    // Mabel confirms and offers a next step.
+    // Bo confirms and offers a next step.
     await expect(page.getByText(/got it\. i've added your/i)).toBeVisible();
     // A structured preview is shown with a way to open the item.
     const open = page.getByRole("link", { name: /open item/i }).first();
@@ -23,7 +23,7 @@ test.describe("Mabel core demo flows", () => {
     await open.click();
 
     await expect(page).toHaveURL(/\/items\//);
-    await expect(page.getByText(/mabel.s understanding/i)).toBeVisible();
+    await expect(page.getByText(/bo.s understanding/i)).toBeVisible();
 
     // The due date is unknown; add it via Update details.
     await page.getByRole("button", { name: /update details/i }).click();
@@ -33,7 +33,7 @@ test.describe("Mabel core demo flows", () => {
 
   test("Flow 2: Bill reminder — capture with a reminder date", async ({ page }) => {
     await page.goto("/capture");
-    await tellMabel(page, "Remind me to pay my electricity bill tomorrow.");
+    await tellBo(page, "Remind me to pay my electricity bill tomorrow.");
     await expect(page.getByText(/got it\./i)).toBeVisible();
     await page.getByRole("link", { name: /open item/i }).first().click();
     await expect(page).toHaveURL(/\/items\//);
@@ -43,7 +43,7 @@ test.describe("Mabel core demo flows", () => {
 
   test("Flow 3: Shopping decision — get bundles, best match, approve", async ({ page }) => {
     await page.goto("/capture");
-    await tellMabel(page, "Find me an outdoor dining set under $2,000 that seats six.");
+    await tellBo(page, "Find me an outdoor dining set under $2,000 that seats six.");
 
     const options = page.getByRole("link", { name: /view options/i }).first();
     await expect(options).toBeVisible();
@@ -60,7 +60,7 @@ test.describe("Mabel core demo flows", () => {
 
   test("Flow 4: Subscription cancellation — capture, approve, complete", async ({ page }) => {
     await page.goto("/capture");
-    await tellMabel(page, "I keep paying for a gym membership I don't use.");
+    await tellBo(page, "I keep paying for a gym membership I don't use.");
     await expect(page.getByText(/got it\./i)).toBeVisible();
 
     // The seeded gym cancellation is already awaiting approval.
@@ -76,11 +76,11 @@ test.describe("Mabel core demo flows", () => {
     await expect(page.getByText(/gym|streaming|water/i).first()).toBeVisible();
   });
 
-  test("Flow 5: Family appointment — Mabel asks who and when", async ({ page }) => {
+  test("Flow 5: Family appointment — Bo asks who and when", async ({ page }) => {
     await page.goto("/capture");
-    await tellMabel(page, "I need to book the kids into the dentist.");
+    await tellBo(page, "I need to book the kids into the dentist.");
 
-    // Mabel asks a short follow-up for the missing details.
+    // Bo asks a short follow-up for the missing details.
     await expect(page.getByText(/which of the kids|preferred|who and/i).first()).toBeVisible();
     await page.getByRole("link", { name: /open item/i }).first().click();
     await expect(page).toHaveURL(/\/items\//);

@@ -1,7 +1,7 @@
 "use client";
 
-import { MabelProvider } from "@/lib/store/MabelProvider";
+import { BoProvider } from "@/lib/store/BoProvider";
 
 export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
-  return <MabelProvider>{children}</MabelProvider>;
+  return <BoProvider>{children}</BoProvider>;
 }

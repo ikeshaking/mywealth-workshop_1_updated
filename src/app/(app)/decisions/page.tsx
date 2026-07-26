@@ -7,12 +7,12 @@ import { Card } from "@/components/ui/Card";
 import { Composer } from "@/components/capture/Composer";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Badge } from "@/components/ui/Badge";
-import { useMabel } from "@/lib/store/MabelProvider";
+import { useBo } from "@/lib/store/BoProvider";
 import { formatMoney } from "@/lib/utils";
 
 export default function DecisionsPage() {
   const router = useRouter();
-  const { data } = useMabel();
+  const { data } = useBo();
 
   const decisions = [...data.decisionRequests].reverse();
 
@@ -21,7 +21,7 @@ export default function DecisionsPage() {
       <AppHeader title="Decisions & shopping" />
       <div className="container-app space-y-4 py-4">
         <p className="text-sm text-ink-soft">
-          Ask Mabel to research anything — she returns complete options, not a wall of products.
+          Ask Bo to research anything — it returns complete options, not a wall of products.
         </p>
         <Composer
           placeholder="Find me… / Help me choose… / Should I…"

@@ -2,11 +2,11 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { buildSeed } from "@/lib/demo/seed";
 import { fallbackExtract } from "@/lib/ai/fallback";
 import * as ops from "@/lib/store/operations";
-import type { MabelData } from "@/lib/types";
+import type { BoData } from "@/lib/types";
 
 const TODAY = "2026-07-25";
 
-function freshData(): MabelData {
+function freshData(): BoData {
   return buildSeed(TODAY);
 }
 

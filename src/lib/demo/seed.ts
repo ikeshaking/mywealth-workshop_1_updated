@@ -1,5 +1,5 @@
 import type {
-  MabelData,
+  BoData,
   LifeItem,
   Approval,
   Reminder,
@@ -29,7 +29,7 @@ function addDays(iso: string, n: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function buildSeed(today: string): MabelData {
+export function buildSeed(today: string): BoData {
   const nowIso = today + "T09:00:00.000Z";
   const items: LifeItem[] = [];
   const events: ItemEvent[] = [];
@@ -141,7 +141,7 @@ export function buildSeed(today: string): MabelData {
     id: "item_internet",
     title: "Review internet plan",
     original_input: "My internet bill seems expensive.",
-    summary: "Mabel found a faster plan that saves an estimated $216/year.",
+    summary: "Bo found a faster plan that saves an estimated $216/year.",
     category: "subscription",
     status: "researching",
     priority: "medium",
@@ -160,7 +160,7 @@ export function buildSeed(today: string): MabelData {
     id: "item_gym",
     title: "Cancel gym membership",
     original_input: "I keep paying for a gym membership I do not use.",
-    summary: "You haven't used this in 45 days. Mabel prepared a cancellation.",
+    summary: "You haven't used this in 45 days. Bo prepared a cancellation.",
     category: "subscription",
     status: "ready_for_approval",
     priority: "medium",
@@ -200,11 +200,11 @@ export function buildSeed(today: string): MabelData {
     id: "item_dentist",
     title: "Book the kids' dentist",
     original_input: "I need to book the kids into the dentist.",
-    summary: "Mabel needs to know who and when before proposing times.",
+    summary: "Bo needs to know who and when before proposing times.",
     category: "family",
     status: "needs_information",
     priority: "medium",
-    recommended_action: "Tell Mabel which children and preferred timing.",
+    recommended_action: "Tell Bo which children and preferred timing.",
     approval_required: true,
     confidence_score: 0.7,
     follow_up_date: addDays(today, 2),
@@ -260,7 +260,7 @@ export function buildSeed(today: string): MabelData {
     priority: "medium",
     due_date: addDays(today, 9),
     context: "$1,234.00 · quarterly",
-    recommended_action: "Set aside funds; Mabel will remind you.",
+    recommended_action: "Set aside funds; Bo will remind you.",
     confidence_score: 0.92,
   });
   items.push(rates);
@@ -271,12 +271,12 @@ export function buildSeed(today: string): MabelData {
     id: "item_travel",
     title: "Organise travel insurance",
     original_input: "I should probably organise travel insurance.",
-    summary: "You mentioned travel insurance. Want Mabel to find options?",
+    summary: "You mentioned travel insurance. Want Bo to find options?",
     category: "travel",
     status: "captured",
     priority: "low",
     follow_up_date: addDays(today, 5),
-    recommended_action: "Share your trip dates and Mabel will compare policies.",
+    recommended_action: "Share your trip dates and Bo will compare policies.",
     confidence_score: 0.6,
     inferred: { priority: true },
   });
@@ -294,7 +294,7 @@ export function buildSeed(today: string): MabelData {
     priority: "high",
     due_date: addDays(today, 2),
     context: "Year 3 museum trip",
-    recommended_action: "Sign the form; Mabel can remind you to hand it in.",
+    recommended_action: "Sign the form; Bo can remind you to hand it in.",
     confidence_score: 0.85,
   });
   items.push(permission);
@@ -324,7 +324,7 @@ export function buildSeed(today: string): MabelData {
     id: "item_cancelled_stream",
     title: "Cancelled unused streaming plan",
     original_input: "Cancel the streaming service nobody watches",
-    summary: "Mabel cancelled a streaming plan you weren't using.",
+    summary: "Bo cancelled a streaming plan you weren't using.",
     category: "subscription",
     status: "completed",
     priority: "low",
@@ -340,7 +340,7 @@ export function buildSeed(today: string): MabelData {
   const conversation: Conversation = {
     id: "conv_main",
     user_id: USER_ID,
-    title: "Chat with Mabel",
+    title: "Chat with Bo",
     created_at: nowIso,
     updated_at: nowIso,
   };
@@ -349,7 +349,7 @@ export function buildSeed(today: string): MabelData {
     {
       id: "msg_1",
       conversation_id: conversation.id,
-      role: "mabel",
+      role: "bo",
       body: "Morning! I'm keeping an eye on a few things for you. Tell me anything and I'll handle the admin.",
       item_id: null,
       decision_request_id: null,

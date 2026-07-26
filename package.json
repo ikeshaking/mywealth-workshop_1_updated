@@ -1,8 +1,8 @@
 {
-  "name": "mabel",
+  "name": "nook",
   "version": "0.1.0",
   "private": true,
-  "description": "Mabel — your calm, capable AI personal assistant. Tell Mabel once. She handles the rest.",
+  "description": "Nook — a calm, personal home for everyday life. Inside Nook, Bo handles the rest.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

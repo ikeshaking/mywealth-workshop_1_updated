@@ -1,18 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useMabel } from "@/lib/store/MabelProvider";
-import { MabelAvatar } from "@/components/brand/Logo";
+import { useBo } from "@/lib/store/BoProvider";
+import { BoAvatar } from "@/components/brand/Logo";
 import { X } from "lucide-react";
 
 /**
  * Proactive nudge surface. On mount (and periodically) it fires any reminders
  * whose time has passed and shows the newest one as a calm, dismissible toast.
- * This is the app-level simulation of Mabel's proactive nudging — no external
+ * This is the app-level simulation of Bo's proactive nudging — no external
  * push notifications required.
  */
 export function NudgeToaster() {
-  const { data, runNudges } = useMabel();
+  const { data, runNudges } = useBo();
   const [dismissed, setDismissed] = useState<string[]>([]);
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export function NudgeToaster() {
         role="status"
         className="pointer-events-auto flex w-full max-w-md items-start gap-2.5 rounded-2xl border border-eucalypt-200 bg-white p-3 shadow-lift animate-fade-in"
       >
-        <MabelAvatar size={28} />
+        <BoAvatar size={28} />
         <p className="flex-1 text-sm text-ink">{latest.message}</p>
         <button
           aria-label="Dismiss nudge"

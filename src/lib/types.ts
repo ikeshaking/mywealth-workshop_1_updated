@@ -1,5 +1,5 @@
 /**
- * Core domain types for Mabel.
+ * Core domain types for Bo.
  *
  * These are the single source of truth for the shape of a "life item" and its
  * satellites (notes, events, reminders, approvals, decisions). The Zod schemas
@@ -42,7 +42,7 @@ export type Priority = (typeof PRIORITIES)[number];
 export const PERMISSION_LEVELS = ["observe", "prepare", "approve", "autopilot"] as const;
 export type PermissionLevel = (typeof PERMISSION_LEVELS)[number];
 
-/** A single field on a life item that Mabel inferred rather than being told. */
+/** A single field on a life item that Bo inferred rather than being told. */
 export interface InferredMeta {
   due_date?: boolean;
   reminder_date?: boolean;
@@ -67,7 +67,7 @@ export interface LifeItem {
   recommended_action: string | null;
   approval_required: boolean;
   confidence_score: number; // 0..1
-  /** Which fields were inferred by Mabel (shown as "inferred" in the UI). */
+  /** Which fields were inferred by Bo (shown as "inferred" in the UI). */
   inferred: InferredMeta;
   /** Money/time saved once completed — used for the Completed screen + metrics. */
   money_saved: number | null;
@@ -122,9 +122,9 @@ export type ApprovalStatus = "pending" | "approved" | "rejected" | "snoozed";
 export interface Approval {
   id: string;
   item_id: string;
-  /** What Mabel wants to do */
+  /** What Bo wants to do */
   action: string;
-  /** Why she wants to do it */
+  /** Why it wants to do it */
   reason: string;
   expected_cost: number | null;
   /** What information would be shared to take the action */
@@ -177,7 +177,7 @@ export interface RecommendationSet {
   created_at: string;
 }
 
-export type MessageRole = "user" | "mabel";
+export type MessageRole = "user" | "bo";
 
 export interface Message {
   id: string;
@@ -200,7 +200,7 @@ export interface Conversation {
 
 export type HouseholdType = "solo" | "couple" | "family" | "shared";
 export type NotificationPreference = "all" | "important" | "quiet";
-export type MabelTone = "friend" | "calm" | "witty" | "concise";
+export type BoTone = "friend" | "calm" | "witty" | "concise";
 
 export interface UserPreferences {
   preferred_name: string;
@@ -210,8 +210,8 @@ export interface UserPreferences {
   proactive_suggestions: boolean;
   permission_level: PermissionLevel;
   currency: string;
-  /** Mabel's selectable voice/personality. */
-  tone: MabelTone;
+  /** Bo's selectable voice/personality. */
+  tone: BoTone;
   onboarded: boolean;
 }
 
@@ -222,7 +222,7 @@ export interface DemoUser {
 }
 
 /** The full serialisable demo database persisted to localStorage. */
-export interface MabelData {
+export interface BoData {
   user: DemoUser;
   preferences: UserPreferences;
   items: LifeItem[];
