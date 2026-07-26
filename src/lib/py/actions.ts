@@ -10,8 +10,22 @@ export interface Todo {
   signoffModules: { id: string; title: string; quarterId: string; quarterNumber: number }[];
   /** Competencies the candidate has self-rated but the supervisor hasn't rated. */
   competencyPending: number;
+  /** The first quarter (e.g. "q2") with competencies awaiting a rating. */
+  competencyQuarter: string | null;
   /** Where to jump inside the candidate's tracker to act. */
   hash: string;
+}
+
+/**
+ * What to open and scroll to inside the tracker once it loads. The hash alone
+ * only gets you to the right tab — this pins the exact module (or competency
+ * quarter) the reviewer clicked.
+ */
+export interface FocusTarget {
+  /** A training module id, e.g. "q2_super" — expanded and scrolled into view. */
+  moduleId?: string;
+  /** A competency quarter, e.g. "q2" — selected on the competency screen. */
+  compQuarter?: string;
 }
 
 /** A single activity entry from a candidate's audit log. */
@@ -68,12 +82,17 @@ export function deriveTodo(
   // Competencies: candidate has rated (>0) but supervisor hasn't (0/undefined).
   const comp = (state.competencyScores ?? {}) as CompScores;
   let competencyPending = 0;
-  for (const q of Object.keys(comp)) {
+  let competencyQuarter: string | null = null;
+  // Sorted so "the first pending quarter" is the earliest one, not hash order.
+  for (const q of Object.keys(comp).sort()) {
     const dom = comp[q];
     if (!dom) continue;
     for (const key of Object.keys(dom)) {
       const s = dom[key];
-      if (s && (s.candidate ?? 0) > 0 && (s.supervisor ?? 0) === 0) competencyPending++;
+      if (s && (s.candidate ?? 0) > 0 && (s.supervisor ?? 0) === 0) {
+        competencyPending++;
+        if (!competencyQuarter) competencyQuarter = q;
+      }
     }
   }
 
@@ -85,7 +104,15 @@ export function deriveTodo(
       ? `#/quarters/${signoffModules[0].quarterId}/training`
       : "#/competency";
 
-  return { candidateId, candidateName, supervisorName, signoffModules, competencyPending, hash };
+  return {
+    candidateId,
+    candidateName,
+    supervisorName,
+    signoffModules,
+    competencyPending,
+    competencyQuarter,
+    hash,
+  };
 }
 
 /** Activity a candidate performed, newest first. Optionally only since `sinceIso`. */

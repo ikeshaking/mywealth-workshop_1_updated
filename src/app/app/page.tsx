@@ -8,12 +8,13 @@ import { Dashboard } from "@/components/shell/Dashboard";
 import { AdminPanel } from "@/components/shell/AdminPanel";
 import { TrackerFrame } from "@/components/shell/TrackerFrame";
 import { NotificationSettings } from "@/components/shell/NotificationSettings";
+import type { FocusTarget } from "@/lib/py/actions";
 
 type View =
   | { kind: "home" }
   | { kind: "admin" }
   | { kind: "notifications" }
-  | { kind: "tracker"; candidateId: string; candidateName: string; hash?: string };
+  | { kind: "tracker"; candidateId: string; candidateName: string; hash?: string; focus?: FocusTarget };
 
 function AppInner() {
   const { profile, loading } = useSession();
@@ -75,8 +76,12 @@ function AppInner() {
   }
 
   // --- Supervisor & PY manager: dashboard, tracker, (manager) admin. ---
-  const openCandidate = (candidateId: string, candidateName: string, hash?: string) =>
-    setView({ kind: "tracker", candidateId, candidateName, hash });
+  const openCandidate = (
+    candidateId: string,
+    candidateName: string,
+    hash?: string,
+    focus?: FocusTarget,
+  ) => setView({ kind: "tracker", candidateId, candidateName, hash, focus });
 
   if (view.kind === "tracker") {
     return (
@@ -107,6 +112,7 @@ function AppInner() {
           viewerRole={profile.role}
           candidateName={view.candidateName}
           initialHash={view.hash}
+          focus={view.focus}
         />
       </>
     );

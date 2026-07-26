@@ -6002,7 +6002,10 @@ const Modal = {
     // The app shell already shows the MyWealth wordmark + identity, so hide the
     // tracker's own brand block to avoid a duplicate. Keep the section nav.
     var __embedStyle = document.createElement('style');
-    __embedStyle.textContent = '.topbar .brand,.topbar .tool-label{display:none!important}.topbar{padding-top:8px;padding-bottom:8px}';
+    __embedStyle.textContent = '.topbar .brand,.topbar .tool-label{display:none!important}.topbar{padding-top:8px;padding-bottom:8px}'
+      // Brief highlight so a deep-linked module is obvious on arrival.
+      + '@keyframes pyFocusPulse{0%{box-shadow:0 0 0 3px var(--blue);}100%{box-shadow:0 0 0 3px rgba(43,111,214,0);}}'
+      + '.py-focus-target{animation:pyFocusPulse 2.4s ease-out 1;border-radius:12px;scroll-margin-top:110px}';
     document.head.appendChild(__embedStyle);
     if (saved.ui && saved.ui.theme) { /* theme still honoured from injected state */ }
     try { window.parent.postMessage({ type: 'py:ready' }, '*'); } catch (e) {}
@@ -6017,6 +6020,30 @@ const Modal = {
   if (!location.hash) location.hash = '#/dashboard';
 
   App.mount(document.getElementById('mainContent'), document.getElementById('topnav'));
+
+  // Deep link from the app shell's "Needs you" list: the target module was
+  // already opened via the injected state, so we only have to bring it into
+  // view and flag it. Retry briefly in case the view is still rendering.
+  if (typeof window !== 'undefined' && window.__PY_EMBED__ && window.__PY_FOCUS_MODULE__) {
+    (function scrollToFocus(attempt) {
+      var id = window.__PY_FOCUS_MODULE__;
+      // The card carries data-module-id; its body is #mod-<id>.
+      var card = document.querySelector('.module[data-module-id="' + id + '"]');
+      var body = document.getElementById('mod-' + id);
+      if (!card && !body) {
+        if (attempt < 20) return setTimeout(function () { scrollToFocus(attempt + 1); }, 100);
+        return;
+      }
+      card = card || body.closest('.module') || body;
+      card.classList.add('py-focus-target');
+      // Anchor the module's TITLE near the top. An expanded module is taller
+      // than the viewport, so centring it would push the heading off-screen and
+      // you'd lose track of which module you landed on.
+      try { card.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      catch (e) { card.scrollIntoView(); }
+      setTimeout(function () { card.classList.remove('py-focus-target'); }, 2600);
+    })(0);
+  }
 
   // Autosave heartbeat — flush any in-progress edit every 2 seconds.
   setInterval(flushActiveField, 2000);

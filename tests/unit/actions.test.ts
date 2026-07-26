@@ -49,6 +49,37 @@ describe("deriveTodo", () => {
     expect(todo.hash).toBe("#/competency"); // no modules pending → competency link
     expect(totalPending(todo)).toBe(1);
   });
+
+  it("reports the earliest quarter with competencies awaiting a rating", () => {
+    const s = stateWith((s) => {
+      const comp = s.competencyScores as Record<string, Record<string, { candidate: number; supervisor: number }>>;
+      // Seed a later quarter first — the result must still be the earliest.
+      comp.q3["0_0"] = { candidate: 4, supervisor: 0 };
+      comp.q2["0_0"] = { candidate: 3, supervisor: 0 };
+    });
+    const todo = deriveTodo("c1", "Alex", "Sarah", s)!;
+    expect(todo.competencyQuarter).toBe("q2");
+    expect(todo.competencyPending).toBe(2);
+  });
+
+  it("has no competency quarter when nothing is awaiting a rating", () => {
+    const s = stateWith((s) => {
+      (s.modulesDone as Record<string, { done: boolean }>)["q2_super"].done = true;
+    });
+    const todo = deriveTodo("c1", "Alex", "Sarah", s)!;
+    expect(todo.competencyQuarter).toBeNull();
+  });
+
+  it("carries the module id so the shell can open that exact module", () => {
+    const s = stateWith((s) => {
+      (s.modulesDone as Record<string, { done: boolean }>)["q2_super"].done = true;
+    });
+    const todo = deriveTodo("c1", "Alex", "Sarah", s)!;
+    // The id is what the deep link expands and scrolls to inside the tracker.
+    expect(todo.signoffModules[0].id).toBe("q2_super");
+    expect(todo.signoffModules[0].quarterId).toBe("q2");
+    expect(todo.signoffModules[0].title).toMatch(/Superannuation/);
+  });
 });
 
 describe("deriveActivity", () => {
