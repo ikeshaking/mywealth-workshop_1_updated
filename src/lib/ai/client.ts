@@ -147,6 +147,7 @@ export async function draftClient(item: DraftRequestItem, name?: string): Promis
 export interface RecommendationResult {
   summary: string;
   options: RecommendationBundle[];
+  grounded?: boolean;
 }
 
 /** Real, relevant shopping/decision options via /api/recommend. Null on failure. */
