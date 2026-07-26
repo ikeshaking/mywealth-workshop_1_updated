@@ -11,10 +11,10 @@ export async function openaiExtract(
   input: string,
   today: string,
 ): Promise<Extraction | null> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) return null;
 
-  const client = new OpenAI({ apiKey });
+  const client = new OpenAI({ apiKey, timeout: 20_000, maxRetries: 3 });
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
   const system = [

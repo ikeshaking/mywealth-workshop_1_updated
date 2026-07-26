@@ -33,7 +33,9 @@ export async function openaiChat(
   tone: BoTone,
   ctx: ChatContext,
 ): Promise<ChatOutcome> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  // Trim to strip any stray whitespace/newline pasted into the env var — such a
+  // character makes the Authorization header illegal and fails every request.
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) return { reply: null, error: "OPENAI_API_KEY is not set on the server" };
 
   // Explicit timeout + built-in retries make transient connection blips
@@ -112,5 +114,7 @@ function describeError(err: unknown): string {
     cur = e.cause;
     depth++;
   }
-  return parts.length ? parts.join(" <- ") : String(err);
+  const joined = parts.length ? parts.join(" <- ") : String(err);
+  // Never leak the API key into UI/logs, even inside an error message.
+  return joined.replace(/sk-[A-Za-z0-9_-]{10,}/g, "sk-***redacted***");
 }
