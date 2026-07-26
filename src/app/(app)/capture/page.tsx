@@ -9,7 +9,8 @@ import { Composer } from "@/components/capture/Composer";
 import { BoAvatar } from "@/components/brand/Logo";
 import { StatusBadge, CategoryBadge, InferredTag } from "@/components/ui/Badge";
 import { useBo } from "@/lib/store/BoProvider";
-import { extractClient, chatClient, planClient } from "@/lib/ai/client";
+import { extractClient, chatClient, planClient, recommendClient } from "@/lib/ai/client";
+import { recommendFor } from "@/lib/ai/recommend";
 import { fallbackExtract } from "@/lib/ai/fallback";
 import { boReply } from "@/lib/ai/reply";
 import type { Extraction } from "@/lib/schemas";
@@ -251,8 +252,24 @@ function Bubble({
 }
 
 function CaptureInner() {
-  const { capture, addReminders, data } = useBo();
+  const { capture, addReminders, attachRecommendations, data } = useBo();
   const params = useSearchParams();
+
+  const loadRecommendations = async (
+    drId: string,
+    request: string,
+    budget: number | null,
+    currency: string,
+  ) => {
+    const ai = await recommendClient(request, budget, currency);
+    if (ai) {
+      attachRecommendations(drId, ai.summary, ai.options);
+      return;
+    }
+    // Fallback to the offline bundle bank so there's always something to show.
+    const canned = recommendFor(request, budget, currency);
+    attachRecommendations(drId, canned.summary, canned.options);
+  };
   const tone = data.preferences.tone;
   const [messages, setMessages] = useState<ChatMsg[]>([
     {
@@ -359,6 +376,10 @@ function CaptureInner() {
       // Task or shopping — turn it into a structured item.
       const { extraction, engine } = await extractClient(text);
       const item = capture(text, extraction);
+      // For a shopping/decision, research real options in the background.
+      if (item.decision_request_id) {
+        void loadRecommendations(item.decision_request_id, text, extraction.budget, extraction.currency);
+      }
       setMessages((m) => [
         ...m,
         {

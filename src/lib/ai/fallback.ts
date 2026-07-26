@@ -113,14 +113,22 @@ function parseBudget(input: string): { budget: number | null; currency: string }
       : currencyMatch?.[1] === "€"
         ? "EUR"
         : "AUD";
-  const m = input.match(/(?:under|less than|below|max(?:imum)?|budget of|around)\s*[£$€]?\s*([\d,]+)/i);
+  // Parse a number token with optional 'k' suffix, e.g. "1k" → 1000, "1.5k" → 1500.
+  const toAmount = (numStr: string, k?: string): number => {
+    const n = Number(numStr.replace(/,/g, ""));
+    if (!Number.isFinite(n)) return NaN;
+    return k ? n * 1000 : n;
+  };
+  const m = input.match(
+    /(?:under|less than|below|max(?:imum)?|budget of|around)\s*[£$€]?\s*([\d,]+(?:\.\d+)?)\s*([kK])?/i,
+  );
   if (m) {
-    const n = Number(m[1].replace(/,/g, ""));
+    const n = toAmount(m[1], m[2]);
     return { budget: Number.isFinite(n) ? n : null, currency };
   }
-  const bare = input.match(/[£$€]\s*([\d,]+)/);
+  const bare = input.match(/[£$€]\s*([\d,]+(?:\.\d+)?)\s*([kK])?/);
   if (bare) {
-    const n = Number(bare[1].replace(/,/g, ""));
+    const n = toAmount(bare[1], bare[2]);
     return { budget: Number.isFinite(n) ? n : null, currency };
   }
   return { budget: null, currency };

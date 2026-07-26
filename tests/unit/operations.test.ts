@@ -42,11 +42,55 @@ describe("life item creation", () => {
     );
     expect(item.status).toBe("researching");
     expect(decisionRequestId).toBeTruthy();
+    // Options are now attached asynchronously; capture creates an empty set.
     const set = next.recommendationSets.find((s) => s.decision_request_id === decisionRequestId);
     expect(set).toBeTruthy();
     const opts = next.recommendationOptions.filter((o) => o.set_id === set!.id);
-    expect(opts.length).toBeGreaterThanOrEqual(2);
-    expect(opts.some((o) => o.is_best_match)).toBe(true);
+    expect(opts.length).toBe(0);
+  });
+
+  it("attaches recommendations to a decision, guaranteeing one best match", () => {
+    const data = freshData();
+    const input = "Find me an outdoor dining set under $2,000 that seats six.";
+    const { data: created, decisionRequestId } = ops.createItemFromExtraction(
+      data,
+      input,
+      fallbackExtract(input, TODAY),
+    );
+    const bundles = [
+      {
+        title: "Set A",
+        total_price: 1499,
+        is_best_match: false,
+        items: [{ name: "Table", price: 999 }],
+        advantages: ["Good value"],
+        trade_offs: ["Assembly required"],
+        why_it_suits: "Fits the budget.",
+        retailer_label: "Temple & Webster",
+        retailer_url: "https://www.templeandwebster.com.au",
+        delivery: "5–7 days",
+        sizing_notes: null,
+      },
+      {
+        title: "Set B",
+        total_price: 1899,
+        is_best_match: false,
+        items: [{ name: "Table", price: 1299 }],
+        advantages: ["Premium"],
+        trade_offs: ["Near budget"],
+        why_it_suits: "Higher quality.",
+        retailer_label: "Castlery",
+        retailer_url: "https://www.castlery.com",
+        delivery: "7–10 days",
+        sizing_notes: null,
+      },
+    ];
+    const next = ops.attachRecommendations(created, decisionRequestId!, "Two real options.", bundles);
+    const set = next.recommendationSets.find((s) => s.decision_request_id === decisionRequestId);
+    const opts = next.recommendationOptions.filter((o) => o.set_id === set!.id);
+    expect(opts.length).toBe(2);
+    expect(opts.filter((o) => o.is_best_match).length).toBe(1);
+    expect(opts.every((o) => o.currency === "AUD")).toBe(true);
   });
 });
 

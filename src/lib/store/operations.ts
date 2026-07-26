@@ -11,9 +11,8 @@ import type {
   RecommendationSet,
   Memory,
 } from "../types";
-import type { Extraction, PlannedReminder } from "../schemas";
+import type { Extraction, PlannedReminder, RecommendationBundle } from "../schemas";
 import { id, nowIso, todayIso, addDays, currencySymbol } from "../utils";
-import { recommendFor } from "../ai/recommend";
 
 /**
  * Pure, framework-free operations over the Nook data set. Every function takes
@@ -96,16 +95,15 @@ export function createItemFromExtraction(
     next.decisionRequests.push(dr);
     decisionRequestId = dr.id;
 
-    const rec = recommendFor(input, extraction.budget, extraction.currency);
+    // Create an empty set immediately; real options are attached asynchronously
+    // (by the AI recommender, with the offline bundle bank as a fallback).
     const set: RecommendationSet = {
       id: id("recset"),
       decision_request_id: dr.id,
-      summary: rec.summary,
+      summary: "Researching your best options…",
       created_at: now,
     };
     next.recommendationSets.push(set);
-    const options: RecommendationOption[] = rec.options.map((o) => ({ ...o, set_id: set.id }));
-    next.recommendationOptions.push(...options);
   }
 
   const item: LifeItem = {
@@ -194,6 +192,58 @@ export function createReminders(
     count += 1;
   }
   return { data: next, count };
+}
+
+/**
+ * Attach a freshly generated set of options (from the AI recommender, or the
+ * offline bundle bank) to a decision request, replacing any existing options.
+ */
+export function attachRecommendations(
+  data: BoData,
+  decisionRequestId: string,
+  summary: string,
+  bundles: RecommendationBundle[],
+): BoData {
+  const next = clone(data);
+  const dr = next.decisionRequests.find((d) => d.id === decisionRequestId);
+  if (!dr) return next;
+
+  let set = next.recommendationSets.find((s) => s.decision_request_id === decisionRequestId);
+  if (!set) {
+    set = {
+      id: id("recset"),
+      decision_request_id: decisionRequestId,
+      summary,
+      created_at: nowIso(),
+    };
+    next.recommendationSets.push(set);
+  } else {
+    set.summary = summary;
+  }
+
+  const setId = set.id;
+  next.recommendationOptions = next.recommendationOptions.filter((o) => o.set_id !== setId);
+  const options: RecommendationOption[] = bundles.map((b) => ({
+    id: id("recopt"),
+    set_id: setId,
+    title: b.title,
+    is_best_match: b.is_best_match,
+    total_price: b.total_price,
+    currency: dr.currency,
+    items: b.items,
+    advantages: b.advantages,
+    trade_offs: b.trade_offs,
+    why_it_suits: b.why_it_suits,
+    retailer_label: b.retailer_label,
+    retailer_url: b.retailer_url,
+    delivery: b.delivery,
+    sizing_notes: b.sizing_notes,
+    saved: false,
+    rejected: false,
+  }));
+  if (!options.some((o) => o.is_best_match) && options[0]) options[0].is_best_match = true;
+  next.recommendationOptions.push(...options);
+  return next;
 }
 
 export function updateItem(

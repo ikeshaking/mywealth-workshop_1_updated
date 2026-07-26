@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { AppHeader } from "@/components/app/AppHeader";
@@ -10,17 +10,33 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { RecommendationCard } from "@/components/decisions/RecommendationCard";
 import { useBo } from "@/lib/store/BoProvider";
+import { recommendClient } from "@/lib/ai/client";
+import { recommendFor } from "@/lib/ai/recommend";
 import { formatMoney } from "@/lib/utils";
 
 export default function DecisionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { data, setOptionFlag, approvePurchaseOption } = useBo();
+  const { data, setOptionFlag, approvePurchaseOption, attachRecommendations } = useBo();
   const [tab, setTab] = useState<"picks" | "compare">("picks");
+  const fetchingRef = useRef(false);
 
   const dr = data.decisionRequests.find((d) => d.id === id);
   const set = data.recommendationSets.find((s) => s.decision_request_id === id);
   const options = data.recommendationOptions.filter((o) => o.set_id === set?.id);
+
+  // Self-heal: if a decision has no options yet (e.g. opened directly, or a
+  // prior fetch never completed), research them now.
+  useEffect(() => {
+    if (!dr || options.length > 0 || fetchingRef.current) return;
+    fetchingRef.current = true;
+    (async () => {
+      const ai = await recommendClient(dr.request, dr.budget, dr.currency, dr.preferences);
+      const result = ai ?? recommendFor(dr.request, dr.budget, dr.currency);
+      attachRecommendations(dr.id, result.summary, result.options);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dr?.id, options.length]);
 
   if (!dr || !set) {
     return (
@@ -65,12 +81,26 @@ export default function DecisionDetailPage() {
           </div>
         </Card>
 
-        {/* Tabs */}
-        <div
-          role="tablist"
-          aria-label="View options"
-          className="flex rounded-xl bg-canvas-soft p-1 text-sm"
-        >
+        {options.length === 0 ? (
+          <Card className="flex items-center gap-3">
+            <BoAvatar size={30} />
+            <div>
+              <p className="text-sm font-medium text-ink">
+                Nook is researching your best options…
+              </p>
+              <p className="mt-0.5 text-xs text-ink-soft">
+                Finding complete options that fit what you asked. Just a few seconds.
+              </p>
+            </div>
+          </Card>
+        ) : (
+          <>
+            {/* Tabs */}
+            <div
+              role="tablist"
+              aria-label="View options"
+              className="flex rounded-xl bg-canvas-soft p-1 text-sm"
+            >
           <button
             role="tab"
             aria-selected={tab === "picks"}
@@ -136,9 +166,12 @@ export default function DecisionDetailPage() {
             </table>
           </div>
         )}
+          </>
+        )}
 
         <p className="text-center text-xs text-ink-faint">
-          Nothing is purchased until you approve — and no real payment is taken in demo mode.
+          Nothing is purchased until you approve. Prices are Nook&apos;s estimates, not live quotes —
+          check the retailer before buying.
         </p>
       </div>
     </div>

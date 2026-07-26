@@ -5,6 +5,7 @@ import {
   type ExtractResponse,
   type PlannedReminder,
   type Draft,
+  type RecommendationBundle,
 } from "../schemas";
 import { fallbackExtract } from "./fallback";
 import { demoSuggest } from "./suggest";
@@ -138,6 +139,32 @@ export async function draftClient(item: DraftRequestItem, name?: string): Promis
     if (!res.ok) return null;
     const json = (await res.json()) as { draft?: Draft | null };
     return json.draft ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export interface RecommendationResult {
+  summary: string;
+  options: RecommendationBundle[];
+}
+
+/** Real, relevant shopping/decision options via /api/recommend. Null on failure. */
+export async function recommendClient(
+  request: string,
+  budget: number | null,
+  currency: string,
+  preferences: string[] = [],
+): Promise<RecommendationResult | null> {
+  try {
+    const res = await fetch("/api/recommend", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ request, budget, currency, preferences }),
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as { result?: RecommendationResult | null };
+    return json.result ?? null;
   } catch {
     return null;
   }
