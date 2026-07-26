@@ -37,6 +37,7 @@ export interface ChatClientContext {
   preferredName?: string;
   household?: string;
   currency?: string;
+  memories?: string[];
 }
 
 /**

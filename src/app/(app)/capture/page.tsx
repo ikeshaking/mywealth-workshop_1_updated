@@ -37,7 +37,7 @@ const QUICK_PROMPTS = [
 ];
 
 const SHOPPING_NOUNS =
-  /\b(buy|find me|purchase|order|wardrobe|sofa|couch|dining|table|tv|television|laptop|phone|gift|present|dishwasher|washing machine|washer|fridge|desk|bike|mattress|headphones|camera)\b/i;
+  /\b(buy|find me|purchase|order|wardrobe|sofa|couch|dining set|table|tv|television|laptop|phone|dishwasher|washing machine|washer|fridge|desk|bike|mattress|headphones|camera)\b/i;
 
 const ADMIN_CATS = new Set([
   "bill",
@@ -51,16 +51,35 @@ const ADMIN_CATS = new Set([
   "travel",
 ]);
 
+// A clear, action-oriented admin signal — the only thing that should turn a
+// message into a tracked task. Nouns alone (e.g. "netflix") are NOT enough.
+const ADMIN_VERBS =
+  /\b(pay|paid|renew|renewal|rego|registration|cancel|unsubscribe|book|booking|schedule|reschedule|appointment|remind me|reminder|due|overdue|invoice|bill(?:\sis|\sdue| for)|insurance|licence|license|passport|inspection|deadline|return by|sign and)\b/i;
+
+// Conversational cues — recommendations, entertainment, planning, thinking. When
+// present (and there's no clear admin action), Nook should just talk, not track.
+const CHAT_CUES =
+  /\b(watch|watched|watching|movie|movies|film|series|show|shows|netflix|stan|binge|stream|streaming|recommend|recommendation|suggest|idea|ideas|what should i|should i|which|pros and cons|compare|comparison|versus|vs\.?|meal|meals|dinner|lunch|breakfast|recipe|recipes|cook|plan a|planning|holiday|trip|vacation|party|think through|help me (decide|choose|think|plan|find|figure)|feeling|mood)\b/i;
+
 type Kind = "task" | "shopping" | "chat";
 
 function classify(text: string): { kind: Kind; extraction: Extraction } {
   const extraction = fallbackExtract(text, todayIso());
+
+  // 1. A real purchase/shopping decision (has a budget or a concrete product).
   if (extraction.is_decision && (extraction.budget != null || SHOPPING_NOUNS.test(text))) {
     return { kind: "shopping", extraction };
   }
-  if (!extraction.is_decision && ADMIN_CATS.has(extraction.category)) {
+
+  // 2. A genuine life-admin task — only when there's a clear admin action or a
+  //    concrete date. This stops "something on netflix" becoming a subscription.
+  const hasAdminSignal = ADMIN_VERBS.test(text) || !!extraction.due_date;
+  if (!extraction.is_decision && ADMIN_CATS.has(extraction.category) && hasAdminSignal) {
     return { kind: "task", extraction };
   }
+
+  // 3. Everything else — recommendations, planning, thinking, chit-chat — is a
+  //    conversation. Default to chat so Nook talks instead of over-filing.
   return { kind: "chat", extraction };
 }
 
@@ -262,6 +281,8 @@ function CaptureInner() {
         const { reply, saveTitle, engine } = await chatClient(history, tone, {
           preferredName: data.preferences.preferred_name,
           currency: data.preferences.currency,
+          household: data.preferences.household_type,
+          memories: data.memories.map((mem) => `${mem.label}: ${mem.value}`),
         });
         setMessages((m) => [
           ...m,

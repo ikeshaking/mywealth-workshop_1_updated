@@ -21,6 +21,7 @@ const chatRequestSchema = z.object({
   household: z.string().max(60).optional(),
   currency: z.string().length(3).optional(),
   today: z.string().optional(),
+  memories: z.array(z.string().max(300)).max(50).optional(),
 });
 
 /**
@@ -44,7 +45,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { messages, tone, preferredName, household, currency, today } = parsed.data;
+  const { messages, tone, preferredName, household, currency, today, memories } = parsed.data;
   const history = messages as ChatTurn[];
   const latest = history[history.length - 1]?.content ?? "";
 
@@ -53,12 +54,27 @@ export async function POST(req: Request) {
     household,
     currency,
     today,
+    memories,
   });
 
   if (viaOpenAI) {
     return NextResponse.json({ reply: viaOpenAI, engine: "openai" }, { status: 200 });
   }
 
+  // A key is configured but the call failed — be honest rather than falling back
+  // to the offline "tell me more" bank (which reads like Nook is stalling).
+  if (process.env.OPENAI_API_KEY) {
+    return NextResponse.json(
+      {
+        reply:
+          "I hit a snag reaching my brain just then — mind sending that again in a moment? If it keeps happening, it's usually an OpenAI credit or rate-limit issue on the account.",
+        engine: "fallback",
+      },
+      { status: 200 },
+    );
+  }
+
+  // No key at all (demo mode) — use the offline suggestion bank.
   const fallback = demoSuggest(latest, tone);
   return NextResponse.json(
     { reply: fallback.reply, saveTitle: fallback.saveTitle, engine: "fallback" },
