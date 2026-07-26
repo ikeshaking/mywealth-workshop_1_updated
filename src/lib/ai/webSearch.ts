@@ -10,9 +10,15 @@ export interface WebResult {
  * key is configured or on any failure, so callers degrade gracefully to the
  * model's own knowledge.
  */
-export async function webSearch(query: string, maxResults = 6): Promise<WebResult[]> {
+export async function webSearch(
+  query: string,
+  opts: { maxResults?: number; depth?: "basic" | "advanced" } = {},
+): Promise<WebResult[]> {
   const apiKey = process.env.TAVILY_API_KEY?.trim();
   if (!apiKey) return [];
+
+  const maxResults = Math.min(Math.max(opts.maxResults ?? 6, 1), 10);
+  const depth = opts.depth ?? "basic";
 
   try {
     const res = await fetch("https://api.tavily.com/search", {
@@ -23,12 +29,12 @@ export async function webSearch(query: string, maxResults = 6): Promise<WebResul
       },
       body: JSON.stringify({
         query,
-        search_depth: "basic",
-        max_results: Math.min(Math.max(maxResults, 1), 10),
+        search_depth: depth,
+        max_results: maxResults,
         include_answer: false,
       }),
       // Don't let a slow search hang the whole request.
-      signal: AbortSignal.timeout(12_000),
+      signal: AbortSignal.timeout(15_000),
     });
     if (!res.ok) return [];
     const json = (await res.json()) as { results?: Array<Record<string, unknown>> };

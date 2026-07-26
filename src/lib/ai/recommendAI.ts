@@ -28,10 +28,15 @@ export async function recommendAI(
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
   // Try to ground the options in real, current listings via live web search.
-  const searchQuery = [request, budget ? `under ${currency} ${budget}` : "", "buy online Australia price"]
+  const searchQuery = [
+    request,
+    budget ? `under ${currency} ${budget}` : "",
+    "buy online Australia price",
+  ]
     .filter(Boolean)
     .join(" ");
-  const results = await webSearch(searchQuery, 6);
+  // Advanced depth + more results → better odds of real, direct product pages.
+  const results = await webSearch(searchQuery, { maxResults: 8, depth: "advanced" });
   const grounded = results.length > 0;
   const resultsBlock = grounded
     ? [
@@ -49,7 +54,12 @@ export async function recommendAI(
       ? `Budget: keep every option at or under ${currency} ${budget}. Mark the best value-for-money one within budget as the best match.`
       : "Suggest a sensible price range and mark the best value one as the best match.",
     grounded
-      ? "Base your options on the LIVE WEB SEARCH RESULTS below. Use the ACTUAL product names, prices and URLs from them. 'retailer_url' must be a real URL taken from the results (prefer the direct product page). If a result doesn't show a price, estimate sensibly and say so in the notes. Do not invent products that aren't supported by the results."
+      ? [
+          "Base every option ONLY on the LIVE WEB SEARCH RESULTS below — each option must correspond to a specific real product found in them.",
+          "'retailer_url' MUST be the exact, direct PRODUCT-PAGE URL copied verbatim from a result (the deep link to that specific item) — never a homepage, category or search page. Copy the URL character-for-character; do not shorten, guess or fabricate it.",
+          "Use the actual product names and prices from the results. If a result doesn't show a price, estimate sensibly and note it.",
+          "If you can't find enough real product pages in the results to fill 2–3 options, return only the ones you genuinely found — do not invent extras.",
+        ].join(" ")
       : "Use REAL, well-known Australian retailers appropriate to the category — e.g. furniture: Koala, Castlery, Temple & Webster, Amart, IKEA, Fantastic Furniture; electronics: JB Hi-Fi, Officeworks; home/hardware: Bunnings, Kmart. 'retailer_url' MUST be that retailer's real main website, never an invented product link. You do NOT have live prices — estimate honestly and never claim a price is current.",
     'Return JSON ONLY: { "summary": one honest line, "options": [ { "title", "total_price": number, "is_best_match": boolean, "items": [ { "name", "price": number, "note"? } ], "advantages": [..], "trade_offs": [..], "why_it_suits", "retailer_label", "retailer_url", "delivery", "sizing_notes": string|null } ] }.',
     "Exactly ONE option has is_best_match=true. Keep advantages/trade_offs to 2–3 short bullets each. Concrete, honest, plain Australian English.",
