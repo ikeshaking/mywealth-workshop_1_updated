@@ -32,3 +32,37 @@ export function markSeen(viewerId: string, iso = new Date().toISOString()) {
     /* ignore */
   }
 }
+
+/* ---- Per-candidate view marks (drives the manager's monthly check-ins) ---- */
+
+const CAND_KEY = "mywealth-py:candidate-seen:v1";
+
+function readCand(): Record<string, Record<string, string>> {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem(CAND_KEY) || "{}") as Record<string, Record<string, string>>;
+  } catch {
+    return {};
+  }
+}
+
+/** When this viewer last opened each candidate's Professional Year. */
+export function getCandidateSeen(viewerId: string): Record<string, string> {
+  return readCand()[viewerId] ?? {};
+}
+
+/** Record that this viewer just opened a candidate's record. */
+export function markCandidateSeen(
+  viewerId: string,
+  candidateId: string,
+  iso = new Date().toISOString(),
+) {
+  if (typeof window === "undefined") return;
+  const all = readCand();
+  all[viewerId] = { ...(all[viewerId] ?? {}), [candidateId]: iso };
+  try {
+    localStorage.setItem(CAND_KEY, JSON.stringify(all));
+  } catch {
+    /* ignore */
+  }
+}

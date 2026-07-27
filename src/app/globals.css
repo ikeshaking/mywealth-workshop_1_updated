@@ -227,6 +227,11 @@ html[data-theme="dark"] select{border-color:#436788}
     flex:1;min-width:0;font-size:13px;font-weight:600;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
+  /* Two-line rows (the manager's alerts carry a title plus an explanation),
+     which must wrap rather than truncate mid-sentence. */
+  .todo-item-text.stacked{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35}
+  .todo-item:has(.todo-item-text.stacked){align-items:flex-start}
+  .todo-item:has(.todo-item-text.stacked) > .badge{margin-top:1px}
   .activity-row{border:none;border-radius:0;background:transparent;padding:11px 20px}
   .activity-row + .activity-row{border-top:1px solid var(--border-soft)}
 

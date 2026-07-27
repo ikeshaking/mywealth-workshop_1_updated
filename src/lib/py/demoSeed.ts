@@ -117,6 +117,9 @@ function seedState(opts: {
 function hoursAgo(h: number): string {
   return new Date(Date.now() - h * 3600_000).toISOString();
 }
+function daysAgo(d: number): string {
+  return hoursAgo(d * 24);
+}
 
 /** Fresh seeded demo database: 1 manager, 2 supervisors, 4 candidates. */
 export function buildDemoDb(): DemoDb {
@@ -176,7 +179,9 @@ export function buildDemoDb(): DemoDb {
     hours: { q1: { work: 210, structured: 18 } },
     awaitingSignoff: ["q1_journey"],
     activity: [
-      { ts: hoursAgo(11), action: "Completed training module", detail: "Understanding the MyWealth Client Journey — ready for sign-off", cat: "module" },
+      // Completed nearly a fortnight ago and still unsigned — this is what the
+      // PY manager should be chasing Sarah about.
+      { ts: daysAgo(12), action: "Completed training module", detail: "Understanding the MyWealth Client Journey — ready for sign-off", cat: "module" },
       { ts: hoursAgo(40), action: "Logged work hours", detail: "Q1 work hours 180 → 210", cat: "hours" },
     ],
   });
@@ -196,6 +201,7 @@ export function buildDemoDb(): DemoDb {
     signedOff: ["q1_journey", "q1_meetings", "q2_cashdebt", "q2_super", "q2_insurance"],
     activity: [
       { ts: hoursAgo(20), action: "Logged work hours", detail: "Q3 work hours 150 → 180", cat: "hours" },
+      { ts: daysAgo(5), action: "Quarter progression decision", detail: "Q3 — Ready to progress", cat: "readiness" },
       { ts: hoursAgo(70), action: "Milestone marked complete", detail: "Q3 · Wealth Creation & Investment Strategy", cat: "milestone" },
     ],
   });

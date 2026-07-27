@@ -5,10 +5,12 @@ import { getBackend } from "@/lib/py/backend";
 import { loadCandidateSummaries, type CandidateWithState } from "@/lib/py/summaries";
 import { deriveActivity, deriveTodo, type Activity, type FocusTarget, type Todo } from "@/lib/py/actions";
 import { assessCandidate, type RiskFlag } from "@/lib/py/risk";
-import { getLastSeen, markSeen } from "@/lib/py/lastSeen";
+import { getCandidateSeen, getLastSeen, markSeen } from "@/lib/py/lastSeen";
+import { deriveManagerAlerts, type ManagerAlert } from "@/lib/py/manager";
 import type { Profile } from "@/lib/py/types";
 import { CandidateCard } from "./CandidateCard";
 import { TodoList } from "./TodoList";
+import { ManagerPanel } from "./ManagerPanel";
 import { ActivityFeed } from "./ActivityFeed";
 
 function Stat({ label, value, tone }: { label: string; value: string | number; tone?: string }) {
@@ -86,6 +88,21 @@ export function Dashboard({
     return m;
   }, [candidates]);
 
+  // The PY manager gets oversight (who's stuck / slipping / due a check-in)
+  // rather than the supervisors' sign-off queue.
+  const managerAlerts: ManagerAlert[] = useMemo(() => {
+    if (profile.role !== "py_manager") return [];
+    return deriveManagerAlerts({
+      candidates: candidates.map((c) => ({
+        id: c.profile.id,
+        name: c.profile.fullName,
+        supervisorName: c.supervisorName,
+        state: c.state,
+      })),
+      lastViewed: getCandidateSeen(profile.id),
+    });
+  }, [candidates, profile.role, profile.id]);
+
   const isManager = profile.role === "py_manager";
   const avg =
     candidates.length > 0
@@ -116,10 +133,17 @@ export function Dashboard({
 
       {!loading && candidates.length > 0 ? (
         <div className="panel-grid" style={{ marginBottom: 26 }}>
-          <TodoList
-            todos={todos}
-            onOpen={(id, name, hash, focus) => onOpenCandidate(id, name, hash, focus)}
-          />
+          {isManager ? (
+            <ManagerPanel
+              alerts={managerAlerts}
+              onOpen={(id, name, hash, focus) => onOpenCandidate(id, name, hash, focus)}
+            />
+          ) : (
+            <TodoList
+              todos={todos}
+              onOpen={(id, name, hash, focus) => onOpenCandidate(id, name, hash, focus)}
+            />
+          )}
           <ActivityFeed
             activity={activity}
             sinceIso={sinceIso.current || undefined}

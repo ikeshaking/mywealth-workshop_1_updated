@@ -6002,12 +6002,22 @@ const Modal = {
     // The app shell already shows the MyWealth wordmark + identity, so hide the
     // tracker's own brand block to avoid a duplicate. Keep the section nav.
     var __embedStyle = document.createElement('style');
-    __embedStyle.textContent = '.topbar .brand,.topbar .tool-label{display:none!important}.topbar{padding-top:8px;padding-bottom:8px}'
+    // The app shell owns the wordmark and the light/dark toggle, so hide the
+    // tracker's own copies — otherwise the header shows each of them twice.
+    __embedStyle.textContent = '.topbar .brand,.topbar .tool-label,.topbar .theme-toggle,#themeToggle{display:none!important}.topbar{padding-top:8px;padding-bottom:8px}'
       // Brief highlight so a deep-linked module is obvious on arrival.
       + '@keyframes pyFocusPulse{0%{box-shadow:0 0 0 3px var(--blue);}100%{box-shadow:0 0 0 3px rgba(43,111,214,0);}}'
       + '.py-focus-target{animation:pyFocusPulse 2.4s ease-out 1;border-radius:12px;scroll-margin-top:110px}';
     document.head.appendChild(__embedStyle);
-    if (saved.ui && saved.ui.theme) { /* theme still honoured from injected state */ }
+    // The shell's toggle drives our theme. Applied straight to the DOM rather
+    // than through the store, so a viewer's display preference never counts as
+    // an edit to the candidate's record.
+    window.addEventListener('message', function (ev) {
+      var d = ev && ev.data;
+      if (d && d.type === 'py:theme' && (d.theme === 'dark' || d.theme === 'light')) {
+        document.documentElement.setAttribute('data-theme', d.theme);
+      }
+    });
     try { window.parent.postMessage({ type: 'py:ready' }, '*'); } catch (e) {}
   }
   document.documentElement.setAttribute('data-theme', saved.ui.theme || 'light');
