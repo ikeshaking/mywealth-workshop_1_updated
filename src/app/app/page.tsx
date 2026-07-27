@@ -9,6 +9,7 @@ import { AdminPanel } from "@/components/shell/AdminPanel";
 import { TrackerFrame } from "@/components/shell/TrackerFrame";
 import { NotificationSettings } from "@/components/shell/NotificationSettings";
 import type { FocusTarget } from "@/lib/py/actions";
+import { markCandidateSeen } from "@/lib/py/lastSeen";
 
 type View =
   | { kind: "home" }
@@ -81,7 +82,11 @@ function AppInner() {
     candidateName: string,
     hash?: string,
     focus?: FocusTarget,
-  ) => setView({ kind: "tracker", candidateId, candidateName, hash, focus });
+  ) => {
+    // Opening a record counts as the check-in for that candidate this month.
+    markCandidateSeen(profile.id, candidateId);
+    setView({ kind: "tracker", candidateId, candidateName, hash, focus });
+  };
 
   if (view.kind === "tracker") {
     return (

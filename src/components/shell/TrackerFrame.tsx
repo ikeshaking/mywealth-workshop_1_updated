@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getBackend } from "@/lib/py/backend";
+import { useSession } from "@/lib/py/session";
 import type { ProgramState, Role } from "@/lib/py/types";
 import type { FocusTarget } from "@/lib/py/actions";
 
@@ -20,17 +21,22 @@ function buildSrcDoc(
   inAppRole: "candidate" | "supervisor",
   initialHash?: string,
   focus?: FocusTarget,
+  theme?: "light" | "dark",
 ) {
   // Pre-apply the focus to the injected state so the target renders already
   // expanded / on the right quarter — no post-render click, no flicker.
   let seed = state;
-  if (focus?.moduleId || focus?.compQuarter) {
+  if (focus?.moduleId || focus?.compQuarter || theme) {
     seed = { ...state };
-    if (focus.moduleId) {
+    if (theme) {
+      // Display preference belongs to the viewer, not the candidate's record.
+      seed.ui = { ...((state.ui as object) ?? {}), theme };
+    }
+    if (focus?.moduleId) {
       seed.openModules = { ...((state.openModules as object) ?? {}), [focus.moduleId]: true };
     }
-    if (focus.compQuarter) {
-      seed.ui = { ...((state.ui as object) ?? {}), compQuarter: focus.compQuarter };
+    if (focus?.compQuarter) {
+      seed.ui = { ...((seed.ui as object) ?? {}), compQuarter: focus.compQuarter };
     }
   }
 
@@ -60,12 +66,15 @@ export function TrackerFrame({
   initialHash?: string;
   focus?: FocusTarget;
 }) {
+  const { theme } = useSession();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [srcDoc, setSrcDoc] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestState = useRef<ProgramState | null>(null);
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
 
   // Candidates edit in candidate view; supervisors and the manager use the
   // supervisor view (sign-off + oversight).
@@ -90,7 +99,7 @@ export function TrackerFrame({
           buildSrcDoc(template, state, inAppRole, initialHash, {
             moduleId: focusModuleId,
             compQuarter: focusCompQuarter,
-          }),
+          }, themeRef.current),
         );
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Could not load this record.");
@@ -129,6 +138,11 @@ export function TrackerFrame({
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
   }, [candidateId]);
+
+  // Keep the embedded tracker's theme in step with the shell's toggle.
+  useEffect(() => {
+    iframeRef.current?.contentWindow?.postMessage({ type: "py:theme", theme }, "*");
+  }, [theme, srcDoc]);
 
   if (error) {
     return (
