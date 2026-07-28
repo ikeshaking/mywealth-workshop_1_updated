@@ -133,6 +133,24 @@ textarea{resize:vertical;min-height:60px}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .person-tag{font-family:'ABC Arizona Flare','Playfair Display';font-size:13px;color:var(--heading);margin-bottom:8px;font-weight:700}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 20px;border-radius:24px;font-size:13px;font-weight:600;box-shadow:var(--shadow);z-index:200;opacity:0;pointer-events:none;transition:.25s}
+/* ---------- How-To Guide (SOP) tab ---------- */
+.sop{max-width:880px}
+.sop p{margin:0 0 10px;line-height:1.6;font-size:13px}
+.sop ul,.sop ol{margin:0 0 12px 20px;line-height:1.6;font-size:13px}
+.sop li{margin-bottom:7px}
+.sop b{color:var(--heading)}
+.sop-flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0 14px}
+.sop-flow .stepchip{background:var(--navy);color:#fff;border-radius:10px;padding:8px 13px;font-weight:700;font-size:12px}
+.sop-flow .arrow{color:var(--text-faint);font-weight:800}
+.sop-role{display:inline-block;background:var(--lime-light);color:var(--lime-dark);border:1px solid var(--lime);border-radius:999px;padding:2px 10px;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-left:8px;vertical-align:2px}
+.sop-role.adv{background:var(--blue-light);color:var(--blue);border-color:var(--blue-soft)}
+.sop-callout{border-left:3px solid var(--blue);background:var(--blue-light);border-radius:0 8px 8px 0;padding:10px 13px;margin:10px 0 14px;font-size:12.5px;line-height:1.55}
+.sop-callout.warn{border-left-color:var(--coral);background:var(--coral-light)}
+.sop-callout.tip{border-left-color:var(--green);background:var(--green-light)}
+.sop kbd{background:var(--surface-2);border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;padding:1px 7px;font-family:inherit;font-size:11.5px;font-weight:700;color:var(--heading);white-space:nowrap}
+.sop-tbl{border-collapse:collapse;font-size:12.5px;margin:6px 0 12px;width:100%}
+.sop-tbl th,.sop-tbl td{border:1px solid var(--border);padding:6px 10px;text-align:left;vertical-align:top}
+.sop-tbl th{background:var(--navy);color:#fff;font-weight:700}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 /* Checklist hybrid layout */
 .cl-wrap{display:grid;grid-template-columns:230px minmax(0,1fr);gap:16px;align-items:start}
@@ -2074,6 +2092,139 @@ const SECTIONS=[
   {id:"actions",  num:"9", title:"Actions & Services",  render:renderActions},
   {id:"rebalance",num:"⇄", title:"Rebalance (draft)",   render:renderRebalance}
 ];
+/* ============================================================
+   HOW-TO GUIDE (SOP) — a detailed standard operating procedure
+   for running an annual review end-to-end with this tool.
+   ============================================================ */
+function sopHead(title,intro){ return `<div class="section-head"><h2>${title}</h2>${intro?`<p>${intro}</p>`:""}</div>`; }
+function sopOverview(){
+  return sopHead("How-To Guide — Workflow Overview","The standard operating procedure for producing an annual Wealth Review with this tool, from pre-review prep through to the post-review file note and ROA.")+`<div class="sop">
+  <div class="card"><div class="card-title"><span class="bar"></span>The four stages</div>
+    <div class="sop-flow">
+      <span class="stepchip">① Pre-Review Checklist</span><span class="arrow">→</span>
+      <span class="stepchip">② Generate Wealth Doc</span><span class="arrow">→</span>
+      <span class="stepchip">③ Review Meeting</span><span class="arrow">→</span>
+      <span class="stepchip">④ Post Review</span>
+    </div>
+    <table class="sop-tbl"><thead><tr><th>Stage</th><th>Who</th><th>What happens</th></tr></thead><tbody>
+      <tr><td><b>① Pre-Review Checklist</b></td><td>RSO</td><td>Work through the guided checklist before the meeting — scope the client's accounts, answer every prompt, and let the answers route into the wealth doc as data and to-do items.</td></tr>
+      <tr><td><b>② Generate Wealth Doc</b></td><td>RSO</td><td>Upload the <b>last wealth review first</b> as the base, then this year's supporting documents (platform reports, valuations, statements) which <b>override</b> the base figures with the most up-to-date values. Check every section, then complete the rebalance calc.</td></tr>
+      <tr><td><b>③ Review Meeting</b></td><td>Adviser</td><td>The adviser presents the review live with the client and discusses the rebalance. Every edit made in this tab is <b>tracked as a change</b> automatically.</td></tr>
+      <tr><td><b>④ Post Review</b></td><td>RSO</td><td>The tracked changes become the <b>Review File Note</b> and the <b>Review ROA</b> (rebalance or no-change). Review both, export, and file.</td></tr>
+    </tbody></table>
+  </div>
+  <div class="card"><div class="card-title"><span class="bar"></span>Golden rules</div>
+    <ul>
+      <li><b>Base first, overrides second.</b> Always upload the last wealth review (or IMP review) <i>before</i> this year's reports — the review builds the skeleton and the reports refresh the figures.</li>
+      <li><b>First review for this client?</b> There's nothing to upload — work the checklist from scratch and enter details manually (or from a review data snapshot) in tab ②.</li>
+      <li><b>Save your work.</b> <kbd>💾 Save draft</kbd> downloads a JSON of everything; <kbd>📂 Load</kbd> restores it on any machine. The tool also autosaves in this browser.</li>
+      <li><b>Client data never leaves the browser.</b> Every uploaded document is read on this computer — nothing is sent to a server.</li>
+      <li><b>Watch the ⚠ conflict panel.</b> If an import might duplicate an existing account, the tool warns instead of guessing — link the rows or keep both.</li>
+    </ul>
+  </div>
+  <div class="card"><div class="card-title"><span class="bar"></span>Quick start (the whole SOP in eight lines)</div>
+    <ol>
+      <li>Tab ① — drop in the old checklist (.xlsx) if one exists, then answer every prompt; <kbd>Apply &amp; generate</kbd>.</li>
+      <li>Tab ② — upload the <b>last wealth review .docx</b> (or IMP review if it's their first).</li>
+      <li>Upload this year's supporting docs — HUB24 / BT / Macquarie reports, property valuations, insurance schedules. Figures update in place.</li>
+      <li>Resolve any ⚠ duplicate warnings, then sanity-check sections 1–8 against the live preview.</li>
+      <li>Complete the <b>Rebalance (draft)</b> calc.</li>
+      <li>Tab ③ — the adviser presents to the client and discusses the rebalance; edits are tracked automatically.</li>
+      <li>Tab ④ — review the tracked <b>Changes Made</b>, then the generated <b>File Note</b> and <b>ROA</b>.</li>
+      <li>Export the Word documents and file them per practice process.</li>
+    </ol>
+  </div></div>`;
+}
+function sopStep1(){
+  return sopHead("Step 1 — Pre-Review Checklist","Complete this before the review meeting. It scopes the client, catches compliance items, and pre-loads the wealth doc.")+`<div class="sop">
+  <div class="card"><div class="card-title"><span class="bar"></span>Who &amp; when <span class="sop-role">RSO</span></div>
+    <p>Run the checklist as part of review prep, ideally when the review is scheduled — before any documents are generated.</p></div>
+  <div class="card"><div class="card-title"><span class="bar"></span>Procedure</div>
+    <ol>
+      <li><b>Load last year's checklist if one exists.</b> Drop the previous checklist <b>.xlsx</b> onto the drop zone in the left sidebar — answers prefill, and for a couple the (J)/(M) answers route to the right client automatically. <b>If this is the client's first review, skip this and work from scratch.</b></li>
+      <li><b>Scope &amp; Accounts first.</b> Set how many clients are in the review, enter their names, pick the adviser, and tick <i>every</i> account/product type the client holds (retail super, held super, SMSF, MCMA, investment/DR, bonds, property, loans, insurance…). Only the relevant sections then appear — an SMSF section never shows for a client without an SMSF.</li>
+      <li><b>Work through every section.</b> Step through with <kbd>Next</kbd> or jump via the section sidebar. Answer every prompt — yes/no toggles, balances, dates. Follow-up questions appear automatically when an answer triggers them (e.g. contributions made → bring-forward dates). Use <kbd>+ Add note</kbd> for anything worth carrying into the meeting.</li>
+      <li><b>For couples,</b> per-client prompts show a field for each client — answer both.</li>
+      <li><b>Watch the flags.</b> The checklist reconciles figures as you go (e.g. SG contributions vs expected from salary, SOA fee vs actual fees charged) and raises a flag when something doesn't line up. Flagged items become discussion points / to-dos rather than silently passing.</li>
+      <li><b>Finish with <kbd>Apply &amp; generate</kbd>.</b> Answers route into the wealth doc: action-type answers become <b>to-do items</b>, data answers feed the matching section (beneficiaries → estate, contributions → super notes, CRPs → details, fees → reference notes).</li>
+    </ol>
+    <div class="sop-callout tip"><b>Tip:</b> the progress bar and per-section counters show what's still unanswered — aim for every section green before moving to tab ②.</div>
+  </div></div>`;
+}
+function sopStep2(){
+  return sopHead("Step 2 — Generate Wealth Doc","Build the draft review: base document first, then this year's reports override the figures with the most up-to-date values.")+`<div class="sop">
+  <div class="card"><div class="card-title"><span class="bar"></span>Who &amp; when <span class="sop-role">RSO</span></div>
+    <p>After the checklist is applied, before the review meeting. The goal: a complete, accurate draft the adviser can present without editing anything on the fly.</p></div>
+  <div class="card"><div class="card-title"><span class="bar"></span>Procedure — imports (order matters)</div>
+    <ol>
+      <li><b>Upload the last Wealth Review .docx FIRST.</b> This is the <b>base</b> — it prefills Your Details, Current Situation (lifestyle &amp; nest-egg assets), Foundations &amp; Estate, Goals, Goal Tracking and Insurance. <b>If this is the client's first review,</b> upload the IMP review instead — or, if there's no prior document at all, enter the details manually section by section.</li>
+      <li><b>Then upload this year's supporting documents</b> — HUB24 / BT / Macquarie platform reports, MCMA statements, property valuations (AVM/Cotality), insurance schedules, the PTW. Each report <b>overrides</b> the matching row with the latest figure — matched by account number, owner and super/investment type, so Jon's HUB24 report updates Jon's row and Marion's updates Marion's. Nothing doubles up.</li>
+      <li><b>Or use Smart drop.</b> Drop <i>everything at once</i> onto the Smart drop zone — each file is identified by type and applied in the right order automatically (base first, overrides second). Scanned PDFs and screenshots are read with in-browser OCR.</li>
+      <li><b>Resolve the ⚠ conflict panel if it appears.</b> When an import looks like it might describe an account that's already listed, the tool warns instead of merging blindly: pick which row to keep and <kbd>Link</kbd> them into one, or keep both if they're genuinely separate accounts.</li>
+    </ol>
+    <div class="sop-callout warn"><b>Never upload reports before the base document.</b> The reports would create fresh rows, and the review upload would then add its own — upload the review first and the reports slot their figures into the rows it created.</div>
+  </div>
+  <div class="card"><div class="card-title"><span class="bar"></span>Procedure — check &amp; finish</div>
+    <ol>
+      <li><b>Walk sections 1–8</b> (Cover &amp; Details → Actions &amp; Services) and sanity-check every pulled figure against the source documents. The <b>live preview</b> on the right shows the document exactly as it will print — use <kbd>⤢ Fullscreen</kbd> for a page-by-page check.</li>
+      <li><b>Complete the Rebalance (draft) calc.</b> Enter the current vs target allocation (or upload the CARE rebalance .xlsx) — this drives the rebalance discussion in the meeting and the rebalance ROA afterwards.</li>
+      <li><b><kbd>💾 Save draft</kbd></b> so the meeting can load the exact prepared state, and <kbd>⬇ Export Word</kbd> if a copy of the review document is needed for the file or to send ahead.</li>
+    </ol>
+  </div></div>`;
+}
+function sopStep3(){
+  return sopHead("Step 3 — Review Meeting","The adviser presents this tab live with the client. Every change made here is tracked automatically.")+`<div class="sop">
+  <div class="card"><div class="card-title"><span class="bar"></span>Who &amp; when <span class="sop-role adv">Adviser</span></div>
+    <p>In the review meeting, with the client (in person or online). The RSO's prepared draft is the script; this tab is the live working copy.</p></div>
+  <div class="card"><div class="card-title"><span class="bar"></span>Procedure</div>
+    <ol>
+      <li><b>Open the Review Meeting tab when the meeting starts.</b> The baseline locks to the prepared draft at that moment (you'll see a confirmation) — from here, <b>only edits made in this tab count as meeting changes</b>. Prep edits are never confused with client-agreed changes.</li>
+      <li><b>Start on the Dashboard</b> — net position, asset/liability totals, open action items, raised flags and rebalance status at a glance, with the live document preview alongside.</li>
+      <li><b>Walk the client through each section.</b> Everything is editable in place — update a balance, reword a goal, change a rating — and totals and the preview recompute live.</li>
+      <li><b>Discuss the rebalance</b> prepared in step 2 — adjust it to whatever is agreed in the room.</li>
+      <li><b>Capture agreed actions</b> in Actions &amp; Services as they come up (who / what / when).</li>
+      <li><b>Nothing else to do</b> — every edit is being recorded with its before → after value for the post-review documents.</li>
+    </ol>
+    <div class="sop-callout tip"><b>Tip:</b> if the preview is distracting on screen-share, use <kbd>🖥 Hide preview</kbd> — the tracking is unaffected.</div>
+  </div></div>`;
+}
+function sopStep4(){
+  return sopHead("Step 4 — Post Review","Turn the meeting's tracked changes into the compliance record: file note and ROA.")+`<div class="sop">
+  <div class="card"><div class="card-title"><span class="bar"></span>Who &amp; when <span class="sop-role">RSO</span></div>
+    <p>As soon as practical after the meeting, while the discussion is fresh.</p></div>
+  <div class="card"><div class="card-title"><span class="bar"></span>Procedure</div>
+    <ol>
+      <li><b>Changes Made (Δ)</b> — review the tracked change list first: every field the adviser touched in the meeting with its before → after value. This is the source of truth for the documents that follow.</li>
+      <li><b>Review File Note</b> — auto-drafted from the meeting details and tracked changes. Read it, edit anything that needs adviser voice, then copy or export to Word for the file.</li>
+      <li><b>Review ROA</b> — pick the right variant: the <b>rebalance ROA</b> if a rebalance was agreed (it pulls the rebalance table from step 2 as amended in the meeting), or the <b>no-change ROA</b> if the portfolio stands. Review the wording, export to Word.</li>
+      <li><b>File everything</b> per practice process — file note and ROA to the client file, action items into the task system, and the saved draft JSON kept as the record of this year's review (it becomes next year's starting point).</li>
+    </ol>
+    <div class="sop-callout"><b>Next year:</b> load this year's saved draft and use <kbd>↻ Roll forward to a new review</kbd> — details, goals and structures carry over, figures reset ready for the new year's reports.</div>
+  </div></div>`;
+}
+function sopTips(){
+  return sopHead("Tips & Troubleshooting","Answers to the common snags.")+`<div class="sop">
+  <div class="card"><div class="card-title"><span class="bar"></span>Saving &amp; resuming</div>
+    <ul>
+      <li><b>Autosave</b> keeps your work in this browser as you type — but it's tied to this browser on this machine.</li>
+      <li><b><kbd>💾 Save draft</kbd></b> downloads a portable JSON — use it to move between machines, back up before the meeting, and archive the completed review.</li>
+      <li><b><kbd>♻ Reset</kbd></b> clears everything for a new client (you'll be asked to confirm). The checklist has its own <kbd>↺ Reset answers</kbd>.</li>
+    </ul></div>
+  <div class="card"><div class="card-title"><span class="bar"></span>Imports</div>
+    <ul>
+      <li><b>A report didn't update the figure?</b> Check the ⚠ conflict panel first, then check the row's owner and reference — a report matches on account number, owner and super/investment type. You can always edit the figure directly.</li>
+      <li><b>Duplicate warning on legitimate accounts?</b> Two different people's accounts on the same platform are kept separate automatically — if a warning still appears, choose <i>keep both</i>; the tool remembers.</li>
+      <li><b>Scanned or photographed documents</b> are read with in-browser OCR — allow a few extra seconds per page.</li>
+      <li><b>Insurance shows N/A / the section is hidden?</b> That's driven by the pre-checklist: when both insurance questions are answered No or N/A, the Insurance section drops out of the doc and Foundations shows N/A. Answer Yes (or add cover rows) to bring it back.</li>
+    </ul></div>
+  <div class="card"><div class="card-title"><span class="bar"></span>Privacy &amp; environment</div>
+    <ul>
+      <li><b>All processing is local.</b> Uploaded client documents are parsed in this browser; nothing is transmitted anywhere.</li>
+      <li><b>The Word export needs the document engine</b>, which loads from the internet when the page opens — if <kbd>⬇ Export Word</kbd> says the engine is still loading, check the connection and try again.</li>
+      <li><b>Day/night theme</b> — toggle top-right; your choice is remembered on this machine.</li>
+    </ul></div></div>`;
+}
+
 const TABS=[
   {id:"checklist", label:"① Pre-Review Checklist", sub:"Complete the checklist for this client",
     sections:[{id:"checklist",num:"✓",title:"Pre-Review Checklist",render:renderChecklistForm}]},
@@ -2096,6 +2247,15 @@ const TABS=[
       {id:"changelog",num:"Δ", title:"Changes Made",      render:renderChangeLog},
       {id:"filenote", num:"📝", title:"Review File Note",  render:renderFileNote},
       {id:"roa",      num:"📄", title:"Review ROA",        render:renderROA}
+    ]},
+  {id:"guide", label:"ⓘ How-To Guide", sub:"Standard operating procedure — running a review end to end",
+    sections:[
+      {id:"sopOverview",num:"◎", title:"Workflow Overview",           render:sopOverview},
+      {id:"sop1",       num:"1", title:"① Pre-Review Checklist",      render:sopStep1},
+      {id:"sop2",       num:"2", title:"② Generate Wealth Doc",       render:sopStep2},
+      {id:"sop3",       num:"3", title:"③ Review Meeting",            render:sopStep3},
+      {id:"sop4",       num:"4", title:"④ Post Review",               render:sopStep4},
+      {id:"sopTips",    num:"✚", title:"Tips & Troubleshooting",      render:sopTips}
     ]}
 ];
 let activeTab="checklist";
@@ -2173,7 +2333,8 @@ function snapshotState(){ const c={...S}; delete c._snapshot; return JSON.parse(
 const NAV_GROUPS={
   generate:[["Setup",["imports"]],["Client & Position",["meta","situation","foundations"]],["Goals & Plan",["goals","tracking","portfolio","alloc","insurance"]],["Actions",["actions","rebalance"]]],
   meeting:[["Meeting",["dashboard"]],["Client & Position",["meta","situation"]],["Goals & Plan",["goals","tracking","portfolio","alloc","insurance"]],["Actions",["actions"]]],
-  post:[["Post Review",["changelog","filenote","roa"]]]
+  post:[["Post Review",["changelog","filenote","roa"]]],
+  guide:[["Getting Started",["sopOverview"]],["The Four Steps",["sop1","sop2","sop3","sop4"]],["Reference",["sopTips"]]]
 };
 function sectionComplete(id){
   switch(id){
