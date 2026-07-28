@@ -135,7 +135,12 @@ textarea{resize:vertical;min-height:60px}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 20px;border-radius:24px;font-size:13px;font-weight:600;box-shadow:var(--shadow);z-index:200;opacity:0;pointer-events:none;transition:.25s}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 /* Checklist hybrid layout */
-.cl-wrap{display:grid;grid-template-columns:230px 1fr;gap:16px;align-items:start}
+.cl-wrap{display:grid;grid-template-columns:230px minmax(0,1fr);gap:16px;align-items:start}
+.cl-main{min-width:0}
+/* a wide item (e.g. the fee matrix table) breaks out of the multi-column flow and
+   spans the full card width; on narrow screens its overflow-x wrapper scrolls in
+   place instead of blowing the page out sideways */
+.cl-item.cl-wide{column-span:all;-webkit-column-span:all}
 .cl-side{position:sticky;top:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px;box-shadow:var(--shadow)}
 .cl-side .cl-side-h{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);padding:6px 8px 8px}
 .cl-sec-btn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:none;background:transparent;color:var(--text-dim);font-weight:700;font-size:12px;padding:7px 9px;border-radius:8px;cursor:pointer;transition:.12s;margin-bottom:1px}
@@ -566,7 +571,7 @@ const CL={
   date:(id,prompt,o={})=>Object.assign({id,prompt,type:"date"},o),
   sel:(id,prompt,options,o={})=>Object.assign({id,prompt,type:"select",options},o),
   combo:(id,prompt,options,o={})=>Object.assign({id,prompt,type:"combo",options},o),   // dropdown suggestions + free type
-  info:(id,compute)=>({id,type:"computed",compute}),
+  info:(id,compute,wide)=>({id,type:"computed",compute,wide:!!wide}),
   sub:(id,label)=>({id,type:"computed",isSub:true,subLabel:label,compute:()=>`<div class="cl-subhead">${label}</div>`})
 };
 const yesTrig=(v)=>String(v).trim().toLowerCase()==="yes";
@@ -928,7 +933,7 @@ const CHECKLIST_SCHEMA=[
     CL.sub("fee_h_charged","Fees charged"),
     CL.cur("fee_soa","SOA fee"),
     CL.cur("fee_osa","Last OSA fee"),
-    CL.info("fee_matrix",()=>`<div class="cl-help"><b>Actual fees charged</b> — split super vs cashflow by owner (Client 1 / 2 / Joint / Entity), and record where each is paid from.</div>`+feesGrid()),
+    CL.info("fee_matrix",()=>`<div class="cl-help"><b>Actual fees charged</b> — split super vs cashflow by owner (Client 1 / 2 / Joint / Entity), and record where each is paid from.</div>`+feesGrid(),true),
     CL.info("fee_calc",()=>feePanel()),
     CL.sub("fee_h_changes","Changes & compliance"),
     CL.yn("fee_split_change","Adviser wants to change the fee split / structure / amounts?",
@@ -3180,7 +3185,7 @@ function clGo(id){ S.checklist.activeSection=id; renderContent(); window.scrollT
 function clReset(){ if(!confirm("Clear all checklist answers?")) return; S.checklist.answers={}; renderContent(); toast("Checklist answers cleared."); }
 
 function renderCLItem(it){
-  if(it.type==="computed"){ try{ return `<div class="cl-item">${it.compute()}</div>`; }catch(e){ return ""; } }
+  if(it.type==="computed"){ try{ return `<div class="cl-item${it.wide?' cl-wide':''}">${it.compute()}</div>`; }catch(e){ return ""; } }
   if(!clItemVisible(it)) return "";
   const help=it.help?`<div class="cl-help">${esc(it.help)}</div>`:"";
   let control;
