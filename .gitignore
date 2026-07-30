@@ -40,3 +40,4 @@ next-env.d.ts
 # workshop scratch + generated screenshots (not part of the app)
 /scratch
 /screenshots
+tools/allocation-workbook/__pycache__/
