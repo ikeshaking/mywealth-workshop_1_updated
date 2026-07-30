@@ -54,6 +54,41 @@ register, 2025 / peer review / RS-cancelled tabs as read-only history, week
 banners onto the `Weeks` note column, and `On AL` / `Away` rows into the leave
 register.
 
+## The HTML dashboard
+
+`build_dashboard.py` produces the same thing as a single self-contained page —
+one `.html` file with the data embedded, no CDN, no fonts, no network calls, so
+it runs from a local drive, a shared folder or any static host.
+
+```bash
+python build_dashboard.py Associate_Allocations_14.xlsx Associate_Allocations_Dashboard.html
+```
+
+It reuses `build_workbook.py`'s migration, so both outputs are built from one
+parser. `dashboard_template.html` holds the page; `__SEED__` is replaced with
+the migrated JSON at build time.
+
+- **This week** — stat tiles, then a card per associate with their files for the
+  week, a `n of 3` capacity pill, on-leave state and the row checks inline.
+- **Load** — the associate × week heatmap (sequential blue for magnitude,
+  reserved amber/red for at/over capacity, hatching for leave), plus
+  year-to-date totals.
+- **All SOAs** — the whole register with search, associate/progress filters and
+  a "only rows with a check" toggle.
+- **Peer review** — rotation order with per-reviewer counts, and a queue per
+  reviewer.
+- **Setup** — roster, leave, division caps, plan year, holidays.
+
+Editing happens in a drawer; the rotation, capacity states and checks
+recalculate on every change. State lives in `localStorage`, with **Backup** and
+**Restore** for a JSON file and **Export CSV** for the register (Excel opens it
+directly). Each browser holds its own copy — it is a single-user tool unless
+it's hosted with a shared backend.
+
+Verify changes by driving it in a browser, not by reading the diff: check every
+view, add and delete a row, reload for persistence, and screenshot light, dark
+and a narrow viewport.
+
 ## Implementation notes
 
 - Only pre-2007 worksheet functions are used (`COUNTIFS`, `SUMIF`,

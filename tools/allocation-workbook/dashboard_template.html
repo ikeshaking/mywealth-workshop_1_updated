@@ -1,0 +1,1237 @@
+<title>Associate Allocations</title>
+<style>
+  /* ---------------------------------------------------------------
+     Tokens. Chrome is a cool-neutral paper with ink-navy furniture;
+     data colours are the validated sequential blue ramp plus the
+     reserved status trio, so a capacity state never shares a hue with
+     an ordinary figure.
+     --------------------------------------------------------------- */
+  :root {
+    color-scheme: light;
+    --paper:        #f4f5f7;
+    --surface:      #ffffff;
+    --surface-sunk: #eceef2;
+    --ink:          #0e1726;
+    --ink-2:        #46505f;
+    --bar:          #0e1726;
+    --bar-ink:      #ffffff;
+    --bar-ink-2:    #93a4be;
+    --critical-ink: #d03b3b;
+    --ink-muted:    #79828f;
+    --line:         #dfe3e9;
+    --line-strong:  #c4cad3;
+    --accent:       #256abf;
+    --accent-ink:   #184f95;
+    --accent-wash:  #e8f0fb;
+    --good:         #0ca30c;
+    --warning:      #fab219;
+    --critical:     #d03b3b;
+    --good-wash:    #e4f6e4;
+    --warning-wash: #fdf1d8;
+    --critical-wash:#fae0e0;
+    --seq-1:  #cde2fb;
+    --seq-2:  #9ec5f4;
+    --seq-3:  #6da7ec;
+    --seq-4:  #3987e5;
+    --seq-5:  #256abf;
+    --shadow: 0 1px 2px rgba(14, 23, 38, .06), 0 8px 24px -16px rgba(14, 23, 38, .28);
+    --radius: 10px;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --paper:        #0f1319;
+      --surface:      #171c24;
+      --surface-sunk: #1f2530;
+      --ink:          #f2f4f7;
+      --ink-2:        #b8c0cc;
+      --ink-muted:    #8b93a1;
+      --bar:          #0a0d12;
+      --bar-ink:      #f2f4f7;
+      --bar-ink-2:    #7d8ba2;
+      --critical-ink: #ff9a9a;
+      --line:         #2a3140;
+      --line-strong:  #3a4353;
+      --accent:       #5598e7;
+      --accent-ink:   #86b6ef;
+      --accent-wash:  #1a2637;
+      --good-wash:    #14301a;
+      --warning-wash: #33280d;
+      --critical-wash:#3a1a1c;
+      --seq-1:  #17304f;
+      --seq-2:  #1c4479;
+      --seq-3:  #205ba3;
+      --seq-4:  #2a78d6;
+      --seq-5:  #5598e7;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --paper:        #0f1319;
+    --surface:      #171c24;
+    --surface-sunk: #1f2530;
+    --ink:          #f2f4f7;
+    --ink-2:        #b8c0cc;
+    --ink-muted:    #8b93a1;
+    --bar:          #0a0d12;
+    --bar-ink:      #f2f4f7;
+    --bar-ink-2:    #7d8ba2;
+    --critical-ink: #ff9a9a;
+    --line:         #2a3140;
+    --line-strong:  #3a4353;
+    --accent:       #5598e7;
+    --accent-ink:   #86b6ef;
+    --accent-wash:  #1a2637;
+    --good-wash:    #14301a;
+    --warning-wash: #33280d;
+    --critical-wash:#3a1a1c;
+    --seq-1:  #17304f;
+    --seq-2:  #1c4479;
+    --seq-3:  #205ba3;
+    --seq-4:  #2a78d6;
+    --seq-5:  #5598e7;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font: 400 14px/1.5 var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { margin: 0; text-wrap: balance; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+  .eyebrow {
+    font: 600 10.5px/1.4 var(--sans); letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink-muted);
+  }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  /* ---------- top bar ---------- */
+  header.bar {
+    position: sticky; top: 0; z-index: 40;
+    background: var(--bar); color: var(--bar-ink);
+    display: flex; align-items: center; gap: 18px;
+    padding: 0 18px; min-height: 56px; flex-wrap: wrap;
+  }
+  :root[data-theme="dark"] header.bar, :root:where(:not([data-theme="light"])) header.bar {
+    border-bottom: 1px solid var(--line);
+  }
+  .wordmark { display: flex; align-items: baseline; gap: 9px; margin-right: 4px; }
+  .wordmark strong { font-size: 15px; font-weight: 650; letter-spacing: -.01em; }
+  .wordmark span { font: 600 10px/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--bar-ink-2); }
+  nav.views { display: flex; gap: 2px; flex-wrap: wrap; }
+  nav.views button {
+    background: none; border: 0; color: var(--bar-ink-2); cursor: pointer;
+    padding: 7px 11px; border-radius: 7px; font-weight: 500;
+  }
+  nav.views button:hover { background: rgba(255,255,255,.09); color: #fff; }
+  nav.views button[aria-current="true"] { background: #fff; color: var(--ink); font-weight: 600; }
+  :root[data-theme="dark"] nav.views button[aria-current="true"],
+  :root:where(:not([data-theme="light"])) nav.views button[aria-current="true"] {
+    background: var(--accent); color: #fff;
+  }
+  .bar .spacer { flex: 1 1 auto; }
+  .bar .tool {
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16);
+    color: #fff; padding: 6px 11px; border-radius: 7px; cursor: pointer;
+  }
+  .bar .tool:hover { background: rgba(255,255,255,.2); }
+  .bar .primary { background: var(--accent); border-color: transparent; font-weight: 600; }
+  .bar .primary:hover { background: var(--accent-ink); }
+
+  /* ---------- week stepper ---------- */
+  .weekbar {
+    position: sticky; top: 56px; z-index: 30;
+    background: var(--surface); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 14px; padding: 10px 18px; flex-wrap: wrap;
+  }
+  .stepper { display: flex; align-items: center; gap: 8px; }
+  .stepper button {
+    width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
+    font-size: 15px; line-height: 1;
+  }
+  .stepper button:hover { background: var(--surface-sunk); }
+  .weeklabel { display: flex; align-items: baseline; gap: 10px; }
+  .weeklabel .wk { font: 650 17px/1 var(--sans); }
+  .weeklabel .dates { color: var(--ink-2); }
+  .chipline { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+  main { padding: 18px; max-width: 1600px; margin: 0 auto; }
+  section.view[hidden] { display: none; }
+  .stack { display: flex; flex-direction: column; gap: 18px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+  }
+  .card > .head {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 12px 14px; border-bottom: 1px solid var(--line);
+  }
+  .card > .head h2 { font-size: 14.5px; font-weight: 650; }
+  .card > .body { padding: 14px; }
+  .card > .body.flush { padding: 0; }
+
+  /* ---------- stat tiles ---------- */
+  .tiles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+  .tile {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
+    box-shadow: var(--shadow);
+  }
+  .tile .v { font: 650 27px/1.1 var(--sans); letter-spacing: -.02em; }
+  .tile .sub { color: var(--ink-muted); font-size: 12.5px; }
+  .tile.is-critical { border-color: var(--critical); background: var(--critical-wash); }
+  .tile.is-warning  { border-color: var(--warning); background: var(--warning-wash); }
+  .tile.is-good     { border-color: var(--good);    background: var(--good-wash); }
+
+  /* ---------- pills & chips ---------- */
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+    border-radius: 999px; padding: 2px 9px; font-size: 11.5px; font-weight: 600;
+    border: 1px solid var(--line-strong); background: var(--surface-sunk); color: var(--ink-2);
+  }
+  .pill.good     { border-color: var(--good);     background: var(--good-wash);     color: var(--ink); }
+  .pill.warning  { border-color: var(--warning);  background: var(--warning-wash);  color: var(--ink); }
+  .pill.critical { border-color: var(--critical); background: var(--critical-wash); color: var(--ink); }
+  .pill.accent   { border-color: var(--accent);   background: var(--accent-wash);   color: var(--accent-ink); }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+  /* ---------- associate columns ---------- */
+  /* Column flow rather than a grid: an associate with one SOA leaves no hole
+     under their card, so the board stays dense however uneven the week is. */
+  .board { columns: 258px; column-gap: 12px; }
+  .col {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); display: flex; flex-direction: column;
+    break-inside: avoid; margin-bottom: 12px;
+  }
+  .col > header {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 10px 12px; border-bottom: 1px solid var(--line);
+  }
+  .col > header .who { font-weight: 650; }
+  .col.on-leave > header { background: var(--surface-sunk); }
+  .col .slots { display: flex; flex-direction: column; padding: 6px; gap: 6px; min-height: 54px; }
+  .slot {
+    text-align: left; width: 100%; cursor: pointer;
+    background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px;
+    transition: background .12s ease, transform .12s ease;
+  }
+  .slot:hover { background: var(--accent-wash); }
+  .slot .client { font-weight: 600; line-height: 1.3; }
+  .slot .meta { display: flex; flex-wrap: wrap; gap: 0 6px; align-items: center; color: var(--ink-muted); font-size: 12px; }
+  .slot .meta .bit { white-space: nowrap; }
+  .slot .meta .sep::before { content: "\00b7"; margin-right: 6px; }
+  .slot.flagged { border-left-color: var(--warning); }
+  .slot.done    { border-left-color: var(--good); }
+  .slot.dropped { border-left-color: var(--critical); opacity: .72; }
+  .slot .checks { color: var(--critical); font-size: 12px; font-weight: 500; }
+  .col .add {
+    margin: 6px; padding: 7px; border-radius: 8px; cursor: pointer;
+    border: 1px dashed var(--line-strong); background: none; color: var(--ink-muted); font-weight: 500;
+  }
+  .col .add:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-wash); }
+  .empty { color: var(--ink-muted); font-style: italic; padding: 10px; }
+
+  /* ---------- tables ---------- */
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  thead th {
+    position: sticky; top: 0; background: var(--surface-sunk); z-index: 2;
+    font: 600 10.5px/1.4 var(--sans); letter-spacing: .08em; text-transform: uppercase;
+    color: var(--ink-2); white-space: nowrap; border-bottom: 1px solid var(--line-strong);
+  }
+  tbody tr:hover { background: var(--accent-wash); }
+  tbody tr.clickable { cursor: pointer; }
+  td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .thisweek > td { box-shadow: inset 3px 0 0 var(--accent); }
+
+  /* ---------- heatmap ---------- */
+  .heat td, .heat th { vertical-align: middle; }
+  .heat th.rowhead { position: sticky; left: 0; background: var(--surface); z-index: 1; white-space: nowrap; font-weight: 500; }
+  .heat thead th { text-align: center; }
+  .heat td { text-align: center; padding: 0; border: 1px solid var(--surface); }
+  .heat td .cell {
+    display: block; padding: 6px 4px; font-family: var(--mono); font-variant-numeric: tabular-nums;
+    font-size: 12.5px; min-width: 46px;
+  }
+  .heat td[data-s="0"] .cell { color: var(--ink-muted); }
+  .heat td[data-s="1"] .cell { background: var(--seq-1); }
+  .heat td[data-s="2"] .cell { background: var(--seq-2); }
+  .heat td[data-s="3"] .cell { background: var(--seq-3); color: #fff; }
+  .heat td[data-s="4"] .cell { background: var(--seq-4); color: #fff; }
+  .heat td[data-s="at"]   .cell { background: var(--warning-wash);  box-shadow: inset 0 0 0 1.5px var(--warning); font-weight: 700; }
+  .heat td[data-s="over"] .cell { background: var(--critical-wash); box-shadow: inset 0 0 0 1.5px var(--critical); font-weight: 700; color: var(--critical-ink); }
+  .heat td.leave .cell { background: repeating-linear-gradient(135deg, var(--surface-sunk) 0 4px, var(--line) 4px 5px); color: var(--ink-muted); }
+  .heat tr.now th, .heat tr.now td { border-top-color: var(--accent); border-bottom-color: var(--accent); }
+  .legend { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; color: var(--ink-2); font-size: 12px; }
+  .legend .swatch { display: inline-block; width: 13px; height: 13px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; border: 1px solid var(--line-strong); }
+
+  /* ---------- filters, forms ---------- */
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  input[type="text"], input[type="date"], input[type="number"], select, textarea {
+    background: var(--surface); border: 1px solid var(--line-strong); border-radius: 7px;
+    padding: 6px 9px; min-width: 0;
+  }
+  input[type="text"]:hover, select:hover { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 62px; width: 100%; }
+  label.field { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--ink-2); }
+  label.field > span { font-weight: 600; }
+  .btn {
+    border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
+    padding: 6px 12px; border-radius: 8px; cursor: pointer; font-weight: 500;
+  }
+  .btn:hover { background: var(--surface-sunk); }
+  .btn.primary { background: var(--accent); border-color: transparent; color: #fff; font-weight: 600; }
+  .btn.primary:hover { background: var(--accent-ink); }
+  .btn.danger { color: var(--critical); border-color: var(--critical); }
+  .btn.danger:hover { background: var(--critical-wash); }
+
+  /* ---------- drawer ---------- */
+  .scrim {
+    position: fixed; inset: 0; background: rgba(14, 23, 38, .45); z-index: 50;
+    display: flex; justify-content: flex-end;
+  }
+  .scrim[hidden] { display: none; }
+  .drawer {
+    background: var(--surface); width: min(460px, 100%); height: 100%; overflow-y: auto;
+    border-left: 1px solid var(--line); display: flex; flex-direction: column;
+    animation: slide .16s ease-out;
+  }
+  @keyframes slide { from { transform: translateX(14px); opacity: .6 } to { transform: none; opacity: 1 } }
+  .drawer > header { display: flex; align-items: center; justify-content: space-between; padding: 14px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface); }
+  .drawer .grid { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; padding: 14px; }
+  .drawer .grid .full { grid-column: 1 / -1; }
+  .drawer > footer { display: flex; gap: 8px; padding: 14px; border-top: 1px solid var(--line); margin-top: auto; position: sticky; bottom: 0; background: var(--surface); }
+  .notice { padding: 9px 11px; border-radius: 8px; background: var(--warning-wash); border: 1px solid var(--warning); font-size: 12.5px; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+    background: var(--bar); color: var(--bar-ink); padding: 9px 15px; border-radius: 999px;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow); z-index: 60; font-weight: 500;
+  }
+  .toast[hidden] { display: none; }
+  .muted { color: var(--ink-muted); }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .grid2 { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
+  .tip {
+    position: fixed; z-index: 55; pointer-events: none; background: var(--bar); color: var(--bar-ink);
+    padding: 6px 9px; border-radius: 7px; font-size: 12px; box-shadow: var(--shadow); max-width: 240px;
+  }
+  .tip[hidden] { display: none; }
+  @media print {
+    header.bar, .weekbar, .bar .tool, .col .add { display: none; }
+    body { background: #fff; }
+  }
+</style>
+
+<header class="bar">
+  <div class="wordmark"><strong>Associate Allocations</strong><span id="yearTag">2026</span></div>
+  <nav class="views" id="views">
+    <button data-view="week"   aria-current="true">This week</button>
+    <button data-view="load">Load</button>
+    <button data-view="all">All SOAs</button>
+    <button data-view="review">Peer review</button>
+    <button data-view="setup">Setup</button>
+  </nav>
+  <div class="spacer"></div>
+  <button class="tool primary" id="addBtn">+ Add SOA</button>
+  <button class="tool" id="exportBtn">Export CSV</button>
+  <button class="tool" id="backupBtn">Backup</button>
+  <button class="tool" id="restoreBtn">Restore</button>
+  <input type="file" id="restoreFile" accept="application/json" hidden>
+</header>
+
+<div class="weekbar">
+  <div class="stepper">
+    <button id="prevWk" title="Previous week" aria-label="Previous week">&#8249;</button>
+    <button id="nextWk" title="Next week" aria-label="Next week">&#8250;</button>
+  </div>
+  <div class="weeklabel">
+    <span class="wk num" id="wkNo">Week 31</span>
+    <span class="dates" id="wkDates">JUL &middot; 27th - 31st</span>
+  </div>
+  <div class="chipline" id="wkChips"></div>
+  <div class="spacer"></div>
+  <button class="btn" id="todayBtn">Jump to this week</button>
+</div>
+
+<main>
+  <section class="view stack" id="view-week"></section>
+  <section class="view stack" id="view-load" hidden></section>
+  <section class="view stack" id="view-all" hidden></section>
+  <section class="view stack" id="view-review" hidden></section>
+  <section class="view stack" id="view-setup" hidden></section>
+</main>
+
+<div class="scrim" id="scrim" hidden></div>
+<div class="toast" id="toast" hidden></div>
+<div class="tip" id="tip" hidden></div>
+
+<script id="seed" type="application/json">__SEED__</script>
+<script>
+"use strict";
+/* =====================================================================
+   Associate Allocations - a single-file dashboard over the same data the
+   workbook holds. Week calendar, peer review rotation, capacity and the
+   row checks are all derived here, exactly as the spreadsheet derives
+   them, so nothing has to be typed twice.
+   ===================================================================== */
+
+const DAY = 86400000;
+const KEY = "mywealth.allocations.v1";
+const seed = JSON.parse(document.getElementById("seed").textContent);
+
+let state = load();
+let view = "week";
+let week = null;            // set after weeks() is available
+let filters = { q: "", assoc: "", progress: "", flagged: false };
+let reviewFilter = { who: "", outstandingOnly: false };
+let editing = null;
+
+/* ---------- storage ---------- */
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      if (saved && Array.isArray(saved.allocations)) return saved;
+    }
+  } catch (e) { /* fall through to the seed */ }
+  return structuredClone(seed);
+}
+let saveTimer = null;
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); }
+    catch (e) { toast("Could not save to this browser - export a backup instead"); }
+  }, 120);
+}
+
+/* ---------- dates ---------- */
+const parseDate = s => (s ? new Date(s + "T00:00:00") : null);
+const iso = d => d.toISOString().slice(0, 10);
+const MONTHS = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+function ordinal(n) {
+  const s = (n === 1 || n === 21 || n === 31) ? "st"
+          : (n === 2 || n === 22) ? "nd"
+          : (n === 3 || n === 23) ? "rd" : "th";
+  return n + s;
+}
+function fmtDate(s) {
+  const d = parseDate(s);
+  if (!d) return "";
+  return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
+}
+
+/* ---------- derived: week calendar ---------- */
+function weeks() {
+  const anchor = parseDate(state.meta.anchor);
+  const out = [];
+  for (let i = 1; i <= state.meta.weeks; i++) {
+    const mon = new Date(anchor.getTime() + (i - 1) * 7 * DAY);
+    const fri = new Date(mon.getTime() + 4 * DAY);
+    const hols = state.holidays.filter(h => {
+      const d = parseDate(h.date);
+      return d && d >= mon && d <= fri;
+    });
+    out.push({
+      no: i, mon, fri,
+      month: MONTHS[mon.getMonth()],
+      label: `${ordinal(mon.getDate())} - ${ordinal(fri.getDate())}`,
+      hols, workingDays: 5 - hols.length,
+      note: state.weekNotes[i] || "",
+    });
+  }
+  return out;
+}
+const WK = () => weeks();
+function weekOf(no) { return WK().find(w => w.no === no) || null; }
+function currentWeekNo() {
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  const found = WK().filter(w => w.mon <= now).pop();
+  return found ? found.no : 1;
+}
+
+/* ---------- derived: people ---------- */
+const activeRoster = () => state.roster.filter(p => p.active);
+const associates = () => activeRoster().map(p => p.short);
+const reviewers = () => activeRoster().filter(p => p.rota).map(p => p.short);
+function person(short) { return state.roster.find(p => p.short === short) || null; }
+function capacityOf(short) { const p = person(short); return p ? Number(p.cap) || 0 : 0; }
+function onLeave(short, wk) {
+  if (!wk) return null;
+  return state.leave.find(l => {
+    if (l.who !== short) return false;
+    const from = parseDate(l.from), to = parseDate(l.to);
+    return from && to && from <= wk.fri && to >= wk.mon;
+  }) || null;
+}
+function weekCapacity(wk) {
+  let cap = 0;
+  for (const p of activeRoster()) if (!onLeave(p.short, wk)) cap += Number(p.cap) || 0;
+  return cap;
+}
+
+/* ---------- derived: the peer review rotation ----------
+   Nobody reviews their own SOA. Each associate's files are dealt out in
+   turn across everyone else in the rotation, offset by that person's own
+   position, so two authors never start on the same reviewer and the load
+   stays level. Anyone outside the rotation falls back to the whole list. */
+function withDerived() {
+  const pool = reviewers();
+  const ordered = state.allocations
+    .map((a, i) => ({ a, i }))
+    .sort((x, y) => (x.a.week - y.a.week) || (x.i - y.i));
+  const perAuthor = new Map();
+  const out = new Map();
+  let seq = 0;
+  for (const { a } of ordered) {
+    if (!a.client) continue;
+    seq++;
+    let auto = "";
+    const ai = pool.indexOf(a.assoc);
+    if (pool.length === 0) auto = "";
+    else if (ai < 0) auto = pool[(seq - 1) % pool.length];
+    else if (pool.length > 1) {
+      const n = perAuthor.get(a.assoc) || 0;
+      perAuthor.set(a.assoc, n + 1);
+      const slot = (n + ai + 1) % (pool.length - 1);   // 0-based among "others"
+      auto = pool.filter(p => p !== a.assoc)[slot];
+    }
+    out.set(a.id, { seq, auto });
+  }
+  return state.allocations.map(a => {
+    const d = out.get(a.id) || { seq: null, auto: "" };
+    const reviewer = a.reviewOverride || d.auto;
+    return { ...a, seq: d.seq, autoReviewer: d.auto, reviewer };
+  });
+}
+let rowsCache = null;
+function rows() { return rowsCache || (rowsCache = withDerived()); }
+function invalidate() { rowsCache = null; }
+
+/* ---------- derived: the checks on a row ---------- */
+function checksFor(r, all) {
+  const out = [];
+  const wk = weekOf(r.week);
+  if (!r.assoc) out.push("no associate");
+  else if (!person(r.assoc)) out.push("associate not on the roster");
+  if (!r.week || !wk) out.push("no week");
+  if (r.assoc && wk && onLeave(r.assoc, wk)) out.push("on leave that week");
+  if (r.assoc && wk) {
+    const load = all.filter(x => x.week === r.week && x.assoc === r.assoc && x.client).length;
+    if (load > capacityOf(r.assoc)) out.push(`over capacity (${load} of ${capacityOf(r.assoc)})`);
+  }
+  if (r.soaDate && wk) {
+    const d = parseDate(r.soaDate);
+    if (d < wk.mon) out.push("SOA date is before the week");
+    else if (d > new Date(wk.mon.getTime() + 90 * DAY)) out.push("SOA date over 90 days out");
+  }
+  if (r.reviewer && r.reviewer === r.assoc) out.push("reviewer is the author");
+  if (r.client && all.filter(x => x.week === r.week && x.client === r.client).length > 1)
+    out.push("duplicate in this week");
+  if (!r.adviser) out.push("no adviser");
+  return out;
+}
+const DROPPED = ["Cancelled", "On hold", "Rescheduled"];
+const isDropped = r => DROPPED.includes(r.progress);
+const isLive = r => r.client && !isDropped(r);
+
+/* ---------- helpers ---------- */
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+// Each part carries its own separator, so a wrap never strands a bullet at
+// the end of a line.
+const metaLine = parts => parts.filter(Boolean)
+  .map((v, i) => `<span class="bit${i ? " sep" : ""}">${esc(v)}</span>`).join("");
+const el = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 2600);
+}
+function options(list, chosen, blank) {
+  const opts = (blank == null ? [] : [`<option value="">${esc(blank)}</option>`]);
+  for (const v of list) opts.push(`<option value="${esc(v)}"${v === chosen ? " selected" : ""}>${esc(v)}</option>`);
+  return opts.join("");
+}
+function nextId() {
+  return 1 + state.allocations.reduce((m, a) => Math.max(m, Number(a.id) || 0), 0);
+}
+
+/* =====================================================================
+   Views
+   ===================================================================== */
+function render() {
+  invalidate();
+  document.getElementById("yearTag").textContent = state.meta.year;
+  renderWeekBar();
+  document.querySelectorAll("#views button").forEach(b =>
+    b.setAttribute("aria-current", String(b.dataset.view === view)));
+  document.querySelectorAll("section.view").forEach(s =>
+    s.hidden = s.id !== "view-" + view);
+  ({ week: renderWeek, load: renderLoad, all: renderAll, review: renderReview, setup: renderSetup })[view]();
+  save();
+}
+
+function renderWeekBar() {
+  const wk = weekOf(week);
+  document.getElementById("wkNo").textContent = "Week " + week;
+  document.getElementById("wkDates").textContent = wk ? `${wk.month} · ${wk.label}` : "";
+  const chips = [];
+  if (wk) {
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    if (now >= wk.mon && now <= wk.fri) chips.push(`<span class="pill accent"><span class="dot"></span>this week</span>`);
+    for (const h of wk.hols) chips.push(`<span class="pill warning">${esc(h.name)}</span>`);
+    if (wk.workingDays < 5) chips.push(`<span class="pill">${wk.workingDays} working days</span>`);
+    if (wk.note) chips.push(`<span class="pill">${esc(wk.note)}</span>`);
+  }
+  document.getElementById("wkChips").innerHTML = chips.join("");
+}
+
+/* ---------- This week ---------- */
+function renderWeek() {
+  const host = document.getElementById("view-week");
+  const all = rows();
+  const wk = weekOf(week);
+  const mine = all.filter(r => r.week === week && r.client);
+  const live = mine.filter(isLive);
+  const cap = weekCapacity(wk);
+  const flagged = mine.filter(r => checksFor(r, all).length);
+  const outstanding = mine.filter(r => isLive(r) && r.reviewStatus !== "Approved");
+  const spare = cap - live.length;
+
+  const tiles = [
+    ["SOAs this week", live.length, `${mine.length - live.length} cancelled or on hold`, ""],
+    ["Spare capacity", spare, `${live.length} of ${cap} slots used`,
+      spare < 0 ? "is-critical" : spare === 0 ? "is-warning" : "is-good"],
+    ["Needs a look", flagged.length, flagged.length ? "rows with a check" : "everything checks out",
+      flagged.length ? "is-warning" : "is-good"],
+    ["Reviews outstanding", outstanding.length, "not yet approved", ""],
+  ].map(([k, v, sub, cls]) => `
+    <div class="tile ${cls}">
+      <span class="eyebrow">${esc(k)}</span>
+      <span class="v num">${v}</span>
+      <span class="sub">${esc(sub)}</span>
+    </div>`).join("");
+
+  const board = activeRoster().map(p => {
+    const leave = onLeave(p.short, wk);
+    const list = mine.filter(r => r.assoc === p.short);
+    const liveCount = list.filter(isLive).length;
+    const state_ = liveCount > p.cap ? "critical" : liveCount === p.cap ? "warning" : liveCount ? "good" : "";
+    const slots = list.length ? list.map(r => {
+      const ch = checksFor(r, all);
+      const cls = isDropped(r) ? "dropped" : ch.length ? "flagged" : r.progress === "Completed" ? "done" : "";
+      return `
+        <button class="slot ${cls}" data-edit="${r.id}">
+          <span class="client">${esc(r.client)}</span>
+          <span class="meta">
+            ${r.type ? `<span class="pill">${esc(r.type)}</span>` : ""}
+            ${metaLine([r.division, r.adviser])}
+          </span>
+          <span class="meta">
+            ${metaLine([r.soaDate ? fmtDate(r.soaDate) : (r.appt || "no date"),
+                        r.reviewer ? "review: " + r.reviewer : "",
+                        r.progress === "Not started" ? "" : r.progress])}
+          </span>
+          ${ch.length ? `<span class="checks">${esc(ch.join(" · "))}</span>` : ""}
+        </button>`;
+    }).join("") : `<p class="empty">Nothing allocated</p>`;
+    return `
+      <div class="col ${leave ? "on-leave" : ""}">
+        <header>
+          <span class="who">${esc(p.short)}</span>
+          ${leave ? `<span class="pill critical" title="${esc(leave.reason || "")}">on leave</span>`
+                  : `<span class="pill ${state_}"><span class="num">${liveCount} of ${p.cap}</span></span>`}
+        </header>
+        <div class="slots">${slots}</div>
+        <button class="add" data-add="${esc(p.short)}">+ add for ${esc(p.short)}</button>
+      </div>`;
+  }).join("");
+
+  const attention = flagged.length ? `
+    <div class="card">
+      <div class="head"><h2>Needs a look</h2><span class="muted">${flagged.length} of ${mine.length} rows this week</span></div>
+      <div class="body flush scroll">
+        <table>
+          <thead><tr><th>Client</th><th>Associate</th><th>What to check</th></tr></thead>
+          <tbody>${flagged.map(r => `
+            <tr class="clickable" data-edit="${r.id}">
+              <td>${esc(r.client)}</td><td>${esc(r.assoc)}</td>
+              <td>${esc(checksFor(r, all).join(" · "))}</td>
+            </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>` : "";
+
+  const divs = state.caps.map(c => {
+    const n = live.filter(r => r.division === c.division).length;
+    const cls = n > c.soa ? "critical" : n === c.soa ? "warning" : n ? "good" : "";
+    return `<span class="pill ${cls}">${esc(c.division)} <span class="num">${n} of ${c.soa}</span></span>`;
+  }).join(" ");
+
+  host.innerHTML = `
+    <div class="tiles">${tiles}</div>
+    <div class="card">
+      <div class="head"><h2>Week ${week} board</h2><div class="chipline">${divs}</div></div>
+      <div class="body"><div class="board">${board}</div></div>
+    </div>
+    ${attention}`;
+}
+
+/* ---------- Load ---------- */
+function renderLoad() {
+  const host = document.getElementById("view-load");
+  const all = rows().filter(isLive);
+  const people = activeRoster();
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+
+  const head = people.map(p => `<th title="${esc(p.short)} - ${p.cap} a week">${esc(p.short)}<br><span class="eyebrow num">cap ${p.cap}</span></th>`).join("");
+  const body = WK().map(wk => {
+    const isNow = now >= wk.mon && now <= wk.fri;
+    const cells = people.map(p => {
+      const n = all.filter(r => r.week === wk.no && r.assoc === p.short).length;
+      const leave = onLeave(p.short, wk);
+      let s = "0";
+      if (n > p.cap) s = "over";
+      else if (n && n === p.cap) s = "at";
+      else if (n) s = String(Math.min(4, Math.max(1, Math.ceil((n / Math.max(p.cap, 1)) * 4))));
+      const label = leave ? `${p.short} is on leave in week ${wk.no}`
+        : `${p.short}, week ${wk.no}: ${n} of ${p.cap}`;
+      return `<td data-s="${s}" class="${leave ? "leave" : ""}" data-tip="${esc(label)}"><span class="cell">${leave ? "&middot;" : (n || "&ndash;")}</span></td>`;
+    }).join("");
+    const total = all.filter(r => r.week === wk.no).length;
+    const cap = weekCapacity(wk);
+    return `
+      <tr class="${isNow ? "now" : ""}">
+        <th class="rowhead">
+          <span class="num">${wk.no}</span> &nbsp;<span class="muted">${wk.month} ${wk.label}</span>
+          ${wk.hols.length ? ` <span class="pill warning">${wk.workingDays}d</span>` : ""}
+        </th>
+        ${cells}
+        <td class="num">${total}</td><td class="num">${cap}</td>
+        <td class="num" style="font-weight:600;color:${cap - total < 0 ? "var(--critical-ink)" : "inherit"}">${cap - total}</td>
+      </tr>`;
+  }).join("");
+
+  host.innerHTML = `
+    <div class="card">
+      <div class="head">
+        <h2>SOAs per associate per week</h2>
+        <div class="legend">
+          <span><span class="swatch" style="background:var(--seq-2)"></span>has room</span>
+          <span><span class="swatch" style="background:var(--warning-wash);border-color:var(--warning)"></span>at capacity</span>
+          <span><span class="swatch" style="background:var(--critical-wash);border-color:var(--critical)"></span>over capacity</span>
+          <span><span class="swatch" style="background:var(--surface-sunk)"></span>on leave</span>
+        </div>
+      </div>
+      <div class="body flush scroll">
+        <table class="heat">
+          <thead><tr><th class="rowhead">Week</th>${head}<th>Total</th><th>Capacity</th><th>Spare</th></tr></thead>
+          <tbody>${body}</tbody>
+        </table>
+      </div>
+    </div>
+    ${ytdCard()}`;
+}
+
+function ytdCard() {
+  const all = rows().filter(isLive);
+  const per = activeRoster().map(p => {
+    const mine = all.filter(r => r.assoc === p.short);
+    return `<tr>
+      <td>${esc(p.short)}</td>
+      <td class="num">${mine.length}</td>
+      <td class="num">${mine.filter(r => r.type === "New Business").length}</td>
+      <td class="num">${mine.filter(r => r.type === "Existing").length}</td>
+      <td class="num">${mine.filter(r => r.progress === "Completed").length}</td>
+      <td class="num">${all.filter(r => r.reviewer === p.short).length}</td>
+    </tr>`;
+  }).join("");
+  const byDiv = state.caps.map(c => `<tr>
+      <td>${esc(c.division)}</td>
+      <td class="num">${all.filter(r => r.division === c.division).length}</td>
+      <td class="num">${c.soa}</td>
+      <td class="num">${Math.max(0, ...WK().map(w => all.filter(r => r.week === w.no && r.division === c.division).length))}</td>
+    </tr>`).join("");
+  return `
+    <div class="grid2">
+      <div class="card">
+        <div class="head"><h2>Year to date by associate</h2></div>
+        <div class="body flush scroll"><table>
+          <thead><tr><th>Associate</th><th class="num">SOAs</th><th class="num">New</th><th class="num">Existing</th><th class="num">Done</th><th class="num">Reviews</th></tr></thead>
+          <tbody>${per}</tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="head"><h2>Year to date by division</h2></div>
+        <div class="body flush scroll"><table>
+          <thead><tr><th>Division</th><th class="num">SOAs</th><th class="num">Cap/week</th><th class="num">Busiest week</th></tr></thead>
+          <tbody>${byDiv}</tbody></table></div>
+      </div>
+    </div>`;
+}
+
+/* ---------- All SOAs ---------- */
+function renderAll() {
+  const host = document.getElementById("view-all");
+  const all = rows();
+  const q = filters.q.toLowerCase();
+  const list = all.filter(r => r.client)
+    .filter(r => !filters.assoc || r.assoc === filters.assoc)
+    .filter(r => !filters.progress || r.progress === filters.progress)
+    .filter(r => !filters.flagged || checksFor(r, all).length)
+    .filter(r => !q || [r.client, r.assoc, r.adviser, r.division, r.notes, r.reviewer]
+      .some(v => String(v ?? "").toLowerCase().includes(q)))
+    .sort((a, b) => (a.week - b.week) || String(a.assoc).localeCompare(String(b.assoc)));
+
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  const body = list.map(r => {
+    const wk = weekOf(r.week);
+    const ch = checksFor(r, all);
+    const isNow = wk && now >= wk.mon && now <= wk.fri;
+    return `<tr class="clickable ${isNow ? "thisweek" : ""}" data-edit="${r.id}">
+      <td class="num">${r.week ?? ""}</td>
+      <td>${wk ? esc(wk.month + " " + wk.label) : `<span class="pill critical">no week</span>`}</td>
+      <td>${esc(r.client)}</td>
+      <td>${esc(r.assoc)}</td>
+      <td class="num">${r.type === "New Business" ? "new" : r.type === "Existing" ? "existing" : esc(r.type)}</td>
+      <td>${esc(r.division)}</td>
+      <td>${esc(r.adviser)}</td>
+      <td>${r.soaDate ? fmtDate(r.soaDate) : `<span class="muted">${esc(r.appt || "")}</span>`}</td>
+      <td>${esc(r.progress)}</td>
+      <td>${esc(r.reviewer)}${r.reviewOverride ? ` <span class="pill accent">set</span>` : ""}</td>
+      <td>${ch.length ? `<span class="pill warning">${esc(ch.join(" · "))}</span>` : `<span class="muted">ok</span>`}</td>
+    </tr>`;
+  }).join("");
+
+  host.innerHTML = `
+    <div class="card">
+      <div class="head">
+        <h2>All SOAs</h2>
+        <div class="filters">
+          <input type="text" id="fq" placeholder="Search client, adviser, notes" value="${esc(filters.q)}" size="26">
+          <select id="fassoc">${options(associates(), filters.assoc, "Every associate")}</select>
+          <select id="fprog">${options(state.progress, filters.progress, "Any progress")}</select>
+          <label class="row" style="font-size:12.5px"><input type="checkbox" id="fflag" ${filters.flagged ? "checked" : ""}> only rows with a check</label>
+        </div>
+        <span class="muted num">${list.length} rows</span>
+      </div>
+      <div class="body flush scroll" style="max-height:70vh;overflow-y:auto">
+        <table>
+          <thead><tr>
+            <th class="num">Wk</th><th>Week</th><th>Client</th><th>Associate</th><th class="num">Type</th>
+            <th>Division</th><th>Adviser</th><th>SOA date</th><th>Progress</th><th>Peer reviewer</th><th>Checks</th>
+          </tr></thead>
+          <tbody>${body || `<tr><td colspan="11" class="empty">Nothing matches those filters</td></tr>`}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  document.getElementById("fq").oninput = e => { filters.q = e.target.value; renderAll(); };
+  document.getElementById("fassoc").onchange = e => { filters.assoc = e.target.value; renderAll(); };
+  document.getElementById("fprog").onchange = e => { filters.progress = e.target.value; renderAll(); };
+  document.getElementById("fflag").onchange = e => { filters.flagged = e.target.checked; renderAll(); };
+}
+
+/* ---------- Peer review ---------- */
+function renderReview() {
+  const host = document.getElementById("view-review");
+  const all = rows().filter(isLive);
+  const pool = reviewers();
+  if (!reviewFilter.who) reviewFilter.who = pool[0] || "";
+
+  const counts = pool.map(name => {
+    const mine = all.filter(r => r.reviewer === name);
+    const approved = mine.filter(r => r.reviewStatus === "Approved").length;
+    return { name, total: mine.length, approved, out: mine.length - approved };
+  });
+  const spread = counts.length ? Math.max(...counts.map(c => c.total)) - Math.min(...counts.map(c => c.total)) : 0;
+
+  const rota = counts.map((c, i) => `<tr>
+      <td class="num">${i + 1}</td>
+      <td>${esc(c.name)}</td>
+      <td class="num">${c.total}</td>
+      <td class="num">${c.out ? `<span class="pill warning">${c.out}</span>` : "0"}</td>
+      <td class="num">${c.approved}</td>
+    </tr>`).join("");
+
+  let queue = all.filter(r => r.reviewer === reviewFilter.who);
+  if (reviewFilter.outstandingOnly) queue = queue.filter(r => r.reviewStatus !== "Approved");
+  queue.sort((a, b) => (a.week - b.week));
+
+  const qbody = queue.map(r => `<tr class="clickable" data-edit="${r.id}">
+      <td class="num">${r.week}</td>
+      <td>${esc(r.client)}</td>
+      <td>${esc(r.assoc)}</td>
+      <td>${r.soaDate ? fmtDate(r.soaDate) : `<span class="muted">${esc(r.appt || "")}</span>`}</td>
+      <td>${r.link ? `<a href="${esc(r.link)}" target="_blank" rel="noreferrer noopener">folder</a>` : `<span class="muted">-</span>`}</td>
+      <td>${r.reviewStatus === "Approved" ? `<span class="pill good">Approved</span>`
+            : `<span class="pill ${r.reviewStatus ? "warning" : ""}">${esc(r.reviewStatus || "Not uploaded")}</span>`}</td>
+      <td>${r.reviewedOn ? fmtDate(r.reviewedOn) : ""}</td>
+    </tr>`).join("");
+
+  host.innerHTML = `
+    <div class="card">
+      <div class="head">
+        <h2>Rotation</h2>
+        <span class="muted">Each associate's SOAs are dealt out in turn across everyone else, so nobody reviews their own work.</span>
+      </div>
+      <div class="body flush scroll">
+        <table><thead><tr><th class="num">#</th><th>Reviewer</th><th class="num">Assigned</th><th class="num">Outstanding</th><th class="num">Approved</th></tr></thead>
+        <tbody>${rota}</tbody></table>
+      </div>
+      <div class="body" style="border-top:1px solid var(--line)">
+        <span class="muted">Spread across the rotation: <span class="num">${spread}</span> reviews.
+        Change who is in the rotation on the Setup tab; use Reviewer override on a row to swap a single review.</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="head">
+        <h2>Review queue</h2>
+        <div class="filters">
+          <select id="rwho">${options(pool, reviewFilter.who, null)}</select>
+          <label class="row" style="font-size:12.5px"><input type="checkbox" id="rout" ${reviewFilter.outstandingOnly ? "checked" : ""}> hide approved</label>
+        </div>
+        <span class="muted num">${queue.length} SOAs</span>
+      </div>
+      <div class="body flush scroll">
+        <table><thead><tr><th class="num">Wk</th><th>Client</th><th>Written by</th><th>SOA date</th><th>Folder</th><th>Review</th><th>Reviewed</th></tr></thead>
+        <tbody>${qbody || `<tr><td colspan="7" class="empty">Nothing in this queue</td></tr>`}</tbody></table>
+      </div>
+    </div>`;
+
+  document.getElementById("rwho").onchange = e => { reviewFilter.who = e.target.value; renderReview(); };
+  document.getElementById("rout").onchange = e => { reviewFilter.outstandingOnly = e.target.checked; renderReview(); };
+}
+
+/* ---------- Setup ---------- */
+function renderSetup() {
+  const host = document.getElementById("view-setup");
+  const roster = state.roster.map((p, i) => `<tr>
+      <td><input type="text" data-r="${i}" data-f="short" value="${esc(p.short)}" size="12"></td>
+      <td><input type="text" data-r="${i}" data-f="full" value="${esc(p.full)}" size="16"></td>
+      <td><input type="text" data-r="${i}" data-f="role" value="${esc(p.role)}" size="10"></td>
+      <td style="text-align:center"><input type="checkbox" data-r="${i}" data-f="active" ${p.active ? "checked" : ""}></td>
+      <td class="num"><input type="number" data-r="${i}" data-f="cap" value="${Number(p.cap) || 0}" min="0" max="20" style="width:64px"></td>
+      <td style="text-align:center"><input type="checkbox" data-r="${i}" data-f="rota" ${p.rota ? "checked" : ""}></td>
+      <td><input type="text" data-r="${i}" data-f="notes" value="${esc(p.notes || "")}" size="24"></td>
+      <td><button class="btn danger" data-delrow="roster:${i}" title="Remove">&times;</button></td>
+    </tr>`).join("");
+
+  const leave = state.leave.map((l, i) => `<tr>
+      <td><select data-l="${i}" data-f="who">${options(state.roster.map(p => p.short), l.who, "-")}</select></td>
+      <td><input type="date" data-l="${i}" data-f="from" value="${esc(l.from)}"></td>
+      <td><input type="date" data-l="${i}" data-f="to" value="${esc(l.to)}"></td>
+      <td><input type="text" data-l="${i}" data-f="reason" value="${esc(l.reason || "")}" size="22"></td>
+      <td><button class="btn danger" data-delrow="leave:${i}" title="Remove">&times;</button></td>
+    </tr>`).join("");
+
+  const hols = state.holidays.slice().sort((a, b) => String(a.date).localeCompare(String(b.date)))
+    .map(h => `<tr><td class="num">${fmtDate(h.date)}</td><td>${esc(h.name)}</td><td>${esc(h.region)}</td></tr>`).join("");
+
+  const caps = state.caps.map((c, i) => `<tr>
+      <td>${esc(c.division)}</td>
+      <td class="num"><input type="number" data-c="${i}" data-f="soa" value="${c.soa}" min="0" style="width:64px"></td>
+      <td class="num"><input type="number" data-c="${i}" data-f="imp" value="${c.imp}" min="0" style="width:64px"></td>
+    </tr>`).join("");
+
+  host.innerHTML = `
+    <div class="card">
+      <div class="head">
+        <h2>Team</h2>
+        <span class="muted">Active people appear on the board and in the dropdowns. "In rotation" is who peer reviews.</span>
+      </div>
+      <div class="body flush scroll"><table>
+        <thead><tr><th>Short name</th><th>Full name</th><th>Role</th><th>Active</th><th class="num">SOAs/week</th><th>In rotation</th><th>Notes</th><th></th></tr></thead>
+        <tbody>${roster}</tbody></table></div>
+      <div class="body" style="border-top:1px solid var(--line)"><button class="btn" id="addPerson">+ Add person</button></div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="head"><h2>Leave</h2><span class="muted">Comes out of that week's capacity</span></div>
+        <div class="body flush scroll"><table>
+          <thead><tr><th>Who</th><th>From</th><th>To</th><th>Reason</th><th></th></tr></thead>
+          <tbody>${leave || `<tr><td colspan="5" class="empty">No leave recorded</td></tr>`}</tbody></table></div>
+        <div class="body" style="border-top:1px solid var(--line)"><button class="btn" id="addLeave">+ Add leave</button></div>
+      </div>
+      <div class="card">
+        <div class="head"><h2>Division caps per week</h2></div>
+        <div class="body flush scroll"><table>
+          <thead><tr><th>Division</th><th class="num">SOA cap</th><th class="num">Implementation cap</th></tr></thead>
+          <tbody>${caps}</tbody></table></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="head"><h2>Plan year</h2></div>
+        <div class="body">
+          <div class="row">
+            <label class="field"><span>Week 1 Monday</span><input type="date" id="anchor" value="${esc(state.meta.anchor)}"></label>
+            <label class="field"><span>Weeks in the year</span><input type="number" id="nweeks" value="${state.meta.weeks}" min="1" max="60" style="width:80px"></label>
+            <label class="field"><span>Year label</span><input type="number" id="ylabel" value="${state.meta.year}" style="width:96px"></label>
+          </div>
+          <p class="muted" style="margin:10px 0 0">Every week number, month and date label in the tool comes from these three values.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="head"><h2>Public holidays</h2><span class="muted">National plus the NSW/QLD dates from the old tab</span></div>
+        <div class="body flush scroll" style="max-height:280px;overflow-y:auto"><table>
+          <thead><tr><th>Date</th><th>Holiday</th><th>Region</th></tr></thead>
+          <tbody>${hols}</tbody></table></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="head"><h2>Your data</h2></div>
+      <div class="body row">
+        <span class="muted">Changes are kept in this browser. Use Backup for a file you can keep or move to another machine.</span>
+        <div class="spacer"></div>
+        <button class="btn danger" id="resetBtn">Reset to the imported data</button>
+      </div>
+    </div>`;
+
+  host.querySelectorAll("[data-r]").forEach(inp => {
+    inp.onchange = e => {
+      const p = state.roster[Number(e.target.dataset.r)];
+      const f = e.target.dataset.f;
+      p[f] = e.target.type === "checkbox" ? e.target.checked
+           : f === "cap" ? Number(e.target.value) : e.target.value;
+      render();
+    };
+  });
+  host.querySelectorAll("[data-l]").forEach(inp => {
+    inp.onchange = e => {
+      state.leave[Number(e.target.dataset.l)][e.target.dataset.f] = e.target.value;
+      render();
+    };
+  });
+  host.querySelectorAll("[data-c]").forEach(inp => {
+    inp.onchange = e => {
+      state.caps[Number(e.target.dataset.c)][e.target.dataset.f] = Number(e.target.value);
+      render();
+    };
+  });
+  host.querySelectorAll("[data-delrow]").forEach(btn => {
+    btn.onclick = e => {
+      const [what, i] = e.currentTarget.dataset.delrow.split(":");
+      state[what].splice(Number(i), 1);
+      render();
+    };
+  });
+  document.getElementById("addPerson").onclick = () => {
+    state.roster.push({ short: "New person", full: "", role: "Associate", active: true, cap: 3, rota: false, notes: "" });
+    render();
+  };
+  document.getElementById("addLeave").onclick = () => {
+    const wk = weekOf(week);
+    state.leave.push({ who: associates()[0] || "", from: iso(wk.mon), to: iso(wk.fri), reason: "Annual leave" });
+    render();
+  };
+  document.getElementById("anchor").onchange = e => { state.meta.anchor = e.target.value; render(); };
+  document.getElementById("nweeks").onchange = e => { state.meta.weeks = Number(e.target.value); render(); };
+  document.getElementById("ylabel").onchange = e => { state.meta.year = Number(e.target.value); render(); };
+  document.getElementById("resetBtn").onclick = () => {
+    if (!confirm("Discard every change made in this browser and go back to the imported data?")) return;
+    state = structuredClone(seed);
+    week = currentWeekNo();
+    toast("Back to the imported data");
+    render();
+  };
+}
+
+/* =====================================================================
+   Editor drawer
+   ===================================================================== */
+function openEditor(id, preset) {
+  const all = rows();
+  const r = id ? all.find(x => String(x.id) === String(id)) : null;
+  editing = r ? r.id : null;
+  const v = r || Object.assign({
+    week, client: "", assoc: "", type: "", division: "", adviser: "",
+    soaDate: "", appt: "", progress: "Not started", notes: "",
+    link: "", reviewOverride: "", reviewStatus: "", reviewedOn: "", comments: "",
+  }, preset || {});
+  const ch = r ? checksFor(r, all) : [];
+
+  const drawer = el(`
+    <div class="drawer" role="dialog" aria-modal="true" aria-label="${r ? "Edit SOA" : "Add SOA"}">
+      <header>
+        <div>
+          <span class="eyebrow">${r ? "Edit SOA" : "Add SOA"}</span>
+          <h2>${esc(v.client || "New client file")}</h2>
+        </div>
+        <button class="btn" data-close>Close</button>
+      </header>
+      ${ch.length ? `<div style="padding:0 14px"><p class="notice">${esc(ch.join(" · "))}</p></div>` : ""}
+      <div class="grid">
+        <label class="field full"><span>Client</span><input type="text" id="e_client" value="${esc(v.client)}"></label>
+        <label class="field"><span>Week</span><input type="number" id="e_week" value="${v.week ?? ""}" min="1" max="${state.meta.weeks}"></label>
+        <label class="field"><span>Associate</span><select id="e_assoc">${options(associates(), v.assoc, "-")}</select></label>
+        <label class="field"><span>Client type</span><select id="e_type">${options(state.clientTypes, v.type, "-")}</select></label>
+        <label class="field"><span>Division</span><select id="e_division">${options(state.divisions, v.division, "-")}</select></label>
+        <label class="field"><span>Adviser</span><select id="e_adviser">${options(state.advisers, v.adviser, "-")}</select></label>
+        <label class="field"><span>Progress</span><select id="e_progress">${options(state.progress, v.progress, "-")}</select></label>
+        <label class="field"><span>SOA date</span><input type="date" id="e_soaDate" value="${esc(v.soaDate)}"></label>
+        <label class="field"><span>Appointment</span><select id="e_appt">${options(state.appt, v.appt, "-")}</select></label>
+        <label class="field full"><span>Notes</span><textarea id="e_notes">${esc(v.notes)}</textarea></label>
+        <label class="field full"><span>SOA folder link</span><input type="text" id="e_link" value="${esc(v.link)}" placeholder="https://drive.google.com/..."></label>
+        <label class="field"><span>Peer reviewer</span>
+          <select id="e_reviewOverride">${options(associates(), v.reviewOverride, "auto: " + (r ? (r.autoReviewer || "-") : "assigned on save"))}</select>
+        </label>
+        <label class="field"><span>Review status</span><select id="e_reviewStatus">${options(state.reviewStatus, v.reviewStatus, "-")}</select></label>
+        <label class="field"><span>Reviewed on</span><input type="date" id="e_reviewedOn" value="${esc(v.reviewedOn)}"></label>
+        <label class="field full"><span>Reviewer comments</span><textarea id="e_comments">${esc(v.comments)}</textarea></label>
+      </div>
+      <footer>
+        <button class="btn primary" data-save>${r ? "Save" : "Add SOA"}</button>
+        ${r ? `<button class="btn danger" data-delete>Delete</button>` : ""}
+        <div class="spacer" style="flex:1"></div>
+        <button class="btn" data-close>Cancel</button>
+      </footer>
+    </div>`);
+
+  const scrim = document.getElementById("scrim");
+  scrim.innerHTML = "";
+  scrim.appendChild(drawer);
+  scrim.hidden = false;
+  drawer.querySelector("#e_client").focus();
+
+  const close = () => { scrim.hidden = true; scrim.innerHTML = ""; editing = null; };
+  drawer.querySelectorAll("[data-close]").forEach(b => b.onclick = close);
+  scrim.onclick = e => { if (e.target === scrim) close(); };
+  drawer.querySelector("[data-save]").onclick = () => {
+    const get = k => drawer.querySelector("#e_" + k).value.trim();
+    const patch = {
+      week: Number(drawer.querySelector("#e_week").value) || null,
+      client: get("client"), assoc: get("assoc"), type: get("type"),
+      division: get("division"), adviser: get("adviser"), progress: get("progress"),
+      soaDate: get("soaDate"), appt: get("appt"), notes: get("notes"), link: get("link"),
+      reviewOverride: get("reviewOverride"), reviewStatus: get("reviewStatus"),
+      reviewedOn: get("reviewedOn"), comments: get("comments"),
+    };
+    if (!patch.client) { toast("Give the client file a name first"); return; }
+    if (patch.soaDate && patch.appt === "") patch.appt = "Booked";
+    if (r) Object.assign(state.allocations.find(a => a.id === r.id), patch);
+    else state.allocations.push(Object.assign({ id: nextId() }, patch));
+    toast(r ? "Saved" : "Added");
+    close(); render();
+  };
+  const del = drawer.querySelector("[data-delete]");
+  if (del) del.onclick = () => {
+    if (!confirm(`Delete ${r.client}?`)) return;
+    state.allocations = state.allocations.filter(a => a.id !== r.id);
+    toast("Deleted"); close(); render();
+  };
+}
+
+/* =====================================================================
+   Export / backup
+   ===================================================================== */
+function download(name, text, type) {
+  const url = URL.createObjectURL(new Blob([text], { type: type || "text/plain;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+function exportCsv() {
+  const cols = ["Week","Month","Week label","Client","Associate","# that week","Client type",
+    "Division","Adviser","SOA date","Appt status","Progress","Peer reviewer","Checks","Notes",
+    "SOA folder link","Review status","Reviewed on","Reviewer comments"];
+  const all = rows();
+  const seen = new Map();
+  const lines = [cols.join(",")];
+  for (const r of all.filter(x => x.client).sort((a, b) => (a.week - b.week) || a.seq - b.seq)) {
+    const k = r.week + "|" + r.assoc;
+    seen.set(k, (seen.get(k) || 0) + 1);
+    const wk = weekOf(r.week);
+    const cells = [r.week, wk ? wk.month : "", wk ? wk.label : "", r.client, r.assoc, seen.get(k),
+      r.type, r.division, r.adviser, r.soaDate, r.appt, r.progress, r.reviewer,
+      checksFor(r, all).join("; ") || "OK", r.notes, r.link, r.reviewStatus, r.reviewedOn, r.comments];
+    lines.push(cells.map(c => {
+      const s = String(c ?? "");
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }).join(","));
+  }
+  download(`allocations-${state.meta.year}.csv`, lines.join("\r\n"), "text/csv;charset=utf-8");
+  toast("CSV exported - opens straight in Excel");
+}
+
+/* =====================================================================
+   Wiring
+   ===================================================================== */
+document.getElementById("views").onclick = e => {
+  const b = e.target.closest("button[data-view]");
+  if (!b) return;
+  view = b.dataset.view; render();
+};
+document.getElementById("prevWk").onclick = () => { week = Math.max(1, week - 1); render(); };
+document.getElementById("nextWk").onclick = () => { week = Math.min(state.meta.weeks, week + 1); render(); };
+document.getElementById("todayBtn").onclick = () => { week = currentWeekNo(); render(); };
+document.getElementById("addBtn").onclick = () => openEditor(null, { week });
+document.getElementById("exportBtn").onclick = exportCsv;
+document.getElementById("backupBtn").onclick = () => {
+  download(`allocations-backup-${iso(new Date())}.json`, JSON.stringify(state, null, 1), "application/json");
+  toast("Backup downloaded");
+};
+document.getElementById("restoreBtn").onclick = () => document.getElementById("restoreFile").click();
+document.getElementById("restoreFile").onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data || !Array.isArray(data.allocations)) throw new Error("not a backup");
+      state = data; week = currentWeekNo();
+      toast("Backup restored"); render();
+    } catch (err) { toast("That file is not an Allocations backup"); }
+    e.target.value = "";
+  };
+  reader.readAsText(file);
+};
+
+document.addEventListener("click", e => {
+  const edit = e.target.closest("[data-edit]");
+  if (edit) { openEditor(edit.dataset.edit); return; }
+  const add = e.target.closest("[data-add]");
+  if (add) { openEditor(null, { week, assoc: add.dataset.add }); return; }
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && !document.getElementById("scrim").hidden) {
+    document.getElementById("scrim").hidden = true;
+    document.getElementById("scrim").innerHTML = "";
+  }
+  if (document.activeElement && /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  if (e.key === "[") { week = Math.max(1, week - 1); render(); }
+  if (e.key === "]") { week = Math.min(state.meta.weeks, week + 1); render(); }
+});
+
+/* heatmap hover tooltip */
+const tip = document.getElementById("tip");
+document.addEventListener("mousemove", e => {
+  const cell = e.target.closest("[data-tip]");
+  if (!cell) { tip.hidden = true; return; }
+  tip.textContent = cell.dataset.tip;
+  tip.hidden = false;
+  tip.style.left = Math.min(window.innerWidth - 250, e.clientX + 12) + "px";
+  tip.style.top = (e.clientY + 14) + "px";
+});
+
+week = currentWeekNo();
+render();
+</script>
