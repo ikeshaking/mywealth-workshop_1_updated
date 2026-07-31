@@ -941,7 +941,7 @@ const QUIZ = [
   "id": "S1",
   "code": "Section 01",
   "title": "Super & Retirement",
-  "blurb": "Twelve rows and only two possible answers. Knowing which two rows fall outside s25-5 is most of this section.",
+  "blurb": "Nothing in super touches s8-1 — the fund earns the income, not the member. So every row here is either s25-5 or nothing, and knowing which rows fall outside s25-5 is most of this section.",
   "questions": [
    {
     "type": "mc",
@@ -985,7 +985,7 @@ const QUIZ = [
    {
     "type": "bucket",
     "tag": "Sort into boxes",
-    "q": "Sort each Super & Retirement strategy into the correct treatment. Only two apply across this whole section.",
+    "q": "Sort each Super &amp; Retirement strategy into its treatment. There are only two boxes because no row in this section can reach s8-1 — every strategy here is either s25-5 or nothing.",
     "boxes": [
      "s25-5",
      "Not deductible"
@@ -1118,16 +1118,16 @@ const QUIZ = [
     "type": "mc",
     "tag": "Complex",
     "hard": true,
-    "q": "An engagement establishes a new $800,000 portfolio from scratch. The file also contains separately scoped and separately documented analysis of the CGT consequences of the ownership structure chosen. How is the fee treated?",
-    "hint": "The default for this row is not the end of the analysis. Identify what the guidance permits to be separated out, and the condition attached to doing so.",
+    "q": "During the annual review of an existing income-producing portfolio, the adviser performs detailed realised and unrealised gain and loss analysis, models the loss offset against a crystallised gain, and recommends sale timing before 30 June. How should this work be recorded?",
+    "hint": "Two questions, in order. Does this work belong on the ongoing management line or on a row of its own? Then ask whether it has an income-production limb at all.",
     "options": [
-     "Not deductible across the whole engagement — establishment is capital, and that governs the entire fee",
-     "Deductible under both heads — the portfolio will produce assessable income once established",
-     "The establishment component is not deductible, with the separately documented CGT and structure analysis identified as a s25-5 component",
-     "Deductible under s25-5 in full — the presence of CGT analysis makes the engagement tax-affairs work"
+     "Folded into Ongoing Management of an Existing Investment Portfolio, under both heads",
+     "On its own Tax-Loss Harvesting row, under s25-5, separately from the ongoing management line",
+     "On its own Tax-Loss Harvesting row, under both heads, because the portfolio produces assessable income",
+     "Not deductible — recommending sale timing is advice on a capital transaction"
     ],
-    "answer": 2,
-    "why": "Split it. Establishment and acquisition advice is capital and preparatory, so it defaults to nil. The guidance permits a tax-affairs component to be separately identified for distinct work such as CGT or structure analysis, but only where that work is separately costed or documented. Without the documentation, option A would be correct."
+    "answer": 1,
+    "why": "Its own row, s25-5 alone. Where the CGT calculations, loss-offset modelling and timing analysis are actually performed, this is distinct tax-affairs work and earns its own line rather than disappearing into the ongoing management fee. It does not pick up s8-1: the work manages the client’s CGT position, it does not produce or maintain assessable income, and the fact that the surrounding portfolio does is not enough — that is what option C gets wrong. Note the threshold works both ways. Had the review merely mentioned in passing that a loss could be realised, with no CGT analysis performed, the row could not be used at all."
    },
    {
     "type": "bucket",
@@ -1213,16 +1213,18 @@ const QUIZ = [
    },
    {
     "type": "mc",
-    "tag": "Wording",
-    "q": "Which invoice wording pre-fills for Investment Bond Advice?",
+    "tag": "Complex",
+    "hard": true,
+    "q": "Investment Structuring Advice (trust, company) is claimed under both heads. Investment Bond Advice is claimed under s25-5 alone. Both are advice on how to structure a client’s assets tax-effectively — what accounts for the difference?",
+    "hint": "Ask who earns the assessable income in each case. One structure holds the client’s income-producing investments; the other is taxed internally and distributes nothing to them.",
     "options": [
-     "“Advice on managing Capital Gains Tax (CGT) implications of investments (s25-5)”",
-     "“Advice on structuring assets to reduce assessable income via an internally taxed investment bond (s25-5)”",
-     "“Advice on tax-effective investment structuring (e.g., ownership in trust, company, joint names) (s25-5)”",
-     "“Advice on the operation of a Commonwealth law relating to taxation (s25-5)”"
+     "Investment bonds are products rather than structures, and product advice can never attract s8-1",
+     "Structuring advice concerns the ownership of the client’s existing income-producing investments, which supplies the s8-1 nexus; an investment bond is taxed internally and returns nothing assessable to the client, so only the tax-structuring advice is claimable",
+     "The bond must be held for ten years, and s8-1 cannot apply to a long-term holding",
+     "There is no principled difference — the exemplars simply happen to record the two rows differently"
     ],
     "answer": 1,
-    "why": "The bond wording turns on the internally taxed structure — the client’s marginal rate against the tax-paid rate inside the bond. Retain the taxable-income comparison and the 10-year and contribution rule notes on file. Option A is tax-loss harvesting; option C is investment structuring."
+    "why": "Follow the assessable income. Trust and company structuring is about how the client’s existing income-producing investments are owned, so the s8-1 limb survives alongside the tax analysis of rates, distributions and CGT. An investment bond is internally taxed at the bond rate and pays the client nothing assessable while it is held — there is no income of theirs being produced or maintained, so nothing supports s8-1. What remains is genuine s25-5 work: structuring assets to reduce assessable income and advising on the tax implications of investing through the bond."
    },
    {
     "type": "escalate",
@@ -1566,7 +1568,7 @@ const QUIZ = [
    {
     "type": "bucket",
     "tag": "Sort into boxes",
-    "q": "Sort each SMSF strategy into the correct treatment. As with ordinary super, only two apply.",
+    "q": "Sort each SMSF strategy into its treatment. Two boxes again, for the same reason as ordinary super — the fund earns the income, so no row here reaches s8-1.",
     "boxes": [
      "s25-5",
      "Not deductible"
@@ -1911,28 +1913,28 @@ const QUIZ = [
   "id": "S8",
   "code": "Section 08",
   "title": "The Statement of Advice",
-  "blurb": "One client, one SOA, eight recommendations and a single fee. Build the invoice: strategy row, section, and the reason that supports it.",
+  "blurb": "A different client, a different SOA. Eight recommendations and a single upfront fee — build the invoice: strategy row, section, and the reason that supports it.",
   "questions": [
    {
     "type": "soa",
     "tag": "Capstone",
     "hard": true,
     "q": "For each recommendation, select the strategy row, the section it is claimed under, and the reason that supports it.",
-    "hint": "Work the section column first. Ownership determines the insurance rows, the existing-versus-new distinction determines the investment rows, and the remainder turn on whether documented tax analysis was performed. Each strategy row and each reason is used exactly once.",
-    "scenario": "<b>Client:</b> Dave &amp; Sally Whitmore. <b>SOA issued:</b> last financial year. <b>Advice fee:</b> $8,800 incl. GST, invoiced as a single amount. The file contains a complete set of calculations, modelling and file notes for every recommendation below.",
+    "hint": "Work the section column first, then let it drive the other two. Ownership decides the insurance rows, existing-versus-new decides the investment rows, and the rest turn on whether tax was actually analysed. There are more strategy rows and reasons on offer than you need, but none is used twice.",
+    "scenario": "<b>Client:</b> Marcus &amp; Elena Vasquez, owners of a manufacturing business they intend to sell in around five years. <b>Advice fee:</b> $11,000 incl. GST, invoiced as a single upfront amount. The file contains a complete set of calculations, modelling and file notes for every recommendation below.",
     "strategies": [
      "Advice on Death Benefit Nominations (Super)",
-     "Commencement of an Account Based Pension (ABP)",
+     "Bank Account & Offset Structuring",
+     "Business Expenses Insurance Advice",
+     "Business Succession Planning (Tax Implications)",
      "Establish a New Investment Portfolio (from scratch)",
-     "Estate Planning Advice (e.g., Testamentary Trusts)",
-     "Financial Modelling & Tax Projections",
-     "General Budgeting and Cash Flow Management",
-     "Income Protection Insurance Application / Review",
-     "Ongoing Management of an Existing Investment Portfolio",
+     "Gearing Strategy Advice (Deductible Debt)",
+     "Investment Structuring Advice (e.g., Trust, Company)",
+     "Key Person Insurance (Deductibility Analysis)",
+     "Personal Deductible Concessional Contributions",
      "Personal Life / TPD / Trauma Insurance Advice (outside super)",
      "Rollover Existing Super to New Fund/Platform",
-     "Salary Sacrifice to Superannuation",
-     "Super-owned Life / TPD Insurance Advice"
+     "Small Business CGT Concessions Advice"
     ],
     "treatments": [
      "s8-1 only",
@@ -1941,68 +1943,68 @@ const QUIZ = [
      "Not deductible"
     ],
     "reasons": [
-     "Reduces assessable income by sacrificing salary into super, and concerns the tax treatment of those contributions",
-     "Creates tax-free pension earnings and concerns the tax treatment of the pension income",
-     "Manages existing income-producing assets, and advises on the tax implications of the income and any disposals",
-     "Establishment and acquisition advice is capital and preparatory in nature",
-     "The premiums protect assessable income, and the advice covers their tax treatment and benefit design",
-     "Concerns the tax implications of super benefits paid before age 60 or to a non-dependant beneficiary",
-     "Private and domestic financial management, not connected to producing assessable income or managing tax affairs",
-     "Private and capital succession planning; any tax consequences are incidental to the estate objective",
+     "Advice on making tax-deductible personal contributions — notice of intent, caps and Division 293 — is applying taxation law",
+     "Division 152 eligibility testing, active asset and connected entity analysis is inherently tax-affairs work",
+     "The borrowings are applied to producing assessable rental income, and the engagement advises on interest deductibility and borrowing purpose",
+     "Considers the most tax-effective ownership of existing income-producing investments, including distributions and CGT",
+     "The premiums secure assessable replacement income and deductible operating expenses, with no separate tax-affairs analysis attached",
+     "Private protection advice — the super-held benefit rationale cannot reach a personally held policy",
      "Product replacement and implementation advice, which is capital in character",
-     "Modelling that calculates the tax payable now and over time for the strategies recommended"
+     "Succession and estate planning, where any tax consequences are incidental to the objective",
+     "Establishment and acquisition advice is capital and preparatory in nature",
+     "Concerns the tax implications of super benefits paid before age 60 or to a non-dependant beneficiary"
     ],
     "rows": [
      {
-      "r": "Salary sacrifice $18,000 per year into Dave’s employer super fund, with a concessional cap worksheet and PAYG comparison on file.",
-      "s": 10,
+      "r": "Make a $30,000 personal deductible contribution for Marcus, with the notice of intent, carry-forward cap position and Division 293 assessment documented.",
+      "s": 8,
       "t": 1,
       "w": 0
      },
      {
-      "r": "Commence an account based pension from Sally’s accumulation balance, with transfer balance cap and minimum pension calculations documented.",
-      "s": 1,
+      "r": "Test eligibility for the small business CGT concessions on the eventual sale, including active asset and connected entity analysis under Division 152.",
+      "s": 11,
       "t": 1,
       "w": 1
      },
      {
-      "r": "Ongoing review and management of the existing $640,000 share and managed fund portfolio, including the tax implications of distributions and two disposals.",
-      "s": 7,
+      "r": "Restructure the borrowings over the commercial premises the business leases from them, with loan purpose tracing and interest deductibility analysis on file.",
+      "s": 5,
       "t": 2,
       "w": 2
      },
      {
-      "r": "Deploy a $200,000 inheritance into a new direct share portfolio built from scratch.",
-      "s": 2,
-      "t": 3,
+      "r": "Move their existing $900,000 share portfolio into a family trust, modelling the distribution and CGT outcomes of the new ownership.",
+      "s": 6,
+      "t": 2,
       "w": 3
      },
      {
-      "r": "Apply for income protection cover owned personally by Dave, with premiums paid from his own funds.",
-      "s": 6,
-      "t": 2,
+      "r": "Put business expenses cover in place to meet the fixed operating costs of the business if either of them is incapacitated.",
+      "s": 2,
+      "t": 0,
       "w": 4
      },
      {
-      "r": "Review the existing life and TPD cover held inside Sally’s super fund, including the position of their adult non-dependant children as beneficiaries.",
-      "s": 11,
-      "t": 1,
+      "r": "Take out trauma and TPD cover held personally, outside super, for family protection.",
+      "s": 9,
+      "t": 3,
       "w": 5
      },
      {
-      "r": "Prepare a household budget and a savings plan targeting a $30,000 cash buffer.",
-      "s": 5,
+      "r": "Roll Elena's existing super to a lower-cost platform on a like-for-like basis.",
+      "s": 10,
       "t": 3,
       "w": 6
      },
      {
-      "r": "Update both wills and establish a testamentary trust for the benefit of the children.",
-      "s": 3,
+      "r": "Put binding death benefit nominations in place across both super accounts.",
+      "s": 0,
       "t": 3,
       "w": 7
      }
     ],
-    "why": "Eight recommendations, four treatments, one invoice. The pattern worth carrying out of the room: ownership decides the insurance rows, existing-versus-new decides the investment rows, and the presence of documented tax analysis decides everything else. Note that recommendations 4, 7 and 8 are all non-deductible for different reasons — capital, private, and private-and-capital respectively — and that distinction is what you rely on when the invoice is questioned."
+    "why": "Eight recommendations and all four treatments, which is rare on one invoice. Business expenses cover is the reason: it is the only row in the entire document claimed under s8-1 alone, because the premiums secure assessable replacement income and deductible operating expenses with no tax-affairs analysis attached to them. The two “both heads” rows are the borrowings and the trust restructure — each concerns assets already producing assessable income, and each also advises on how the tax law treats them. The three nil rows fail for three different reasons: personally held trauma and TPD is private protection and must not inherit the super-held rationale, a like-for-like platform move is product replacement, and death benefit nominations are succession planning where the tax consequences are incidental. Note that the small business CGT work is claimable now even though the sale is years away — Division 152 eligibility testing is tax-affairs work whenever it is performed."
    }
   ]
  },
