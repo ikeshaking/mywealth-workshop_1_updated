@@ -737,6 +737,8 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
 
     <p class="footnote">
       Source: <code>MWS_Fee_Apportioning_Rules.docx</code> &mdash; Tool Specification, aligned to licensee examples 5.3.4 / 5.3.5, the strategy-basis exemplar invoices, TD 2024/7 and s8-1 &amp; s25-5 ITAA 1997. Four-question framework per Ikesha&rsquo;s note in <code>#associate-chat</code>.
+      <br><br>
+      <b>House position &mdash; Debt Recycling Strategy is recorded under both s8-1 and s25-5.</b> The summary table in the specification lists this row as s8-1, but the strategy&rsquo;s own default invoice wording and basis note cite both heads. This quiz follows both heads throughout, on the basis that a documented purpose-tracing and interest-deductibility analysis is a s25-5 claim in its own right. Worth correcting the summary table so the two agree.
     </p>
 
   </div>
@@ -808,10 +810,6 @@ const QUIZ = [
     ],
     "items": [
      {
-      "t": "Debt Recycling Strategy",
-      "box": 0
-     },
-     {
       "t": "Business Expenses Insurance Advice",
       "box": 0
      },
@@ -832,6 +830,10 @@ const QUIZ = [
       "box": 2
      },
      {
+      "t": "Debt Recycling Strategy",
+      "box": 2
+     },
+     {
       "t": "Establish a New Investment Portfolio (from scratch)",
       "box": 3
      },
@@ -840,7 +842,7 @@ const QUIZ = [
       "box": 3
      }
     ],
-    "why": "Only two rows in the entire document sit on s8-1 alone: debt recycling and business expenses insurance. Both are about producing or protecting assessable income, with no tax-affairs analysis attached. The s25-5-only rows are advice about tax treatment where the arrangement itself produces nothing assessable for the client. Both heads apply where the work manages existing income-producing assets and advises on the tax consequences at the same time."
+    "why": "Business expenses insurance is the only row in the whole document that sits on s8-1 alone — cover that protects business revenue, with no tax-affairs analysis attached to it. The s25-5-only rows are advice about tax treatment where the arrangement itself produces nothing assessable for the client. Both heads apply where the work manages or produces assessable income and advises on the tax consequences at the same time, which is why debt recycling belongs there: the borrowings are applied to income-producing investments (s8-1) and the engagement also advises on interest deductibility and borrowing purpose (s25-5)."
    },
    {
     "type": "mc",
@@ -902,16 +904,16 @@ const QUIZ = [
     "type": "mc",
     "tag": "Complex",
     "hard": true,
-    "q": "A debt recycling strategy converts private home loan debt into deductible investment debt. The client also achieves meaningful interest savings on the remaining home loan. Which limb supports the deduction, and what must be apportioned out?",
-    "hint": "Two limbs are engaged: one deductible, one not. Identify what the borrowed funds are applied to, and treat the balance of the engagement separately.",
+    "q": "A debt recycling engagement converts private home loan debt into deductible investment debt. Loan purpose tracing and an interest deductibility analysis are documented. The client also achieves meaningful interest savings on the remaining home loan. Which head or heads support the deduction, and what must be apportioned out?",
+    "hint": "Ask two separate questions. What are the borrowed funds applied to, and did the engagement also advise on how the tax law treats those borrowings? Then deal with the balance of the work.",
     "options": [
-     "s25-5 supports it; the investment borrowing is apportioned out",
-     "s8-1 supports it, because the borrowing acquires income-producing investments; the private home loan and personal cashflow advice is apportioned out as private and domestic",
-     "Both limbs support the whole engagement, and nothing is apportioned out",
+     "s25-5 only; the investment borrowing itself is apportioned out",
+     "s8-1 only, because the borrowing acquires income-producing investments — advice on interest deductibility adds nothing further",
+     "Both heads — the borrowings are applied to producing assessable income (s8-1) and the engagement advises on interest deductibility and borrowing purpose (s25-5); the private home loan and personal cashflow advice is apportioned out",
      "Neither — borrowing to acquire assets is always capital"
     ],
-    "answer": 1,
-    "why": "s8-1, with the private slice carved off. Deductible investment borrowings have a nexus to producing assessable income; the home loan reduction and household cashflow advice is private and domestic. Interest savings on private debt are not assessable income."
+    "answer": 2,
+    "why": "Both heads, with the private slice carved off. The borrowings are applied to investments that produce assessable income, which supplies s8-1. The documented purpose tracing and interest deductibility analysis is advice on how the taxation law applies to those borrowings, which supplies s25-5 in its own right. What cannot come along is the home loan reduction and household cashflow advice — interest savings on private debt are not assessable income, and improving the client’s cash position is not managing their tax affairs."
    },
    {
     "type": "multi",
@@ -1178,7 +1180,7 @@ const QUIZ = [
     },
     "right": {
      "t": "Debt Recycling Strategy",
-     "d": "Converting home loan debt into investment borrowings, with loan purpose tracing documented"
+     "d": "Converting home loan debt into investment borrowings, with loan purpose tracing and interest deductibility analysis documented"
     },
     "options": [
      "Left only",
@@ -1186,8 +1188,8 @@ const QUIZ = [
      "Both",
      "Neither"
     ],
-    "answer": 0,
-    "why": "Gearing only. Both have the s8-1 nexus — borrowings applied to producing assessable income. Gearing picks up s25-5 in addition because the engagement covers the taxation treatment of the borrowings and interest deductibility as a distinct piece of advice. Debt recycling is the document’s clearest standalone s8-1 row."
+    "answer": 2,
+    "why": "Both. The two debt rows are treated alike, and this is the pairing most likely to catch you out. Each has the s8-1 nexus — borrowings applied to producing assessable income. Each also picks up s25-5, because the engagement advises on the taxation treatment of those borrowings: interest deductibility and borrowing purpose. The distinction to resist is the old one, where debt recycling was recorded on s8-1 alone; if the file documents the purpose tracing and the deductibility analysis, that work is a s25-5 claim in its own right on both rows."
    },
    {
     "type": "mc",
@@ -1426,7 +1428,7 @@ const QUIZ = [
   "id": "S4",
   "code": "Section 04",
   "title": "Debt, Cash Flow & Centrelink",
-  "blurb": "Private debt is nil. Investment debt carries the only standalone s8-1 claim in the document. The whole section lives on that line.",
+  "blurb": "Private debt is nil. Investment debt carries both heads. The whole section turns on one question — what were the borrowed funds actually applied to?",
   "questions": [
    {
     "type": "mc",
@@ -1448,38 +1450,37 @@ const QUIZ = [
     "tag": "Sort into boxes",
     "q": "Sort each debt, cash flow and Centrelink strategy into the section it is claimed under.",
     "boxes": [
-     "s8-1 only",
      "s25-5 only",
      "Both s8-1 & s25-5",
      "Not deductible"
     ],
     "items": [
      {
-      "t": "Debt Recycling Strategy",
+      "t": "Bank Account & Offset Structuring",
       "box": 0
      },
      {
-      "t": "Bank Account & Offset Structuring",
+      "t": "Debt Recycling Strategy",
       "box": 1
      },
      {
       "t": "Maximise Centrelink/DVA Entitlements",
-      "box": 2
+      "box": 1
      },
      {
       "t": "Gearing Strategy Advice (Deductible Debt)",
-      "box": 2
+      "box": 1
      },
      {
       "t": "General Budgeting and Cash Flow Management",
-      "box": 3
+      "box": 2
      },
      {
       "t": "Paying down a Non-Deductible Debt (e.g., family home)",
-      "box": 3
+      "box": 2
      }
     ],
-    "why": "This is the only section that uses every treatment. Debt recycling is the document’s clearest standalone s8-1 claim — it converts private debt into borrowings that produce assessable income. Gearing picks up s25-5 as well, because the engagement also covers the tax treatment of the borrowings and interest deductibility. The two nil rows are private and domestic."
+    "why": "Note what is missing from this section: there is no s8-1-only box, because nothing here sits on that head alone. Both debt rows carry both heads. The borrowings are applied to investments that produce assessable income (s8-1), and each engagement also advises on the taxation treatment of those borrowings — interest deductibility and borrowing purpose (s25-5). Centrelink and DVA work joins them where the entitlement strategy includes documented tax-implications advice. Offset structuring is s25-5 alone, because an offset against a home loan reduces non-deductible interest and produces nothing assessable. The two nil rows are private and domestic."
    },
    {
     "type": "mc",
@@ -1500,13 +1501,13 @@ const QUIZ = [
     "type": "audit",
     "tag": "Invoice audit",
     "q": "Click every line on this invoice that has the wrong section against it.",
-    "client": "<b>Invoice draft — Whitmore cashflow &amp; debt engagement.</b> Three of these six lines cite the wrong section.",
+    "client": "<b>Invoice draft — Whitmore cashflow &amp; debt engagement.</b> Four of these six lines cite the wrong section. The file documents loan purpose tracing and interest deductibility analysis for both debt strategies.",
     "rows": [
      {
       "s": "Debt Recycling Strategy",
       "sec": "s8-1",
-      "bad": false,
-      "fix": "Correct — borrowings applied to producing assessable income, with no separate tax-treatment advice."
+      "bad": true,
+      "fix": "Should be both heads — the line has the income-production limb but drops the s25-5 advice on interest deductibility and borrowing purpose."
      },
      {
       "s": "General Budgeting and Cash Flow Management",
@@ -1539,7 +1540,7 @@ const QUIZ = [
       "fix": "Should be both heads — the s8-1 nexus to the funded investments is missing from this line."
      }
     ],
-    "why": "Three errors. Budgeting and home loan reduction are both private and domestic, and neither can carry a section at all. Gearing is understated rather than overstated — the line claims the tax-advice limb but drops the income-production limb, which is the more common drafting error of the two."
+    "why": "Four errors, failing in two different directions. Budgeting and home loan reduction are private and domestic, and neither can carry a section at all — those two over-claim. The two debt lines under-claim, and they drop opposite limbs: debt recycling cites the income-production limb but omits the s25-5 advice on interest deductibility and borrowing purpose, while gearing cites the tax-advice limb but omits the s8-1 nexus to the funded investments. Under-claiming is the easier error to miss on review, because nothing on the invoice looks aggressive."
    },
    {
     "type": "mc",
@@ -1835,7 +1836,7 @@ const QUIZ = [
      },
      {
       "t": "Debt Recycling Strategy",
-      "a": 0
+      "a": 2
      },
      {
       "t": "Estate Planning Advice (Testamentary Trusts)",
@@ -1902,7 +1903,7 @@ const QUIZ = [
       "a": 1
      }
     ],
-    "why": "Two rows only ever sit on s8-1 alone: debt recycling and business expenses insurance. The \"both\" group always involves existing income-producing assets plus tax advice about them. Everything else is either pure tax-affairs work under s25-5, or produces nothing assessable and creates something new — in which case it attracts nothing."
+    "why": "One row only ever sits on s8-1 alone: business expenses insurance. If you reached for s8-1 anywhere else, check whether the engagement also advised on how the tax law applies — because it almost always did, and that makes it both. The \"both\" group is income-producing assets or borrowings, plus tax advice about them. Everything else is either pure tax-affairs work under s25-5, or produces nothing assessable and creates something new, in which case it attracts nothing."
    }
   ]
  },
