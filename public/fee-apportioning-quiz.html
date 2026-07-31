@@ -1,0 +1,2951 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fee Apportioning Pop Quiz — My Wealth Solutions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,600;1,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F4FD;
+  --card:#FFFFFF;
+  --ink:#1C1C36;
+  --ink-2:#43436B;
+  --muted:#7E7EA3;
+  --line:#E8E8F5;
+  --line-2:#D6D6EC;
+  --soft:#F7F7FD;
+  --green:#00A870;
+  --green-bg:#E1F8EF;
+  --red:#F2436D;
+  --red-bg:#FFE9EF;
+  --amber:#FF9E1B;
+  --amber-bg:#FFF4E2;
+  --sec:#7C3AED;
+  --sec-bg:#F1EAFE;
+  --font:'Nunito',ui-rounded,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:var(--font);font-size:16.5px;line-height:1.55;font-weight:400;
+  -webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;
+}
+body::before{
+  content:'';position:fixed;inset:0 0 auto;height:520px;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(760px 340px at 6% -10%, #FFD9EA 0%, rgba(255,217,234,0) 62%),
+    radial-gradient(720px 320px at 94% -14%, #CDE4FF 0%, rgba(205,228,255,0) 62%),
+    radial-gradient(620px 300px at 46% -22%, #FFF2C4 0%, rgba(255,242,196,0) 66%),
+    radial-gradient(560px 280px at 74% 4%, #DCFAEF 0%, rgba(220,250,239,0) 66%);
+}
+
+
+/* ---------- masthead ---------- */
+
+.eyebrow{
+  font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+  color:#7C3AED;margin:0 0 16px;display:flex;gap:9px;align-items:center;flex-wrap:wrap
+}
+.eyebrow span{color:var(--line-2)}
+h1{
+  font-weight:900;font-size:clamp(38px,8vw,72px);
+  line-height:.94;letter-spacing:-.035em;margin:0 0 16px;
+}
+h1 em{
+  font-style:normal;display:block;
+  background:linear-gradient(96deg,#7C3AED 0%,#DB2777 42%,#EA580C 78%,#CA8A04 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.dek{color:var(--ink-2);max-width:58ch;margin:0 0 26px;font-size:17.5px;font-weight:600}
+.dek b{color:var(--ink);font-weight:800}
+
+
+/* framework reference card */
+.framework{
+  background:var(--card);border-radius:20px;overflow:hidden;
+  box-shadow:0 2px 0 var(--line-2),0 16px 40px rgba(28,28,54,.07);
+}
+.fw-label{
+  font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
+  color:#fff;padding:15px 20px;
+  background:linear-gradient(96deg,#7C3AED,#DB2777 55%,#EA580C);
+}
+.fw-list{list-style:none;margin:0;padding:0}
+.fw{
+  display:grid;grid-template-columns:1fr;gap:5px 16px;align-items:center;
+  padding:15px 20px;border-bottom:1px solid var(--line);font-size:15.5px;line-height:1.4;font-weight:600
+}
+@media(min-width:680px){.fw{grid-template-columns:92px 1fr 128px;gap:16px}}
+.fw b{font-weight:900;font-size:15px;letter-spacing:-.01em}
+.fw.yes b{color:#00A870}
+.fw.no b{color:#F2436D}
+.fw span{color:var(--ink-2)}
+.fw em{
+  font-style:normal;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  justify-self:start;padding:6px 12px;border-radius:999px;
+}
+@media(min-width:680px){.fw em{justify-self:end;text-align:center}}
+.fw.yes em{color:#00875C;background:var(--green-bg)}
+.fw.no em{color:#D42A57;background:var(--red-bg)}
+.fw-foot{
+  padding:13px 20px;font-size:12.5px;font-weight:800;letter-spacing:.03em;
+  color:#B26A00;background:var(--amber-bg)
+}
+
+/* ---------- running ledger ---------- */
+.ledger{
+  position:sticky;top:0;z-index:60;background:rgba(255,255,255,.92);
+  backdrop-filter:blur(12px);box-shadow:0 1px 0 var(--line-2),0 6px 22px rgba(28,28,54,.06);
+}
+.ledger-in{max-width:940px;margin:0 auto;padding:11px 20px;display:flex;align-items:center;gap:14px}
+.ledger-label{font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.ledger-bar{flex:1;height:11px;background:var(--line);border-radius:999px;overflow:hidden;min-width:60px}
+.ledger-fill{
+  height:100%;width:0;border-radius:999px;
+  background:linear-gradient(90deg,#7C3AED,#0D9488,#2563EB,#DB2777,#EA580C,#4F46E5,#CA8A04,#0891B2);
+  background-size:800% 100%;transition:width .55s cubic-bezier(.2,.8,.3,1)
+}
+.ledger-num{font-weight:900;font-size:17px;white-space:nowrap}
+.ledger-num small{color:var(--muted);font-weight:700;font-size:12.5px}
+
+/* ---------- sections ---------- */
+.section{
+  margin-top:44px;background:var(--card);border-radius:22px;overflow:hidden;
+  box-shadow:0 2px 0 var(--line-2),0 18px 44px rgba(28,28,54,.07);
+}
+.sec-head{padding:26px 26px 24px;background:var(--sec);color:#fff}
+.sec-code{font-size:12px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.78);margin-bottom:8px}
+.sec-title{font-weight:900;font-size:clamp(24px,4.2vw,34px);letter-spacing:-.028em;margin:0 0 9px;line-height:1.03}
+.sec-blurb{color:rgba(255,255,255,.88);font-size:15.5px;font-weight:600;margin:0;max-width:60ch}
+
+/* ---------- question ---------- */
+.q{padding:26px;border-bottom:1px solid var(--line)}
+.q:last-of-type{border-bottom:none}
+.q-top{display:flex;gap:9px;align-items:center;margin-bottom:13px;flex-wrap:wrap}
+.q-num{font-weight:900;font-size:13.5px;color:var(--sec);flex:none;letter-spacing:.02em}
+.q-tag{
+  font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  padding:5px 11px;border-radius:999px;background:var(--sec-bg);color:var(--sec)
+}
+.q-tag.hard{background:var(--amber-bg);color:#B26A00}
+.q-text{font-size:18px;font-weight:700;margin:0 0 17px;line-height:1.42;letter-spacing:-.011em}
+
+/* options */
+.opts{display:flex;flex-direction:column;gap:9px}
+.opt{
+  display:flex;gap:13px;align-items:flex-start;padding:14px 16px;
+  border:2px solid var(--line);background:var(--soft);border-radius:14px;
+  cursor:pointer;transition:border-color .15s,background .15s,transform .12s;
+}
+.opt:hover{border-color:var(--sec);background:var(--sec-bg);transform:translateY(-1px)}
+.opt:has(input:checked){border-color:var(--sec);background:var(--sec-bg)}
+.opt input{margin:4px 0 0;accent-color:var(--sec);flex:none;width:17px;height:17px}
+.opt span{font-size:16px;font-weight:600;line-height:1.42;color:var(--ink-2)}
+.opt.is-right{border-color:var(--green);background:var(--green-bg)}
+.opt.is-right span{color:#00654A;font-weight:700}
+.opt.is-wrong{border-color:var(--red);background:var(--red-bg)}
+.opt.is-wrong span{color:#B31F45}
+.opt.is-missed{border-color:var(--green);border-style:dashed;background:transparent}
+.opt.is-missed span{color:#00654A;font-weight:700}
+.locked .opt{cursor:default;transform:none}
+.locked .opt:hover{transform:none;border-color:var(--line);background:var(--soft)}
+.locked .opt.is-right,.locked .opt.is-right:hover{border-color:var(--green);background:var(--green-bg)}
+.locked .opt.is-wrong,.locked .opt.is-wrong:hover{border-color:var(--red);background:var(--red-bg)}
+.locked .opt.is-missed,.locked .opt.is-missed:hover{border-color:var(--green);background:transparent}
+
+/* fill in the blank */
+.fill-text{font-size:18px;line-height:2.2;font-weight:700}
+.blank{
+  font-family:var(--font);font-size:16px;font-weight:800;
+  background:var(--soft);border:2px solid var(--line);border-bottom:3px solid var(--sec);
+  color:var(--ink);padding:7px 11px;width:150px;border-radius:12px;text-align:center;
+}
+select.blank{
+  width:auto;min-width:150px;cursor:pointer;padding-right:34px;
+  appearance:none;-webkit-appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--sec) 50%),linear-gradient(135deg,var(--sec) 50%,transparent 50%);
+  background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat;
+}
+select.blank.is-right{background-image:linear-gradient(45deg,transparent 50%,var(--green) 50%),linear-gradient(135deg,var(--green) 50%,transparent 50%)}
+select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var(--red) 50%),linear-gradient(135deg,var(--red) 50%,transparent 50%)}
+.blank:focus{outline:3px solid var(--sec-bg);outline-offset:0;border-color:var(--sec)}
+.blank.is-right{border-color:var(--green);background:var(--green-bg);color:#00654A}
+.blank.is-wrong{border-color:var(--red);background:var(--red-bg);color:#B31F45}
+.blank:disabled{opacity:1}
+
+/* match */
+.pool{
+  display:flex;flex-wrap:wrap;gap:9px;min-height:64px;padding:14px;
+  border:2px dashed var(--line-2);border-radius:16px;background:var(--soft);align-content:flex-start
+}
+.chip{
+  font-size:13.5px;font-weight:800;letter-spacing:-.005em;
+  background:var(--card);border:2px solid var(--line-2);color:var(--ink);
+  padding:10px 13px;border-radius:12px;cursor:grab;user-select:none;line-height:1.28;text-align:center;
+  box-shadow:0 2px 0 var(--line-2);transition:transform .12s,border-color .15s,background .15s,box-shadow .12s;
+}
+.chip:hover{border-color:var(--sec);color:var(--sec);transform:translateY(-2px);box-shadow:0 4px 0 var(--sec-bg)}
+.chip.sel{border-color:var(--sec);background:var(--sec-bg);color:var(--sec);box-shadow:0 0 0 4px var(--sec-bg)}
+.chip.in-slot{width:100%;border:none;background:transparent;border-radius:0;padding:12px 9px;box-shadow:none}
+.chip.in-slot:hover{transform:none;box-shadow:none}
+.chip.dragging{opacity:.35}
+.locked .chip{cursor:default;box-shadow:none}
+.locked .chip:hover{transform:none;border-color:var(--line-2);color:var(--ink);box-shadow:none}
+.locked .slot{cursor:default}
+
+/* hint */
+.hint{margin-top:15px}
+.hint summary{
+  font-size:12.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+  color:#B26A00;cursor:pointer;display:inline-flex;gap:8px;align-items:center;
+  background:var(--amber-bg);padding:9px 15px;border-radius:999px;list-style:none;
+}
+.hint summary::-webkit-details-marker{display:none}
+.hint summary:hover{background:#FFE9C7}
+.hint[open] summary{margin-bottom:11px}
+.hint-body{
+  font-size:15.5px;font-weight:600;color:var(--ink-2);
+  background:var(--amber-bg);border-radius:14px;padding:14px 17px;max-width:64ch
+}
+
+/* verdict */
+.verdict{
+  margin-top:17px;padding:15px 18px;border-radius:14px;font-size:15.5px;line-height:1.5;font-weight:600;
+  background:var(--soft);color:var(--ink-2);display:none;max-width:72ch
+}
+.verdict.show{display:block;animation:rise .32s ease both}
+.verdict.right{background:var(--green-bg)}
+.verdict.wrong{background:var(--red-bg)}
+.verdict b{font-size:12.5px;font-weight:900;letter-spacing:.11em;text-transform:uppercase;display:block;margin-bottom:7px}
+.verdict.right b{color:#00875C}
+.verdict.wrong b{color:#D42A57}
+.verdict .ans{color:var(--ink);font-weight:800}
+
+/* footer of section */
+.sec-foot{padding:24px 26px;display:flex;gap:18px;align-items:center;flex-wrap:wrap;background:var(--sec-bg)}
+.btn{
+  font-family:var(--font);font-size:15px;font-weight:900;letter-spacing:.02em;
+  background:var(--sec);color:#fff;border:none;padding:15px 28px;border-radius:999px;cursor:pointer;
+  box-shadow:0 4px 0 rgba(0,0,0,.16);transition:transform .12s,box-shadow .12s,filter .15s;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 0 rgba(0,0,0,.16);filter:brightness(1.06)}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.16)}
+.btn:disabled{background:var(--card);color:var(--muted);box-shadow:0 3px 0 var(--line-2);cursor:default;transform:none;filter:none}
+.btn.ghost{background:transparent;border:2px solid var(--line-2);color:var(--muted);box-shadow:none}
+
+.result{display:none;align-items:center;gap:16px;flex-wrap:wrap}
+.result.show{display:flex;animation:rise .4s ease both}
+.stamp{
+  font-size:13.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;
+  border:3px solid var(--amber);color:#B26A00;background:var(--card);
+  padding:9px 17px;border-radius:999px;transform:rotate(-2.5deg);white-space:nowrap
+}
+.stamp.perfect{border-color:var(--green);color:#00875C;animation:thump .55s cubic-bezier(.2,1.7,.4,1) both}
+.stamp.poor{border-color:var(--red);color:#D42A57}
+.result-score{font-weight:900;font-size:25px;color:var(--ink)}
+.result-score small{font-size:14px;color:var(--muted);font-weight:700}
+.result-note{font-size:15px;font-weight:600;color:var(--ink-2);max-width:44ch}
+
+/* finale */
+.finale{
+  margin-top:0;border-radius:26px;padding:44px 30px;text-align:center;
+  background:var(--card);box-shadow:0 2px 0 var(--line-2),0 22px 55px rgba(28,28,54,.1);
+  position:relative;overflow:hidden
+}
+.finale::before{
+  content:'';position:absolute;inset:0 0 auto;height:9px;
+  background:linear-gradient(90deg,#7C3AED,#0D9488,#2563EB,#DB2777,#EA580C,#4F46E5,#CA8A04,#0891B2)
+}
+
+.finale .eyebrow{justify-content:center;color:var(--muted)}
+.finale-pct{
+  font-weight:900;font-size:clamp(66px,17vw,126px);line-height:.9;letter-spacing:-.05em;margin:8px 0 6px;
+  background:linear-gradient(96deg,#7C3AED 0%,#DB2777 40%,#EA580C 72%,#CA8A04 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent
+}
+.finale h2{font-weight:900;font-size:clamp(22px,4.4vw,32px);letter-spacing:-.025em;margin:12px 0 12px}
+.finale p{color:var(--ink-2);max-width:54ch;margin:0 auto 22px;font-size:16.5px;font-weight:600}
+.finale-break{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin:26px 0 4px}
+.brk{
+  font-size:13px;font-weight:800;padding:9px 14px;border-radius:999px;
+  background:var(--soft);color:var(--ink-2);border:2px solid var(--line)
+}
+.brk b{font-weight:900}
+.brk.full{background:var(--green-bg);border-color:var(--green);color:#00875C}
+
+/* confetti */
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:200;overflow:hidden}
+.cf{position:absolute;width:10px;height:16px;border-radius:3px;opacity:0;animation:fall 2.4s cubic-bezier(.3,.5,.5,1) forwards}
+@keyframes fall{0%{opacity:1;transform:translateY(-8vh) rotate(0deg)}100%{opacity:0;transform:translateY(105vh) rotate(760deg)}}
+@keyframes rise{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@keyframes thump{0%{transform:rotate(-2.5deg) scale(.55)}60%{transform:rotate(-2.5deg) scale(1.14)}100%{transform:rotate(-2.5deg) scale(1)}}
+
+.footnote{margin-top:44px;color:var(--muted);font-size:13.5px;font-weight:600;line-height:1.7;text-align:center;max-width:70ch;margin-inline:auto}
+.footnote code{font-weight:800;color:var(--ink-2)}
+
+:focus-visible{outline:3px solid var(--sec);outline-offset:3px;border-radius:6px}
+
+
+/* ============ WIZARD SHELL ============ */
+.topbar{position:sticky;top:0;z-index:70;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);box-shadow:0 1px 0 var(--line-2),0 6px 22px rgba(28,28,54,.06)}
+.topbar-in{max-width:1240px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:11px;flex:1;min-width:0}
+.brand-dot{width:13px;height:13px;border-radius:50%;flex:none;background:linear-gradient(135deg,#7C3AED,#DB2777 55%,#EA580C)}
+.brand-txt{font-weight:900;font-size:15.5px;letter-spacing:-.02em;line-height:1.15;display:flex;flex-direction:column;min-width:0}
+.brand-txt b{font-weight:700;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+@media(max-width:620px){.brand-txt b{display:none}.brand-txt{font-size:14px}}
+.topbar-score{font-weight:900;font-size:19px;white-space:nowrap}
+.topbar-score small{font-weight:700;font-size:12.5px;color:var(--muted)}
+.ledger-bar{height:6px;background:var(--line);overflow:hidden}
+.ledger-fill{height:100%;width:0;background:linear-gradient(90deg,#7C3AED,#0D9488,#2563EB,#DB2777,#EA580C,#4F46E5,#CA8A04,#0891B2);transition:width .55s cubic-bezier(.2,.8,.3,1)}
+.navtoggle{display:none;font-family:var(--font);font-weight:800;font-size:13px;background:var(--soft);border:2px solid var(--line-2);color:var(--ink-2);padding:8px 14px;border-radius:999px;cursor:pointer}
+
+.shell{max-width:1240px;margin:0 auto;padding:0 22px 110px;display:grid;grid-template-columns:1fr;gap:30px}
+@media(min-width:1000px){.shell{grid-template-columns:266px 1fr;gap:38px;align-items:start}}
+
+/* sidebar */
+.sidebar{display:none}
+@media(min-width:1000px){.sidebar{display:block;position:sticky;top:86px;padding-top:34px}}
+.sidebar.open{display:block;position:fixed;top:0;left:0;bottom:0;width:290px;z-index:90;background:var(--card);padding:24px 20px;overflow-y:auto;box-shadow:0 0 60px rgba(28,28,54,.28)}
+.side-label{font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-left:4px}
+.navitem{
+  display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+  font-family:var(--font);font-size:14.5px;font-weight:700;color:var(--ink-2);
+  background:transparent;border:none;padding:10px 12px;border-radius:12px;cursor:pointer;margin-bottom:3px;
+  transition:background .15s,color .15s;
+}
+.navitem:hover{background:var(--soft)}
+.navitem .dot{width:26px;height:26px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:900;color:#fff;background:var(--line-2)}
+.navitem .nm{flex:1;line-height:1.25;min-width:0}
+.navitem .tick{font-size:12px;font-weight:900;color:var(--muted);white-space:nowrap}
+.navitem.active{background:var(--nav-bg);color:var(--nav)}
+.navitem.active .dot{background:var(--nav)}
+.navitem.done .dot{background:var(--green)}
+.navitem.done .tick{color:var(--green)}
+.side-foot{margin-top:22px;padding:16px;background:var(--soft);border-radius:16px}
+.side-foot-t{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.mini{list-style:none;margin:0;padding:0;font-size:12.5px;font-weight:600;color:var(--ink-2);line-height:1.4}
+.mini li{margin-bottom:8px;padding-left:2px}
+.mini li b{display:block;font-weight:900;font-size:12px;color:#00A870}
+.mini li.no b{color:#F2436D}
+.navscrim{display:none;position:fixed;inset:0;background:rgba(28,28,54,.42);z-index:85}
+.navscrim.show{display:block}
+@media(max-width:999px){.navtoggle{display:block}}
+
+/* stage + steps */
+.stage{min-width:0;padding-top:22px}
+.step{display:none;animation:rise .35s ease both}
+.step.on{display:block}
+.section{display:none}
+.section.on{display:block;animation:rise .35s ease both}
+
+#step-intro .eyebrow{margin-top:14px}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:26px 0 28px}
+.stat{background:var(--card);border-radius:16px;padding:18px 20px;box-shadow:0 2px 0 var(--line-2),0 12px 30px rgba(28,28,54,.06)}
+.stat b{display:block;font-size:30px;font-weight:900;letter-spacing:-.03em;line-height:1}
+.stat span{font-size:12.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.btn.start{margin-top:4px;background:linear-gradient(96deg,#7C3AED,#DB2777 60%,#EA580C);font-size:16.5px;padding:17px 34px}
+
+/* step footer nav */
+.stepnav{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:20px 26px 26px}
+.btn.nav{background:var(--card);color:var(--sec);box-shadow:0 3px 0 var(--line-2);border:2px solid var(--line-2)}
+.btn.nav:hover{border-color:var(--sec)}
+.btn.nav.primary{background:var(--sec);color:#fff;border-color:transparent;box-shadow:0 4px 0 rgba(0,0,0,.16)}
+.stepnav .spacer{flex:1}
+.stepcount{font-size:13px;font-weight:800;color:var(--muted)}
+.sec-foot{border-bottom:1px solid var(--line)}
+.finale .btn.ghost{margin-top:8px;background:var(--soft);color:var(--ink-2);border:2px solid var(--line-2);box-shadow:none}
+.finale{padding-bottom:38px}
+.footnote{margin-top:38px}
+
+
+.match-col-label{font-size:11.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin-bottom:11px}
+.match-hint{font-size:13px;font-weight:700;color:var(--muted);margin-top:11px}
+
+/* ============ BUCKETS ============ */
+.bucketwrap{margin-top:4px}
+.pool.bpool{margin-bottom:18px;min-height:70px}
+.buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.bucket{
+  border:2px dashed var(--line-2);border-radius:16px;background:var(--card);
+  min-height:150px;display:flex;flex-direction:column;cursor:pointer;overflow:hidden;
+  transition:border-color .15s,background .15s;
+}
+.bucket.armed{border-color:var(--bc);background:var(--bc-bg)}
+.bucket.over{border-color:var(--bc);background:var(--bc-bg)}
+.bucket-head{
+  font-size:12px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;
+  color:#fff;background:var(--bc);padding:10px 12px;text-align:center
+}
+.bucket-body{display:flex;flex-direction:column;gap:7px;padding:11px;flex:1}
+.chip.bchip{width:100%;text-align:left;font-size:13px;padding:10px 12px}
+.chip.bchip.bok{border-color:var(--green);background:var(--green-bg);color:#00654A;box-shadow:none}
+.chip.bchip.bbad{border-color:var(--red);background:var(--red-bg);color:#B31F45;box-shadow:none}
+.bfix{display:block;font-size:11.5px;font-weight:900;color:#00875C;margin-top:5px}
+.locked .bucket{cursor:default}
+
+/* ============ SOA CAPSTONE ============ */
+.soawrap{margin-top:4px}
+.scenario{
+  background:var(--sec-bg);border-radius:16px;padding:16px 19px;margin-bottom:20px;
+  font-size:15.5px;font-weight:600;line-height:1.55;color:var(--ink-2)
+}
+.scenario b{color:var(--ink);font-weight:900}
+.soa-card{
+  border:2px solid var(--line);border-radius:16px;background:var(--soft);
+  padding:16px 18px;margin-bottom:12px
+}
+.soa-head{margin-bottom:7px}
+.soa-n{
+  font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;
+  color:#fff;background:var(--sec);padding:5px 11px;border-radius:999px
+}
+.soa-rec{font-size:16px;font-weight:700;line-height:1.42;margin:0 0 14px;color:var(--ink)}
+.soa-fields{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:860px){.soa-fields{grid-template-columns:1.15fr .7fr 1.15fr}}
+.soa-f{display:flex;flex-direction:column;gap:5px;min-width:0}
+.soa-lab{font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.soa-sel{
+  font-family:var(--font);font-size:14px;font-weight:700;color:var(--ink);
+  background:var(--card);border:2px solid var(--line-2);border-radius:12px;
+  padding:11px 12px;width:100%;cursor:pointer;
+  appearance:none;-webkit-appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 17px) 20px,calc(100% - 12px) 20px;
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:34px;
+}
+.soa-sel:focus{border-color:var(--sec);outline:3px solid var(--sec-bg)}
+.soa-sel.is-right{border-color:var(--green);background-color:var(--green-bg);color:#00654A}
+.soa-sel.is-wrong{border-color:var(--red);background-color:var(--red-bg);color:#B31F45}
+.soa-sel:disabled{opacity:1}
+.soa-fix{font-size:12.5px;font-weight:800;color:#00875C;line-height:1.35;padding:2px 2px 0}
+
+/* ============ ODD ONE OUT ============ */
+.opts.oddgrid{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:700px){.opts.oddgrid{grid-template-columns:1fr 1fr}}
+.opts.oddgrid .opt{align-items:center}
+.opts.oddgrid .opt input{position:absolute;opacity:0;pointer-events:none}
+.opts.oddgrid .opt{position:relative;padding:16px 18px}
+.opts.oddgrid .opt::before{
+  content:'';width:22px;height:22px;border-radius:50%;flex:none;
+  border:2px solid var(--line-2);background:var(--card);
+  transition:border-color .15s,background .15s;
+}
+.opts.oddgrid .opt:has(input:checked)::before{border-color:var(--sec);background:var(--sec);box-shadow:inset 0 0 0 4px var(--card)}
+.opts.oddgrid .opt.is-right::before{border-color:var(--green);background:var(--green);box-shadow:inset 0 0 0 4px var(--card)}
+.opts.oddgrid .opt.is-wrong::before{border-color:var(--red);background:var(--red);box-shadow:inset 0 0 0 4px var(--card)}
+.opts.oddgrid .opt.is-missed::before{border-color:var(--green);background:transparent}
+
+/* ============ HEAD TO HEAD ============ */
+.versus{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:18px;align-items:stretch}
+@media(min-width:760px){.versus{grid-template-columns:1fr 54px 1fr}}
+.vs-card{
+  border:2px solid var(--line-2);border-radius:16px;background:var(--soft);padding:16px 18px;
+  display:flex;flex-direction:column;gap:7px
+}
+.vs-tag{
+  font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;
+  color:#fff;background:var(--vc);padding:4px 10px;border-radius:999px;align-self:flex-start
+}
+.vs-t{font-size:16.5px;font-weight:900;letter-spacing:-.015em;line-height:1.3;color:var(--ink)}
+.vs-d{font-size:14.5px;font-weight:600;line-height:1.45;color:var(--ink-2)}
+.vs-mid{
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)
+}
+.vs-mid span{
+  background:var(--card);border:2px solid var(--line-2);border-radius:999px;
+  padding:9px 12px;line-height:1
+}
+
+/* ============ ESCALATING FACT PATTERN ============ */
+.esc{display:flex;flex-direction:column;gap:0}
+.esc-stage{
+  border-left:3px solid var(--line-2);padding:0 0 22px 20px;position:relative;margin-left:9px
+}
+.esc-stage:last-child{padding-bottom:0;border-left-color:transparent}
+.esc-stage::before{
+  content:attr(data-n);position:absolute;left:-15px;top:0;width:27px;height:27px;border-radius:50%;
+  background:var(--line-2);color:#fff;font-size:12px;font-weight:900;
+  display:flex;align-items:center;justify-content:center
+}
+.esc-stage.live{border-left-color:var(--sec)}
+.esc-stage.live::before{background:var(--sec)}
+.esc-stage.answered::before{background:var(--green);content:'✓'}
+.esc-stage.hidden{display:none}
+.esc-fact{
+  background:var(--sec-bg);border-radius:14px;padding:14px 17px;margin-bottom:13px;
+  font-size:15.5px;font-weight:600;line-height:1.5;color:var(--ink-2)
+}
+.esc-q{font-size:16.5px;font-weight:800;margin:0 0 12px;letter-spacing:-.008em}
+.esc-lock{
+  display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:800;color:var(--muted);
+  background:var(--soft);border:2px dashed var(--line-2);border-radius:14px;padding:14px 17px
+}
+.esc-verdict{
+  margin-top:11px;font-size:14.5px;font-weight:600;line-height:1.5;
+  border-radius:12px;padding:12px 15px;display:none
+}
+.esc-verdict.show{display:block;animation:rise .3s ease both}
+.esc-verdict.ok{background:var(--green-bg);color:#00654A}
+.esc-verdict.no{background:var(--red-bg);color:#B31F45}
+.esc-verdict b{display:block;font-size:11.5px;font-weight:900;letter-spacing:.11em;text-transform:uppercase;margin-bottom:5px}
+
+/* ============ INVOICE AUDIT ============ */
+.audit-note{
+  background:var(--amber-bg);border-radius:14px;padding:13px 16px;margin-bottom:16px;
+  font-size:15px;font-weight:600;color:#8A5200;line-height:1.5
+}
+.audit-note b{color:#7A4800;font-weight:900}
+.inv{border:2px solid var(--line-2);border-radius:16px;overflow:hidden;background:var(--card)}
+.inv-head{
+  display:grid;grid-template-columns:1fr 132px 74px;gap:10px;padding:11px 16px;
+  background:var(--soft);border-bottom:2px solid var(--line-2);
+  font-size:11px;font-weight:900;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)
+}
+.inv-head span:last-child{text-align:right}
+.inv-row{
+  display:grid;grid-template-columns:1fr 132px 74px;gap:10px;align-items:center;
+  padding:14px 16px;border-bottom:1px solid var(--line);cursor:pointer;
+  transition:background .15s;font-size:15px;font-weight:700;text-align:left;width:100%;
+  font-family:var(--font);color:var(--ink);background:var(--card);border-left:none;border-right:none;border-top:none
+}
+.inv-row:last-of-type{border-bottom:none}
+.inv-row:hover{background:var(--sec-bg)}
+.inv-sec{font-size:13px;font-weight:900;color:var(--ink-2)}
+.inv-flag{
+  justify-self:end;font-size:10.5px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;
+  padding:5px 9px;border-radius:999px;background:var(--line);color:var(--muted);white-space:nowrap
+}
+.inv-row.flagged{background:var(--amber-bg)}
+.inv-row.flagged:hover{background:#FFE9C7}
+.inv-row.flagged .inv-flag{background:var(--amber);color:#fff}
+.inv-row.ok-right{background:var(--green-bg)}
+.inv-row.ok-right .inv-flag{background:var(--green);color:#fff}
+.inv-row.ok-wrong{background:var(--red-bg)}
+.inv-row.ok-wrong .inv-flag{background:var(--red);color:#fff}
+.inv-fix{grid-column:1/-1;font-size:13px;font-weight:700;color:var(--ink-2);line-height:1.45;padding-top:3px}
+@media(max-width:620px){
+  .inv-head{display:none}
+  .inv-row{grid-template-columns:1fr auto;gap:6px 10px;padding:13px 14px}
+  .inv-row .inv-name{grid-column:1/-1}
+  .inv-sec{align-self:center}
+  .inv-flag{justify-self:end}
+}
+.audit-count{margin-top:12px;font-size:13.5px;font-weight:800;color:var(--muted)}
+.audit-count b{color:var(--sec);font-weight:900}
+.locked .inv-row{cursor:default}
+.locked .inv-row:hover{background:var(--card)}
+.locked .inv-row.ok-right,.locked .inv-row.ok-right:hover{background:var(--green-bg)}
+.locked .inv-row.ok-wrong,.locked .inv-row.ok-wrong:hover{background:var(--red-bg)}
+
+/* ============ LIGHTNING ROUND ============ */
+.rapid-bar{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px;
+  background:var(--soft);border-radius:14px;padding:13px 17px
+}
+.rapid-bar .rb-lab{font-size:11.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.rapid-bar .rb-n{font-size:19px;font-weight:900;color:var(--sec)}
+.rapid-bar .rb-n small{font-size:12.5px;font-weight:700;color:var(--muted)}
+.rapid-bar .rb-bar{flex:1;min-width:80px;height:9px;background:var(--line);border-radius:999px;overflow:hidden}
+.rapid-bar .rb-fill{height:100%;width:0;background:var(--sec);border-radius:999px;transition:width .3s ease}
+.rapid-bar .rb-key{font-size:12px;font-weight:700;color:var(--muted)}
+.rapid-bar .rb-key kbd{
+  font-family:var(--font);font-size:11px;font-weight:900;background:var(--card);
+  border:1.5px solid var(--line-2);border-bottom-width:2.5px;border-radius:6px;padding:2px 6px;color:var(--ink-2)
+}
+.rcards{display:flex;flex-direction:column;gap:10px}
+.rcard{
+  border:2px solid var(--line);border-radius:16px;background:var(--soft);padding:13px 15px;
+  display:grid;grid-template-columns:1fr;gap:11px;align-items:center;transition:border-color .15s,background .15s
+}
+@media(min-width:820px){.rcard{grid-template-columns:1fr 336px}}
+.rcard.done{border-color:var(--line-2);background:var(--card)}
+.rcard.rok{border-color:var(--green);background:var(--green-bg)}
+.rcard.rno{border-color:var(--red);background:var(--red-bg)}
+.rcard-t{font-size:15.5px;font-weight:800;line-height:1.32;letter-spacing:-.01em}
+.rcard-n{font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:3px}
+.rbtns{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.rbtn{
+  font-family:var(--font);font-size:12.5px;font-weight:900;letter-spacing:-.01em;line-height:1.15;
+  background:var(--card);border:2px solid var(--line-2);color:var(--ink-2);
+  padding:11px 4px;border-radius:11px;cursor:pointer;transition:all .12s;
+}
+.rbtn:hover{border-color:var(--sec);color:var(--sec);transform:translateY(-1px)}
+.rbtn.sel{background:var(--sec);border-color:var(--sec);color:#fff}
+.rbtn.good{background:var(--green);border-color:var(--green);color:#fff}
+.rbtn.bad{background:var(--red);border-color:var(--red);color:#fff}
+.rbtn.want{border-color:var(--green);border-style:dashed;color:#00875C;background:transparent}
+.locked .rbtn{cursor:default;transform:none}
+.locked .rbtn:hover{transform:none}
+.locked .rbtn:not(.sel):not(.good):not(.bad):not(.want){border-color:var(--line-2);color:var(--ink-2)}
+
+/* ============ FEE CAPSTONE (upfront / ongoing) ============ */
+.feewrap{margin-top:4px}
+.fee-brief{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:20px}
+@media(min-width:820px){.fee-brief{grid-template-columns:1fr 1fr}}
+.brief{border:2px solid var(--line-2);border-radius:16px;background:var(--card);overflow:hidden}
+.brief-h{
+  padding:12px 16px;color:#fff;background:var(--bh);
+  font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase
+}
+.brief-h small{display:block;font-size:11px;letter-spacing:.04em;text-transform:none;font-weight:700;opacity:.85;margin-top:2px}
+.brief ul{list-style:none;margin:0;padding:13px 16px}
+.brief li{
+  font-size:14.5px;font-weight:600;line-height:1.45;color:var(--ink-2);
+  padding:6px 0 6px 17px;position:relative
+}
+.brief li::before{content:'';position:absolute;left:0;top:14px;width:7px;height:7px;border-radius:50%;background:var(--bh)}
+.brief li b{color:var(--ink);font-weight:800}
+.brief .brief-none{color:#B31F45;font-weight:800}
+.brief .brief-none::before{background:var(--red)}
+
+.feeblock{margin-bottom:26px}
+.feeblock:last-child{margin-bottom:0}
+.fb-head{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;
+  padding:12px 16px;border-radius:14px;background:var(--fb-bg);border:2px solid var(--fb)
+}
+.fb-title{font-size:16.5px;font-weight:900;letter-spacing:-.02em;color:var(--fb)}
+.fb-sub{font-size:13px;font-weight:700;color:var(--ink-2);flex:1;min-width:120px}
+.fb-count{font-size:12.5px;font-weight:900;color:var(--fb);white-space:nowrap}
+.fb-instr{font-size:13.5px;font-weight:700;color:var(--muted);margin:11px 2px 11px}
+.fee-list{display:flex;flex-direction:column;gap:8px}
+.frow{
+  border:2px solid var(--line);border-radius:14px;background:var(--soft);
+  transition:border-color .15s,background .15s;overflow:hidden
+}
+.frow.on{border-color:var(--fb);background:var(--card)}
+.fr-top{
+  display:flex;gap:12px;align-items:center;padding:13px 15px;cursor:pointer;
+  font-family:var(--font);width:100%;text-align:left;background:none;border:none;color:var(--ink)
+}
+.fr-box{
+  width:22px;height:22px;flex:none;border-radius:7px;border:2px solid var(--line-2);background:var(--card);
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:900;
+  transition:all .15s
+}
+.frow.on .fr-box{background:var(--fb);border-color:var(--fb)}
+.fr-name{flex:1;font-size:15px;font-weight:700;line-height:1.34;min-width:0}
+.fr-hint{font-size:11px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+@media(max-width:640px){
+  .fr-hint{display:none}                    /* the checkbox already says it; the name needs the width */
+  .fb-head{gap:4px 10px}
+  .fb-sub{flex-basis:100%}
+}
+.fr-rule{display:none;padding:0 15px 13px 49px}
+.frow.on .fr-rule,.frow.reveal .fr-rule{display:block;animation:rise .25s ease both}
+.frow.reveal .fr-box{border-style:dashed;border-color:var(--green);color:transparent}
+.fr-rule-lab{font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.fr-btns{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;max-width:460px}
+@media(min-width:600px){.fr-btns{grid-template-columns:repeat(4,1fr)}}
+.fr-b{
+  font-family:var(--font);font-size:12.5px;font-weight:900;line-height:1.15;
+  background:var(--soft);border:2px solid var(--line-2);color:var(--ink-2);
+  padding:10px 4px;border-radius:10px;cursor:pointer;transition:all .12s
+}
+.fr-b:hover{border-color:var(--fb);color:var(--fb)}
+.fr-b.sel{background:var(--fb);border-color:var(--fb);color:#fff}
+.fr-b.good{background:var(--green);border-color:var(--green);color:#fff}
+.fr-b.bad{background:var(--red);border-color:var(--red);color:#fff}
+.fr-b.want{border-color:var(--green);border-style:dashed;color:#00875C;background:transparent}
+.frow.gok{border-color:var(--green);background:var(--green-bg)}
+.frow.gno{border-color:var(--red);background:var(--red-bg)}
+.frow.gpart{border-color:var(--amber);background:var(--amber-bg)}
+.fr-fix{font-size:12.5px;font-weight:800;line-height:1.4;padding:0 15px 12px 49px;color:#00654A}
+.frow.gno .fr-fix{color:#B31F45}
+.frow.gpart .fr-fix{color:#8A5200}
+.locked .fr-top{cursor:default}
+.locked .fr-b{cursor:default}
+.locked .frow:not(.on):not(.reveal) .fr-rule{display:none}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <span class="brand-txt">Fee Apportioning &amp; Deductibility<b>My Wealth Solutions &middot; Associate Pop Quiz</b></span>
+    </div>
+    <div class="topbar-score">
+      <span id="ledgerScore">0</span><small>/<span id="ledgerMax">0</span> pts</small>
+    </div>
+    <button class="navtoggle" id="navToggle" aria-label="Show sections">Sections</button>
+  </div>
+  <div class="ledger-bar"><div class="ledger-fill" id="ledgerFill"></div></div>
+</div>
+
+<div class="shell">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="side-label">Sections</div>
+    <nav id="sideNav"></nav>
+    <div class="side-foot">
+      <div class="side-foot-t">Four-question framework</div>
+      <ul class="mini">
+        <li><b>s8-1</b> Does this help the client earn or maintain assessable income?</li>
+        <li><b>s25-5</b> Is this about their tax obligations or tax consequences?</li>
+        <li class="no"><b>Capital</b> Is this buying or setting up a new long-term asset?</li>
+        <li class="no"><b>Private</b> Is this mainly about personal finances or lifestyle?</li>
+      </ul>
+    </div>
+  </aside>
+
+  <div class="stage">
+
+    <section class="step" id="step-intro">
+      <div class="eyebrow">Monday associate meeting</div>
+      <h1>Fee Apportioning<em>&amp; Deductibility</em></h1>
+      <p class="dek">Every strategy row and the rules engine behind the tax invoice generator, one section at a time. No percentages &mdash; <b>only the strategy and the tax ruling that applies to it</b>. The final section builds both invoices, upfront and ongoing, from a real SOA.</p>
+
+      <div class="framework">
+        <div class="fw-label">Before any percentage &mdash; why was the advice obtained?</div>
+        <ul class="fw-list">
+          <li class="fw yes"><b>s8-1</b><span>Does this advice help the client earn or maintain assessable income?</span><em>Deductible</em></li>
+          <li class="fw yes"><b>s25-5</b><span>Is this advice about the client&rsquo;s tax obligations or tax consequences?</span><em>Deductible</em></li>
+          <li class="fw no"><b>Capital</b><span>Is the advice helping the client buy or set up a new long-term asset or investment?</span><em>Not deductible</em></li>
+          <li class="fw no"><b>Private</b><span>Is the advice mainly about the client&rsquo;s personal finances or lifestyle?</span><em>Not deductible</em></li>
+        </ul>
+        <div class="fw-foot">One engagement often triggers more than one &mdash; which is exactly what apportioning the fee is for.</div>
+      </div>
+
+      <div class="statgrid" id="statgrid"></div>
+      <button class="btn start" id="startBtn">Start the quiz</button>
+    </section>
+
+    <main id="quiz"></main>
+
+    <section class="step finale" id="finale">
+      <div class="eyebrow">Final assessment</div>
+      <div class="finale-pct" id="finalePct">0%</div>
+      <h2 id="finaleTitle"></h2>
+      <p id="finaleNote"></p>
+      <div class="finale-break" id="finaleBreak"></div>
+      <button class="btn ghost" id="restartBtn">Review from the top</button>
+    </section>
+
+    <p class="footnote">
+      Source: <code>MWS_Fee_Apportioning_Rules.docx</code> &mdash; Tool Specification, aligned to licensee examples 5.3.4 / 5.3.5, the strategy-basis exemplar invoices, TD 2024/7 and s8-1 &amp; s25-5 ITAA 1997. Four-question framework per Ikesha&rsquo;s note in <code>#associate-chat</code>.
+    </p>
+
+  </div>
+</div>
+
+<div class="navscrim" id="navScrim"></div>
+
+<div class="confetti" id="confetti"></div>
+
+<script>
+/* ============================================================
+   QUESTION BANK
+   ============================================================ */
+const QUIZ = [
+ {
+  "id": "S0",
+  "code": "Section 00",
+  "title": "Why Was The Advice Obtained?",
+  "blurb": "Four categories, four questions. Establish which section applies and why, and the rest of the quiz follows from it.",
+  "questions": [
+   {
+    "type": "mc",
+    "tag": "Standard",
+    "q": "Under s25-5, what exactly is being deducted?",
+    "options": [
+     "The cost of the underlying investment or strategy",
+     "The tax advice itself — not the underlying investment or strategy",
+     "The tax the client ultimately pays",
+     "The adviser’s time, regardless of subject matter"
+    ],
+    "answer": 1,
+    "why": "The tax advice itself. This is what makes apportioning possible at all: you can recommend a wholly non-deductible arrangement and still claim the part of the fee that was advice on its tax consequences. Super-owned life and TPD cover is the clearest case — the premiums are never deductible to the member, but the advice on the tax treatment of the benefits is."
+   },
+   {
+    "type": "dropdown",
+    "tag": "Standard",
+    "q": "The framework in one line: s8-1 asks whether the advice helps the client earn or maintain ___ income, while s25-5 asks whether it concerns their tax obligations or tax ___.",
+    "selects": [
+     {
+      "options": [
+       "assessable",
+       "taxable",
+       "net",
+       "passive"
+      ],
+      "answer": 0
+     },
+     {
+      "options": [
+       "minimisation",
+       "consequences",
+       "returns",
+       "residency"
+      ],
+      "answer": 1
+     }
+    ],
+    "why": "Assessable income, and tax consequences. s8-1 requires a direct connection to an existing income-producing activity, which is why anything preparatory or acquisitive falls outside it. s25-5 covers advice on how tax law applies to the client’s circumstances."
+   },
+   {
+    "type": "bucket",
+    "tag": "Sort into boxes",
+    "q": "Drag each strategy into the box showing the section of the Income Tax Assessment Act 1997 it is claimed under.",
+    "boxes": [
+     "s8-1 only",
+     "s25-5 only",
+     "Both s8-1 & s25-5",
+     "Not deductible"
+    ],
+    "items": [
+     {
+      "t": "Debt Recycling Strategy",
+      "box": 0
+     },
+     {
+      "t": "Business Expenses Insurance Advice",
+      "box": 0
+     },
+     {
+      "t": "Salary Sacrifice to Superannuation",
+      "box": 1
+     },
+     {
+      "t": "Investment Bond Advice",
+      "box": 1
+     },
+     {
+      "t": "Ongoing Management of an Existing Investment Portfolio",
+      "box": 2
+     },
+     {
+      "t": "Income Protection Insurance Application / Review",
+      "box": 2
+     },
+     {
+      "t": "Establish a New Investment Portfolio (from scratch)",
+      "box": 3
+     },
+     {
+      "t": "General Budgeting and Cash Flow Management",
+      "box": 3
+     }
+    ],
+    "why": "Only two rows in the entire document sit on s8-1 alone: debt recycling and business expenses insurance. Both are about producing or protecting assessable income, with no tax-affairs analysis attached. The s25-5-only rows are advice about tax treatment where the arrangement itself produces nothing assessable for the client. Both heads apply where the work manages existing income-producing assets and advises on the tax consequences at the same time."
+   },
+   {
+    "type": "mc",
+    "tag": "Complex",
+    "hard": true,
+    "q": "An adviser reviews a client’s existing $2m share portfolio, recommends selling two holdings, and reinvests the proceeds into three new managed funds inside the same portfolio. No new capital is introduced. How is the advice treated?",
+    "hint": "The absence of new capital is not the test. Consider whether each element maintains an existing holding or brings a new one into existence.",
+    "options": [
+     "Deductible under both heads throughout — no new capital was introduced, so the whole engagement maintains existing income-producing assets",
+     "Not deductible — three new fund holdings are acquisitions, and acquisition advice is capital in nature",
+     "Deductible under both heads for the review and the disposal advice, with the selection of the three new funds apportioned out as capital",
+     "Deductible under s25-5 alone — the engagement is advice on the tax consequences of disposals"
+    ],
+    "answer": 2,
+    "why": "Apportion it. Reinvesting proceeds still brings new holdings into existence, so the fund selection is capital regardless of where the money came from. The review of existing holdings supplies the s8-1 limb and the CGT advice on the disposals supplies s25-5. Option A is the common error — treating “no new money” as though it settled the question."
+   },
+   {
+    "type": "tf",
+    "tag": "Trap",
+    "q": "Advice that reduces a client’s non-deductible interest cost is deductible under s8-1, because reducing an expense has the same effect on their position as increasing assessable income.",
+    "answer": false,
+    "why": "False, and this is the reasoning behind the corrected offset wording. Reducing non-deductible interest improves the client’s cash position but does not produce assessable income and does not constitute managing their tax affairs. The two are not equivalent for s8-1 purposes."
+   },
+   {
+    "type": "odd",
+    "tag": "Odd one out",
+    "q": "Three of these are capital in nature. Which one is not?",
+    "options": [
+     "Establishing a new investment portfolio from scratch",
+     "Setting up an SMSF deed and trustee structure",
+     "The bare trust and asset acquisition under an SMSF limited recourse borrowing arrangement",
+     "Rebalancing an existing portfolio back to its target asset allocation"
+    ],
+    "answer": 3,
+    "why": "Rebalancing is the odd one out. It maintains a portfolio that already exists, so it keeps its deductible treatment under both heads. The other three all bring something into existence, which is the definition of capital in this context."
+   },
+   {
+    "type": "versus",
+    "tag": "Head to head",
+    "q": "Which of these engages s8-1?",
+    "left": {
+     "t": "Reviewing an existing $1.2m share portfolio",
+     "d": "Advising on the tax implications of its distributions and two disposals"
+    },
+    "right": {
+     "t": "Selecting and acquiring $1.2m of new shares",
+     "d": "Building a portfolio for a client who currently holds none"
+    },
+    "options": [
+     "Left only",
+     "Right only",
+     "Both",
+     "Neither"
+    ],
+    "answer": 0,
+    "why": "Left only. s8-1 requires a direct connection to an existing income-producing activity. The left engagement manages assets already producing assessable income. The right one is acquisitive and preparatory — capital in nature — and the fact that the shares will produce income later does not create the connection now."
+   },
+   {
+    "type": "mc",
+    "tag": "Complex",
+    "hard": true,
+    "q": "A debt recycling strategy converts private home loan debt into deductible investment debt. The client also achieves meaningful interest savings on the remaining home loan. Which limb supports the deduction, and what must be apportioned out?",
+    "hint": "Two limbs are engaged: one deductible, one not. Identify what the borrowed funds are applied to, and treat the balance of the engagement separately.",
+    "options": [
+     "s25-5 supports it; the investment borrowing is apportioned out",
+     "s8-1 supports it, because the borrowing acquires income-producing investments; the private home loan and personal cashflow advice is apportioned out as private and domestic",
+     "Both limbs support the whole engagement, and nothing is apportioned out",
+     "Neither — borrowing to acquire assets is always capital"
+    ],
+    "answer": 1,
+    "why": "s8-1, with the private slice carved off. Deductible investment borrowings have a nexus to producing assessable income; the home loan reduction and household cashflow advice is private and domestic. Interest savings on private debt are not assessable income."
+   },
+   {
+    "type": "multi",
+    "tag": "Select all",
+    "q": "A strategy is claimed under s25-5. Which of these actually support that position on file?",
+    "options": [
+     "A documented allocation of the advice work between deductible and private components",
+     "A file note identifying the tax-driven component against the private or capital component",
+     "The client’s verbal confirmation that the advice was about tax",
+     "Calculations and modelling output showing the tax analysis actually performed",
+     "The premium split used as the allocation basis, with no explanation of why",
+     "Evidence the assets are income-producing — income, dividend or interest records"
+    ],
+    "answer": [
+     0,
+     1,
+     3,
+     5
+    ],
+    "why": "The two rejects are the ones the document warns about by name. A verbal confirmation evidences nothing, and a premium split may not be used as the allocation basis unless the file explains why it is a reasonable proxy for the advice work. Everything else establishes either that the work was tax-affairs work, or that the assets it related to were genuinely income-producing."
+   }
+  ]
+ },
+ {
+  "id": "S1",
+  "code": "Section 01",
+  "title": "Super & Retirement",
+  "blurb": "Twelve rows and only two possible answers. Knowing which two rows fall outside s25-5 is most of this section.",
+  "questions": [
+   {
+    "type": "mc",
+    "tag": "Standard",
+    "q": "Salary sacrifice advice is claimed under s25-5 alone. Given that it reduces the client’s assessable income, why is s8-1 not also cited?",
+    "options": [
+     "Because s8-1 and s25-5 can never appear on the same strategy line",
+     "Because s8-1 requires a nexus to earning or maintaining assessable income, and reducing assessable income is not the same as producing it",
+     "Because superannuation contributions are excluded from s8-1 by statute",
+     "Because the deduction is claimed by the employer rather than the client"
+    ],
+    "answer": 1,
+    "why": "s8-1 requires a connection to producing assessable income; salary sacrifice reduces it. The deductibility comes entirely from the s25-5 limb — advice on the tax treatment of sacrificing salary into super, the concessional cap and the PAYG consequences. Several rows in the document do cite both heads, so option A is wrong on its face."
+   },
+   {
+    "type": "dropdown",
+    "tag": "Standard",
+    "q": "Three contribution strategies are claimed in full under s25-5: Salary Sacrifice to Superannuation, Personal Deductible ___ Contributions, and ___-Concessional (After-Tax) Contributions.",
+    "selects": [
+     {
+      "options": [
+       "Downsizer",
+       "Concessional",
+       "Spouse",
+       "Non-Concessional"
+      ],
+      "answer": 1
+     },
+     {
+      "options": [
+       "Non",
+       "Re",
+       "Co",
+       "Pre"
+      ],
+      "answer": 0
+     }
+    ],
+    "why": "Concessional and Non-Concessional. All three concern applying taxation laws — contribution caps, deductibility, Division 293 and bring-forward mechanics — which is squarely s25-5 territory."
+   },
+   {
+    "type": "bucket",
+    "tag": "Sort into boxes",
+    "q": "Sort each Super & Retirement strategy into the correct treatment. Only two apply across this whole section.",
+    "boxes": [
+     "s25-5",
+     "Not deductible"
+    ],
+    "items": [
+     {
+      "t": "Salary Sacrifice to Superannuation",
+      "box": 0
+     },
+     {
+      "t": "Commencement of an Account Based Pension",
+      "box": 0
+     },
+     {
+      "t": "Ongoing Superannuation & Pension Management",
+      "box": 0
+     },
+     {
+      "t": "Spouse Contributions / Contribution Splitting",
+      "box": 0
+     },
+     {
+      "t": "Downsizer Contributions",
+      "box": 0
+     },
+     {
+      "t": "Consolidate Multiple Superannuation Accounts",
+      "box": 0
+     },
+     {
+      "t": "Rollover Existing Super to New Fund/Platform",
+      "box": 1
+     },
+     {
+      "t": "Review / Optimise Investment Strategy within Super",
+      "box": 1
+     }
+    ],
+    "why": "Nothing in Super & Retirement touches s8-1 — super assets produce income for the fund, not for the member. That leaves s25-5 or nothing. The two nil rows share a reason: a like-for-like fund or platform move is product replacement, and reviewing the investment strategy inside super is neither managing the member’s tax affairs nor producing their assessable income."
+   },
+   {
+    "type": "mc",
+    "tag": "Complex",
+    "hard": true,
+    "q": "A re-contribution strategy is recommended. The file shows the dominant purpose is intergenerational wealth transfer to non-dependant adult children. Which section applies, if any?",
+    "hint": "The apportionment turns on dominant purpose. Estate, succession and capital restructuring components sit outside any deductible claim entirely.",
+    "options": [
+     "s25-5 across the whole engagement, since the strategy turns on taxable and tax-free component mechanics",
+     "s25-5, but only for identifiable tax-affairs analysis such as component modelling and death benefit tax calculations — the estate and succession work is not deductible",
+     "Not deductible at all — wealth transfer is private",
+     "s8-1, since the strategy preserves the value of the estate"
+    ],
+    "answer": 1,
+    "why": "s25-5, but only for the identifiable tax-affairs work. Where the dominant purpose is intergenerational transfer, the deductible element is narrow and must be separately evidenced — component modelling, death benefit tax comparison, contribution cap analysis. The succession and capital restructuring elements attract nothing."
+   },
+   {
+    "type": "escalate",
+    "tag": "Fact pattern",
+    "hard": true,
+    "q": "A client’s circumstances change across the year. Answer each stage before the next fact is revealed.",
+    "hint": "Each new fact adds work rather than replacing it. Ask what section applies to the additional work in isolation, not to the engagement as a whole.",
+    "stages": [
+     {
+      "fact": "Dave is 58 and entirely in accumulation phase. The annual review covers the investment options held inside his super fund.",
+      "q": "Which section applies to that work?",
+      "options": [
+       "s25-5",
+       "s8-1",
+       "Both s8-1 and s25-5",
+       "None — not deductible"
+      ],
+      "answer": 3,
+      "why": "Nothing. Reviewing investment options inside super is neither managing the member’s tax affairs nor producing their assessable income. The fund produces the income, not Dave."
+     },
+     {
+      "fact": "Mid-year Dave commences an account based pension. The review now also covers drawdown levels and the tax components of the pension payments.",
+      "q": "Which section applies to that additional work?",
+      "options": [
+       "s25-5",
+       "s8-1",
+       "Both s8-1 and s25-5",
+       "None — not deductible"
+      ],
+      "answer": 0,
+      "why": "s25-5. Advising on drawdown and the tax implications of the pension income is managing the member’s tax affairs. It goes on the Ongoing Superannuation & Pension Management row. Still no s8-1 — super assets never produce the member’s assessable income."
+     },
+     {
+      "fact": "The same review also recommends switching the underlying investment options held within the new pension.",
+      "q": "Which section applies to the switching work?",
+      "options": [
+       "s25-5, because the account is now in pension phase",
+       "s8-1, because pension assets are exempt",
+       "Both heads",
+       "None — not deductible"
+      ],
+      "answer": 3,
+      "why": "Still nothing. Pension phase does not convert an investment option review into tax-affairs work. This is the trap: the same account can carry deductible drawdown advice and non-deductible investment selection advice at the same time, and they go on different rows."
+     }
+    ]
+   },
+   {
+    "type": "tf",
+    "tag": "Standard",
+    "q": "Commencement of a Transition to Retirement pension is claimed under the same section as an account based pension — s25-5 — because it involves the same pension tax mechanics.",
+    "answer": true,
+    "why": "True. A TTR engages pension tax treatment, PAYG reduction and contribution recycling — the same mechanics that make ABP commencement deductible under s25-5. Reduce it where the advice is mainly a work-transition or lifestyle recommendation."
+   },
+   {
+    "type": "odd",
+    "tag": "Odd one out",
+    "q": "Three of these attract a s25-5 claim. Which one attracts nothing at all?",
+    "options": [
+     "Spouse Contributions / Contribution Splitting",
+     "Downsizer Contributions",
+     "Rollover Existing Super to New Fund/Platform",
+     "Consolidate Multiple Superannuation Accounts"
+    ],
+    "answer": 2,
+    "why": "The rollover. A like-for-like fund or platform move is product replacement and implementation — capital in character. The other three each contain a narrow band of genuine tax-affairs analysis: spouse offset and cap mechanics, downsizer eligibility and cap interaction, and the tax consequences of consolidating."
+   }
+  ]
+ },
+ {
+  "id": "S2",
+  "code": "Section 02",
+  "title": "Investments",
+  "blurb": "The most important distinction in the document: managing what already exists, versus building something new.",
+  "questions": [
+   {
+    "type": "mc",
+    "tag": "Complex",
+    "hard": true,
+    "q": "An engagement establishes a new $800,000 portfolio from scratch. The file also contains separately scoped and separately documented analysis of the CGT consequences of the ownership structure chosen. How is the fee treated?",
+    "hint": "The default for this row is not the end of the analysis. Identify what the guidance permits to be separated out, and the condition attached to doing so.",
+    "options": [
+     "Not deductible across the whole engagement — establishment is capital, and that governs the entire fee",
+     "Deductible under both heads — the portfolio will produce assessable income once established",
+     "The establishment component is not deductible, with the separately documented CGT and structure analysis identified as a s25-5 component",
+     "Deductible under s25-5 in full — the presence of CGT analysis makes the engagement tax-affairs work"
+    ],
+    "answer": 2,
+    "why": "Split it. Establishment and acquisition advice is capital and preparatory, so it defaults to nil. The guidance permits a tax-affairs component to be separately identified for distinct work such as CGT or structure analysis, but only where that work is separately costed or documented. Without the documentation, option A would be correct."
+   },
+   {
+    "type": "bucket",
+    "tag": "Sort into boxes",
+    "q": "Sort each investment strategy into the section of the Income Tax Assessment Act 1997 it is claimed under.",
+    "boxes": [
+     "s25-5 only",
+     "Both s8-1 & s25-5",
+     "Not deductible"
+    ],
+    "items": [
+     {
+      "t": "Tax-Loss Harvesting Strategy",
+      "box": 0
+     },
+     {
+      "t": "Investment Bond Advice",
+      "box": 0
+     },
+     {
+      "t": "Ongoing Management of an Existing Investment Portfolio",
+      "box": 1
+     },
+     {
+      "t": "Gearing Strategy Advice (Deductible Debt)",
+      "box": 1
+     },
+     {
+      "t": "Investment Structuring Advice (Trust, Company)",
+      "box": 1
+     },
+     {
+      "t": "ETF Investment Advice (existing portfolio)",
+      "box": 1
+     },
+     {
+      "t": "Establish a New Investment Portfolio (from scratch)",
+      "box": 2
+     }
+    ],
+    "why": "Tax-loss harvesting and investment bonds are pure tax-affairs work — the client is managing a CGT position or a tax structure, and the advice itself produces nothing assessable. Everything in the middle box involves existing income-producing assets plus advice on the tax consequences, so both heads apply. Nothing in Investments sits on s8-1 alone."
+   },
+   {
+    "type": "versus",
+    "tag": "Head to head",
+    "q": "Which of these is claimed under s25-5 as well as s8-1?",
+    "left": {
+     "t": "Gearing Strategy Advice",
+     "d": "Structuring an investment property loan, including analysis of interest deductibility and the tax treatment of the borrowings"
+    },
+    "right": {
+     "t": "Debt Recycling Strategy",
+     "d": "Converting home loan debt into investment borrowings, with loan purpose tracing documented"
+    },
+    "options": [
+     "Left only",
+     "Right only",
+     "Both",
+     "Neither"
+    ],
+    "answer": 0,
+    "why": "Gearing only. Both have the s8-1 nexus — borrowings applied to producing assessable income. Gearing picks up s25-5 in addition because the engagement covers the taxation treatment of the borrowings and interest deductibility as a distinct piece of advice. Debt recycling is the document’s clearest standalone s8-1 row."
+   },
+   {
+    "type": "mc",
+    "tag": "Standard",
+    "q": "Tax-Loss Harvesting Strategy — which section or sections?",
+    "options": [
+     "s8-1 only",
+     "s25-5 only",
+     "Both s8-1 and s25-5",
+     "Not deductible"
+    ],
+    "answer": 1,
+    "why": "s25-5 alone. The work manages CGT consequences and the client’s tax position; there is no s8-1 income-production limb. Do not use this row where no actual CGT or tax-loss analysis was performed."
+   },
+   {
+    "type": "tf",
+    "tag": "Standard",
+    "q": "Managed Fund / LIC Investment Review loses its deductibility to the extent the advice replaces products or deploys new capital.",
+    "answer": true,
+    "why": "True. The deductible treatment only holds while the work manages existing income-producing holdings — distributions, suitability, ongoing role in the portfolio. Product replacement and new capital are capital in nature and must be apportioned out."
+   },
+   {
+    "type": "mc",
+    "tag": "Wording",
+    "q": "Which invoice wording pre-fills for Investment Bond Advice?",
+    "options": [
+     "“Advice on managing Capital Gains Tax (CGT) implications of investments (s25-5)”",
+     "“Advice on structuring assets to reduce assessable income via an internally taxed investment bond (s25-5)”",
+     "“Advice on tax-effective investment structuring (e.g., ownership in trust, company, joint names) (s25-5)”",
+     "“Advice on the operation of a Commonwealth law relating to taxation (s25-5)”"
+    ],
+    "answer": 1,
+    "why": "The bond wording turns on the internally taxed structure — the client’s marginal rate against the tax-paid rate inside the bond. Retain the taxable-income comparison and the 10-year and contribution rule notes on file. Option A is tax-loss harvesting; option C is investment structuring."
+   },
+   {
+    "type": "escalate",
+    "tag": "Fact pattern",
+    "hard": true,
+    "q": "A single portfolio engagement grows as facts are added. Answer each stage before the next fact is revealed.",
+    "hint": "Treat each new element as its own line. The correct answer for one component does not overwrite the answer for the others.",
+    "stages": [
+     {
+      "fact": "The review recommends selling three existing holdings and rebalancing the remainder of an established income-producing portfolio.",
+      "q": "Which section applies to that work?",
+      "options": [
+       "s25-5 only",
+       "s8-1 only",
+       "Both s8-1 and s25-5",
+       "None — not deductible"
+      ],
+      "answer": 2,
+      "why": "Both heads. Maintaining existing income-producing investments supplies s8-1, and advising on the tax implications of the income and disposals supplies s25-5."
+     },
+     {
+      "fact": "The same engagement also deploys $400,000 of fresh capital into a first-time direct share portfolio.",
+      "q": "How is that additional component treated?",
+      "options": [
+       "Both heads, since it sits inside the same review",
+       "s25-5 only",
+       "Not deductible, on the Establish a New Investment Portfolio row",
+       "s8-1 only, since it will produce income"
+      ],
+      "answer": 2,
+      "why": "Not deductible, and on a different row. Deploying new capital is acquisitive and capital in nature. Folding it into the rebalancing line would over-claim on the acquisition component."
+     },
+     {
+      "fact": "The file separately scopes and separately documents CGT analysis of the ownership structure chosen for that new capital.",
+      "q": "Does that change anything?",
+      "options": [
+       "No — the establishment row is fixed at not deductible",
+       "Yes — the separately documented CGT and structure analysis can be identified as a s25-5 component",
+       "Yes — the whole establishment component now becomes deductible",
+       "Yes — it moves the entire engagement to s25-5"
+      ],
+      "answer": 1,
+      "why": "Yes, but only for the documented analysis. The guidance permits a tax-affairs component to be separately identified for distinct work such as CGT or structure analysis, provided it is separately costed or documented. The establishment work itself stays non-deductible."
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "S3",
+  "code": "Section 03",
+  "title": "Insurance",
+  "blurb": "The only section that uses all four treatments. Ownership decides almost every row — read who holds the policy before anything else.",
+  "questions": [
+   {
+    "type": "mc",
+    "tag": "Standard",
+    "q": "Personally held income protection is claimed under both s25-5 and s8-1. Business expenses insurance is claimed under s8-1 alone. What accounts for the difference?",
+    "options": [
+     "Business expenses cover is held by an entity rather than an individual",
+     "Income protection advice also covers the tax treatment of the premiums and benefits, which supplies the s25-5 limb",
+     "Business expenses premiums are not deductible, so only s8-1 can apply",
+     "Income protection protects personal income, and only personal income engages s25-5"
+    ],
+    "answer": 1,
+    "why": "The s25-5 limb comes from the tax advice itself. Both policies protect income, which supplies the s8-1 nexus. Income protection advice additionally covers premium deductibility and the tax treatment of benefits, so both heads are cited. Business expenses cover rests on the standard premium-deductibility position under s8-1."
+   },
+   {
+    "type": "mc",
+    "tag": "Complex",
+    "hard": true,
+    "q": "Income protection held via superannuation — the trustee owns the policy and premiums are paid from the member’s balance. Is any part of the advice fee deductible?",
+    "hint": "Identify who pays and deducts the premium. Where that is not the member, no personal s8-1 nexus arises, notwithstanding that a benefit would be assessable when paid.",
+    "options": [
+     "Yes, under both heads — the cover still protects assessable income",
+     "Yes, under s8-1 — a benefit would be assessable to the member when paid",
+     "Yes, under s25-5 — the advice concerns the tax treatment of super-held cover",
+     "No — the fund pays and deducts the premium, so the member has no personal s8-1 nexus, and the advice is super and private in character"
+    ],
+    "answer": 3,
+    "why": "Nil claim. The premiums are paid and deducted by the super fund, not the member, so no personal s8-1 nexus arises. Personally held income protection uses the standard row instead. Retain the policy ownership and premium-funding details on file."
+   },
+   {
+    "type": "bucket",
+    "tag": "Sort into boxes",
+    "q": "Sort each insurance strategy into the section it is claimed under. Ownership is the deciding factor throughout.",
+    "boxes": [
+     "s8-1 only",
+     "s25-5 only",
+     "Both s8-1 & s25-5",
+     "Not deductible"
+    ],
+    "items": [
+     {
+      "t": "Business Expenses Insurance Advice",
+      "box": 0
+     },
+     {
+      "t": "Super-owned Life / TPD Insurance Advice",
+      "box": 1
+     },
+     {
+      "t": "Key Person Insurance (Deductibility Analysis)",
+      "box": 1
+     },
+     {
+      "t": "Advice on Structuring Insurance Inside vs Outside Super",
+      "box": 1
+     },
+     {
+      "t": "Income Protection Insurance Application / Review",
+      "box": 2
+     },
+     {
+      "t": "Income Protection held via superannuation",
+      "box": 3
+     },
+     {
+      "t": "Personal Life / TPD / Trauma (outside super)",
+      "box": 3
+     }
+    ],
+    "why": "The two income protection rows land in different boxes purely on ownership: personally held picks up both heads, super-held picks up nothing because the fund pays and deducts the premium. Business expenses cover rests on the standard s8-1 premium position with no tax-affairs limb. Super-owned life and TPD, key person and inside-versus-outside structuring are all s25-5, because the deductible element is the tax analysis, never the cover itself."
+   },
+   {
+    "type": "dropdown",
+    "tag": "Standard",
+    "q": "The s25-5 component on super-owned Life and TPD cover concerns the tax implications where benefits are paid before age ___ or to a ___ beneficiary.",
+    "selects": [
+     {
+      "options": [
+       "55",
+       "60",
+       "65",
+       "67"
+      ],
+      "answer": 1
+     },
+     {
+      "options": [
+       "binding",
+       "non-dependant",
+       "dependant",
+       "reversionary"
+      ],
+      "answer": 1
+     }
+    ],
+    "why": "Age 60 and a non-dependant beneficiary. That is the entire deductible rationale for the row. Note the premiums themselves are never deductible to the member — the claim relates to the advice fee only, and the balance of that advice is private protection."
+   },
+   {
+    "type": "versus",
+    "tag": "Head to head",
+    "q": "Which of these supports a s25-5 claim on the advice fee?",
+    "left": {
+     "t": "Trauma cover held personally, outside super",
+     "d": "Recommended for family protection against a critical illness event"
+    },
+    "right": {
+     "t": "Life and TPD cover held inside super",
+     "d": "Reviewed alongside the position of adult non-dependant children as beneficiaries"
+    },
+    "options": [
+     "Left only",
+     "Right only",
+     "Both",
+     "Neither"
+    ],
+    "answer": 1,
+    "why": "Right only. The s25-5 rationale for super-held cover is superannuation benefit taxation — the consequences of benefits paid before age 60 or to a non-dependant. That reasoning cannot reach a personally held policy, so trauma outside super attracts nothing and must not inherit the treatment."
+   },
+   {
+    "type": "mc",
+    "tag": "Complex",
+    "hard": true,
+    "q": "An SOA covers personally held income protection, life and TPD cover held inside super, and trauma cover held personally outside super. What is the correct treatment on the invoice?",
+    "hint": "Three policies, three different owners, three different answers. Consider whether they belong on one line or several.",
+    "options": [
+     "One combined insurance line, claimed under both s8-1 and s25-5",
+     "One combined insurance line, claimed under s25-5",
+     "Three separate rows: personally held income protection under both heads, super-held life and TPD under s25-5, and the outside-super trauma cover as not deductible",
+     "Three separate rows, all claimed under s25-5, since each involves advice on the tax treatment of insurance"
+    ],
+    "answer": 2,
+    "why": "Separate rows are the preferred treatment, and here all three land differently. Personally held income protection picks up both heads. Super-held life and TPD is s25-5 only, on the tax implications of benefits paid before age 60 or to a non-dependant. Personally held trauma is not deductible and must not inherit the super-held reasoning."
+   },
+   {
+    "type": "odd",
+    "tag": "Odd one out",
+    "q": "Three of these are claimed under s25-5. Which one is claimed under s8-1 alone?",
+    "options": [
+     "Super-owned Life / TPD Insurance Advice",
+     "Key Person Insurance (Deductibility Analysis)",
+     "Business Expenses Insurance Advice",
+     "Advice on Structuring Insurance Inside vs Outside Super"
+    ],
+    "answer": 2,
+    "why": "Business expenses insurance. It rests on the standard premium-deductibility position — cover that protects business revenue or deductible operating expenses has a direct nexus to producing assessable income. The other three are deductible only for the tax analysis attached to them, never for the cover itself."
+   }
+  ]
+ },
+ {
+  "id": "S4",
+  "code": "Section 04",
+  "title": "Debt, Cash Flow & Centrelink",
+  "blurb": "Private debt is nil. Investment debt carries the only standalone s8-1 claim in the document. The whole section lives on that line.",
+  "questions": [
+   {
+    "type": "mc",
+    "tag": "Complex",
+    "hard": true,
+    "q": "A cashflow strategy directs surplus income to accelerate repayment of the family home loan, on the documented basis that clearing non-deductible debt first is the most tax-efficient use of the surplus. Treatment?",
+    "hint": "A tax-efficiency rationale is not the same as advice on the client’s tax affairs. Consider what the advice is directed at achieving.",
+    "options": [
+     "Deductible under s25-5, on the same basis as offset structuring",
+     "Not deductible — the advice remains private and domestic debt management, and a tax-efficiency rationale does not change its character",
+     "Deductible under s25-5 in part, since the rationale was documented",
+     "Deductible under s8-1 — clearing non-deductible debt is a recognised deductible debt strategy"
+    ],
+    "answer": 1,
+    "why": "Nil. Explaining why a private strategy is sensible is not advice on the client’s tax affairs. The offset row is deductible because the advice concerns the tax implications of how the accounts are structured; accelerating home loan repayment is household debt reduction. If genuine investment debt advice sits alongside it, record that separately."
+   },
+   {
+    "type": "bucket",
+    "tag": "Sort into boxes",
+    "q": "Sort each debt, cash flow and Centrelink strategy into the section it is claimed under.",
+    "boxes": [
+     "s8-1 only",
+     "s25-5 only",
+     "Both s8-1 & s25-5",
+     "Not deductible"
+    ],
+    "items": [
+     {
+      "t": "Debt Recycling Strategy",
+      "box": 0
+     },
+     {
+      "t": "Bank Account & Offset Structuring",
+      "box": 1
+     },
+     {
+      "t": "Maximise Centrelink/DVA Entitlements",
+      "box": 2
+     },
+     {
+      "t": "Gearing Strategy Advice (Deductible Debt)",
+      "box": 2
+     },
+     {
+      "t": "General Budgeting and Cash Flow Management",
+      "box": 3
+     },
+     {
+      "t": "Paying down a Non-Deductible Debt (e.g., family home)",
+      "box": 3
+     }
+    ],
+    "why": "This is the only section that uses every treatment. Debt recycling is the document’s clearest standalone s8-1 claim — it converts private debt into borrowings that produce assessable income. Gearing picks up s25-5 as well, because the engagement also covers the tax treatment of the borrowings and interest deductibility. The two nil rows are private and domestic."
+   },
+   {
+    "type": "mc",
+    "tag": "Complex",
+    "hard": true,
+    "q": "The exemplar wording for offset structuring says it “reduces assessable income”. Why was that wording changed on the invoice?",
+    "hint": "Consider the mechanics of an offset account against a home loan, then identify which element — the treatment or the wording — was retained on review.",
+    "options": [
+     "Both the treatment and the wording were wrong, so both were corrected",
+     "An offset against a home loan reduces non-deductible interest, not assessable income — so the s25-5 treatment was retained but the wording corrected to refer to the tax implications of the structuring",
+     "Offset structuring is now treated as not deductible",
+     "s25-5 does not apply to bank accounts"
+    ],
+    "answer": 1,
+    "why": "Treatment retained, wording corrected. The exemplar overstates the mechanics: an offset reduces non-deductible interest, it does not reduce assessable income. The s25-5 claim stands on the tax implications of how the accounts are structured; the balance of the work is private cashflow and banking structure."
+   },
+   {
+    "type": "audit",
+    "tag": "Invoice audit",
+    "q": "Click every line on this invoice that has the wrong section against it.",
+    "client": "<b>Invoice draft — Whitmore cashflow &amp; debt engagement.</b> Three of these six lines cite the wrong section.",
+    "rows": [
+     {
+      "s": "Debt Recycling Strategy",
+      "sec": "s8-1",
+      "bad": false,
+      "fix": "Correct — borrowings applied to producing assessable income, with no separate tax-treatment advice."
+     },
+     {
+      "s": "General Budgeting and Cash Flow Management",
+      "sec": "s25-5",
+      "bad": true,
+      "fix": "Should be not deductible — private and domestic financial management."
+     },
+     {
+      "s": "Bank Account & Offset Structuring",
+      "sec": "s25-5",
+      "bad": false,
+      "fix": "Correct — advice on the tax implications of how the accounts are structured."
+     },
+     {
+      "s": "Paying down a Non-Deductible Debt (family home)",
+      "sec": "s8-1",
+      "bad": true,
+      "fix": "Should be not deductible — private debt reduction produces no assessable income."
+     },
+     {
+      "s": "Maximise Centrelink/DVA Entitlements",
+      "sec": "Both s8-1 & s25-5",
+      "bad": false,
+      "fix": "Correct, provided the entitlement strategy includes documented tax-implications advice."
+     },
+     {
+      "s": "Gearing Strategy Advice (Deductible Debt)",
+      "sec": "s25-5",
+      "bad": true,
+      "fix": "Should be both heads — the s8-1 nexus to the funded investments is missing from this line."
+     }
+    ],
+    "why": "Three errors. Budgeting and home loan reduction are both private and domestic, and neither can carry a section at all. Gearing is understated rather than overstated — the line claims the tax-advice limb but drops the income-production limb, which is the more common drafting error of the two."
+   },
+   {
+    "type": "mc",
+    "tag": "Standard",
+    "q": "Maximise Centrelink/DVA Entitlements — under which head or heads is it claimed, and what condition attaches?",
+    "options": [
+     "s25-5 only, whenever an entitlement calculation is performed",
+     "Both s25-5 and s8-1, where the entitlement strategy includes documented advice on the tax implications — nil where the work is purely social security or aged care planning",
+     "s8-1 only, because pension income is assessable",
+     "Not deductible — social security is a government benefit, not a tax matter"
+    ],
+    "answer": 1,
+    "why": "Both heads, conditionally. Structuring affairs to maximise entitlements attracts deductibility where the strategy includes advice on the tax implications. Where the work is purely social security or aged care planning with no tax analysis, nothing is claimable."
+   }
+  ]
+ },
+ {
+  "id": "S5",
+  "code": "Section 05",
+  "title": "SMSF",
+  "blurb": "Same logic as ordinary super, applied inside a fund the client controls. Structural setup versus tax analysis decides every row.",
+  "questions": [
+   {
+    "type": "bucket",
+    "tag": "Sort into boxes",
+    "q": "Sort each SMSF strategy into the correct treatment. As with ordinary super, only two apply.",
+    "boxes": [
+     "s25-5",
+     "Not deductible"
+    ],
+    "items": [
+     {
+      "t": "SMSF Contribution Strategy Advice",
+      "box": 0
+     },
+     {
+      "t": "SMSF Pension Strategy Advice (inc. Segregation)",
+      "box": 0
+     },
+     {
+      "t": "SMSF Establishment and Structuring Advice",
+      "box": 0
+     },
+     {
+      "t": "SMSF Investment Strategy (Compliance & Review)",
+      "box": 0
+     },
+     {
+      "t": "Advice on Winding Up an SMSF",
+      "box": 0
+     },
+     {
+      "t": "SMSF Borrowing / Limited Recourse Borrowing Arrangement",
+      "box": 1
+     }
+    ],
+    "why": "No s8-1 anywhere, for the same reason as ordinary super: the fund produces the income, not the member. LRBA advice is the only nil row — it is structural, capital and acquisition-related, not recurrent income management. Note that several of the s25-5 rows are deductible only in part, and only where the tax analysis is documented."
+   },
+   {
+    "type": "mc",
+    "tag": "Complex",
+    "hard": true,
+    "q": "A client rolls their existing super into a newly established SMSF, and the advice includes analysis of the tax implications. Which row records this?",
+    "hint": "The Rollover Existing Super row expressly directs one scenario to a different strategy line. Identify which scenario that is.",
+    "options": [
+     "Rollover Existing Super to New Fund/Platform, not deductible",
+     "SMSF Establishment and Structuring Advice, under s25-5",
+     "Ongoing Superannuation & Pension Management, under s25-5",
+     "Split evenly across the rollover and SMSF establishment rows"
+    ],
+    "answer": 1,
+    "why": "SMSF Establishment and Structuring, under s25-5. The exemplar covers exactly this: rolling super to a new SMSF and setting the fund up, including advice on the tax implications. The plain Rollover row is nil because a like-for-like fund or platform move is product replacement."
+   },
+   {
+    "type": "tf",
+    "tag": "Standard",
+    "q": "SMSF Contribution Strategy Advice is treated exactly like ordinary concessional and non-concessional contribution advice, under s25-5.",
+    "answer": true,
+    "why": "True. The same reasoning applies inside an SMSF as outside it: caps, deductibility and Division 293 are all applying taxation laws. Reduce the claim where the work is mainly member balance or accumulation management rather than contribution tax analysis."
+   },
+   {
+    "type": "mc",
+    "tag": "Complex",
+    "hard": true,
+    "q": "What is required before any part of an SMSF Investment Strategy (Compliance & Review) engagement becomes deductible?",
+    "hint": "A portfolio or compliance review on its own attracts nothing. Reaching a deductible position requires a specific category of recurring work to be documented.",
+    "options": [
+     "A review of the trustee’s compliance with their investment strategy obligations",
+     "An actuarial certificate for the year",
+     "Recurring pension-phase tax management — ECPI, drawdown — with the tax analysis documented",
+     "Confirmation that the fund holds income-producing assets"
+    ],
+    "answer": 2,
+    "why": "Documented pension-phase tax management. The floor for this row is nil: a portfolio or compliance review on its own is neither managing the member’s tax affairs nor producing their assessable income. Trustee compliance alone is not a tax-affairs nexus."
+   },
+   {
+    "type": "mc",
+    "tag": "Complex",
+    "hard": true,
+    "q": "An SMSF is wound up. The work includes rolling benefits to a retail fund, disposing of the fund’s listed holdings, and preparing analysis of the CGT position and final-year ECPI for the accountant. Which component, if any, is deductible?",
+    "hint": "Distinguish the administrative steps from the analytical work. Only one category can be claimed.",
+    "options": [
+     "The disposals and rollovers, since they trigger the tax consequences",
+     "The CGT position and final-year ECPI analysis, as identifiable tax-affairs work — the disposals, rollovers and deregistration are administrative",
+     "The whole engagement, since a wind-up necessarily involves tax obligations",
+     "None of it — wind-up is structural"
+    ],
+    "answer": 1,
+    "why": "The analysis, not the administration. Disposals, rollovers and deregistration are administrative and structural steps in closing the fund. The CGT position and final-year ECPI analysis is identifiable tax-affairs work under s25-5, and it is the only part that can be claimed."
+   },
+   {
+    "type": "odd",
+    "tag": "Odd one out",
+    "q": "Three of these can attract a s25-5 claim. Which one cannot?",
+    "options": [
+     "SMSF Pension Strategy Advice (inc. Segregation)",
+     "SMSF Contribution Strategy Advice",
+     "SMSF Borrowing / Limited Recourse Borrowing Arrangement",
+     "Advice on Winding Up an SMSF"
+    ],
+    "answer": 2,
+    "why": "The LRBA. Borrowing structure and asset acquisition is capital and structural, not recurrent income management. Even a wind-up carries a narrow s25-5 claim for the CGT and final-year ECPI analysis, but there is nothing comparable in setting up a bare trust and buying an asset."
+   }
+  ]
+ },
+ {
+  "id": "S6",
+  "code": "Section 06",
+  "title": "Estate, Business & General",
+  "blurb": "Two hard nils sitting alongside the cleanest s25-5 claims in the document. The line between them is whether tax was actually calculated.",
+  "questions": [
+   {
+    "type": "bucket",
+    "tag": "Sort into boxes",
+    "q": "Sort each estate, business and general strategy into the correct treatment.",
+    "boxes": [
+     "s25-5",
+     "Not deductible"
+    ],
+    "items": [
+     {
+      "t": "Financial Modelling & Tax Projections",
+      "box": 0
+     },
+     {
+      "t": "Small Business CGT Concessions Advice",
+      "box": 0
+     },
+     {
+      "t": "Business Succession Planning (Tax Implications)",
+      "box": 0
+     },
+     {
+      "t": "Estate Planning Advice (e.g., Testamentary Trusts)",
+      "box": 1
+     },
+     {
+      "t": "Advice on Death Benefit Nominations (Super)",
+      "box": 1
+     },
+     {
+      "t": "General Budgeting and Cash Flow Management",
+      "box": 1
+     }
+    ],
+    "why": "The nil rows are private and domestic, or private and capital. Estate planning and death benefit nominations are succession work where any tax consequences are incidental. Budgeting is household financial management. The s25-5 rows all involve tax being analysed or calculated — Division 152 eligibility, CGT and rollover consequences, or tax payable over time."
+   },
+   {
+    "type": "tf",
+    "tag": "Trap",
+    "q": "Advice on Death Benefit Nominations can be claimed under s25-5, because death benefit tax implications are necessarily discussed.",
+    "answer": false,
+    "why": "False. It defaults to nil. Tax consequences are incidental to what is fundamentally succession and estate planning, unless there is separately identifiable and separately scoped tax-affairs analysis. The same logic applies to estate planning generally — do not claim merely because testamentary trust tax rates came up."
+   },
+   {
+    "type": "versus",
+    "tag": "Head to head",
+    "q": "Which of these is claimed under s25-5?",
+    "left": {
+     "t": "A 20-year projection of household income and spending",
+     "d": "Cashflow modelling showing savings capacity and a target cash buffer"
+    },
+    "right": {
+     "t": "Modelling of tax payable now and over time",
+     "d": "Calculated for each strategy recommended in the SOA"
+    },
+    "options": [
+     "Left only",
+     "Right only",
+     "Both",
+     "Neither"
+    ],
+    "answer": 1,
+    "why": "Right only. The distinguishing feature is whether tax was actually calculated. Cashflow projections without tax calculations belong under General Budgeting and attract nothing. Only genuine tax modelling reaches the Financial Modelling & Tax Projections row — and the output showing the calculations has to be on file."
+   },
+   {
+    "type": "mc",
+    "tag": "Standard",
+    "q": "Small Business CGT Concessions Advice is claimed under s25-5. What underpins that treatment?",
+    "options": [
+     "The value of the business being sold",
+     "Division 152 work being inherently tax-affairs work — eligibility testing, active asset tests, connected entity rules and concession sequencing",
+     "The presence of a capital gain",
+     "The involvement of the client’s accountant"
+    ],
+    "answer": 1,
+    "why": "Division 152. Eligibility testing, active asset analysis, connected entity and affiliate rules, retirement and 15-year exemptions and concession sequencing are all applying taxation law to the client’s circumstances. Do not use this row where no specific concession analysis was performed."
+   },
+   {
+    "type": "mc",
+    "tag": "Complex",
+    "hard": true,
+    "q": "A business succession engagement transfers shares to the next generation. The file contains detailed Division 152 eligibility testing and active asset analysis alongside the succession and shareholder agreement work. How should the fee be recorded?",
+    "hint": "Two rows are available, carrying very different treatments. Consider whether the Division 152 work is incidental to the succession advice or a distinct piece of analysis.",
+    "options": [
+     "One line under Business Succession Planning",
+     "One line under Small Business CGT Concessions Advice",
+     "Separate lines: the succession and shareholder work under Business Succession Planning, and the Division 152 analysis under Small Business CGT Concessions Advice",
+     "One line under Business Succession Planning, not deductible — ownership transfer is capital"
+    ],
+    "answer": 2,
+    "why": "Two rows. Ownership transition and shareholder agreements are capital and private in character, so very little of that work is claimable. Division 152 eligibility testing and active asset analysis is distinct s25-5 work with its own row. Options A and B each collapse one body of work into the other’s treatment."
+   },
+   {
+    "type": "audit",
+    "tag": "Invoice audit",
+    "q": "Click every line on this invoice that has the wrong section against it.",
+    "client": "<b>Invoice draft — Whitmore estate &amp; business engagement.</b> Two of these five lines cite the wrong section.",
+    "rows": [
+     {
+      "s": "Estate Planning Advice (Testamentary Trusts)",
+      "sec": "Not deductible",
+      "bad": false,
+      "fix": "Correct — private and capital succession planning."
+     },
+     {
+      "s": "Small Business CGT Concessions Advice",
+      "sec": "s25-5",
+      "bad": false,
+      "fix": "Correct — Division 152 work is inherently tax-affairs work."
+     },
+     {
+      "s": "Advice on Death Benefit Nominations (Super)",
+      "sec": "s25-5",
+      "bad": true,
+      "fix": "Should be not deductible — succession planning, with tax consequences incidental."
+     },
+     {
+      "s": "Financial Modelling & Tax Projections",
+      "sec": "Both s8-1 & s25-5",
+      "bad": true,
+      "fix": "Should be s25-5 only — modelling tax payable produces no assessable income."
+     },
+     {
+      "s": "Business Succession Planning (Tax Implications)",
+      "sec": "s25-5",
+      "bad": false,
+      "fix": "Correct, but only for the identifiable tax analysis — the ownership transfer work is capital."
+     }
+    ],
+    "why": "Two errors, and they fail in opposite directions. Death benefit nominations over-claim by treating incidental tax consequences as tax-affairs advice. Financial modelling over-claims by adding an s8-1 limb that cannot exist — producing a tax projection does not produce assessable income."
+   }
+  ]
+ },
+ {
+  "id": "S7L",
+  "code": "Section 07",
+  "title": "Lightning Round",
+  "blurb": "Twenty strategies, four buttons, no hints and nowhere to hide. Recall under pressure.",
+  "questions": [
+   {
+    "type": "rapid",
+    "tag": "Lightning round",
+    "q": "Twenty strategies, four buttons, no hints. Tap the section each one is claimed under.",
+    "buttons": [
+     "s8-1",
+     "s25-5",
+     "Both",
+     "Not deductible"
+    ],
+    "cards": [
+     {
+      "t": "Salary Sacrifice to Superannuation",
+      "a": 1
+     },
+     {
+      "t": "Establish a New Investment Portfolio (from scratch)",
+      "a": 3
+     },
+     {
+      "t": "Ongoing Management of an Existing Investment Portfolio",
+      "a": 2
+     },
+     {
+      "t": "Debt Recycling Strategy",
+      "a": 0
+     },
+     {
+      "t": "Estate Planning Advice (Testamentary Trusts)",
+      "a": 3
+     },
+     {
+      "t": "Investment Bond Advice",
+      "a": 1
+     },
+     {
+      "t": "Income Protection Insurance (personally held)",
+      "a": 2
+     },
+     {
+      "t": "SMSF Borrowing / LRBA",
+      "a": 3
+     },
+     {
+      "t": "Business Expenses Insurance Advice",
+      "a": 0
+     },
+     {
+      "t": "Tax-Loss Harvesting Strategy",
+      "a": 1
+     },
+     {
+      "t": "Gearing Strategy Advice (Deductible Debt)",
+      "a": 2
+     },
+     {
+      "t": "General Budgeting and Cash Flow Management",
+      "a": 3
+     },
+     {
+      "t": "Super-owned Life / TPD Insurance Advice",
+      "a": 1
+     },
+     {
+      "t": "Maximise Centrelink/DVA Entitlements",
+      "a": 2
+     },
+     {
+      "t": "Rollover Existing Super to New Fund/Platform",
+      "a": 3
+     },
+     {
+      "t": "Bank Account & Offset Structuring",
+      "a": 1
+     },
+     {
+      "t": "Investment Structuring Advice (Trust, Company)",
+      "a": 2
+     },
+     {
+      "t": "SMSF Pension Strategy Advice",
+      "a": 1
+     },
+     {
+      "t": "Small Business CGT Concessions Advice",
+      "a": 1
+     },
+     {
+      "t": "Financial Modelling & Tax Projections",
+      "a": 1
+     }
+    ],
+    "why": "Two rows only ever sit on s8-1 alone: debt recycling and business expenses insurance. The \"both\" group always involves existing income-producing assets plus tax advice about them. Everything else is either pure tax-affairs work under s25-5, or produces nothing assessable and creates something new — in which case it attracts nothing."
+   }
+  ]
+ },
+ {
+  "id": "S8",
+  "code": "Section 08",
+  "title": "The Statement of Advice",
+  "blurb": "One client, one SOA, eight recommendations and a single fee. Build the invoice: strategy row, section, and the reason that supports it.",
+  "questions": [
+   {
+    "type": "soa",
+    "tag": "Capstone",
+    "hard": true,
+    "q": "For each recommendation, select the strategy row, the section it is claimed under, and the reason that supports it.",
+    "hint": "Work the section column first. Ownership determines the insurance rows, the existing-versus-new distinction determines the investment rows, and the remainder turn on whether documented tax analysis was performed. Each strategy row and each reason is used exactly once.",
+    "scenario": "<b>Client:</b> Dave &amp; Sally Whitmore. <b>SOA issued:</b> last financial year. <b>Advice fee:</b> $8,800 incl. GST, invoiced as a single amount. The file contains a complete set of calculations, modelling and file notes for every recommendation below.",
+    "strategies": [
+     "Advice on Death Benefit Nominations (Super)",
+     "Commencement of an Account Based Pension (ABP)",
+     "Establish a New Investment Portfolio (from scratch)",
+     "Estate Planning Advice (e.g., Testamentary Trusts)",
+     "Financial Modelling & Tax Projections",
+     "General Budgeting and Cash Flow Management",
+     "Income Protection Insurance Application / Review",
+     "Ongoing Management of an Existing Investment Portfolio",
+     "Personal Life / TPD / Trauma Insurance Advice (outside super)",
+     "Rollover Existing Super to New Fund/Platform",
+     "Salary Sacrifice to Superannuation",
+     "Super-owned Life / TPD Insurance Advice"
+    ],
+    "treatments": [
+     "s8-1 only",
+     "s25-5 only",
+     "Both s8-1 & s25-5",
+     "Not deductible"
+    ],
+    "reasons": [
+     "Reduces assessable income by sacrificing salary into super, and concerns the tax treatment of those contributions",
+     "Creates tax-free pension earnings and concerns the tax treatment of the pension income",
+     "Manages existing income-producing assets, and advises on the tax implications of the income and any disposals",
+     "Establishment and acquisition advice is capital and preparatory in nature",
+     "The premiums protect assessable income, and the advice covers their tax treatment and benefit design",
+     "Concerns the tax implications of super benefits paid before age 60 or to a non-dependant beneficiary",
+     "Private and domestic financial management, not connected to producing assessable income or managing tax affairs",
+     "Private and capital succession planning; any tax consequences are incidental to the estate objective",
+     "Product replacement and implementation advice, which is capital in character",
+     "Modelling that calculates the tax payable now and over time for the strategies recommended"
+    ],
+    "rows": [
+     {
+      "r": "Salary sacrifice $18,000 per year into Dave’s employer super fund, with a concessional cap worksheet and PAYG comparison on file.",
+      "s": 10,
+      "t": 1,
+      "w": 0
+     },
+     {
+      "r": "Commence an account based pension from Sally’s accumulation balance, with transfer balance cap and minimum pension calculations documented.",
+      "s": 1,
+      "t": 1,
+      "w": 1
+     },
+     {
+      "r": "Ongoing review and management of the existing $640,000 share and managed fund portfolio, including the tax implications of distributions and two disposals.",
+      "s": 7,
+      "t": 2,
+      "w": 2
+     },
+     {
+      "r": "Deploy a $200,000 inheritance into a new direct share portfolio built from scratch.",
+      "s": 2,
+      "t": 3,
+      "w": 3
+     },
+     {
+      "r": "Apply for income protection cover owned personally by Dave, with premiums paid from his own funds.",
+      "s": 6,
+      "t": 2,
+      "w": 4
+     },
+     {
+      "r": "Review the existing life and TPD cover held inside Sally’s super fund, including the position of their adult non-dependant children as beneficiaries.",
+      "s": 11,
+      "t": 1,
+      "w": 5
+     },
+     {
+      "r": "Prepare a household budget and a savings plan targeting a $30,000 cash buffer.",
+      "s": 5,
+      "t": 3,
+      "w": 6
+     },
+     {
+      "r": "Update both wills and establish a testamentary trust for the benefit of the children.",
+      "s": 3,
+      "t": 3,
+      "w": 7
+     }
+    ],
+    "why": "Eight recommendations, four treatments, one invoice. The pattern worth carrying out of the room: ownership decides the insurance rows, existing-versus-new decides the investment rows, and the presence of documented tax analysis decides everything else. Note that recommendations 4, 7 and 8 are all non-deductible for different reasons — capital, private, and private-and-capital respectively — and that distinction is what you rely on when the invoice is questioned."
+   }
+  ]
+ },
+ {
+  "id": "S9",
+  "code": "Section 09",
+  "title": "Upfront & Ongoing",
+  "blurb": "The same client, two separate fees, two separate invoices. A strategy row only goes on a fee if that work was actually performed for that fee — and the ruling is decided row by row.",
+  "questions": [
+   {
+    "type": "fees",
+    "tag": "Final capstone",
+    "hard": true,
+    "q": "This client had an SOA last financial year, and is on an ongoing service agreement this year. For each fee, select every strategy row that belongs on it — then set the tax ruling for each row you select.",
+    "hint": "Three traps. A strategy can appear on both fees, on one, or on neither. Some rows change nothing between the two fees; others cannot repeat, because the work was one-off. And two rows in the pool were never recommended at all — the strategy list is not a menu, it only records work actually performed.",
+    "scenario": "<b>Client:</b> Dave &amp; Sally Whitmore. Both fees are invoiced as a single amount, and the file holds a complete set of calculations, modelling and file notes for every piece of work listed below.",
+    "rulings": [
+     "s8-1",
+     "s25-5",
+     "Both s8-1 & s25-5",
+     "Not deductible"
+    ],
+    "pool": [
+     "Salary Sacrifice to Superannuation",
+     "Commencement of an Account Based Pension (ABP)",
+     "Ongoing Management of an Existing Investment Portfolio",
+     "Investment Portfolio Review &amp; Rebalancing",
+     "Ongoing Superannuation &amp; Pension Management",
+     "Establish a New Investment Portfolio (from scratch)",
+     "Income Protection Insurance Application / Review",
+     "Super-owned Life / TPD Insurance Advice",
+     "General Budgeting and Cash Flow Management",
+     "Estate Planning Advice (e.g., Testamentary Trusts)",
+     "Financial Modelling &amp; Tax Projections",
+     "Debt Recycling Strategy",
+     "SMSF Establishment and Structuring Advice"
+    ],
+    "notes": [
+     "the SOA set the arrangement up and analysed the concessional cap and PAYG consequences, which is s25-5 work. Nothing further was advised on it this year.",
+     "commencement is one-off pension tax advice. Once the pension is running, the recurring work belongs on the Ongoing Superannuation &amp; Pension Management row instead.",
+     "the existing $640,000 portfolio was reviewed in the SOA and is reviewed again under the service agreement, so it sits on both fees. Managing existing income-producing assets supplies s8-1; advising on the tax implications of the income and the disposals supplies s25-5.",
+     "the rebalance back to target allocation was done under the ongoing service, not in the SOA. It maintains an existing portfolio rather than building one, so both heads apply.",
+     "drawdown levels and the tax components of Sally's pension payments are recurring pension tax management under s25-5. There is no s8-1 limb, because super assets produce income for the fund and not for the member.",
+     "deploying the $200,000 inheritance into a brand-new portfolio is acquisitive and capital in nature, and no part of it recurs.",
+     "the application and the advice on premium deductibility is upfront work. The cover protects assessable income (s8-1) and the advice covers its tax treatment (s25-5).",
+     "reviewing super-held cover alongside the position of adult non-dependant children is the exemplified s25-5 claim — the tax implications of benefits paid before age 60 or to a non-dependant.",
+     "the budget was prepared in the SOA and refreshed under the ongoing service, so it belongs on both fees. Private and domestic either way: the row goes on the invoice and calculates $0.",
+     "the wills and the testamentary trust were done in the SOA. Private and capital succession planning, with any tax consequences incidental to the estate objective.",
+     "the modelling calculating tax payable now and over time was produced for the SOA, which is squarely s25-5. No new tax modelling was produced this year, so nothing can be claimed on the ongoing fee.",
+     "never recommended for these clients. A strategy row only goes on an invoice where the work was actually performed — the list is not a menu.",
+     "never recommended for these clients. They hold retail super and no SMSF was established."
+    ],
+    "blocks": [
+     {
+      "label": "Upfront advice fee",
+      "fee": "$8,800 incl. GST — SOA issued last financial year",
+      "colour": "#7C3AED",
+      "tint": "#F1EAFE",
+      "work": [
+       "Salary sacrifice <b>$18,000 per year</b> into Dave's employer super fund — concessional cap worksheet and PAYG comparison on file",
+       "Commence an <b>account based pension</b> from Sally's accumulation balance — transfer balance cap and minimum pension calculations documented",
+       "Review and take over management of the existing <b>$640,000</b> share and managed fund portfolio, including the tax implications of its distributions and two disposals",
+       "Deploy a <b>$200,000 inheritance</b> into a new direct share portfolio built from scratch",
+       "Apply for <b>income protection cover owned personally</b> by Dave, with premiums paid from his own funds",
+       "Review the <b>life and TPD cover held inside Sally's super fund</b>, including the position of their adult non-dependant children as beneficiaries",
+       "Prepare a <b>household budget</b> and a savings plan targeting a $30,000 cash buffer",
+       "Update both wills and establish a <b>testamentary trust</b> for the benefit of the children",
+       "<b>Financial modelling</b> calculating the tax payable now and over time for every strategy above"
+      ],
+      "key": {
+       "0": 1,
+       "1": 1,
+       "2": 2,
+       "5": 3,
+       "6": 2,
+       "7": 1,
+       "8": 3,
+       "9": 3,
+       "10": 1
+      }
+     },
+     {
+      "label": "Ongoing advice fee",
+      "fee": "$6,600 per year incl. GST — this financial year, no new SOA",
+      "colour": "#0D9488",
+      "tint": "#DEF5F1",
+      "work": [
+       "Annual review and <b>ongoing management of the existing portfolio</b>, including the tax implications of the income and one disposal",
+       "<b>Rebalance</b> the portfolio back to its target asset allocation",
+       "Manage Sally's pension — <b>drawdown levels</b> and the tax components of the pension payments",
+       "Refresh the <b>household budget</b> and check progress against the cash buffer",
+       "!No new SOA, no new strategies, and <b>no new tax modelling</b> was produced this year"
+      ],
+      "key": {
+       "2": 2,
+       "3": 2,
+       "4": 1,
+       "8": 3
+      }
+     }
+    ],
+    "why": "Two fees, two invoices, and the rows do not simply carry across. Only two rows appear on both: the ongoing management of the existing portfolio, and budgeting — and each keeps the same ruling on both fees, because the character of the work has not changed. Everything else is one-off. Commencing the pension is upfront; managing the drawdown afterwards is ongoing, and they are different rows even though they concern the same account. The rebalance is ongoing only. And the tax modelling is the sharpest trap in the exercise: it is a clean s25-5 claim on the upfront fee, but claiming it again on the ongoing fee, in a year when no modelling was produced, is exactly the over-claim the evidence requirements exist to prevent. Finally, debt recycling and SMSF establishment were never recommended — if the work was not performed, the row does not go on the invoice."
+   }
+  ]
+ }
+];
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+const $ = (s,r=document)=>r.querySelector(s);
+const el = (t,c,h)=>{const n=document.createElement(t);if(c)n.className=c;if(h!==undefined)n.innerHTML=h;return n};
+const norm = s => String(s).toLowerCase().trim().replace(/[%$.,'"’]/g,'').replace(/\s+/g,' ');
+const shuffle = a => {const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b};
+
+function qPoints(q){
+  if(q.type==='bucket')   return q.items.length;
+  if(q.type==='soa')      return q.rows.length*3;
+  if(q.type==='escalate') return q.stages.length;
+  if(q.type==='audit')    return q.rows.length;
+  if(q.type==='rapid')    return q.cards.length;
+  if(q.type==='fees')     return q.blocks.reduce((t,b)=>t + q.pool.length + Object.keys(b.key).length, 0);
+  return 1;
+}
+function secPoints(s){ return s.questions.reduce((t,q)=>t+qPoints(q),0) }
+
+const TOTAL = QUIZ.reduce((t,s)=>t+secPoints(s),0);
+const state = {}; // sectionId -> {score, max, done}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+const SECTION_COLORS = [
+  ['#7C3AED','#F1EAFE'], ['#0D9488','#DEF5F1'], ['#2563EB','#E6EDFE'], ['#DB2777','#FDE7F0'],
+  ['#EA580C','#FEEDE2'], ['#4F46E5','#EAE9FD'], ['#CA8A04','#FBF1D9'], ['#0891B2','#DEF2F8'],
+  ['#BE123C','#FFE3EA']
+];
+/* declared here, not beside buildBucket: the render loop below calls buildBucket,
+   so a later `const` would still be in its temporal dead zone. */
+const BOX_COLORS = [['#2563EB','#E6EDFE'],['#7C3AED','#F1EAFE'],['#0D9488','#DEF5F1'],['#64748B','#EEF1F6']];
+const root = $('#quiz');
+
+QUIZ.forEach((sec,si)=>{
+  const max = secPoints(sec);
+  state[sec.id] = {score:0,max,done:false};
+
+  const node = el('section','section');
+  node.id = sec.id;
+  const pal = SECTION_COLORS[si % SECTION_COLORS.length];
+  node.style.setProperty('--sec', pal[0]);
+  node.style.setProperty('--sec-bg', pal[1]);
+
+  const head = el('div','sec-head');
+  head.appendChild(el('div','sec-code', sec.code + ' &nbsp;·&nbsp; ' + max + ' points'));
+  head.appendChild(el('h2','sec-title', sec.title));
+  head.appendChild(el('p','sec-blurb', sec.blurb));
+  node.appendChild(head);
+
+  sec.questions.forEach((q,qi)=>{
+    const qn = el('div','q');
+    qn.dataset.q = qi;
+
+    const top = el('div','q-top');
+    top.appendChild(el('div','q-num', sec.code.replace('Section ','')+'.'+String(qi+1)));
+    top.appendChild(el('div','q-tag'+(q.hard?' hard':''), q.tag));
+    if(q.type==='match') top.appendChild(el('div','q-tag', qPoints(q)+' pts'));
+    qn.appendChild(top);
+
+    if(q.type!=='dropdown') qn.appendChild(el('p','q-text', q.q));
+
+    if(q.type==='versus'){
+      const vs = el('div','versus');
+      const l = el('div','vs-card'); l.style.setProperty('--vc','#2563EB');
+      l.appendChild(el('div','vs-tag','Left'));
+      l.appendChild(el('div','vs-t', q.left.t));
+      l.appendChild(el('div','vs-d', q.left.d));
+      const mid = el('div','vs-mid','<span>vs</span>');
+      const r = el('div','vs-card'); r.style.setProperty('--vc','#DB2777');
+      r.appendChild(el('div','vs-tag','Right'));
+      r.appendChild(el('div','vs-t', q.right.t));
+      r.appendChild(el('div','vs-d', q.right.d));
+      vs.appendChild(l); vs.appendChild(mid); vs.appendChild(r);
+      qn.appendChild(vs);
+    }
+
+    if(q.type==='mc' || q.type==='tf' || q.type==='multi' || q.type==='odd' || q.type==='versus'){
+      const opts = q.type==='tf' ? ['True','False'] : q.options;
+      const box = el('div','opts'+(q.type==='odd'?' oddgrid':''));
+      opts.forEach((o,oi)=>{
+        const lab = el('label','opt');
+        const inp = document.createElement('input');
+        inp.type = q.type==='multi' ? 'checkbox' : 'radio';
+        inp.name = sec.id+'-'+qi;
+        inp.value = oi;
+        lab.appendChild(inp);
+        lab.appendChild(el('span','',o));
+        box.appendChild(lab);
+      });
+      qn.appendChild(box);
+    }
+
+    if(q.type==='dropdown'){
+      const p = el('p','q-text fill-text');
+      const parts = q.q.split('___');
+      parts.forEach((txt,i)=>{
+        p.appendChild(document.createTextNode(txt));
+        if(i < parts.length-1){
+          const sel = document.createElement('select');
+          sel.className='blank'; sel.dataset.blank=i;
+          sel.setAttribute('aria-label','Answer '+(i+1));
+          const ph=document.createElement('option');
+          ph.value=''; ph.textContent='choose\u2026'; ph.disabled=true; ph.selected=true;
+          sel.appendChild(ph);
+          shuffle(q.selects[i].options.map((o,oi)=>({o,oi}))).forEach(x=>{
+            const opt=document.createElement('option');
+            opt.value=x.oi; opt.textContent=x.o;
+            sel.appendChild(opt);
+          });
+          p.appendChild(sel);
+        }
+      });
+      qn.appendChild(p);
+    }
+
+    if(q.type==='bucket')   qn.appendChild(buildBucket(q, sec.id+'-'+qi));
+    if(q.type==='soa')      qn.appendChild(buildSoa(q, sec.id+'-'+qi));
+    if(q.type==='escalate') qn.appendChild(buildEscalate(q, sec.id+'-'+qi));
+    if(q.type==='audit')    qn.appendChild(buildAudit(q));
+    if(q.type==='rapid')    qn.appendChild(buildRapid(q, sec.id+'-'+qi));
+    if(q.type==='fees')     qn.appendChild(buildFees(q, sec.id+'-'+qi));
+
+    if(q.hint){
+      const d = el('details','hint');
+      d.appendChild(el('summary','','◆ Need a hint?'));
+      d.appendChild(el('div','hint-body', q.hint));
+      qn.appendChild(d);
+    }
+
+    qn.appendChild(el('div','verdict'));
+    node.appendChild(qn);
+  });
+
+  const foot = el('div','sec-foot');
+  const btn = el('button','btn','Check this section');
+  const res = el('div','result');
+  foot.appendChild(btn);
+  foot.appendChild(res);
+  node.appendChild(foot);
+
+  const nav = el('div','stepnav');
+  const back = el('button','btn nav','\u2190 Back');
+  const count = el('div','stepcount', 'Section '+(si+1)+' of '+QUIZ.length);
+  const next = el('button','btn nav primary', si===QUIZ.length-1 ? 'See results \u2192' : 'Next section \u2192');
+  nav.appendChild(back);
+  nav.appendChild(el('div','spacer'));
+  nav.appendChild(count);
+  nav.appendChild(next);
+  node.appendChild(nav);
+  back.addEventListener('click', ()=>go(si-1));
+  next.addEventListener('click', ()=>go(si+1));
+
+  btn.addEventListener('click', ()=>gradeSection(sec, node, btn, res));
+
+  root.appendChild(node);
+});
+
+$('#ledgerMax').textContent = TOTAL;
+
+/* ============================================================
+   WIZARD NAVIGATION
+   ============================================================ */
+const sideNav = $('#sideNav');
+const navItems = [];
+QUIZ.forEach((sec,si)=>{
+  const pal = SECTION_COLORS[si % SECTION_COLORS.length];
+  const b = el('button','navitem');
+  b.style.setProperty('--nav', pal[0]);
+  b.style.setProperty('--nav-bg', pal[1]);
+  b.innerHTML = '<span class="dot">'+String(si).padStart(2,'0')+'</span><span class="nm">'+sec.title+'</span><span class="tick"></span>';
+  b.addEventListener('click', ()=>{ go(si); closeNav(); });
+  sideNav.appendChild(b);
+  navItems.push(b);
+});
+
+$('#statgrid').innerHTML =
+  '<div class="stat"><b>'+QUIZ.length+'</b><span>Sections</span></div>'
+ +'<div class="stat"><b>'+QUIZ.reduce((t,s)=>t+s.questions.length,0)+'</b><span>Questions</span></div>'
+ +'<div class="stat"><b>'+TOTAL+'</b><span>Points</span></div>'
+ +'<div class="stat"><b>44</b><span>Strategies</span></div>';
+
+let current = -1; // -1 = intro, QUIZ.length = finale
+function go(i){
+  current = i;
+  $('#step-intro').classList.toggle('on', i===-1);
+  $('#finale').classList.toggle('on', i===QUIZ.length);
+  QUIZ.forEach((sec,si)=>document.getElementById(sec.id).classList.toggle('on', si===i));
+  navItems.forEach((b,bi)=>b.classList.toggle('active', bi===i));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function refreshNav(){
+  QUIZ.forEach((sec,si)=>{
+    const st = state[sec.id];
+    navItems[si].classList.toggle('done', st.done);
+    navItems[si].querySelector('.tick').textContent = st.done ? Math.round(st.score/st.max*100)+'%' : '';
+  });
+}
+const sidebar = $('#sidebar'), scrim = $('#navScrim');
+function closeNav(){ sidebar.classList.remove('open'); scrim.classList.remove('show') }
+$('#navToggle').addEventListener('click', ()=>{
+  sidebar.classList.toggle('open'); scrim.classList.toggle('show');
+});
+scrim.addEventListener('click', closeNav);
+$('#startBtn').addEventListener('click', ()=>go(0));
+$('#restartBtn').addEventListener('click', ()=>go(-1));
+go(-1);
+
+/* ============================================================
+   MATCH WIDGET
+   ============================================================ */
+
+function buildBucket(q, key){
+  const wrap = el('div','bucketwrap');
+
+  const pool = el('div','pool bpool');
+  pool.dataset.pool = key;
+  shuffle(q.items.map((it,i)=>({...it,i}))).forEach(o=>{
+    pool.appendChild(makeBChip(o.t, key, o.i));
+  });
+  wrap.appendChild(el('div','match-col-label','Strategies \u2014 drag or tap to place'));
+  wrap.appendChild(pool);
+
+  const boxes = el('div','buckets');
+  q.boxes.forEach((label,bi)=>{
+    const bc = BOX_COLORS[bi % BOX_COLORS.length];
+    const box = el('div','bucket');
+    box.dataset.box = bi; box.dataset.key = key;
+    box.style.setProperty('--bc', bc[0]);
+    box.style.setProperty('--bc-bg', bc[1]);
+    box.appendChild(el('div','bucket-head', label));
+    const body = el('div','bucket-body');
+    box.appendChild(body);
+    box.tabIndex = 0;
+    const drop = ()=>{
+      if(box.closest('.locked')) return;
+      const sel = document.querySelector('.chip.sel[data-key="'+key+'"]');
+      if(sel){ body.appendChild(sel); sel.classList.remove('sel'); clearArmed(); }
+    };
+    box.addEventListener('click', drop);
+    box.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();drop()} });
+    box.addEventListener('dragover', e=>{ if(!box.closest('.locked')){e.preventDefault();box.classList.add('over')} });
+    box.addEventListener('dragleave', ()=>box.classList.remove('over'));
+    box.addEventListener('drop', e=>{
+      e.preventDefault(); box.classList.remove('over');
+      if(box.closest('.locked')) return;
+      const c = document.querySelector('[data-chip="'+e.dataTransfer.getData('text/plain')+'"]');
+      if(c){ body.appendChild(c); c.classList.remove('sel'); clearArmed(); }
+    });
+    boxes.appendChild(box);
+  });
+  wrap.appendChild(boxes);
+
+  pool.addEventListener('dragover', e=>{ if(!pool.closest('.locked')) e.preventDefault() });
+  pool.addEventListener('drop', e=>{
+    e.preventDefault();
+    if(pool.closest('.locked')) return;
+    const c = document.querySelector('[data-chip="'+e.dataTransfer.getData('text/plain')+'"]');
+    if(c){ pool.appendChild(c); c.classList.remove('sel'); clearArmed(); }
+  });
+  wrap.appendChild(el('div','match-hint','Tap a strategy, then tap a box. Tap a placed strategy to send it back.'));
+  return wrap;
+}
+
+function makeBChip(text, key, i){
+  const chip = el('div','chip bchip', text);
+  chip.dataset.chip = key+'-b'+i;
+  chip.dataset.bitem = i;
+  chip.dataset.key = key;
+  chip.draggable = true;
+  chip.tabIndex = 0;
+  chip.addEventListener('dragstart', e=>{
+    if(chip.closest('.locked')){e.preventDefault();return}
+    e.dataTransfer.setData('text/plain', chip.dataset.chip);
+    chip.classList.add('dragging');
+  });
+  chip.addEventListener('dragend', ()=>chip.classList.remove('dragging'));
+  chip.addEventListener('click', e=>{
+    e.stopPropagation();
+    if(chip.closest('.locked')) return;
+    if(chip.closest('.bucket')){
+      document.querySelector('[data-pool="'+key+'"]').appendChild(chip);
+      chip.classList.remove('sel'); clearArmed(); return;
+    }
+    const was = chip.classList.contains('sel');
+    document.querySelectorAll('.chip.sel[data-key="'+key+'"]').forEach(c=>c.classList.remove('sel'));
+    clearArmed();
+    if(!was){
+      chip.classList.add('sel');
+      document.querySelectorAll('.bucket[data-key="'+key+'"]').forEach(bx=>bx.classList.add('armed'));
+    }
+  });
+  chip.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();chip.click()} });
+  return chip;
+}
+function clearArmed(){ document.querySelectorAll('.bucket.armed,.slot.armed').forEach(x=>x.classList.remove('armed')) }
+
+/* ---- escalating fact pattern: each stage unlocks the next ---- */
+function buildEscalate(q, key){
+  const wrap = el('div','esc');
+  q.stages.forEach((st,si)=>{
+    const stage = el('div','esc-stage'+(si===0?' live':' hidden'));
+    stage.dataset.n = si+1;
+    stage.dataset.stage = si;
+    stage.appendChild(el('div','esc-fact', st.fact));
+    stage.appendChild(el('p','esc-q', st.q));
+    const box = el('div','opts');
+    st.options.forEach((o,oi)=>{
+      const lab = el('label','opt');
+      const inp = document.createElement('input');
+      inp.type='radio'; inp.name = key+'-st'+si; inp.value = oi;
+      lab.appendChild(inp);
+      lab.appendChild(el('span','',o));
+      box.appendChild(lab);
+      inp.addEventListener('change', ()=>{
+        stage.classList.add('answered');
+        const nxt = wrap.querySelector('.esc-stage[data-stage="'+(si+1)+'"]');
+        if(nxt && nxt.classList.contains('hidden')){
+          nxt.classList.remove('hidden');
+          nxt.classList.add('live');
+        }
+      });
+    });
+    stage.appendChild(box);
+    stage.appendChild(el('div','esc-verdict'));
+    wrap.appendChild(stage);
+  });
+  const lock = el('div','esc-lock','◆ &nbsp;Answer each stage to reveal the next fact.');
+  wrap.appendChild(lock);
+  return wrap;
+}
+
+/* ---- invoice audit: click the lines citing the wrong section ---- */
+function buildAudit(q){
+  const wrap = el('div','auditwrap');
+  wrap.appendChild(el('div','audit-note', q.client));
+  const inv = el('div','inv');
+  const head = el('div','inv-head');
+  head.appendChild(el('span','','Strategy row'));
+  head.appendChild(el('span','','Section cited'));
+  head.appendChild(el('span','','Flag'));
+  inv.appendChild(head);
+  const counter = el('div','audit-count');
+  const tally = ()=>{
+    const n = inv.querySelectorAll('.inv-row.flagged').length;
+    counter.innerHTML = '<b>'+n+'</b> line'+(n===1?'':'s')+' flagged as incorrect.';
+  };
+  q.rows.forEach((row,ri)=>{
+    const r = document.createElement('button');
+    r.type='button'; r.className='inv-row'; r.dataset.row = ri;
+    r.setAttribute('aria-pressed','false');
+    r.appendChild(el('span','inv-name', row.s));
+    r.appendChild(el('span','inv-sec', row.sec));
+    r.appendChild(el('span','inv-flag','Flag'));
+    r.addEventListener('click', ()=>{
+      if(r.closest('.locked')) return;
+      const on = r.classList.toggle('flagged');
+      r.setAttribute('aria-pressed', on?'true':'false');
+      r.querySelector('.inv-flag').textContent = on ? 'Flagged' : 'Flag';
+      tally();
+    });
+    inv.appendChild(r);
+  });
+  wrap.appendChild(inv);
+  wrap.appendChild(counter);
+  tally();
+  return wrap;
+}
+
+/* ---- lightning round: one tap per card, keys 1-4 ---- */
+function buildRapid(q, key){
+  const wrap = el('div','rapidwrap');
+  const bar = el('div','rapid-bar');
+  bar.innerHTML =
+    '<span class="rb-lab">Answered</span>'
+   +'<span class="rb-n"><span data-done>0</span><small>/'+q.cards.length+'</small></span>'
+   +'<span class="rb-bar"><span class="rb-fill" data-fill></span></span>'
+   +'<span class="rb-key">Hover a card and press <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd></span>';
+  wrap.appendChild(bar);
+  const doneN = bar.querySelector('[data-done]'), fill = bar.querySelector('[data-fill]');
+  const tally = ()=>{
+    const n = wrap.querySelectorAll('.rcard.done').length;
+    doneN.textContent = n;
+    fill.style.width = (n/q.cards.length*100)+'%';
+  };
+
+  const list = el('div','rcards');
+  q.cards.forEach((c,ci)=>{
+    const card = el('div','rcard');
+    card.dataset.card = ci;
+    card.tabIndex = 0;
+    const left = el('div','');
+    left.appendChild(el('span','rcard-n','Strategy '+(ci+1)));
+    left.appendChild(el('div','rcard-t', c.t));
+    card.appendChild(left);
+    const btns = el('div','rbtns');
+    q.buttons.forEach((b,bi)=>{
+      const btn = document.createElement('button');
+      btn.type='button'; btn.className='rbtn'; btn.textContent = b; btn.dataset.pick = bi;
+      btn.setAttribute('aria-label', c.t+': '+b);
+      btn.addEventListener('click', ()=>pick(bi));
+      btns.appendChild(btn);
+    });
+    card.appendChild(btns);
+    function pick(bi){
+      if(card.closest('.locked')) return;
+      [...btns.children].forEach((x,xi)=>x.classList.toggle('sel', xi===bi));
+      card.dataset.pick = bi;
+      card.classList.add('done');
+      tally();
+    }
+    card.addEventListener('keydown', e=>{
+      const n = Number(e.key);
+      if(n>=1 && n<=q.buttons.length){ e.preventDefault(); pick(n-1) }
+    });
+    card.addEventListener('mouseenter', ()=>{ card._hot = true });
+    card.addEventListener('mouseleave', ()=>{ card._hot = false });
+    list.appendChild(card);
+  });
+  wrap.appendChild(list);
+
+  document.addEventListener('keydown', e=>{
+    if(/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)) return;
+    const n = Number(e.key);
+    if(!(n>=1 && n<=q.buttons.length)) return;
+    const hot = [...list.querySelectorAll('.rcard')].find(c=>c._hot);
+    if(hot && !hot.closest('.locked')){ e.preventDefault(); hot.querySelectorAll('.rbtn')[n-1].click() }
+  });
+  return wrap;
+}
+
+/* ---- capstone: which strategies sit on the upfront fee, and on the ongoing fee ---- */
+function buildFees(q, key){
+  const wrap = el('div','feewrap');
+  wrap.appendChild(el('div','scenario', q.scenario));
+
+  const brief = el('div','fee-brief');
+  q.blocks.forEach(bl=>{
+    const c = el('div','brief');
+    c.style.setProperty('--bh', bl.colour);
+    const h = el('div','brief-h', bl.label + '<small>' + bl.fee + '</small>');
+    c.appendChild(h);
+    const ul = document.createElement('ul');
+    bl.work.forEach(w=>{
+      const li = document.createElement('li');
+      li.className = w.startsWith('!') ? 'brief-none' : '';
+      li.innerHTML = w.replace(/^!/,'');
+      ul.appendChild(li);
+    });
+    c.appendChild(ul);
+    brief.appendChild(c);
+  });
+  wrap.appendChild(brief);
+
+  q.blocks.forEach((bl,bi)=>{
+    const block = el('div','feeblock');
+    block.dataset.block = bi;
+    block.style.setProperty('--fb', bl.colour);
+    block.style.setProperty('--fb-bg', bl.tint);
+
+    const head = el('div','fb-head');
+    head.appendChild(el('div','fb-title', bl.label));
+    head.appendChild(el('div','fb-sub', bl.fee));
+    const cnt = el('div','fb-count','0 selected');
+    head.appendChild(cnt);
+    block.appendChild(head);
+    block.appendChild(el('div','fb-instr','Select every strategy row that belongs on this fee — then set the tax ruling for each one you select.'));
+
+    const list = el('div','fee-list');
+    const tally = ()=>{
+      const n = list.querySelectorAll('.frow.on').length;
+      cnt.textContent = n+' selected';
+    };
+    q.pool.forEach((name,pi)=>{
+      const row = el('div','frow');
+      row.dataset.item = pi;
+
+      const top = document.createElement('button');
+      top.type='button'; top.className='fr-top';
+      top.setAttribute('aria-pressed','false');
+      top.innerHTML = '<span class="fr-box">✓</span><span class="fr-name">'+name+'</span><span class="fr-hint">on this fee?</span>';
+      row.appendChild(top);
+
+      const rule = el('div','fr-rule');
+      rule.appendChild(el('div','fr-rule-lab','Tax ruling'));
+      const btns = el('div','fr-btns');
+      q.rulings.forEach((r,ri)=>{
+        const b = document.createElement('button');
+        b.type='button'; b.className='fr-b'; b.textContent = r; b.dataset.rule = ri;
+        b.setAttribute('aria-label', name+', '+bl.label+': '+r);
+        b.addEventListener('click', ()=>{
+          if(row.closest('.locked')) return;
+          [...btns.children].forEach((x,xi)=>x.classList.toggle('sel', xi===ri));
+          row.dataset.rule = ri;
+        });
+        btns.appendChild(b);
+      });
+      rule.appendChild(btns);
+      row.appendChild(rule);
+
+      top.addEventListener('click', ()=>{
+        if(row.closest('.locked')) return;
+        const on = row.classList.toggle('on');
+        top.setAttribute('aria-pressed', on?'true':'false');
+        if(!on){
+          delete row.dataset.rule;
+          [...btns.children].forEach(x=>x.classList.remove('sel'));
+        }
+        tally();
+      });
+
+      list.appendChild(row);
+    });
+    block.appendChild(list);
+    wrap.appendChild(block);
+  });
+  return wrap;
+}
+
+function buildSoa(q, key){
+  const wrap = el('div','soawrap');
+  wrap.appendChild(el('div','scenario', q.scenario));
+  const fields = [
+    ['Strategy row', q.strategies],
+    ['Treatment', q.treatments],
+    ['Why it is treated that way', q.reasons]
+  ];
+  q.rows.forEach((row,ri)=>{
+    const card = el('div','soa-card');
+    const head = el('div','soa-head');
+    head.appendChild(el('span','soa-n', 'Recommendation '+(ri+1)));
+    card.appendChild(head);
+    card.appendChild(el('p','soa-rec', row.r));
+    const grid = el('div','soa-fields');
+    fields.forEach(([lab,opts],fi)=>{
+      const f = el('div','soa-f');
+      f.appendChild(el('label','soa-lab', lab));
+      const sel = document.createElement('select');
+      sel.className='soa-sel'; sel.dataset.f = fi;
+      sel.setAttribute('aria-label', lab+', recommendation '+(ri+1));
+      const ph = document.createElement('option');
+      ph.value=''; ph.textContent='Select\u2026'; ph.disabled=true; ph.selected=true;
+      sel.appendChild(ph);
+      opts.forEach((o,oi)=>{
+        const opt=document.createElement('option');
+        opt.value=oi; opt.textContent=o;
+        sel.appendChild(opt);
+      });
+      f.appendChild(sel);
+      grid.appendChild(f);
+    });
+    card.appendChild(grid);
+    wrap.appendChild(card);
+  });
+  return wrap;
+}
+
+
+/* ============================================================
+   GRADING
+   ============================================================ */
+function gradeSection(sec, node, btn, res){
+  let score = 0;
+  const max = state[sec.id].max;
+
+  sec.questions.forEach((q,qi)=>{
+    const qn = node.querySelector('.q[data-q="'+qi+'"]');
+    const verdict = qn.querySelector('.verdict');
+    let got = 0, pts = qPoints(q), correctText = '';
+
+    if(q.type==='mc' || q.type==='tf' || q.type==='odd' || q.type==='versus'){
+      const opts = [...qn.querySelectorAll('.opt')];
+      const ans = q.type==='tf' ? (q.answer?0:1) : q.answer;
+      const picked = opts.findIndex(o=>o.querySelector('input').checked);
+      opts.forEach((o,i)=>{
+        o.querySelector('input').disabled = true;
+        if(i===ans) o.classList.add(i===picked?'is-right':'is-missed');
+        else if(i===picked) o.classList.add('is-wrong');
+      });
+      if(picked===ans) got = 1;
+      correctText = opts[ans].querySelector('span').textContent;
+    }
+
+    if(q.type==='multi'){
+      const opts = [...qn.querySelectorAll('.opt')];
+      const picked = [];
+      opts.forEach((o,i)=>{
+        const inp = o.querySelector('input');
+        if(inp.checked) picked.push(i);
+        inp.disabled = true;
+        const isAns = q.answer.includes(i);
+        if(isAns) o.classList.add(inp.checked?'is-right':'is-missed');
+        else if(inp.checked) o.classList.add('is-wrong');
+      });
+      const ok = picked.length===q.answer.length && picked.every(p=>q.answer.includes(p));
+      if(ok) got = 1;
+      correctText = q.answer.map(i=>opts[i].querySelector('span').textContent).join(' · ');
+    }
+
+    if(q.type==='dropdown'){
+      const sels = [...qn.querySelectorAll('select.blank')];
+      let allOk = true;
+      sels.forEach((sel,i)=>{
+        const ok = sel.value!=='' && Number(sel.value)===q.selects[i].answer;
+        sel.disabled = true;
+        sel.classList.add(ok?'is-right':'is-wrong');
+        if(!ok) allOk = false;
+      });
+      if(allOk) got = 1;
+      correctText = q.selects.map(x=>x.options[x.answer]).join(' \u00b7 ');
+    }
+
+    if(q.type==='bucket'){
+      q.items.forEach((it,ii)=>{
+        const chip = qn.querySelector('[data-bitem="'+ii+'"]');
+        const box = chip.closest('.bucket');
+        const idx = box ? Number(box.dataset.box) : -1;
+        const ok = idx===it.box;
+        chip.classList.add(ok?'bok':'bbad');
+        chip.draggable = false;
+        if(ok) got++;
+        else chip.appendChild(el('span','bfix','\u2192 '+q.boxes[it.box]));
+      });
+      correctText = '';
+    }
+
+    if(q.type==='escalate'){
+      [...qn.querySelectorAll('.esc-stage')].forEach((stage,si)=>{
+        const st = q.stages[si];
+        stage.classList.remove('hidden');
+        const opts = [...stage.querySelectorAll('.opt')];
+        const picked = opts.findIndex(o=>o.querySelector('input').checked);
+        opts.forEach((o,i)=>{
+          o.querySelector('input').disabled = true;
+          if(i===st.answer) o.classList.add(i===picked?'is-right':'is-missed');
+          else if(i===picked) o.classList.add('is-wrong');
+        });
+        const ok = picked===st.answer;
+        if(ok) got++;
+        const v = stage.querySelector('.esc-verdict');
+        v.className = 'esc-verdict show '+(ok?'ok':'no');
+        v.innerHTML = '<b>'+(ok?'✓ Stage '+(si+1)+' correct':'✗ Stage '+(si+1))+'</b>'
+          + (ok?'':'<div style="margin-bottom:6px">Answer: <span class="ans">'+st.options[st.answer]+'</span></div>')
+          + st.why;
+      });
+      const lock = qn.querySelector('.esc-lock');
+      if(lock) lock.remove();
+      correctText = '';
+    }
+
+    if(q.type==='audit'){
+      [...qn.querySelectorAll('.inv-row')].forEach((r,ri)=>{
+        const row = q.rows[ri];
+        const flagged = r.classList.contains('flagged');
+        const ok = flagged === row.bad;
+        r.classList.remove('flagged');
+        r.classList.add(ok?'ok-right':'ok-wrong');
+        r.disabled = true;
+        r.querySelector('.inv-flag').textContent = row.bad ? 'Wrong' : 'Correct';
+        r.appendChild(el('span','inv-fix', (ok?'✓ ':'✗ ')+row.fix));
+        if(ok) got++;
+      });
+      const c = qn.querySelector('.audit-count');
+      if(c) c.remove();
+      correctText = '';
+    }
+
+    if(q.type==='rapid'){
+      [...qn.querySelectorAll('.rcard')].forEach((card,ci)=>{
+        const c = q.cards[ci];
+        const picked = card.dataset.pick===undefined ? -1 : Number(card.dataset.pick);
+        const ok = picked===c.a;
+        card.classList.remove('done');
+        card.classList.add(ok?'rok':'rno');
+        [...card.querySelectorAll('.rbtn')].forEach((b,bi)=>{
+          b.disabled = true;
+          b.classList.remove('sel');
+          if(bi===c.a) b.classList.add(bi===picked?'good':'want');
+          else if(bi===picked) b.classList.add('bad');
+        });
+        if(ok) got++;
+      });
+      const bar = qn.querySelector('.rapid-bar');
+      if(bar) bar.remove();
+      correctText = '';
+    }
+
+    if(q.type==='fees'){
+      [...qn.querySelectorAll('.feeblock')].forEach((block,bi)=>{
+        const bl = q.blocks[bi];
+        [...block.querySelectorAll('.frow')].forEach((row,pi)=>{
+          const want = bl.key[pi];                       // undefined === not on this fee
+          const belongs = want !== undefined;
+          const on = row.classList.contains('on');
+          const picked = row.dataset.rule===undefined ? -1 : Number(row.dataset.rule);
+          const btns = [...row.querySelectorAll('.fr-b')];
+          btns.forEach(b=>b.disabled = true);
+          row.querySelector('.fr-top').disabled = true;
+
+          let cls, fix;
+          if(on === belongs) got++;                      // inclusion decision
+
+          if(!belongs && !on){
+            cls='gok'; fix='';
+          } else if(!belongs && on){
+            cls='gno'; fix='Not on this fee — '+q.notes[pi];
+            row.classList.remove('on');
+            row.querySelector('.fr-rule').style.display='none';
+          } else if(belongs && !on){
+            cls='gno'; fix='Belongs on this fee, under '+q.rulings[want]+' — '+q.notes[pi];
+            row.classList.add('reveal');   // show the answer without implying it was selected
+            btns[want].classList.add('want');
+          } else {
+            if(picked===want){ got++; cls='gok'; fix=''; btns[want].classList.add('good') }
+            else{
+              cls='gpart';
+              fix='Right strategy, wrong ruling — '+q.rulings[want]+'. '+q.notes[pi];
+              btns[want].classList.add('want');
+              if(picked>=0) btns[picked].classList.add('bad');
+            }
+          }
+          row.classList.add(cls);
+          if(fix) row.appendChild(el('div','fr-fix', (cls==='gno'?'✗ ':'△ ')+fix));
+        });
+        const cnt = block.querySelector('.fb-count');
+        if(cnt){
+          const n = Object.keys(bl.key).length;
+          cnt.textContent = n+' belong here';
+        }
+        const instr = block.querySelector('.fb-instr');
+        if(instr) instr.remove();
+      });
+      correctText = '';
+    }
+
+    if(q.type==='soa'){
+      const keys=['s','t','w'];
+      const pools=[q.strategies,q.treatments,q.reasons];
+      [...qn.querySelectorAll('.soa-card')].forEach((card,ri)=>{
+        const row=q.rows[ri];
+        [...card.querySelectorAll('.soa-sel')].forEach((sel,fi)=>{
+          const ok = sel.value!=='' && Number(sel.value)===row[keys[fi]];
+          sel.disabled = true;
+          sel.classList.add(ok?'is-right':'is-wrong');
+          if(ok) got++;
+          else sel.parentElement.appendChild(el('div','soa-fix','\u2192 '+pools[fi][row[keys[fi]]]));
+        });
+      });
+      correctText = '';
+    }
+
+    score += got;
+    const full = got===pts;
+    verdict.className = 'verdict show '+(full?'right':'wrong');
+    verdict.innerHTML =
+      '<b>'+(full ? (pts>1 ? '✓ All '+pts+' matched' : '✓ Correct') : (pts>1 ? '✗ '+got+' of '+pts+' matched' : '✗ Not quite'))+'</b>'
+      + (!full && correctText ? '<div style="margin-bottom:7px">Answer: <span class="ans">'+correctText+'</span></div>' : '')
+      + q.why;
+
+    const d = qn.querySelector('.hint');
+    if(d) d.open = true;
+  });
+
+  state[sec.id] = {score, max, done:true};
+  node.classList.add('locked');
+  btn.disabled = true;
+  btn.textContent = 'Section checked';
+
+  const pct = Math.round(score/max*100);
+  const r = rate(pct);
+  res.innerHTML =
+    '<div class="stamp '+r.cls+'">'+r.stamp+'</div>'
+    + '<div class="result-score">'+score+'<small> / '+max+' · '+pct+'%</small></div>'
+    + '<div class="result-note">'+r.note+'</div>';
+  res.classList.add('show');
+
+  if(pct===100) celebrate();
+  refreshNav();
+  updateLedger();
+}
+
+function rate(pct){
+  if(pct===100) return {cls:'perfect', stamp:'★ 100% Deductible', note:'Fully assessed, exemplar-aligned, nothing apportioned out. Outstanding.'};
+  if(pct>=80)  return {cls:'', stamp:'Strong nexus', note:'Solid. A small apportionment for the bits that slipped — worth a second read of the misses.'};
+  if(pct>=60)  return {cls:'', stamp:'Apportion a little', note:'You know the shape of it. The detail needs another pass before you rely on it.'};
+  if(pct>=40)  return {cls:'poor', stamp:'Apportion heavily', note:'A fair chunk of this section is not landing. Re-read the section rows before Monday.'};
+  return {cls:'poor', stamp:'Non-deductible', note:'Calculates $0 regardless of percentage. Back to pages 1–3 — the summary table does most of the work.'};
+}
+
+function updateLedger(){
+  const done = Object.values(state).filter(s=>s.done);
+  const score = done.reduce((t,s)=>t+s.score,0);
+  $('#ledgerScore').textContent = score;
+  $('#ledgerFill').style.width = (score/TOTAL*100)+'%';
+  if(done.length===QUIZ.length) finish(score);
+}
+
+function finish(score){
+  const pct = Math.round(score/TOTAL*100);
+  const f = $('#finale');
+  $('#finalePct').textContent = pct+'%';
+  const r = rate(pct);
+  $('#finaleTitle').textContent = pct===100 ? 'Perfect. Every strategy, every rule.' : r.stamp;
+  $('#finaleNote').textContent = pct===100
+    ? 'Forty-four strategy rows, every section and the rules engine — all of it, including both invoices on the capstone. Generating tax invoices should be considerably quicker from here.'
+    : score+' of '+TOTAL+' points. '+r.note;
+
+  const brk = $('#finaleBreak');
+  brk.innerHTML='';
+  QUIZ.forEach(s=>{
+    const st = state[s.id];
+    const p = Math.round(st.score/st.max*100);
+    const chip = el('div','brk'+(p===100?' full':''), s.title+' <b>'+p+'%</b>');
+    if(p!==100){ const c = SECTION_COLORS[QUIZ.indexOf(s) % SECTION_COLORS.length];
+      chip.style.background = c[1]; chip.style.borderColor = c[0]; chip.style.color = c[0]; }
+    brk.appendChild(chip);
+  });
+
+  if(pct===100) setTimeout(()=>celebrate(90), 250);
+  setTimeout(()=>go(QUIZ.length), 420);
+}
+
+function celebrate(n=40){
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const box = $('#confetti');
+  const cols = ['#7C3AED','#0D9488','#2563EB','#DB2777','#EA580C','#4F46E5','#CA8A04','#0891B2','#00A870','#FF9E1B'];
+  for(let i=0;i<n;i++){
+    const c = el('div','cf');
+    c.style.left = Math.random()*100+'vw';
+    c.style.background = cols[Math.floor(Math.random()*cols.length)];
+    c.style.animationDelay = (Math.random()*.5)+'s';
+    c.style.animationDuration = (1.8+Math.random()*1.2)+'s';
+    box.appendChild(c);
+    setTimeout(()=>c.remove(), 3600);
+  }
+}
+</script>
+</body>
+</html>
