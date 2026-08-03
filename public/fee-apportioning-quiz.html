@@ -629,6 +629,14 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
   .feegrid .fr-rule{padding-left:40px}
   .feegrid .fr-fix{padding-left:40px}
 }
+/* a question that must not be read until the previous one is committed */
+.q.gated > *:not(.q-top):not(.q-lock){display:none}
+.q-lock{
+  display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:800;color:var(--muted);
+  background:var(--soft);border:2px dashed var(--line-2);border-radius:14px;padding:12px 15px;margin-top:4px
+}
+.q:not(.gated) > .q-lock{display:none}
+.q.committed{position:relative}
 .briefwrap{margin:0 0 18px}
 .briefwrap .fee-brief{margin-bottom:0}
 .feeblock{margin-bottom:20px}
@@ -2159,7 +2167,7 @@ const QUIZ = [
   "id": "S10",
   "code": "Section 09",
   "title": "Upfront & Ongoing — The Home Upgrade",
-  "blurb": "Same client, two invoices. Almost everything appears on both — so the useful question is not what is on each fee, but what differs between them, and why.",
+  "blurb": "Same client, two invoices. Almost everything appears on both — so the useful questions are what differs between them, why, and which rows change their character from one year to the next.",
   "questions": [
    {
     "type": "multi",
@@ -2234,7 +2242,8 @@ const QUIZ = [
      "Because tax modelling stops being deductible once a client moves onto a recurring service"
     ],
     "answer": 1,
-    "why": "Because that work was not done again. Nothing stops modelling appearing on an ongoing fee — in a year where you genuinely re-run the tax projections, it belongs there and carries s25-5. This year they refreshed a household budget, which calculates no tax and belongs under budgeting at nil. This is the row that depends most on what is actually on the file, which is exactly why it is the one that moves."
+    "why": "Because that work was not done again. Nothing stops modelling appearing on an ongoing fee — in a year where you genuinely re-run the tax projections, it belongs there and carries s25-5. This year they refreshed a household budget, which calculates no tax and belongs under budgeting at nil. This is the row that depends most on what is actually on the file, which is exactly why it is the one that moves.",
+    "gated": true
    },
    {
     "type": "mc",
@@ -2250,7 +2259,24 @@ const QUIZ = [
      "It is double-counting, but it is accepted practice where an ongoing service is in place"
     ],
     "answer": 1,
-    "why": "Because the work was done twice, in two different years, and each fee is claimed for its own year. That is the whole test: not whether the arrangement still exists, but whether someone actually advised on it again. Salary sacrifice is the clearest case — checking the available cap space and deciding whether to continue, increase or decrease it is fresh advice on the tax treatment of the contributions every time it is done. Option A is the trap that produces over-claiming: the service agreement describes what you might do, the file shows what you did, and only the second one supports a claim."
+    "why": "Because the work was done twice, in two different years, and each fee is claimed for its own year. That is the whole test: not whether the arrangement still exists, but whether someone actually advised on it again. Salary sacrifice is the clearest case — checking the available cap space and deciding whether to continue, increase or decrease it is fresh advice on the tax treatment of the contributions every time it is done. Option A is the trap that produces over-claiming: the service agreement describes what you might do, the file shows what you did, and only the second one supports a claim.",
+    "gated": true
+   },
+   {
+    "type": "mc",
+    "tag": "Same row, two fees",
+    "hard": true,
+    "core": true,
+    "q": "Suppose the Carters' <b>next</b> SOA establishes a new $200,000 share portfolio from scratch, and the following year's ongoing service reviews and manages it. How does that one investment appear across those two fees?",
+    "hint": "Ask what the adviser is being paid for in each year. In the first they are choosing and buying something that does not exist yet. In the second they are looking after something that does, and that already earns income. Those are not the same piece of work, so they are not the same row.",
+    "options": [
+     "Not deductible on both fees — it was established from scratch, and that character carries forward to every later review",
+     "Not deductible on the upfront fee as an acquisition, then both heads on the ongoing fee — from the following year it is an existing income-producing portfolio being managed, which is a different strategy row",
+     "Both heads on both fees, because the portfolio produces assessable income from the day it is bought",
+     "Not deductible upfront, then s25-5 only on the ongoing fee, for the tax implications of the income"
+    ],
+    "answer": 1,
+    "why": "Two different rows, and the switch happens the moment the portfolio exists. Buying it is acquisition — capital and preparatory — so it goes on Establish a New Investment Portfolio at nil, and it appears once. From the next review onward the work is managing assets that already produce assessable income (s8-1) and advising on the tax implications of that income and any disposals (s25-5), which is Ongoing Management of an Existing Investment Portfolio at both heads.\n\nOption C is the common over-claim: the portfolio producing income later does not make the act of buying it deductible. Option A is the mirror error — the nil attaches to the acquisition work, not to those assets forever. The Carters' rental makes the same point from the other direction: it was never acquired at all, so it never touches the Establish row, but it joins the Ongoing Management row the day it is tenanted. What decides the row is whether the asset already exists and already earns, not how it came to be owned."
    },
    {
     "type": "odd",
@@ -2452,8 +2478,14 @@ ACTIVE.forEach((sec,si)=>{
     }
 
     qn.appendChild(el('div','verdict'));
+    if(q.gated){
+      qn.classList.add('gated');
+      qn.appendChild(el('div','q-lock','\u25c6 &nbsp;Answer the previous question to reveal this one.'));
+    }
     node.appendChild(qn);
   });
+
+  wireGates(node);
 
   const foot = el('div','sec-foot');
   const btn = el('button','btn','Check this section');
@@ -2767,6 +2799,42 @@ function buildRapid(q, key){
 }
 
 /* ---- capstone: which strategies sit on the upfront fee, and on the ongoing fee ---- */
+/* ============================================================
+   QUESTION GATES
+   Some questions name the answer to the one before them. Those are
+   marked gated: hidden until the previous question is answered, and
+   answering it commits the choice so you cannot revise after reading on.
+   ============================================================ */
+function isAnswered(qn){
+  const boxes = [...qn.querySelectorAll('.opt input, .esc-stage input')];
+  if(boxes.length) return boxes.some(b=>b.checked);
+  const sels = [...qn.querySelectorAll('select')];
+  if(sels.length) return sels.every(x=>x.value!=='');
+  if(qn.querySelector('.bucket')) return !!qn.querySelector('.bucket .chip');
+  if(qn.querySelector('.rcard')) return [...qn.querySelectorAll('.rcard')].every(c=>c.dataset.pick!==undefined);
+  if(qn.querySelector('.inv-row')) return true;   // flagging nothing is a valid answer
+  if(qn.querySelector('.frow')) return !!qn.querySelector('.frow.on');
+  return false;
+}
+
+function wireGates(node){
+  const qs = [...node.querySelectorAll('.q')];
+  qs.forEach((qn,i)=>{
+    if(!qn.classList.contains('gated') || i===0) return;
+    const prev = qs[i-1];
+    const reveal = ()=>{
+      if(node.classList.contains('locked')) return;
+      if(!isAnswered(prev)) return;
+      qn.classList.remove('gated');
+      prev.classList.add('committed');
+      // commit the previous answer: revising it after reading ahead would defeat the gate
+      prev.querySelectorAll('.opt input, select.blank').forEach(x=>{ x.disabled = true });
+    };
+    prev.addEventListener('change', reveal);
+    prev.addEventListener('click', ()=>setTimeout(reveal,0));
+  });
+}
+
 /* ---- scenario brief: the two fee summaries, shown above a normal question ---- */
 function buildBrief(b){
   const wrap = el('div','briefwrap');
@@ -2928,6 +2996,7 @@ function gradeSection(sec, node, btn, res){
 
   sec.questions.forEach((q,qi)=>{
     const qn = node.querySelector('.q[data-q="'+qi+'"]');
+    qn.classList.remove('gated');   // once checked, every question shows its feedback
     const verdict = qn.querySelector('.verdict');
     let got = 0, pts = qPoints(q), correctText = '';
 
