@@ -31,7 +31,7 @@
 html{scroll-behavior:smooth}
 body{
   margin:0;background:var(--bg);color:var(--ink);
-  font-family:var(--font);font-size:16.5px;line-height:1.55;font-weight:400;
+  font-family:var(--font);font-size:14.5px;line-height:1.5;font-weight:400;
   -webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;
 }
 body::before{
@@ -47,12 +47,12 @@ body::before{
 /* ---------- masthead ---------- */
 
 .eyebrow{
-  font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+  font-size:10.6px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
   color:#7C3AED;margin:0 0 16px;display:flex;gap:9px;align-items:center;flex-wrap:wrap
 }
 .eyebrow span{color:var(--line-2)}
 h1{
-  font-weight:900;font-size:clamp(38px,8vw,72px);
+  font-weight:900;font-size:clamp(33px,7vw,60px);
   line-height:.94;letter-spacing:-.035em;margin:0 0 16px;
 }
 h1 em{
@@ -60,7 +60,7 @@ h1 em{
   background:linear-gradient(96deg,#7C3AED 0%,#DB2777 42%,#EA580C 78%,#CA8A04 100%);
   -webkit-background-clip:text;background-clip:text;color:transparent;
 }
-.dek{color:var(--ink-2);max-width:58ch;margin:0 0 26px;font-size:17.5px;font-weight:600}
+.dek{color:var(--ink-2);max-width:58ch;margin:0 0 26px;font-size:15.4px;font-weight:600}
 .dek b{color:var(--ink);font-weight:800}
 
 
@@ -70,29 +70,29 @@ h1 em{
   box-shadow:0 2px 0 var(--line-2),0 16px 40px rgba(28,28,54,.07);
 }
 .fw-label{
-  font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
+  font-size:10.6px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
   color:#fff;padding:15px 20px;
   background:linear-gradient(96deg,#7C3AED,#DB2777 55%,#EA580C);
 }
 .fw-list{list-style:none;margin:0;padding:0}
 .fw{
   display:grid;grid-template-columns:1fr;gap:5px 16px;align-items:center;
-  padding:15px 20px;border-bottom:1px solid var(--line);font-size:15.5px;line-height:1.4;font-weight:600
+  padding:15px 20px;border-bottom:1px solid var(--line);font-size:13.6px;line-height:1.4;font-weight:600
 }
 @media(min-width:680px){.fw{grid-template-columns:92px 1fr 128px;gap:16px}}
-.fw b{font-weight:900;font-size:15px;letter-spacing:-.01em}
+.fw b{font-weight:900;font-size:13.2px;letter-spacing:-.01em}
 .fw.yes b{color:#00A870}
 .fw.no b{color:#F2436D}
 .fw span{color:var(--ink-2)}
 .fw em{
-  font-style:normal;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  font-style:normal;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
   justify-self:start;padding:6px 12px;border-radius:999px;
 }
 @media(min-width:680px){.fw em{justify-self:end;text-align:center}}
 .fw.yes em{color:#00875C;background:var(--green-bg)}
 .fw.no em{color:#D42A57;background:var(--red-bg)}
 .fw-foot{
-  padding:13px 20px;font-size:12.5px;font-weight:800;letter-spacing:.03em;
+  padding:13px 20px;font-size:11px;font-weight:800;letter-spacing:.03em;
   color:#B26A00;background:var(--amber-bg)
 }
 
@@ -102,49 +102,49 @@ h1 em{
   backdrop-filter:blur(12px);box-shadow:0 1px 0 var(--line-2),0 6px 22px rgba(28,28,54,.06);
 }
 .ledger-in{max-width:940px;margin:0 auto;padding:11px 20px;display:flex;align-items:center;gap:14px}
-.ledger-label{font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.ledger-label{font-size:10.6px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 .ledger-bar{flex:1;height:11px;background:var(--line);border-radius:999px;overflow:hidden;min-width:60px}
 .ledger-fill{
   height:100%;width:0;border-radius:999px;
   background:linear-gradient(90deg,#7C3AED,#0D9488,#2563EB,#DB2777,#EA580C,#4F46E5,#CA8A04,#0891B2);
   background-size:800% 100%;transition:width .55s cubic-bezier(.2,.8,.3,1)
 }
-.ledger-num{font-weight:900;font-size:17px;white-space:nowrap}
-.ledger-num small{color:var(--muted);font-weight:700;font-size:12.5px}
+.ledger-num{font-weight:900;font-size:15px;white-space:nowrap}
+.ledger-num small{color:var(--muted);font-weight:700;font-size:11px}
 
 /* ---------- sections ---------- */
 .section{
-  margin-top:44px;background:var(--card);border-radius:22px;overflow:hidden;
+  margin-top:30px;background:var(--card);border-radius:22px;overflow:hidden;
   box-shadow:0 2px 0 var(--line-2),0 18px 44px rgba(28,28,54,.07);
 }
-.sec-head{padding:26px 26px 24px;background:var(--sec);color:#fff}
-.sec-code{font-size:12px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.78);margin-bottom:8px}
-.sec-title{font-weight:900;font-size:clamp(24px,4.2vw,34px);letter-spacing:-.028em;margin:0 0 9px;line-height:1.03}
-.sec-blurb{color:rgba(255,255,255,.88);font-size:15.5px;font-weight:600;margin:0;max-width:60ch}
+.sec-head{padding:19px 22px 17px;background:var(--sec);color:#fff}
+.sec-code{font-size:10.6px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.78);margin-bottom:8px}
+.sec-title{font-weight:900;font-size:clamp(21px,3.7vw,29px);letter-spacing:-.028em;margin:0 0 9px;line-height:1.03}
+.sec-blurb{color:rgba(255,255,255,.88);font-size:13.6px;font-weight:600;margin:0;max-width:60ch}
 
 /* ---------- question ---------- */
-.q{padding:26px;border-bottom:1px solid var(--line)}
+.q{padding:19px 20px;border-bottom:1px solid var(--line)}
 .q:last-of-type{border-bottom:none}
 .q-top{display:flex;gap:9px;align-items:center;margin-bottom:13px;flex-wrap:wrap}
-.q-num{font-weight:900;font-size:13.5px;color:var(--sec);flex:none;letter-spacing:.02em}
+.q-num{font-weight:900;font-size:11.9px;color:var(--sec);flex:none;letter-spacing:.02em}
 .q-tag{
-  font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
   padding:5px 11px;border-radius:999px;background:var(--sec-bg);color:var(--sec)
 }
 .q-tag.hard{background:var(--amber-bg);color:#B26A00}
-.q-text{font-size:18px;font-weight:700;margin:0 0 17px;line-height:1.42;letter-spacing:-.011em}
+  .q-text{font-size:15.8px;font-weight:700;margin:0 0 13px;line-height:1.4;letter-spacing:-.011em}
 
 /* options */
-.opts{display:flex;flex-direction:column;gap:9px}
+.opts{display:flex;flex-direction:column;gap:7px}
 .opt{
-  display:flex;gap:13px;align-items:flex-start;padding:14px 16px;
+  display:flex;gap:11px;align-items:flex-start;padding:11px 13px;
   border:2px solid var(--line);background:var(--soft);border-radius:14px;
   cursor:pointer;transition:border-color .15s,background .15s,transform .12s;
 }
 .opt:hover{border-color:var(--sec);background:var(--sec-bg);transform:translateY(-1px)}
 .opt:has(input:checked){border-color:var(--sec);background:var(--sec-bg)}
 .opt input{margin:4px 0 0;accent-color:var(--sec);flex:none;width:17px;height:17px}
-.opt span{font-size:16px;font-weight:600;line-height:1.42;color:var(--ink-2)}
+.opt span{font-size:14.1px;font-weight:600;line-height:1.42;color:var(--ink-2)}
 .opt.is-right{border-color:var(--green);background:var(--green-bg)}
 .opt.is-right span{color:#00654A;font-weight:700}
 .opt.is-wrong{border-color:var(--red);background:var(--red-bg)}
@@ -158,9 +158,9 @@ h1 em{
 .locked .opt.is-missed,.locked .opt.is-missed:hover{border-color:var(--green);background:transparent}
 
 /* fill in the blank */
-.fill-text{font-size:18px;line-height:2.2;font-weight:700}
+.fill-text{font-size:15.8px;line-height:2.2;font-weight:700}
 .blank{
-  font-family:var(--font);font-size:16px;font-weight:800;
+  font-family:var(--font);font-size:14.1px;font-weight:800;
   background:var(--soft);border:2px solid var(--line);border-bottom:3px solid var(--sec);
   color:var(--ink);padding:7px 11px;width:150px;border-radius:12px;text-align:center;
 }
@@ -184,7 +184,7 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
   border:2px dashed var(--line-2);border-radius:16px;background:var(--soft);align-content:flex-start
 }
 .chip{
-  font-size:13.5px;font-weight:800;letter-spacing:-.005em;
+  font-size:11.9px;font-weight:800;letter-spacing:-.005em;
   background:var(--card);border:2px solid var(--line-2);color:var(--ink);
   padding:10px 13px;border-radius:12px;cursor:grab;user-select:none;line-height:1.28;text-align:center;
   box-shadow:0 2px 0 var(--line-2);transition:transform .12s,border-color .15s,background .15s,box-shadow .12s;
@@ -201,7 +201,7 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
 /* hint */
 .hint{margin-top:15px}
 .hint summary{
-  font-size:12.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+  font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
   color:#B26A00;cursor:pointer;display:inline-flex;gap:8px;align-items:center;
   background:var(--amber-bg);padding:9px 15px;border-radius:999px;list-style:none;
 }
@@ -209,27 +209,27 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
 .hint summary:hover{background:#FFE9C7}
 .hint[open] summary{margin-bottom:11px}
 .hint-body{
-  font-size:15.5px;font-weight:600;color:var(--ink-2);
+  font-size:13.6px;font-weight:600;color:var(--ink-2);
   background:var(--amber-bg);border-radius:14px;padding:14px 17px;max-width:64ch
 }
 
 /* verdict */
 .verdict{
-  margin-top:17px;padding:15px 18px;border-radius:14px;font-size:15.5px;line-height:1.5;font-weight:600;
+  margin-top:17px;padding:15px 18px;border-radius:14px;font-size:13.6px;line-height:1.5;font-weight:600;
   background:var(--soft);color:var(--ink-2);display:none;max-width:72ch
 }
 .verdict.show{display:block;animation:rise .32s ease both}
 .verdict.right{background:var(--green-bg)}
 .verdict.wrong{background:var(--red-bg)}
-.verdict b{font-size:12.5px;font-weight:900;letter-spacing:.11em;text-transform:uppercase;display:block;margin-bottom:7px}
+.verdict b{font-size:11px;font-weight:900;letter-spacing:.11em;text-transform:uppercase;display:block;margin-bottom:7px}
 .verdict.right b{color:#00875C}
 .verdict.wrong b{color:#D42A57}
 .verdict .ans{color:var(--ink);font-weight:800}
 
 /* footer of section */
-.sec-foot{padding:24px 26px;display:flex;gap:18px;align-items:center;flex-wrap:wrap;background:var(--sec-bg)}
+.sec-foot{padding:18px 20px;display:flex;gap:18px;align-items:center;flex-wrap:wrap;background:var(--sec-bg)}
 .btn{
-  font-family:var(--font);font-size:15px;font-weight:900;letter-spacing:.02em;
+  font-family:var(--font);font-size:13.2px;font-weight:900;letter-spacing:.02em;
   background:var(--sec);color:#fff;border:none;padding:15px 28px;border-radius:999px;cursor:pointer;
   box-shadow:0 4px 0 rgba(0,0,0,.16);transition:transform .12s,box-shadow .12s,filter .15s;
 }
@@ -241,19 +241,19 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
 .result{display:none;align-items:center;gap:16px;flex-wrap:wrap}
 .result.show{display:flex;animation:rise .4s ease both}
 .stamp{
-  font-size:13.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;
+  font-size:11.9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;
   border:3px solid var(--amber);color:#B26A00;background:var(--card);
   padding:9px 17px;border-radius:999px;transform:rotate(-2.5deg);white-space:nowrap
 }
 .stamp.perfect{border-color:var(--green);color:#00875C;animation:thump .55s cubic-bezier(.2,1.7,.4,1) both}
 .stamp.poor{border-color:var(--red);color:#D42A57}
-.result-score{font-weight:900;font-size:25px;color:var(--ink)}
-.result-score small{font-size:14px;color:var(--muted);font-weight:700}
-.result-note{font-size:15px;font-weight:600;color:var(--ink-2);max-width:44ch}
+.result-score{font-weight:900;font-size:22px;color:var(--ink)}
+.result-score small{font-size:12.3px;color:var(--muted);font-weight:700}
+.result-note{font-size:13.2px;font-weight:600;color:var(--ink-2);max-width:44ch}
 
 /* finale */
 .finale{
-  margin-top:0;border-radius:26px;padding:44px 30px;text-align:center;
+  margin-top:0;border-radius:26px;padding:32px 24px;text-align:center;
   background:var(--card);box-shadow:0 2px 0 var(--line-2),0 22px 55px rgba(28,28,54,.1);
   position:relative;overflow:hidden
 }
@@ -264,15 +264,15 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
 
 .finale .eyebrow{justify-content:center;color:var(--muted)}
 .finale-pct{
-  font-weight:900;font-size:clamp(66px,17vw,126px);line-height:.9;letter-spacing:-.05em;margin:8px 0 6px;
+  font-weight:900;font-size:clamp(58px,15vw,106px);line-height:.9;letter-spacing:-.05em;margin:8px 0 6px;
   background:linear-gradient(96deg,#7C3AED 0%,#DB2777 40%,#EA580C 72%,#CA8A04 100%);
   -webkit-background-clip:text;background-clip:text;color:transparent
 }
-.finale h2{font-weight:900;font-size:clamp(22px,4.4vw,32px);letter-spacing:-.025em;margin:12px 0 12px}
-.finale p{color:var(--ink-2);max-width:54ch;margin:0 auto 22px;font-size:16.5px;font-weight:600}
+.finale h2{font-weight:900;font-size:clamp(19px,3.9vw,27px);letter-spacing:-.025em;margin:12px 0 12px}
+.finale p{color:var(--ink-2);max-width:54ch;margin:0 auto 22px;font-size:14.5px;font-weight:600}
 .finale-break{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin:26px 0 4px}
 .brk{
-  font-size:13px;font-weight:800;padding:9px 14px;border-radius:999px;
+  font-size:11.4px;font-weight:800;padding:9px 14px;border-radius:999px;
   background:var(--soft);color:var(--ink-2);border:2px solid var(--line)
 }
 .brk b{font-weight:900}
@@ -285,7 +285,7 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
 @keyframes rise{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
 @keyframes thump{0%{transform:rotate(-2.5deg) scale(.55)}60%{transform:rotate(-2.5deg) scale(1.14)}100%{transform:rotate(-2.5deg) scale(1)}}
 
-.footnote{margin-top:44px;color:var(--muted);font-size:13.5px;font-weight:600;line-height:1.7;text-align:center;max-width:70ch;margin-inline:auto}
+.footnote{margin-top:44px;color:var(--muted);font-size:11.9px;font-weight:600;line-height:1.7;text-align:center;max-width:70ch;margin-inline:auto}
 .footnote code{font-weight:800;color:var(--ink-2)}
 
 :focus-visible{outline:3px solid var(--sec);outline-offset:3px;border-radius:6px}
@@ -296,49 +296,49 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
 .topbar-in{max-width:1240px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:16px}
 .brand{display:flex;align-items:center;gap:11px;flex:1;min-width:0}
 .brand-dot{width:13px;height:13px;border-radius:50%;flex:none;background:linear-gradient(135deg,#7C3AED,#DB2777 55%,#EA580C)}
-.brand-txt{font-weight:900;font-size:15.5px;letter-spacing:-.02em;line-height:1.15;display:flex;flex-direction:column;min-width:0}
-.brand-txt b{font-weight:700;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-top:2px}
-@media(max-width:620px){.brand-txt b{display:none}.brand-txt{font-size:14px}}
-.topbar-score{font-weight:900;font-size:19px;white-space:nowrap}
-.topbar-score small{font-weight:700;font-size:12.5px;color:var(--muted)}
+.brand-txt{font-weight:900;font-size:13.6px;letter-spacing:-.02em;line-height:1.15;display:flex;flex-direction:column;min-width:0}
+.brand-txt b{font-weight:700;font-size:10.1px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+@media(max-width:620px){.brand-txt b{display:none}.brand-txt{font-size:12.3px}}
+.topbar-score{font-weight:900;font-size:16.7px;white-space:nowrap}
+.topbar-score small{font-weight:700;font-size:11px;color:var(--muted)}
 .ledger-bar{height:6px;background:var(--line);overflow:hidden}
 .ledger-fill{height:100%;width:0;background:linear-gradient(90deg,#7C3AED,#0D9488,#2563EB,#DB2777,#EA580C,#4F46E5,#CA8A04,#0891B2);transition:width .55s cubic-bezier(.2,.8,.3,1)}
-.navtoggle{display:none;font-family:var(--font);font-weight:800;font-size:13px;background:var(--soft);border:2px solid var(--line-2);color:var(--ink-2);padding:8px 14px;border-radius:999px;cursor:pointer}
+.navtoggle{display:none;font-family:var(--font);font-weight:800;font-size:11.4px;background:var(--soft);border:2px solid var(--line-2);color:var(--ink-2);padding:8px 14px;border-radius:999px;cursor:pointer}
 
-.shell{max-width:1240px;margin:0 auto;padding:0 22px 110px;display:grid;grid-template-columns:1fr;gap:30px}
+.shell{max-width:1240px;margin:0 auto;padding:0 20px 76px;display:grid;grid-template-columns:1fr;gap:30px}
 @media(min-width:1000px){.shell{grid-template-columns:266px 1fr;gap:38px;align-items:start}}
 
 /* sidebar */
 .sidebar{display:none}
 @media(min-width:1000px){.sidebar{display:block;position:sticky;top:86px;padding-top:34px}}
 .sidebar.open{display:block;position:fixed;top:0;left:0;bottom:0;width:290px;z-index:90;background:var(--card);padding:24px 20px;overflow-y:auto;box-shadow:0 0 60px rgba(28,28,54,.28)}
-.side-label{font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-left:4px}
+.side-label{font-size:10.1px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-left:4px}
 .navitem{
   display:flex;align-items:center;gap:11px;width:100%;text-align:left;
-  font-family:var(--font);font-size:14.5px;font-weight:700;color:var(--ink-2);
+  font-family:var(--font);font-size:12.8px;font-weight:700;color:var(--ink-2);
   background:transparent;border:none;padding:10px 12px;border-radius:12px;cursor:pointer;margin-bottom:3px;
   transition:background .15s,color .15s;
 }
 .navitem:hover{background:var(--soft)}
-.navitem .dot{width:26px;height:26px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:900;color:#fff;background:var(--line-2)}
+.navitem .dot{width:26px;height:26px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:10.1px;font-weight:900;color:#fff;background:var(--line-2)}
 .navitem .nm{flex:1;line-height:1.25;min-width:0}
-.navitem .tick{font-size:12px;font-weight:900;color:var(--muted);white-space:nowrap}
+.navitem .tick{font-size:10.6px;font-weight:900;color:var(--muted);white-space:nowrap}
 .navitem.active{background:var(--nav-bg);color:var(--nav)}
 .navitem.active .dot{background:var(--nav)}
 .navitem.done .dot{background:var(--green)}
 .navitem.done .tick{color:var(--green)}
 .side-foot{margin-top:22px;padding:16px;background:var(--soft);border-radius:16px}
-.side-foot-t{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
-.mini{list-style:none;margin:0;padding:0;font-size:12.5px;font-weight:600;color:var(--ink-2);line-height:1.4}
+.side-foot-t{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.mini{list-style:none;margin:0;padding:0;font-size:11px;font-weight:600;color:var(--ink-2);line-height:1.4}
 .mini li{margin-bottom:8px;padding-left:2px}
-.mini li b{display:block;font-weight:900;font-size:12px;color:#00A870}
+.mini li b{display:block;font-weight:900;font-size:10.6px;color:#00A870}
 .mini li.no b{color:#F2436D}
 .navscrim{display:none;position:fixed;inset:0;background:rgba(28,28,54,.42);z-index:85}
 .navscrim.show{display:block}
 @media(max-width:999px){.navtoggle{display:block}}
 
 /* stage + steps */
-.stage{min-width:0;padding-top:22px}
+.stage{min-width:0;padding-top:16px}
 .step{display:none;animation:rise .35s ease both}
 .step.on{display:block}
 .section{display:none}
@@ -346,39 +346,39 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
 
 #step-intro .eyebrow{margin-top:14px}
 .statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:26px 0 28px}
-.stat{background:var(--card);border-radius:16px;padding:18px 20px;box-shadow:0 2px 0 var(--line-2),0 12px 30px rgba(28,28,54,.06)}
-.stat b{display:block;font-size:30px;font-weight:900;letter-spacing:-.03em;line-height:1}
-.stat span{font-size:12.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-.btn.start{margin-top:4px;background:linear-gradient(96deg,#7C3AED,#DB2777 60%,#EA580C);font-size:16.5px;padding:17px 34px}
+.stat{background:var(--card);border-radius:16px;padding:13px 15px;box-shadow:0 2px 0 var(--line-2),0 12px 30px rgba(28,28,54,.06)}
+.stat b{display:block;font-size:26.4px;font-weight:900;letter-spacing:-.03em;line-height:1}
+.stat span{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.btn.start{margin-top:4px;background:linear-gradient(96deg,#7C3AED,#DB2777 60%,#EA580C);font-size:14.5px;padding:17px 34px}
 .modepick{display:flex;gap:12px;flex-wrap:wrap;align-items:stretch;margin-top:4px}
 .modepick .btn{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:left;line-height:1.2}
-.modepick .btn small{font-size:12px;font-weight:700;letter-spacing:.01em;opacity:.82}
+.modepick .btn small{font-size:10.6px;font-weight:700;letter-spacing:.01em;opacity:.82}
 .btn.modealt{
   background:var(--card);color:var(--ink-2);border:2px solid var(--line-2);
-  box-shadow:0 3px 0 var(--line-2);font-size:15px;padding:16px 26px
+  box-shadow:0 3px 0 var(--line-2);font-size:13.2px;padding:16px 26px
 }
 .btn.modealt:hover{border-color:var(--sec);color:var(--sec)}
 .btn.modealt small{color:var(--muted)}
 .modenote{
-  margin:16px 0 0;font-size:13.5px;font-weight:600;color:var(--muted);max-width:58ch;line-height:1.5
+  margin:16px 0 0;font-size:11.9px;font-weight:600;color:var(--muted);max-width:58ch;line-height:1.5
 }
 .modenote b{color:var(--ink-2);font-weight:800}
 
 /* step footer nav */
-.stepnav{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:20px 26px 26px}
+.stepnav{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:15px 20px 20px}
 .btn.nav{background:var(--card);color:var(--sec);box-shadow:0 3px 0 var(--line-2);border:2px solid var(--line-2)}
 .btn.nav:hover{border-color:var(--sec)}
 .btn.nav.primary{background:var(--sec);color:#fff;border-color:transparent;box-shadow:0 4px 0 rgba(0,0,0,.16)}
 .stepnav .spacer{flex:1}
-.stepcount{font-size:13px;font-weight:800;color:var(--muted)}
+.stepcount{font-size:11.4px;font-weight:800;color:var(--muted)}
 .sec-foot{border-bottom:1px solid var(--line)}
 .finale .btn.ghost{margin-top:8px;background:var(--soft);color:var(--ink-2);border:2px solid var(--line-2);box-shadow:none}
 .finale{padding-bottom:38px}
 .footnote{margin-top:38px}
 
 
-.match-col-label{font-size:11.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin-bottom:11px}
-.match-hint{font-size:13px;font-weight:700;color:var(--muted);margin-top:11px}
+.match-col-label{font-size:10.1px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin-bottom:11px}
+.match-hint{font-size:11.4px;font-weight:700;color:var(--muted);margin-top:11px}
 
 /* ============ BUCKETS ============ */
 .bucketwrap{margin-top:4px}
@@ -392,21 +392,21 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
 .bucket.armed{border-color:var(--bc);background:var(--bc-bg)}
 .bucket.over{border-color:var(--bc);background:var(--bc-bg)}
 .bucket-head{
-  font-size:12px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;
+  font-size:10.6px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;
   color:#fff;background:var(--bc);padding:10px 12px;text-align:center
 }
 .bucket-body{display:flex;flex-direction:column;gap:7px;padding:11px;flex:1}
-.chip.bchip{width:100%;text-align:left;font-size:13px;padding:10px 12px}
+.chip.bchip{width:100%;text-align:left;font-size:11.4px;padding:10px 12px}
 .chip.bchip.bok{border-color:var(--green);background:var(--green-bg);color:#00654A;box-shadow:none}
 .chip.bchip.bbad{border-color:var(--red);background:var(--red-bg);color:#B31F45;box-shadow:none}
-.bfix{display:block;font-size:11.5px;font-weight:900;color:#00875C;margin-top:5px}
+.bfix{display:block;font-size:10.1px;font-weight:900;color:#00875C;margin-top:5px}
 .locked .bucket{cursor:default}
 
 /* ============ SOA CAPSTONE ============ */
 .soawrap{margin-top:4px}
 .scenario{
   background:var(--sec-bg);border-radius:16px;padding:16px 19px;margin-bottom:20px;
-  font-size:15.5px;font-weight:600;line-height:1.55;color:var(--ink-2)
+  font-size:13.6px;font-weight:600;line-height:1.55;color:var(--ink-2)
 }
 .scenario b{color:var(--ink);font-weight:900}
 .soa-card{
@@ -415,16 +415,16 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
 }
 .soa-head{margin-bottom:7px}
 .soa-n{
-  font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;
+  font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;
   color:#fff;background:var(--sec);padding:5px 11px;border-radius:999px
 }
-.soa-rec{font-size:16px;font-weight:700;line-height:1.42;margin:0 0 14px;color:var(--ink)}
+.soa-rec{font-size:14.1px;font-weight:700;line-height:1.42;margin:0 0 14px;color:var(--ink)}
 .soa-fields{display:grid;grid-template-columns:1fr;gap:12px}
 @media(min-width:860px){.soa-fields{grid-template-columns:1.15fr .7fr 1.15fr}}
 .soa-f{display:flex;flex-direction:column;gap:5px;min-width:0}
-.soa-lab{font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.soa-lab{font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .soa-sel{
-  font-family:var(--font);font-size:14px;font-weight:700;color:var(--ink);
+  font-family:var(--font);font-size:12.3px;font-weight:700;color:var(--ink);
   background:var(--card);border:2px solid var(--line-2);border-radius:12px;
   padding:11px 12px;width:100%;cursor:pointer;
   appearance:none;-webkit-appearance:none;
@@ -436,7 +436,7 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
 .soa-sel.is-right{border-color:var(--green);background-color:var(--green-bg);color:#00654A}
 .soa-sel.is-wrong{border-color:var(--red);background-color:var(--red-bg);color:#B31F45}
 .soa-sel:disabled{opacity:1}
-.soa-fix{font-size:12.5px;font-weight:800;color:#00875C;line-height:1.35;padding:2px 2px 0}
+.soa-fix{font-size:11px;font-weight:800;color:#00875C;line-height:1.35;padding:2px 2px 0}
 
 /* ============ ODD ONE OUT ============ */
 .opts.oddgrid{display:grid;grid-template-columns:1fr;gap:10px}
@@ -462,14 +462,14 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
   display:flex;flex-direction:column;gap:7px
 }
 .vs-tag{
-  font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;
+  font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;
   color:#fff;background:var(--vc);padding:4px 10px;border-radius:999px;align-self:flex-start
 }
-.vs-t{font-size:16.5px;font-weight:900;letter-spacing:-.015em;line-height:1.3;color:var(--ink)}
-.vs-d{font-size:14.5px;font-weight:600;line-height:1.45;color:var(--ink-2)}
+.vs-t{font-size:14.5px;font-weight:900;letter-spacing:-.015em;line-height:1.3;color:var(--ink)}
+.vs-d{font-size:12.8px;font-weight:600;line-height:1.45;color:var(--ink-2)}
 .vs-mid{
   display:flex;align-items:center;justify-content:center;
-  font-size:13px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)
+  font-size:11.4px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)
 }
 .vs-mid span{
   background:var(--card);border:2px solid var(--line-2);border-radius:999px;
@@ -479,12 +479,12 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
 /* ============ ESCALATING FACT PATTERN ============ */
 .esc{display:flex;flex-direction:column;gap:0}
 .esc-stage{
-  border-left:3px solid var(--line-2);padding:0 0 22px 20px;position:relative;margin-left:9px
+  border-left:3px solid var(--line-2);padding:0 0 16px 18px;position:relative;margin-left:9px
 }
 .esc-stage:last-child{padding-bottom:0;border-left-color:transparent}
 .esc-stage::before{
   content:attr(data-n);position:absolute;left:-15px;top:0;width:27px;height:27px;border-radius:50%;
-  background:var(--line-2);color:#fff;font-size:12px;font-weight:900;
+  background:var(--line-2);color:#fff;font-size:10.6px;font-weight:900;
   display:flex;align-items:center;justify-content:center
 }
 .esc-stage.live{border-left-color:var(--sec)}
@@ -493,46 +493,46 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
 .esc-stage.hidden{display:none}
 .esc-fact{
   background:var(--sec-bg);border-radius:14px;padding:14px 17px;margin-bottom:13px;
-  font-size:15.5px;font-weight:600;line-height:1.5;color:var(--ink-2)
+  font-size:13.6px;font-weight:600;line-height:1.5;color:var(--ink-2)
 }
-.esc-q{font-size:16.5px;font-weight:800;margin:0 0 12px;letter-spacing:-.008em}
+.esc-q{font-size:14.5px;font-weight:800;margin:0 0 12px;letter-spacing:-.008em}
 .esc-lock{
-  display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:800;color:var(--muted);
+  display:flex;align-items:center;gap:10px;font-size:11.9px;font-weight:800;color:var(--muted);
   background:var(--soft);border:2px dashed var(--line-2);border-radius:14px;padding:14px 17px
 }
 .esc-verdict{
-  margin-top:11px;font-size:14.5px;font-weight:600;line-height:1.5;
+  margin-top:11px;font-size:12.8px;font-weight:600;line-height:1.5;
   border-radius:12px;padding:12px 15px;display:none
 }
 .esc-verdict.show{display:block;animation:rise .3s ease both}
 .esc-verdict.ok{background:var(--green-bg);color:#00654A}
 .esc-verdict.no{background:var(--red-bg);color:#B31F45}
-.esc-verdict b{display:block;font-size:11.5px;font-weight:900;letter-spacing:.11em;text-transform:uppercase;margin-bottom:5px}
+.esc-verdict b{display:block;font-size:10.1px;font-weight:900;letter-spacing:.11em;text-transform:uppercase;margin-bottom:5px}
 
 /* ============ INVOICE AUDIT ============ */
 .audit-note{
   background:var(--amber-bg);border-radius:14px;padding:13px 16px;margin-bottom:16px;
-  font-size:15px;font-weight:600;color:#8A5200;line-height:1.5
+  font-size:13.2px;font-weight:600;color:#8A5200;line-height:1.5
 }
 .audit-note b{color:#7A4800;font-weight:900}
 .inv{border:2px solid var(--line-2);border-radius:16px;overflow:hidden;background:var(--card)}
 .inv-head{
   display:grid;grid-template-columns:1fr 132px 74px;gap:10px;padding:11px 16px;
   background:var(--soft);border-bottom:2px solid var(--line-2);
-  font-size:11px;font-weight:900;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)
+  font-size:10px;font-weight:900;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)
 }
 .inv-head span:last-child{text-align:right}
 .inv-row{
   display:grid;grid-template-columns:1fr 132px 74px;gap:10px;align-items:center;
-  padding:14px 16px;border-bottom:1px solid var(--line);cursor:pointer;
-  transition:background .15s;font-size:15px;font-weight:700;text-align:left;width:100%;
+  padding:11px 14px;border-bottom:1px solid var(--line);cursor:pointer;
+  transition:background .15s;font-size:13.2px;font-weight:700;text-align:left;width:100%;
   font-family:var(--font);color:var(--ink);background:var(--card);border-left:none;border-right:none;border-top:none
 }
 .inv-row:last-of-type{border-bottom:none}
 .inv-row:hover{background:var(--sec-bg)}
-.inv-sec{font-size:13px;font-weight:900;color:var(--ink-2)}
+.inv-sec{font-size:11.4px;font-weight:900;color:var(--ink-2)}
 .inv-flag{
-  justify-self:end;font-size:10.5px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;
+  justify-self:end;font-size:10px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;
   padding:5px 9px;border-radius:999px;background:var(--line);color:var(--muted);white-space:nowrap
 }
 .inv-row.flagged{background:var(--amber-bg)}
@@ -542,7 +542,7 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
 .inv-row.ok-right .inv-flag{background:var(--green);color:#fff}
 .inv-row.ok-wrong{background:var(--red-bg)}
 .inv-row.ok-wrong .inv-flag{background:var(--red);color:#fff}
-.inv-fix{grid-column:1/-1;font-size:13px;font-weight:700;color:var(--ink-2);line-height:1.45;padding-top:3px}
+.inv-fix{grid-column:1/-1;font-size:11.4px;font-weight:700;color:var(--ink-2);line-height:1.45;padding-top:3px}
 @media(max-width:620px){
   .inv-head{display:none}
   .inv-row{grid-template-columns:1fr auto;gap:6px 10px;padding:13px 14px}
@@ -550,7 +550,7 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
   .inv-sec{align-self:center}
   .inv-flag{justify-self:end}
 }
-.audit-count{margin-top:12px;font-size:13.5px;font-weight:800;color:var(--muted)}
+.audit-count{margin-top:12px;font-size:11.9px;font-weight:800;color:var(--muted)}
 .audit-count b{color:var(--sec);font-weight:900}
 .locked .inv-row{cursor:default}
 .locked .inv-row:hover{background:var(--card)}
@@ -562,30 +562,30 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
   display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px;
   background:var(--soft);border-radius:14px;padding:13px 17px
 }
-.rapid-bar .rb-lab{font-size:11.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-.rapid-bar .rb-n{font-size:19px;font-weight:900;color:var(--sec)}
-.rapid-bar .rb-n small{font-size:12.5px;font-weight:700;color:var(--muted)}
+.rapid-bar .rb-lab{font-size:10.1px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.rapid-bar .rb-n{font-size:16.7px;font-weight:900;color:var(--sec)}
+.rapid-bar .rb-n small{font-size:11px;font-weight:700;color:var(--muted)}
 .rapid-bar .rb-bar{flex:1;min-width:80px;height:9px;background:var(--line);border-radius:999px;overflow:hidden}
 .rapid-bar .rb-fill{height:100%;width:0;background:var(--sec);border-radius:999px;transition:width .3s ease}
-.rapid-bar .rb-key{font-size:12px;font-weight:700;color:var(--muted)}
+.rapid-bar .rb-key{font-size:10.6px;font-weight:700;color:var(--muted)}
 .rapid-bar .rb-key kbd{
-  font-family:var(--font);font-size:11px;font-weight:900;background:var(--card);
+  font-family:var(--font);font-size:10px;font-weight:900;background:var(--card);
   border:1.5px solid var(--line-2);border-bottom-width:2.5px;border-radius:6px;padding:2px 6px;color:var(--ink-2)
 }
-.rcards{display:flex;flex-direction:column;gap:10px}
+.rcards{display:flex;flex-direction:column;gap:8px}
 .rcard{
-  border:2px solid var(--line);border-radius:16px;background:var(--soft);padding:13px 15px;
+  border:2px solid var(--line);border-radius:16px;background:var(--soft);padding:10px 13px;
   display:grid;grid-template-columns:1fr;gap:11px;align-items:center;transition:border-color .15s,background .15s
 }
 @media(min-width:820px){.rcard{grid-template-columns:1fr 336px}}
 .rcard.done{border-color:var(--line-2);background:var(--card)}
 .rcard.rok{border-color:var(--green);background:var(--green-bg)}
 .rcard.rno{border-color:var(--red);background:var(--red-bg)}
-.rcard-t{font-size:15.5px;font-weight:800;line-height:1.32;letter-spacing:-.01em}
-.rcard-n{font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:3px}
+.rcard-t{font-size:13.6px;font-weight:800;line-height:1.32;letter-spacing:-.01em}
+.rcard-n{font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:3px}
 .rbtns{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .rbtn{
-  font-family:var(--font);font-size:12.5px;font-weight:900;letter-spacing:-.01em;line-height:1.15;
+  font-family:var(--font);font-size:11px;font-weight:900;letter-spacing:-.01em;line-height:1.15;
   background:var(--card);border:2px solid var(--line-2);color:var(--ink-2);
   padding:11px 4px;border-radius:11px;cursor:pointer;transition:all .12s;
 }
@@ -605,47 +605,58 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
 .brief{border:2px solid var(--line-2);border-radius:16px;background:var(--card);overflow:hidden}
 .brief-h{
   padding:12px 16px;color:#fff;background:var(--bh);
-  font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase
+  font-size:10.6px;font-weight:900;letter-spacing:.1em;text-transform:uppercase
 }
-.brief-h small{display:block;font-size:11px;letter-spacing:.04em;text-transform:none;font-weight:700;opacity:.85;margin-top:2px}
+.brief-h small{display:block;font-size:10px;letter-spacing:.04em;text-transform:none;font-weight:700;opacity:.85;margin-top:2px}
 .brief ul{list-style:none;margin:0;padding:13px 16px}
-.brief li{
-  font-size:14.5px;font-weight:600;line-height:1.45;color:var(--ink-2);
-  padding:6px 0 6px 17px;position:relative
+  .brief li{
+  font-size:12.8px;font-weight:600;line-height:1.45;color:var(--ink-2);
+  padding:4px 0 4px 16px;position:relative
 }
 .brief li::before{content:'';position:absolute;left:0;top:14px;width:7px;height:7px;border-radius:50%;background:var(--bh)}
 .brief li b{color:var(--ink);font-weight:800}
 .brief .brief-none{color:#B31F45;font-weight:800}
 .brief .brief-none::before{background:var(--red)}
 
-.feeblock{margin-bottom:26px}
+/* the two fees side by side on a wide screen: halves the height of the
+   capstone, and lets a strategy be compared across both fees in one look */
+.feegrid{display:block}
+@media(min-width:1180px){
+  .feegrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  .feegrid .feeblock{margin-bottom:0}
+  .feegrid .fr-btns{grid-template-columns:1fr 1fr}   /* 2x2 — the columns are narrower now */
+  .feegrid .fr-hint{display:none}     /* the checkbox already asks it; the name needs the width */
+  .feegrid .fr-rule{padding-left:40px}
+  .feegrid .fr-fix{padding-left:40px}
+}
+.feeblock{margin-bottom:20px}
 .feeblock:last-child{margin-bottom:0}
 .fb-head{
   display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;
   padding:12px 16px;border-radius:14px;background:var(--fb-bg);border:2px solid var(--fb)
 }
-.fb-title{font-size:16.5px;font-weight:900;letter-spacing:-.02em;color:var(--fb)}
-.fb-sub{font-size:13px;font-weight:700;color:var(--ink-2);flex:1;min-width:120px}
-.fb-count{font-size:12.5px;font-weight:900;color:var(--fb);white-space:nowrap}
-.fb-instr{font-size:13.5px;font-weight:700;color:var(--muted);margin:11px 2px 11px}
-.fee-list{display:flex;flex-direction:column;gap:8px}
+.fb-title{font-size:14.5px;font-weight:900;letter-spacing:-.02em;color:var(--fb)}
+.fb-sub{font-size:11.4px;font-weight:700;color:var(--ink-2);flex:1;min-width:120px}
+.fb-count{font-size:11px;font-weight:900;color:var(--fb);white-space:nowrap}
+.fb-instr{font-size:11.9px;font-weight:700;color:var(--muted);margin:11px 2px 11px}
+.fee-list{display:flex;flex-direction:column;gap:6px}
 .frow{
   border:2px solid var(--line);border-radius:14px;background:var(--soft);
   transition:border-color .15s,background .15s;overflow:hidden
 }
 .frow.on{border-color:var(--fb);background:var(--card)}
 .fr-top{
-  display:flex;gap:12px;align-items:center;padding:13px 15px;cursor:pointer;
+  display:flex;gap:11px;align-items:center;padding:10px 13px;cursor:pointer;
   font-family:var(--font);width:100%;text-align:left;background:none;border:none;color:var(--ink)
 }
 .fr-box{
   width:22px;height:22px;flex:none;border-radius:7px;border:2px solid var(--line-2);background:var(--card);
-  display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:11.4px;font-weight:900;
   transition:all .15s
 }
 .frow.on .fr-box{background:var(--fb);border-color:var(--fb)}
-.fr-name{flex:1;font-size:15px;font-weight:700;line-height:1.34;min-width:0}
-.fr-hint{font-size:11px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.fr-name{flex:1;font-size:13.2px;font-weight:700;line-height:1.34;min-width:0}
+.fr-hint{font-size:10px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 @media(max-width:640px){
   .fr-hint{display:none}                    /* the checkbox already says it; the name needs the width */
   .fb-head{gap:4px 10px}
@@ -654,11 +665,11 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
 .fr-rule{display:none;padding:0 15px 13px 49px}
 .frow.on .fr-rule,.frow.reveal .fr-rule{display:block;animation:rise .25s ease both}
 .frow.reveal .fr-box{border-style:dashed;border-color:var(--green);color:transparent}
-.fr-rule-lab{font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.fr-rule-lab{font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
 .fr-btns{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;max-width:460px}
 @media(min-width:600px){.fr-btns{grid-template-columns:repeat(4,1fr)}}
 .fr-b{
-  font-family:var(--font);font-size:12.5px;font-weight:900;line-height:1.15;
+  font-family:var(--font);font-size:11px;font-weight:900;line-height:1.15;
   background:var(--soft);border:2px solid var(--line-2);color:var(--ink-2);
   padding:10px 4px;border-radius:10px;cursor:pointer;transition:all .12s
 }
@@ -670,7 +681,7 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
 .frow.gok{border-color:var(--green);background:var(--green-bg)}
 .frow.gno{border-color:var(--red);background:var(--red-bg)}
 .frow.gpart{border-color:var(--amber);background:var(--amber-bg)}
-.fr-fix{font-size:12.5px;font-weight:800;line-height:1.4;padding:0 15px 12px 49px;color:#00654A}
+.fr-fix{font-size:11px;font-weight:800;line-height:1.4;padding:0 15px 12px 49px;color:#00654A}
 .frow.gno .fr-fix{color:#B31F45}
 .frow.gpart .fr-fix{color:#8A5200}
 .locked .fr-top{cursor:default}
@@ -966,7 +977,7 @@ const QUIZ = [
      5
     ],
     "why": "The two rejects are the ones the document warns about by name. A verbal confirmation evidences nothing, and a premium split may not be used as the allocation basis unless the file explains why it is a reasonable proxy for the advice work. Everything else establishes either that the work was tax-affairs work, or that the assets it related to were genuinely income-producing.",
-    "core": true
+    "core": false
    }
   ]
  },
@@ -1273,6 +1284,30 @@ const QUIZ = [
     "core": false
    },
    {
+    "type": "versus",
+    "tag": "Head to head",
+    "hard": true,
+    "core": true,
+    "q": "Both of these are brand new, bought from scratch in the same SOA. Which one can be claimed?",
+    "hint": "Ask which head each claim would have to rest on. One of them could only ever be claimed because the asset will earn income later. The other is being claimed for the tax analysis itself — so ask whether that analysis needs the asset to already exist.",
+    "left": {
+     "t": "A new $150,000 share portfolio",
+     "d": "Selected and bought for a client who held no investments outside super"
+    },
+    "right": {
+     "t": "A new $150,000 investment bond",
+     "d": "Recommended as an internally taxed structure to reduce assessable income, with ownership, the 10-year rule and the 125% rule analysed"
+    },
+    "options": [
+     "Left only",
+     "Right only",
+     "Both",
+     "Neither"
+    ],
+    "answer": 1,
+    "why": "Right only — and the reason is which head the claim rests on, not which asset is newer. “Capital and preparatory” is an answer to s8-1. The share portfolio could only ever be claimed on the basis that it will produce assessable income later, and that connection does not exist yet, so the row is nil.\n\nThe bond never relied on s8-1 at all. Its claim is s25-5: advice on how the taxation law applies to this client's circumstances — using an internally taxed structure to reduce their assessable income, and the consequences of the 10-year and 125% rules. s25-5 does not require an existing income-producing asset, so it survives the bond being brand new. Being new defeats an s8-1 claim; it does not defeat a s25-5 one.\n\nThe limit on the bond row is a different one: reduce it where the work was mainly product selection with no tax analysis on the file. It is the analysis that is claimable, never the act of buying the product."
+   },
+   {
     "type": "escalate",
     "tag": "Fact pattern",
     "hard": true,
@@ -1555,6 +1590,22 @@ const QUIZ = [
     "answer": 1,
     "why": "Treatment retained, wording corrected. The exemplar overstates the mechanics: an offset reduces non-deductible interest, it does not reduce assessable income. The s25-5 claim stands on the tax implications of how the accounts are structured; the balance of the work is private cashflow and banking structure.",
     "core": false
+   },
+   {
+    "type": "mc",
+    "tag": "Complex",
+    "hard": true,
+    "core": true,
+    "q": "Bank Account &amp; Offset Structuring is claimed under s25-5, but only part of the fee is claimable. What is that deductible part actually paying for?",
+    "hint": "Ask what changes, in tax terms, when the money moves. Savings sitting in an account do something for the client's tax position that the same savings sitting in an offset do not. Then ask how much of the engagement was really about that, and how much was about where the household banks.",
+    "options": [
+     "The interest the client saves on the home loan — that is the real benefit the advice delivers",
+     "Advice on the tax consequences of where the money sits: savings in an account earn assessable interest, the same savings in an offset earn none and reduce non-deductible interest instead, and whose name the accounts are in decides who is taxed on any interest that is earned",
+     "The whole engagement, because structuring bank accounts is inherently a tax matter",
+     "Nothing — an offset produces no assessable income, so no part of the fee can be claimed"
+    ],
+    "answer": 1,
+    "why": "The deductible part is the tax analysis, not the money saved. Moving savings into an offset changes the client's tax position in a way worth advising on: interest that would have been assessable is never earned, non-deductible interest falls instead, and if any account does earn interest, whose name it is in decides who pays tax on it. That is advice on the tax implications of the structuring, which is s25-5.\n\nThe rest of the engagement — how many accounts, which bank, how the household routes its pay — is private banking and cashflow structure, and that is precisely why only part of the fee carries the claim rather than all of it. Note what the two wrong extremes get wrong. Option A confuses the client's benefit with the advice; you never claim the interest saved, only the work of advising. Option D assumes that because the arrangement produces no assessable income, nothing is claimable — but advising on the tax consequences of an arrangement is s25-5 whether or not the arrangement itself produces income. That is the same principle that lets super-held life and TPD cover carry a claim when the premiums themselves never can."
    },
    {
     "type": "audit",
@@ -2115,7 +2166,7 @@ const QUIZ = [
     "core": true,
     "q": "This client had an SOA last financial year and is on an ongoing service this year. For each fee, select every strategy row that belongs on it — then set the tax ruling for each row you select.",
     "hint": "Most rows appear on both fees, because a real annual review covers the whole plan and reviewing something again is real work — so ask whether anyone advised on it that year, not whether the arrangement still exists. Hold on to one idea throughout: for anything involving a loan, deductibility follows what the borrowed money was spent on, not what the loan is secured against.",
-    "scenario": "<b>Client:</b> Ben &amp; Sophie Carter, both employed, two school-aged children. Last financial year they bought a larger home for $1.35m and <b>kept their previous home as a rental</b> — they moved out on 1 November and it was tenanted from 15 November. The former home carries a <b>$310,000 loan</b>; the new home carries a <b>$700,000 loan</b>. The deposit for the new home was drawn against the former home. Both fees are invoiced as a single amount, and the file holds a complete set of calculations, modelling and file notes for every piece of work below.",
+    "scenario": "<b>Client:</b> Ben &amp; Sophie Carter, both employed, two school-aged children. Last financial year they bought a larger home for $1.35m and <b>kept their previous home as a rental</b> — they moved out on 1 November and it was tenanted from 15 November. The former home carries a <b>$310,000 loan</b>; the new home carries a <b>$700,000 loan</b>. The deposit for the new home was drawn against the former home. Both fees are invoiced as a single amount, and the file holds complete calculations and file notes for every piece of work below.",
     "rulings": [
      "s8-1",
      "s25-5",
@@ -2140,18 +2191,18 @@ const QUIZ = [
     ],
     "notes": [
      "on both fees, both heads, and it carries the whole lesson. Deductibility follows the purpose the borrowed money was put to, not the asset securing the loan. Part of the loan secured over the rental funded the new home, so that slice of interest is private despite the security. Working it out is advice on an income-producing asset (s8-1) and on how the tax law treats the borrowings (s25-5).",
-     "on both fees, both heads. The former home became an income-producing asset the day it was tenanted, and from that point reviewing it is managing existing income-producing assets (s8-1) plus advice on the tax implications of the rental income and any disposal (s25-5). It never goes on the Establish row — nothing was acquired, the same asset simply changed character.",
+     "on both fees, both heads, though the work differs. On the upfront fee it is the changeover: market value cost base, the main residence exemption position, the depreciation schedule and the tax treatment of the rental income from the day it was let. On the ongoing fee it is a full year of managing that same asset. Either way the property is an existing holding that produces assessable income (s8-1) and the advice covers the tax implications of that income and any disposal (s25-5). It never goes on the Establish row — nothing was acquired, the same asset simply changed character.",
      "s25-5 on both fees. The bond is taxed internally and returns nothing assessable to them while they hold it, so there is no s8-1 limb. What is claimable is the advice on structuring assets to reduce assessable income, and on the 10-year and 125% rules.",
      "s25-5 on both fees — advice on the tax implications of how the accounts are structured. It is not the same row as paying down the home loan, and it is not nil.",
-     "nil, and on the upfront fee only. Directing surplus at the new home loan is private debt reduction. It drops off the ongoing fee because the surplus was redirected to the investment strategy — a row goes on a fee only where that work was actually done that year.",
+     "nil on both fees. Directing surplus at the home loan was recommended in the SOA and reviewed again at the annual review — reviewing it is real work, and it still claims nothing, because private debt reduction produces no assessable income and manages no tax position. Note it is not the same row as offset structuring, which does carry a s25-5 slice for the tax analysis attached to it.",
      "nil on both fees. Prepared in the SOA and refreshed at the review, and private and domestic either way. The row goes on the invoice and calculates $0.",
      "nil on both fees. The wills were rewritten after the purchase and reviewed again at the annual review. Both are real pieces of work and neither is claimable — an annual estate review is still an estate review, and frequency does not create deductibility.",
-     "s25-5 on both fees, because the projections were genuinely produced in each year. This is the row that depends most on the file: claim it in the years the modelling was actually done, not because it appears in the service agreement.",
+     "s25-5, and on the upfront fee only. Modelling that calculates the tax payable now and over time is an SOA exercise — it was not re-run this year, and a cashflow update without tax calculations is not this row. Claim it in the years the modelling was genuinely produced, not because it appears in the service agreement.",
      "both heads on both fees. Increased in the SOA and re-assessed at the review. The cover protects assessable income (s8-1) and the advice covers its tax treatment and benefit design (s25-5). Ownership is what matters, and this is held personally by Ben.",
      "s25-5 on both fees — the tax implications of benefits paid before age 60 or to a non-dependant. Held inside Sophie's super, so no personal s8-1 nexus arises, and the premiums are never deductible to her. This is the advice fee only.",
      "s25-5 on both fees. It was reduced in the SOA to fund the larger mortgage and increased again at the review, and both decisions rest on the available concessional cap space and carry-forward position. Deciding whether to continue, increase or decrease an arrangement is continuing advice on the tax treatment of the contributions.",
-     "both heads, and on the ongoing fee only. It was not recommended in the SOA, where the priority was getting the two home loans structured correctly. Once the new mortgage settled, splitting it and borrowing to invest converts private debt into deductible investment debt — s8-1 for the borrowings, s25-5 for the interest deductibility and purpose tracing. Note the interest is deductible even though the loan is secured over the family home.",
-     "nil, and on the ongoing fee only. The shares bought with the recycled borrowings are an acquisition, and acquisition advice is capital. Note the pairing: the loan that funded the portfolio is claimable under both heads while the portfolio itself is nil — two rows, opposite answers, on the same invoice.",
+     "never recommended, and it would not fit. The surplus is already committed to the mortgage, the bond and school fees — and you cannot recycle debt into an internally taxed investment bond in any event, because the borrowing has to fund an asset that produces assessable income in the client's own hands. A bond produces none while it is held.",
+     "never recommended — nothing was acquired. The rental is an existing asset that changed character, which belongs on the ongoing management row. This row is for deploying capital into something new, and that did not happen.",
      "never recommended, and could not be — both are in their forties and years from a condition of release. The strategy list is not a menu."
     ],
     "blocks": [
@@ -2196,32 +2247,28 @@ const QUIZ = [
        "<b>Annual review covering every strategy in the SOA</b>, with updated file notes for each",
        "<b>Ongoing management of the rental</b> — a full year of tenancy, income, expenses, depreciation and the tax implications",
        "Re-check the <b>loan splits and purpose tracing</b> after a refinance of the rental loan",
-       "<b>Restart and increase the salary sacrifice</b> now the mortgage has settled — cap space and carry-forward re-checked",
+       "<b>Increase the salary sacrifice again</b> now the mortgage has settled — cap space and carry-forward position re-checked",
        "Review the <b>investment bond</b> against the 125% contribution rule",
-       "Re-test the <b>offset structure</b> against their current salary and savings pattern",
+       "Re-test the <b>offset structure</b>, and review progress on <b>paying down the home loan</b>",
        "<b>Insurance review</b> — Ben's income protection and Sophie's super-held cover both re-assessed",
-       "<b>Split the new home loan and borrow to invest</b>, converting private debt into deductible investment debt, with purpose tracing documented",
-       "Select and buy the <b>$120,000 share portfolio</b> funded by those borrowings",
        "Refresh the <b>budget</b> and review the <b>wills</b>",
-       "!The surplus now funds the investment strategy, so <b>no further work was done on paying down the home loan</b> this year."
+       "!No new strategies were added this year, and <b>no new tax modelling</b> was produced — the projections were done with the SOA."
       ],
       "key": {
        "0": 2,
        "1": 2,
        "2": 1,
        "3": 1,
+       "4": 3,
        "5": 3,
        "6": 3,
-       "7": 1,
        "8": 2,
        "9": 1,
-       "10": 1,
-       "11": 2,
-       "12": 3
+       "10": 1
       }
      }
     ],
-    "why": "The engagement turns on one idea, and it is the one most likely to cost a client money: deductibility follows the purpose the borrowed money was put to, not the asset the loan is secured against. Part of the loan secured over the rental funded the new home, so that interest is private despite the security — and in the following year the new home loan is split and borrowed against to invest, making that interest deductible despite being secured over the family home. Working out either of those is claimable under both heads.\n\nThe second idea is that an asset can change character. The former home was private until the day it was tenanted and income-producing from then on. It never goes on the Establish row, because nothing was acquired — the same asset simply started earning. That is why managing it is claimable, while buying the share portfolio in the second year is not, and why that portfolio sits at nil on the very same invoice as the borrowings that funded it.\n\nEverything else keeps its ruling across both fees, because the character of the work has not changed. Salary sacrifice was reduced one year and increased the next, and both decisions rest on the available cap space — continuing advice on the tax treatment of the contributions, not a one-off setup. Only one row falls away entirely: paying down the home loan, because the surplus was redirected and nobody did that work again. And the two permanent nils are worth saying out loud — budgeting is private, and the wills are private and capital however often you review them."
+    "why": "On a mature ongoing service almost every row recurs, and that is the headline. The annual review covers the whole plan, so reviewing something again is real work that belongs on the invoice — the question is never whether the arrangement still exists, but whether anyone actually advised on it that year. Where they did, the ruling stays the same, because the character of the work has not changed. Exactly one row falls away: the tax modelling was produced with the SOA and not re-run, and a cashflow update without tax calculations is not that row.\n\nThe engagement turns on one idea, and it is the one most likely to cost a client money: deductibility follows the purpose the borrowed money was put to, not the asset the loan is secured against. The deposit for the new home was drawn against the former home, so that slice of interest is private despite being secured over an income-producing property. Working that out is claimable under both heads — and it is the reason the file traces purpose rather than security.\n\nThe second idea is that an asset can change character. The former home was private until the day it was tenanted and income-producing from then on. It never goes on the Establish row, because nothing was acquired — the same asset simply started earning.\n\nFinally, the three rows that claim nothing on either fee still go on the invoice every year and calculate $0. Budgeting is private. Paying down the home loan is private debt reduction, reviewed annually and claimable never. The wills are private and capital however often you review them. Frequency does not create deductibility."
    }
   ]
  }
@@ -2745,6 +2792,7 @@ function buildFees(q, key){
   });
   wrap.appendChild(brief);
 
+  const grid = el('div','feegrid');
   q.blocks.forEach((bl,bi)=>{
     const block = el('div','feeblock');
     block.dataset.block = bi;
@@ -2805,8 +2853,9 @@ function buildFees(q, key){
       list.appendChild(row);
     });
     block.appendChild(list);
-    wrap.appendChild(block);
+    grid.appendChild(block);
   });
+  wrap.appendChild(grid);
   return wrap;
 }
 
