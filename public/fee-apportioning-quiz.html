@@ -350,6 +350,19 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
 .stat b{display:block;font-size:30px;font-weight:900;letter-spacing:-.03em;line-height:1}
 .stat span{font-size:12.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
 .btn.start{margin-top:4px;background:linear-gradient(96deg,#7C3AED,#DB2777 60%,#EA580C);font-size:16.5px;padding:17px 34px}
+.modepick{display:flex;gap:12px;flex-wrap:wrap;align-items:stretch;margin-top:4px}
+.modepick .btn{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:left;line-height:1.2}
+.modepick .btn small{font-size:12px;font-weight:700;letter-spacing:.01em;opacity:.82}
+.btn.modealt{
+  background:var(--card);color:var(--ink-2);border:2px solid var(--line-2);
+  box-shadow:0 3px 0 var(--line-2);font-size:15px;padding:16px 26px
+}
+.btn.modealt:hover{border-color:var(--sec);color:var(--sec)}
+.btn.modealt small{color:var(--muted)}
+.modenote{
+  margin:16px 0 0;font-size:13.5px;font-weight:600;color:var(--muted);max-width:58ch;line-height:1.5
+}
+.modenote b{color:var(--ink-2);font-weight:800}
 
 /* step footer nav */
 .stepnav{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:20px 26px 26px}
@@ -721,7 +734,18 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
       </div>
 
       <div class="statgrid" id="statgrid"></div>
-      <button class="btn start" id="startBtn">Start the quiz</button>
+
+      <div class="modepick">
+        <button class="btn start" id="startCore">
+          Start the 30-minute core
+          <small id="coreMeta"></small>
+        </button>
+        <button class="btn modealt" id="startFull">
+          Run the full workshop
+          <small id="fullMeta"></small>
+        </button>
+      </div>
+      <p class="modenote" id="modeNote"></p>
     </section>
 
     <main id="quiz"></main>
@@ -770,7 +794,8 @@ const QUIZ = [
      "The adviser’s time, regardless of subject matter"
     ],
     "answer": 1,
-    "why": "The tax advice itself. This is what makes apportioning possible at all: you can recommend a wholly non-deductible arrangement and still claim the part of the fee that was advice on its tax consequences. Super-owned life and TPD cover is the clearest case — the premiums are never deductible to the member, but the advice on the tax treatment of the benefits is."
+    "why": "The tax advice itself. This is what makes apportioning possible at all: you can recommend a wholly non-deductible arrangement and still claim the part of the fee that was advice on its tax consequences. Super-owned life and TPD cover is the clearest case — the premiums are never deductible to the member, but the advice on the tax treatment of the benefits is.",
+    "core": true
    },
    {
     "type": "dropdown",
@@ -796,7 +821,8 @@ const QUIZ = [
       "answer": 1
      }
     ],
-    "why": "Assessable income, and tax consequences. s8-1 requires a direct connection to an existing income-producing activity, which is why anything preparatory or acquisitive falls outside it. s25-5 covers advice on how tax law applies to the client’s circumstances."
+    "why": "Assessable income, and tax consequences. s8-1 requires a direct connection to an existing income-producing activity, which is why anything preparatory or acquisitive falls outside it. s25-5 covers advice on how tax law applies to the client’s circumstances.",
+    "core": true
    },
    {
     "type": "bucket",
@@ -842,14 +868,15 @@ const QUIZ = [
       "box": 3
      }
     ],
-    "why": "Business expenses insurance is the only row in the whole document that sits on s8-1 alone — cover that protects business revenue, with no tax-affairs analysis attached to it. The s25-5-only rows are advice about tax treatment where the arrangement itself produces nothing assessable for the client. Both heads apply where the work manages or produces assessable income and advises on the tax consequences at the same time, which is why debt recycling belongs there: the borrowings are applied to income-producing investments (s8-1) and the engagement also advises on interest deductibility and borrowing purpose (s25-5)."
+    "why": "Business expenses insurance is the only row in the whole document that sits on s8-1 alone — cover that protects business revenue, with no tax-affairs analysis attached to it. The s25-5-only rows are advice about tax treatment where the arrangement itself produces nothing assessable for the client. Both heads apply where the work manages or produces assessable income and advises on the tax consequences at the same time, which is why debt recycling belongs there: the borrowings are applied to income-producing investments (s8-1) and the engagement also advises on interest deductibility and borrowing purpose (s25-5).",
+    "core": true
    },
    {
     "type": "mc",
     "tag": "Complex",
     "hard": true,
     "q": "An adviser reviews a client’s existing $2m share portfolio, recommends selling two holdings, and reinvests the proceeds into three new managed funds inside the same portfolio. No new capital is introduced. How is the advice treated?",
-    "hint": "The absence of new capital is not the test. Consider whether each element maintains an existing holding or brings a new one into existence.",
+    "hint": "Ask this of each part separately: does it look after something the client already owns, or does it bring something new into existence? Looking after existing holdings is deductible. Bringing new ones into existence is capital — and that stays true even when the money came from a sale rather than the client's own pocket.",
     "options": [
      "Deductible under both heads throughout — no new capital was introduced, so the whole engagement maintains existing income-producing assets",
      "Not deductible — three new fund holdings are acquisitions, and acquisition advice is capital in nature",
@@ -857,14 +884,16 @@ const QUIZ = [
      "Deductible under s25-5 alone — the engagement is advice on the tax consequences of disposals"
     ],
     "answer": 2,
-    "why": "Apportion it. Reinvesting proceeds still brings new holdings into existence, so the fund selection is capital regardless of where the money came from. The review of existing holdings supplies the s8-1 limb and the CGT advice on the disposals supplies s25-5. Option A is the common error — treating “no new money” as though it settled the question."
+    "why": "Apportion it. Reinvesting proceeds still brings new holdings into existence, so the fund selection is capital regardless of where the money came from. The review of existing holdings supplies the s8-1 limb and the CGT advice on the disposals supplies s25-5. Option A is the common error — treating “no new money” as though it settled the question.",
+    "core": false
    },
    {
     "type": "tf",
     "tag": "Trap",
     "q": "Advice that reduces a client’s non-deductible interest cost is deductible under s8-1, because reducing an expense has the same effect on their position as increasing assessable income.",
     "answer": false,
-    "why": "False, and this is the reasoning behind the corrected offset wording. Reducing non-deductible interest improves the client’s cash position but does not produce assessable income and does not constitute managing their tax affairs. The two are not equivalent for s8-1 purposes."
+    "why": "False, and this is the reasoning behind the corrected offset wording. Reducing non-deductible interest improves the client’s cash position but does not produce assessable income and does not constitute managing their tax affairs. The two are not equivalent for s8-1 purposes.",
+    "core": false
    },
    {
     "type": "odd",
@@ -877,7 +906,8 @@ const QUIZ = [
      "Rebalancing an existing portfolio back to its target asset allocation"
     ],
     "answer": 3,
-    "why": "Rebalancing is the odd one out. It maintains a portfolio that already exists, so it keeps its deductible treatment under both heads. The other three all bring something into existence, which is the definition of capital in this context."
+    "why": "Rebalancing is the odd one out. It maintains a portfolio that already exists, so it keeps its deductible treatment under both heads. The other three all bring something into existence, which is the definition of capital in this context.",
+    "core": false
    },
    {
     "type": "versus",
@@ -898,14 +928,15 @@ const QUIZ = [
      "Neither"
     ],
     "answer": 0,
-    "why": "Left only. s8-1 requires a direct connection to an existing income-producing activity. The left engagement manages assets already producing assessable income. The right one is acquisitive and preparatory — capital in nature — and the fact that the shares will produce income later does not create the connection now."
+    "why": "Left only. s8-1 requires a direct connection to an existing income-producing activity. The left engagement manages assets already producing assessable income. The right one is acquisitive and preparatory — capital in nature — and the fact that the shares will produce income later does not create the connection now.",
+    "core": false
    },
    {
     "type": "mc",
     "tag": "Complex",
     "hard": true,
     "q": "A debt recycling engagement converts private home loan debt into deductible investment debt. Loan purpose tracing and an interest deductibility analysis are documented. The client also achieves meaningful interest savings on the remaining home loan. Which head or heads support the deduction, and what must be apportioned out?",
-    "hint": "Ask two separate questions. What are the borrowed funds applied to, and did the engagement also advise on how the tax law treats those borrowings? Then deal with the balance of the work.",
+    "hint": "Two separate tests. First, what were the borrowed funds spent on? If it was income-producing investments, that is s8-1. Second, did the adviser also work out how the tax law treats those borrowings — interest deductibility, purpose tracing? That is s25-5 in its own right. Then take out anything to do with the home loan, because that part is private.",
     "options": [
      "s25-5 only; the investment borrowing itself is apportioned out",
      "s8-1 only, because the borrowing acquires income-producing investments — advice on interest deductibility adds nothing further",
@@ -913,7 +944,8 @@ const QUIZ = [
      "Neither — borrowing to acquire assets is always capital"
     ],
     "answer": 2,
-    "why": "Both heads, with the private slice carved off. The borrowings are applied to investments that produce assessable income, which supplies s8-1. The documented purpose tracing and interest deductibility analysis is advice on how the taxation law applies to those borrowings, which supplies s25-5 in its own right. What cannot come along is the home loan reduction and household cashflow advice — interest savings on private debt are not assessable income, and improving the client’s cash position is not managing their tax affairs."
+    "why": "Both heads, with the private slice carved off. The borrowings are applied to investments that produce assessable income, which supplies s8-1. The documented purpose tracing and interest deductibility analysis is advice on how the taxation law applies to those borrowings, which supplies s25-5 in its own right. What cannot come along is the home loan reduction and household cashflow advice — interest savings on private debt are not assessable income, and improving the client’s cash position is not managing their tax affairs.",
+    "core": false
    },
    {
     "type": "multi",
@@ -933,7 +965,8 @@ const QUIZ = [
      3,
      5
     ],
-    "why": "The two rejects are the ones the document warns about by name. A verbal confirmation evidences nothing, and a premium split may not be used as the allocation basis unless the file explains why it is a reasonable proxy for the advice work. Everything else establishes either that the work was tax-affairs work, or that the assets it related to were genuinely income-producing."
+    "why": "The two rejects are the ones the document warns about by name. A verbal confirmation evidences nothing, and a premium split may not be used as the allocation basis unless the file explains why it is a reasonable proxy for the advice work. Everything else establishes either that the work was tax-affairs work, or that the assets it related to were genuinely income-producing.",
+    "core": false
    }
   ]
  },
@@ -954,7 +987,8 @@ const QUIZ = [
      "Because the deduction is claimed by the employer rather than the client"
     ],
     "answer": 1,
-    "why": "s8-1 requires a connection to producing assessable income; salary sacrifice reduces it. The deductibility comes entirely from the s25-5 limb — advice on the tax treatment of sacrificing salary into super, the concessional cap and the PAYG consequences. Several rows in the document do cite both heads, so option A is wrong on its face."
+    "why": "s8-1 requires a connection to producing assessable income; salary sacrifice reduces it. The deductibility comes entirely from the s25-5 limb — advice on the tax treatment of sacrificing salary into super, the concessional cap and the PAYG consequences. Several rows in the document do cite both heads, so option A is wrong on its face.",
+    "core": false
    },
    {
     "type": "dropdown",
@@ -980,7 +1014,8 @@ const QUIZ = [
       "answer": 0
      }
     ],
-    "why": "Concessional and Non-Concessional. All three concern applying taxation laws — contribution caps, deductibility, Division 293 and bring-forward mechanics — which is squarely s25-5 territory."
+    "why": "Concessional and Non-Concessional. All three concern applying taxation laws — contribution caps, deductibility, Division 293 and bring-forward mechanics — which is squarely s25-5 territory.",
+    "core": false
    },
    {
     "type": "bucket",
@@ -1024,14 +1059,15 @@ const QUIZ = [
       "box": 1
      }
     ],
-    "why": "Nothing in Super & Retirement touches s8-1 — super assets produce income for the fund, not for the member. That leaves s25-5 or nothing. The two nil rows share a reason: a like-for-like fund or platform move is product replacement, and reviewing the investment strategy inside super is neither managing the member’s tax affairs nor producing their assessable income."
+    "why": "Nothing in Super & Retirement touches s8-1 — super assets produce income for the fund, not for the member. That leaves s25-5 or nothing. The two nil rows share a reason: a like-for-like fund or platform move is product replacement, and reviewing the investment strategy inside super is neither managing the member’s tax affairs nor producing their assessable income.",
+    "core": false
    },
    {
     "type": "mc",
     "tag": "Complex",
     "hard": true,
     "q": "A re-contribution strategy is recommended. The file shows the dominant purpose is intergenerational wealth transfer to non-dependant adult children. Which section applies, if any?",
-    "hint": "The apportionment turns on dominant purpose. Estate, succession and capital restructuring components sit outside any deductible claim entirely.",
+    "hint": "Look for the main reason the client wanted the advice. Where that reason is passing wealth to the children, the estate and succession work is not deductible at all. Only the specific tax calculations — component modelling, death benefit tax — can be claimed.",
     "options": [
      "s25-5 across the whole engagement, since the strategy turns on taxable and tax-free component mechanics",
      "s25-5, but only for identifiable tax-affairs analysis such as component modelling and death benefit tax calculations — the estate and succession work is not deductible",
@@ -1039,14 +1075,15 @@ const QUIZ = [
      "s8-1, since the strategy preserves the value of the estate"
     ],
     "answer": 1,
-    "why": "s25-5, but only for the identifiable tax-affairs work. Where the dominant purpose is intergenerational transfer, the deductible element is narrow and must be separately evidenced — component modelling, death benefit tax comparison, contribution cap analysis. The succession and capital restructuring elements attract nothing."
+    "why": "s25-5, but only for the identifiable tax-affairs work. Where the dominant purpose is intergenerational transfer, the deductible element is narrow and must be separately evidenced — component modelling, death benefit tax comparison, contribution cap analysis. The succession and capital restructuring elements attract nothing.",
+    "core": false
    },
    {
     "type": "escalate",
     "tag": "Fact pattern",
     "hard": true,
     "q": "A client’s circumstances change across the year. Answer each stage before the next fact is revealed.",
-    "hint": "Each new fact adds work rather than replacing it. Ask what section applies to the additional work in isolation, not to the engagement as a whole.",
+    "hint": "Each new fact adds work; it does not replace the work before it. Answer each stage about the new work only, not about the engagement as a whole.",
     "stages": [
      {
       "fact": "Dave is 58 and entirely in accumulation phase. The annual review covers the investment options held inside his super fund.",
@@ -1084,14 +1121,16 @@ const QUIZ = [
       "answer": 3,
       "why": "Still nothing. Pension phase does not convert an investment option review into tax-affairs work. This is the trap: the same account can carry deductible drawdown advice and non-deductible investment selection advice at the same time, and they go on different rows."
      }
-    ]
+    ],
+    "core": true
    },
    {
     "type": "tf",
     "tag": "Standard",
     "q": "Commencement of a Transition to Retirement pension is claimed under the same section as an account based pension — s25-5 — because it involves the same pension tax mechanics.",
     "answer": true,
-    "why": "True. A TTR engages pension tax treatment, PAYG reduction and contribution recycling — the same mechanics that make ABP commencement deductible under s25-5. Reduce it where the advice is mainly a work-transition or lifestyle recommendation."
+    "why": "True. A TTR engages pension tax treatment, PAYG reduction and contribution recycling — the same mechanics that make ABP commencement deductible under s25-5. Reduce it where the advice is mainly a work-transition or lifestyle recommendation.",
+    "core": false
    },
    {
     "type": "odd",
@@ -1104,7 +1143,8 @@ const QUIZ = [
      "Consolidate Multiple Superannuation Accounts"
     ],
     "answer": 2,
-    "why": "The rollover. A like-for-like fund or platform move is product replacement and implementation — capital in character. The other three each contain a narrow band of genuine tax-affairs analysis: spouse offset and cap mechanics, downsizer eligibility and cap interaction, and the tax consequences of consolidating."
+    "why": "The rollover. A like-for-like fund or platform move is product replacement and implementation — capital in character. The other three each contain a narrow band of genuine tax-affairs analysis: spouse offset and cap mechanics, downsizer eligibility and cap interaction, and the tax consequences of consolidating.",
+    "core": false
    }
   ]
  },
@@ -1119,7 +1159,7 @@ const QUIZ = [
     "tag": "Complex",
     "hard": true,
     "q": "During the annual review of an existing income-producing portfolio, the adviser performs detailed realised and unrealised gain and loss analysis, models the loss offset against a crystallised gain, and recommends sale timing before 30 June. How should this work be recorded?",
-    "hint": "Two questions, in order. Does this work belong on the ongoing management line or on a row of its own? Then ask whether it has an income-production limb at all.",
+    "hint": "Two things to decide, in order. First, is this its own strategy row, or part of the ongoing management line? Second, does the work actually earn or protect the client's income, or does it only manage their tax position? Only the first of those earns s8-1.",
     "options": [
      "Folded into Ongoing Management of an Existing Investment Portfolio, under both heads",
      "On its own Tax-Loss Harvesting row, under s25-5, separately from the ongoing management line",
@@ -1127,7 +1167,8 @@ const QUIZ = [
      "Not deductible — recommending sale timing is advice on a capital transaction"
     ],
     "answer": 1,
-    "why": "Its own row, s25-5 alone. Where the CGT calculations, loss-offset modelling and timing analysis are actually performed, this is distinct tax-affairs work and earns its own line rather than disappearing into the ongoing management fee. It does not pick up s8-1: the work manages the client’s CGT position, it does not produce or maintain assessable income, and the fact that the surrounding portfolio does is not enough — that is what option C gets wrong. Note the threshold works both ways. Had the review merely mentioned in passing that a loss could be realised, with no CGT analysis performed, the row could not be used at all."
+    "why": "Its own row, s25-5 alone. Where the CGT calculations, loss-offset modelling and timing analysis are actually performed, this is distinct tax-affairs work and earns its own line rather than disappearing into the ongoing management fee. It does not pick up s8-1: the work manages the client’s CGT position, it does not produce or maintain assessable income, and the fact that the surrounding portfolio does is not enough — that is what option C gets wrong. Note the threshold works both ways. Had the review merely mentioned in passing that a loss could be realised, with no CGT analysis performed, the row could not be used at all.",
+    "core": false
    },
    {
     "type": "bucket",
@@ -1168,7 +1209,8 @@ const QUIZ = [
       "box": 2
      }
     ],
-    "why": "Tax-loss harvesting and investment bonds are pure tax-affairs work — the client is managing a CGT position or a tax structure, and the advice itself produces nothing assessable. Everything in the middle box involves existing income-producing assets plus advice on the tax consequences, so both heads apply. Nothing in Investments sits on s8-1 alone."
+    "why": "Tax-loss harvesting and investment bonds are pure tax-affairs work — the client is managing a CGT position or a tax structure, and the advice itself produces nothing assessable. Everything in the middle box involves existing income-producing assets plus advice on the tax consequences, so both heads apply. Nothing in Investments sits on s8-1 alone.",
+    "core": false
    },
    {
     "type": "versus",
@@ -1189,7 +1231,8 @@ const QUIZ = [
      "Neither"
     ],
     "answer": 2,
-    "why": "Both. The two debt rows are treated alike, and this is the pairing most likely to catch you out. Each has the s8-1 nexus — borrowings applied to producing assessable income. Each also picks up s25-5, because the engagement advises on the taxation treatment of those borrowings: interest deductibility and borrowing purpose. The distinction to resist is the old one, where debt recycling was recorded on s8-1 alone; if the file documents the purpose tracing and the deductibility analysis, that work is a s25-5 claim in its own right on both rows."
+    "why": "Both. The two debt rows are treated alike, and this is the pairing most likely to catch you out. Each has the s8-1 nexus — borrowings applied to producing assessable income. Each also picks up s25-5, because the engagement advises on the taxation treatment of those borrowings: interest deductibility and borrowing purpose. The distinction to resist is the old one, where debt recycling was recorded on s8-1 alone; if the file documents the purpose tracing and the deductibility analysis, that work is a s25-5 claim in its own right on both rows.",
+    "core": false
    },
    {
     "type": "mc",
@@ -1202,21 +1245,23 @@ const QUIZ = [
      "Not deductible"
     ],
     "answer": 1,
-    "why": "s25-5 alone. The work manages CGT consequences and the client’s tax position; there is no s8-1 income-production limb. Do not use this row where no actual CGT or tax-loss analysis was performed."
+    "why": "s25-5 alone. The work manages CGT consequences and the client’s tax position; there is no s8-1 income-production limb. Do not use this row where no actual CGT or tax-loss analysis was performed.",
+    "core": false
    },
    {
     "type": "tf",
     "tag": "Standard",
     "q": "Managed Fund / LIC Investment Review loses its deductibility to the extent the advice replaces products or deploys new capital.",
     "answer": true,
-    "why": "True. The deductible treatment only holds while the work manages existing income-producing holdings — distributions, suitability, ongoing role in the portfolio. Product replacement and new capital are capital in nature and must be apportioned out."
+    "why": "True. The deductible treatment only holds while the work manages existing income-producing holdings — distributions, suitability, ongoing role in the portfolio. Product replacement and new capital are capital in nature and must be apportioned out.",
+    "core": false
    },
    {
     "type": "mc",
     "tag": "Complex",
     "hard": true,
     "q": "Investment Structuring Advice (trust, company) is claimed under both heads. Investment Bond Advice is claimed under s25-5 alone. Both are advice on how to structure a client’s assets tax-effectively — what accounts for the difference?",
-    "hint": "Ask who earns the assessable income in each case. One structure holds the client’s income-producing investments; the other is taxed internally and distributes nothing to them.",
+    "hint": "Ask who receives the assessable income. A trust holds the client's own investments, so the income is still theirs. An investment bond pays its tax inside the bond and gives them nothing assessable while they hold it.",
     "options": [
      "Investment bonds are products rather than structures, and product advice can never attract s8-1",
      "Structuring advice concerns the ownership of the client’s existing income-producing investments, which supplies the s8-1 nexus; an investment bond is taxed internally and returns nothing assessable to the client, so only the tax-structuring advice is claimable",
@@ -1224,14 +1269,15 @@ const QUIZ = [
      "There is no principled difference — the exemplars simply happen to record the two rows differently"
     ],
     "answer": 1,
-    "why": "Follow the assessable income. Trust and company structuring is about how the client’s existing income-producing investments are owned, so the s8-1 limb survives alongside the tax analysis of rates, distributions and CGT. An investment bond is internally taxed at the bond rate and pays the client nothing assessable while it is held — there is no income of theirs being produced or maintained, so nothing supports s8-1. What remains is genuine s25-5 work: structuring assets to reduce assessable income and advising on the tax implications of investing through the bond."
+    "why": "Follow the assessable income. Trust and company structuring is about how the client’s existing income-producing investments are owned, so the s8-1 limb survives alongside the tax analysis of rates, distributions and CGT. An investment bond is internally taxed at the bond rate and pays the client nothing assessable while it is held — there is no income of theirs being produced or maintained, so nothing supports s8-1. What remains is genuine s25-5 work: structuring assets to reduce assessable income and advising on the tax implications of investing through the bond.",
+    "core": false
    },
    {
     "type": "escalate",
     "tag": "Fact pattern",
     "hard": true,
     "q": "A single portfolio engagement grows as facts are added. Answer each stage before the next fact is revealed.",
-    "hint": "Treat each new element as its own line. The correct answer for one component does not overwrite the answer for the others.",
+    "hint": "Each new element gets its own line and its own answer. Getting one component right does not change the answer for the others.",
     "stages": [
      {
       "fact": "The review recommends selling three existing holdings and rebalancing the remainder of an established income-producing portfolio.",
@@ -1269,7 +1315,8 @@ const QUIZ = [
       "answer": 1,
       "why": "Yes, but only for the documented analysis. The guidance permits a tax-affairs component to be separately identified for distinct work such as CGT or structure analysis, provided it is separately costed or documented. The establishment work itself stays non-deductible."
      }
-    ]
+    ],
+    "core": true
    }
   ]
  },
@@ -1290,14 +1337,15 @@ const QUIZ = [
      "Income protection protects personal income, and only personal income engages s25-5"
     ],
     "answer": 1,
-    "why": "The s25-5 limb comes from the tax advice itself. Both policies protect income, which supplies the s8-1 nexus. Income protection advice additionally covers premium deductibility and the tax treatment of benefits, so both heads are cited. Business expenses cover rests on the standard premium-deductibility position under s8-1."
+    "why": "The s25-5 limb comes from the tax advice itself. Both policies protect income, which supplies the s8-1 nexus. Income protection advice additionally covers premium deductibility and the tax treatment of benefits, so both heads are cited. Business expenses cover rests on the standard premium-deductibility position under s8-1.",
+    "core": false
    },
    {
     "type": "mc",
     "tag": "Complex",
     "hard": true,
     "q": "Income protection held via superannuation — the trustee owns the policy and premiums are paid from the member’s balance. Is any part of the advice fee deductible?",
-    "hint": "Identify who pays and deducts the premium. Where that is not the member, no personal s8-1 nexus arises, notwithstanding that a benefit would be assessable when paid.",
+    "hint": "Ask who actually pays the premium and claims the deduction for it. If that is the super fund rather than the member, the member has no s8-1 connection — even though a benefit would be taxed in their hands if one were ever paid.",
     "options": [
      "Yes, under both heads — the cover still protects assessable income",
      "Yes, under s8-1 — a benefit would be assessable to the member when paid",
@@ -1305,7 +1353,8 @@ const QUIZ = [
      "No — the fund pays and deducts the premium, so the member has no personal s8-1 nexus, and the advice is super and private in character"
     ],
     "answer": 3,
-    "why": "Nil claim. The premiums are paid and deducted by the super fund, not the member, so no personal s8-1 nexus arises. Personally held income protection uses the standard row instead. Retain the policy ownership and premium-funding details on file."
+    "why": "Nil claim. The premiums are paid and deducted by the super fund, not the member, so no personal s8-1 nexus arises. Personally held income protection uses the standard row instead. Retain the policy ownership and premium-funding details on file.",
+    "core": false
    },
    {
     "type": "bucket",
@@ -1347,7 +1396,8 @@ const QUIZ = [
       "box": 3
      }
     ],
-    "why": "The two income protection rows land in different boxes purely on ownership: personally held picks up both heads, super-held picks up nothing because the fund pays and deducts the premium. Business expenses cover rests on the standard s8-1 premium position with no tax-affairs limb. Super-owned life and TPD, key person and inside-versus-outside structuring are all s25-5, because the deductible element is the tax analysis, never the cover itself."
+    "why": "The two income protection rows land in different boxes purely on ownership: personally held picks up both heads, super-held picks up nothing because the fund pays and deducts the premium. Business expenses cover rests on the standard s8-1 premium position with no tax-affairs limb. Super-owned life and TPD, key person and inside-versus-outside structuring are all s25-5, because the deductible element is the tax analysis, never the cover itself.",
+    "core": true
    },
    {
     "type": "dropdown",
@@ -1373,7 +1423,8 @@ const QUIZ = [
       "answer": 1
      }
     ],
-    "why": "Age 60 and a non-dependant beneficiary. That is the entire deductible rationale for the row. Note the premiums themselves are never deductible to the member — the claim relates to the advice fee only, and the balance of that advice is private protection."
+    "why": "Age 60 and a non-dependant beneficiary. That is the entire deductible rationale for the row. Note the premiums themselves are never deductible to the member — the claim relates to the advice fee only, and the balance of that advice is private protection.",
+    "core": false
    },
    {
     "type": "versus",
@@ -1394,14 +1445,15 @@ const QUIZ = [
      "Neither"
     ],
     "answer": 1,
-    "why": "Right only. The s25-5 rationale for super-held cover is superannuation benefit taxation — the consequences of benefits paid before age 60 or to a non-dependant. That reasoning cannot reach a personally held policy, so trauma outside super attracts nothing and must not inherit the treatment."
+    "why": "Right only. The s25-5 rationale for super-held cover is superannuation benefit taxation — the consequences of benefits paid before age 60 or to a non-dependant. That reasoning cannot reach a personally held policy, so trauma outside super attracts nothing and must not inherit the treatment.",
+    "core": false
    },
    {
     "type": "mc",
     "tag": "Complex",
     "hard": true,
     "q": "An SOA covers personally held income protection, life and TPD cover held inside super, and trauma cover held personally outside super. What is the correct treatment on the invoice?",
-    "hint": "Three policies, three different owners, three different answers. Consider whether they belong on one line or several.",
+    "hint": "Three policies with three different owners. Ownership decides the treatment, so work out who owns each one first, then decide whether they can share a single invoice line.",
     "options": [
      "One combined insurance line, claimed under both s8-1 and s25-5",
      "One combined insurance line, claimed under s25-5",
@@ -1409,7 +1461,8 @@ const QUIZ = [
      "Three separate rows, all claimed under s25-5, since each involves advice on the tax treatment of insurance"
     ],
     "answer": 2,
-    "why": "Separate rows are the preferred treatment, and here all three land differently. Personally held income protection picks up both heads. Super-held life and TPD is s25-5 only, on the tax implications of benefits paid before age 60 or to a non-dependant. Personally held trauma is not deductible and must not inherit the super-held reasoning."
+    "why": "Separate rows are the preferred treatment, and here all three land differently. Personally held income protection picks up both heads. Super-held life and TPD is s25-5 only, on the tax implications of benefits paid before age 60 or to a non-dependant. Personally held trauma is not deductible and must not inherit the super-held reasoning.",
+    "core": false
    },
    {
     "type": "odd",
@@ -1422,7 +1475,8 @@ const QUIZ = [
      "Advice on Structuring Insurance Inside vs Outside Super"
     ],
     "answer": 2,
-    "why": "Business expenses insurance. It rests on the standard premium-deductibility position — cover that protects business revenue or deductible operating expenses has a direct nexus to producing assessable income. The other three are deductible only for the tax analysis attached to them, never for the cover itself."
+    "why": "Business expenses insurance. It rests on the standard premium-deductibility position — cover that protects business revenue or deductible operating expenses has a direct nexus to producing assessable income. The other three are deductible only for the tax analysis attached to them, never for the cover itself.",
+    "core": false
    }
   ]
  },
@@ -1437,7 +1491,7 @@ const QUIZ = [
     "tag": "Complex",
     "hard": true,
     "q": "A cashflow strategy directs surplus income to accelerate repayment of the family home loan, on the documented basis that clearing non-deductible debt first is the most tax-efficient use of the surplus. Treatment?",
-    "hint": "A tax-efficiency rationale is not the same as advice on the client’s tax affairs. Consider what the advice is directed at achieving.",
+    "hint": "Saying a strategy is tax-efficient is not the same as giving advice about the client's tax. Ask what the advice was actually for — paying off the home loan, or working out a tax position.",
     "options": [
      "Deductible under s25-5, on the same basis as offset structuring",
      "Not deductible — the advice remains private and domestic debt management, and a tax-efficiency rationale does not change its character",
@@ -1445,7 +1499,8 @@ const QUIZ = [
      "Deductible under s8-1 — clearing non-deductible debt is a recognised deductible debt strategy"
     ],
     "answer": 1,
-    "why": "Nil. Explaining why a private strategy is sensible is not advice on the client’s tax affairs. The offset row is deductible because the advice concerns the tax implications of how the accounts are structured; accelerating home loan repayment is household debt reduction. If genuine investment debt advice sits alongside it, record that separately."
+    "why": "Nil. Explaining why a private strategy is sensible is not advice on the client’s tax affairs. The offset row is deductible because the advice concerns the tax implications of how the accounts are structured; accelerating home loan repayment is household debt reduction. If genuine investment debt advice sits alongside it, record that separately.",
+    "core": false
    },
    {
     "type": "bucket",
@@ -1482,14 +1537,15 @@ const QUIZ = [
       "box": 2
      }
     ],
-    "why": "Note what is missing from this section: there is no s8-1-only box, because nothing here sits on that head alone. Both debt rows carry both heads. The borrowings are applied to investments that produce assessable income (s8-1), and each engagement also advises on the taxation treatment of those borrowings — interest deductibility and borrowing purpose (s25-5). Centrelink and DVA work joins them where the entitlement strategy includes documented tax-implications advice. Offset structuring is s25-5 alone, because an offset against a home loan reduces non-deductible interest and produces nothing assessable. The two nil rows are private and domestic."
+    "why": "Note what is missing from this section: there is no s8-1-only box, because nothing here sits on that head alone. Both debt rows carry both heads. The borrowings are applied to investments that produce assessable income (s8-1), and each engagement also advises on the taxation treatment of those borrowings — interest deductibility and borrowing purpose (s25-5). Centrelink and DVA work joins them where the entitlement strategy includes documented tax-implications advice. Offset structuring is s25-5 alone, because an offset against a home loan reduces non-deductible interest and produces nothing assessable. The two nil rows are private and domestic.",
+    "core": false
    },
    {
     "type": "mc",
     "tag": "Complex",
     "hard": true,
     "q": "The exemplar wording for offset structuring says it “reduces assessable income”. Why was that wording changed on the invoice?",
-    "hint": "Consider the mechanics of an offset account against a home loan, then identify which element — the treatment or the wording — was retained on review.",
+    "hint": "Work through what an offset account actually does to a home loan. It cuts the interest the client pays; it does not change what they earn. Then ask whether it was the percentage or the wording that needed correcting.",
     "options": [
      "Both the treatment and the wording were wrong, so both were corrected",
      "An offset against a home loan reduces non-deductible interest, not assessable income — so the s25-5 treatment was retained but the wording corrected to refer to the tax implications of the structuring",
@@ -1497,7 +1553,8 @@ const QUIZ = [
      "s25-5 does not apply to bank accounts"
     ],
     "answer": 1,
-    "why": "Treatment retained, wording corrected. The exemplar overstates the mechanics: an offset reduces non-deductible interest, it does not reduce assessable income. The s25-5 claim stands on the tax implications of how the accounts are structured; the balance of the work is private cashflow and banking structure."
+    "why": "Treatment retained, wording corrected. The exemplar overstates the mechanics: an offset reduces non-deductible interest, it does not reduce assessable income. The s25-5 claim stands on the tax implications of how the accounts are structured; the balance of the work is private cashflow and banking structure.",
+    "core": false
    },
    {
     "type": "audit",
@@ -1542,7 +1599,8 @@ const QUIZ = [
       "fix": "Should be both heads — the s8-1 nexus to the funded investments is missing from this line."
      }
     ],
-    "why": "Four errors, failing in two different directions. Budgeting and home loan reduction are private and domestic, and neither can carry a section at all — those two over-claim. The two debt lines under-claim, and they drop opposite limbs: debt recycling cites the income-production limb but omits the s25-5 advice on interest deductibility and borrowing purpose, while gearing cites the tax-advice limb but omits the s8-1 nexus to the funded investments. Under-claiming is the easier error to miss on review, because nothing on the invoice looks aggressive."
+    "why": "Four errors, failing in two different directions. Budgeting and home loan reduction are private and domestic, and neither can carry a section at all — those two over-claim. The two debt lines under-claim, and they drop opposite limbs: debt recycling cites the income-production limb but omits the s25-5 advice on interest deductibility and borrowing purpose, while gearing cites the tax-advice limb but omits the s8-1 nexus to the funded investments. Under-claiming is the easier error to miss on review, because nothing on the invoice looks aggressive.",
+    "core": true
    },
    {
     "type": "mc",
@@ -1555,7 +1613,8 @@ const QUIZ = [
      "Not deductible — social security is a government benefit, not a tax matter"
     ],
     "answer": 1,
-    "why": "Both heads, conditionally. Structuring affairs to maximise entitlements attracts deductibility where the strategy includes advice on the tax implications. Where the work is purely social security or aged care planning with no tax analysis, nothing is claimable."
+    "why": "Both heads, conditionally. Structuring affairs to maximise entitlements attracts deductibility where the strategy includes advice on the tax implications. Where the work is purely social security or aged care planning with no tax analysis, nothing is claimable.",
+    "core": false
    }
   ]
  },
@@ -1599,14 +1658,15 @@ const QUIZ = [
       "box": 1
      }
     ],
-    "why": "No s8-1 anywhere, for the same reason as ordinary super: the fund produces the income, not the member. LRBA advice is the only nil row — it is structural, capital and acquisition-related, not recurrent income management. Note that several of the s25-5 rows are deductible only in part, and only where the tax analysis is documented."
+    "why": "No s8-1 anywhere, for the same reason as ordinary super: the fund produces the income, not the member. LRBA advice is the only nil row — it is structural, capital and acquisition-related, not recurrent income management. Note that several of the s25-5 rows are deductible only in part, and only where the tax analysis is documented.",
+    "core": false
    },
    {
     "type": "mc",
     "tag": "Complex",
     "hard": true,
     "q": "A client rolls their existing super into a newly established SMSF, and the advice includes analysis of the tax implications. Which row records this?",
-    "hint": "The Rollover Existing Super row expressly directs one scenario to a different strategy line. Identify which scenario that is.",
+    "hint": "The Rollover row sends one particular scenario somewhere else. Re-read what that scenario is, and which row it is sent to.",
     "options": [
      "Rollover Existing Super to New Fund/Platform, not deductible",
      "SMSF Establishment and Structuring Advice, under s25-5",
@@ -1614,21 +1674,23 @@ const QUIZ = [
      "Split evenly across the rollover and SMSF establishment rows"
     ],
     "answer": 1,
-    "why": "SMSF Establishment and Structuring, under s25-5. The exemplar covers exactly this: rolling super to a new SMSF and setting the fund up, including advice on the tax implications. The plain Rollover row is nil because a like-for-like fund or platform move is product replacement."
+    "why": "SMSF Establishment and Structuring, under s25-5. The exemplar covers exactly this: rolling super to a new SMSF and setting the fund up, including advice on the tax implications. The plain Rollover row is nil because a like-for-like fund or platform move is product replacement.",
+    "core": false
    },
    {
     "type": "tf",
     "tag": "Standard",
     "q": "SMSF Contribution Strategy Advice is treated exactly like ordinary concessional and non-concessional contribution advice, under s25-5.",
     "answer": true,
-    "why": "True. The same reasoning applies inside an SMSF as outside it: caps, deductibility and Division 293 are all applying taxation laws. Reduce the claim where the work is mainly member balance or accumulation management rather than contribution tax analysis."
+    "why": "True. The same reasoning applies inside an SMSF as outside it: caps, deductibility and Division 293 are all applying taxation laws. Reduce the claim where the work is mainly member balance or accumulation management rather than contribution tax analysis.",
+    "core": false
    },
    {
     "type": "mc",
     "tag": "Complex",
     "hard": true,
     "q": "What is required before any part of an SMSF Investment Strategy (Compliance & Review) engagement becomes deductible?",
-    "hint": "A portfolio or compliance review on its own attracts nothing. Reaching a deductible position requires a specific category of recurring work to be documented.",
+    "hint": "A review of the fund's investments, or of its compliance, is worth nothing on its own. Ask what extra kind of work has to be on file before any part of it becomes claimable.",
     "options": [
      "A review of the trustee’s compliance with their investment strategy obligations",
      "An actuarial certificate for the year",
@@ -1636,14 +1698,15 @@ const QUIZ = [
      "Confirmation that the fund holds income-producing assets"
     ],
     "answer": 2,
-    "why": "Documented pension-phase tax management. The floor for this row is nil: a portfolio or compliance review on its own is neither managing the member’s tax affairs nor producing their assessable income. Trustee compliance alone is not a tax-affairs nexus."
+    "why": "Documented pension-phase tax management. The floor for this row is nil: a portfolio or compliance review on its own is neither managing the member’s tax affairs nor producing their assessable income. Trustee compliance alone is not a tax-affairs nexus.",
+    "core": false
    },
    {
     "type": "mc",
     "tag": "Complex",
     "hard": true,
     "q": "An SMSF is wound up. The work includes rolling benefits to a retail fund, disposing of the fund’s listed holdings, and preparing analysis of the CGT position and final-year ECPI for the accountant. Which component, if any, is deductible?",
-    "hint": "Distinguish the administrative steps from the analytical work. Only one category can be claimed.",
+    "hint": "Split the work in two: the steps that close the fund down, and the analysis of what closing it costs in tax. Only one of those can be claimed.",
     "options": [
      "The disposals and rollovers, since they trigger the tax consequences",
      "The CGT position and final-year ECPI analysis, as identifiable tax-affairs work — the disposals, rollovers and deregistration are administrative",
@@ -1651,7 +1714,8 @@ const QUIZ = [
      "None of it — wind-up is structural"
     ],
     "answer": 1,
-    "why": "The analysis, not the administration. Disposals, rollovers and deregistration are administrative and structural steps in closing the fund. The CGT position and final-year ECPI analysis is identifiable tax-affairs work under s25-5, and it is the only part that can be claimed."
+    "why": "The analysis, not the administration. Disposals, rollovers and deregistration are administrative and structural steps in closing the fund. The CGT position and final-year ECPI analysis is identifiable tax-affairs work under s25-5, and it is the only part that can be claimed.",
+    "core": false
    },
    {
     "type": "odd",
@@ -1664,7 +1728,8 @@ const QUIZ = [
      "Advice on Winding Up an SMSF"
     ],
     "answer": 2,
-    "why": "The LRBA. Borrowing structure and asset acquisition is capital and structural, not recurrent income management. Even a wind-up carries a narrow s25-5 claim for the CGT and final-year ECPI analysis, but there is nothing comparable in setting up a bare trust and buying an asset."
+    "why": "The LRBA. Borrowing structure and asset acquisition is capital and structural, not recurrent income management. Even a wind-up carries a narrow s25-5 claim for the CGT and final-year ECPI analysis, but there is nothing comparable in setting up a bare trust and buying an asset.",
+    "core": true
    }
   ]
  },
@@ -1708,14 +1773,16 @@ const QUIZ = [
       "box": 1
      }
     ],
-    "why": "The nil rows are private and domestic, or private and capital. Estate planning and death benefit nominations are succession work where any tax consequences are incidental. Budgeting is household financial management. The s25-5 rows all involve tax being analysed or calculated — Division 152 eligibility, CGT and rollover consequences, or tax payable over time."
+    "why": "The nil rows are private and domestic, or private and capital. Estate planning and death benefit nominations are succession work where any tax consequences are incidental. Budgeting is household financial management. The s25-5 rows all involve tax being analysed or calculated — Division 152 eligibility, CGT and rollover consequences, or tax payable over time.",
+    "core": false
    },
    {
     "type": "tf",
     "tag": "Trap",
     "q": "Advice on Death Benefit Nominations can be claimed under s25-5, because death benefit tax implications are necessarily discussed.",
     "answer": false,
-    "why": "False. It defaults to nil. Tax consequences are incidental to what is fundamentally succession and estate planning, unless there is separately identifiable and separately scoped tax-affairs analysis. The same logic applies to estate planning generally — do not claim merely because testamentary trust tax rates came up."
+    "why": "False. It defaults to nil. Tax consequences are incidental to what is fundamentally succession and estate planning, unless there is separately identifiable and separately scoped tax-affairs analysis. The same logic applies to estate planning generally — do not claim merely because testamentary trust tax rates came up.",
+    "core": true
    },
    {
     "type": "versus",
@@ -1736,7 +1803,8 @@ const QUIZ = [
      "Neither"
     ],
     "answer": 1,
-    "why": "Right only. The distinguishing feature is whether tax was actually calculated. Cashflow projections without tax calculations belong under General Budgeting and attract nothing. Only genuine tax modelling reaches the Financial Modelling & Tax Projections row — and the output showing the calculations has to be on file."
+    "why": "Right only. The distinguishing feature is whether tax was actually calculated. Cashflow projections without tax calculations belong under General Budgeting and attract nothing. Only genuine tax modelling reaches the Financial Modelling & Tax Projections row — and the output showing the calculations has to be on file.",
+    "core": true
    },
    {
     "type": "mc",
@@ -1749,14 +1817,15 @@ const QUIZ = [
      "The involvement of the client’s accountant"
     ],
     "answer": 1,
-    "why": "Division 152. Eligibility testing, active asset analysis, connected entity and affiliate rules, retirement and 15-year exemptions and concession sequencing are all applying taxation law to the client’s circumstances. Do not use this row where no specific concession analysis was performed."
+    "why": "Division 152. Eligibility testing, active asset analysis, connected entity and affiliate rules, retirement and 15-year exemptions and concession sequencing are all applying taxation law to the client’s circumstances. Do not use this row where no specific concession analysis was performed.",
+    "core": false
    },
    {
     "type": "mc",
     "tag": "Complex",
     "hard": true,
     "q": "A business succession engagement transfers shares to the next generation. The file contains detailed Division 152 eligibility testing and active asset analysis alongside the succession and shareholder agreement work. How should the fee be recorded?",
-    "hint": "Two rows are available, carrying very different treatments. Consider whether the Division 152 work is incidental to the succession advice or a distinct piece of analysis.",
+    "hint": "There are two separate rows here with very different treatments. Ask whether the Division 152 work was a real piece of analysis in its own right, or just something that came up while discussing succession.",
     "options": [
      "One line under Business Succession Planning",
      "One line under Small Business CGT Concessions Advice",
@@ -1764,7 +1833,8 @@ const QUIZ = [
      "One line under Business Succession Planning, not deductible — ownership transfer is capital"
     ],
     "answer": 2,
-    "why": "Two rows. Ownership transition and shareholder agreements are capital and private in character, so very little of that work is claimable. Division 152 eligibility testing and active asset analysis is distinct s25-5 work with its own row. Options A and B each collapse one body of work into the other’s treatment."
+    "why": "Two rows. Ownership transition and shareholder agreements are capital and private in character, so very little of that work is claimable. Division 152 eligibility testing and active asset analysis is distinct s25-5 work with its own row. Options A and B each collapse one body of work into the other’s treatment.",
+    "core": false
    },
    {
     "type": "audit",
@@ -1803,7 +1873,8 @@ const QUIZ = [
       "fix": "Correct, but only for the identifiable tax analysis — the ownership transfer work is capital."
      }
     ],
-    "why": "Two errors, and they fail in opposite directions. Death benefit nominations over-claim by treating incidental tax consequences as tax-affairs advice. Financial modelling over-claims by adding an s8-1 limb that cannot exist — producing a tax projection does not produce assessable income."
+    "why": "Two errors, and they fail in opposite directions. Death benefit nominations over-claim by treating incidental tax consequences as tax-affairs advice. Financial modelling over-claims by adding an s8-1 limb that cannot exist — producing a tax projection does not produce assessable income.",
+    "core": false
    }
   ]
  },
@@ -1905,7 +1976,8 @@ const QUIZ = [
       "a": 1
      }
     ],
-    "why": "One row only ever sits on s8-1 alone: business expenses insurance. If you reached for s8-1 anywhere else, check whether the engagement also advised on how the tax law applies — because it almost always did, and that makes it both. The \"both\" group is income-producing assets or borrowings, plus tax advice about them. Everything else is either pure tax-affairs work under s25-5, or produces nothing assessable and creates something new, in which case it attracts nothing."
+    "why": "One row only ever sits on s8-1 alone: business expenses insurance. If you reached for s8-1 anywhere else, check whether the engagement also advised on how the tax law applies — because it almost always did, and that makes it both. The \"both\" group is income-producing assets or borrowings, plus tax advice about them. Everything else is either pure tax-affairs work under s25-5, or produces nothing assessable and creates something new, in which case it attracts nothing.",
+    "core": true
    }
   ]
  },
@@ -1920,7 +1992,7 @@ const QUIZ = [
     "tag": "Capstone",
     "hard": true,
     "q": "For each recommendation, select the strategy row, the section it is claimed under, and the reason that supports it.",
-    "hint": "Work the section column first, then let it drive the other two. Ownership decides the insurance rows, existing-versus-new decides the investment rows, and the rest turn on whether tax was actually analysed. There are more strategy rows and reasons on offer than you need, but none is used twice.",
+    "hint": "Do the section column first, then let it point you to the strategy row and the reason. Three rules cover everything here: for insurance, ask who owns the policy; for investments, ask whether it already existed; for everything else, ask whether tax was actually calculated. More rows and reasons are listed than you need, and none is used twice.",
     "scenario": "<b>Client:</b> Marcus &amp; Elena Vasquez, owners of a manufacturing business they intend to sell in around five years. <b>Advice fee:</b> $11,000 incl. GST, invoiced as a single upfront amount. The file contains a complete set of calculations, modelling and file notes for every recommendation below.",
     "strategies": [
      "Advice on Death Benefit Nominations (Super)",
@@ -2004,7 +2076,8 @@ const QUIZ = [
       "w": 7
      }
     ],
-    "why": "Eight recommendations and all four treatments, which is rare on one invoice. Business expenses cover is the reason: it is the only row in the entire document claimed under s8-1 alone, because the premiums secure assessable replacement income and deductible operating expenses with no tax-affairs analysis attached to them. The two “both heads” rows are the borrowings and the trust restructure — each concerns assets already producing assessable income, and each also advises on how the tax law treats them. The three nil rows fail for three different reasons: personally held trauma and TPD is private protection and must not inherit the super-held rationale, a like-for-like platform move is product replacement, and death benefit nominations are succession planning where the tax consequences are incidental. Note that the small business CGT work is claimable now even though the sale is years away — Division 152 eligibility testing is tax-affairs work whenever it is performed."
+    "why": "Eight recommendations and all four treatments, which is rare on one invoice. Business expenses cover is the reason: it is the only row in the entire document claimed under s8-1 alone, because the premiums secure assessable replacement income and deductible operating expenses with no tax-affairs analysis attached to them. The two “both heads” rows are the borrowings and the trust restructure — each concerns assets already producing assessable income, and each also advises on how the tax law treats them. The three nil rows fail for three different reasons: personally held trauma and TPD is private protection and must not inherit the super-held rationale, a like-for-like platform move is product replacement, and death benefit nominations are succession planning where the tax consequences are incidental. Note that the small business CGT work is claimable now even though the sale is years away — Division 152 eligibility testing is tax-affairs work whenever it is performed.",
+    "core": true
    }
   ]
  },
@@ -2019,7 +2092,7 @@ const QUIZ = [
     "tag": "Final capstone",
     "hard": true,
     "q": "This client had an SOA last financial year, and is on an ongoing service agreement this year. For each fee, select every strategy row that belongs on it — then set the tax ruling for each row you select.",
-    "hint": "Three traps. A strategy can appear on both fees, on one, or on neither. Some rows change nothing between the two fees; others cannot repeat, because the work was one-off. And two rows in the pool were never recommended at all — the strategy list is not a menu, it only records work actually performed.",
+    "hint": "Three things to watch. A strategy can belong to both fees, to one, or to neither. Work that was only done once — starting the pension, writing the wills — cannot be charged again on the ongoing fee. And two rows in the list were never recommended to this client at all: only put a row on a fee if that work was actually done.",
     "scenario": "<b>Client:</b> Dave &amp; Sally Whitmore. Both fees are invoiced as a single amount, and the file holds a complete set of calculations, modelling and file notes for every piece of work listed below.",
     "rulings": [
      "s8-1",
@@ -2106,7 +2179,8 @@ const QUIZ = [
       }
      }
     ],
-    "why": "Two fees, two invoices, and the rows do not simply carry across. Only two rows appear on both: the ongoing management of the existing portfolio, and budgeting — and each keeps the same ruling on both fees, because the character of the work has not changed. Everything else is one-off. Commencing the pension is upfront; managing the drawdown afterwards is ongoing, and they are different rows even though they concern the same account. The rebalance is ongoing only. And the tax modelling is the sharpest trap in the exercise: it is a clean s25-5 claim on the upfront fee, but claiming it again on the ongoing fee, in a year when no modelling was produced, is exactly the over-claim the evidence requirements exist to prevent. Finally, debt recycling and SMSF establishment were never recommended — if the work was not performed, the row does not go on the invoice."
+    "why": "Two fees, two invoices, and the rows do not simply carry across. Only two rows appear on both: the ongoing management of the existing portfolio, and budgeting — and each keeps the same ruling on both fees, because the character of the work has not changed. Everything else is one-off. Commencing the pension is upfront; managing the drawdown afterwards is ongoing, and they are different rows even though they concern the same account. The rebalance is ongoing only. And the tax modelling is the sharpest trap in the exercise: it is a clean s25-5 claim on the upfront fee, but claiming it again on the ongoing fee, in a year when no modelling was produced, is exactly the over-claim the evidence requirements exist to prevent. Finally, debt recycling and SMSF establishment were never recommended — if the work was not performed, the row does not go on the invoice.",
+    "core": true
    }
   ]
  }
@@ -2120,6 +2194,53 @@ const el = (t,c,h)=>{const n=document.createElement(t);if(c)n.className=c;if(h!=
 const norm = s => String(s).toLowerCase().trim().replace(/[%$.,'"’]/g,'').replace(/\s+/g,' ');
 const shuffle = a => {const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b};
 
+/* ============================================================
+   RUN MODE — the core set is the 30-minute Monday run; "full"
+   is every question. Switching reloads, which is safe because
+   the switch only appears on the intro, before anything is answered.
+   ============================================================ */
+let MODE = 'core';
+try{ if(localStorage.getItem('mwsQuizMode')==='full') MODE='full' }catch(e){}
+if(/[?&]mode=full/.test(location.search)) MODE='full';
+if(/[?&]mode=core/.test(location.search)) MODE='core';
+
+const ACTIVE = QUIZ
+  .map(sec => ({...sec, questions: sec.questions.filter(q => MODE==='full' || q.core)}))
+  .filter(sec => sec.questions.length);
+
+function setMode(m){
+  try{ localStorage.setItem('mwsQuizMode', m) }catch(e){}
+  if(m===MODE){ go(0); return }
+  location.search = '?mode='+m+'&start=1';   // start=1 so the reload lands on section 1, not back on the intro
+}
+
+/* Rough clock for the intro. Same shape as a facilitator's own estimate:
+   reading time for the words on screen, plus a beat for each decision. */
+function estimateMinutes(sections){
+  const words = t => String(t||'').replace(/<[^>]+>/g,' ').split(/\s+/).filter(Boolean).length;
+  const READ = 0.36;
+  let t = 0;
+  sections.forEach(sec=>{
+    t += 42;                                    // header, Check button, reading the verdicts
+    sec.questions.forEach(q=>{
+      t += 6 + words(q.q)*READ + words(q.hint)*READ*0.4;
+      if(q.options) t += q.options.reduce((s,o)=>s+words(o),0)*READ + q.options.length*1.5;
+      if(q.type==='tf') t += 8;
+      if(q.type==='multi') t += 12;
+      if(q.type==='dropdown') t += q.selects.length*10;
+      if(q.type==='bucket') t += 10 + q.items.length*9 + q.boxes.length*2;
+      if(q.type==='escalate') t += q.stages.reduce((s,st)=>s+8+words(st.fact+' '+st.q)*READ+st.options.reduce((a,o)=>a+words(o),0)*READ,0);
+      if(q.type==='audit') t += words(q.client)*READ + q.rows.length*11;
+      if(q.type==='rapid') t += 15 + q.cards.length*6;
+      if(q.type==='soa') t += words(q.scenario)*READ + q.rows.length*(words(q.rows[0].r)*READ + 26);
+      if(q.type==='fees') t += words(q.scenario)*READ
+        + q.blocks.reduce((s,bl)=>s+bl.work.reduce((a,w)=>a+words(w),0)*READ,0)
+        + q.blocks.reduce((s,bl)=>s + q.pool.length*5 + Object.keys(bl.key).length*8, 0);
+    });
+  });
+  return Math.round(t/60);
+}
+
 function qPoints(q){
   if(q.type==='bucket')   return q.items.length;
   if(q.type==='soa')      return q.rows.length*3;
@@ -2131,7 +2252,7 @@ function qPoints(q){
 }
 function secPoints(s){ return s.questions.reduce((t,q)=>t+qPoints(q),0) }
 
-const TOTAL = QUIZ.reduce((t,s)=>t+secPoints(s),0);
+const TOTAL = ACTIVE.reduce((t,s)=>t+secPoints(s),0);
 const state = {}; // sectionId -> {score, max, done}
 
 /* ============================================================
@@ -2147,7 +2268,7 @@ const SECTION_COLORS = [
 const BOX_COLORS = [['#2563EB','#E6EDFE'],['#7C3AED','#F1EAFE'],['#0D9488','#DEF5F1'],['#64748B','#EEF1F6']];
 const root = $('#quiz');
 
-QUIZ.forEach((sec,si)=>{
+ACTIVE.forEach((sec,si)=>{
   const max = secPoints(sec);
   state[sec.id] = {score:0,max,done:false};
 
@@ -2256,8 +2377,8 @@ QUIZ.forEach((sec,si)=>{
 
   const nav = el('div','stepnav');
   const back = el('button','btn nav','\u2190 Back');
-  const count = el('div','stepcount', 'Section '+(si+1)+' of '+QUIZ.length);
-  const next = el('button','btn nav primary', si===QUIZ.length-1 ? 'See results \u2192' : 'Next section \u2192');
+  const count = el('div','stepcount', 'Section '+(si+1)+' of '+ACTIVE.length);
+  const next = el('button','btn nav primary', si===ACTIVE.length-1 ? 'See results \u2192' : 'Next section \u2192');
   nav.appendChild(back);
   nav.appendChild(el('div','spacer'));
   nav.appendChild(count);
@@ -2278,7 +2399,7 @@ $('#ledgerMax').textContent = TOTAL;
    ============================================================ */
 const sideNav = $('#sideNav');
 const navItems = [];
-QUIZ.forEach((sec,si)=>{
+ACTIVE.forEach((sec,si)=>{
   const pal = SECTION_COLORS[si % SECTION_COLORS.length];
   const b = el('button','navitem');
   b.style.setProperty('--nav', pal[0]);
@@ -2290,22 +2411,22 @@ QUIZ.forEach((sec,si)=>{
 });
 
 $('#statgrid').innerHTML =
-  '<div class="stat"><b>'+QUIZ.length+'</b><span>Sections</span></div>'
- +'<div class="stat"><b>'+QUIZ.reduce((t,s)=>t+s.questions.length,0)+'</b><span>Questions</span></div>'
+  '<div class="stat"><b>'+ACTIVE.length+'</b><span>Sections</span></div>'
+ +'<div class="stat"><b>'+ACTIVE.reduce((t,s)=>t+s.questions.length,0)+'</b><span>Questions</span></div>'
  +'<div class="stat"><b>'+TOTAL+'</b><span>Points</span></div>'
- +'<div class="stat"><b>44</b><span>Strategies</span></div>';
+ +'<div class="stat"><b>~'+estimateMinutes(ACTIVE)+'</b><span>Minutes</span></div>';
 
-let current = -1; // -1 = intro, QUIZ.length = finale
+let current = -1; // -1 = intro, ACTIVE.length = finale
 function go(i){
   current = i;
   $('#step-intro').classList.toggle('on', i===-1);
-  $('#finale').classList.toggle('on', i===QUIZ.length);
-  QUIZ.forEach((sec,si)=>document.getElementById(sec.id).classList.toggle('on', si===i));
+  $('#finale').classList.toggle('on', i===ACTIVE.length);
+  ACTIVE.forEach((sec,si)=>document.getElementById(sec.id).classList.toggle('on', si===i));
   navItems.forEach((b,bi)=>b.classList.toggle('active', bi===i));
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function refreshNav(){
-  QUIZ.forEach((sec,si)=>{
+  ACTIVE.forEach((sec,si)=>{
     const st = state[sec.id];
     navItems[si].classList.toggle('done', st.done);
     navItems[si].querySelector('.tick').textContent = st.done ? Math.round(st.score/st.max*100)+'%' : '';
@@ -2317,9 +2438,23 @@ $('#navToggle').addEventListener('click', ()=>{
   sidebar.classList.toggle('open'); scrim.classList.toggle('show');
 });
 scrim.addEventListener('click', closeNav);
-$('#startBtn').addEventListener('click', ()=>go(0));
+/* mode picker: label both runs with their real size, then wire the switch */
+(function(){
+  const build = m => QUIZ
+    .map(sec => ({...sec, questions: sec.questions.filter(q => m==='full' || q.core)}))
+    .filter(sec => sec.questions.length);
+  const label = set => '~'+estimateMinutes(set)+' min · '+set.length+' sections · '
+    + set.reduce((t,s)=>t+s.questions.length,0)+' questions';
+  $('#coreMeta').textContent = label(build('core'));
+  $('#fullMeta').textContent = label(build('full'));
+  $('#modeNote').innerHTML = MODE==='core'
+    ? 'Showing the <b>core run</b> — the framework, one signature question per section, and rounds 07, 08 and 09 in full. The full workshop adds every question that was cut.'
+    : 'Showing the <b>full workshop</b> — every question. Switch back to the core run for a 30-minute session.';
+  $('#startCore').addEventListener('click', ()=>setMode('core'));
+  $('#startFull').addEventListener('click', ()=>setMode('full'));
+})();
 $('#restartBtn').addEventListener('click', ()=>go(-1));
-go(-1);
+go(/[?&]start=1/.test(location.search) ? 0 : -1);
 
 /* ============================================================
    MATCH WIDGET
@@ -2907,7 +3042,7 @@ function updateLedger(){
   const score = done.reduce((t,s)=>t+s.score,0);
   $('#ledgerScore').textContent = score;
   $('#ledgerFill').style.width = (score/TOTAL*100)+'%';
-  if(done.length===QUIZ.length) finish(score);
+  if(done.length===ACTIVE.length) finish(score);
 }
 
 function finish(score){
@@ -2922,17 +3057,17 @@ function finish(score){
 
   const brk = $('#finaleBreak');
   brk.innerHTML='';
-  QUIZ.forEach(s=>{
+  ACTIVE.forEach(s=>{
     const st = state[s.id];
     const p = Math.round(st.score/st.max*100);
     const chip = el('div','brk'+(p===100?' full':''), s.title+' <b>'+p+'%</b>');
-    if(p!==100){ const c = SECTION_COLORS[QUIZ.indexOf(s) % SECTION_COLORS.length];
+    if(p!==100){ const c = SECTION_COLORS[ACTIVE.indexOf(s) % SECTION_COLORS.length];
       chip.style.background = c[1]; chip.style.borderColor = c[0]; chip.style.color = c[0]; }
     brk.appendChild(chip);
   });
 
   if(pct===100) setTimeout(()=>celebrate(90), 250);
-  setTimeout(()=>go(QUIZ.length), 420);
+  setTimeout(()=>go(ACTIVE.length), 420);
 }
 
 function celebrate(n=40){
