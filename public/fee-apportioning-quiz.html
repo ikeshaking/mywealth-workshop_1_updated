@@ -629,6 +629,8 @@ select.blank.is-wrong{background-image:linear-gradient(45deg,transparent 50%,var
   .feegrid .fr-rule{padding-left:40px}
   .feegrid .fr-fix{padding-left:40px}
 }
+.briefwrap{margin:0 0 18px}
+.briefwrap .fee-brief{margin-bottom:0}
 .feeblock{margin-bottom:20px}
 .feeblock:last-child{margin-bottom:0}
 .fb-head{
@@ -977,7 +979,7 @@ const QUIZ = [
      5
     ],
     "why": "The two rejects are the ones the document warns about by name. A verbal confirmation evidences nothing, and a premium split may not be used as the allocation basis unless the file explains why it is a reasonable proxy for the advice work. Everything else establishes either that the work was tax-affairs work, or that the assets it related to were genuinely income-producing.",
-    "core": false
+    "core": true
    }
   ]
  },
@@ -1071,7 +1073,7 @@ const QUIZ = [
      }
     ],
     "why": "Nothing in Super & Retirement touches s8-1 — super assets produce income for the fund, not for the member. That leaves s25-5 or nothing. The two nil rows share a reason: a like-for-like fund or platform move is product replacement, and reviewing the investment strategy inside super is neither managing the member’s tax affairs nor producing their assessable income.",
-    "core": false
+    "core": true
    },
    {
     "type": "mc",
@@ -1459,7 +1461,7 @@ const QUIZ = [
      }
     ],
     "why": "Age 60 and a non-dependant beneficiary. That is the entire deductible rationale for the row. Note the premiums themselves are never deductible to the member — the claim relates to the advice fee only, and the balance of that advice is private protection.",
-    "core": false
+    "core": true
    },
    {
     "type": "versus",
@@ -2157,118 +2159,112 @@ const QUIZ = [
   "id": "S10",
   "code": "Section 09",
   "title": "Upfront & Ongoing — The Home Upgrade",
-  "blurb": "They kept the old house and let it. One property, two characters, and two loans whose deductibility has nothing to do with what secures them.",
+  "blurb": "Same client, two invoices. Almost everything appears on both — so the useful question is not what is on each fee, but what differs between them, and why.",
   "questions": [
    {
-    "type": "fees",
-    "tag": "Final capstone",
+    "type": "multi",
+    "tag": "Compare the fees",
     "hard": true,
     "core": true,
-    "q": "This client had an SOA last financial year and is on an ongoing service this year. For each fee, select every strategy row that belongs on it — then set the tax ruling for each row you select.",
-    "hint": "Most rows appear on both fees, because a real annual review covers the whole plan and reviewing something again is real work — so ask whether anyone advised on it that year, not whether the arrangement still exists. Hold on to one idea throughout: for anything involving a loan, deductibility follows what the borrowed money was spent on, not what the loan is secured against.",
-    "scenario": "<b>Client:</b> Ben &amp; Sophie Carter, both employed, two school-aged children. Last financial year they bought a larger home for $1.35m and <b>kept their previous home as a rental</b> — they moved out on 1 November and it was tenanted from 15 November. The former home carries a <b>$310,000 loan</b>; the new home carries a <b>$700,000 loan</b>. The deposit for the new home was drawn against the former home. Both fees are invoiced as a single amount, and the file holds complete calculations and file notes for every piece of work below.",
-    "rulings": [
-     "s8-1",
-     "s25-5",
-     "Both s8-1 & s25-5",
-     "Not deductible"
-    ],
-    "pool": [
-     "Gearing Strategy Advice (Deductible Debt)",
-     "Ongoing Management of an Existing Investment Portfolio",
-     "Investment Bond Advice",
-     "Bank Account &amp; Offset Structuring",
-     "Paying down a Non-Deductible Debt (e.g., family home)",
-     "General Budgeting and Cash Flow Management",
-     "Estate Planning Advice (e.g., Testamentary Trusts)",
-     "Financial Modelling &amp; Tax Projections",
+    "brief": {
+     "scenario": "<b>Client:</b> Ben &amp; Sophie Carter, both employed, two school-aged children. Last financial year they bought a larger home for $1.35m and <b>kept their previous home as a rental</b> — they moved out on 1 November and it was tenanted from 15 November. The former home carries a <b>$310,000 loan</b>; the new home carries a <b>$700,000 loan</b>. The deposit for the new home was drawn against the former home. Both fees are invoiced as a single amount, and the file holds complete calculations and file notes for every piece of work below.",
+     "blocks": [
+      {
+       "label": "Upfront advice fee",
+       "fee": "$9,900 incl. GST — SOA issued last financial year",
+       "colour": "#7C3AED",
+       "work": [
+        "Advise on <b>which loan interest is deductible and which is not</b> — the new home deposit was drawn against the former home, so the file traces purpose rather than security, with a deductibility analysis for each loan split",
+        "Set up the <b>retained property as a rental</b> — market value cost base at changeover, main residence exemption position, depreciation and capital works schedule, and the tax treatment of the rental income",
+        "Start an <b>investment bond</b> for the children's school fees, internally taxed, with the 10-year and 125% rules modelled",
+        "Direct salary and savings through an <b>offset account against the new home loan</b>",
+        "Prioritise <b>paying down the new home loan</b>, which carries the non-deductible interest",
+        "Prepare a <b>household budget</b> for the higher repayments",
+        "<b>Reduce the salary sacrifice</b> to fund the larger mortgage — concessional cap space and carry-forward position re-checked",
+        "Increase <b>Ben's personally owned income protection</b> to match the larger debt",
+        "Review <b>life and TPD cover inside Sophie's super</b>, including who receives the benefit",
+        "Update the <b>wills</b> to reflect the new property",
+        "<b>Financial modelling</b> of tax payable now and over ten years for every strategy above"
+       ]
+      },
+      {
+       "label": "Ongoing advice fee",
+       "fee": "$5,500 per year incl. GST — this financial year, no new SOA",
+       "colour": "#0D9488",
+       "work": [
+        "<b>Annual review covering every strategy in the SOA</b>, with updated file notes for each",
+        "<b>Ongoing management of the rental</b> — a full year of tenancy, income, expenses, depreciation and the tax implications",
+        "Re-check the <b>loan splits and purpose tracing</b> after a refinance of the rental loan",
+        "<b>Increase the salary sacrifice again</b> now the mortgage has settled — cap space and carry-forward position re-checked",
+        "Review the <b>investment bond</b> against the 125% contribution rule",
+        "Re-test the <b>offset structure</b>, and review progress on <b>paying down the home loan</b>",
+        "<b>Insurance review</b> — Ben's income protection and Sophie's super-held cover both re-assessed",
+        "Refresh the <b>budget</b> and review the <b>wills</b>",
+        "!No new strategies were added this year, and <b>no new tax modelling</b> was produced — the projections were done with the SOA."
+       ]
+      }
+     ]
+    },
+    "q": "Both invoices are drawn from the work above. Select every strategy row that appears on the <b>upfront fee but not the ongoing fee</b>.",
+    "hint": "Go line by line down the ongoing brief and ask what it does not mention. Everything the annual review genuinely re-did earns its place again — so you are looking for the one piece of work that was done once and not repeated.",
+    "options": [
+     "Financial Modelling & Tax Projections",
+     "Estate Planning Advice (wills and guardianship)",
      "Income Protection Insurance Application / Review",
-     "Super-owned Life / TPD Insurance Advice",
      "Salary Sacrifice to Superannuation",
-     "Debt Recycling Strategy",
-     "Establish a New Investment Portfolio (from scratch)",
-     "Commencement of an Account Based Pension (ABP)"
+     "Paying down a Non-Deductible Debt (the family home)",
+     "Bank Account & Offset Structuring"
     ],
-    "notes": [
-     "on both fees, both heads, and it carries the whole lesson. Deductibility follows the purpose the borrowed money was put to, not the asset securing the loan. Part of the loan secured over the rental funded the new home, so that slice of interest is private despite the security. Working it out is advice on an income-producing asset (s8-1) and on how the tax law treats the borrowings (s25-5).",
-     "on both fees, both heads, though the work differs. On the upfront fee it is the changeover: market value cost base, the main residence exemption position, the depreciation schedule and the tax treatment of the rental income from the day it was let. On the ongoing fee it is a full year of managing that same asset. Either way the property is an existing holding that produces assessable income (s8-1) and the advice covers the tax implications of that income and any disposal (s25-5). It never goes on the Establish row — nothing was acquired, the same asset simply changed character.",
-     "s25-5 on both fees. The bond is taxed internally and returns nothing assessable to them while they hold it, so there is no s8-1 limb. What is claimable is the advice on structuring assets to reduce assessable income, and on the 10-year and 125% rules.",
-     "s25-5 on both fees — advice on the tax implications of how the accounts are structured. It is not the same row as paying down the home loan, and it is not nil.",
-     "nil on both fees. Directing surplus at the home loan was recommended in the SOA and reviewed again at the annual review — reviewing it is real work, and it still claims nothing, because private debt reduction produces no assessable income and manages no tax position. Note it is not the same row as offset structuring, which does carry a s25-5 slice for the tax analysis attached to it.",
-     "nil on both fees. Prepared in the SOA and refreshed at the review, and private and domestic either way. The row goes on the invoice and calculates $0.",
-     "nil on both fees. The wills were rewritten after the purchase and reviewed again at the annual review. Both are real pieces of work and neither is claimable — an annual estate review is still an estate review, and frequency does not create deductibility.",
-     "s25-5, and on the upfront fee only. Modelling that calculates the tax payable now and over time is an SOA exercise — it was not re-run this year, and a cashflow update without tax calculations is not this row. Claim it in the years the modelling was genuinely produced, not because it appears in the service agreement.",
-     "both heads on both fees. Increased in the SOA and re-assessed at the review. The cover protects assessable income (s8-1) and the advice covers its tax treatment and benefit design (s25-5). Ownership is what matters, and this is held personally by Ben.",
-     "s25-5 on both fees — the tax implications of benefits paid before age 60 or to a non-dependant. Held inside Sophie's super, so no personal s8-1 nexus arises, and the premiums are never deductible to her. This is the advice fee only.",
-     "s25-5 on both fees. It was reduced in the SOA to fund the larger mortgage and increased again at the review, and both decisions rest on the available concessional cap space and carry-forward position. Deciding whether to continue, increase or decrease an arrangement is continuing advice on the tax treatment of the contributions.",
-     "never recommended, and it would not fit. The surplus is already committed to the mortgage, the bond and school fees — and you cannot recycle debt into an internally taxed investment bond in any event, because the borrowing has to fund an asset that produces assessable income in the client's own hands. A bond produces none while it is held.",
-     "never recommended — nothing was acquired. The rental is an existing asset that changed character, which belongs on the ongoing management row. This row is for deploying capital into something new, and that did not happen.",
-     "never recommended, and could not be — both are in their forties and years from a condition of release. The strategy list is not a menu."
+    "answer": [
+     0
     ],
-    "blocks": [
-     {
-      "label": "Upfront advice fee",
-      "fee": "$9,900 incl. GST — SOA issued last financial year",
-      "colour": "#7C3AED",
-      "tint": "#F1EAFE",
-      "work": [
-       "Advise on <b>which loan interest is deductible and which is not</b> — the new home deposit was drawn against the former home, so the file traces purpose rather than security, with a deductibility analysis for each loan split",
-       "Set up the <b>retained property as a rental</b> — market value cost base at changeover, main residence exemption position, depreciation and capital works schedule, and the tax treatment of the rental income",
-       "Start an <b>investment bond</b> for the children's school fees, internally taxed, with the 10-year and 125% rules modelled",
-       "Direct salary and savings through an <b>offset account against the new home loan</b>",
-       "Prioritise <b>paying down the new home loan</b>, which carries the non-deductible interest",
-       "Prepare a <b>household budget</b> for the higher repayments",
-       "<b>Reduce the salary sacrifice</b> to fund the larger mortgage — concessional cap space and carry-forward position re-checked",
-       "Increase <b>Ben's personally owned income protection</b> to match the larger debt",
-       "Review <b>life and TPD cover inside Sophie's super</b>, including who receives the benefit",
-       "Update the <b>wills</b> to reflect the new property",
-       "<b>Financial modelling</b> of tax payable now and over ten years for every strategy above"
-      ],
-      "key": {
-       "0": 2,
-       "1": 2,
-       "2": 1,
-       "3": 1,
-       "4": 3,
-       "5": 3,
-       "6": 3,
-       "7": 1,
-       "8": 2,
-       "9": 1,
-       "10": 1
-      }
-     },
-     {
-      "label": "Ongoing advice fee",
-      "fee": "$5,500 per year incl. GST — this financial year, no new SOA",
-      "colour": "#0D9488",
-      "tint": "#DEF5F1",
-      "work": [
-       "<b>Annual review covering every strategy in the SOA</b>, with updated file notes for each",
-       "<b>Ongoing management of the rental</b> — a full year of tenancy, income, expenses, depreciation and the tax implications",
-       "Re-check the <b>loan splits and purpose tracing</b> after a refinance of the rental loan",
-       "<b>Increase the salary sacrifice again</b> now the mortgage has settled — cap space and carry-forward position re-checked",
-       "Review the <b>investment bond</b> against the 125% contribution rule",
-       "Re-test the <b>offset structure</b>, and review progress on <b>paying down the home loan</b>",
-       "<b>Insurance review</b> — Ben's income protection and Sophie's super-held cover both re-assessed",
-       "Refresh the <b>budget</b> and review the <b>wills</b>",
-       "!No new strategies were added this year, and <b>no new tax modelling</b> was produced — the projections were done with the SOA."
-      ],
-      "key": {
-       "0": 2,
-       "1": 2,
-       "2": 1,
-       "3": 1,
-       "4": 3,
-       "5": 3,
-       "6": 3,
-       "8": 2,
-       "9": 1,
-       "10": 1
-      }
-     }
+    "why": "Only the modelling. Every other row on that list was genuinely re-done at the annual review — the cap space was re-checked, the loan splits re-traced, the cover re-assessed, the offset re-tested, the wills reviewed and the home loan progress checked. Reviewing something again is real work, so each of those rows earns a place on the second invoice too. Note that three of them claim nothing when they get there, which is a separate question from whether they belong."
+   },
+   {
+    "type": "mc",
+    "tag": "Why it differs",
+    "hard": true,
+    "core": true,
+    "q": "Why does Financial Modelling &amp; Tax Projections drop off the ongoing fee?",
+    "hint": "Ask what was actually produced this year, and whether it is the same thing the row describes.",
+    "options": [
+     "Because modelling is one-off by nature and can never sit on an ongoing fee",
+     "Because the projections were produced with the SOA and not re-run this year — and refreshing a budget without calculating tax payable is a different row entirely",
+     "Because the ongoing fee is smaller, so fewer rows fit within it",
+     "Because tax modelling stops being deductible once a client moves onto a recurring service"
     ],
-    "why": "On a mature ongoing service almost every row recurs, and that is the headline. The annual review covers the whole plan, so reviewing something again is real work that belongs on the invoice — the question is never whether the arrangement still exists, but whether anyone actually advised on it that year. Where they did, the ruling stays the same, because the character of the work has not changed. Exactly one row falls away: the tax modelling was produced with the SOA and not re-run, and a cashflow update without tax calculations is not that row.\n\nThe engagement turns on one idea, and it is the one most likely to cost a client money: deductibility follows the purpose the borrowed money was put to, not the asset the loan is secured against. The deposit for the new home was drawn against the former home, so that slice of interest is private despite being secured over an income-producing property. Working that out is claimable under both heads — and it is the reason the file traces purpose rather than security.\n\nThe second idea is that an asset can change character. The former home was private until the day it was tenanted and income-producing from then on. It never goes on the Establish row, because nothing was acquired — the same asset simply started earning.\n\nFinally, the three rows that claim nothing on either fee still go on the invoice every year and calculate $0. Budgeting is private. Paying down the home loan is private debt reduction, reviewed annually and claimable never. The wills are private and capital however often you review them. Frequency does not create deductibility."
+    "answer": 1,
+    "why": "Because that work was not done again. Nothing stops modelling appearing on an ongoing fee — in a year where you genuinely re-run the tax projections, it belongs there and carries s25-5. This year they refreshed a household budget, which calculates no tax and belongs under budgeting at nil. This is the row that depends most on what is actually on the file, which is exactly why it is the one that moves."
+   },
+   {
+    "type": "mc",
+    "tag": "Why it repeats",
+    "hard": true,
+    "core": true,
+    "q": "Almost every other row appears on <b>both</b> fees, carrying the same ruling each time. What makes that correct rather than charging twice for one piece of advice?",
+    "hint": "Ask what the ongoing fee is actually paying for — the arrangement continuing to exist, or someone doing work on it again this year.",
+    "options": [
+     "The service agreement lists those strategies, so they can be charged in every year it runs",
+     "Each fee is claimed for the work done in its own year: the review re-checked the cap space, re-traced the loans and re-assessed the cover, and advising again is advice",
+     "Once a strategy has been set up, its ruling attaches to the client and applies to every later invoice",
+     "It is double-counting, but it is accepted practice where an ongoing service is in place"
+    ],
+    "answer": 1,
+    "why": "Because the work was done twice, in two different years, and each fee is claimed for its own year. That is the whole test: not whether the arrangement still exists, but whether someone actually advised on it again. Salary sacrifice is the clearest case — checking the available cap space and deciding whether to continue, increase or decrease it is fresh advice on the tax treatment of the contributions every time it is done. Option A is the trap that produces over-claiming: the service agreement describes what you might do, the file shows what you did, and only the second one supports a claim."
+   },
+   {
+    "type": "odd",
+    "tag": "Odd one out",
+    "core": true,
+    "q": "Three of these are reviewed every year and still claim nothing. Which one is reviewed every year and does carry a claim?",
+    "options": [
+     "Progress on paying down the family home loan",
+     "The household budget and cash flow plan",
+     "The wills and guardianship arrangements",
+     "The offset account structure"
+    ],
+    "answer": 3,
+    "why": "The offset. It is the only one of the four with a genuine tax question attached: savings sitting in an account earn assessable interest, the same savings in an offset earn none and reduce non-deductible interest instead, and whose name an account is in decides who is taxed. That analysis is s25-5, and it is why part of the fee is claimable while the rest — which bank, how many accounts, how the pay is routed — is private structure. The other three are reviewed just as diligently and claim nothing: private debt reduction, private cashflow, and private and capital succession planning. Frequency does not create deductibility."
    }
   ]
  }
@@ -2384,6 +2380,7 @@ ACTIVE.forEach((sec,si)=>{
     if(q.type==='match') top.appendChild(el('div','q-tag', qPoints(q)+' pts'));
     qn.appendChild(top);
 
+    if(q.brief) qn.appendChild(buildBrief(q.brief));
     if(q.type!=='dropdown') qn.appendChild(el('p','q-text', q.q));
 
     if(q.type==='versus'){
@@ -2770,7 +2767,31 @@ function buildRapid(q, key){
 }
 
 /* ---- capstone: which strategies sit on the upfront fee, and on the ongoing fee ---- */
+/* ---- scenario brief: the two fee summaries, shown above a normal question ---- */
+function buildBrief(b){
+  const wrap = el('div','briefwrap');
+  wrap.appendChild(el('div','scenario', b.scenario));
+  const grid = el('div','fee-brief');
+  b.blocks.forEach(bl=>{
+    const c = el('div','brief');
+    c.style.setProperty('--bh', bl.colour);
+    c.appendChild(el('div','brief-h', bl.label + '<small>' + bl.fee + '</small>'));
+    const ul = document.createElement('ul');
+    bl.work.forEach(w=>{
+      const li = document.createElement('li');
+      li.className = w.startsWith('!') ? 'brief-none' : '';
+      li.innerHTML = w.replace(/^!/,'');
+      ul.appendChild(li);
+    });
+    c.appendChild(ul);
+    grid.appendChild(c);
+  });
+  wrap.appendChild(grid);
+  return wrap;
+}
+
 function buildFees(q, key){
+
   const wrap = el('div','feewrap');
   wrap.appendChild(el('div','scenario', q.scenario));
 
