@@ -893,7 +893,7 @@ const QUIZ = [
     "q": "Advice that reduces a client’s non-deductible interest cost is deductible under s8-1, because reducing an expense has the same effect on their position as increasing assessable income.",
     "answer": false,
     "why": "False, and this is the reasoning behind the corrected offset wording. Reducing non-deductible interest improves the client’s cash position but does not produce assessable income and does not constitute managing their tax affairs. The two are not equivalent for s8-1 purposes.",
-    "core": false
+    "core": true
    },
    {
     "type": "odd",
@@ -966,7 +966,7 @@ const QUIZ = [
      5
     ],
     "why": "The two rejects are the ones the document warns about by name. A verbal confirmation evidences nothing, and a premium split may not be used as the allocation basis unless the file explains why it is a reasonable proxy for the advice work. Everything else establishes either that the work was tax-affairs work, or that the assets it related to were genuinely income-producing.",
-    "core": false
+    "core": true
    }
   ]
  },
@@ -1232,7 +1232,7 @@ const QUIZ = [
     ],
     "answer": 2,
     "why": "Both. The two debt rows are treated alike, and this is the pairing most likely to catch you out. Each has the s8-1 nexus — borrowings applied to producing assessable income. Each also picks up s25-5, because the engagement advises on the taxation treatment of those borrowings: interest deductibility and borrowing purpose. The distinction to resist is the old one, where debt recycling was recorded on s8-1 alone; if the file documents the purpose tracing and the deductibility analysis, that work is a s25-5 claim in its own right on both rows.",
-    "core": false
+    "core": true
    },
    {
     "type": "mc",
@@ -1354,7 +1354,7 @@ const QUIZ = [
     ],
     "answer": 3,
     "why": "Nil claim. The premiums are paid and deducted by the super fund, not the member, so no personal s8-1 nexus arises. Personally held income protection uses the standard row instead. Retain the policy ownership and premium-funding details on file.",
-    "core": false
+    "core": true
    },
    {
     "type": "bucket",
@@ -1500,7 +1500,7 @@ const QUIZ = [
     ],
     "answer": 1,
     "why": "Nil. Explaining why a private strategy is sensible is not advice on the client’s tax affairs. The offset row is deductible because the advice concerns the tax implications of how the accounts are structured; accelerating home loan repayment is household debt reduction. If genuine investment debt advice sits alongside it, record that separately.",
-    "core": false
+    "core": true
    },
    {
     "type": "bucket",
@@ -1982,118 +1982,18 @@ const QUIZ = [
   ]
  },
  {
-  "id": "S8",
-  "code": "Section 08",
-  "title": "The Statement of Advice",
-  "blurb": "A different client, a different SOA. Eight recommendations and a single upfront fee — build the invoice: strategy row, section, and the reason that supports it.",
-  "questions": [
-   {
-    "type": "soa",
-    "tag": "Capstone",
-    "hard": true,
-    "q": "For each recommendation, select the strategy row, the section it is claimed under, and the reason that supports it.",
-    "hint": "Do the section column first, then let it point you to the strategy row and the reason. Three rules cover everything here: for insurance, ask who owns the policy; for investments, ask whether it already existed; for everything else, ask whether tax was actually calculated. More rows and reasons are listed than you need, and none is used twice.",
-    "scenario": "<b>Client:</b> Marcus &amp; Elena Vasquez, owners of a manufacturing business they intend to sell in around five years. <b>Advice fee:</b> $11,000 incl. GST, invoiced as a single upfront amount. The file contains a complete set of calculations, modelling and file notes for every recommendation below.",
-    "strategies": [
-     "Advice on Death Benefit Nominations (Super)",
-     "Bank Account & Offset Structuring",
-     "Business Expenses Insurance Advice",
-     "Business Succession Planning (Tax Implications)",
-     "Establish a New Investment Portfolio (from scratch)",
-     "Gearing Strategy Advice (Deductible Debt)",
-     "Investment Structuring Advice (e.g., Trust, Company)",
-     "Key Person Insurance (Deductibility Analysis)",
-     "Personal Deductible Concessional Contributions",
-     "Personal Life / TPD / Trauma Insurance Advice (outside super)",
-     "Rollover Existing Super to New Fund/Platform",
-     "Small Business CGT Concessions Advice"
-    ],
-    "treatments": [
-     "s8-1 only",
-     "s25-5 only",
-     "Both s8-1 & s25-5",
-     "Not deductible"
-    ],
-    "reasons": [
-     "Advice on making tax-deductible personal contributions — notice of intent, caps and Division 293 — is applying taxation law",
-     "Division 152 eligibility testing, active asset and connected entity analysis is inherently tax-affairs work",
-     "The borrowings are applied to producing assessable rental income, and the engagement advises on interest deductibility and borrowing purpose",
-     "Considers the most tax-effective ownership of existing income-producing investments, including distributions and CGT",
-     "The premiums secure assessable replacement income and deductible operating expenses, with no separate tax-affairs analysis attached",
-     "Private protection advice — the super-held benefit rationale cannot reach a personally held policy",
-     "Product replacement and implementation advice, which is capital in character",
-     "Succession and estate planning, where any tax consequences are incidental to the objective",
-     "Establishment and acquisition advice is capital and preparatory in nature",
-     "Concerns the tax implications of super benefits paid before age 60 or to a non-dependant beneficiary"
-    ],
-    "rows": [
-     {
-      "r": "Make a $30,000 personal deductible contribution for Marcus, with the notice of intent, carry-forward cap position and Division 293 assessment documented.",
-      "s": 8,
-      "t": 1,
-      "w": 0
-     },
-     {
-      "r": "Test eligibility for the small business CGT concessions on the eventual sale, including active asset and connected entity analysis under Division 152.",
-      "s": 11,
-      "t": 1,
-      "w": 1
-     },
-     {
-      "r": "Restructure the borrowings over the commercial premises the business leases from them, with loan purpose tracing and interest deductibility analysis on file.",
-      "s": 5,
-      "t": 2,
-      "w": 2
-     },
-     {
-      "r": "Move their existing $900,000 share portfolio into a family trust, modelling the distribution and CGT outcomes of the new ownership.",
-      "s": 6,
-      "t": 2,
-      "w": 3
-     },
-     {
-      "r": "Put business expenses cover in place to meet the fixed operating costs of the business if either of them is incapacitated.",
-      "s": 2,
-      "t": 0,
-      "w": 4
-     },
-     {
-      "r": "Take out trauma and TPD cover held personally, outside super, for family protection.",
-      "s": 9,
-      "t": 3,
-      "w": 5
-     },
-     {
-      "r": "Roll Elena's existing super to a lower-cost platform on a like-for-like basis.",
-      "s": 10,
-      "t": 3,
-      "w": 6
-     },
-     {
-      "r": "Put binding death benefit nominations in place across both super accounts.",
-      "s": 0,
-      "t": 3,
-      "w": 7
-     }
-    ],
-    "why": "Eight recommendations and all four treatments, which is rare on one invoice. Business expenses cover is the reason: it is the only row in the entire document claimed under s8-1 alone, because the premiums secure assessable replacement income and deductible operating expenses with no tax-affairs analysis attached to them. The two “both heads” rows are the borrowings and the trust restructure — each concerns assets already producing assessable income, and each also advises on how the tax law treats them. The three nil rows fail for three different reasons: personally held trauma and TPD is private protection and must not inherit the super-held rationale, a like-for-like platform move is product replacement, and death benefit nominations are succession planning where the tax consequences are incidental. Note that the small business CGT work is claimable now even though the sale is years away — Division 152 eligibility testing is tax-affairs work whenever it is performed.",
-    "core": true
-   }
-  ]
- },
- {
   "id": "S9",
-  "code": "Section 09",
+  "code": "Section 08",
   "title": "Upfront & Ongoing",
-  "blurb": "The same client, two separate fees, two separate invoices. A strategy row only goes on a fee if that work was actually performed for that fee — and the ruling is decided row by row.",
+  "blurb": "One client, two fees, two invoices. A home, a mortgage, insurance and a first step into investing — plus two things they intend to do later but have not done yet.",
   "questions": [
    {
     "type": "fees",
     "tag": "Final capstone",
     "hard": true,
-    "q": "This client had an SOA last financial year, and is on an ongoing service agreement this year. For each fee, select every strategy row that belongs on it — then set the tax ruling for each row you select.",
-    "hint": "Three things to watch. A strategy can belong to both fees, to one, or to neither. Work that was only done once — starting the pension, writing the wills — cannot be charged again on the ongoing fee. And two rows in the list were never recommended to this client at all: only put a row on a fee if that work was actually done.",
-    "scenario": "<b>Client:</b> Dave &amp; Sally Whitmore. Both fees are invoiced as a single amount, and the file holds a complete set of calculations, modelling and file notes for every piece of work listed below.",
+    "q": "This client had an SOA last financial year and is on an ongoing service this year. For each fee, select every strategy row that belongs on it — then set the tax ruling for each row you select.",
+    "hint": "Most rows appear on both fees — a real annual review covers the whole plan, and reviewing something again is real work. So do not ask whether the arrangement still exists; ask whether anyone actually advised on it this year. Then watch two groups: the things that can only happen once, and the things you review every year that still are not deductible. Two rows in the list were never recommended at all.",
+    "scenario": "<b>Client:</b> Josh &amp; Amy Nguyen, both employed, own their home with a $520,000 mortgage. At the time of the SOA they held no investments outside super. They intend to buy an investment property in around four years, and Amy is considering starting her own business after that — <b>neither has happened yet</b>. Both fees are invoiced as a single amount, and the file holds a complete set of calculations, modelling and file notes for every piece of work below.",
     "rulings": [
      "s8-1",
      "s25-5",
@@ -2101,85 +2001,103 @@ const QUIZ = [
      "Not deductible"
     ],
     "pool": [
-     "Salary Sacrifice to Superannuation",
-     "Commencement of an Account Based Pension (ABP)",
-     "Ongoing Management of an Existing Investment Portfolio",
-     "Investment Portfolio Review &amp; Rebalancing",
-     "Ongoing Superannuation &amp; Pension Management",
+     "Bank Account &amp; Offset Structuring",
+     "Debt Recycling Strategy",
      "Establish a New Investment Portfolio (from scratch)",
+     "Ongoing Management of an Existing Investment Portfolio",
+     "Gearing Strategy Advice (Deductible Debt)",
+     "General Budgeting and Cash Flow Management",
      "Income Protection Insurance Application / Review",
      "Super-owned Life / TPD Insurance Advice",
-     "General Budgeting and Cash Flow Management",
-     "Estate Planning Advice (e.g., Testamentary Trusts)",
+     "Investment Structuring Advice (e.g., Trust, Company)",
      "Financial Modelling &amp; Tax Projections",
-     "Debt Recycling Strategy",
-     "SMSF Establishment and Structuring Advice"
+     "Estate Planning Advice (e.g., Testamentary Trusts)",
+     "Salary Sacrifice to Superannuation",
+     "Paying down a Non-Deductible Debt (e.g., family home)",
+     "Commencement of an Account Based Pension (ABP)"
     ],
     "notes": [
-     "the SOA set the arrangement up and analysed the concessional cap and PAYG consequences, which is s25-5 work. Nothing further was advised on it this year.",
-     "commencement is one-off pension tax advice. Once the pension is running, the recurring work belongs on the Ongoing Superannuation &amp; Pension Management row instead.",
-     "the existing $640,000 portfolio was reviewed in the SOA and is reviewed again under the service agreement, so it sits on both fees. Managing existing income-producing assets supplies s8-1; advising on the tax implications of the income and the disposals supplies s25-5.",
-     "the rebalance back to target allocation was done under the ongoing service, not in the SOA. It maintains an existing portfolio rather than building one, so both heads apply.",
-     "drawdown levels and the tax components of Sally's pension payments are recurring pension tax management under s25-5. There is no s8-1 limb, because super assets produce income for the fund and not for the member.",
-     "deploying the $200,000 inheritance into a brand-new portfolio is acquisitive and capital in nature, and no part of it recurs.",
-     "the application and the advice on premium deductibility is upfront work. The cover protects assessable income (s8-1) and the advice covers its tax treatment (s25-5).",
-     "reviewing super-held cover alongside the position of adult non-dependant children is the exemplified s25-5 claim — the tax implications of benefits paid before age 60 or to a non-dependant.",
-     "the budget was prepared in the SOA and refreshed under the ongoing service, so it belongs on both fees. Private and domestic either way: the row goes on the invoice and calculates $0.",
-     "the wills and the testamentary trust were done in the SOA. Private and capital succession planning, with any tax consequences incidental to the estate objective.",
-     "the modelling calculating tax payable now and over time was produced for the SOA, which is squarely s25-5. No new tax modelling was produced this year, so nothing can be claimed on the ongoing fee.",
-     "never recommended for these clients. A strategy row only goes on an invoice where the work was actually performed — the list is not a menu.",
-     "never recommended for these clients. They hold retail super and no SMSF was established."
+     "set up in the SOA and re-tested at the review, so it belongs on both fees. s25-5 either way — advice on the tax implications of how the accounts are structured. It is not the same row as paying down the home loan, which is nil.",
+     "on both fees. Set up in the SOA and reviewed again this year with a further loan split, and the character has not changed: borrowings applied to income-producing investments (s8-1), plus advice on interest deductibility and borrowing purpose (s25-5).",
+     "buying the portfolio with the recycled borrowings is capital, and it only happens once — which is why it sits on the upfront fee and cannot appear again. The loan is claimable and the portfolio it buys is not: two rows, opposite answers.",
+     "there was nothing to manage until the portfolio existed, so this cannot appear on the upfront fee. From this year it is both heads — existing income-producing assets, plus advice on the tax implications of the dividends and the disposal.",
+     "revisited at the annual review, and still nil. Reviewing a plan every year does not change the answer while there is nothing to attach it to — no property has been bought and nothing has been borrowed, so no income-producing asset exists.",
+     "prepared in the SOA and refreshed at every review, so it sits on both fees. Private and domestic either way — the row goes on the invoice and calculates $0.",
+     "applied for in the SOA and re-assessed this year, so it belongs on both fees. Both heads each time: the cover protects assessable income (s8-1) and the advice covers its tax treatment and benefit design (s25-5).",
+     "recommended in the SOA and reviewed again this year, so it sits on both fees at s25-5 — the tax implications of benefits paid before age 60 or to a non-dependant. The premiums are never deductible to the member; this is the advice fee only.",
+     "revisited at the review and still nil. This row normally carries both heads, but only because it usually structures investments that already produce assessable income. A business that has not begun trading has none, and another year of discussing it does not change that.",
+     "produced for the SOA and updated at the review, so it sits on both fees at s25-5. This is the row that depends most on the file — claim it in a year when the projections were genuinely produced, not because it appears in the service agreement.",
+     "reviewed every year, and nil every year. This is the one worth remembering: an annual review of the wills and guardianship is real work, and it is still private and capital succession planning. Frequency does not create deductibility.",
+     "on both fees at s25-5, and this is the row that makes the point. Each year you check the available concessional cap space and the carry-forward position, and decide whether to continue, increase or decrease the sacrifice. That is continuing advice on the tax treatment of the contributions. A strategy does not stop being advised on merely because it was set up in an earlier year.",
+     "never recommended — the strategy was to restructure and recycle the home loan, not to pay it down. A row only goes on an invoice where that work was actually performed.",
+     "never recommended, and could not be — both are in their forties and years from a condition of release. The strategy list is not a menu."
     ],
     "blocks": [
      {
       "label": "Upfront advice fee",
-      "fee": "$8,800 incl. GST — SOA issued last financial year",
+      "fee": "$6,600 incl. GST — SOA issued last financial year",
       "colour": "#7C3AED",
       "tint": "#F1EAFE",
       "work": [
-       "Salary sacrifice <b>$18,000 per year</b> into Dave's employer super fund — concessional cap worksheet and PAYG comparison on file",
-       "Commence an <b>account based pension</b> from Sally's accumulation balance — transfer balance cap and minimum pension calculations documented",
-       "Review and take over management of the existing <b>$640,000</b> share and managed fund portfolio, including the tax implications of its distributions and two disposals",
-       "Deploy a <b>$200,000 inheritance</b> into a new direct share portfolio built from scratch",
-       "Apply for <b>income protection cover owned personally</b> by Dave, with premiums paid from his own funds",
-       "Review the <b>life and TPD cover held inside Sally's super fund</b>, including the position of their adult non-dependant children as beneficiaries",
-       "Prepare a <b>household budget</b> and a savings plan targeting a $30,000 cash buffer",
-       "Update both wills and establish a <b>testamentary trust</b> for the benefit of the children",
+       "Start a <b>salary sacrifice arrangement</b> into Josh's employer fund, with a concessional cap worksheet and PAYG comparison",
+       "Restructure the home loan and direct both salaries and their savings through an <b>offset account</b>",
+       "Prepare a <b>household budget</b> and a savings plan building toward the deposit for the future investment property",
+       "Split the home loan and <b>borrow against the equity to invest</b>, converting private debt into deductible investment debt — loan purpose tracing and interest deductibility analysis on file",
+       "Select and buy the <b>$150,000 share portfolio</b> funded by those recycled borrowings; they held no investments outside super",
+       "Apply for <b>income protection cover owned personally</b> by Josh, premiums paid from his own funds",
+       "Recommend <b>life and TPD cover inside Amy's super fund</b>, including who should receive the benefit",
+       "Advise on timing and loan structure for the <b>investment property they intend to buy in about four years</b> — no property identified, no borrowing in place",
+       "Discuss whether Amy should own <b>the business she is considering starting</b> through a company or a family trust — it does not exist and has not begun trading",
+       "Put <b>wills and guardianship arrangements</b> in place for the children",
        "<b>Financial modelling</b> calculating the tax payable now and over time for every strategy above"
       ],
       "key": {
        "0": 1,
-       "1": 1,
-       "2": 2,
+       "1": 2,
+       "2": 3,
+       "4": 3,
        "5": 3,
        "6": 2,
        "7": 1,
        "8": 3,
-       "9": 3,
-       "10": 1
+       "9": 1,
+       "10": 3,
+       "11": 1
       }
      },
      {
       "label": "Ongoing advice fee",
-      "fee": "$6,600 per year incl. GST — this financial year, no new SOA",
+      "fee": "$4,400 per year incl. GST — this financial year, no new SOA",
       "colour": "#0D9488",
       "tint": "#DEF5F1",
       "work": [
-       "Annual review and <b>ongoing management of the existing portfolio</b>, including the tax implications of the income and one disposal",
-       "<b>Rebalance</b> the portfolio back to its target asset allocation",
-       "Manage Sally's pension — <b>drawdown levels</b> and the tax components of the pension payments",
-       "Refresh the <b>household budget</b> and check progress against the cash buffer",
-       "!No new SOA, no new strategies, and <b>no new tax modelling</b> was produced this year"
+       "<b>Annual review covering every strategy in the SOA</b>, with updated file notes for each",
+       "Review the <b>salary sacrifice</b> — available concessional cap space, carry-forward position, and whether to continue, increase or decrease it",
+       "<b>Ongoing management of the share portfolio</b>, including the tax implications of its dividends and one disposal",
+       "Review the <b>debt recycling structure</b> — a further loan split, purpose tracing and interest deductibility updated",
+       "Re-test the <b>offset structure</b> against their current salary and savings pattern",
+       "<b>Insurance review</b> — Josh's income protection and Amy's super-held cover both re-assessed",
+       "Revisit the <b>investment property plan</b> and the <b>business ownership question</b> — still nothing bought, still not trading",
+       "Refresh the <b>household budget</b>, and review the <b>wills and guardianship arrangements</b>",
+       "<b>Updated tax projections</b> for the year ahead",
+       "!Nothing new was established this year — the share portfolio was bought once, last year."
       ],
       "key": {
-       "2": 2,
+       "0": 1,
+       "1": 2,
        "3": 2,
-       "4": 1,
-       "8": 3
+       "4": 3,
+       "5": 3,
+       "6": 2,
+       "7": 1,
+       "8": 3,
+       "9": 1,
+       "10": 3,
+       "11": 1
       }
      }
     ],
-    "why": "Two fees, two invoices, and the rows do not simply carry across. Only two rows appear on both: the ongoing management of the existing portfolio, and budgeting — and each keeps the same ruling on both fees, because the character of the work has not changed. Everything else is one-off. Commencing the pension is upfront; managing the drawdown afterwards is ongoing, and they are different rows even though they concern the same account. The rebalance is ongoing only. And the tax modelling is the sharpest trap in the exercise: it is a clean s25-5 claim on the upfront fee, but claiming it again on the ongoing fee, in a year when no modelling was produced, is exactly the over-claim the evidence requirements exist to prevent. Finally, debt recycling and SMSF establishment were never recommended — if the work was not performed, the row does not go on the invoice.",
+    "why": "Almost every row sits on both fees, and that is the headline. A real ongoing service reviews the whole plan each year, and reviewing something again is real work that belongs on the invoice. Salary sacrifice is the clearest case: checking the available cap space and deciding whether to continue, increase or decrease it is continuing advice on the tax treatment of the contributions, so it is s25-5 in the year it was set up and s25-5 again every year you revisit it. A strategy does not stop being advised on merely because it was set up earlier. The question is never whether the arrangement still exists — it is whether anyone actually did the work this year.\n\nOnly two rows differ in whether they appear at all, and they are mirror images. Buying the portfolio happens once and cannot repeat; managing that portfolio cannot appear until it exists. Note the pairing at the centre of the upfront fee — the loan that funded the portfolio is claimable under both heads while the portfolio it bought is nil.\n\nThen the four rows that stay nil however often you look at them. Budgeting is private. The wills are private and capital, and an annual estate review is still an estate review — frequency does not create deductibility, and that is the trap most likely to reach a real invoice. The property and the business fail for the same reason as each other: neither exists, so there is no income-producing asset and no tax position for the advice to attach to. Revisiting a plan a second year running does not change that.",
     "core": true
    }
   ]
