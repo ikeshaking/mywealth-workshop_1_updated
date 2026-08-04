@@ -1533,42 +1533,6 @@ function svgCycle() {
     '</svg>';
 }
 
-/* --------------------------------------- two money streams, one crossing */
-function svgLanes() {
-  function node(x, y, w, t) {
-    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="52" rx="10" style="fill:var(--surface);stroke:var(--border-strong);stroke-width:1.5"/>' +
-      '<text x="' + (x + w / 2) + '" y="' + (y + 32) + '" text-anchor="middle" style="' + F.h + '">' + t + '</text>';
-  }
-  return '<svg data-anim viewBox="0 0 780 326" role="img" aria-label="Personal money flows salary to offset to home loan; borrowed money flows investment split to cash account to investments. Income and tax refunds are the only permitted crossing; personal spending out of the investment split is never allowed.">' +
-    ARROWS +
-    '<rect x="16" y="20" width="748" height="96" rx="12" style="fill:var(--lime-light);stroke:var(--lime-dark);stroke-width:2"/>' +
-    '<text x="32" y="42" style="' + F.cap + '">PERSONAL MONEY</text>' +
-    node(40, 50, 170, 'Salary &amp; savings') + node(250, 50, 170, 'Offset account') + node(460, 50, 200, 'Home loan (Split A)') +
-    '<path id="ln1" d="M216 76 L244 76" style="stroke:var(--lime-dark);stroke-width:2.5" marker-end="url(#ag)"/>' +
-    '<path id="ln2" d="M426 76 L454 76" style="stroke:var(--lime-dark);stroke-width:2.5" marker-end="url(#ag)"/>' +
-
-    '<rect x="16" y="196" width="748" height="96" rx="12" style="fill:var(--blue-light);stroke:var(--blue);stroke-width:2"/>' +
-    '<text x="32" y="218" style="' + F.cap + '">BORROWED MONEY</text>' +
-    node(40, 226, 170, 'Investment split') + node(250, 226, 170, 'CMA') + node(460, 226, 200, 'The portfolio') +
-    '<path id="ln3" d="M216 252 L244 252" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
-    '<path id="ln4" d="M426 252 L454 252" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
-
-    '<path id="ln5" d="M335 222 L335 108" style="stroke:var(--green);stroke-width:3" marker-end="url(#ab)"/>' +
-    '<text x="352" y="150" style="font:800 12px var(--bf);fill:var(--green)">✓ the tax refund</text>' +
-    '<text x="352" y="170" style="' + F.s + '">the one crossing the strategy is built on</text>' +
-
-    '<path d="M125 222 L125 108" style="stroke:var(--red);stroke-width:3;stroke-dasharray:6 5"/>' +
-    '<circle cx="125" cy="165" r="17" style="fill:var(--red-light);stroke:var(--red);stroke-width:2.5"/>' +
-    '<text x="125" y="172" text-anchor="middle" style="font:800 17px var(--bf);fill:var(--red)">✕</text>' +
-    '<text x="150" y="150" style="font:800 12px var(--bf);fill:var(--red)">✕ personal spending</text>' +
-    '<text x="150" y="170" style="' + F.s + '">a redraw out of the investment split</text>' +
-    flowDot('ln1', '0s', 'var(--lime-dark)', 5) + flowDot('ln2', '0.6s', 'var(--lime-dark)', 5) +
-    flowDot('ln3', '0.3s', 'var(--blue)', 5) + flowDot('ln4', '0.9s', 'var(--blue)', 5) +
-    flowDot('ln5', '1.6s', 'var(--green)', 5) +
-    '<text x="390" y="318" text-anchor="middle" style="' + F.s + '">Green arrow: always. Red arrow: never. Almost every routing question is one of these two.</text>' +
-    '</svg>';
-}
-
 /* ============================================================================
    TWO MORE EXERCISE TYPES
    ========================================================================== */
@@ -2168,7 +2132,7 @@ MODULES.push({
    ========================================================================== */
 MODULES.push({
   slug: "accounts",
-  mins: 5,
+  mins: 6,
   title: "The accounts, and what each one is for",
   sub: "Splits, offsets, CMA, portfolio",
   lede: "Almost every mistake in debt recycling is an account mistake. Get the map straight and the " +
@@ -2301,7 +2265,23 @@ MODULES.push({
         { lbl: "Borrowed funds not yet invested belong in the offset against…", opts: ["Split A", "Split B", "Either one", "Neither"], a: 1 },
         { lbl: "Dividends and distributions are…", opts: ["credited to the offset", "credited to the CMA", "reinvested inside the investment account", "paid to the client's everyday account"], a: 2 }
       ],
-      why: "P&I on the home loan so the bad debt actually reduces; interest-only on the investment split so the good debt is not accidentally paid down. Both splits have an offset, but they hold different money: the client's own cash against Split A, undrawn borrowed funds against Split B. Investment income goes to the CMA, where the trail stays clean." }
+      why: "P&I on the home loan so the bad debt actually reduces; interest-only on the investment split so the good debt is not accidentally paid down. Both splits have an offset, but they hold different money: the client's own cash against Split A, undrawn borrowed funds against Split B. Investment income goes to the CMA, where the trail stays clean." },
+
+    { id: "m5q1", kind: "cloze",
+      q: "Route each of these. Choose the correct destination from the list.",
+      rows: [
+        { lbl: "The client's monthly pay lands. It should go to…",
+          opts: ["The offset linked to Split A", "The CMA", "Split B, as a repayment", "A term deposit"], a: 0 },
+        { lbl: "A $60,000 drawdown from the new investment split should be paid into…",
+          opts: ["The client's everyday account", "The offset account", "A clean, nil-balance CMA", "Split A, to reduce it"], a: 2 },
+        { lbl: "A $3,100 quarterly ETF distribution is declared. Under our structure it is…",
+          opts: ["swept to the offset", "reinvested inside the investment account", "paid off Split B", "paid out to the client"], a: 1 },
+        { lbl: "The client's $8,400 tax refund from the interest deduction should go to…",
+          opts: ["The offset / Split A", "Split B", "The investment account, to buy more units", "Wherever the client prefers"], a: 0 },
+        { lbl: "The client asks to take $15,000 out for a holiday. The funds should come from…",
+          opts: ["Redraw on Split B", "Redraw on Split A", "The offset account", "Selling down some ETFs"], a: 2 }
+      ],
+      why: "Personal money and personal spending live on the offset / Split A side. Borrowed money and investment income live on the CMA / Split B side. Note the tax refund: it is personal money the strategy generated, so it belongs on the non-deductible side." }
   ]
 });
 
@@ -2366,70 +2346,11 @@ MODULES.push({
 });
 
 /* ============================================================================
-   MODULE 7 — Following the money
-   ========================================================================== */
-MODULES.push({
-  slug: "money",
-  mins: 2,
-  title: "Following the money",
-  sub: "Where each dollar goes, and why",
-  lede: "Day to day, your job is routing. Money arrives, and there is a right destination for it. " +
-        "This module is the routing table.",
-  blocks: [
-    '<div class="tablewrap"><table class="t"><thead><tr><th style="width:30%">Money event</th><th style="width:26%">Where it goes</th><th>Why</th></tr></thead><tbody>' +
-    '<tr><td>Salary and surplus cash</td><td>Offset (Split A)</td><td>Works against the non-deductible balance while staying liquid.</td></tr>' +
-    '<tr><td>Split B drawdown</td><td>Clean, nil-balance CMA → straight to the investment</td><td>Keeps borrowed funds traceable to their investment purpose.</td></tr>' +
-    '<tr><td>Dividends and distributions</td><td>Stay in the investment account and are reinvested</td><td>Not paid out at all — the holding compounds on itself.</td></tr>' +
-    '<tr><td>Annual tax refund</td><td>Offset / Split A</td><td>It exists because of the deduction — send it where it accelerates the strategy.</td></tr>' +
-    '<tr><td>Interest charged on Split B</td><td>Paid from the CMA or a personal account</td><td>Never capitalised onto the split itself without specific advice.</td></tr>' +
-    '<tr><td>A bonus or inheritance</td><td>Offset first — then flag it to the adviser</td><td>Parking it is always safe; whether to recycle it is an advice decision.</td></tr>' +
-    '<tr><td>Client wants $20,000 for a car</td><td>From the offset. Never from Split B.</td><td>A personal redraw against the investment split contaminates it permanently.</td></tr>' +
-    '<tr><td>Proceeds from selling investments</td><td>Stop — escalate to the adviser</td><td>CGT, the deductible balance and the plan are all in play. Not a routing decision.</td></tr>' +
-    '</tbody></table></div>' +
-
-    '<figure class="figure">' + svgLanes() +
-    '<figcaption>Figure 1 — two streams running in parallel. The tax refund crosses upward on purpose. Investment ' +
-    'income stays on the investment side and is reinvested. Nothing crosses downward.</figcaption></figure>' +
-
-    '<div class="callout c-note"><h4>🧠 The rule behind the whole table</h4>' +
-    '<p style="margin:0"><strong>Personal money attacks non-deductible debt. Borrowed money buys investments, and ' +
-    'what those investments earn is reinvested.</strong> The only thing crossing between the two is the tax refund. ' +
-    'Hold onto that and most routing questions answer themselves.</p></div>',
-
-    { id: "m5q1", kind: "cloze",
-      q: "Route each of these. Choose the correct destination from the list.",
-      rows: [
-        { lbl: "The client's monthly pay lands. It should go to…",
-          opts: ["The offset linked to Split A", "The CMA", "Split B, as a repayment", "A term deposit"], a: 0 },
-        { lbl: "A $60,000 drawdown from the new investment split should be paid into…",
-          opts: ["The client's everyday account", "The offset account", "A clean, nil-balance CMA", "Split A, to reduce it"], a: 2 },
-        { lbl: "A $3,100 quarterly ETF distribution is declared. Under our structure it is…",
-          opts: ["swept to the offset", "reinvested inside the investment account", "paid off Split B", "paid out to the client"], a: 1 },
-        { lbl: "The client's $8,400 tax refund from the interest deduction should go to…",
-          opts: ["The offset / Split A", "Split B", "The investment account, to buy more units", "Wherever the client prefers"], a: 0 },
-        { lbl: "The client asks to take $15,000 out for a holiday. The funds should come from…",
-          opts: ["Redraw on Split B", "Redraw on Split A", "The offset account", "Selling down some ETFs"], a: 2 }
-      ],
-      why: "Personal money and personal spending live on the offset / Split A side. Borrowed money and investment income live on the CMA / Split B side. Note the tax refund: it is personal money the strategy generated, so it belongs on the non-deductible side." },
-
-    { id: "m5q2", kind: "mcq",
-      q: "A client cannot cover this month's interest on Split B and asks whether the bank can just add it to the loan balance. What do you do?",
-      opts: [
-        "Arrange it — capitalising interest keeps the deductible debt growing, which helps the strategy.",
-        "Refuse and tell the client it is illegal.",
-        "Do not action it. Capitalising investment loan interest is a specific tax question with anti-avoidance implications — escalate to the adviser straight away.",
-        "Transfer the shortfall out of the offset without telling anyone, to keep things moving."
-      ], a: 2,
-      why: "Capitalising interest on an investment loan while paying down private debt is exactly the sort of arrangement the ATO scrutinises. It may be fine in a particular case, but it is never a client service decision — and a client short on cash flow is itself something the adviser needs to know about." }
-  ]
-});
-
-/* ============================================================================
    MODULE 8 — Cardinal rules and contamination
    ========================================================================== */
 MODULES.push({
   slug: "rules",
-  mins: 3,
+  mins: 4,
   title: "The cardinal rules",
   sub: "Contamination and how to avoid it",
   lede: "Most damage to a debt recycling strategy is done by ordinary, well-meaning admin. " +
@@ -3052,29 +2973,29 @@ MODULES.push({
         why: "Two offsets, two jobs. Own cash cuts non-deductible interest; undrawn borrowed funds sit against the investment term loan so no net interest is charged on money not yet working. (Module 5)" },
       { q: "Where must a drawdown from the investment split land?",
         opts: ["The client's everyday transaction account", "The offset account", "A clean, nil-balance account such as a CMA, then straight into the investment", "Split A, to reduce the home loan"], a: 2,
-        why: "Traceability is the deduction. Mixing borrowed funds with personal money breaks the trail. (Modules 6 and 8)" },
+        why: "Traceability is the deduction. Mixing borrowed funds with personal money breaks the trail. (Modules 6 and 7)" },
       { q: "A client redraws $20,000 from their $100,000 investment split to pay for a holiday. What is the consequence?",
         opts: ["No consequence — the split was created for investment", "The whole split loses deductibility", "The split becomes mixed-purpose: 80% of the interest is deductible and repayments are apportioned across both purposes", "The client simply repays it and the problem is resolved"], a: 2,
-        why: "Apportionment, and it is sticky. (Module 8)" },
+        why: "Apportionment, and it is sticky. (Module 7)" },
 
     { q: "Split B has fallen from $120,000 to $105,000 since the last review. This is…",
         opts: ["Good news — less debt", "Neutral — balances move", "A problem: deductible debt has been destroyed and cannot easily be rebuilt. Flag it to the adviser", "Only a problem if the client also sold investments"], a: 2,
-        why: "On the investment split, a falling balance works against the strategy. (Module 9)" },
+        why: "On the investment split, a falling balance works against the strategy. (Module 8)" },
       { q: "Select every event that should be escalated to the adviser the same day.",
         multi: true,
         opts: ["The client is refinancing both loans to a new lender", "The client has reduced their working hours", "A quarterly distribution has been reinvested", "The client wants to pay a lump sum off the investment split", "You are updating the client's postal address"], a: [0, 1, 3],
-        why: "Refinances can merge the splits, income changes undermine serviceability, and lump sums off the investment split destroy deductible debt. A distribution reinvesting normally, and an address update, are ordinary business. (Modules 8, 9 and 11)" },
+        why: "Refinances can merge the splits, income changes undermine serviceability, and lump sums off the investment split destroy deductible debt. A distribution reinvesting normally, and an address update, are ordinary business. (Modules 7, 8 and 10)" },
 
     { q: "A client on a 47% marginal rate paid $9,000 of interest on their investment split. The approximate tax benefit is…",
         opts: ["$9,000", "$4,230", "$2,880", "Nil until the investments are sold"], a: 1,
         why: "$9,000 × 47% = $4,230. The deduction reduces taxable income; it does not refund the interest. (Module 4)" },
       { q: "A client asks you directly whether the interest on their new split is tax-deductible. The right response is to…",
         opts: ["Confirm that it is, since the split was set up for investing", "Route the question to the adviser and the accountant, promptly", "Tell them to call the ATO", "Say you are not permitted to discuss anything tax-related"], a: 1,
-        why: "You may know the answer; it is still advice about a specific client's circumstances. Route it — and route it quickly. (Module 9)" },
+        why: "You may know the answer; it is still advice about a specific client's circumstances. Route it — and route it quickly. (Module 8)" },
       { q: "Select everything our guide identifies as a genuine risk or precondition of debt recycling.",
         multi: true,
         opts: ["Losses are amplified in a downturn", "The family home is usually the security", "A minimum horizon of around seven years", "Personal insurance, particularly income protection, matters", "The ATO may retrospectively disallow the strategy"], a: [0, 1, 2, 3],
-        why: "Debt recycling is legal under Australian tax law where funds are used for an income-producing purpose. The risks are structural and market-based. (Modules 3 and 11)" }
+        why: "Debt recycling is legal under Australian tax law where funds are used for an income-producing purpose. The risks are structural and market-based. (Modules 3 and 10)" }
     ] },
 
     '<div class="callout c-firm"><h4>📌 Before you sign off</h4>' +
