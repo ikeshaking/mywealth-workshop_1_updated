@@ -15799,9 +15799,9 @@ function renderHowToPage(){
         <div class="sop-step-head"><span class="sop-step-num">3a</span>Build a rebalance / rollover / no-change ROA</div>
 <ul>
         <li>The usual order is <strong>file note first, then the ROA</strong>: write the After Review Summary straight after the meeting, then start the Record of Advice and read the file note into it.</li>
-        <li>On <strong>Rebalance &amp; Accounts</strong>, confirm the type, enter the three dates, then add the CARE document — <strong>drag the file onto the drop zone</strong> or click it to browse; several at once is fine. Each account it finds is listed with its risk profile, trade and variation counts and fee disclosure.</li>
+        <li>On <strong>Review Documents &amp; Accounts</strong>, confirm the type and enter the three dates, then <strong>drop both of the review's documents on the one zone together</strong> — the file note and the CARE rebalance. Each file is identified by what's inside it, so the order doesn't matter and one confirmation covers the lot. Every CARE account found is listed with its risk profile, trade and variation counts and fee disclosure.</li>
         <li>Each account carries an <strong>investment menu</strong> setting, taken from the document: a <em>CARE managed</em> account prints the full platform fee disclosure; an <em>index / Vanguard</em> account prints its transactional costs only. Override it per account when the document is ambiguous — a household with both (e.g. Hub24 CARE super plus a CFS Edge index account) prints correctly in one document.</li>
-        <li>On <strong>Updates &amp; Action Items</strong>, drop the <strong>review file note</strong> on the zone at the top. Its "Updates:" and "Action items" headings fill both lists verbatim, and the client name, meeting date and adviser come across from the "On &lt;date&gt;, &lt;adviser&gt; met with…" line. Everything stays editable afterwards.</li>
+        <li><strong>Updates &amp; Action Items</strong> arrives already filled from the file note: its "Updates:" and "Action items" headings are copied verbatim, and the client name, meeting date and adviser come across from the "On &lt;date&gt;, &lt;adviser&gt; met with…" line. Everything stays editable — read it against the note and adjust.</li>
         <li>The tool can also lead the action items with a standard line written from the ROA type ("…we will perform a partial rollover from QSuper to Hub24, after which…"). When the file note's own wording already covers the rebalance or rollover, the import switches that line off so the document doesn't say it twice — the tick box shows the current state either way.</li>
         <li>A <strong>No Change ROA</strong> prints no rebalance, implications or fee tables, so the CARE upload is optional there — type the risk profile in instead.</li>
       </ul>
@@ -22119,42 +22119,27 @@ function rbalActionList(){
 }
 function rbalUpdateList(){ return (F.rbalUpdates||[]).filter(Boolean); }
 
-// ─── CARE import (this document quotes the CARE figures verbatim) ───
-async function rbalImportCare(inp){
-  const files = [...(inp.files||[])]; inp.value = '';
-  if(!files.length) return;
-  if(typeof mammoth === 'undefined'){ alert('The Word reader (mammoth) failed to load — check your internet connection and try again.'); return; }
+// ─── Importing the review's source documents ──────────────────────────────
+// Two documents build this Record of Advice, and both are dropped in the same
+// place: the CARE rebalance appendix (the tables) and the review file note (the
+// updates and action items). Each dropped file is identified by what's inside
+// it, so they can go on together in any order. Reading and applying are kept
+// apart so several files produce one confirmation rather than one each.
+
+// Read the CARE rebalance appendix. Returns {found:[account], skipped:[reason]}.
+async function rbalReadCareFiles(files){
   const found = [], skipped = [];
   for(const file of files){
-    const ext = (file.name.split('.').pop()||'').toLowerCase();
-    if(!(ext === 'docx' || (file.type||'').includes('wordprocessingml'))){
-      skipped.push(`${file.name} — export the CARE rebalance as Word (.docx); a PDF export loses the table structure this reader relies on`);
-      continue;
-    }
     try{
-      showImportStatus('Reading CARE document…');
       const res = await mammoth.convertToHtml({arrayBuffer: await file.arrayBuffer()});
-      hideImportStatus();
       const accts = extractCareDoc(res.value).filter(a => (a.trades||[]).length || (a.comparison||[]).length);
       if(!accts.length){ skipped.push(`${file.name} — no "Rebalance - <account>" section found`); continue; }
       accts.forEach(a => { a.sourceFile = file.name; found.push(a); });
-    }catch(ex){
-      hideImportStatus();
-      skipped.push(`${file.name} — ${ex && ex.message ? ex.message : ex}`);
-    }
+    }catch(ex){ skipped.push(`${file.name} — ${ex && ex.message ? ex.message : ex}`); }
   }
-  if(!found.length){ alert('CARE import failed.\n\n' + (skipped.join('\n') || 'No rebalance accounts were found.')); return; }
-
-  let summary = `Found ${found.length} account${found.length>1?'s':''}:\n\n`;
-  found.forEach(a => {
-    summary += `• ${a.banner}\n`;
-    summary += `     ${a.engine === 'care' ? 'CARE managed portfolios' : 'Index / external menu'}  ·  ${a.riskProfile||'risk profile not stated'}  ·  ${a.totalValue||'—'}\n`;
-    summary += `     ${a.trades.length} trade row(s), ${a.comparison.length} variation row(s)${a.feeRows.length?', investment fees':''}${(a.txn&&a.txn.total)?', transactional costs':''}\n`;
-  });
-  summary += `\nThe rebalance, implications and investment-fee tables are reprinted in the Record of Advice exactly as they appear here.`;
-  summary += `\n\nThis replaces any accounts already imported into this document. Proceed?`;
-  if(!confirm(summary)) return;
-
+  return {found, skipped};
+}
+function rbalApplyCare(found){
   F.rbalAccounts = found.map(a => ({
     banner: a.banner, accountName: a.accountName, owner: a.owner, type: a.type,
     platform: a.platform, riskProfile: a.riskProfile, engine: a.engine,
@@ -22173,27 +22158,108 @@ async function rbalImportCare(inp){
   const rp = found.map(a => a.riskProfile).filter(Boolean)[0];
   if(rp && !F.globalRiskProfile) F.globalRiskProfile = rp;
   if(rbalIsNoChange() && found.some(a => a.trades.length)) F.rbalType = 'rebalance';
-  render();
-  alert(`Imported ${F.rbalAccounts.length} account${F.rbalAccounts.length>1?'s':''} from the CARE document.${skipped.length?`\n\nSkipped:\n${skipped.join('\n')}`:''}`);
 }
-// A drop target that also works as a click-to-browse control. Dragging files
-// over it highlights it; dropping hands them to `handler` in the same shape a
-// file input would, so the importer doesn't care which route the files took.
-function rbalDropZone(opts){
-  const handler = opts.handler;                       // e.g. "rbalImportCare"
-  const accept = opts.accept || '.docx';
-  const multiple = opts.multiple ? 'multiple' : '';
-  const hi = "this.classList.add('is-dragging')";
-  const lo = "this.classList.remove('is-dragging')";
-  return `<label class="drop-zone rbal-drop" style="display:block"
-    ondragover="if(event.dataTransfer&&Array.from(event.dataTransfer.types||[]).includes('Files')){event.preventDefault();event.stopPropagation();${hi};}"
-    ondragleave="${lo}"
-    ondrop="event.preventDefault();event.stopPropagation();${lo};if(event.dataTransfer&&event.dataTransfer.files.length)${handler}({files:event.dataTransfer.files, value:''});">
-    <span class="drop-zone-icon">⇪</span>
-    <span class="drop-zone-text">${e(opts.title||'Drop files here')}</span>
-    <span class="drop-zone-sub">${e(opts.sub||'')}</span>
-    <input type="file" accept="${e(accept)}" ${multiple} style="display:none" onchange="${handler}(this)">
-  </label>`;
+// Read the After Review Summary. Returns the parsed note, or null.
+async function rbalReadFileNote(file){
+  try{
+    const res = await mammoth.convertToHtml({arrayBuffer: await file.arrayBuffer()});
+    const fn = parseReviewFileNote(res.value);
+    fn.sourceFile = file.name;
+    fn.actionsAll = fn.actions.concat(fn.nextSteps.length ? ['Next steps:'].concat(fn.nextSteps) : []);
+    // If the note's own action items already say a rebalance or rollover is
+    // happening, the tool's generated lead line would say it twice.
+    fn.saysRebalance = fn.actionsAll.some(a => /rebalanc|roll ?over/i.test(a));
+    return fn;
+  }catch(ex){ return {error: `${file.name} — ${ex && ex.message ? ex.message : ex}`}; }
+}
+function rbalApplyFileNote(fn){
+  if(fn.updates.length) F.rbalUpdates = fn.updates.slice();
+  if(fn.actionsAll.length) F.rbalActions = fn.actionsAll.slice();
+  if(fn.saysRebalance) F.rbalLeadAction = false;
+  if(fn.meetingDate && !F.rbalMeetingDate) F.rbalMeetingDate = fn.meetingDate;
+  if(fn.adviser && !F.adviserName) F.adviserName = fn.adviser;
+  if(fn.clientName && !F.client1Name){
+    const parts = fn.clientName.split(/\s+(?:and|&)\s+/i).map(s => s.trim()).filter(Boolean);
+    F.client1Name = parts[0];
+    if(parts[1]){ F.clientType = 'joint'; if(!F.client2Name) F.client2Name = parts[1]; }
+  }
+}
+// The one drop target. Sorts whatever is dropped into CARE documents and file
+// notes by reading them, then confirms the lot in a single dialog.
+async function rbalImportDocs(inp){
+  const files = [...(inp.files||[])]; inp.value = '';
+  if(!files.length) return;
+  if(typeof mammoth === 'undefined'){ alert('The Word reader (mammoth) failed to load — check your internet connection and try again.'); return; }
+
+  const careFiles = [], noteFiles = [], skipped = [];
+  showImportStatus('Reading documents…');
+  try{
+    for(const file of files){
+      const ext = (file.name.split('.').pop()||'').toLowerCase();
+      if(!(ext === 'docx' || (file.type||'').includes('wordprocessingml'))){
+        skipped.push(`${file.name} — Word (.docx) only. Export from CARE as Word, not PDF: a PDF loses the table structure.`);
+        continue;
+      }
+      let raw = '';
+      try{ raw = (await mammoth.extractRawText({arrayBuffer: await file.arrayBuffer()})).value; }
+      catch(ex){ skipped.push(`${file.name} — ${ex && ex.message ? ex.message : ex}`); continue; }
+      if(looksLikeReviewFileNote(raw)) noteFiles.push(file);
+      else if(/rebalance\s*[-–—:]/i.test(raw) && /(recommended implications|portfolio rebalance)/i.test(raw)) careFiles.push(file);
+      else if(/updates/i.test(raw) && /action items?/i.test(raw)) noteFiles.push(file);
+      else skipped.push(`${file.name} — not recognised as a CARE rebalance or a review file note`);
+    }
+
+    const care = careFiles.length ? await rbalReadCareFiles(careFiles) : {found:[], skipped:[]};
+    care.skipped.forEach(x => skipped.push(x));
+    // Only one file note applies to a document; if several are dropped, the last wins.
+    let note = null;
+    for(const f of noteFiles){
+      const fn = await rbalReadFileNote(f);
+      if(fn && fn.error){ skipped.push(fn.error); continue; }
+      if(fn && !fn.updates.length && !fn.actionsAll.length){
+        skipped.push(`${f.name} — no "Updates:" or "Action items" list found`); continue;
+      }
+      note = fn;
+    }
+    hideImportStatus();
+
+    if(!care.found.length && !note){
+      alert('Nothing could be imported.\n\n' + (skipped.join('\n') || 'No CARE rebalance or review file note was recognised.'));
+      return;
+    }
+
+    // ── one summary for everything read ──
+    let summary = '';
+    if(note){
+      summary += `Review file note — ${note.sourceFile}\n`;
+      summary += `  • ${note.updates.length} update${note.updates.length===1?'':'s'}\n`;
+      summary += `  • ${note.actionsAll.length} action item${note.actionsAll.length===1?'':'s'}${note.nextSteps.length?` (including ${note.nextSteps.length} under "Next steps")`:''}\n`;
+      if(note.clientName) summary += `  • Client: ${note.clientName}\n`;
+      if(note.meetingDate) summary += `  • Meeting date: ${note.meetingDate}\n`;
+      if(note.adviser) summary += `  • Adviser: ${note.adviser}\n`;
+      if(note.saysRebalance) summary += `  • The action items already describe the rebalance/rollover, so the standard rebalance line will be switched off to avoid saying it twice.\n`;
+      summary += '\n';
+    }
+    if(care.found.length){
+      summary += `CARE rebalance — ${care.found.length} account${care.found.length===1?'':'s'}\n`;
+      care.found.forEach(a => {
+        summary += `  • ${a.banner}\n`;
+        summary += `      ${a.engine === 'care' ? 'CARE managed portfolios' : 'Index / external menu'}  ·  ${a.riskProfile||'risk profile not stated'}  ·  ${a.totalValue||'—'}\n`;
+        summary += `      ${a.trades.length} trade row(s), ${a.comparison.length} variation row(s)${a.feeRows.length?', investment fees':''}${(a.txn&&a.txn.total)?', transactional costs':''}\n`;
+      });
+      summary += '\n';
+    }
+    if(skipped.length) summary += `Skipped:\n  • ${skipped.join('\n  • ')}\n\n`;
+    summary += 'This replaces the content already read from these documents. Proceed?';
+    if(!confirm(summary)) return;
+
+    if(care.found.length) rbalApplyCare(care.found);
+    if(note) rbalApplyFileNote(note);
+    render();
+  }catch(ex){
+    hideImportStatus();
+    alert('Import failed: ' + (ex && ex.message ? ex.message : ex));
+  }
 }
 
 // ─── Review file note (.docx) ─────────────────────────────────────────────
@@ -22253,61 +22319,25 @@ function looksLikeReviewFileNote(text){
   const t = String(text||'');
   return /after review summary/i.test(t) || (/date of file note/i.test(t) && /action items?/i.test(t));
 }
-async function rbalImportFileNote(inp){
-  const file = (inp.files||[])[0]; inp.value = '';
-  if(!file) return;
-  if(typeof mammoth === 'undefined'){ alert('The Word reader (mammoth) failed to load — check your internet connection and try again.'); return; }
-  const ext = (file.name.split('.').pop()||'').toLowerCase();
-  if(!(ext === 'docx' || (file.type||'').includes('wordprocessingml'))){
-    alert('Please upload the review file note as a Word (.docx) file.'); return;
-  }
-  let fn;
-  try{
-    showImportStatus('Reading review file note…');
-    const res = await mammoth.convertToHtml({arrayBuffer: await file.arrayBuffer()});
-    const raw = (await mammoth.extractRawText({arrayBuffer: await file.arrayBuffer()})).value;
-    hideImportStatus();
-    if(!looksLikeReviewFileNote(raw) && !/updates/i.test(raw)){
-      if(!confirm(`"${file.name}" doesn't look like an After Review Summary file note. Read it anyway?`)) return;
-    }
-    fn = parseReviewFileNote(res.value);
-  }catch(ex){
-    hideImportStatus();
-    alert('Couldn\'t read that file note: ' + (ex && ex.message ? ex.message : ex));
-    return;
-  }
-  if(!fn.updates.length && !fn.actions.length && !fn.nextSteps.length){
-    alert(`No "Updates:" or "Action items" list was found in ${file.name}.\n\nThe reader looks for those headings and takes the bullets under each.`);
-    return;
-  }
 
-  const actions = fn.actions.concat(fn.nextSteps.length ? ['Next steps:'].concat(fn.nextSteps) : []);
-  // If the note's own action items already say a rebalance or rollover is
-  // happening, the tool's generated lead line would say it twice.
-  const saysRebalance = actions.some(a => /rebalanc|roll ?over/i.test(a));
-
-  let summary = `Read ${file.name}:\n\n`;
-  summary += `• ${fn.updates.length} update${fn.updates.length===1?'':'s'}\n`;
-  summary += `• ${actions.length} action item${actions.length===1?'':'s'}${fn.nextSteps.length?` (including ${fn.nextSteps.length} under "Next steps")`:''}\n`;
-  if(fn.clientName) summary += `• Client: ${fn.clientName}\n`;
-  if(fn.meetingDate) summary += `• Meeting date: ${fn.meetingDate}\n`;
-  if(fn.adviser) summary += `• Adviser: ${fn.adviser}\n`;
-  if(saysRebalance) summary += `\nThe action items already describe the rebalance/rollover, so the tool's standard rebalance action line will be switched off to avoid saying it twice. Turn it back on below if you want both.`;
-  summary += `\n\nThis replaces the Updates and Action items currently in the document. Proceed?`;
-  if(!confirm(summary)) return;
-
-  if(fn.updates.length) F.rbalUpdates = fn.updates.slice();
-  F.rbalActions = actions;
-  if(saysRebalance) F.rbalLeadAction = false;
-  // Everything else fills only where nothing has been entered yet.
-  if(fn.meetingDate && !F.rbalMeetingDate) F.rbalMeetingDate = fn.meetingDate;
-  if(fn.adviser && !F.adviserName) F.adviserName = fn.adviser;
-  if(fn.clientName && !F.client1Name){
-    const parts = fn.clientName.split(/\s+(?:and|&)\s+/i).map(s => s.trim()).filter(Boolean);
-    F.client1Name = parts[0];
-    if(parts[1]){ F.clientType = 'joint'; if(!F.client2Name) F.client2Name = parts[1]; }
-  }
-  render();
+// A drop target that also works as a click-to-browse control. Dragging files
+// over it highlights it; dropping hands them to `handler` in the same shape a
+// file input would, so the importer doesn't care which route the files took.
+function rbalDropZone(opts){
+  const handler = opts.handler;                       // e.g. "rbalImportDocs"
+  const accept = opts.accept || '.docx';
+  const multiple = opts.multiple ? 'multiple' : '';
+  const hi = "this.classList.add('is-dragging')";
+  const lo = "this.classList.remove('is-dragging')";
+  return `<label class="drop-zone rbal-drop" style="display:block"
+    ondragover="if(event.dataTransfer&&Array.from(event.dataTransfer.types||[]).includes('Files')){event.preventDefault();event.stopPropagation();${hi};}"
+    ondragleave="${lo}"
+    ondrop="event.preventDefault();event.stopPropagation();${lo};if(event.dataTransfer&&event.dataTransfer.files.length)${handler}({files:event.dataTransfer.files, value:''});">
+    <span class="drop-zone-icon">⇪</span>
+    <span class="drop-zone-text">${e(opts.title||'Drop files here')}</span>
+    <span class="drop-zone-sub">${e(opts.sub||'')}</span>
+    <input type="file" accept="${e(accept)}" ${multiple} style="display:none" onchange="${handler}(this)">
+  </label>`;
 }
 function rbalSetEngine(i, v){ if(F.rbalAccounts[i]) F.rbalAccounts[i].engine = v; render(); }
 function rbalRemoveAccount(i){ F.rbalAccounts.splice(i, 1); render(); }
@@ -22317,7 +22347,7 @@ function renderRbalBuilder(){
   const meta = rbalTypeMeta();
   const steps = [
     {k:'client',  l:'Client & Adviser Details', render: () => naaBlockClient()},
-    {k:'accounts',l:'Rebalance & Accounts',     render: () => rbalBlockSetup() + rbalBlockAccounts()},
+    {k:'accounts',l:'Review Documents & Accounts', render: () => rbalBlockSetup() + rbalBlockAccounts()},
     {k:'content', l:'Updates & Action Items',   render: () => rbalBlockContent()},
   ];
   if(wizardStep >= steps.length) wizardStep = steps.length - 1;
@@ -22423,17 +22453,34 @@ function rbalBlockSetup(){
 
 function rbalBlockAccounts(){
   const accts = rbalAccounts();
+  const noteIn = (F.rbalUpdates||[]).length || (F.rbalActions||[]).length;
   let h = `<div class="section-block">
     <div class="section-block-head">
-      <div class="section-block-title"><span>CARE rebalance</span></div>
-      <div class="section-block-actions">${accts.length ? `<span class="pre-filled-badge">${accts.length} account${accts.length>1?'s':''}</span>` : ''}</div>
+      <div class="section-block-title"><span>Review documents</span></div>
+      <div class="section-block-actions">
+        ${noteIn ? `<span class="pre-filled-badge">File note read</span>` : ''}
+        ${accts.length ? `<span class="pre-filled-badge">${accts.length} account${accts.length>1?'s':''}</span>` : ''}
+      </div>
     </div>
     <div class="section-block-body"><div class="card">
-      <div class="card-sub">Upload the CARE rebalance document — the "Appendix to RoA" Word export. Everything the Record of Advice quotes is read from it: the account banner, risk profile, the Current → Proposed → Change trades, the Recommended Implications variations, the whole Investment Fees disclosure and the transactional costs. Export from CARE as <strong>Word, not PDF</strong> — a PDF loses the table structure.</div>
-      ${rbalDropZone({handler:'rbalImportCare', accept:'.docx', multiple:true,
-        title:'Drop the CARE rebalance document here', sub:'…or click to browse. Word (.docx) only — several at once is fine.'})}`;
+      <div class="card-sub">Drop both of the review's documents here together — each file is identified by what's inside it, so the order doesn't matter. Export from CARE as <strong>Word, not PDF</strong>: a PDF loses the table structure the reader relies on.</div>
+      ${rbalDropZone({handler:'rbalImportDocs', accept:'.docx', multiple:true,
+        title:'Drop the review file note and the CARE rebalance here',
+        sub:'…or click to browse. Word (.docx), both at once.'})}
+      <div class="grid-2" style="margin-top:10px">
+        <div class="card-sub" style="margin:0">
+          <strong>Review file note</strong> — the "After Review Summary".
+          Fills the <em>Updates</em> and <em>Action items</em> on the next step verbatim, plus the client name, meeting date and adviser.
+          ${noteIn ? '<br><span style="color:var(--green-dark,#2e7d32)">✓ read</span>' : ''}
+        </div>
+        <div class="card-sub" style="margin:0">
+          <strong>CARE rebalance</strong> — the "Appendix to RoA".
+          Fills the account banner, risk profile, the Current → Proposed → Change trades, the Recommended Implications variations, the whole Investment Fees disclosure and the transactional costs.
+          ${accts.length ? '<br><span style="color:var(--green-dark,#2e7d32)">✓ read</span>' : ''}
+        </div>
+      </div>`;
   if(rbalIsNoChange()){
-    h += `<div class="card-sub" style="margin-top:8px"><strong>No Change ROA:</strong> the rebalance, implications and fee tables are not printed. Uploading is optional — it only fills the risk profile and client names.</div>`;
+    h += `<div class="card-sub" style="margin-top:8px"><strong>No Change ROA:</strong> the rebalance, implications and fee tables are not printed, so the CARE document is optional here — it only fills the risk profile and client names. The file note still fills the updates and action items.</div>`;
   }
   h += `</div>`;
 
@@ -22472,14 +22519,8 @@ function rbalBlockContent(){
     <div class="section-block-head"><div class="section-block-title"><span>What this Record of Advice covers</span></div></div>
     <div class="section-block-body">
     <div class="card">
-      <h4 style="margin:0 0 6px 0">Start from the review file note</h4>
-      <div class="card-sub">The "After Review Summary" file note written straight after the meeting. Its <strong>Updates:</strong> and <strong>Action items</strong> are what this Record of Advice repeats, so reading it fills both lists below verbatim — along with the client name, the meeting date and the adviser from the "On &lt;date&gt;, &lt;adviser&gt; met with…" line.</div>
-      ${rbalDropZone({handler:'rbalImportFileNote', accept:'.docx',
-        title:'Drop the review file note here', sub:'…or click to browse. Word (.docx).'})}
-    </div>
-    <div class="card">
       <h4 style="margin:0 0 6px 0">Updates</h4>
-      <div class="card-sub">What was refreshed on file at the review. Prints under "Updates:".</div>`;
+      <div class="card-sub">What was refreshed on file at the review. Prints under "Updates:". Filled from the review file note — drop it on <button class="btn btn-xs" onclick="wizardStep=1;render();window.scrollTo(0,0)">Review documents</button> if you haven't yet.</div>`;
   (F.rbalUpdates||[]).forEach((b, i) => {
     h += `<div style="display:grid;grid-template-columns:1fr auto;gap:5px;align-items:center;margin-bottom:5px">
       <input class="field" style="margin:0" value="${e(b)}" onchange="F.rbalUpdates[${i}]=this.value" placeholder="Update">
