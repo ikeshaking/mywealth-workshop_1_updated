@@ -166,6 +166,9 @@ table.t tr:nth-child(even) td{background:var(--row-alt)}
 .figure{background:var(--surface-2);border:1px solid var(--border-soft);border-radius:14px;padding:16px;margin:16px 0;
   overflow-x:auto;-webkit-overflow-scrolling:touch}
 .svgscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+/* Cap diagram width: the SVG text is sized in viewBox units, so an uncapped
+   figure on a wide screen renders its labels far larger than the body copy. */
+.figure svg,.svgscroll svg{max-width:880px;display:block;margin-left:auto;margin-right:auto}
 .figure figcaption{font-size:12.5px;color:var(--text-muted);margin-top:10px;text-align:center;font-weight:600}
 
 /* ============================================================ EXERCISES */
@@ -249,12 +252,14 @@ html[data-theme="dark"] .fb.ok,html[data-theme="dark"] .fb.no{color:var(--text)}
 
 /* Compact mode — display scaling and browser zoom vary a lot, so this is a
    deliberate second density the reader can pick rather than a guess at theirs. */
-html.compact body{font-size:13px;line-height:1.5}
-html.compact h1{font-size:clamp(19px,2.1vw,25px)}
-html.compact h2{font-size:clamp(16px,1.7vw,20px)}
-html.compact h3{font-size:15px}
-html.compact h4{font-size:13.5px}
-html.compact .lede{font-size:14px}
+html.compact body{font-size:12.5px;line-height:1.5}
+html.compact h1{font-size:clamp(18px,1.8vw,22px)}
+html.compact h2{font-size:clamp(15px,1.5vw,18px)}
+html.compact h3{font-size:14px}
+html.compact h4{font-size:13px}
+html.compact .lede{font-size:13px}
+html.compact .figure svg,html.compact .svgscroll svg{max-width:760px}
+html.compact .eyebrow{font-size:9.5px}
 html.compact .layout{max-width:1720px;gap:18px;grid-template-columns:236px minmax(0,1fr);padding:16px 20px 60px}
 html.compact .card{padding:16px 20px;margin-bottom:13px}
 html.compact .ex{padding:13px 16px;margin:15px 0}
@@ -352,6 +357,9 @@ html[data-theme="dark"] .stepdot[aria-current="true"]{color:var(--chrome)}
   .tp-track{width:70px}
   .nav-toggle{display:flex}
   .top-progress{display:none}   /* the sidebar already shows progress; the topbar needs the room */
+  /* Compact's layout rule is more specific than this block, so restate it here
+     or the sidebar keeps its column and pushes the page sideways. */
+  html.compact .layout{grid-template-columns:1fr;padding:14px 12px 60px;max-width:100%}
   .side-title{display:none}
   /* Diagrams stay legible by scrolling sideways inside their own box, never the page. */
   .figure svg,.svgscroll svg{min-width:640px}
@@ -381,7 +389,7 @@ html[data-theme="dark"] .stepdot[aria-current="true"]{color:var(--chrome)}
       <span id="tpText">0%</span>
       <span class="tp-track"><span class="tp-fill" id="tpFill" style="width:0%"></span></span>
     </div>
-    <button class="icon-btn" id="sizeBtn" type="button" aria-label="Use smaller text">Smaller</button>
+    <button class="icon-btn" id="sizeBtn" type="button" aria-label="Use larger text">Larger</button>
     <button class="icon-btn" id="motionBtn" type="button" aria-label="Pause diagram animations">Pause</button>
     <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle dark mode">🌙</button>
     <button class="icon-btn no-print" id="resetBtn" type="button" title="Clear all answers and progress">Reset</button>
@@ -3042,8 +3050,8 @@ MODULES.push({
 
   var SIZE_KEY = "mws.debtrecycling.size";
   function applySize() {
-    var compact = false;
-    try { compact = localStorage.getItem(SIZE_KEY) === "compact"; } catch (e) {}
+    var compact = true;   /* denser by default; the control below opts out */
+    try { compact = localStorage.getItem(SIZE_KEY) !== "normal"; } catch (e) {}
     document.documentElement.classList.toggle("compact", compact);
     var b = document.getElementById("sizeBtn");
     if (b) {
