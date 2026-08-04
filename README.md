@@ -161,11 +161,14 @@ standalone, dependency-free interactive training module for **client service
 officers** who are new to the debt recycling strategy. It is served as a static
 page — open it at `/debt-recycling-training.html`, or just double-click the file.
 
-Twelve modules, each ending in exercises that must be answered correctly before
-the module is marked complete. Modules 1 and 2 start from the ground up — what
-"tax deductible" means, what a deduction is actually worth, and where a client
-service officer sits among the adviser, the broker and the accountant — before
-any of the strategy itself is introduced.
+Twelve modules, about **40 minutes** end to end (each module carries its own
+estimate). Modules 1 and 2 start from the ground up — what "tax deductible"
+means, what a deduction is worth, what equity and usable equity are, what a term
+loan is and why it carries an offset — before any of the strategy is introduced.
+
+Roles are modelled as MyWealth runs them: adviser, **associate adviser** (the
+calcs and the debt transfer instructions), mortgage broker, accountant, and the
+two client service seats — **implementation** and **review**.
 
 Eight interaction types: multiple choice, select-all, drag-and-drop sorting,
 drag-to-sequence, dropdown routing drills, flip-card definitions, a live
