@@ -96,7 +96,7 @@ img,svg{max-width:100%}
 .icon-btn:hover{background:rgba(255,255,255,.22)}
 
 /* ============================================================ LAYOUT */
-.layout{display:grid;grid-template-columns:264px minmax(0,1fr);gap:22px;max-width:1500px;margin:0 auto;padding:20px 22px 72px}
+.layout{display:grid;grid-template-columns:264px minmax(0,1fr);gap:22px;max-width:1620px;margin:0 auto;padding:20px 22px 72px}
 .sidebar{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow-y:auto}
 .side-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;box-shadow:var(--shadow)}
 .side-title{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-faint);font-weight:800;
@@ -247,6 +247,27 @@ html[data-theme="dark"] .fb.ok,html[data-theme="dark"] .fb.no{color:var(--text)}
 .hs-panel h4{margin-bottom:4px}
 .hs-panel .muted{color:var(--text-muted);font-style:italic}
 
+/* Compact mode — display scaling and browser zoom vary a lot, so this is a
+   deliberate second density the reader can pick rather than a guess at theirs. */
+html.compact body{font-size:13px;line-height:1.5}
+html.compact h1{font-size:clamp(19px,2.1vw,25px)}
+html.compact h2{font-size:clamp(16px,1.7vw,20px)}
+html.compact h3{font-size:15px}
+html.compact h4{font-size:13.5px}
+html.compact .lede{font-size:14px}
+html.compact .layout{max-width:1720px;gap:18px;grid-template-columns:236px minmax(0,1fr);padding:16px 20px 60px}
+html.compact .card{padding:16px 20px;margin-bottom:13px}
+html.compact .ex{padding:13px 16px;margin:15px 0}
+html.compact .ex-q{font-size:14px}
+html.compact .opt{padding:9px 11px;font-size:13.5px}
+html.compact table.t{font-size:12.5px}
+html.compact table.t td,html.compact table.t th{padding:7px 9px}
+html.compact .figure{padding:13px;margin:14px 0}
+html.compact .tile{padding:12px 14px}
+html.compact .callout{padding:12px 14px;margin:13px 0}
+html.compact .navbtn{padding:7px 9px;font-size:13px}
+html.compact .flipcard{height:140px}
+
 /* content arrives as you scroll rather than all at once */
 .reveal{opacity:0;transform:translateY(16px);
   transition:opacity .55s cubic-bezier(.22,.61,.36,1),transform .55s cubic-bezier(.22,.61,.36,1)}
@@ -360,6 +381,7 @@ html[data-theme="dark"] .stepdot[aria-current="true"]{color:var(--chrome)}
       <span id="tpText">0%</span>
       <span class="tp-track"><span class="tp-fill" id="tpFill" style="width:0%"></span></span>
     </div>
+    <button class="icon-btn" id="sizeBtn" type="button" aria-label="Use smaller text">Smaller</button>
     <button class="icon-btn" id="motionBtn" type="button" aria-label="Pause diagram animations">Pause</button>
     <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle dark mode">🌙</button>
     <button class="icon-btn no-print" id="resetBtn" type="button" title="Clear all answers and progress">Reset</button>
@@ -977,6 +999,9 @@ function renderModule(slug) {
     "General information for training purposes only; it is not financial or tax advice and must not be given to clients. " +
     "My Wealth Solutions Pty Ltd is a Corporate Authorised Representative (414145) of GPS Wealth Ltd, AFSL 254544." }));
 
+  /* Nothing to answer here, so reading it is the completion. */
+  if (!moduleExerciseIds(m).length && !State.data.done[m.slug]) State.complete(m.slug);
+
   markCurrent();
   refreshProgress();
   window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
@@ -1136,11 +1161,9 @@ function svgAccounts() {
     '<path id="fp2" d="M534 122 L614 122" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
     '<text x="574" y="112" text-anchor="middle" style="' + F.lab + '">2 · invest</text>' +
 
-    '<path id="fp3" d="M616 168 L536 168" style="stroke:var(--green);stroke-width:2.5" marker-end="url(#ab)"/>' +
-    '<text x="576" y="188" text-anchor="middle" style="font:800 11px var(--bf);fill:var(--green)">3 · income</text>' +
-
-    '<text x="575" y="228" text-anchor="middle" style="font:800 12px var(--bf);fill:var(--green)">Income is reinvested — arrows 2 and 3 are a loop</text>' +
-    '<text x="575" y="248" text-anchor="middle" style="' + F.s + '">the portfolio compounds on itself</text>' +
+    '<path id="fp3" d="M832 120 C 892 106 892 186 834 172" style="fill:none;stroke:var(--green);stroke-width:2.5" marker-end="url(#ab)"/>' +
+    '<text x="725" y="228" text-anchor="middle" style="font:800 12px var(--bf);fill:var(--green)">3 · income stays here and is reinvested</text>' +
+    '<text x="725" y="248" text-anchor="middle" style="' + F.s + '">it is never paid out and never touches the CMA</text>' +
     '<text x="142" y="278" text-anchor="middle" style="' + F.s + '">no net interest on what is not yet invested</text>' +
 
     /* ---------------- the home side ---------------- */
@@ -2145,7 +2168,7 @@ MODULES.push({
    ========================================================================== */
 MODULES.push({
   slug: "accounts",
-  mins: 4,
+  mins: 5,
   title: "The accounts, and what each one is for",
   sub: "Splits, offsets, CMA, portfolio",
   lede: "Almost every mistake in debt recycling is an account mistake. Get the map straight and the " +
@@ -2185,16 +2208,18 @@ MODULES.push({
              "<p style='margin:0'>Two offsets, two jobs. Personal cash belongs here; borrowed cash belongs in the " +
              "investment offset. Crossing them is the mistake.</p>" },
         cma: { t: "Cash Management Account (CMA)",
-          d: "<p>The <strong>clean hub</strong> for investment money. Drawdowns land here and go straight out to buy " +
-             "assets; income comes back here; the Split B interest is paid from here.</p>" +
+          d: "<p>The <strong>clean hub</strong> for borrowed money on its way to being invested. Drawdowns land here " +
+             "and go straight out to buy assets, and the Split B interest is paid from here.</p>" +
+             "<p><strong>Investment income does not come back here.</strong> Dividends and distributions stay in the " +
+             "investment account and are reinvested there.</p>" +
              "<p style='margin:0'>Its real job is the <strong>audit trail</strong> — one account whose every line is " +
              "investment-related, so borrowed funds can be traced to their purpose years later.</p>" },
         portfolio: { t: "The portfolio",
           d: "<p>The broker or platform account holding the assets — ETFs, managed funds, direct shares. It must be in " +
              "the <strong>correct name</strong>: whoever borrows and owns the asset claims the deduction and declares " +
              "the income.</p>" +
-             "<p style='margin:0'>Dividends and distributions are <strong>reinvested</strong> back into the portfolio, so " +
-             "arrows 2 and 3 form a loop and the holding compounds on itself.</p>" },
+             "<p style='margin:0'>Dividends and distributions are <strong>reinvested inside this account</strong> — they " +
+             "are not paid out and never touch the CMA, so the holding compounds on itself.</p>" },
         salary: { t: "Salary and surplus cash",
           d: "<p>Personal income belongs in the <strong>home loan offset</strong>, working against the non-deductible " +
              "side. It never goes into Split B, the investment offset or the CMA.</p>" +
@@ -2260,7 +2285,6 @@ MODULES.push({
       items: [
         { t: "Holds the client's salary and emergency buffer", z: "off" },
         { t: "Reduces the interest charged on the home loan", z: "off" },
-        { t: "Receives dividends and distributions from the portfolio", z: "cma" },
         { t: "Gives one clean statement trail for the ATO", z: "cma" },
         { t: "Receives the loan drawdown before it is invested", z: "cma" },
         { t: "The balance whose interest is tax-deductible", z: "sb" },
@@ -2275,7 +2299,7 @@ MODULES.push({
         { lbl: "Split B — the investment portion — repayment type is often…", opts: ["Interest-only", "Principal & interest"], a: 0 },
         { lbl: "The client's own savings belong in the offset against…", opts: ["Split A", "Split B", "Either one", "Neither"], a: 0 },
         { lbl: "Borrowed funds not yet invested belong in the offset against…", opts: ["Split A", "Split B", "Either one", "Neither"], a: 1 },
-        { lbl: "Dividends and distributions should be credited to…", opts: ["The offset", "The CMA", "Split B", "The client's everyday account"], a: 1 }
+        { lbl: "Dividends and distributions are…", opts: ["credited to the offset", "credited to the CMA", "reinvested inside the investment account", "paid to the client's everyday account"], a: 2 }
       ],
       why: "P&I on the home loan so the bad debt actually reduces; interest-only on the investment split so the good debt is not accidentally paid down. Both splits have an offset, but they hold different money: the client's own cash against Split A, undrawn borrowed funds against Split B. Investment income goes to the CMA, where the trail stays clean." }
   ]
@@ -2286,7 +2310,7 @@ MODULES.push({
    ========================================================================== */
 MODULES.push({
   slug: "cycle",
-  mins: 3,
+  mins: 2,
   title: "The six-step cycle",
   sub: "How a round of recycling runs",
   lede: "This is the repeatable process described in our client guide, expanded with what actually has to happen " +
@@ -2338,28 +2362,6 @@ MODULES.push({
     'if investment and personal debt are mixed in the same account, you risk losing the tax deduction entirely.” ' +
     'Structure mistakes are cheap to prevent and expensive — sometimes impossible — to fix.</p></div>',
 
-    { id: "m4q1", kind: "seq",
-      q: "Put the six steps of the cycle back into order.",
-      items: [
-        "Make extra repayments on the home loan to build equity",
-        "Set up a separate investment loan split with the lender",
-        "Redraw from the investment split into a clean account",
-        "Invest the funds into income-producing assets",
-        "Reinvest the income; send the tax refund to the home loan",
-        "Repeat — recycle the next tranche"
-      ],
-      why: "Equity first, structure second, then draw, invest, redirect the income, and go again. The order matters: drawing before the split exists is exactly how loans get contaminated." },
-
-    { id: "m4q2", kind: "mcq",
-      q: "A drawdown of $75,000 from Split B is due to settle on Friday. The client asks you to send it to their everyday transaction account “because it's easier, I'll move it across next week”. What is the problem?",
-      opts: [
-        "Nothing — as long as it is invested eventually the deduction is safe.",
-        "Only that it delays the investment by a week.",
-        "Borrowed funds mixing with personal money breaks the clean trail from the loan to the investment, which is exactly what the ATO needs to see. It must go to a clean, nil-balance account.",
-        "The bank will not allow a drawdown to a transaction account."
-      ], a: 2,
-      why: "Our guide says the redraw must come from the investment split, not the offset or everyday account — and the same logic applies to where it lands. Traceability is the deduction." },
-
     ]
 });
 
@@ -2377,7 +2379,7 @@ MODULES.push({
     '<div class="tablewrap"><table class="t"><thead><tr><th style="width:30%">Money event</th><th style="width:26%">Where it goes</th><th>Why</th></tr></thead><tbody>' +
     '<tr><td>Salary and surplus cash</td><td>Offset (Split A)</td><td>Works against the non-deductible balance while staying liquid.</td></tr>' +
     '<tr><td>Split B drawdown</td><td>Clean, nil-balance CMA → straight to the investment</td><td>Keeps borrowed funds traceable to their investment purpose.</td></tr>' +
-    '<tr><td>Dividends and distributions</td><td>CMA → reinvested into the portfolio</td><td>The holding compounds on itself instead of the cash leaking away.</td></tr>' +
+    '<tr><td>Dividends and distributions</td><td>Stay in the investment account and are reinvested</td><td>Not paid out at all — the holding compounds on itself.</td></tr>' +
     '<tr><td>Annual tax refund</td><td>Offset / Split A</td><td>It exists because of the deduction — send it where it accelerates the strategy.</td></tr>' +
     '<tr><td>Interest charged on Split B</td><td>Paid from the CMA or a personal account</td><td>Never capitalised onto the split itself without specific advice.</td></tr>' +
     '<tr><td>A bonus or inheritance</td><td>Offset first — then flag it to the adviser</td><td>Parking it is always safe; whether to recycle it is an advice decision.</td></tr>' +
@@ -2401,8 +2403,8 @@ MODULES.push({
           opts: ["The offset linked to Split A", "The CMA", "Split B, as a repayment", "A term deposit"], a: 0 },
         { lbl: "A $60,000 drawdown from the new investment split should be paid into…",
           opts: ["The client's everyday account", "The offset account", "A clean, nil-balance CMA", "Split A, to reduce it"], a: 2 },
-        { lbl: "A $3,100 quarterly ETF distribution arrives in the CMA. Per the strategy it should be…",
-          opts: ["Left in the CMA indefinitely", "Reinvested into the portfolio", "Paid off Split B", "Sent to the client's credit card"], a: 1 },
+        { lbl: "A $3,100 quarterly ETF distribution is declared. Under our structure it is…",
+          opts: ["swept to the offset", "reinvested inside the investment account", "paid off Split B", "paid out to the client"], a: 1 },
         { lbl: "The client's $8,400 tax refund from the interest deduction should go to…",
           opts: ["The offset / Split A", "Split B", "The investment account, to buy more units", "Wherever the client prefers"], a: 0 },
         { lbl: "The client asks to take $15,000 out for a holiday. The funds should come from…",
@@ -2490,7 +2492,7 @@ MODULES.push({
       q: "Safe to process, or stop and escalate? Sort each request.",
       zones: [{ key: "ok", label: "✓ Ordinary — process it" }, { key: "stop", label: "🚩 Stop — escalate to the adviser" }],
       items: [
-        { t: "Transfer this quarter's distributions from the CMA to the offset", z: "ok" },
+        { t: "Confirm this quarter's distributions were reinvested, not paid out", z: "ok" },
         { t: "Client wants to redraw $12,000 from the investment split for a renovation", z: "stop" },
         { t: "Pay the monthly Split B interest from the CMA", z: "ok" },
         { t: "Client is refinancing both loans to a new lender next month", z: "stop" },
@@ -2540,8 +2542,8 @@ MODULES.push({
         d: "<p>Correct entity name, ID and AML complete, TFN supplied, adviser authority in place. The name has to " +
            "match whoever owns the debt.</p>" },
       { t: "Set the standing instructions",
-        d: "<p>Distributions credited to the CMA, not to a personal account. Getting this wrong is how the sweep " +
-           "quietly stops happening six months later.</p>" },
+        d: "<p>Distributions set to <strong>reinvest</strong> inside the investment account, not to pay out to a bank " +
+           "account. Getting this wrong is how income quietly leaks out of the strategy six months later.</p>" },
       { t: "Confirm the drawdown and the trade",
         d: "<p>Check the funds landed clean, then check the full amount was invested and the contract notes are on " +
            "file. Money left sitting in the CMA weakens the link between the borrowing and the investment.</p>" },
@@ -2560,7 +2562,7 @@ MODULES.push({
     '<tr><td>Split A balance is falling</td><td>Flat or rising — the strategy has stalled, or the client is redrawing.</td></tr>' +
     '<tr><td>Split B balance is unchanged</td><td>It moved. Down means deductible debt destroyed; up means a redraw or capitalised interest.</td></tr>' +
     '<tr><td>Each offset holds the right money</td><td>Personal cash has drifted into the investment offset, or an offset has vanished after a product change.</td></tr>' +
-    '<tr><td>Distributions are hitting the CMA</td><td>They are landing in a personal account, or they stopped arriving.</td></tr>' +
+    '<tr><td>Distributions are being reinvested</td><td>They have started paying out to a bank account, or they stopped arriving.</td></tr>' +
     '<tr><td>Income is being swept as planned</td><td>Cash is pooling in the CMA, or quietly being spent.</td></tr>' +
     '<tr><td>Split B interest is being paid</td><td>Arrears, or interest being added to the balance.</td></tr>' +
     '<tr><td>Documents are on file</td><td>Missing contract notes or loan interest summaries — a tax-time scramble in the making.</td></tr>' +
@@ -2671,7 +2673,7 @@ MODULES.push({
     '<tr><td>Deductible interest paid</td><td>The lender\'s annual interest summary for the investment split only</td></tr>' +
     '<tr><td>Offset balance</td><td>Latest offset statement, dated close to the review</td></tr>' +
     '<tr><td>Portfolio value and holdings</td><td>Platform / broker valuation as at the review date</td></tr>' +
-    '<tr><td>Income received</td><td>Distribution statements, or the CMA transaction history</td></tr>' +
+    '<tr><td>Income received</td><td>Distribution statements and the platform\'s annual tax statement</td></tr>' +
     '<tr><td>Tax benefit</td><td>Interest paid × the client\'s marginal rate — flagged as an estimate, confirmed by the accountant</td></tr>' +
     '<tr><td>Progress vs plan</td><td>The projection in the original advice document, compared with today</td></tr>' +
     '</tbody></table></div>' +
@@ -3060,8 +3062,8 @@ MODULES.push({
         why: "On the investment split, a falling balance works against the strategy. (Module 9)" },
       { q: "Select every event that should be escalated to the adviser the same day.",
         multi: true,
-        opts: ["The client is refinancing both loans to a new lender", "The client has reduced their working hours", "A quarterly distribution has arrived in the CMA", "The client wants to pay a lump sum off the investment split", "You are updating the client's postal address"], a: [0, 1, 3],
-        why: "Refinances can merge the splits, income changes undermine serviceability, and lump sums off the investment split destroy deductible debt. Distributions arriving and address updates are ordinary business. (Modules 8, 9 and 11)" },
+        opts: ["The client is refinancing both loans to a new lender", "The client has reduced their working hours", "A quarterly distribution has been reinvested", "The client wants to pay a lump sum off the investment split", "You are updating the client's postal address"], a: [0, 1, 3],
+        why: "Refinances can merge the splits, income changes undermine serviceability, and lump sums off the investment split destroy deductible debt. A distribution reinvesting normally, and an address update, are ordinary business. (Modules 8, 9 and 11)" },
 
     { q: "A client on a 47% marginal rate paid $9,000 of interest on their investment split. The approximate tax benefit is…",
         opts: ["$9,000", "$4,230", "$2,880", "Nil until the investments are sold"], a: 1,
@@ -3119,6 +3121,24 @@ MODULES.push({
     renderNav();
     renderModule((location.hash || "").replace("#/", "") || MODULES[0].slug);
   });
+
+  var SIZE_KEY = "mws.debtrecycling.size";
+  function applySize() {
+    var compact = false;
+    try { compact = localStorage.getItem(SIZE_KEY) === "compact"; } catch (e) {}
+    document.documentElement.classList.toggle("compact", compact);
+    var b = document.getElementById("sizeBtn");
+    if (b) {
+      b.textContent = compact ? "Larger" : "Smaller";
+      b.setAttribute("aria-label", compact ? "Use larger text" : "Use smaller text");
+    }
+  }
+  document.getElementById("sizeBtn").addEventListener("click", function () {
+    var compact = document.documentElement.classList.contains("compact");
+    try { localStorage.setItem(SIZE_KEY, compact ? "normal" : "compact"); } catch (e) {}
+    applySize();
+  });
+  applySize();
 
   document.getElementById("motionBtn").addEventListener("click", function () {
     try { localStorage.setItem(MOTION_KEY, motionWanted() ? "off" : "on"); } catch (e) {}
