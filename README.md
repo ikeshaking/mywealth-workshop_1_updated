@@ -161,11 +161,18 @@ standalone, dependency-free interactive training module for **client service
 officers** who are new to the debt recycling strategy. It is served as a static
 page — open it at `/debt-recycling-training.html`, or just double-click the file.
 
-Ten modules, each ending in exercises that must be answered correctly before the
-module is marked complete: multiple choice, select-all, drag-and-drop sorting,
-drag-to-sequence, dropdown routing drills and a clickable account-map diagram,
-finishing with a 12-question assessment (80% to pass) and a printable
-certificate. Progress and answers persist per browser in `localStorage`.
+Twelve modules, each ending in exercises that must be answered correctly before
+the module is marked complete. Modules 1 and 2 assume no prior knowledge at all —
+they explain what "tax deductible" means, what a deduction is actually worth, and
+where a client service officer sits among the adviser, the broker and the
+accountant — before any of the strategy is introduced.
+
+Eight interaction types: multiple choice, select-all, drag-and-drop sorting,
+drag-to-sequence, dropdown routing drills, flip-card definitions, a live
+deduction calculator, and two clickable diagrams. Ten inline SVG figures, all
+themed from the CSS tokens rather than shipped as images. It finishes with a
+12-question assessment (80% to pass) and a printable certificate. Progress and
+answers persist per browser in `localStorage`.
 
 It shares the PY tracker's brand tokens and light/dark behaviour but has no
 dependency on the app shell, so it can later be wrapped the same way

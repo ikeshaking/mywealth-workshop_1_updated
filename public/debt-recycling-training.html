@@ -243,6 +243,35 @@ html[data-theme="dark"] .fb.ok,html[data-theme="dark"] .fb.no{color:var(--text)}
 .hs-panel h4{margin-bottom:4px}
 .hs-panel .muted{color:var(--text-muted);font-style:italic}
 
+/* flip cards — plain-English glossary */
+.flipgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:12px;margin-bottom:12px}
+.flipcard{perspective:900px;height:154px;border:0;background:none;padding:0;cursor:pointer;font-family:var(--bf)}
+.flipinner{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flipcard.on .flipinner{transform:rotateY(180deg)}
+.flipface{position:absolute;inset:0;-webkit-backface-visibility:hidden;backface-visibility:hidden;border-radius:12px;
+  border:1.5px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:12px 14px;text-align:center;overflow:hidden}
+.flipfront{background:var(--surface-2)}
+.flipfront .term{font:800 15px var(--bf);color:var(--heading)}
+.flipfront .hint{font:700 10px var(--bf);letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);margin-top:10px}
+.flipback{background:var(--blue-light);border-color:var(--blue-soft);transform:rotateY(180deg)}
+.flipback .def{font:600 12.5px/1.45 var(--bf);color:var(--text)}
+@media (prefers-reduced-motion:reduce){.flipinner{transition:none}}
+
+/* the deduction calculator */
+.calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;align-items:start;margin-bottom:12px}
+.calcfield{display:flex;flex-direction:column;gap:5px}
+.calcfield .cl{font:800 11px var(--bf);letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint)}
+.calcfield .cv{font:800 21px var(--bf);color:var(--heading);font-variant-numeric:tabular-nums}
+.calcfield input[type=range]{width:100%;accent-color:var(--blue)}
+.calcfield select{font-family:var(--bf);font-size:14px;font-weight:700;padding:7px 9px;border-radius:9px;
+  border:1.5px solid var(--border-strong);background:var(--input-bg);color:var(--text)}
+.calcout{background:var(--blue-light);border:1.5px solid var(--blue);border-radius:12px;padding:16px;display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;text-align:center}
+.calcout .ol{font:800 10px var(--bf);letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted)}
+.calcout .ov{font-family:var(--hf);font-size:26px;color:var(--heading);font-variant-numeric:tabular-nums;line-height:1.15}
+.calcout .ov.good{color:var(--green-dark)}
+
 /* stepper */
 .stepper{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
 .stepdot{border:1.5px solid var(--border);background:var(--surface);border-radius:9px;padding:6px 11px;font-size:12.5px;
@@ -995,7 +1024,504 @@ function svgClean() {
 }
 
 /* ============================================================================
-   MODULE 1 — What debt recycling actually is
+   BEGINNER DIAGRAMS
+   ========================================================================== */
+
+/* --------------------------------------- what a deduction actually does */
+function svgDeduction() {
+  function box(x, w, fill, stroke, cap, val) {
+    return '<rect x="' + x + '" y="30" width="' + w + '" height="78" rx="11" style="fill:' + fill +
+      ';stroke:' + stroke + ';stroke-width:2"/>' +
+      '<text x="' + (x + w / 2) + '" y="58" text-anchor="middle" style="' + F.cap + '">' + cap + '</text>' +
+      '<text x="' + (x + w / 2) + '" y="88" text-anchor="middle" style="font-family:var(--hf);font-size:24px;fill:var(--heading)">' + val + '</text>';
+  }
+  return '<svg viewBox="0 0 760 230" role="img" aria-label="A $10,000 deduction reduces taxable income from $150,000 to $140,000, saving $4,700 in tax at a 47% marginal rate.">' +
+    ARROWS +
+    box(16, 200, 'var(--surface)', 'var(--border-strong)', 'INCOME EARNED', '$150,000') +
+    '<text x="240" y="62" text-anchor="middle" style="' + F.b + '">minus</text>' +
+    '<path d="M222 78 L258 78" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
+    box(266, 212, 'var(--green-light)', 'var(--green)', 'DEDUCTIBLE INTEREST', '$10,000') +
+    '<text x="502" y="62" text-anchor="middle" style="' + F.b + '">equals</text>' +
+    '<path d="M484 78 L520 78" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
+    box(528, 216, 'var(--surface)', 'var(--border-strong)', 'TAXED ON', '$140,000') +
+    '<rect x="16" y="128" width="728" height="84" rx="12" style="fill:var(--lime-light);stroke:var(--lime-dark);stroke-width:2"/>' +
+    '<text x="380" y="162" text-anchor="middle" style="font-family:var(--hf);font-size:22px;fill:var(--heading)">' +
+      '$10,000 &#215; 47% marginal rate = $4,700 less tax</text>' +
+    '<text x="380" y="188" text-anchor="middle" style="' + F.b + '">' +
+      'A deduction is a discount on the cost — not a refund of it.</text>' +
+    '</svg>';
+}
+
+/* ------------------------------------- same loan, two uses, two costs */
+function svgTwoLoans() {
+  function panel(x, ok, what, back, net, barW) {
+    var col = ok ? 'var(--green)' : 'var(--red)';
+    var bg = ok ? 'var(--green-light)' : 'var(--red-light)';
+    var out = '<rect x="' + x + '" y="16" width="352" height="252" rx="12" style="fill:' + bg + ';stroke:' + col + ';stroke-width:2"/>' +
+      '<text x="' + (x + 176) + '" y="44" text-anchor="middle" style="font:800 13.5px var(--bf);fill:' + col + '">' + what + '</text>';
+    [['Interest at 6% a year', '$6,000'], ['The ATO gives back', back], ['What it really costs', net]].forEach(function (r, i) {
+      var y = 60 + i * 40;
+      out += '<rect x="' + (x + 16) + '" y="' + y + '" width="320" height="32" rx="7" style="fill:var(--surface);stroke:var(--border);stroke-width:1"/>' +
+        '<text x="' + (x + 30) + '" y="' + (y + 21) + '" style="' + F.b + '">' + r[0] + '</text>' +
+        '<text x="' + (x + 322) + '" y="' + (y + 21) + '" text-anchor="end" style="font:800 13px var(--bf);fill:var(--heading)">' + r[1] + '</text>';
+    });
+    out += '<text x="' + (x + 16) + '" y="' + 202 + '" style="' + F.cap + '">REAL ANNUAL COST</text>' +
+      '<rect x="' + (x + 16) + '" y="212" width="320" height="30" rx="7" style="fill:var(--surface);stroke:var(--border);stroke-width:1"/>' +
+      '<rect x="' + (x + 16) + '" y="212" width="' + barW + '" height="30" rx="7" style="fill:' + col + ';opacity:.85"/>' +
+      '<text x="' + (x + 28) + '" y="' + 232 + '" style="font:800 13px var(--bf);fill:#fff">' + net + '</text>';
+    return out;
+  }
+  return '<svg viewBox="0 0 760 296" role="img" aria-label="Two clients each borrow $100,000 at 6%. The one who bought a boat pays $6,000 a year; the one who bought ETFs pays a net $3,180 after the deduction.">' +
+    panel(16, false, 'Borrowed $100,000 &#8594; bought a boat', '$0', '$6,000', 320) +
+    panel(392, true, 'Borrowed $100,000 &#8594; bought ETFs', '$2,820', '$3,180', 170) +
+    '<text x="380" y="288" text-anchor="middle" style="' + F.s + '">' +
+      'Same bank, same loan, same rate. The only difference is what the borrowed money bought.</text>' +
+    '</svg>';
+}
+
+/* ------------------------------------------- the client's three options */
+function svgChoices() {
+  var cols = [
+    { x: 224, t: 'Pay down', t2: 'the mortgage', v: [1, 0, 0], hi: false },
+    { x: 400, t: 'Invest the', t2: 'spare cash', v: [0, 1, 0], hi: false },
+    { x: 576, t: 'Debt', t2: 'recycle', v: [1, 1, 1], hi: true }
+  ];
+  var rows = ['Mortgage gone sooner', 'Portfolio starts growing now', 'Interest becomes deductible'];
+  var out = '<svg viewBox="0 0 760 250" role="img" aria-label="Comparison: paying down the mortgage achieves one of three outcomes, investing spare cash achieves one, debt recycling achieves all three.">';
+  cols.forEach(function (c) {
+    if (c.hi) out += '<rect x="' + (c.x - 12) + '" y="14" width="168" height="220" rx="12" style="fill:var(--lime-light);stroke:var(--lime-dark);stroke-width:2"/>';
+    out += '<text x="' + (c.x + 72) + '" y="42" text-anchor="middle" style="' + F.h + '">' + c.t + '</text>' +
+           '<text x="' + (c.x + 72) + '" y="60" text-anchor="middle" style="' + F.h + '">' + c.t2 + '</text>';
+  });
+  rows.forEach(function (r, i) {
+    var y = 100 + i * 46;
+    out += '<text x="16" y="' + (y + 5) + '" style="' + F.b + '">' + r + '</text>' +
+           '<line x1="16" y1="' + (y + 22) + '" x2="744" y2="' + (y + 22) + '" style="stroke:var(--border-soft);stroke-width:1"/>';
+    cols.forEach(function (c) {
+      var yes = c.v[i];
+      out += '<text x="' + (c.x + 72) + '" y="' + (y + 9) + '" text-anchor="middle" style="font:800 22px var(--bf);fill:' +
+        (yes ? 'var(--green)' : 'var(--text-faint)') + '">' + (yes ? '✓' : '✕') + '</text>';
+    });
+  });
+  out += '<text x="380" y="242" text-anchor="middle" style="' + F.s + '">Debt recycling is not a fourth option — it is doing the first two at once, and getting the deduction as well.</text>';
+  return out + '</svg>';
+}
+
+/* ---------------------------------------------- who does what (hotspot) */
+function svgCast() {
+  function node(id, x, y, w, fill, stroke, t1, t2) {
+    return '<g data-hs="' + id + '">' +
+      '<rect class="hs-shape" x="' + x + '" y="' + y + '" width="' + w + '" height="78" rx="12" style="fill:' + fill +
+      ';stroke:' + stroke + ';stroke-width:2"/>' +
+      '<text x="' + (x + w / 2) + '" y="' + (y + 34) + '" text-anchor="middle" style="' + F.h + '">' + t1 + '</text>' +
+      '<text x="' + (x + w / 2) + '" y="' + (y + 56) + '" text-anchor="middle" style="' + F.s + '">' + t2 + '</text></g>';
+  }
+  var line = 'stroke:var(--border-strong);stroke-width:2;stroke-dasharray:4 4';
+  return '<svg viewBox="0 0 800 404" role="group" aria-label="The client sits in the middle; the adviser, mortgage broker, client service officer and accountant each play a different part.">' +
+    '<path d="M330 170 L228 106" style="' + line + '"/>' +
+    '<path d="M470 170 L572 106" style="' + line + '"/>' +
+    '<path d="M330 234 L228 298" style="' + line + '"/>' +
+    '<path d="M470 234 L572 298" style="' + line + '"/>' +
+    node('client', 300, 164, 200, 'var(--surface-2)', 'var(--border-strong)', 'The client', 'owns the home and the plan') +
+    node('adviser', 30, 24, 210, 'var(--blue-light)', 'var(--blue)', 'Financial adviser', 'decides the strategy') +
+    node('broker', 560, 24, 210, 'var(--surface)', 'var(--border-strong)', 'Mortgage broker', 'builds the loan splits') +
+    node('cso', 30, 296, 210, 'var(--lime-light)', 'var(--lime-dark)', 'You', 'make it actually happen') +
+    node('accountant', 560, 296, 210, 'var(--surface)', 'var(--border-strong)', 'Accountant', 'claims it at tax time') +
+    '</svg>';
+}
+
+/* --------------------------------------- where the CSO touches the plan */
+function svgJourney() {
+  var st = [
+    { t: 'Advice', d: 'The strategy is designed', h: 22 },
+    { t: 'Implementation', d: 'Splits and accounts set up', h: 74 },
+    { t: 'Ongoing service', d: 'Money routed and checked', h: 66 },
+    { t: 'Wealth review', d: 'Progress evidenced', h: 70 },
+    { t: 'Next round', d: 'The cycle repeats', h: 40 }
+  ];
+  var out = '<svg viewBox="0 0 800 262" role="img" aria-label="Across the five stages of a debt recycling engagement, the client service officer\'s workload is heaviest at implementation, ongoing service and review.">' + ARROWS;
+  st.forEach(function (s, i) {
+    var x = 16 + i * 156;
+    out += '<rect x="' + x + '" y="24" width="140" height="70" rx="11" style="fill:var(--surface);stroke:var(--blue-soft);stroke-width:2"/>' +
+      '<text x="' + (x + 70) + '" y="50" text-anchor="middle" style="' + F.h + '">' + s.t + '</text>' +
+      '<text x="' + (x + 70) + '" y="72" text-anchor="middle" style="' + F.s + '">' + s.d + '</text>';
+    if (i < 4) out += '<path d="M' + (x + 144) + ' 59 L' + (x + 168) + ' 59" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>';
+    var y = 216 - s.h;
+    out += '<rect x="' + (x + 20) + '" y="' + y + '" width="100" height="' + s.h + '" rx="6" style="fill:var(--lime-dark);opacity:.85"/>';
+  });
+  out += '<line x1="16" y1="216" x2="784" y2="216" style="stroke:var(--border-strong);stroke-width:1.5"/>' +
+    '<text x="16" y="128" style="' + F.cap + '">HOW MUCH OF IT LANDS ON YOUR DESK</text>' +
+    '<text x="400" y="240" text-anchor="middle" style="' + F.s + '">The adviser owns the first bar. You own most of the other four.</text>';
+  return out + '</svg>';
+}
+
+/* ----------------------------------------------- how an offset works */
+function svgOffsetHow() {
+  return '<svg viewBox="0 0 760 240" role="img" aria-label="A $500,000 loan with $50,000 sitting in the offset account is only charged interest on $450,000.">' +
+    ARROWS +
+    '<text x="20" y="34" style="' + F.cap + '">HOME LOAN BALANCE — $500,000</text>' +
+    '<rect x="20" y="46" width="648" height="56" rx="9" style="fill:var(--coral);opacity:.9"/>' +
+    '<rect x="668" y="46" width="72" height="56" rx="9" style="fill:var(--lime);opacity:.95"/>' +
+    '<text x="344" y="80" text-anchor="middle" style="font:800 14px var(--bf);fill:#fff">Interest charged on $450,000</text>' +
+    '<text x="704" y="34" text-anchor="middle" style="font:800 11px var(--bf);fill:var(--lime-dark)">$50,000 offset</text>' +
+    '<path d="M704 176 L704 110" style="stroke:var(--lime-dark);stroke-width:2.5" marker-end="url(#ag)"/>' +
+    '<rect x="530" y="180" width="210" height="46" rx="10" style="fill:var(--lime-light);stroke:var(--lime-dark);stroke-width:2"/>' +
+    '<text x="635" y="208" text-anchor="middle" style="' + F.h + '">Offset account: $50,000</text>' +
+    '<text x="20" y="196" style="' + F.b + '">The $50,000 is still the client\'s money.</text>' +
+    '<text x="20" y="216" style="' + F.s + '">They can withdraw it tomorrow — it has not been repaid to the bank.</text>' +
+    '</svg>';
+}
+
+/* ------------------------------------------------------- the loop itself */
+function svgCycle() {
+  function step(x, y, n, t1, t2) {
+    return '<rect x="' + x + '" y="' + y + '" width="200" height="86" rx="12" style="fill:var(--surface);stroke:var(--blue-soft);stroke-width:2"/>' +
+      '<circle cx="' + (x + 28) + '" cy="' + (y + 26) + '" r="14" style="fill:var(--blue)"/>' +
+      '<text x="' + (x + 28) + '" y="' + (y + 31) + '" text-anchor="middle" style="font:800 13px var(--bf);fill:#fff">' + n + '</text>' +
+      '<text x="' + (x + 50) + '" y="' + (y + 31) + '" style="' + F.h + '">' + t1 + '</text>' +
+      '<text x="' + (x + 16) + '" y="' + (y + 58) + '" style="' + F.s + '">' + t2 + '</text>';
+  }
+  return '<svg viewBox="0 0 780 320" role="img" aria-label="The six steps run as a loop: build equity, create the split, draw clean funds, invest, redirect the income, then repeat.">' +
+    ARROWS +
+    step(20, 26, '1', 'Build equity', 'extra repayments on the loan') +
+    step(290, 26, '2', 'Create the split', 'broker splits the facility') +
+    step(560, 26, '3', 'Draw it clean', 'into a nil-balance CMA') +
+    '<path d="M226 69 L282 69" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
+    '<path d="M496 69 L552 69" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
+    '<path d="M660 118 L660 178" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
+    step(560, 186, '4', 'Invest it all', 'buy income-producing assets') +
+    step(290, 186, '5', 'Redirect income', 'income + refund to Split A') +
+    step(20, 186, '6', 'Repeat', 'bad debt down, good debt up') +
+    '<path d="M552 229 L496 229" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
+    '<path d="M282 229 L226 229" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
+    '<path d="M120 182 L120 122" style="stroke:var(--lime-dark);stroke-width:2.5;stroke-dasharray:5 4" marker-end="url(#ag)"/>' +
+    '<text x="132" y="158" style="font:800 11px var(--bf);fill:var(--lime-dark)">round two</text>' +
+    '<text x="390" y="308" text-anchor="middle" style="' + F.s + '">Each lap moves another slice of the mortgage from the non-deductible side to the deductible side.</text>' +
+    '</svg>';
+}
+
+/* --------------------------------------- two money streams, one crossing */
+function svgLanes() {
+  function node(x, y, w, t) {
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="52" rx="10" style="fill:var(--surface);stroke:var(--border-strong);stroke-width:1.5"/>' +
+      '<text x="' + (x + w / 2) + '" y="' + (y + 32) + '" text-anchor="middle" style="' + F.h + '">' + t + '</text>';
+  }
+  return '<svg viewBox="0 0 780 326" role="img" aria-label="Personal money flows salary to offset to home loan; borrowed money flows investment split to cash account to investments. Income and tax refunds are the only permitted crossing; personal spending out of the investment split is never allowed.">' +
+    ARROWS +
+    '<rect x="16" y="20" width="748" height="96" rx="12" style="fill:var(--lime-light);stroke:var(--lime-dark);stroke-width:2"/>' +
+    '<text x="32" y="42" style="' + F.cap + '">PERSONAL MONEY</text>' +
+    node(40, 50, 170, 'Salary &amp; savings') + node(250, 50, 170, 'Offset account') + node(460, 50, 200, 'Home loan (Split A)') +
+    '<path d="M216 76 L244 76" style="stroke:var(--lime-dark);stroke-width:2.5" marker-end="url(#ag)"/>' +
+    '<path d="M426 76 L454 76" style="stroke:var(--lime-dark);stroke-width:2.5" marker-end="url(#ag)"/>' +
+
+    '<rect x="16" y="196" width="748" height="96" rx="12" style="fill:var(--blue-light);stroke:var(--blue);stroke-width:2"/>' +
+    '<text x="32" y="218" style="' + F.cap + '">BORROWED MONEY</text>' +
+    node(40, 226, 170, 'Investment split') + node(250, 226, 170, 'CMA') + node(460, 226, 200, 'The portfolio') +
+    '<path d="M216 252 L244 252" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
+    '<path d="M426 252 L454 252" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
+
+    '<path d="M335 222 L335 108" style="stroke:var(--green);stroke-width:3" marker-end="url(#ab)"/>' +
+    '<text x="352" y="150" style="font:800 12px var(--bf);fill:var(--green)">✓ income &amp; tax refunds</text>' +
+    '<text x="352" y="170" style="' + F.s + '">the one crossing the strategy is built on</text>' +
+
+    '<path d="M125 222 L125 108" style="stroke:var(--red);stroke-width:3;stroke-dasharray:6 5"/>' +
+    '<circle cx="125" cy="165" r="17" style="fill:var(--red-light);stroke:var(--red);stroke-width:2.5"/>' +
+    '<text x="125" y="172" text-anchor="middle" style="font:800 17px var(--bf);fill:var(--red)">✕</text>' +
+    '<text x="150" y="150" style="font:800 12px var(--bf);fill:var(--red)">✕ personal spending</text>' +
+    '<text x="150" y="170" style="' + F.s + '">a redraw out of the investment split</text>' +
+    '<text x="390" y="318" text-anchor="middle" style="' + F.s + '">Green arrow: always. Red arrow: never. Almost every routing question is one of these two.</text>' +
+    '</svg>';
+}
+
+/* ============================================================================
+   TWO MORE EXERCISE TYPES
+   ========================================================================== */
+
+/* --------------------------------------------- flip cards (plain English) */
+function renderFlip(spec) {
+  var wrap = el("div", { class: "ex" }, [
+    exHead("Flip the cards"),
+    el("p", { class: "ex-q", html: spec.q })
+  ]);
+  var grid = el("div", { class: "flipgrid" });
+  var seen = {};
+  spec.cards.forEach(function (c, i) {
+    var card = el("button", { class: "flipcard", type: "button", "aria-label": c.t + " — reveal definition" }, [
+      el("div", { class: "flipinner" }, [
+        el("div", { class: "flipface flipfront" }, [
+          el("span", { class: "term", html: c.t }),
+          el("span", { class: "hint", text: "tap to reveal" })
+        ]),
+        el("div", { class: "flipface flipback" }, [el("span", { class: "def", html: c.d })])
+      ])
+    ]);
+    card.addEventListener("click", function () {
+      card.classList.toggle("on");
+      seen[i] = true;
+      if (Object.keys(seen).length === spec.cards.length) State.mark(spec.id, true);
+    });
+    grid.appendChild(card);
+  });
+  wrap.appendChild(grid);
+  wrap.appendChild(el("p", { class: "footnote", style: "text-align:left;margin-top:2px",
+    text: "Flip all " + spec.cards.length + " to complete this one." }));
+  return wrap;
+}
+
+/* -------------------------------------------- the deduction calculator */
+function renderCalc(spec) {
+  var wrap = el("div", { class: "ex" }, [
+    exHead("Have a play"),
+    el("p", { class: "ex-q", html: spec.q })
+  ]);
+  var money = function (n) { return "$" + Math.round(n).toLocaleString("en-AU"); };
+
+  var amt = el("input", { type: "range", min: "25000", max: "500000", step: "5000", value: "100000", "aria-label": "Investment split size" });
+  var rate = el("input", { type: "range", min: "3", max: "10", step: "0.1", value: "6", "aria-label": "Interest rate" });
+  var mtr = el("select", { "aria-label": "Marginal tax rate" });
+  [["47", "47% — top rate incl. Medicare"], ["39", "39%"], ["34.5", "34.5%"], ["21", "21%"], ["0", "0% — no taxable income"]]
+    .forEach(function (o) { mtr.appendChild(el("option", { value: o[0], text: o[1] })); });
+
+  var amtV = el("span", { class: "cv" }), rateV = el("span", { class: "cv" });
+  var oInt = el("div", { class: "ov" }), oSave = el("div", { class: "ov good" }), oNet = el("div", { class: "ov" });
+
+  var out = el("div", { class: "calcout" }, [
+    el("div", {}, [el("div", { class: "ol", text: "Interest a year" }), oInt]),
+    el("div", {}, [el("div", { class: "ol", text: "Tax saved" }), oSave]),
+    el("div", {}, [el("div", { class: "ol", text: "Real cost after tax" }), oNet])
+  ]);
+
+  function update() {
+    var a = Number(amt.value), r = Number(rate.value), m = Number(mtr.value) / 100;
+    var interest = a * r / 100;
+    amtV.textContent = money(a);
+    rateV.textContent = r.toFixed(1) + "%";
+    oInt.textContent = money(interest);
+    oSave.textContent = money(interest * m);
+    oNet.textContent = money(interest * (1 - m));
+    State.mark(spec.id, true);
+  }
+  [amt, rate, mtr].forEach(function (n) { n.addEventListener("input", update); n.addEventListener("change", update); });
+
+  wrap.appendChild(el("div", { class: "calc" }, [
+    el("div", { class: "calcfield" }, [el("span", { class: "cl", text: "Investment split" }), amtV, amt]),
+    el("div", { class: "calcfield" }, [el("span", { class: "cl", text: "Interest rate" }), rateV, rate]),
+    el("div", { class: "calcfield" }, [el("span", { class: "cl", text: "Client's marginal rate" }), mtr])
+  ]));
+  wrap.appendChild(out);
+  wrap.appendChild(el("p", { class: "footnote", style: "text-align:left",
+    html: "Notice what happens at a 0% marginal rate: the deduction is worth nothing. That is why the strategy suits higher income earners — and why it is never a fit for everyone." }));
+  update();
+  return wrap;
+}
+
+/* ============================================================================
+   MODULE 1 — Start here: tax and debt in plain English
+   ========================================================================== */
+MODULES.push({
+  slug: "basics",
+  title: "Start here: tax and debt in plain English",
+  sub: "No assumed knowledge",
+  lede: "Before any of the strategy makes sense, two words have to make sense: <em>deductible</em> and " +
+        "<em>non-deductible</em>. Nothing here assumes you have seen them before.",
+  blocks: [
+    '<h2>How income tax works, in thirty seconds</h2>' +
+    '<p>A person earns income. The ATO taxes it — but not all of it. Certain costs can be ' +
+    '<strong>subtracted from that income first</strong>. Whatever is left is the amount they actually pay tax on.</p>' +
+    '<p>Those subtractable costs are called <strong>deductions</strong>. A cost is ' +
+    '<strong>tax deductible</strong> when the ATO allows it to be subtracted. It is ' +
+    '<strong>non-deductible</strong> when it cannot be — meaning the client pays for it out of money they have ' +
+    'already been taxed on.</p>' +
+
+    '<figure class="figure">' + svgDeduction() +
+    '<figcaption>Figure 1 — a deduction does not come back dollar for dollar. It comes back at the client\'s tax rate.</figcaption></figure>' +
+
+    '<div class="callout c-note"><h4>🔑 The sentence to remember</h4>' +
+    '<p style="margin:0">A deduction is a <strong>discount on a cost</strong>, not a refund of it. ' +
+    'Spending $10,000 to save $4,700 in tax still leaves the client $5,300 out of pocket — which is why nobody ' +
+    'spends money purely to get a deduction. It only makes sense when they were going to incur the cost anyway, ' +
+    'or when the spending buys something worth owning.</p></div>' +
+
+    '<h2>Now apply that to debt</h2>' +
+    '<p>Interest is a cost. So the same question applies to it: <strong>can this interest be subtracted from income?</strong></p>' +
+    '<p>The answer depends on one thing — <strong>what the borrowed money was used for</strong>:</p>' +
+    '<ul>' +
+      '<li>Borrowed to buy something that <strong>earns income</strong> (shares, a rental property) → the interest ' +
+      'is generally <span class="pill p-ded">deductible</span>.</li>' +
+      '<li>Borrowed for <strong>private life</strong> (a home to live in, a car, a holiday) → the interest is ' +
+      '<span class="pill p-non">not deductible</span>.</li>' +
+    '</ul>' +
+
+    '<figure class="figure">' + svgTwoLoans() +
+    '<figcaption>Figure 2 — two clients, identical loans. One pays $6,000 a year; the other pays a real cost of ' +
+    '$3,180 once the deduction is counted. Nothing about the loan changed — only what the money bought.</figcaption></figure>',
+
+    { id: "m0calc", kind: "calc",
+      q: "Move the sliders and watch the real cost of the interest change. This is the engine the whole strategy runs on." },
+
+    '<h3>So why is a home loan such a problem?</h3>' +
+    '<p>Because it is usually the client\'s <strong>biggest debt, their longest debt, and completely ' +
+    'non-deductible</strong>. Every dollar of mortgage interest is paid with money that has already been taxed, ' +
+    'and the average family carries it for 25 to 30 years.</p>' +
+    '<p>That is the problem debt recycling exists to solve. Everything else in this course is detail.</p>',
+
+    { id: "m0flip", kind: "flip",
+      q: "Eight words you will hear this week. Flip each card for the plain-English meaning.",
+      cards: [
+        { t: "Deduction", d: "A cost the ATO lets you subtract from your income before tax is worked out." },
+        { t: "Marginal tax rate", d: "The rate of tax on your <em>next</em> dollar earned. It is also the rate a deduction saves you." },
+        { t: "Assessable income", d: "Income the ATO counts — salary, dividends, distributions, rent, interest." },
+        { t: "Equity", d: "The part of the home the client owns outright: its value minus what is still owed." },
+        { t: "Interest", d: "The cost of borrowing money, charged as a percentage of the balance owing." },
+        { t: "Offset account", d: "A savings account linked to a loan. Its balance reduces the amount interest is charged on." },
+        { t: "Loan split", d: "One loan divided into separate portions, each with its own account number and statements." },
+        { t: "Redraw", d: "Taking back money you previously repaid into a loan. It counts as brand-new borrowing." }
+      ] },
+
+    { id: "m0q1", kind: "mcq",
+      q: "In your own words test: what does it mean when a cost is <strong>tax deductible</strong>?",
+      opts: [
+        "The ATO refunds the full amount of the cost.",
+        "The cost can be subtracted from income before tax is calculated, so the client pays tax on a smaller amount.",
+        "The cost is free.",
+        "The client can claim it back from their bank."
+      ], a: 1,
+      why: "Deductible means subtractable. The saving equals the cost multiplied by the client's marginal rate — not the whole cost." },
+
+    { id: "m0q2", kind: "sort",
+      q: "Would the ATO let this be subtracted from the client's income? Sort each one.",
+      zones: [{ key: "d", label: "✓ Deductible" }, { key: "n", label: "✗ Not deductible" }],
+      items: [
+        { t: "Interest on money borrowed to buy shares that pay dividends", z: "d" },
+        { t: "Interest on the loan for the home they live in", z: "n" },
+        { t: "Interest on money borrowed to buy a rental property", z: "d" },
+        { t: "The cost of the family's overseas holiday", z: "n" },
+        { t: "Interest on a car loan for the family car", z: "n" },
+        { t: "Interest on money borrowed to buy managed funds", z: "d" }
+      ],
+      why: "Only borrowings used to acquire something income-producing get the deduction. Private life — the home, the car, the holiday — is paid for with after-tax money." },
+
+    { id: "m0q3", kind: "mcq",
+      q: "A client on a 32.5% marginal rate has $4,000 of deductible interest. How much tax does that save them?",
+      opts: ["$4,000", "$1,300", "$2,700", "Nothing until they sell the investment"], a: 1,
+      why: "$4,000 × 32.5% = $1,300. Notice the same $4,000 would save $1,880 for someone on 47% — the identical deduction is worth more the higher the client's tax rate." }
+  ]
+});
+
+/* ============================================================================
+   MODULE 2 — Why this matters and where you fit
+   ========================================================================== */
+MODULES.push({
+  slug: "why-you",
+  title: "Why this matters, and where you fit in",
+  sub: "The problem, the cast, your part",
+  lede: "You are about to learn a strategy you will never recommend and never sell. " +
+        "Here is why it is still worth knowing better than almost anyone else in the office.",
+  blocks: [
+    '<h2>The client\'s problem</h2>' +
+    '<p>Picture a typical client. Mortgage of $600,000. About $1,000 a month spare after everything else. ' +
+    'They want two things at once — the mortgage gone, and some wealth built outside the house. ' +
+    'Traditionally they have to choose.</p>' +
+
+    '<figure class="figure">' + svgChoices() +
+    '<figcaption>Figure 1 — the first two columns are the choice most people think they have. ' +
+    'The third is what an adviser can build for them.</figcaption></figure>' +
+
+    '<div class="callout c-tip"><h4>💡 So what is the strategy, in one line?</h4>' +
+    '<p style="margin:0">Use the equity already sitting in the home to invest, so that part of the mortgage interest ' +
+    'becomes deductible — then send the investment income and the tax refund straight back at the mortgage. ' +
+    'The debt slowly changes from bad debt into good debt. That is it. The next ten modules are the how.</p></div>' +
+
+    '<h2>Who does what</h2>' +
+    '<p>Four people surround this strategy, and confusing their jobs is how clients get bad answers. ' +
+    'Click each one — you need all five to complete this module.</p>',
+
+    { id: "m0bmap", kind: "hotspot",
+      q: "Click every person to see what they own — and, just as importantly, what they don't.",
+      svg: svgCast(),
+      spots: {
+        client: { t: "The client",
+          d: "<p>Owns the home, the debt and the decisions. They will ring <em>you</em> first, because you are the person " +
+             "whose name is on the emails — which is exactly why knowing where to route a question matters.</p>" },
+        adviser: { t: "The financial adviser",
+          d: "<p>Decides whether the strategy suits the client at all, how big each split should be, what to invest in, " +
+             "and when the next round happens. Every question that starts with <em>“should I…”</em> belongs here.</p>" },
+        broker: { t: "The mortgage broker (or lender)",
+          d: "<p>Works out what the client can borrow and physically builds the loan splits. Rates, products, servicing " +
+             "and the mechanics of the facility are theirs.</p>" +
+             "<p style='margin:0'>You will talk to them constantly — briefing the split, then checking what comes back.</p>" },
+        cso: { t: "You — the client service officer",
+          d: "<p>You turn a strategy on paper into accounts that exist and money that moves to the right place. " +
+             "You open the accounts, verify the structure, chase the documents, watch the balances between reviews and " +
+             "assemble the evidence the adviser presents.</p>" +
+             "<p style='margin:0'>You are also the only person looking at these accounts <strong>regularly</strong>. " +
+             "The adviser sees them twice a year. You see them every month.</p>" },
+        accountant: { t: "The accountant",
+          d: "<p>Claims the deduction in the tax return and confirms what is and is not deductible for that client. " +
+             "They can only claim what they can evidence — which comes from the documents you have been filing all year.</p>" }
+      } },
+
+    '<h2>Where your part sits</h2>' +
+
+    '<figure class="figure">' + svgJourney() +
+    '<figcaption>Figure 2 — the adviser owns the design. Almost everything after it runs through you.</figcaption></figure>' +
+
+    '<h3>A typical month on a debt recycling client</h3>' +
+    '<div class="tablewrap"><table class="t"><thead><tr><th style="width:34%">What lands</th><th>What you do with it</th></tr></thead><tbody>' +
+    '<tr><td>A distribution hits the client\'s cash account</td><td>Check it arrived, check it was swept where the plan says.</td></tr>' +
+    '<tr><td>The broker sends a new loan schedule</td><td>Check the amount, the repayment type, and that no offset is attached to the investment split.</td></tr>' +
+    '<tr><td>Monthly loan statements</td><td>Confirm the home loan is falling and the investment split has not moved.</td></tr>' +
+    '<tr><td>A client asks “can I take $20k out?”</td><td>Work out which account it should come from — and escalate if the answer is the wrong one.</td></tr>' +
+    '<tr><td>A review is booked in six weeks</td><td>Start pulling statements, valuations and interest summaries now, not the night before.</td></tr>' +
+    '</tbody></table></div>' +
+
+    '<div class="callout c-rule"><h4>💸 Why the accuracy matters, in dollars</h4>' +
+    '<p>Suppose $20,000 of a $100,000 investment split gets spent on something private. At 6% interest, ' +
+    'that is $1,200 of interest a year that is no longer deductible. For a client on 47%, that is ' +
+    '<strong>$564 of lost tax benefit every single year</strong> — and it does not fix itself.</p>' +
+    '<p style="margin:0">Over a twenty-year loan, one transfer to the wrong account costs the client more than ' +
+    '<strong>$11,000</strong>. That is the whole reason this course exists.</p></div>',
+
+    { id: "m0bq1", kind: "cloze",
+      q: "Who would you take each of these to?",
+      rows: [
+        { lbl: "“Should I put the next $50,000 into a new split or leave it in the offset?”",
+          opts: ["The adviser", "The mortgage broker", "The accountant", "Answer it yourself"], a: 0 },
+        { lbl: "“How much can I actually borrow against the house?”",
+          opts: ["The adviser", "The mortgage broker", "The accountant", "Answer it yourself"], a: 1 },
+        { lbl: "“Can you send me last year's interest summary for the investment split?”",
+          opts: ["The adviser", "The mortgage broker", "The accountant", "Answer it yourself"], a: 3 },
+        { lbl: "“How do I actually claim this in my tax return?”",
+          opts: ["The adviser", "The mortgage broker", "The accountant", "Answer it yourself"], a: 2 },
+        { lbl: "“Has my quarterly distribution come through yet?”",
+          opts: ["The adviser", "The mortgage broker", "The accountant", "Answer it yourself"], a: 3 }
+      ],
+      why: "Anything starting with “should I” is the adviser. Borrowing capacity and loan mechanics are the broker. Lodging the return is the accountant. Facts about what has happened in the accounts are yours — and answering those quickly is most of the value you add." },
+
+    { id: "m0bq2", kind: "mcq",
+      q: "Which best describes why a client service officer needs to understand this strategy, rather than just processing the instructions?",
+      opts: [
+        "So they can advise clients when the adviser is unavailable.",
+        "Because they are the only person looking at these accounts regularly, so they are the one who spots a problem while it is still fixable.",
+        "Because client service officers approve the loan splits.",
+        "So they can recommend which investments to buy."
+      ], a: 1,
+      why: "Three of these are things you specifically do not do. The value is in noticing — a redraw, a missing sweep, an offset that appeared on the wrong split — months before the next review would have caught it." },
+
+    { id: "m0bq3", kind: "mcq",
+      q: "Debt recycling is best described as…",
+      opts: [
+        "A way to borrow more money to invest.",
+        "A way to pay off a mortgage without investing.",
+        "A way to do both at once — pay down the mortgage and build a portfolio — while making part of the interest deductible.",
+        "A tax scheme that reduces the client's income."
+      ], a: 2,
+      why: "It is not a fourth option, and it is not extra borrowing for its own sake. It restructures debt the client already has so that the same money does two jobs." }
+  ]
+});
+
+/* ============================================================================
+   MODULE 3 — What debt recycling actually is
    ========================================================================== */
 MODULES.push({
   slug: "what",
@@ -1092,7 +1618,7 @@ MODULES.push({
 });
 
 /* ============================================================================
-   MODULE 2 — Deductible vs non-deductible
+   MODULE 4 — Deductible vs non-deductible
    ========================================================================== */
 MODULES.push({
   slug: "purpose",
@@ -1168,7 +1694,7 @@ MODULES.push({
 });
 
 /* ============================================================================
-   MODULE 3 — The accounts
+   MODULE 5 — The accounts
    ========================================================================== */
 MODULES.push({
   slug: "accounts",
@@ -1220,6 +1746,19 @@ MODULES.push({
              "<p style='margin:0'>At review time this is a number the adviser will want quantified: what the strategy returned in tax this year.</p>" }
       } },
 
+    '<h3>How an offset account actually works</h3>' +
+    '<p>This one trips up nearly everyone at first. Money in an offset account is <strong>not a repayment</strong>. ' +
+    'It stays the client\'s money and they can take it out tomorrow. All it does is reduce the balance the bank ' +
+    'charges interest <em>on</em>.</p>' +
+
+    '<figure class="figure">' + svgOffsetHow() +
+    '<figcaption>Figure 1 — $500,000 owing, $50,000 in the offset, so interest is charged on $450,000. ' +
+    'The loan balance is still $500,000; only the interest calculation changes.</figcaption></figure>' +
+
+    '<p>That is why an offset is the right home for a client\'s cash. It saves them interest at their loan rate, ' +
+    'the money stays available for emergencies, and — unlike paying the loan down — taking it back out is not ' +
+    'a redraw, so it cannot contaminate anything.</p>' +
+
     '<h3>Offset account vs debt recycling — they are not the same tool</h3>' +
     '<p>Clients mix these up constantly, so know the difference cold. Our guide sets it out like this:</p>' +
     '<div class="tablewrap"><table class="t"><thead><tr><th>Offset account</th><th>Debt recycling</th></tr></thead><tbody>' +
@@ -1266,12 +1805,32 @@ MODULES.push({
         "In the CMA, so it is ready to invest.",
         "Paid directly off Split B to reduce the investment debt."
       ], a: 1,
-      why: "Cash should always work against the non-deductible side first. Offsetting the investment split would reduce the interest the client actually wants to be claiming, and paying down Split B destroys deductible debt they cannot easily rebuild." }
+      why: "Cash should always work against the non-deductible side first. Offsetting the investment split would reduce the interest the client actually wants to be claiming, and paying down Split B destroys deductible debt they cannot easily rebuild." },
+
+    { id: "m3q3", kind: "mcq",
+      q: "A client owes $480,000 on Split A and has $62,000 sitting in the offset. What is the bank charging interest on, and what is the loan balance?",
+      opts: [
+        "Interest on $418,000; the loan balance is $418,000.",
+        "Interest on $418,000; the loan balance is still $480,000.",
+        "Interest on $480,000; the offset only earns the client interest.",
+        "Interest on $542,000."
+      ], a: 1,
+      why: "The offset changes the interest calculation, not the debt. The $62,000 is still the client's — which is exactly why it is the right place for their cash rather than paying it off the loan." },
+
+    { id: "m3q4", kind: "cloze",
+      q: "Fill in the structure. For a standard debt recycling client, which setting belongs on which split?",
+      rows: [
+        { lbl: "Split A — the home loan portion — repayment type is usually…", opts: ["Interest-only", "Principal & interest"], a: 1 },
+        { lbl: "Split B — the investment portion — repayment type is often…", opts: ["Interest-only", "Principal & interest"], a: 0 },
+        { lbl: "The offset account should be attached to…", opts: ["Split A", "Split B", "Both", "Neither"], a: 0 },
+        { lbl: "Dividends and distributions should be credited to…", opts: ["The offset", "The CMA", "Split B", "The client's everyday account"], a: 1 }
+      ],
+      why: "P&I on the home loan so the bad debt actually reduces; interest-only on the investment split so the good debt does not accidentally get paid down; offset on Split A only; investment income into the CMA where the trail stays clean." }
   ]
 });
 
 /* ============================================================================
-   MODULE 4 — The six-step cycle
+   MODULE 6 — The six-step cycle
    ========================================================================== */
 MODULES.push({
   slug: "cycle",
@@ -1280,8 +1839,11 @@ MODULES.push({
   lede: "This is the repeatable process described in our client guide, expanded with what actually has to happen " +
         "operationally at each step.",
   blocks: [
-    '<p>Debt recycling is not a one-off transaction — it is a loop the client runs again and again. ' +
-    'Step through each stage below, then put the steps back in order.</p>',
+    '<p>Debt recycling is not a one-off transaction — it is a loop the client runs again and again.</p>' +
+
+    '<figure class="figure">' + svgCycle() +
+    '<figcaption>Figure 1 — one full lap. Step through each stage below for what actually has to happen, ' +
+    'then put the six back in order yourself.</figcaption></figure>',
 
     { kind: "stepper", steps: [
       { n: "1", t: "Build equity with extra repayments",
@@ -1358,7 +1920,7 @@ MODULES.push({
 });
 
 /* ============================================================================
-   MODULE 5 — Following the money
+   MODULE 7 — Following the money
    ========================================================================== */
 MODULES.push({
   slug: "money",
@@ -1377,6 +1939,10 @@ MODULES.push({
     '<tr><td>Client wants $20,000 for a car</td><td>From the offset. Never from Split B.</td><td>A personal redraw against the investment split contaminates it permanently.</td></tr>' +
     '<tr><td>Proceeds from selling investments</td><td>Stop — escalate to the adviser</td><td>CGT, the deductible balance and the plan are all in play. Not a routing decision.</td></tr>' +
     '</tbody></table></div>' +
+
+    '<figure class="figure">' + svgLanes() +
+    '<figcaption>Figure 1 — two streams of money, running in parallel. Investment income and tax refunds cross ' +
+    'upward on purpose; nothing crosses downward.</figcaption></figure>' +
 
     '<div class="callout c-note"><h4>🧠 The rule behind the whole table</h4>' +
     '<p style="margin:0"><strong>Personal money attacks non-deductible debt. Borrowed money buys investments. ' +
@@ -1412,7 +1978,7 @@ MODULES.push({
 });
 
 /* ============================================================================
-   MODULE 6 — Cardinal rules and contamination
+   MODULE 8 — Cardinal rules and contamination
    ========================================================================== */
 MODULES.push({
   slug: "rules",
@@ -1493,7 +2059,7 @@ MODULES.push({
 });
 
 /* ============================================================================
-   MODULE 7 — Your role
+   MODULE 9 — Your role
    ========================================================================== */
 MODULES.push({
   slug: "role",
@@ -1586,7 +2152,7 @@ MODULES.push({
 });
 
 /* ============================================================================
-   MODULE 8 — Prepping the wealth review
+   MODULE 10 — Prepping the wealth review
    ========================================================================== */
 MODULES.push({
   slug: "review",
@@ -1679,7 +2245,7 @@ MODULES.push({
 });
 
 /* ============================================================================
-   MODULE 9 — Risks and escalation
+   MODULE 11 — Risks and escalation
    ========================================================================== */
 MODULES.push({
   slug: "risk",
@@ -1876,10 +2442,11 @@ function buildCertificate() {
 
 /* extend the dispatcher without editing the switch above */
 var _renderExBase = renderEx;
-renderEx = function (ex) { return ex.kind === "exam" ? renderExam(ex) : _renderExBase(ex); };
+var LATE_KINDS = { exam: renderExam, flip: renderFlip, calc: renderCalc };
+renderEx = function (ex) { return LATE_KINDS[ex.kind] ? LATE_KINDS[ex.kind](ex) : _renderExBase(ex); };
 
 /* ============================================================================
-   MODULE 10 — Glossary and final assessment
+   MODULE 12 — Glossary and final assessment
    ========================================================================== */
 MODULES.push({
   slug: "assessment",
@@ -1926,42 +2493,42 @@ MODULES.push({
     { id: "m10exam", kind: "exam", pass: 0.8, questions: [
       { q: "What does debt recycling change about a client's debt?",
         opts: ["The total amount owed", "Its character — non-deductible debt becomes deductible debt", "The interest rate", "The lender"], a: 1,
-        why: "Restructure, not increase. (Module 1)" },
+        why: "Restructure, not increase. (Module 3)" },
       { q: "Interest on a loan is deductible when…",
         opts: ["The loan is secured against an investment asset", "The borrowed money was used to acquire an income-producing asset", "The loan is labelled an investment loan by the bank", "The client is on a high marginal tax rate"], a: 1,
-        why: "The purpose test. Security, product name and tax rate are all irrelevant to whether the deduction exists. (Module 2)" },
+        why: "The purpose test. Security, product name and tax rate are all irrelevant to whether the deduction exists. (Module 4)" },
       { q: "An offset account should be attached to…",
         opts: ["The investment split, to reduce deductible interest", "The home loan split only", "Both splits equally", "Whichever split has the higher rate"], a: 1,
-        why: "Cash should reduce non-deductible interest, never deductible interest. (Module 3)" },
+        why: "Cash should reduce non-deductible interest, never deductible interest. (Module 5)" },
       { q: "Where must a drawdown from the investment split land?",
         opts: ["The client's everyday transaction account", "The offset account", "A clean, nil-balance account such as a CMA, then straight into the investment", "Split A, to reduce the home loan"], a: 2,
-        why: "Traceability is the deduction. Mixing borrowed funds with personal money breaks the trail. (Modules 4 and 6)" },
+        why: "Traceability is the deduction. Mixing borrowed funds with personal money breaks the trail. (Modules 6 and 8)" },
       { q: "A client redraws $20,000 from their $100,000 investment split to pay for a holiday. What is the consequence?",
         opts: ["No consequence — the split was created for investment", "The whole split loses deductibility", "The split becomes mixed-purpose: 80% of the interest is deductible and repayments are apportioned across both purposes", "The client simply repays it and the problem is resolved"], a: 2,
-        why: "Apportionment, and it is sticky. (Module 6)" },
+        why: "Apportionment, and it is sticky. (Module 8)" },
       { q: "The client's ETF distributions arrive in the CMA. Under a standard debt recycling plan, where do they go next?",
         opts: ["They stay in the CMA", "Swept to the offset to reduce non-deductible debt — or reinvested if that is what the advice specifies", "Paid off the investment split", "Transferred to the client's credit card"], a: 1,
-        why: "Redirecting investment income at the bad debt is one of the three engines of the strategy. (Modules 4 and 5)" },
+        why: "Redirecting investment income at the bad debt is one of the three engines of the strategy. (Modules 6 and 7)" },
       { q: "Split B has fallen from $120,000 to $105,000 since the last review. This is…",
         opts: ["Good news — less debt", "Neutral — balances move", "A problem: deductible debt has been destroyed and cannot easily be rebuilt. Flag it to the adviser", "Only a problem if the client also sold investments"], a: 2,
-        why: "On the investment split, a falling balance works against the strategy. (Module 7)" },
+        why: "On the investment split, a falling balance works against the strategy. (Module 9)" },
       { q: "Select every event that should be escalated to the adviser the same day.",
         multi: true,
         opts: ["The client is refinancing both loans to a new lender", "The client has reduced their working hours", "A quarterly distribution has arrived in the CMA", "The client wants to pay a lump sum off the investment split", "You are updating the client's postal address"], a: [0, 1, 3],
-        why: "Refinances can merge the splits, income changes undermine serviceability, and lump sums off the investment split destroy deductible debt. Distributions arriving and address updates are ordinary business. (Modules 6, 7 and 9)" },
+        why: "Refinances can merge the splits, income changes undermine serviceability, and lump sums off the investment split destroy deductible debt. Distributions arriving and address updates are ordinary business. (Modules 8, 9 and 11)" },
       { q: "Which figure best demonstrates whether the debt recycling strategy is working?",
         opts: ["The portfolio's total return", "The reduction in the non-deductible balance and the proportion of debt now deductible", "The total debt balance", "The client's offset balance"], a: 1,
-        why: "The portfolio return would have happened from investing anyway. The debt shift is what recycling uniquely produces. (Module 8)" },
+        why: "The portfolio return would have happened from investing anyway. The debt shift is what recycling uniquely produces. (Module 10)" },
       { q: "A client on a 47% marginal rate paid $9,000 of interest on their investment split. The approximate tax benefit is…",
         opts: ["$9,000", "$4,230", "$2,925", "Nil until the investments are sold"], a: 1,
-        why: "$9,000 × 47% = $4,230. The deduction reduces taxable income; it does not refund the interest. (Module 2)" },
+        why: "$9,000 × 47% = $4,230. The deduction reduces taxable income; it does not refund the interest. (Module 4)" },
       { q: "A client asks you directly whether the interest on their new split is tax-deductible. The right response is to…",
         opts: ["Confirm that it is, since the split was set up for investing", "Route the question to the adviser and the accountant, promptly", "Tell them to call the ATO", "Say you are not permitted to discuss anything tax-related"], a: 1,
-        why: "You may know the answer; it is still advice about a specific client's circumstances. Route it — and route it quickly. (Module 7)" },
+        why: "You may know the answer; it is still advice about a specific client's circumstances. Route it — and route it quickly. (Module 9)" },
       { q: "Select everything our guide identifies as a genuine risk or precondition of debt recycling.",
         multi: true,
         opts: ["Losses are amplified in a downturn", "The family home is usually the security", "A minimum horizon of around seven years", "Personal insurance, particularly income protection, matters", "The ATO may retrospectively disallow the strategy"], a: [0, 1, 2, 3],
-        why: "Debt recycling is legal under Australian tax law where funds are used for an income-producing purpose. The risks are structural and market-based. (Modules 1 and 9)" }
+        why: "Debt recycling is legal under Australian tax law where funds are used for an income-producing purpose. The risks are structural and market-based. (Modules 3 and 11)" }
     ] },
 
     '<div class="callout c-firm"><h4>📌 Before you sign off</h4>' +
