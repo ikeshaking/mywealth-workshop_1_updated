@@ -151,3 +151,28 @@ npm run verify      # lint + typecheck + test + build
 - The embedded tracker's in-app "who is using this" toggle is removed when
   embedded — the role comes from the authenticated session, so a candidate can't
   switch themselves into the supervisor view.
+
+---
+
+## Staff training: Debt Recycling (CSO induction)
+
+[`public/debt-recycling-training.html`](public/debt-recycling-training.html) is a
+standalone, dependency-free interactive training module for **client service
+officers** who are new to the debt recycling strategy. It is served as a static
+page — open it at `/debt-recycling-training.html`, or just double-click the file.
+
+Ten modules, each ending in exercises that must be answered correctly before the
+module is marked complete: multiple choice, select-all, drag-and-drop sorting,
+drag-to-sequence, dropdown routing drills and a clickable account-map diagram,
+finishing with a 12-question assessment (80% to pass) and a printable
+certificate. Progress and answers persist per browser in `localStorage`.
+
+It shares the PY tracker's brand tokens and light/dark behaviour but has no
+dependency on the app shell, so it can later be wrapped the same way
+`py-app.html` is if per-user completion tracking is wanted.
+
+Content is based on My Wealth Solutions' own
+[comprehensive guide to debt recycling](https://mywealthsolutions.com.au/debt-recycling-guide/).
+**The final module points staff at the firm's internal debt transfer
+instructions** — that procedure is not reproduced here, and the placeholder in
+module 10 should be replaced with a link to it.
