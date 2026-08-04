@@ -10394,7 +10394,7 @@ function resetState(){
     rbalUpdates:[], rbalActions:[],
     rbalMeetingDate:"", rbalSoaDate:"", rbalOsaDate:"",
     rbalRolloverFrom:"", rbalRolloverTo:"", rbalRolloverAmount:"",
-    rbalCgtNote:"", rbalShowInvestmentInfo:true,
+    rbalCgtNote:"", rbalShowInvestmentInfo:true, rbalLeadAction:true,
     // Custom sections
     customSections:[],
     // Off by default — tick "Include Custom Sections in output" to use them.
@@ -15766,6 +15766,7 @@ function renderHowToPage(){
     <ul class="sop-check">
         <li>Client details on hand — full names (and entity details for joint / entity clients), account and platform names, current balances.</li>
         <li><strong>Review ROA:</strong> for a rollover, the fund being rolled out of, the receiving platform and (optionally) the amount coming across.</li>
+        <li><strong>Review ROA:</strong> the <strong>review file note</strong> (the "After Review Summary" written straight after the meeting) as <strong>Word (.docx)</strong>. Its Updates and Action items are what the Record of Advice repeats, so the tool reads them straight out of it.</li>
         <li><strong>Review ROA:</strong> the CARE rebalance document — the "Appendix to RoA" — exported as <strong>Word (.docx)</strong>. A rebalance ROA reprints its figures rather than summarising them: the account banner, risk profile, the Current → Proposed → Change trades, the Recommended Implications variations, the whole Investment Fees disclosure and the transactional costs. A PDF export loses the table structure the reader relies on.</li>
         <li><strong>Review ROA:</strong> the meeting date, the Statement of Advice date and the Ongoing Service agreement date, in the firm's house wording (e.g. "the 17th of July 2026").</li>
         <li><strong>Review NAA:</strong> the client's instruction in their own words — what to buy or sell, the amounts, the account, and the purpose of any withdrawal.</li>
@@ -15797,9 +15798,11 @@ function renderHowToPage(){
       <div class="sop-step">
         <div class="sop-step-head"><span class="sop-step-num">3a</span>Build a rebalance / rollover / no-change ROA</div>
 <ul>
+        <li>The usual order is <strong>file note first, then the ROA</strong>: write the After Review Summary straight after the meeting, then start the Record of Advice and read the file note into it.</li>
         <li>On <strong>Rebalance &amp; Accounts</strong>, confirm the type, enter the three dates, then add the CARE document — <strong>drag the file onto the drop zone</strong> or click it to browse; several at once is fine. Each account it finds is listed with its risk profile, trade and variation counts and fee disclosure.</li>
         <li>Each account carries an <strong>investment menu</strong> setting, taken from the document: a <em>CARE managed</em> account prints the full platform fee disclosure; an <em>index / Vanguard</em> account prints its transactional costs only. Override it per account when the document is ambiguous — a household with both (e.g. Hub24 CARE super plus a CFS Edge index account) prints correctly in one document.</li>
-        <li>On <strong>Updates &amp; Action Items</strong>, edit the "Updates:" list and add the meeting's actions. The first action item is written from the ROA type — change the type, or the rollover funds, to change it.</li>
+        <li>On <strong>Updates &amp; Action Items</strong>, drop the <strong>review file note</strong> on the zone at the top. Its "Updates:" and "Action items" headings fill both lists verbatim, and the client name, meeting date and adviser come across from the "On &lt;date&gt;, &lt;adviser&gt; met with…" line. Everything stays editable afterwards.</li>
+        <li>The tool can also lead the action items with a standard line written from the ROA type ("…we will perform a partial rollover from QSuper to Hub24, after which…"). When the file note's own wording already covers the rebalance or rollover, the import switches that line off so the document doesn't say it twice — the tick box shows the current state either way.</li>
         <li>A <strong>No Change ROA</strong> prints no rebalance, implications or fee tables, so the CARE upload is optional there — type the risk profile in instead.</li>
       </ul>
       </div>
@@ -22075,6 +22078,7 @@ function initRbalState(){
   if(F.rbalRolloverTo == null) F.rbalRolloverTo = '';
   if(F.rbalRolloverAmount == null) F.rbalRolloverAmount = '';
   if(F.rbalShowInvestmentInfo == null) F.rbalShowInvestmentInfo = true;
+  if(F.rbalLeadAction == null) F.rbalLeadAction = true;
 }
 // Picking a Review Rebalance card switches the active document type (clearing
 // an in-progress ROA/NAA selection first) and goes straight to the builder.
@@ -22109,7 +22113,10 @@ function rbalLeadAction(){
   }
   return 'We will perform a rebalance of your portfolios in alignment with your personal risk profile.';
 }
-function rbalActionList(){ return [rbalLeadAction()].concat((F.rbalActions||[]).filter(Boolean)); }
+function rbalActionList(){
+  const rest = (F.rbalActions||[]).filter(Boolean);
+  return (F.rbalLeadAction === false ? [] : [rbalLeadAction()]).concat(rest);
+}
 function rbalUpdateList(){ return (F.rbalUpdates||[]).filter(Boolean); }
 
 // ─── CARE import (this document quotes the CARE figures verbatim) ───
@@ -22187,6 +22194,120 @@ function rbalDropZone(opts){
     <span class="drop-zone-sub">${e(opts.sub||'')}</span>
     <input type="file" accept="${e(accept)}" ${multiple} style="display:none" onchange="${handler}(this)">
   </label>`;
+}
+
+// ─── Review file note (.docx) ─────────────────────────────────────────────
+// The review officer writes the "After Review Summary" file note straight after
+// the meeting, and its Updates / Action items are what the Record of Advice
+// repeats. Reading the file note is therefore the first step of building the
+// ROA: it fills those two lists verbatim, plus the client name, the meeting date
+// and the adviser from the "On <date>, <adviser> met with …" line.
+function parseReviewFileNote(html){
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  // Flatten to an ordered list of {kind:'p'|'li', text} so a file note written
+  // with real Word lists and one written as plain paragraphs both read the same.
+  const stream = [];
+  const push = (kind, el) => { const t = (el.textContent||'').replace(/\s+/g,' ').trim(); if(t) stream.push({kind, text:t}); };
+  const walk = parent => Array.from(parent.children).forEach(el => {
+    const tag = (el.tagName||'').toLowerCase();
+    if(tag === 'ul' || tag === 'ol') Array.from(el.querySelectorAll('li')).forEach(li => push('li', li));
+    else if(tag === 'table') Array.from(el.querySelectorAll('td,th')).forEach(td => push('p', td));
+    else if(el.children.length && !/^(p|h[1-6]|li)$/.test(tag)) walk(el);
+    else push('p', el);
+  });
+  walk(doc.body);
+
+  const out = {clientName:'', fileNoteDate:'', fileNoteTime:'', meetingDate:'', adviser:'',
+    reviewType:'', updates:[], actions:[], nextSteps:[]};
+  let mode = null;
+  const isHeading = (t, re) => re.test(t) && t.length < 32;
+  stream.forEach(it => {
+    const t = it.text;
+    let m;
+    if((m = t.match(/^client name\s*:\s*(.+)$/i))){ out.clientName = m[1].trim(); mode = null; return; }
+    if((m = t.match(/^date of file note\s*:\s*(.+)$/i))){ out.fileNoteDate = m[1].trim(); mode = null; return; }
+    if((m = t.match(/^time of file note\s*:\s*(.+)$/i))){ out.fileNoteTime = m[1].trim(); mode = null; return; }
+    // "On the 17th of July 2026, Damien Guazzo met with Damien for his annual review."
+    if((m = t.match(/^on\s+(.+?),\s*(.+?)\s+met with\b(.*)$/i))){
+      out.meetingDate = m[1].trim();
+      out.adviser = m[2].trim();
+      const rt = (m[3]||'').match(/for (?:his|her|their|the)\s+([a-z ]*review)/i);
+      if(rt) out.reviewType = rt[1].trim();
+      mode = null; return;
+    }
+    if(isHeading(t, /^updates\b/i)){ mode = 'updates'; return; }
+    if(isHeading(t, /^action items?\b/i)){ mode = 'actions'; return; }
+    if(isHeading(t, /^next steps?\b/i)){ mode = 'nextSteps'; return; }
+    if(/^(the following were decided|confidential|my wealth solutions|after review summary)/i.test(t)){ mode = null; return; }
+    if(/^_{6,}$/.test(t)) return;
+    if(!mode) return;
+    // List items are always content. A bare paragraph is only content if it reads
+    // like one — this is what stops the adviser's sign-off name at the foot of the
+    // note being swept into the last list.
+    if(it.kind === 'p' && t.length < 26 && !/[.:;!?]$/.test(t)) return;
+    out[mode].push(t.replace(/^[•●\-–•]\s*/, ''));
+  });
+  return out;
+}
+function looksLikeReviewFileNote(text){
+  const t = String(text||'');
+  return /after review summary/i.test(t) || (/date of file note/i.test(t) && /action items?/i.test(t));
+}
+async function rbalImportFileNote(inp){
+  const file = (inp.files||[])[0]; inp.value = '';
+  if(!file) return;
+  if(typeof mammoth === 'undefined'){ alert('The Word reader (mammoth) failed to load — check your internet connection and try again.'); return; }
+  const ext = (file.name.split('.').pop()||'').toLowerCase();
+  if(!(ext === 'docx' || (file.type||'').includes('wordprocessingml'))){
+    alert('Please upload the review file note as a Word (.docx) file.'); return;
+  }
+  let fn;
+  try{
+    showImportStatus('Reading review file note…');
+    const res = await mammoth.convertToHtml({arrayBuffer: await file.arrayBuffer()});
+    const raw = (await mammoth.extractRawText({arrayBuffer: await file.arrayBuffer()})).value;
+    hideImportStatus();
+    if(!looksLikeReviewFileNote(raw) && !/updates/i.test(raw)){
+      if(!confirm(`"${file.name}" doesn't look like an After Review Summary file note. Read it anyway?`)) return;
+    }
+    fn = parseReviewFileNote(res.value);
+  }catch(ex){
+    hideImportStatus();
+    alert('Couldn\'t read that file note: ' + (ex && ex.message ? ex.message : ex));
+    return;
+  }
+  if(!fn.updates.length && !fn.actions.length && !fn.nextSteps.length){
+    alert(`No "Updates:" or "Action items" list was found in ${file.name}.\n\nThe reader looks for those headings and takes the bullets under each.`);
+    return;
+  }
+
+  const actions = fn.actions.concat(fn.nextSteps.length ? ['Next steps:'].concat(fn.nextSteps) : []);
+  // If the note's own action items already say a rebalance or rollover is
+  // happening, the tool's generated lead line would say it twice.
+  const saysRebalance = actions.some(a => /rebalanc|roll ?over/i.test(a));
+
+  let summary = `Read ${file.name}:\n\n`;
+  summary += `• ${fn.updates.length} update${fn.updates.length===1?'':'s'}\n`;
+  summary += `• ${actions.length} action item${actions.length===1?'':'s'}${fn.nextSteps.length?` (including ${fn.nextSteps.length} under "Next steps")`:''}\n`;
+  if(fn.clientName) summary += `• Client: ${fn.clientName}\n`;
+  if(fn.meetingDate) summary += `• Meeting date: ${fn.meetingDate}\n`;
+  if(fn.adviser) summary += `• Adviser: ${fn.adviser}\n`;
+  if(saysRebalance) summary += `\nThe action items already describe the rebalance/rollover, so the tool's standard rebalance action line will be switched off to avoid saying it twice. Turn it back on below if you want both.`;
+  summary += `\n\nThis replaces the Updates and Action items currently in the document. Proceed?`;
+  if(!confirm(summary)) return;
+
+  if(fn.updates.length) F.rbalUpdates = fn.updates.slice();
+  F.rbalActions = actions;
+  if(saysRebalance) F.rbalLeadAction = false;
+  // Everything else fills only where nothing has been entered yet.
+  if(fn.meetingDate && !F.rbalMeetingDate) F.rbalMeetingDate = fn.meetingDate;
+  if(fn.adviser && !F.adviserName) F.adviserName = fn.adviser;
+  if(fn.clientName && !F.client1Name){
+    const parts = fn.clientName.split(/\s+(?:and|&)\s+/i).map(s => s.trim()).filter(Boolean);
+    F.client1Name = parts[0];
+    if(parts[1]){ F.clientType = 'joint'; if(!F.client2Name) F.client2Name = parts[1]; }
+  }
+  render();
 }
 function rbalSetEngine(i, v){ if(F.rbalAccounts[i]) F.rbalAccounts[i].engine = v; render(); }
 function rbalRemoveAccount(i){ F.rbalAccounts.splice(i, 1); render(); }
@@ -22351,6 +22472,12 @@ function rbalBlockContent(){
     <div class="section-block-head"><div class="section-block-title"><span>What this Record of Advice covers</span></div></div>
     <div class="section-block-body">
     <div class="card">
+      <h4 style="margin:0 0 6px 0">Start from the review file note</h4>
+      <div class="card-sub">The "After Review Summary" file note written straight after the meeting. Its <strong>Updates:</strong> and <strong>Action items</strong> are what this Record of Advice repeats, so reading it fills both lists below verbatim — along with the client name, the meeting date and the adviser from the "On &lt;date&gt;, &lt;adviser&gt; met with…" line.</div>
+      ${rbalDropZone({handler:'rbalImportFileNote', accept:'.docx',
+        title:'Drop the review file note here', sub:'…or click to browse. Word (.docx).'})}
+    </div>
+    <div class="card">
       <h4 style="margin:0 0 6px 0">Updates</h4>
       <div class="card-sub">What was refreshed on file at the review. Prints under "Updates:".</div>`;
   (F.rbalUpdates||[]).forEach((b, i) => {
@@ -22362,11 +22489,14 @@ function rbalBlockContent(){
     </div>
     <div class="card">
       <h4 style="margin:0 0 6px 0">Action items</h4>
-      <div class="card-sub">The first action item is written from the ROA type and can't be edited here — change the type or the rollover funds to change it. Add the rest of the meeting's actions below.</div>
-      <div class="card-sub" style="background:var(--surface-2);border-radius:6px;padding:8px 10px;margin-bottom:8px"><strong>●</strong> ${e(rbalLeadAction())}</div>`;
+      <div class="card-sub">Prints under "Action items". The tool can lead with a standard line written from the ROA type — leave it off when the file note's own wording already covers the rebalance or rollover.</div>
+      <label style="display:flex;gap:8px;align-items:flex-start;font-size:12.5px;background:var(--surface-2);border-radius:6px;padding:8px 10px;margin-bottom:8px;cursor:pointer">
+        <input type="checkbox" ${F.rbalLeadAction === false ? '' : 'checked'} onchange="F.rbalLeadAction=this.checked;render()" style="margin-top:2px">
+        <span><strong>Lead with the standard ${e(rbalTypeMeta()[1].replace(/ ROA$/, ''))} line:</strong><br>${e(rbalLeadAction())}</span>
+      </label>`;
   (F.rbalActions||[]).forEach((b, i) => {
     h += `<div style="display:grid;grid-template-columns:1fr auto;gap:5px;align-items:start;margin-bottom:5px">
-      <textarea class="field" style="margin:0;min-height:48px" onchange="F.rbalActions[${i}]=this.value" placeholder="Action item">${e(b)}</textarea>
+      <textarea class="field" style="margin:0;width:100%;min-height:52px" onchange="F.rbalActions[${i}]=this.value" placeholder="Action item">${e(b)}</textarea>
       <button class="btn btn-xs btn-danger" onclick="F.rbalActions.splice(${i},1);render()">✕</button></div>`;
   });
   h += `<button class="add-inline" onclick="if(!Array.isArray(F.rbalActions))F.rbalActions=[];F.rbalActions.push('');render()">+ Add action item</button>
@@ -22376,7 +22506,7 @@ function rbalBlockContent(){
     h += `<div class="card">
       <h4 style="margin:0 0 6px 0">Estimated capital gains and losses</h4>
       <div class="card-sub">Prints after the Recommended Implications tables. Edit when a platform has an actual gain or loss to disclose.</div>
-      <textarea class="field" style="min-height:70px" onchange="F.rbalCgtNote=this.value;render()">${e(F.rbalCgtNote||RBAL_CGT_DEFAULT)}</textarea>
+      <textarea class="field" style="width:100%;min-height:76px" onchange="F.rbalCgtNote=this.value;render()">${e(F.rbalCgtNote||RBAL_CGT_DEFAULT)}</textarea>
     </div>
     <div class="card">
       <h4 style="margin:0 0 6px 0">Investment information &amp; conflicts</h4>
