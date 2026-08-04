@@ -224,6 +224,15 @@ textarea{resize:vertical;min-height:60px}
 .doc-page .doc-p{margin:2px 0}
 .doc-page .doc-li{margin:2px 0 2px 16px;position:relative}
 .doc-page .doc-li:before{content:"•";position:absolute;left:-13px;color:#0C6AE1}
+/* ROA tables inside the live document preview — mirrors the Word output */
+.doc-page .doc-tbl{width:100%;border-collapse:collapse;margin:8px 0 12px;font-size:11px;table-layout:fixed}
+.doc-page .doc-tbl caption{caption-side:top;text-align:left;font-weight:700;background:#eaf2fd;color:#0C3F86;padding:5px 8px;border:1px solid #c8d8ea;border-bottom:0}
+.doc-page .doc-tbl th,.doc-page .doc-tbl td{border:1px solid #c8d8ea;padding:4px 8px;vertical-align:top;word-wrap:break-word}
+.doc-page .doc-tbl th{background:#f2f6fb;font-weight:700;text-align:left}
+.doc-page .doc-tbl td.r,.doc-page .doc-tbl th.r{text-align:right}
+.doc-page .doc-tbl tr.band td{background:#eaf2fd;font-weight:700;color:#0C3F86}
+.doc-page .doc-tbl tr.note td{background:#fff;font-size:10px;line-height:1.45;color:#4a5a67}
+.doc-page .doc-tbl tr.tot td{background:#f7fafd;border-top:1.5px solid #9dbde0}
 .doc-preview-label{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}
 .acct-block{border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;background:var(--surface-2)}
 .acct-head{display:flex;gap:8px;align-items:center;margin-bottom:8px}
@@ -258,6 +267,8 @@ textarea{resize:vertical;min-height:60px}
 .pv-tbl td.pv-lbl{background:#0B6AE1;color:#fff;font-weight:700}
 .pv-tbl td.r,.pv-tbl th.r{text-align:right}
 .pv-tot td{background:#5EA6FF;color:#fff;font-weight:700}
+/* Total row inside an in-app .tbl (the Word-preview .pv-tot colours wash out here) */
+.tbl tr.tbl-tot td{background:var(--surface-2);color:var(--text);font-weight:800;border-top:2px solid var(--blue)}
 .pv-tot td.pv-val{background:#E3F2F4;color:#16242e}
 .pv-dot{display:inline-block;width:13px;height:13px;border-radius:50%;vertical-align:middle;margin-right:5px}
 .pv-legend{font-size:11px;color:#555;margin:6px 0}
@@ -537,7 +548,20 @@ const S = {
   uploads:[],
   checklist:{ rows:[], answers:{}, notes:{}, activeSection:"" },
   rebalance:[],
-  _snapshot:null, _fileNote:"", _roa:"", _snapReview:null
+  // Record of Advice settings. `type` picks which compliance ROA we produce:
+  //   nochange  — No Change Rebalance ROA (nothing to trade)
+  //   rebalance — Recommendation to rebalance in line with the agreed risk profile
+  //   partial   — as above, plus a partial rollover into the platform account
+  //   full      — Full Rollover and Rebalance of Superannuation (Section 1–5 template)
+  // `engine` is auto-set from the imported accounts (CARE managed portfolios vs an
+  // index/Vanguard menu) and drives the fee disclosure + wording.
+  roa:{
+    type:"auto", engine:"auto",
+    rollover:{ from:"", to:"", amount:"", account:"" },
+    cgtNote:"", scopeOut:"", priorAdvice:[], fsgDate:"1 November 2025",
+    signClients:"", includeAcknowledgement:true
+  },
+  _snapshot:null, _fileNote:"", _roa:"", _roaType:"", _snapReview:null
 };
 const CHECKLIST_ITEMS=[
 "Check ID Expiry date",
@@ -2167,7 +2191,7 @@ function sopStep2(){
   <div class="card"><div class="card-title"><span class="bar"></span>Procedure — check &amp; finish</div>
     <ol>
       <li><b>Walk sections 1–8</b> (Cover &amp; Details → Actions &amp; Services) and sanity-check every pulled figure against the source documents. The <b>live preview</b> on the right shows the document exactly as it will print — use <kbd>⤢ Fullscreen</kbd> for a page-by-page check.</li>
-      <li><b>Complete the Rebalance (draft) calc.</b> Enter the current vs target allocation (or upload the CARE rebalance .xlsx) — this drives the rebalance discussion in the meeting and the rebalance ROA afterwards.</li>
+      <li><b>Complete the Rebalance (draft) calc.</b> Upload the <b>CARE rebalance document (.docx)</b> — the "Appendix to RoA" Word export. It fills the account banner, risk profile, the Current → Proposed → Change trades, the Recommended Implications variation table, the whole Investment Fees disclosure and the indicative holdings, which is everything the rebalance ROA quotes. (The rebalance .xlsx still works, but carries the trades only.) This drives the rebalance discussion in the meeting and the ROA afterwards.</li>
       <li><b><kbd>💾 Save draft</kbd></b> so the meeting can load the exact prepared state, and <kbd>⬇ Export Word</kbd> if a copy of the review document is needed for the file or to send ahead.</li>
     </ol>
   </div></div>`;
@@ -2181,7 +2205,7 @@ function sopStep3(){
       <li><b>Open the Review Meeting tab when the meeting starts.</b> The baseline locks to the prepared draft at that moment (you'll see a confirmation) — from here, <b>only edits made in this tab count as meeting changes</b>. Prep edits are never confused with client-agreed changes.</li>
       <li><b>Start on the Dashboard</b> — net position, asset/liability totals, open action items, raised flags and rebalance status at a glance, with the live document preview alongside.</li>
       <li><b>Walk the client through each section.</b> Everything is editable in place — update a balance, reword a goal, change a rating — and totals and the preview recompute live.</li>
-      <li><b>Discuss the rebalance</b> prepared in step 2 — adjust it to whatever is agreed in the room.</li>
+      <li><b>Discuss the rebalance</b> prepared in step 2 — adjust it to whatever is agreed in the room. If the CARE rebalance came through after prep, drop the CARE <b>.docx</b> onto the Rebalance section here and it fills the trade, variation and fee tables straight away.</li>
       <li><b>Capture agreed actions</b> in Actions &amp; Services as they come up (who / what / when).</li>
       <li><b>Nothing else to do</b> — every edit is being recorded with its before → after value for the post-review documents.</li>
     </ol>
@@ -2196,7 +2220,14 @@ function sopStep4(){
     <ol>
       <li><b>Changes Made (Δ)</b> — review the tracked change list first: every field the adviser touched in the meeting with its before → after value. This is the source of truth for the documents that follow.</li>
       <li><b>Review File Note</b> — auto-drafted from the meeting details and tracked changes. Read it, edit anything that needs adviser voice, then copy or export to Word for the file.</li>
-      <li><b>Review ROA</b> — pick the right variant: the <b>rebalance ROA</b> if a rebalance was agreed (it pulls the rebalance table from step 2 as amended in the meeting), or the <b>no-change ROA</b> if the portfolio stands. Review the wording, export to Word.</li>
+      <li><b>Review ROA</b> — pick the type this review needs. Leave it on <b>Auto</b> and it follows what was imported, or set it explicitly:
+        <ul>
+          <li><b>No change</b> — nothing to trade. The allocations are still in line with the agreed risk profile, so the ROA records that and stops there.</li>
+          <li><b>Rebalance</b> — switching back to the agreed asset allocation. Pulls the Portfolio Rebalance, Recommended Implications and Investment Fees tables from the CARE document.</li>
+          <li><b>Partial rollover + rebalance</b> — the same document, with the partial rollover named in the action items. Fill in "rolling over from / to".</li>
+          <li><b>Full rollover + rebalance</b> — the Section 1–5 template with the recommended allocation table, transaction-cost disclosure and a signed acknowledgement. Fill in the rollover details, the prior advice documents and the per-portfolio ICRs.</li>
+        </ul>
+        This works for a <b>CARE</b> account and for an <b>index / Vanguard</b> menu alike — a CARE account gets the full Hub24 fee disclosure, an index account gets the transactional-cost table. Review the wording, export to Word.</li>
       <li><b>File everything</b> per practice process — file note and ROA to the client file, action items into the task system, and the saved draft JSON kept as the record of this year's review (it becomes next year's starting point).</li>
     </ol>
     <div class="sop-callout"><b>Next year:</b> load this year's saved draft and use <kbd>↻ Roll forward to a new review</kbd> — details, goals and structures carry over, figures reset ready for the new year's reports.</div>
@@ -2763,7 +2794,7 @@ function classifyXlsx(f){
 }
 function loadJSONPromise(f){
   return new Promise((res,rej)=>{ const r=new FileReader();
-    r.onload=()=>{ try{ Object.assign(S,JSON.parse(r.result)); if(!S.checklist.answers)S.checklist.answers={}; if(!S.checklist.notes)S.checklist.notes={}; if(!S.uploads)S.uploads=[]; delete S._snapshot; delete S._fileNote; delete S._roa; delete S._snapReview; res(); }catch(e){ rej(e); } };
+    r.onload=()=>{ try{ Object.assign(S,JSON.parse(r.result)); delete S._snapshot; delete S._fileNote; delete S._roa; delete S._snapReview; normaliseState(); res(); }catch(e){ rej(e); } };
     r.onerror=rej; r.readAsText(f); });
 }
 /* ---------- OCR (images & scanned PDFs) — Tesseract.js, lazy-loaded from CDN, runs in-browser ---------- */
@@ -2872,14 +2903,26 @@ async function importImages(files){
   return done;
 }
 function isImageFile(f){ const n=(f.name||"").toLowerCase(); return /\.(png|jpe?g|webp|gif|bmp|tiff?)$/.test(n) || /^image\//.test(f.type||""); }
+// Peek inside a dropped .docx: a CARE rebalance appendix goes to the CARE reader,
+// anything else is treated as last year's Wealth Review.
+async function isCareDocFile(f){
+  if(!/\.docx$/i.test(f.name||"")) return false;
+  if(/care/i.test(f.name||"") && /rebalance|calc/i.test(f.name||"")) return true;
+  if(typeof mammoth==="undefined") return false;
+  try{
+    const buf=await f.arrayBuffer();
+    const raw=(await mammoth.extractRawText({arrayBuffer:buf})).value;
+    return looksLikeCareDoc(raw);
+  }catch(e){ return false; }
+}
 
 async function smartDropFiles(files){
   files=(files||[]).filter(Boolean); if(!files.length) return;
-  const cat={json:[],docx:[],pdf:[],ptw:[],rebalance:[],xls:[],datacoll:[],image:[],unknown:[]};
+  const cat={json:[],docx:[],care:[],pdf:[],ptw:[],rebalance:[],xls:[],datacoll:[],image:[],unknown:[]};
   for(const f of files){
     const n=(f.name||"").toLowerCase();
     if(n.endsWith(".json")) cat.json.push(f);
-    else if(n.endsWith(".docx")||n.endsWith(".doc")) cat.docx.push(f);
+    else if(n.endsWith(".docx")||n.endsWith(".doc")) (await isCareDocFile(f)?cat.care:cat.docx).push(f);
     else if(n.endsWith(".pdf")) cat.pdf.push(f);
     else if(n.endsWith(".xlsm")||n.endsWith(".xlsx")||n.endsWith(".xls")||n.endsWith(".csv")){ const k=await classifyXlsx(f); (cat[k]||cat.xls).push(f); }
     else if(isImageFile(f)) cat.image.push(f);
@@ -2889,6 +2932,7 @@ async function smartDropFiles(files){
   // ORDER: base first (saved draft → last review), then this year's overrides (platform → PTW → rebalance → checklist → images)
   for(const f of cat.json){ try{ await loadJSONPromise(f); registerUpload(f.name,"Saved draft"); done.push(`${f.name} → saved draft`);}catch(e){ done.push(`${f.name} → JSON error`);} }
   for(const f of cat.docx){ try{ await importReviewDoc({target:{files:[f]}}); done.push(`${f.name} → last review`);}catch(e){ done.push(`${f.name} → review error`);} }
+  if(cat.care.length){ try{ await importCareDoc({target:{files:cat.care}}); done.push(`${cat.care.length} → CARE rebalance`);}catch(e){ done.push(`CARE document → error`);} }
   if(cat.pdf.length){ try{ await importAnyPlatform({target:{files:cat.pdf}}); done.push(`${cat.pdf.length} PDF → platform report(s)`);}catch(e){ done.push(`platform PDFs → error`);} }
   for(const f of cat.ptw){ try{ await importPTW({target:{files:[f]}}); done.push(`${f.name} → PTW`);}catch(e){ done.push(`${f.name} → PTW error`);} }
   if(cat.rebalance.length){ try{ await importRebalance({target:{files:cat.rebalance}}); done.push(`${cat.rebalance.length} → rebalance`);}catch(e){ done.push(`rebalance → error`);} }
@@ -2926,7 +2970,7 @@ function renderImports(){
       <div class="sd-badge">⚡ Recommended</div>
       <div class="sd-title">Smart drop — drop everything here</div>
       <div class="sd-sub">Drop any files here — or anywhere on the page (Word, PDF, Excel, JSON, or a PNG/JPG screenshot). Each file is <b>identified by type</b> and applied in the right <b>order</b>: saved draft &amp; last review first (the base), then this year's platform reports &amp; PTW (the overrides). Screenshots &amp; scanned PDFs are read with in-browser OCR.</div>
-      <div class="sd-types">Recognises: saved draft (.json) · last Wealth Review (.docx) · HUB24 / BT / Macquarie reports (.pdf) · Review PTW (.xlsm) · CARE rebalance (.xlsx) · screenshots &amp; scanned PDFs (.png / .jpg — OCR)</div>
+      <div class="sd-types">Recognises: saved draft (.json) · last Wealth Review (.docx) · CARE rebalance appendix (.docx) · HUB24 / BT / Macquarie reports (.pdf) · Review PTW (.xlsm) · CARE rebalance (.xlsx) · screenshots &amp; scanned PDFs (.png / .jpg — OCR)</div>
       <div style="margin-top:12px"><span class="btn btn-primary btn-sm">Choose files…</span></div>
       <input type="file" multiple accept=".json,.docx,.pdf,.xlsm,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.webp,image/*" onchange="smartDrop(event)">
     </label>
@@ -3672,23 +3716,271 @@ async function importRebalance(ev){
   toast(added?`Rebalance imported for ${added} account(s).`:"Couldn't read a CARE rebalance table from those files.");
   renderContent();
 }
+
+/* ────────────────────────────────────────────────────────────
+   CARE rebalance document (.docx) — "Appendix to RoA"
+   ────────────────────────────────────────────────────────────
+   The same document the ROA Paraplanner reads, parsed here so a review ROA
+   can be built straight from it. One account per "Rebalance - <account>"
+   heading; for each we take everything the compliance ROA quotes verbatim:
+     • the "<Owner> - <Account> - <Platform>" banner (the ROA table caption)
+     • the risk profile   ("The risk profile for X is High Growth")
+     • Portfolio Rebalance      → Current / Proposed / Change per fund
+     • Recommended Implications → Current % / Proposed % / Variance %
+     • Investment Fees          → the whole disclosure block, row for row
+     • Total Ongoing / Transactional costs, admin & CARE management fee %
+     • the risk-profile benchmark, benchmark comparison and indicative holdings
+   Word tables carry all of this, so we read the .docx as structured HTML
+   (mammoth.convertToHtml) rather than raw text, which would flatten them.
+   ──────────────────────────────────────────────────────────── */
+function careDocStream(html){
+  const doc=new DOMParser().parseFromString(html,"text/html");
+  const stream=[];
+  const pushTable=el=>{
+    const rows=Array.from(el.rows||[]).map(tr=>Array.from(tr.cells||[]).map(td=>(td.textContent||"").replace(/\s+/g," ").trim()));
+    stream.push({tag:"table",rows});
+  };
+  Array.from(doc.body.children).forEach(el=>{
+    const tag=(el.tagName||"").toLowerCase();
+    if(/^h[1-6]$/.test(tag)) stream.push({tag,text:(el.textContent||"").replace(/\s+/g," ").trim()});
+    else if(tag==="table") pushTable(el);
+    else if(tag==="p") stream.push({tag:"p",text:(el.textContent||"").replace(/\s+/g," ").trim()});
+    else if(el.querySelector&&el.querySelector("table")) Array.from(el.querySelectorAll("table")).forEach(pushTable);
+    else if(el.textContent) stream.push({tag:"p",text:(el.textContent||"").replace(/\s+/g," ").trim()});
+  });
+  return stream;
+}
+function careAccountType(name){
+  const n=(name||"").toLowerCase();
+  if(/\b(pension|abp|ttr|account[- ]based|allocated)\b/.test(n)) return "Pension";
+  if(/\b(super|superannuation|smsf|accumulation)\b/.test(n)) return "Super";
+  return "Investment";
+}
+function careOwnerName(name){
+  return String(name||"")
+    .replace(/\s*-\s*(hub\s*24|cfs edge|netwealth|macquarie|bt panorama|panorama|expand|north).*$/i,"")
+    .replace(/\b(superannuation|super|pension|investment|invest|inv|account|accumulation|smsf|abp|ttr|ima|portfolio|individually managed)\b/gi," ")
+    .replace(/\s*-\s*$/,"").replace(/\s+/g," ").trim().replace(/^[\-–&]+|[\-–&]+$/g,"").trim();
+}
+// A CARE-managed account discloses a "CARE Portfolio Management Fee"; anything
+// else (a CFS Edge / index menu holding e.g. Vanguard funds) is priced by the
+// underlying fund instead, and gets the shorter transactional-cost disclosure.
+function careEngineOf(acct){
+  const feeText=(acct.feeRows||[]).map(r=>r.join(" ")).join(" ");
+  if(/care portfolio management fee/i.test(feeText)) return "care";
+  const funds=(acct.rows||[]).map(r=>r.fund).join(" ");
+  if(/vanguard|index fund/i.test(funds)) return "vanguard";
+  return /hub\s*24/i.test(acct.platform||"")?"care":"vanguard";
+}
+function careParseAccounts(html){
+  const stream=careDocStream(html);
+  // Split into per-account blocks at each "Rebalance - X" heading. Accept any
+  // heading level — CARE exports style these as Heading 2/3 as often as Heading 1.
+  const blocks=[]; let cur=null;
+  stream.forEach(it=>{
+    if(/^h[1-6]$/.test(it.tag)&&/^rebalance\s*([-–—:]|$)/i.test(it.text||"")){ cur={heading:it.text,items:[]}; blocks.push(cur); }
+    else if(cur) cur.items.push(it);
+  });
+  const pct=s=>{ const m=String(s==null?"":s).match(/-?[\d.]+\s*%/); return m?m[0].replace(/\s+/g,""):""; };
+  const dlr=r=>{ for(let i=1;i<r.length;i++){ if(/\$/.test(r[i]||"")) return (r[i]||"").trim(); } return ""; };
+  const pctCell=r=>{ for(let i=r.length-1;i>0;i--){ if(/%/.test(r[i]||"")) return (r[i]||"").trim(); } return ""; };
+
+  const accounts=[];
+  blocks.forEach(b=>{
+    const accountName=b.heading.replace(/^rebalance\s*[-–—:]\s*/i,"").trim();
+    const a={ accountName, caption:"", platform:"", riskProfile:"", modelReturn:"",
+      rows:[], total:null, comparison:[], compTotal:null,
+      feeRows:[], feeWrapper:"", txn:{}, feeSummary:{},
+      benchmarkProfile:"", benchmark:[], benchmarkComparison:[], holdings:[] };
+    let inHoldings=false, holdingTitle="";
+
+    b.items.forEach(it=>{
+      if(it.tag==="p"||/^h[1-6]$/.test(it.tag)){
+        const t=it.text||"";
+        const rp=t.match(/risk profile for .+? is\s+(.+)/i);
+        if(rp&&!a.riskProfile) a.riskProfile=rp[1].trim().replace(/[.\s]+$/,"");
+        const mr=t.match(/suggested pa total return[^:]*:\s*([\d.]+\s*%)/i);
+        if(mr&&!a.modelReturn) a.modelReturn=mr[1].replace(/\s+/g,"");
+        if(/^indicative$/i.test(t)){ inHoldings=true; holdingTitle=""; return; }
+        if(/^(investment information|notes|grand total)$/i.test(t)){ inHoldings=false; return; }
+        if(inHoldings&&t) holdingTitle=t;
+        return;
+      }
+      if(it.tag!=="table") return;
+      const rows=it.rows;
+      // "<Owner> - <Account> - <Platform>" banner (a single-cell caption row)
+      rows.forEach(r=>{ if(r.length&&r.filter(Boolean).length===1&&/ - /.test(r[0])&&!a.caption){ a.caption=r[0].trim(); a.platform=r[0].split(" - ").pop().trim(); } });
+
+      const flat=rows.map(r=>r.join(" ")).join(" ").toLowerCase();
+      // ── Investment Fees disclosure — kept row for row, it is quoted verbatim
+      if(/total ongoing costs|fee disclosure for this account/.test(flat)){
+        a.feeRows=rows.map(r=>r.slice());
+        rows.forEach(r=>{
+          const lbl=(r[0]||"").trim().toLowerCase();
+          if(r.filter(Boolean).length===2&&/^(hub\s*24|cfs edge|netwealth|macquarie|bt|expand|north)/i.test(r[0]||"")){ a.platform=a.platform||(r[0]||"").trim(); a.feeWrapper=(r[1]||"").trim(); }
+          if(/^care portfolio management fee/.test(lbl)) a.feeSummary.mgmtPct=pct(pctCell(r));
+          if(/^administration fee/.test(lbl)){ a.feeSummary.adminFeePct=pct(pctCell(r)); a.feeSummary.adminFeeDollar=dlr(r); }
+          if(/^total administration and trustee costs/.test(lbl)){ a.feeSummary.adminPct=pct(pctCell(r)); a.feeSummary.adminDollar=dlr(r); }
+          if(/^total investment costs/.test(lbl)){ a.feeSummary.investPct=pct(pctCell(r)); a.feeSummary.investDollar=dlr(r); }
+          if(/^total ongoing costs/.test(lbl)){ a.feeSummary.totalPct=pct(pctCell(r)); a.feeSummary.totalDollar=dlr(r); }
+          if(/^buy\s*\/\s*sell/.test(lbl)) a.txn.buySell={dollar:dlr(r),pct:pct(pctCell(r))};
+          if(/^brokerage/.test(lbl)) a.txn.brokerage={dollar:dlr(r),pct:pct(pctCell(r))};
+          if(/^total transactional costs/.test(lbl)) a.txn.total={dollar:dlr(r),pct:pct(pctCell(r))};
+        });
+        return;
+      }
+      // ── Risk profile benchmark
+      if(/benchmark allocation/.test(flat)){
+        const hdr=rows.findIndex(r=>/benchmark allocation/i.test(r.join(" ")));
+        const title=rows.slice(0,hdr+1).map(r=>r[0]||"").find(t=>/risk profile benchmark/i.test(t))||"";
+        const pm=title.match(/\(([^)]+)\)/); if(pm) a.benchmarkProfile=pm[1].trim();
+        for(let i=hdr+1;i<rows.length;i++){ const r=rows[i]; if(!r[0])continue; a.benchmark.push({asset:r[0].trim(),weight:(r[1]||"").trim()}); }
+        return;
+      }
+      // ── Benchmark comparison (CARE Portfolio / Total Portfolio)
+      if(/risk profile weight/.test(flat)){
+        const hdr=rows.findIndex(r=>/risk profile weight/i.test(r.join(" ")));
+        const title=(rows[0]&&rows[0].filter(Boolean).length===1?rows[0][0]:"")||"";
+        const out=[];
+        for(let i=hdr+1;i<rows.length;i++){ const r=rows[i]; if(!r[0])continue;
+          out.push({asset:r[0].trim(),value:(r[1]||"").trim(),weight:(r[2]||"").trim(),rpValue:(r[3]||"").trim(),rpWeight:(r[4]||"").trim(),varValue:(r[5]||"").trim(),varWeight:(r[6]||"").trim()}); }
+        if(out.length) a.benchmarkComparison.push({title:title||"Benchmark comparison",rows:out});
+        return;
+      }
+      // ── Indicative holdings (one table per model portfolio)
+      if(inHoldings&&/^holding$/i.test((rows[0]&&rows[0][0])||"")){
+        const out=[];
+        for(let i=1;i<rows.length;i++){ const r=rows[i]; if(!r[0])continue; out.push({holding:r[0].trim(),balance:(r[1]||"").trim(),pct:(r[2]||"").trim()}); }
+        if(out.length) a.holdings.push({portfolio:holdingTitle||"Portfolio",rows:out});
+        return;
+      }
+      // ── Portfolio Rebalance / Recommended Implications
+      let hdr=-1,kind=null;
+      for(let i=0;i<rows.length;i++){
+        const low=rows[i].map(c=>(c||"").toLowerCase());
+        if(low.some(c=>c==="proposed amount")){ hdr=i; kind="rebalance"; break; }
+        if(low.some(c=>c==="proposed %")){ hdr=i; kind="comparison"; break; }
+      }
+      if(hdr<0) return;
+      for(let i=hdr+1;i<rows.length;i++){
+        const r=rows[i]; if(r.length<4) continue;
+        const label=(r[0]||"").trim(); if(!label) continue;
+        const isTotal=/^total$/i.test(label);
+        if(kind==="rebalance"){
+          if(isTotal){ a.total={current:num(r[1]),proposed:num(r[2]),change:num(r[3])}; continue; }
+          a.rows.push({fund:label,current:num(r[1]),proposed:num(r[2]),change:num(r[3]),dir:num(r[3])<0?"Sell":"Buy"});
+        }else{
+          if(isTotal){ a.compTotal={current:(r[1]||"").trim(),proposed:(r[2]||"").trim(),variance:(r[3]||"").trim()}; continue; }
+          a.comparison.push({name:label,current:(r[1]||"").trim(),proposed:(r[2]||"").trim(),variance:(r[3]||"").trim()});
+        }
+      }
+    });
+
+    if(!a.caption) a.caption=a.accountName+(a.platform?` - ${a.platform}`:"");
+    a.owner=careOwnerName(a.accountName);
+    a.type=careAccountType(a.accountName);
+    a.engine=careEngineOf(a);
+    if(a.rows.length||a.comparison.length||a.feeRows.length) accounts.push(a);
+  });
+  return accounts;
+}
+// A CARE appendix looks nothing like a Wealth Review document; smart drop uses
+// this to route a dropped .docx to the right importer.
+function looksLikeCareDoc(text){
+  const t=String(text||"");
+  return /appendix to ro[ae]/i.test(t) || (/rebalance\s*[-–—]/i.test(t) && /recommended implications/i.test(t));
+}
+async function importCareDoc(ev){
+  const files=[...(ev.target.files||[])].filter(Boolean); if(!files.length) return;
+  if(typeof mammoth==="undefined"){ toast("Doc reader still loading — try again in a moment."); return; }
+  const found=[]; const failed=[];
+  for(const f of files){
+    if(!/\.docx$/i.test(f.name)){ failed.push(`${f.name} — export the CARE rebalance as Word (.docx); a PDF loses the tables`); continue; }
+    try{
+      const buf=await f.arrayBuffer();
+      const html=(await mammoth.convertToHtml({arrayBuffer:buf})).value;
+      const accts=careParseAccounts(html);
+      if(!accts.length){ failed.push(`${f.name} — no "Rebalance - <account>" section found`); continue; }
+      accts.forEach(a=>{ a.source=f.name; found.push(a); });
+      registerUpload(f.name,"CARE rebalance");
+    }catch(e){ console.warn("CARE doc fail",f.name,e); failed.push(`${f.name} — ${e.message}`); }
+  }
+  if(!found.length){ toast(failed.join(" · ")||"Couldn't read a CARE rebalance from those files."); return; }
+
+  const summary=found.map(a=>{
+    const bits=[`${a.rows.length} trade row(s)`,`${a.comparison.length} variation row(s)`];
+    if(a.feeRows.length) bits.push("investment fees");
+    if(a.holdings.length) bits.push(`${a.holdings.length} model portfolio(s)`);
+    return `• ${a.caption}\n    ${a.engine==="care"?"CARE managed":"Index / external"} · ${a.riskProfile||"risk profile not stated"} · ${a.total?money(a.total.proposed):"—"}\n    ${bits.join(" · ")}`;
+  }).join("\n");
+  const msg=`Import ${found.length} account(s) from the CARE document?\n\n${summary}\n\nThis replaces any accounts previously imported from a CARE document; rebalances you uploaded as a spreadsheet are kept.`;
+  if(typeof confirm==="function" && !confirm(msg)) { toast("CARE import cancelled."); return; }
+
+  S.rebalance=S.rebalance.filter(r=>!r.careImported);
+  found.forEach(a=>{
+    const rec=Object.assign({},a,{account:a.caption,careImported:true});
+    const ex=S.rebalance.findIndex(r=>r.account===rec.account);
+    if(ex>=0) S.rebalance[ex]=rec; else S.rebalance.push(rec);
+  });
+  applyCarePrefill(found);
+  if(failed.length) console.warn("CARE import skipped:",failed);
+  toast(`CARE document read — ${found.length} account(s) imported.${failed.length?` ${failed.length} file(s) skipped.`:""}`);
+  renderContent();
+}
+// Fill in what the CARE document tells us about the client, without ever
+// overwriting something the adviser has already typed.
+function applyCarePrefill(accounts){
+  const owners=[...new Set(accounts.map(a=>a.owner).filter(Boolean))];
+  if(!S.client.name && owners[0]) S.client.name=owners[0];
+  if(!S.partner.name && owners[1]){ S.partner.name=owners[1]; S.meta.hasPartner=true; }
+  if(!S.meta.preparedFor) syncPreparedFor();
+  const rp=accounts.map(a=>a.riskProfile).filter(Boolean);
+  accounts.forEach(a=>{
+    const who=whoFromName(a.owner);
+    const tgt=who==="partner"?S.partner:S.client;
+    if(!tgt.riskProfile&&a.riskProfile) tgt.riskProfile=a.riskProfile;
+  });
+  if(!S.client.riskProfile&&rp[0]) S.client.riskProfile=rp[0];
+  const engines=[...new Set(accounts.map(a=>a.engine))];
+  S.roa.engine=engines.length===1?engines[0]:(engines.length?"mixed":"auto");
+  if(S.roa.type==="auto") S.roa.type=accounts.some(a=>a.rows.length)?"rebalance":"nochange";
+  S._roa="";   // the draft is rebuilt from the new figures
+}
 function renderRebalance(){
   const tbls=S.rebalance.map((rb,ri)=>{
-    const body=rb.rows.map(r=>`<tr><td>${esc(r.fund)}</td><td class="r">${money(r.current)}</td><td class="r">${money(r.proposed)}</td><td class="r" style="color:${r.change<0?'var(--coral)':'var(--green-dark)'}">${r.change<0?'-':''}${money(Math.abs(r.change))}</td><td>${esc(r.dir)}</td></tr>`).join("");
-    const tot=rb.total?`<tr class="pv-tot"><td><b>Total</b></td><td class="r"><b>${money(rb.total.current)}</b></td><td class="r"><b>${money(rb.total.proposed)}</b></td><td class="r"><b>${money(rb.total.change)}</b></td><td></td></tr>`:"";
-    return `<div class="card"><div class="card-title"><span class="bar"></span>${esc(rb.account)} <button class="icon-btn" style="margin-left:auto" onclick="S.rebalance.splice(${ri},1);renderContent()">✕</button></div>
+    const body=(rb.rows||[]).map(r=>`<tr><td>${esc(r.fund)}</td><td class="r">${money(r.current)}</td><td class="r">${money(r.proposed)}</td><td class="r" style="color:${r.change<0?'var(--coral)':'var(--green-dark)'}">${r.change<0?'-':''}${money(Math.abs(r.change))}</td><td>${esc(r.dir)}</td></tr>`).join("");
+    const tot=rb.total?`<tr class="tbl-tot"><td><b>Total</b></td><td class="r"><b>${money(rb.total.current)}</b></td><td class="r"><b>${money(rb.total.proposed)}</b></td><td class="r"><b>${money(rb.total.change)}</b></td><td></td></tr>`:"";
+    const chips=[
+      `<span class="pill">${rb.careImported?"CARE document":"Spreadsheet"}</span>`,
+      rb.engine?`<span class="pill">${rb.engine==="care"?"CARE managed":"Index / external"}</span>`:"",
+      rb.riskProfile?`<span class="pill">${esc(rb.riskProfile)}</span>`:"",
+      (rb.feeRows&&rb.feeRows.length)?`<span class="pill">Investment fees</span>`:"",
+      (rb.comparison&&rb.comparison.length)?`<span class="pill">Implications</span>`:"",
+      (rb.txn&&rb.txn.total&&rb.txn.total.dollar)?`<span class="pill">Txn ${esc(rb.txn.total.dollar)}</span>`:""
+    ].filter(Boolean).join(" ");
+    const engSel=`<select style="max-width:170px;margin-left:6px" onchange="S.rebalance[${ri}].engine=this.value;S._roa='';renderContent()">
+        <option value="care" ${rb.engine==="care"?"selected":""}>CARE managed portfolios</option>
+        <option value="vanguard" ${rb.engine!=="care"?"selected":""}>Index / Vanguard menu</option></select>`;
+    return `<div class="card"><div class="card-title"><span class="bar"></span>${esc(rb.account)} <button class="icon-btn" style="margin-left:auto" onclick="S.rebalance.splice(${ri},1);S._roa='';renderContent()">✕</button></div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px">${chips}${engSel}</div>
       <table class="tbl"><thead><tr><th>Asset / Fund</th><th class="r">Current</th><th class="r">Proposed</th><th class="r">Change</th><th>Buy/Sell</th></tr></thead><tbody>${body}${tot}</tbody></table></div>`;
   }).join("");
   return `
-  <div class="section-head"><h2>Rebalance (draft)</h2><p>Upload the CARE rebalance spreadsheet(s) for the client's account(s). The Current → Proposed → Change table feeds the rebalance ROA in Post Review.</p></div>
+  <div class="section-head"><h2>Rebalance (draft)</h2><p>Upload the CARE rebalance for the client's account(s) — the Word appendix or the spreadsheet. Everything read here feeds the Record of Advice in Post Review.</p></div>
   <div class="card"><div class="card-title"><span class="bar"></span>Upload CARE rebalance</div>
-    <label class="dz" style="display:block;text-align:center;padding:16px"><span class="badge badge-ready">XLSX · multi-file</span>
-      <h4 style="font-size:13px">⇪ Drop CARE rebalance spreadsheet(s) here</h4>
-      <p>e.g. Jason Hub24 Super + Joint Hub24 Investment. Reads the "CARE Rebalance" sheet (Current / Proposed / Change per fund).</p>
-      <input type="file" accept=".xlsx,.xlsm" multiple onchange="importRebalance(event)"></label>
-    <div class="hint" style="margin-top:8px">Tip: the CARE doc (model allocations) is uploaded in the wealth-doc generator; this tool just needs the rebalance output.</div>
+    <div class="imports">
+      <label class="dz"><span class="badge badge-ready">DOCX · recommended</span>
+        <h4>CARE rebalance document</h4>
+        <p>The "Appendix to RoA" Word export. Reads the account banner, risk profile, rebalance and implications tables, the whole investment-fees disclosure and the indicative holdings.</p>
+        <input type="file" accept=".docx" multiple onchange="importCareDoc(event)"></label>
+      <label class="dz"><span class="badge badge-ready">XLSX</span>
+        <h4>CARE rebalance spreadsheet</h4>
+        <p>Reads the "CARE Rebalance" sheet (Current / Proposed / Change per fund) only — no fees or risk profile.</p>
+        <input type="file" accept=".xlsx,.xlsm" multiple onchange="importRebalance(event)"></label>
+    </div>
+    <div class="hint" style="margin-top:8px">Export the rebalance from CARE as <b>Word</b>, not PDF — a PDF export loses the table structure the reader relies on. Re-importing replaces the accounts that came from a CARE document and leaves spreadsheet imports alone.</div>
   </div>
-  ${tbls||'<div class="card"><div class="pv-empty">No rebalance uploaded yet.</div></div>'}`;
+  ${tbls||'<div class="card"><div class="pv-empty">No rebalance uploaded yet. Without one, Post Review builds a <b>No Change</b> ROA.</div></div>'}`;
 }
 
 /* ============================================================
@@ -3754,11 +4046,13 @@ ${acts}
 ${m.adviserName||"[prepared by]"}`;
 }
 // Render plain doc text into a live Word-style page (headings, bullets, dividers)
-const DOC_HEADINGS=/^(CONFIDENTIAL|My Wealth Solutions|After Review Summary|Client Name:|Date of File Note:|Time of File Note:|On .+ met with|The following were decided|Updates:|Action items:|Basis of this Advice|Risk Profile|Advice Fee|Disclosures|What this Record of Advice covers|Portfolio Rebalance)/;
+const DOC_HEADINGS=/^(CONFIDENTIAL|My Wealth Solutions|After Review Summary|Client Name:|Date of File Note:|Time of File Note:|On .+ met with|The following were decided|Updates:|Action items?:?$|Basis of this Advice|Risk Profile|Advice Fees?$|Disclosures|What this Record of Advice covers|Portfolio Rebalance|Recommended Implications|Estimated capital gains and losses|Investment Fees|Investment information|Associations and Conflicts|Section [1-9]:|Acknowledgement|Type of Record of Advice)/;
 function docPreviewHTML(text){
   return String(text==null?"":text).split("\n").map(l=>{
     const t=l.trim();
     if(t==="") return '<div style="height:7px"></div>';
+    const tk=t.match(/^\[\[TBL:([a-z]+)\]\]$/i);
+    if(tk) return roaTableHTML(tk[1].toLowerCase());
     if(/^_{6,}$/.test(t)) return '<div class="doc-rule"></div>';
     if(/^[●•]/.test(t)) return `<div class="doc-li">${esc(t.replace(/^[●•]\s*/,""))}</div>`;
     if(DOC_HEADINGS.test(t) && !/^[●•]/.test(t) && t.length<70) return `<div class="doc-h">${esc(t)}</div>`;
@@ -3786,27 +4080,227 @@ function renderFileNote(){
       <button class="btn btn-ghost btn-sm" onclick="S._fileNote='';renderContent()">↻ Regenerate from changes</button></div>
   </div>`;
 }
+/* ────────────────────────────────────────────────────────────
+   RECORD OF ADVICE — the four review-compliance types
+   ────────────────────────────────────────────────────────────
+   nochange  — nothing to trade: "No Change Rebalance Record of Advice"
+   rebalance — "Recommendation to rebalance in line with client's agreed risk profile"
+   partial   — the same document, plus a partial rollover into the platform account
+   full      — "Rollover and Rebalance of Superannuation Account": the Section 1–5
+               template with an allocation table and a signed acknowledgement
+
+   The first three share one body; `full` has its own. Both are emitted as plain
+   text so the adviser can edit every sentence, with `[[TBL:key]]` markers where a
+   real table belongs. docPreviewHTML() and generateRoaDocx() expand those markers
+   into the live preview and the Word file respectively, so the tables stay driven
+   by the imported CARE figures instead of being flattened into prose.
+   ──────────────────────────────────────────────────────────── */
+const ROA_TYPES=[
+  {id:"nochange", label:"No change", desc:"Nothing to trade — allocations still in line with the risk profile.",
+   advice:"No Change Rebalance Record of Advice"},
+  {id:"rebalance", label:"Rebalance", desc:"Switch the portfolio back to the agreed asset allocation.",
+   advice:"Recommendation to rebalance in line with client’s agreed risk profile."},
+  {id:"partial", label:"Partial rollover + rebalance", desc:"Roll part of an external fund across, then rebalance.",
+   advice:"Recommendation to rebalance in line with client’s agreed risk profile."},
+  {id:"full", label:"Full rollover + rebalance", desc:"Close the external fund into the platform account and rebalance.",
+   advice:"Rollover and Rebalance of Superannuation Account"}
+];
+const CGT_DEFAULT="There are no estimated capital gains or losses. The information shown is subject to change and should not be used as a basis for tax return preparation. You should consult your accountant for the exact amount of any tax payable if any.";
+// Signed money in the exemplars' format: "-$61,013.74", "$0.00".
+function roaMoney(n){ const v=num(n); return (v<0?"-":"")+"$"+Math.abs(v).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+// CARE shortens the option names ("Core High Growth"); the ROA product tables use
+// the firm's full wording. Unknown names pass through untouched.
+function roaCareProductName(raw){
+  const src=String(raw==null?"":raw).trim(); if(!src) return src;
+  const key=src.replace(/^care\b[\s\-–—:]*/i,"").replace(/\bportfolios?\b/gi," ").replace(/\s+/g," ").trim().toLowerCase();
+  const MAP={
+    "core growth":"CARE Core Growth Portfolio","high growth":"CARE High Growth Portfolio",
+    "core high growth":"CARE Core High Growth Portfolio","active":"CARE Active Portfolio",
+    "reserves":"CARE Reserves Portfolio","reserve":"CARE Reserves Portfolio",
+    "australian equities":"CARE Australian Equities Portfolio","enhanced australian equities":"CARE Enhanced Australian Equities Portfolio",
+    "international equities":"CARE International Equities Portfolio","enhanced international equities":"CARE Enhanced International Equities Portfolio",
+    "essentials high growth":"CARE Essentials High Growth Portfolio","essentials growth":"CARE Essentials Growth Portfolio",
+    "essentials balanced":"CARE Essentials Balanced Portfolio","essentials conservative":"CARE Essentials Conservative Portfolio"
+  };
+  return MAP[key]||src;
+}
+function roaKind(){
+  const t=(S.roa&&S.roa.type)||"auto";
+  if(t!=="auto") return t;
+  return roaAccounts().some(a=>(a.rows||[]).length)?"rebalance":"nochange";
+}
+function roaAccounts(){ return (S.rebalance||[]).filter(r=>(r.rows||[]).length||(r.comparison||[]).length); }
+function roaHasHub24(){ return roaAccounts().some(a=>/hub\s*24/i.test((a.platform||"")+" "+(a.account||""))); }
+function roaHasCare(){ return roaAccounts().some(a=>a.engine==="care"); }
+// The person a rollover belongs to — the owner of the account being rolled into,
+// falling back to Client 1 when nothing has been imported yet.
+function roaFirstName(){
+  const a=roaTargetAccount();
+  const nm=(a&&a.owner)||S.client.name||"";
+  return (String(nm).trim().split(/\s+/)[0])||"[client]";
+}
+// The account a rollover lands in — the first super/pension account we imported.
+function roaTargetAccount(){ return roaAccounts().find(a=>a.type==="Super"||a.type==="Pension")||roaAccounts()[0]||null; }
+
+/* ---------- table markers ---------- */
+// Each returns an array of {caption, head, rows, foot, align, layout}.
+function roaTableData(key){
+  const accts=roaAccounts();
+  if(key==="roatype"){
+    const t=ROA_TYPES.find(x=>x.id===roaKind())||ROA_TYPES[1];
+    return [{layout:"plain", rows:[["Type of Record of Advice:",""],["Additional Advice",t.advice]], head:null, bandFirst:true}];
+  }
+  if(key==="rebalance"){
+    return accts.filter(a=>(a.rows||[]).length).map(a=>({
+      caption:a.account,
+      head:["Asset / Fund name","Current Amount","Proposed Amount","Change (Buy/Sell)"],
+      align:["l","r","r","r"],
+      rows:(a.rows||[]).map(r=>[r.fund,roaMoney(r.current),roaMoney(r.proposed),roaMoney(r.change)]),
+      foot:a.total?["Total",roaMoney(a.total.current),roaMoney(a.total.proposed),roaMoney(a.total.change)]:null
+    }));
+  }
+  if(key==="implications"){
+    return accts.filter(a=>(a.comparison||[]).length).map(a=>({
+      caption:a.account,
+      head:["Portfolio name","Current %","Proposed %","Variance, %"],
+      align:["l","r","r","r"],
+      rows:(a.comparison||[]).map(r=>[r.name,r.current,r.proposed,r.variance]),
+      foot:a.compTotal?["Total",a.compTotal.current,a.compTotal.proposed,a.compTotal.variance]:null
+    }));
+  }
+  if(key==="fees"){
+    const out=[];
+    accts.forEach(a=>{
+      if(a.feeRows&&a.feeRows.length){ out.push({layout:"fees", rows:a.feeRows.map(r=>r.slice()), caption:""}); return; }
+      // No disclosure block (an index / external account): quote the transactional
+      // costs on their own, as the exemplar CFS Edge ROA does.
+      const t=a.txn||{};
+      if(t.total&&t.total.dollar){
+        out.push({layout:"fees", caption:"", rows:[
+          [a.account],["Transactional Costs"],
+          ["Buy / Sell",(t.buySell&&t.buySell.dollar)||"",(t.buySell&&t.buySell.pct)||""],
+          ["Brokerage",(t.brokerage&&t.brokerage.dollar)||"Nil",(t.brokerage&&t.brokerage.pct)||"Nil"],
+          ["Total Transactional Costs",t.total.dollar||"",t.total.pct||""]
+        ]});
+      }
+    });
+    return out;
+  }
+  if(key==="allocation"){
+    const a=roaTargetAccount(); if(!a) return [];
+    const icr=(S.roa&&S.roa.icr)||{};
+    const fs=a.feeSummary||{};
+    const rows=[["Platform Name",/hub\s*24/i.test(a.platform||"")?"HUB 24":(a.platform||""),""]];
+    (a.rows||[]).filter(r=>num(r.proposed)>0&&!/^(cash|cash account|working cash)/i.test(r.fund)).forEach(r=>{
+      const nm=roaCareProductName(r.fund);
+      rows.push([nm,roaMoney(r.proposed),icr[r.fund]||""]);
+    });
+    if(fs.mgmtPct) rows.push(["CARE Portfolio Management Fee","-",fs.mgmtPct]);
+    const cash=(a.rows||[]).find(r=>/^(cash|cash account|working cash)/i.test(r.fund));
+    if(cash) rows.push(["Cash",roaMoney(cash.proposed),""]);
+    if(fs.adminFeePct) rows.push(["Administration","-",fs.adminFeePct]);
+    const totFee=[fs.totalPct,fs.totalDollar].filter(Boolean).join(" / ");
+    return [{caption:"", head:[`${roaFirstName()} - Investment Product`,"Recommended Allocation $","Fund Manager’s Fee (ICR)"],
+      align:["l","r","r"], rows,
+      foot:["Portfolio (1)", a.total?money(a.total.proposed):"", totFee]}];
+  }
+  if(key==="advicedocs"){
+    const list=(S.roa&&S.roa.priorAdvice||[]).filter(x=>x&&(x.doc||x.date));
+    const rows=(list.length?list:[{doc:"Statement of Advice",date:S.meta.soaDate||""}]).map(x=>[x.doc||"Statement of Advice",x.date||""]);
+    return [{head:["Advice Provided","Date Provided"], align:["l","l"], rows}];
+  }
+  if(key==="signature"){
+    const names=(S.roa&&S.roa.signClients||"").split(/[,\n]/).map(s=>s.trim()).filter(Boolean);
+    const who=names.length?names:clientNames().filter(n=>n&&!/^client [12]$/i.test(n));
+    return [
+      {head:["Name","Signature","Date"], align:["l","l","l"], rows:who.map(n=>[n,"",""])},
+      {head:["Name","Signature","Date"], align:["l","l","l"], rows:[[S.meta.adviserName||"[adviser]","",""]]}
+    ];
+  }
+  return [];
+}
+function roaTableHTML(key){
+  const tables=roaTableData(key);
+  if(!tables.length) return `<div class="doc-p" style="color:#9aa7b2;font-style:italic">[${esc(key)} table — nothing imported yet]</div>`;
+  return tables.map(t=>{
+    const cap=t.caption?`<caption>${esc(t.caption)}</caption>`:"";
+    const head=t.head?`<thead><tr>${t.head.map((h,i)=>`<th class="${(t.align&&t.align[i])==="r"?"r":""}">${esc(h)}</th>`).join("")}</tr></thead>`:"";
+    const width=Math.max(t.head?t.head.length:0,...t.rows.map(r=>r.length),1);
+    const body=t.rows.map((r,ri)=>{
+      const filled=r.filter(c=>String(c||"").length);
+      if(t.layout==="fees"&&filled.length<=1){
+        // A long single-cell row is the ICR footnote; a short one is a section band.
+        const cls=String(r[0]||"").length>70?"note":"band";
+        return `<tr class="${cls}"><td colspan="${width}">${esc(r[0]||"")}</td></tr>`;
+      }
+      if(t.layout==="plain"&&ri===0&&t.bandFirst) return `<tr class="band"><td colspan="${width}">${esc(r[0]||"")}</td></tr>`;
+      return `<tr>${r.map((c,i)=>`<td class="${(t.align&&t.align[i])==="r"||(i>0&&t.layout==="fees")?"r":""}">${esc(c)}</td>`).join("")}${r.length<width?`<td colspan="${width-r.length}"></td>`:""}</tr>`;
+    }).join("");
+    const foot=t.foot?`<tr class="tot">${t.foot.map((c,i)=>`<td class="${(t.align&&t.align[i])==="r"?"r":""}"><b>${esc(c)}</b></td>`).join("")}</tr>`:"";
+    return `<table class="doc-tbl">${cap}${head}<tbody>${body}${foot}</tbody></table>`;
+  }).join("");
+}
+
+/* ---------- the drafts ---------- */
 function buildROA(kind){
-  const m=S.meta, clients=m.preparedFor||"the client";
+  kind=kind||roaKind();
+  return kind==="full"?buildROAFull():buildROAReview(kind);
+}
+function buildROAReview(kind){
+  const m=S.meta, R=S.roa||{}, ro=R.rollover||{};
+  const rp=S.client.riskProfile||(roaAccounts().map(a=>a.riskProfile).filter(Boolean)[0])||"[risk profile]";
   const changes=diffSnapshot();
-  const both=!!(S.meta.hasPartner && S.partner && S.partner.name);
-  const rp=S.client.riskProfile||"[risk profile]";
-  const updates=changes.length?changes.map(c=>`● ${c}`).join("\n"):"● We have updated your assets, liabilities, income and expenses on file as per discussions in your review meeting.\n● We have revisited your risk profile to assure it is still appropriate for your circumstances.";
-  let actsArr=(S.actionItems||[]).map(a=>`● ${a.desc}`);
-  if(kind==="rebalance" && S.rebalance.length) actsArr.unshift("● We will perform a rebalance of "+S.rebalance.map(r=>r.account).join(" and ")+" in alignment with your personal risk profile.");
-  else if(kind==="nochange") actsArr.unshift("● We will not perform a rebalance of your portfolios at this stage.");
-  const acts=actsArr.join("\n")||"● [action items]";
-  const rebBlock=(kind==="rebalance"&&S.rebalance.length)
-    ? `\n\nPortfolio Rebalance\nTo bring you back in line with your investment strategy I recommend you switch your investments as follows:\n${S.rebalance.map(rb=>{const lines=rb.rows.map(r=>`  ${r.fund}: ${money(r.current)} → ${money(r.proposed)} (${r.change<0?'-':''}${money(Math.abs(r.change))} ${r.dir})`).join("\n");return `${rb.account}\n${lines}${rb.total?`\n  Total: ${money(rb.total.current)} → ${money(rb.total.proposed)}`:""}`;}).join("\n\n")}\n\nThe amounts shown are an estimate only, calculated using the latest available unit price.`
-    : "";
-  return `What this Record of Advice covers
+  const updates=changes.length?changes.map(c=>`● ${c}`).join("\n")
+    :"● We have updated your assets, liabilities, income and expenses on file as per discussions in your review meeting.\n● We have revisited your risk profile to assure it is still appropriate for your circumstances.";
+  let lead="";
+  if(kind==="nochange") lead="● We will not perform a rebalance of your portfolios at this stage, as your current investment allocations remain aligned with your agreed risk profile and investment strategy.";
+  else if(kind==="partial") lead=`● ${roaFirstName()}, we will perform a partial rollover from ${ro.from||"[existing fund]"} to ${ro.to||"[platform account]"}, after which we will perform a rebalance of your portfolios in alignment with your personal risk profile.`;
+  else lead="● We will perform a rebalance of your portfolios in alignment with your personal risk profile.";
+  const acts=[lead,...(S.actionItems||[]).map(a=>`● ${a.desc}`)].join("\n");
+  const rebalanceBlock = kind==="nochange" ? "" : `
+
+Portfolio Rebalance
+You are no longer invested in line with the agreed asset allocation due to market movements and other transactions on your account. To bring you back in line with your investment strategy I recommend that you switch your investments to be invested as follows:
+
+[[TBL:rebalance]]
+
+The amounts shown are an estimate only, and is calculated using the latest available unit price. The actual value for this order may be more or less depending on the final unit price.
+
+Recommended Implications
+Here is a summary of your current portfolio asset allocation compared with your recommended portfolio asset allocation.
+
+[[TBL:implications]]
+
+Estimated capital gains and losses
+${R.cgtNote||CGT_DEFAULT}
+
+Investment Fees
+Based on my recommendations, your fees will be as follows:
+
+[[TBL:fees]]`;
+  const investInfo = kind==="nochange" ? "" : `
+
+Investment information
+I have provided you with the Funds Information and Product Disclosure Statements for or any new managed funds being invested into as part of this advice. You can locate the latest versions of these documents by contacting me. I have also provided you with copies of research reports for any new direct equity holdings or ETFs invested as part of this advice.${roaHasHub24()?`
+
+Hub24 is a platform provider on our APL that has a material shareholding in GPS Wealth’s parent company Diverger Limited. Importantly, I am not subject to any incentive, sales target, or obligation to recommend the Hub24 platform. I manage this conflict by ensuring that any advice that I provide to you is demonstrably in your best interests and appropriate for your needs, objectives, and circumstances.`:""}`;
+  const conflicts = (kind!=="nochange"&&roaHasHub24()) ? `
+
+Associations and Conflicts
+Diverger Limited (Diverger), an ASX listed company, is the owner of GPS Wealth Ltd. Hub24, a platform provider, has a material shareholding in Diverger. The Hub24 platform is on the GPS Wealth approved product list and GPS Wealth advisers do recommend Hub24 when it is appropriate and in a client’s best interests. This creates a potential conflict of interest for GPS Wealth which must be managed. Importantly, no GPS Wealth adviser or practice is under any incentive, sales target or obligation to recommend the Hub24 platform. I may hold an immaterial shareholding in Hub24.
+
+We manage these conflicts by ensuring that any advice we provide to you is demonstrably in your best interests and appropriate for your needs, objectives and circumstances.` : "";
+
+  return `[[TBL:roatype]]
+
+What this Record of Advice covers
 At our meeting on ${formatDate(m.reviewDate)||"[date]"}, we discussed and reviewed your financial situation. I made the following recommendations to you:
 
 Updates:
 ${updates}
 
-Action items:
-${acts}${rebBlock}
+Action items
+${acts}
 
 Basis of this Advice
 I have previously provided you with a Statement of Advice (SoA) dated ${m.soaDate||"[SoA date]"} which set out my recommendations to assist you achieve your stated goals, needs and objectives.
@@ -3818,27 +4312,131 @@ I have considered your previous SoA, and discussed your situation with you, and 
 If anything has changed in your personal circumstances, including your attitude to risk, or your needs or objectives, please disregard this advice and contact me to discuss your changed circumstances.
 
 Risk Profile
-You ${both?"both ":""}remain a ${rp} investor as stated in the SoA referred to above.
+You remain a ${rp} investor as stated in the SoA referred to above.${rebalanceBlock}
 
-Advice Fee
-There are no additional advice fees payable for this Record of Advice, as the cost of this advice is included as part of the Ongoing Service agreement dated ${m.osaDate||"[OSA date]"} that we have entered into.
+Advice Fees
+There are no additional advice fees payable for this Record of Advice, as the cost of this advice is included as part of the Ongoing Service agreement dated ${m.osaDate||"[OSA date]"} that we have entered into.${investInfo}
 
 Disclosures
-The disclosures under the Remuneration in the above-mentioned SOA have not changed.`;
+The disclosures under the Remuneration in the above-mentioned SOA have not changed.${conflicts}`;
 }
+function buildROAFull(){
+  const m=S.meta, R=S.roa||{}, ro=R.rollover||{};
+  const first=roaFirstName();
+  const a=roaTargetAccount();
+  const buys=(a?(a.rows||[]):[]).filter(r=>num(r.change)>0)
+    .map(r=>`● Buy ${roaMoney(r.change)} ${roaCareProductName(r.fund)}`).join("\n");
+  const txn=(a&&a.txn&&a.txn.total&&a.txn.total.dollar)||"[transaction costs]";
+  const amount=ro.amount||"[balance]";
+  return `[[TBL:roatype]]
+
+Section 1: Where You Are Now
+The following advice document has previously been provided to you:
+
+[[TBL:advicedocs]]
+
+Your relevant circumstances, as set out in the previous Statement of Advice have not significantly changed.
+
+Section 2: What You Want to Achieve
+${first}, as agreed, we have decided to complete a Full Rollover from your ${ro.from||"[existing fund]"} to ${ro.to||"[platform]"} account. We discussed the implications of this during your review. I recommend that you complete a Full Rollover and rebalance your portfolio as outlined in this document.${R.scopeOut?`
+
+${R.scopeOut}`:""}
+
+Section 3: My Advice to You and Why It Is Appropriate
+${first}, we recommend you:
+● Full Rollover from your ${ro.from||"[existing fund]"} (~${amount})
+${buys||"● [buy instructions — import the CARE rebalance to fill these]"}
+
+[[TBL:allocation]]
+
+*This is a reflection of the portfolios after implementing the recommended trades.
+
+This will have the following benefits & advantages:
+● This will ensure that your portfolio continues to be in line with your risk profile and in accordance with our superannuation strategy and CARE investment approach.
+
+This will have the following risk and disadvantages:
+● You will incur an estimated ${txn} in transaction costs as a result of the above trades.
+● There may be a change in the degree of risk and returns obtained for that level of risk.
+● There may be a change in the degree of risk regarding the investment options chosen under the new superannuation fund.
+
+Section 4: Fees
+There will be no change in your ongoing advice fees as a result of this advice.
+
+Section 5: Disclosures
+The details stated in the Disclosures, Other Benefits, Other Payments, Disclaimer and Important Information sections as outlined in the most relevant abovementioned advice document have not changed.
+
+Acknowledgement
+I acknowledge that ${m.adviserName||"[adviser]"} has provided me with a current Financial Services Guide (FSG) dated ${R.fsgDate||"[FSG date]"}, a current Adviser Profile and this Record of Advice dated ${formatDate(m.reviewDate)||"[date]"}. I understand the services detailed in the Financial Services Guide.
+
+I authorise you to proceed with implementing the advice and I acknowledge the following:
+● My objectives, financial situation and needs referred to in this RoA are not significantly different from those on which the previous advice was based.
+● You have discussed my/our personal circumstances, financial objectives and risk profile as well as the risks associated with investing in a clear and precise manner.
+● I have read and understood the RoA and it is an accurate reflection of our discussions and instructions.
+● You have fully explained and discussed the costs of the advice and I have understood these costs.
+● I have been given a Product Disclosure Statement (or other disclosure document) relating to each financial product that you have recommended, and I understand that I/we should refer to these before making any investment or insurance decision.
+
+[[TBL:signature]]`;
+}
+
+/* ---------- the ROA screen ---------- */
+function setRoaType(t){ S.roa.type=t; S._roa=""; renderContent(); }
+function setRoaField(path,v){ const ks=path.split("."); let o=S.roa; for(let i=0;i<ks.length-1;i++){ if(!o[ks[i]]) o[ks[i]]={}; o=o[ks[i]]; } o[ks[ks.length-1]]=v; S._roa=""; }
+function roaField(label,path,val,ph){
+  return `<div class="field"><label>${esc(label)}</label><input value="${esc(val||"")}" placeholder="${esc(ph||"")}" onchange="setRoaField('${path}',this.value);renderContent()"></div>`;
+}
+function addPriorAdvice(){ if(!S.roa.priorAdvice) S.roa.priorAdvice=[]; S.roa.priorAdvice.push({doc:"Statement of Advice",date:""}); S._roa=""; renderContent(); }
+function setPriorAdvice(i,k,v){ S.roa.priorAdvice[i][k]=v; S._roa=""; }
+function delPriorAdvice(i){ S.roa.priorAdvice.splice(i,1); S._roa=""; renderContent(); }
+function setRoaIcr(fund,v){ if(!S.roa.icr) S.roa.icr={}; S.roa.icr[fund]=v; S._roa=""; }
 function renderROA(){
-  const txt=S._roa||buildROA(S.rebalance.length?'rebalance':'nochange');
-  return `
-  <div class="section-head"><h2>Review ROA (draft)</h2><p>Draft the Record of Advice content from the review. Pick the type, edit on the left — the live document preview updates on the right. Download as Word or paste into the ROA generator. The Word file adds the branded GPS Wealth / MWS header automatically.</p></div>
-  <div class="card"><div class="card-title"><span class="bar"></span>Draft ROA</div>
-    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-      <button class="btn btn-ghost btn-sm" onclick="S._roa=buildROA('nochange');renderContent()">No-change ROA</button>
-      <button class="btn btn-ghost btn-sm" onclick="S._roa=buildROA('rebalance');renderContent()">Rebalance ROA${S.rebalance.length?` (${S.rebalance.length} acct)`:''}</button>
+  const kind=roaKind(), R=S.roa||{}, ro=R.rollover||{};
+  const txt=S._roa||buildROA(kind);
+  const accts=roaAccounts();
+  const typeBtns=ROA_TYPES.map(t=>`<button class="btn ${t.id===kind?'btn-primary':'btn-ghost'} btn-sm" title="${esc(t.desc)}" onclick="setRoaType('${t.id}')">${esc(t.label)}</button>`).join("");
+  const autoBtn=`<button class="btn ${R.type==="auto"?'btn-primary':'btn-ghost'} btn-sm" title="Pick the type from what's been imported" onclick="setRoaType('auto')">Auto</button>`;
+  const engine=roaAccounts().length?(roaHasCare()?(accts.every(a=>a.engine==="care")?"CARE managed portfolios":"CARE + index accounts"):"Index / Vanguard menu"):"—";
+  const rolloverFields=(kind==="partial"||kind==="full")?`
+    <div class="grid g3" style="margin-top:10px">
+      ${roaField("Rolling over from","rollover.from",ro.from,"e.g. Brighter Super")}
+      ${roaField("Rolling over to","rollover.to",ro.to,"e.g. Hub24")}
+      ${roaField("Approximate amount","rollover.amount",ro.amount,"e.g. $153,354.20")}
+    </div>`:"";
+  const fullFields=kind==="full"?`
+    <div class="grid g2" style="margin-top:10px">
+      ${roaField("FSG dated","fsgDate",R.fsgDate,"1 November 2025")}
+      ${roaField("Signatories (comma separated)","signClients",R.signClients,clientNames().filter(n=>n&&!/^client [12]$/i.test(n)).join(", "))}
     </div>
+    <div class="field" style="margin-top:8px"><label>Accounts scoped out of this ROA</label>
+      <textarea rows="2" placeholder="e.g. As per the previous Record of Advice dated 15/05/2026, we retained your Mercer Super for the purpose of retaining your default insurance cover. We have scoped your Mercer super account out of this ROA." onchange="setRoaField('scopeOut',this.value);renderContent()">${esc(R.scopeOut||"")}</textarea></div>
+    <div class="card-title" style="margin-top:12px"><span class="bar"></span>Prior advice documents (Section 1)</div>
+    <table class="tbl"><thead><tr><th>Advice provided</th><th>Date provided</th><th></th></tr></thead><tbody>
+      ${(R.priorAdvice||[]).map((x,i)=>`<tr>
+        <td><input value="${esc(x.doc||"")}" onchange="setPriorAdvice(${i},'doc',this.value)"></td>
+        <td><input value="${esc(x.date||"")}" placeholder="dd/mm/yyyy" onchange="setPriorAdvice(${i},'date',this.value)"></td>
+        <td><button class="icon-btn" onclick="delPriorAdvice(${i})">✕</button></td></tr>`).join("")||`<tr><td colspan="3" class="pv-empty">None added — the SoA date from Cover &amp; Details is used.</td></tr>`}
+    </tbody></table>
+    <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addPriorAdvice()">+ Add advice document</button>
+    ${roaIcrEditor()}`:"";
+  const cgtField=kind!=="nochange"?`
+    <div class="field" style="margin-top:10px"><label>Estimated capital gains and losses</label>
+      <textarea rows="2" onchange="setRoaField('cgtNote',this.value);renderContent()">${esc(R.cgtNote||CGT_DEFAULT)}</textarea></div>`:"";
+  const warn=(kind!=="nochange"&&!accts.length)
+    ? `<div class="hint" style="color:var(--coral);margin-top:8px">No rebalance imported — the tables will be empty. Upload the CARE document in <b>Review Meeting → Rebalance</b>.</div>` : "";
+
+  return `
+  <div class="section-head"><h2>Review ROA (draft)</h2><p>Pick the Record of Advice this review needs. The tables come straight from the CARE rebalance document; every sentence is editable on the left and the live document preview updates on the right. Download as Word — the branded GPS Wealth / MWS header is added automatically.</p></div>
+  <div class="card"><div class="card-title"><span class="bar"></span>ROA type</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">${autoBtn}${typeBtns}</div>
+    <div class="hint" style="margin-top:8px">${esc((ROA_TYPES.find(t=>t.id===kind)||{}).desc||"")} · Type of advice: <b>${esc((ROA_TYPES.find(t=>t.id===kind)||{}).advice||"")}</b></div>
+    <div class="hint">Accounts imported: <b>${accts.length}</b> · Investment menu: <b>${esc(engine)}</b>${accts.length?` · ${esc(accts.map(a=>a.account).join(" · "))}`:""}</div>
+    ${warn}${rolloverFields}${cgtField}${fullFields}
+    <div style="margin-top:10px"><label class="btn btn-ghost btn-sm" style="cursor:pointer">⇪ Upload CARE document (.docx)<input type="file" accept=".docx" multiple style="display:none" onchange="importCareDoc(event)"></label></div>
+  </div>
+  <div class="card"><div class="card-title"><span class="bar"></span>Draft ROA</div>
     <div class="doc-wrap">
       <div>
-        <div class="doc-preview-label">Editable text</div>
-        <textarea rows="24" style="font-family:ui-monospace,Menlo,monospace;font-size:12px" oninput="S._roa=this.value;document.getElementById('roaPreview').innerHTML=docPreviewHTML(this.value)">${esc(txt)}</textarea>
+        <div class="doc-preview-label">Editable text — <code>[[TBL:…]]</code> markers become real tables</div>
+        <textarea rows="28" style="font-family:ui-monospace,Menlo,monospace;font-size:12px" oninput="S._roa=this.value;document.getElementById('roaPreview').innerHTML=docPreviewHTML(this.value)">${esc(txt)}</textarea>
       </div>
       <div>
         <div class="doc-preview-label">Live document preview</div>
@@ -3847,8 +4445,23 @@ function renderROA(){
     </div>
     <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-primary btn-sm" onclick="generateRoaDocx()">⬇ Word</button>
-      <button class="btn btn-ghost btn-sm" onclick="(navigator.clipboard&&navigator.clipboard.writeText($('content').querySelector('textarea').value));toast('ROA copied.')">⧉ Copy</button></div>
+      <button class="btn btn-ghost btn-sm" onclick="(navigator.clipboard&&navigator.clipboard.writeText($('content').querySelector('textarea').value));toast('ROA copied.')">⧉ Copy</button>
+      <button class="btn btn-ghost btn-sm" onclick="S._roa='';renderContent()">↻ Regenerate from the review</button></div>
   </div>`;
+}
+// The per-portfolio ICRs quoted in a full-rollover allocation table aren't in the
+// CARE document, so they're entered once here and remembered with the draft.
+function roaIcrEditor(){
+  const a=roaTargetAccount(); if(!a) return "";
+  const icr=(S.roa&&S.roa.icr)||{};
+  const rows=(a.rows||[]).filter(r=>num(r.proposed)>0&&!/^(cash|cash account|working cash)/i.test(r.fund));
+  if(!rows.length) return "";
+  return `<div class="card-title" style="margin-top:12px"><span class="bar"></span>Fund manager’s fee (ICR) per portfolio</div>
+    <table class="tbl"><thead><tr><th>Investment product</th><th>ICR</th></tr></thead><tbody>
+    ${rows.map(r=>`<tr><td>${esc(roaCareProductName(r.fund))}</td>
+      <td><input value="${esc(icr[r.fund]||"")}" placeholder="e.g. 0.162%" onchange="setRoaIcr('${esc(r.fund).replace(/'/g,"\\'")}',this.value);renderContent()"></td></tr>`).join("")}
+    </tbody></table>
+    <div class="hint">The CARE document doesn't publish per-portfolio ICRs — take these from the current CARE fact sheet.</div>`;
 }
 
 /* ============================================================
@@ -4094,6 +4707,8 @@ function rollForward(){
   S.goalTracking.forEach(g=>{ if(g.are) g.were=g.are; g.are=""; });
   const T=S.goalTrackingTotals; S.goalTrackingTotals={were:(T.are||T.were||""), shouldBe:"", are:"", wantToBe:T.wantToBe||""};
   S.adviserComments=""; S.overallRating="On Track"; S.actionItems=[];
+  S.rebalance=[]; S.roa.type="auto"; S.roa.engine="auto"; S.roa.rollover={from:"",to:"",amount:"",account:""};
+  S.roa.cgtNote=""; S.roa.scopeOut=""; S.roa.icr={}; S._roa="";
   toast("Rolled forward — upload this year's platform reports to fill 'Where you are'.");
   renderContent();
 }
@@ -4291,7 +4906,7 @@ function saveJSON(){
 function loadJSON(ev){
   const file=ev.target.files[0]; if(!file)return;
   const r=new FileReader();
-  r.onload=()=>{ try{ Object.assign(S,JSON.parse(r.result)); if(!S.checklist.answers) S.checklist.answers={}; if(!S.checklist.notes) S.checklist.notes={}; if(!S.uploads) S.uploads=[]; delete S._snapshot; delete S._fileNote; delete S._roa; delete S._snapReview; renderContent(); autoSave(); toast("Draft loaded."); }catch(e){ toast("Invalid JSON file."); } };
+  r.onload=()=>{ try{ Object.assign(S,JSON.parse(r.result)); delete S._snapshot; delete S._fileNote; delete S._roa; delete S._snapReview; normaliseState(); renderContent(); autoSave(); toast("Draft loaded."); }catch(e){ toast("Invalid JSON file."); } };
   r.readAsText(file);
 }
 /* ---------- auto-save to this browser (localStorage) ---------- */
@@ -4305,17 +4920,35 @@ function autoSave(){
     const el=$("autosaveInd"); if(el) el.textContent="✓ Auto-saved "+new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
   }catch(e){ /* storage full / disabled — ignore */ } }, 600);
 }
+// Drafts saved before a feature existed are missing its state; top them up so a
+// loaded draft never renders against an undefined branch.
+function normaliseState(){
+  if(!S.checklist) S.checklist={rows:[],answers:{},notes:{},activeSection:""};
+  if(!S.checklist.answers) S.checklist.answers={};
+  if(!S.checklist.notes) S.checklist.notes={};
+  if(!S.uploads) S.uploads=[];
+  if(!Array.isArray(S.rebalance)) S.rebalance=[];
+  S.rebalance.forEach(r=>{ if(!Array.isArray(r.rows)) r.rows=[]; if(!Array.isArray(r.comparison)) r.comparison=[]; if(!Array.isArray(r.feeRows)) r.feeRows=[]; if(!r.txn) r.txn={}; if(!r.feeSummary) r.feeSummary={}; });
+  if(!S.roa||typeof S.roa!=="object") S.roa={};
+  const R=S.roa;
+  if(!R.type) R.type="auto";
+  if(!R.engine) R.engine="auto";
+  if(!R.rollover) R.rollover={from:"",to:"",amount:"",account:""};
+  if(!Array.isArray(R.priorAdvice)) R.priorAdvice=[];
+  if(!R.icr) R.icr={};
+  if(R.fsgDate==null) R.fsgDate="1 November 2025";
+  if(R.cgtNote==null) R.cgtNote="";
+  if(R.scopeOut==null) R.scopeOut="";
+  if(R.signClients==null) R.signClients="";
+}
 function restoreAutoSave(){
   try{
     const raw=localStorage.getItem(AUTOSAVE_KEY); if(!raw) return false;
     Object.assign(S, JSON.parse(raw));
     ["_snapshot","_fileNote","_roa","_snapReview"].forEach(k=>delete S[k]);
-    if(!S.checklist) S.checklist={rows:[],answers:{},notes:{},activeSection:""};
-    if(!S.checklist.answers) S.checklist.answers={};
-    if(!S.checklist.notes) S.checklist.notes={};
-    if(!S.uploads) S.uploads=[];
+    normaliseState();
     return true;
-  }catch(e){ return false; }
+  }catch(e){ normaliseState(); return false; }
 }
 function clearAutoSave(){ try{ localStorage.removeItem(AUTOSAVE_KEY); }catch(e){} }
 function resetAll(){
@@ -4839,18 +5472,77 @@ async function generateFileNoteDocx(){
   }catch(e){ console.error(e); toast("File note error: "+e.message); }
 }
 
+// Build the Word tables behind a [[TBL:key]] marker, mirroring the live preview.
+function roaDocxTables(key,D,cfg){
+  const {Paragraph,TextRun,Table,TableRow,TableCell,WidthType,BorderStyle,AlignmentType,ShadingType,TableLayoutType,VerticalAlign}=D;
+  const FONT=(cfg&&cfg.font)||"Calibri", SZ=18, TOTAL=9600;
+  const bd={style:BorderStyle.SINGLE,size:4,color:"C8D8EA"};
+  const borders={top:bd,bottom:bd,left:bd,right:bd};
+  const out=[];
+  roaTableData(key).forEach(t=>{
+    const width=Math.max(t.head?t.head.length:0, t.foot?t.foot.length:0, ...t.rows.map(r=>r.length), 1);
+    const firstW=width>1?Math.round(TOTAL*(width>3?0.40:0.50)):TOTAL;
+    const restW=width>1?Math.round((TOTAL-firstW)/(width-1)):0;
+    const cw=[firstW]; for(let i=1;i<width;i++) cw.push(restW);
+    const cell=(text,o={})=>{
+      const span=o.span||1, from=o.index||0;
+      let w=0; for(let i=from;i<Math.min(from+span,cw.length);i++) w+=cw[i];
+      return new TableCell({columnSpan:span, width:{size:w||firstW,type:WidthType.DXA}, borders,
+        verticalAlign:VerticalAlign.TOP,
+        shading:o.shade?{type:ShadingType.CLEAR,fill:o.shade,color:"auto"}:undefined,
+        margins:{top:50,bottom:50,left:100,right:100},
+        children:[new Paragraph({alignment:o.align==="r"?AlignmentType.RIGHT:AlignmentType.LEFT, spacing:{after:0},
+          children:[new TextRun({text:String(text==null?"":text),font:FONT,size:SZ,bold:!!o.bold})]})]});
+    };
+    const rows=[];
+    if(t.caption) rows.push(new TableRow({children:[cell(t.caption,{bold:true,shade:"EAF2FD",span:width})]}));
+    if(t.head) rows.push(new TableRow({tableHeader:true,children:t.head.map((h,i)=>cell(h,{index:i,bold:true,shade:"F2F6FB",align:t.align&&t.align[i]}))}));
+    t.rows.forEach((r,ri)=>{
+      const filled=r.filter(c=>String(c||"").length);
+      if((t.layout==="fees"&&filled.length<=1)||(t.layout==="plain"&&ri===0&&t.bandFirst)){
+        const note=t.layout==="fees"&&String(r[0]||"").length>70;   // the ICR footnote, not a section band
+        rows.push(new TableRow({children:[cell(r[0]||"",note?{span:width}:{bold:true,shade:"EAF2FD",span:width})]})); return;
+      }
+      const cells=r.map((c,i)=>cell(c,{index:i,align:(t.align&&t.align[i])||(t.layout==="fees"&&i>0?"r":"")}));
+      if(r.length<width) cells.push(cell("",{index:r.length,span:width-r.length}));
+      rows.push(new TableRow({children:cells}));
+    });
+    if(t.foot) rows.push(new TableRow({children:t.foot.map((c,i)=>cell(c,{index:i,bold:true,shade:"F7FAFD",align:t.align&&t.align[i]}))}));
+    out.push(new Table({layout:TableLayoutType.FIXED,width:{size:TOTAL,type:WidthType.DXA},columnWidths:cw,rows}));
+    out.push(new Paragraph({spacing:{after:140},children:[]}));
+  });
+  if(!out.length) out.push(new Paragraph({spacing:{after:100},children:[
+    new TextRun({text:`[${key} table — nothing imported yet]`,font:FONT,size:SZ,italics:true,color:"888888"})]}));
+  return out;
+}
+// Split a draft on its [[TBL:…]] markers and interleave prose with real tables.
+function roaDocxBody(text,D,cfg){
+  const out=[]; let buf=[];
+  const flush=()=>{ if(buf.length){ out.push(...docxBodyFromText(buf.join("\n"),D,cfg)); buf=[]; } };
+  String(text||"").split("\n").forEach(line=>{
+    const tk=line.trim().match(/^\[\[TBL:([a-z]+)\]\]$/i);
+    if(tk){ flush(); out.push(...roaDocxTables(tk[1].toLowerCase(),D,cfg)); }
+    else buf.push(line);
+  });
+  flush();
+  return out;
+}
+
 async function generateRoaDocx(){
   if(typeof docx==="undefined"){ toast("Document engine still loading — try again in a moment."); return; }
   const D=docx;
-  const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,BorderStyle,VerticalAlign}=D;
+  const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,BorderStyle,VerticalAlign,TableLayoutType}=D;
   const m=S.meta,l=S.licensee,pr=S.practice;
   const FONT="Calibri", TEXT="000000", BLUE="0C6AE1";
-  const headings=/^(What this Record of Advice covers|Basis of this Advice|Risk Profile|Advice Fee|Advice Fees|Portfolio Rebalance|Disclosures)$/i;
+  const headings=/^(What this Record of Advice covers|Basis of this Advice|Risk Profile|Advice Fees?|Portfolio Rebalance|Recommended Implications|Estimated capital gains and losses|Investment Fees|Investment information|Disclosures|Associations and Conflicts|Section [1-9]:.*|Acknowledgement)$/i;
 
-  const text=S._roa||buildROA(S.rebalance.length?'rebalance':'nochange');
-  const idx=text.search(/What this Record of Advice covers/i);
-  const bodyText=idx>=0?text.slice(idx):text;       // header table is added below
-  const body=docxBodyFromText(bodyText,D,{font:FONT,size:22,accent:BLUE,headSize:26,headings});
+  const text=S._roa||buildROA();
+  // A draft pasted back in may still carry the firm boilerplate; the branded
+  // header below replaces it, so skip anything before the first real heading.
+  const idx=text.search(/What this Document is About/i)>=0
+    ? Math.max(0,text.search(/(What this Record of Advice covers|Section 1:|\[\[TBL:roatype\]\])/i)) : 0;
+  const bodyText=idx>0?text.slice(idx):text;
+  const body=roaDocxBody(bodyText,D,{font:FONT,size:22,accent:BLUE,headSize:26,headings});
 
   // ---- branded two-column header (firm boilerplate only) ----
   const b={style:BorderStyle.SINGLE,size:4,color:"BBBBBB"};
@@ -4890,7 +5582,8 @@ async function generateRoaDocx(){
     toast("Building ROA…");
     const blob=await Packer.toBlob(doc);
     const slug=(m.preparedFor||"client").replace(/[^a-z0-9]+/gi,"_");
-    saveAs(blob,`Review_ROA_${slug}.docx`);
+    const kindSlug={nochange:"NoChange",rebalance:"Rebalance",partial:"PartialRollover",full:"FullRollover"}[roaKind()]||"Rebalance";
+    saveAs(blob,`Review_${kindSlug}_ROA_${slug}.docx`);
     toast("ROA Word doc generated ✓");
   }catch(e){ console.error(e); toast("ROA error: "+e.message); }
 }
