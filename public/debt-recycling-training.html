@@ -1347,6 +1347,42 @@ function svgOffsetHow() {
     '</svg>';
 }
 
+/* ---------------------------------- the same $20,000 from two sources */
+function svgRedraw() {
+  function stack(x, tint, edge, head, sub, outTint, outEdge, out1, out2) {
+    return '<rect x="' + x + '" y="112" width="316" height="60" rx="11" style="fill:' + tint + ';stroke:' + edge + ';stroke-width:2"/>' +
+      '<text x="' + (x + 158) + '" y="138" text-anchor="middle" style="' + F.h + '">' + head + '</text>' +
+      '<text x="' + (x + 158) + '" y="158" text-anchor="middle" style="' + F.s + '">' + sub + '</text>' +
+      '<rect x="' + x + '" y="212" width="316" height="76" rx="11" style="fill:' + outTint + ';stroke:' + outEdge + ';stroke-width:2"/>' +
+      '<text x="' + (x + 158) + '" y="240" text-anchor="middle" style="font:800 13px var(--bf);fill:' + outEdge + '">' + out1 + '</text>' +
+      '<text x="' + (x + 158) + '" y="264" text-anchor="middle" style="' + F.b + '">' + out2 + '</text>';
+  }
+  return '<svg data-anim viewBox="0 0 760 316" role="img" aria-label="The same $20,000 taken from an offset changes nothing, but redrawn from the investment split it becomes a new private borrowing and that portion stops being deductible.">' +
+    ARROWS +
+    '<rect x="270" y="16" width="220" height="56" rx="11" style="fill:var(--surface);stroke:var(--border-strong);stroke-width:2"/>' +
+    '<text x="380" y="40" text-anchor="middle" style="' + F.h + '">The client needs $20,000</text>' +
+    '<text x="380" y="60" text-anchor="middle" style="' + F.s + '">for a holiday</text>' +
+
+    '<path id="rd1" d="M300 74 C 240 88 200 96 180 108" style="fill:none;stroke:var(--lime-dark);stroke-width:2.5" marker-end="url(#ag)"/>' +
+    '<path id="rd2" d="M460 74 C 520 88 560 96 580 108" style="fill:none;stroke:var(--coral);stroke-width:2.5" marker-end="url(#ac)"/>' +
+
+    stack(22, 'var(--lime-light)', 'var(--lime-dark)', 'Taken from the offset',
+          'their own savings, sitting beside the loan',
+          'var(--green-light)', 'var(--green)', '✓ Not a borrowing at all',
+          'Nothing changes. Deductibility untouched.') +
+    stack(422, 'var(--coral-light)', 'var(--coral)', 'Redrawn from the investment split',
+          'money previously repaid into the loan',
+          'var(--red-light)', 'var(--red)', '✗ A new borrowing, spent privately',
+          'That share of the split stops being deductible.') +
+
+    '<path id="rd3" d="M180 176 L180 206" style="stroke:var(--lime-dark);stroke-width:2.5" marker-end="url(#ag)"/>' +
+    '<path id="rd4" d="M580 176 L580 206" style="stroke:var(--red);stroke-width:2.5" marker-end="url(#ac)"/>' +
+    '<text x="380" y="308" text-anchor="middle" style="' + F.s + '">Identical $20,000 in the client\'s hand. Completely different tax consequence.</text>' +
+    flowDot('rd1', '0s', 'var(--lime-dark)', 5, '2.2s') + flowDot('rd2', '0.3s', 'var(--coral)', 5, '2.2s') +
+    flowDot('rd3', '1.1s', 'var(--lime-dark)', 5, '1.6s') + flowDot('rd4', '1.4s', 'var(--red)', 5, '1.6s') +
+    '</svg>';
+}
+
 /* ------------------------------------- equity, and the part you can use */
 function svgEquity() {
   var x0 = 20, W = 720, loanW = 400, use80 = 576;   /* 720px = $900,000 */
@@ -1569,7 +1605,7 @@ function renderCalc(spec) {
    ========================================================================== */
 MODULES.push({
   slug: "basics",
-  mins: 5,
+  mins: 7,
   title: "Tax, deductions and debt",
   sub: "Where it all starts",
   lede: "Two words do most of the work in this strategy: <em>deductible</em> and <em>non-deductible</em>. " +
@@ -1650,6 +1686,59 @@ MODULES.push({
       '<div class="tile"><h4>Redraw / line of credit</h4><p>Draw and repay as you like. More flexible — and far easier ' +
       'to contaminate, because every redraw is fresh borrowing.</p></div>' +
     '</div>' +
+
+    '<h3>What a redraw actually is</h3>' +
+    '<p>When a client pays <em>more</em> than their required repayment, that extra sits inside the loan. ' +
+    '<strong>Redraw</strong> is taking it back out.</p>' +
+    '<p>It feels like withdrawing your own savings. For tax purposes it is nothing of the sort: ' +
+    '<strong>a redraw is a brand-new borrowing</strong>, and — like any borrowing — whether the interest on it is ' +
+    'deductible depends entirely on what that money is then spent on.</p>' +
+
+    '<div class="callout c-tip"><h4>🔄 Which is exactly why the strategy works</h4>' +
+    '<p style="margin:0">This is the engine of the classic recycle. The client makes extra repayments against the ' +
+    'home loan, then <strong>redraws that same amount and invests it</strong>. The redraw is a new borrowing for an ' +
+    'income-producing purpose — so that slice of debt is now deductible. A non-deductible dollar has become a ' +
+    'deductible one, without the client owing any more than before.</p></div>' +
+
+    '<h3>Redraw or offset? The distinction that catches people</h3>' +
+    '<p>The client cannot tell them apart — both feel like getting their money out. You have to.</p>' +
+
+    '<figure class="figure">' + svgRedraw() +
+    '<figcaption>Figure 4 — the same $20,000. From the offset it is the client\'s own cash and nothing happens. ' +
+    'Redrawn from the investment split it is a new private borrowing, and that share of the loan stops being ' +
+    'deductible.</figcaption></figure>' +
+
+    '<div class="tablewrap"><table class="t"><thead><tr><th style="width:26%"></th><th>Offset</th><th>Redraw</th></tr></thead><tbody>' +
+    '<tr><td><strong>Whose money is it</strong></td><td>The client\'s own — it never left them</td><td>The bank\'s — they repaid it, now they are borrowing it again</td></tr>' +
+    '<tr><td><strong>Taking it out is…</strong></td><td>a withdrawal</td><td>a new borrowing</td></tr>' +
+    '<tr><td><strong>Can it contaminate a split</strong></td><td>No</td><td>Yes — the purpose of the redraw decides its deductibility</td></tr>' +
+    '<tr><td><strong>Effect on the loan balance</strong></td><td>None — only the interest calculation</td><td>The balance goes back up</td></tr>' +
+    '<tr><td><strong>So spare cash belongs…</strong></td><td>here</td><td>not here</td></tr>' +
+    '</tbody></table></div>' +
+    '<p>That last row is our guide\'s own advice: keep spare cash in an <strong>offset</strong> rather than letting it ' +
+    'sit in redraw against the investment loan. Mixing the two makes the records far harder to defend if the ATO ever asks.</p>' +
+
+    '<h3>And where the term loan fits</h3>' +
+    '<div class="tablewrap"><table class="t"><thead><tr><th style="width:30%"></th><th>Term loan — our investment splits</th>' +
+    '<th>Redraw facility</th></tr></thead><tbody>' +
+    '<tr><td><strong>How the money arrives</strong></td><td>Advanced in full, up front</td><td>Drawn whenever the client wants</td></tr>' +
+    '<tr><td><strong>Can repayments be taken back</strong></td><td>Generally no — repaying is one-way</td><td>Yes, but each redraw is a fresh borrowing</td></tr>' +
+    '<tr><td><strong>Where uninvested funds sit</strong></td><td>In the offset against that split</td><td>Often left inside the loan, which is the risk</td></tr>' +
+    '<tr><td><strong>Contamination risk</strong></td><td>Low — one advance, one purpose</td><td>High — every redraw carries its own purpose</td></tr>' +
+    '</tbody></table></div>' +
+    '<p>Put together: the investment split is a <strong>term loan</strong> so the purpose is fixed at the moment it is ' +
+    'drawn, and it carries an <strong>offset</strong> so uninvested funds cost nothing without anyone having to repay — ' +
+    'and therefore re-borrow — anything.</p>',
+
+    { id: "m0rd1", kind: "mcq",
+      q: "A client wants $15,000 for a car. They have $40,000 in the offset against their home loan, and $15,000 of available redraw on their investment split. What is the difference?",
+      opts: [
+        "No difference — it is the client's money either way.",
+        "The offset is their own money, so taking it changes nothing. Redrawing the investment split is a new borrowing spent privately, which makes that split mixed-purpose.",
+        "The redraw is better because it preserves their savings.",
+        "Both would contaminate the investment split."
+      ], a: 1,
+      why: "This is the distinction that catches people, because to the client both feel identical. Offset money is theirs and was never repaid to the bank. Redrawn money is borrowed afresh, and what it is spent on decides whether the interest on it is deductible." },
     '<p>A term loan creates a practical problem: the split is set up for the full amount, but the client may not have ' +
     'every dollar invested on day one. Without somewhere to put the rest, they would pay interest on money that is not ' +
     'yet working.</p>' +
@@ -1910,7 +1999,7 @@ MODULES.push({
    ========================================================================== */
 MODULES.push({
   slug: "purpose",
-  mins: 3,
+  mins: 2,
   title: "Deductible vs non-deductible",
   sub: "The purpose test",
   lede: "One rule decides whether interest is deductible, and it is not the one most people expect. " +
@@ -2840,7 +2929,7 @@ renderEx = function (ex) { return LATE_KINDS[ex.kind] ? LATE_KINDS[ex.kind](ex) 
    ========================================================================== */
 MODULES.push({
   slug: "assessment",
-  mins: 5,
+  mins: 4,
   title: "Glossary & final assessment",
   sub: "Reference and assessment",
   lede: "The vocabulary you will hear in adviser file notes and broker emails, followed by the assessment. " +
