@@ -1091,36 +1091,6 @@ function svgShift() {
     '</svg>';
 }
 
-/* -------------------------------------------------------- purpose test */
-function svgPurpose() {
-  function row(y, sec, use, ok, n) {
-    var col = ok ? 'var(--green)' : 'var(--red)';
-    var bg = ok ? 'var(--green-light)' : 'var(--red-light)';
-    return '<g>' +
-      '<rect x="16" y="' + y + '" width="210" height="70" rx="10" style="fill:var(--surface);stroke:var(--border);stroke-width:1.5"/>' +
-      '<text x="121" y="' + (y + 26) + '" text-anchor="middle" style="' + F.cap + '">SECURED BY</text>' +
-      '<text x="121" y="' + (y + 48) + '" text-anchor="middle" style="' + F.h + '">' + sec + '</text>' +
-      '<path id="pu' + n + 'a" d="M232 ' + (y + 35) + ' L282 ' + (y + 35) + '" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
-      '<rect x="292" y="' + y + '" width="230" height="70" rx="10" style="fill:var(--surface);stroke:var(--border);stroke-width:1.5"/>' +
-      '<text x="407" y="' + (y + 26) + '" text-anchor="middle" style="' + F.cap + '">MONEY USED TO BUY</text>' +
-      '<text x="407" y="' + (y + 48) + '" text-anchor="middle" style="' + F.h + '">' + use + '</text>' +
-      '<path id="pu' + n + 'b" d="M528 ' + (y + 35) + ' L578 ' + (y + 35) + '" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
-      '<rect x="588" y="' + y + '" width="158" height="70" rx="10" style="fill:' + bg + ';stroke:' + col + ';stroke-width:2"/>' +
-      '<text x="667" y="' + (y + 32) + '" text-anchor="middle" style="font:800 20px var(--bf);fill:' + col + '">' + (ok ? '✓' : '✗') + '</text>' +
-      '<text x="667" y="' + (y + 54) + '" text-anchor="middle" style="font:800 12px var(--bf);fill:' + col + '">' +
-        (ok ? 'Interest deductible' : 'Not deductible') + '</text>' +
-      flowDot('pu' + n + 'a', (n === 1 ? '0s' : '0.4s'), 'var(--blue)', 5, '2.4s') +
-      flowDot('pu' + n + 'b', (n === 1 ? '1.2s' : '1.6s'), ok ? 'var(--green)' : 'var(--red)', 5, '2.4s') +
-      '</g>';
-  }
-  return '<svg data-anim viewBox="0 0 760 240" role="img" aria-label="Two examples showing that deductibility follows the use of the money, not what secures the loan.">' +
-    ARROWS +
-    row(20, 'The family home', 'An ETF portfolio', true, 1) +
-    row(140, 'A share portfolio', 'A new car', false, 2) +
-    '<text x="380" y="228" text-anchor="middle" style="' + F.s + '">What the loan is secured against does not decide deductibility. What the borrowed money bought does.</text>' +
-    '</svg>';
-}
-
 /* --------------------------------------------------------- account map */
 function svgAccounts() {
   function box(id, x, y, w, h, fill, stroke, lines) {
@@ -1596,7 +1566,7 @@ function renderCalc(spec) {
    ========================================================================== */
 MODULES.push({
   slug: "basics",
-  mins: 7,
+  mins: 8,
   title: "Tax, deductions and debt",
   sub: "Where it all starts",
   lede: "Two words do most of the work in this strategy: <em>deductible</em> and <em>non-deductible</em>. " +
@@ -1766,6 +1736,16 @@ MODULES.push({
         { t: "Interest on money borrowed to buy managed funds", z: "d" }
       ],
       why: "Only borrowings used to acquire something income-producing get the deduction. Private life — the home, the car, the holiday — is paid for with after-tax money." },
+
+    { id: "m2q2", kind: "mcq",
+      q: "A client's $180,000 investment split is secured entirely against their family home. The funds bought a diversified ETF portfolio. Is the interest deductible?",
+      opts: [
+        "No — the loan is secured by the family home, so it is private debt.",
+        "Only half, because the home is a private asset.",
+        "Yes — deductibility follows the use of the funds, not the security. The money bought income-producing assets.",
+        "Only if the client refinances the split to a different lender."
+      ], a: 2,
+      why: "This is the single most common misunderstanding. Security is irrelevant; use is everything." },
 
     ]
 });
@@ -1987,90 +1967,6 @@ MODULES.push({
       ], a: [0, 1, 3, 4],
       why: "Short horizons are the opposite of what the strategy needs, and nobody can guarantee markets. Equity, stable surplus income, 7+ years and personal protection are the real gates." }
   ]
-});
-
-/* ============================================================================
-   MODULE 4 — Deductible vs non-deductible
-   ========================================================================== */
-MODULES.push({
-  slug: "purpose",
-  mins: 2,
-  title: "Deductible vs non-deductible",
-  sub: "The purpose test",
-  lede: "One rule decides whether interest is deductible, and it is not the one most people expect. " +
-        "Once it clicks, most of the strategy follows from it.",
-  blocks: [
-    '<div class="callout c-rule"><h4>⚖️ The purpose test</h4>' +
-    '<p style="margin:0">The ATO <strong>does not look at where the loan is secured</strong>. It looks at ' +
-    '<strong>what the borrowed money was used for</strong>. Interest is deductible where the funds were used for an ' +
-    'income-producing purpose.</p></div>' +
-
-    '<figure class="figure">' + svgPurpose() +
-    '<figcaption>Figure 2 — the security is a red herring. Borrow against the family home to buy ETFs and the interest is ' +
-    'deductible; borrow against a share portfolio to buy a car and it is not.</figcaption></figure>' +
-
-    '<h3>Two easy misreadings</h3>' +
-    '<div class="grid2">' +
-      '<div class="tile"><h4>It is the interest, not the loan</h4><p>The client does not get a $100,000 deduction for a ' +
-      '$100,000 investment split. They deduct the <strong>interest charged</strong> on it each year.</p></div>' +
-      '<div class="tile"><h4>The asset must produce income</h4><p>Shares, ETFs, managed funds and rental property qualify because ' +
-      'they generate assessable income — dividends, distributions, rent. A non-income-producing asset does not.</p></div>' +
-    '</div>' +
-
-    '<h3>What a deduction is actually worth</h3>' +
-    '<p>The benefit scales with the client\'s marginal tax rate, which is why our guide says higher income earners benefit most:</p>' +
-    '<div class="tablewrap"><table class="t"><thead><tr><th>Client\'s marginal rate</th><th>Interest deduction</th><th>Tax saved</th></tr></thead><tbody>' +
-    '<tr><td>47% — taxable income over $190,000</td><td>$10,000</td><td><strong>$4,700</strong></td></tr>' +
-    '<tr><td>39% — $135,001 to $190,000</td><td>$10,000</td><td><strong>$3,900</strong></td></tr>' +
-    '<tr><td>32% — $45,001 to $135,000</td><td>$10,000</td><td><strong>$3,200</strong></td></tr>' +
-    '</tbody></table></div>' +
-    '<p>Same deduction, three very different outcomes. That is why our guide says higher income earners benefit ' +
-    'most — and why the adviser checks the client\'s rate before the strategy is ever proposed.</p>' +
-
-    '<div class="callout c-tip"><h4>🇦🇺 Franking credits — the bonus</h4>' +
-    '<p style="margin:0">Australian companies often pay tax on profits before paying dividends. With fully franked dividends the ' +
-    'client gets a credit for that tax, which can reduce their tax bill further or even generate a refund. ' +
-    'You will see franking credits on the annual tax statements you collect at review time.</p></div>' +
-
-    '<div class="callout c-note"><h4>📰 What the 2026 tax reform did — and did not — change</h4>' +
-    '<p>The <em>Treasury Laws Amendment (Tax Reform No. 1)</em> package passed in June 2026. ' +
-    '<strong>It did not change interest deductibility.</strong> The purpose test on this page still governs, and ' +
-    'debt recycling into <strong>shares, ETFs and managed funds is untouched</strong> — which is what most of our ' +
-    'clients do.</p>' +
-    '<p style="margin:0">What changed sits one step further along: what a client can do with a rental <em>loss</em>, ' +
-    'and how a capital gain is taxed. Both start 1 July 2027, and both are covered in Module 11.</p></div>' +
-
-    '<div class="callout c-warn"><h4>🚩 Traceability is the whole game</h4>' +
-    '<p style="margin:0">The ATO must be able to trace borrowed funds directly to their investment purpose. That is why each split ' +
-    'gets <strong>its own account number and its own statement trail</strong>. If investment and personal debt are mixed in the same ' +
-    'account, the client risks losing the deduction entirely — and it is very hard to unwind after the fact.</p></div>',
-
-    { id: "m2q1", kind: "sort",
-      q: "Sort each situation into the right column. Tap a card to pick it up, then tap a column (or drag it).",
-      zones: [{ key: "d", label: "✓ Interest is deductible" }, { key: "n", label: "✗ Interest is not deductible" }],
-      items: [
-        { t: "A split drawn against the home, used to buy an ETF portfolio", z: "d" },
-        { t: "The loan on the client's own home", z: "n" },
-        { t: "A split used to buy managed funds paying distributions", z: "d" },
-        { t: "A loan secured by shares, used to buy a family car", z: "n" },
-        { t: "Borrowings used to buy an income-producing rental property", z: "d" },
-        { t: "A credit card used for a family holiday", z: "n" },
-        { t: "Money redrawn from the investment split to renovate the kitchen", z: "n" },
-        { t: "A second split drawn to add to the client's existing share portfolio", z: "d" }
-      ],
-      why: "Every deductible card involves borrowed money buying something that produces assessable income. Every non-deductible card involves private use — no matter what secures the loan." },
-
-    { id: "m2q2", kind: "mcq",
-      q: "A client's $180,000 investment split is secured entirely against their family home. The funds bought a diversified ETF portfolio. Is the interest deductible?",
-      opts: [
-        "No — the loan is secured by the family home, so it is private debt.",
-        "Only half, because the home is a private asset.",
-        "Yes — deductibility follows the use of the funds, not the security. The money bought income-producing assets.",
-        "Only if the client refinances the split to a different lender."
-      ], a: 2,
-      why: "This is the single most common misunderstanding. Security is irrelevant; use is everything." },
-
-    ]
 });
 
 /* ============================================================================
@@ -2858,7 +2754,7 @@ renderEx = function (ex) { return LATE_KINDS[ex.kind] ? LATE_KINDS[ex.kind](ex) 
    ========================================================================== */
 MODULES.push({
   slug: "assessment",
-  mins: 5,
+  mins: 6,
   title: "Glossary & final assessment",
   sub: "Reference and assessment",
   lede: "The vocabulary you will hear in adviser file notes and broker emails, followed by the assessment. " +
@@ -2905,7 +2801,7 @@ MODULES.push({
         why: "Restructure, not increase. (Module 3)" },
       { q: "Interest on a loan is deductible when…",
         opts: ["The loan is secured against an investment asset", "The borrowed money was used to acquire an income-producing asset", "The loan is labelled an investment loan by the bank", "The client is on a high marginal tax rate"], a: 1,
-        why: "The purpose test. Security, product name and tax rate are all irrelevant to whether the deduction exists. (Module 4)" },
+        why: "The purpose test. Security, product name and tax rate are all irrelevant to whether the deduction exists. (Module 1)" },
       { q: "Both splits have an offset. What belongs in each?",
         opts: [
           "The client's own cash in either — it makes no difference",
@@ -2913,32 +2809,32 @@ MODULES.push({
           "Borrowed funds against the home loan split; own cash against the investment split",
           "Offsets are not used in debt recycling"
         ], a: 1,
-        why: "Two offsets, two jobs. Own cash cuts non-deductible interest; undrawn borrowed funds sit against the investment term loan so no net interest is charged on money not yet working. (Module 5)" },
+        why: "Two offsets, two jobs. Own cash cuts non-deductible interest; undrawn borrowed funds sit against the investment term loan so no net interest is charged on money not yet working. (Module 4)" },
       { q: "Where must a drawdown from the investment split land?",
         opts: ["The client's everyday transaction account", "The offset account", "A clean, nil-balance account such as a CMA, then straight into the investment", "Split A, to reduce the home loan"], a: 2,
-        why: "Traceability is the deduction. Mixing borrowed funds with personal money breaks the trail. (Modules 6 and 7)" },
+        why: "Traceability is the deduction. Mixing borrowed funds with personal money breaks the trail. (Modules 5 and 6)" },
       { q: "A client redraws $20,000 from their $100,000 investment split to pay for a holiday. What is the consequence?",
         opts: ["No consequence — the split was created for investment", "The whole split loses deductibility", "The split becomes mixed-purpose: 80% of the interest is deductible and repayments are apportioned across both purposes", "The client simply repays it and the problem is resolved"], a: 2,
-        why: "Apportionment, and it is sticky. (Module 7)" },
+        why: "Apportionment, and it is sticky. (Module 6)" },
 
     { q: "Split B has fallen from $120,000 to $105,000 since the last review. This is…",
         opts: ["Good news — less debt", "Neutral — balances move", "A problem: deductible debt has been destroyed and cannot easily be rebuilt. Flag it to the adviser", "Only a problem if the client also sold investments"], a: 2,
-        why: "On the investment split, a falling balance works against the strategy. (Module 8)" },
+        why: "On the investment split, a falling balance works against the strategy. (Module 7)" },
       { q: "Select every event that should be escalated to the adviser the same day.",
         multi: true,
         opts: ["The client is refinancing both loans to a new lender", "The client has reduced their working hours", "A quarterly distribution has been reinvested", "The client wants to pay a lump sum off the investment split", "You are updating the client's postal address"], a: [0, 1, 3],
-        why: "Refinances can merge the splits, income changes undermine serviceability, and lump sums off the investment split destroy deductible debt. A distribution reinvesting normally, and an address update, are ordinary business. (Modules 7, 8 and 10)" },
+        why: "Refinances can merge the splits, income changes undermine serviceability, and lump sums off the investment split destroy deductible debt. A distribution reinvesting normally, and an address update, are ordinary business. (Modules 6, 7 and 9)" },
 
     { q: "A client on a 47% marginal rate paid $9,000 of interest on their investment split. The approximate tax benefit is…",
         opts: ["$9,000", "$4,230", "$2,880", "Nil until the investments are sold"], a: 1,
-        why: "$9,000 × 47% = $4,230. The deduction reduces taxable income; it does not refund the interest. (Module 4)" },
+        why: "$9,000 × 47% = $4,230. The deduction reduces taxable income; it does not refund the interest. (Module 1)" },
       { q: "A client asks you directly whether the interest on their new split is tax-deductible. The right response is to…",
         opts: ["Confirm that it is, since the split was set up for investing", "Route the question to the adviser and the accountant, promptly", "Tell them to call the ATO", "Say you are not permitted to discuss anything tax-related"], a: 1,
-        why: "You may know the answer; it is still advice about a specific client's circumstances. Route it — and route it quickly. (Module 8)" },
+        why: "You may know the answer; it is still advice about a specific client's circumstances. Route it — and route it quickly. (Module 7)" },
       { q: "Select everything our guide identifies as a genuine risk or precondition of debt recycling.",
         multi: true,
         opts: ["Losses are amplified in a downturn", "The family home is usually the security", "A minimum horizon of around seven years", "Personal insurance, particularly income protection, matters", "The ATO may retrospectively disallow the strategy"], a: [0, 1, 2, 3],
-        why: "Debt recycling is legal under Australian tax law where funds are used for an income-producing purpose. The risks are structural and market-based. (Modules 3 and 10)" }
+        why: "Debt recycling is legal under Australian tax law where funds are used for an income-producing purpose. The risks are structural and market-based. (Modules 3 and 9)" }
     ] },
 
     '<div class="callout c-firm"><h4>📌 Before you sign off</h4>' +
