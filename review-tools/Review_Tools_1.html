@@ -1044,6 +1044,8 @@ details.collapse-card > div{margin-top:8px;padding-top:8px;border-top:1px solid 
 .drop-zone-icon{font-size:24px;margin-bottom:3px;display:block}
 .drop-zone-text{font-size:12px;color:var(--text-dim);font-weight:600}
 .drop-zone-sub{font-size:10px;color:var(--text-muted);margin-top:2px}
+.drop-zone.is-dragging{border-color:var(--blue);background:var(--lime-light)}
+.drop-zone .drop-zone-icon,.drop-zone .drop-zone-text,.drop-zone .drop-zone-sub{display:block}
 
 /* Utilities */
 .flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -10391,7 +10393,7 @@ function resetState(){
     rbalAccounts:[],               // accounts read from the CARE rebalance document
     rbalUpdates:[], rbalActions:[],
     rbalMeetingDate:"", rbalSoaDate:"", rbalOsaDate:"",
-    rbalRolloverFrom:"", rbalRolloverTo:"",
+    rbalRolloverFrom:"", rbalRolloverTo:"", rbalRolloverAmount:"",
     rbalCgtNote:"", rbalShowInvestmentInfo:true,
     // Custom sections
     customSections:[],
@@ -15605,7 +15607,7 @@ function currentDocBaseName(){
   const cn = getFullClientName();
   if(docType === 'Strategy') return `StrategyPaper_${(cn||'client').replace(/[^a-z0-9]+/gi,'_').slice(0,40)}_${F.roaDate || todayLocalISO()}`;
   if(docType === 'NAA') return `NAA_${(cn||'Client').replace(/[^a-z0-9]/gi,'_')}_${F.roaDate || todayLocalISO()}`;
-  if(docType === 'RBAL') return `${({rebalance:'Rebalance',partial:'PartialRollover',nochange:'NoChange'})[F.rbalType||'rebalance']||'Rebalance'}_ROA_${(cn||'Client').replace(/[^a-z0-9]/gi,'_')}_${F.roaDate || todayLocalISO()}`;
+  if(docType === 'RBAL') return `${({rebalance:'Rebalance',partial:'PartialRollover',full:'FullRollover',nochange:'NoChange'})[F.rbalType||'rebalance']||'Rebalance'}_ROA_${(cn||'Client').replace(/[^a-z0-9]/gi,'_')}_${F.roaDate || todayLocalISO()}`;
   if(docType === 'NWF') return `NWF_${(cn||'Client').replace(/[^a-z0-9]/gi,'_')}_${F.roaDate || todayLocalISO()}`;
   return roaExportFileName();
 }
@@ -15741,10 +15743,11 @@ function renderHowToPage(){
         <ul>
           <li><strong>Rebalance ROA</strong> — the portfolio has drifted from the agreed asset allocation and is switched back. Prints the Portfolio Rebalance, Recommended Implications and Investment Fees tables from the CARE document.</li>
           <li><strong>Partial Rollover + Rebalance ROA</strong> — the same document, with the partial rollover named in the action items.</li>
-          <li><strong>Full Rollover ROA (Super)</strong> — the whole balance moves into the recommended platform, written on the Section 1–5 Record of Advice with an allocation table and a signed acknowledgement. (<strong>Partial Rollover ROA (Super)</strong> is the Section 1–5 version of a partial rollover, kept for a rollover written outside the review cycle.)</li>
+          <li><strong>Full Rollover + Rebalance ROA</strong> — the whole external fund is closed into the platform account and the portfolio rebalanced, in the same review layout.</li>
+          <li><strong>Full Rollover ROA (Super)</strong> — the Section 1–5 Record of Advice for a rollover: prior-advice table, recommended allocation table and a signed acknowledgement. Use it when the rollover is written up on its own rather than as part of the review. (<strong>Partial Rollover ROA (Super)</strong> is the Section 1–5 version of a partial rollover.)</li>
           <li><strong>No Change ROA</strong> — no rebalance required; the document records that the allocations remain in line with the agreed risk profile and stops there.</li>
         </ul>
-        The first two and the last are one document family and are built one at a time. The Section 1–5 rollover scenarios can still be multi-selected and combined into one ROA.</li>
+        The first three and the last are one document family and are built one at a time. The Section 1–5 rollover scenarios can still be multi-selected and combined into one ROA.</li>
       <li><strong>Review NAA</strong> — a <em>No Advice Acknowledgement</em>, the record used when a client instructs the firm to execute a transaction without receiving personal advice on it. Six transaction types: Purchase, Sell Specific Holdings &amp; Withdrawal, Partial Selldown, Full Selldown, Pension / Super Withdrawal, and Other Instruction.</li>
     </ul>
     <p><strong>Do not use it for:</strong> advice outside a super rollover (insurance, contributions, cashflow, pension commencement and so on — use the full <em>ROA Generator</em>), high-level strategy discussions (use the <em>Strategy Paper Generator</em>), or an alternative future scenario presented alongside an SOA (use the <em>NWF Generator</em>).</p>
@@ -15786,9 +15789,9 @@ function renderHowToPage(){
       </ul>
       </div>
       <div class="sop-step">
-        <div class="sop-step-head"><span class="sop-step-num">3a</span>Build a rebalance / partial-rollover / no-change ROA</div>
+        <div class="sop-step-head"><span class="sop-step-num">3a</span>Build a rebalance / rollover / no-change ROA</div>
 <ul>
-        <li>On <strong>Rebalance &amp; Accounts</strong>, confirm the type, enter the three dates, then upload the CARE document. Each account it finds is listed with its risk profile, trade and variation counts and fee disclosure.</li>
+        <li>On <strong>Rebalance &amp; Accounts</strong>, confirm the type, enter the three dates, then add the CARE document — <strong>drag the file onto the drop zone</strong> or click it to browse; several at once is fine. Each account it finds is listed with its risk profile, trade and variation counts and fee disclosure.</li>
         <li>Each account carries an <strong>investment menu</strong> setting, taken from the document: a <em>CARE managed</em> account prints the full platform fee disclosure; an <em>index / Vanguard</em> account prints its transactional costs only. Override it per account when the document is ambiguous — a household with both (e.g. Hub24 CARE super plus a CFS Edge index account) prints correctly in one document.</li>
         <li>On <strong>Updates &amp; Action Items</strong>, edit the "Updates:" list and add the meeting's actions. The first action item is written from the ROA type — change the type, or the rollover funds, to change it.</li>
         <li>A <strong>No Change ROA</strong> prints no rebalance, implications or fee tables, so the CARE upload is optional there — type the risk profile in instead.</li>
@@ -20923,8 +20926,11 @@ function naaBlockRebalance(){
     </div>
     <div class="section-block-body"><div class="card">
       `;
-    h += `<div style="display:flex;gap:10px;align-items:center;padding:10px;border:1.5px dashed var(--blue);border-radius:10px;background:var(--blue-light,#eef5ff)">
-      <span style="font-size:12px;flex:1"><strong>📥 Smart drop:</strong> import a Hub24 / CARE rebalance document to pre-fill the rebalance table below (asset/fund names, current, proposed and change amounts).</span>
+    h += `<div style="display:flex;gap:10px;align-items:center;padding:10px;border:1.5px dashed var(--blue);border-radius:10px;background:var(--blue-light,#eef5ff)"
+      ondragover="if(event.dataTransfer&&Array.from(event.dataTransfer.types||[]).includes('Files')){event.preventDefault();event.stopPropagation();this.style.background='var(--lime-light)';}"
+      ondragleave="this.style.background='var(--blue-light,#eef5ff)'"
+      ondrop="event.preventDefault();event.stopPropagation();this.style.background='var(--blue-light,#eef5ff)';if(event.dataTransfer&&event.dataTransfer.files.length)naaImportCareRebalance({files:event.dataTransfer.files, value:''});">
+      <span style="font-size:12px;flex:1"><strong>📥 Smart drop:</strong> drag a Hub24 / CARE rebalance document onto this panel — or use the button — to pre-fill the rebalance table below (asset/fund names, current, proposed and change amounts).</span>
       <button class="btn btn-sm btn-blue" onclick="document.getElementById('naa-care-input').click()">Import CARE rebalance</button>
       <input id="naa-care-input" type="file" accept=".docx" style="display:none" onchange="naaImportCareRebalance(this)">
     </div>`;
@@ -22033,6 +22039,9 @@ const RBAL_TYPES = [
   ['partial',   'Partial Rollover + Rebalance ROA',
    'Part of an external fund is coming across to the platform, then the portfolio is rebalanced.',
    'Recommendation to rebalance in line with client’s agreed risk profile.'],
+  ['full',      'Full Rollover + Rebalance ROA',
+   'The whole external fund is closed into the platform account, then the portfolio is rebalanced.',
+   'Rollover and Rebalance of Superannuation Account'],
   ['nochange',  'No Change ROA',
    'No rebalance required — allocations remain in line with the agreed risk profile.',
    'No Change Rebalance Record of Advice'],
@@ -22064,6 +22073,7 @@ function initRbalState(){
   if(F.rbalOsaDate == null) F.rbalOsaDate = '';
   if(F.rbalRolloverFrom == null) F.rbalRolloverFrom = '';
   if(F.rbalRolloverTo == null) F.rbalRolloverTo = '';
+  if(F.rbalRolloverAmount == null) F.rbalRolloverAmount = '';
   if(F.rbalShowInvestmentInfo == null) F.rbalShowInvestmentInfo = true;
 }
 // Picking a Review Rebalance card switches the active document type (clearing
@@ -22089,11 +22099,13 @@ function pickReviewRbalType(t){
 function rbalLeadAction(){
   const t = F.rbalType || 'rebalance';
   if(t === 'nochange') return 'We will not perform a rebalance of your portfolios at this stage, as your current investment allocations remain aligned with your agreed risk profile and investment strategy.';
-  if(t === 'partial'){
+  if(t === 'partial' || t === 'full'){
     const who = getFirstName();
     const from = F.rbalRolloverFrom || '[existing fund]';
     const to = F.rbalRolloverTo || '[platform account]';
-    return `${who ? who + ', we' : 'We'} will perform a partial rollover from ${from} to ${to}, after which we will perform a rebalance of your portfolios in alignment with your personal risk profile.`;
+    const amt = (F.rbalRolloverAmount||'').trim();
+    const what = t === 'full' ? 'a full rollover' : 'a partial rollover';
+    return `${who ? who + ', we' : 'We'} will perform ${what}${amt ? ' of approximately ' + amt : ''} from ${from} to ${to}, after which we will perform a rebalance of your portfolios in alignment with your personal risk profile.`;
   }
   return 'We will perform a rebalance of your portfolios in alignment with your personal risk profile.';
 }
@@ -22156,6 +22168,25 @@ async function rbalImportCare(inp){
   if(rbalIsNoChange() && found.some(a => a.trades.length)) F.rbalType = 'rebalance';
   render();
   alert(`Imported ${F.rbalAccounts.length} account${F.rbalAccounts.length>1?'s':''} from the CARE document.${skipped.length?`\n\nSkipped:\n${skipped.join('\n')}`:''}`);
+}
+// A drop target that also works as a click-to-browse control. Dragging files
+// over it highlights it; dropping hands them to `handler` in the same shape a
+// file input would, so the importer doesn't care which route the files took.
+function rbalDropZone(opts){
+  const handler = opts.handler;                       // e.g. "rbalImportCare"
+  const accept = opts.accept || '.docx';
+  const multiple = opts.multiple ? 'multiple' : '';
+  const hi = "this.classList.add('is-dragging')";
+  const lo = "this.classList.remove('is-dragging')";
+  return `<label class="drop-zone rbal-drop" style="display:block"
+    ondragover="if(event.dataTransfer&&Array.from(event.dataTransfer.types||[]).includes('Files')){event.preventDefault();event.stopPropagation();${hi};}"
+    ondragleave="${lo}"
+    ondrop="event.preventDefault();event.stopPropagation();${lo};if(event.dataTransfer&&event.dataTransfer.files.length)${handler}({files:event.dataTransfer.files, value:''});">
+    <span class="drop-zone-icon">⇪</span>
+    <span class="drop-zone-text">${e(opts.title||'Drop files here')}</span>
+    <span class="drop-zone-sub">${e(opts.sub||'')}</span>
+    <input type="file" accept="${e(accept)}" ${multiple} style="display:none" onchange="${handler}(this)">
+  </label>`;
 }
 function rbalSetEngine(i, v){ if(F.rbalAccounts[i]) F.rbalAccounts[i].engine = v; render(); }
 function rbalRemoveAccount(i){ F.rbalAccounts.splice(i, 1); render(); }
@@ -22235,14 +22266,16 @@ function rbalBlockSetup(){
       <div class="card-sub" style="margin:0"><strong>Type of Record of Advice:</strong> ${e(rbalTypeMeta()[3])}</div>
     </div>`;
 
-  if(t === 'partial'){
+  if(t === 'partial' || t === 'full'){
     h += `<div class="card">
-      <h4 style="margin:0 0 6px 0">Partial rollover</h4>
-      <div class="card-sub">Names the funds in the action item — e.g. "Matt, we will perform a partial rollover from QSuper to Hub24, after which we will perform a rebalance…".</div>
-      <div class="grid-2">
-        <div class="field"><label>Rolling over from</label><input value="${e(F.rbalRolloverFrom||'')}" placeholder="e.g. QSuper" onchange="F.rbalRolloverFrom=this.value;render()"></div>
+      <h4 style="margin:0 0 6px 0">${t === 'full' ? 'Full' : 'Partial'} rollover</h4>
+      <div class="card-sub">Names the funds in the action item — e.g. "Matt, we will perform a ${t === 'full' ? 'full' : 'partial'} rollover from ${t === 'full' ? 'Brighter Super' : 'QSuper'} to Hub24, after which we will perform a rebalance…". The amount is optional; leave it blank to omit it.</div>
+      <div class="grid-3">
+        <div class="field"><label>Rolling over from</label><input value="${e(F.rbalRolloverFrom||'')}" placeholder="${t === 'full' ? 'e.g. Brighter Super' : 'e.g. QSuper'}" onchange="F.rbalRolloverFrom=this.value;render()"></div>
         <div class="field"><label>Rolling over to</label><input value="${e(F.rbalRolloverTo||'')}" placeholder="e.g. Hub24" onchange="F.rbalRolloverTo=this.value;render()"></div>
+        <div class="field"><label>Approximate amount (optional)</label><input value="${e(F.rbalRolloverAmount||'')}" placeholder="e.g. $153,354.20" onchange="F.rbalRolloverAmount=this.value;render()"></div>
       </div>
+      ${t === 'full' ? `<div class="card-sub" style="margin:6px 0 0">This prints the firm's review-rebalance layout. For the Section 1–5 version — prior-advice table, recommended allocation table and a signed acknowledgement — use the <em>Full Rollover ROA (Super)</em> card instead.</div>` : ''}
     </div>`;
   }
 
@@ -22275,8 +22308,8 @@ function rbalBlockAccounts(){
     </div>
     <div class="section-block-body"><div class="card">
       <div class="card-sub">Upload the CARE rebalance document — the "Appendix to RoA" Word export. Everything the Record of Advice quotes is read from it: the account banner, risk profile, the Current → Proposed → Change trades, the Recommended Implications variations, the whole Investment Fees disclosure and the transactional costs. Export from CARE as <strong>Word, not PDF</strong> — a PDF loses the table structure.</div>
-      <label class="btn btn-blue btn-sm" style="cursor:pointer">⇪ Upload CARE document (.docx)
-        <input type="file" accept=".docx" multiple style="display:none" onchange="rbalImportCare(this)"></label>`;
+      ${rbalDropZone({handler:'rbalImportCare', accept:'.docx', multiple:true,
+        title:'Drop the CARE rebalance document here', sub:'…or click to browse. Word (.docx) only — several at once is fine.'})}`;
   if(rbalIsNoChange()){
     h += `<div class="card-sub" style="margin-top:8px"><strong>No Change ROA:</strong> the rebalance, implications and fee tables are not printed. Uploading is optional — it only fills the risk profile and client names.</div>`;
   }
@@ -22695,7 +22728,7 @@ async function exportRbalDocx(){
   });
 
   const blob = await Packer.toBlob(doc);
-  const kind = {rebalance:'Rebalance', partial:'PartialRollover', nochange:'NoChange'}[F.rbalType||'rebalance'] || 'Rebalance';
+  const kind = {rebalance:'Rebalance', partial:'PartialRollover', full:'FullRollover', nochange:'NoChange'}[F.rbalType||'rebalance'] || 'Rebalance';
   const filename = `${kind}_ROA_${(cn||'Client').replace(/[^a-z0-9]/gi,'_')}_${F.roaDate || todayLocalISO()}.docx`;
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
