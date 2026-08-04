@@ -10386,6 +10386,13 @@ function resetState(){
     naaScopePhrase:"alter your current investment allocation", // short phrase used in the auto-generated lead sentence
     naaAdditionalAck:[],            // extra ack bullets specific to this NAA (in addition to the standard ones)
     naaSubjectArea:"", // appears in the standard ack bullets — usually "insurance alterations", "investment alterations", etc.
+    // Review Rebalance ROA (docType 'RBAL') — the post-review Record of Advice
+    rbalType:"rebalance",          // rebalance | partial | nochange
+    rbalAccounts:[],               // accounts read from the CARE rebalance document
+    rbalUpdates:[], rbalActions:[],
+    rbalMeetingDate:"", rbalSoaDate:"", rbalOsaDate:"",
+    rbalRolloverFrom:"", rbalRolloverTo:"",
+    rbalCgtNote:"", rbalShowInvestmentInfo:true,
     // Custom sections
     customSections:[],
     // Off by default — tick "Include Custom Sections in output" to use them.
@@ -11859,36 +11866,67 @@ function extractCareDoc(html){
     let mgmtFeePct = '', adminFeePct = '', totalFeePct = '', totalFeeDollar = '';
     let txnCostDollar = '';   // "Total Transactional Costs" — buy/sell + brokerage
     let totalChange = '';   // Total row's Change column — a decrease = lump-sum withdrawal
+    // The rebalance Record of Advice quotes the CARE figures rather than
+    // summarising them, so we keep the source rows as well as the summary:
+    let banner = '';          // "<Owner> - <Account> - <Platform>", the ROA table caption
+    let feeRows = [];         // the Investment Fees disclosure, row for row
+    let feeWrapper = '';      // "Super" / "Invest" — the second cell of the platform band
+    let totalCurrent = '';    // Total row's Current column
+    let modelReturn = '';     // "Suggested PA Total Return for modelling: 7.60%"
+    const txn = {};           // {buySell, brokerage, total} — each {dollar, pct}
+    const feeSummary = {};    // admin / investment / ongoing costs, $ and %
 
     b.items.forEach(item => {
       if(item.tag === 'p'){
         const m = item.text.match(/risk profile for .+? is\s+(.+)/i);
         if(m && !riskProfile) riskProfile = m[1].trim().replace(/[.\s]+$/,'');
+        const mr = item.text.match(/suggested pa total return[^:]*:\s*([\d.]+\s*%)/i);
+        if(mr && !modelReturn) modelReturn = mr[1].replace(/\s+/g,'');
       } else if(item.tag === 'table'){
         const rows = item.rows;
-        // "Name - Platform" banner row (single cell containing " - ").
+        // "Name - Platform" banner row (single cell containing " - "). The full
+        // banner is the caption the rebalance ROA prints above each table.
         rows.forEach(r => {
-          if(r.length === 1 && / - /.test(r[0]) && !platform){
+          if(r.filter(Boolean).length === 1 && / - /.test(r[0]) && !platform){
             platform = r[0].split(' - ').pop().trim();
+            banner = r[0].trim();
           }
         });
         // "Investment Fees" disclosure table — the CARE Portfolio Management Fee
         // and Total Administration & Trustee Costs become the fee rows of the
         // allocation table (as in the SOA), and Total Ongoing Costs becomes the
         // portfolio's total fee % / $.
-        if(rows.some(r => /total ongoing costs/i.test((r[0]||'')))){
+        if(rows.some(r => /total ongoing costs/i.test((r[0]||''))) || rows.some(r => /fee disclosure for this account/i.test((r[0]||'')))){
           const pct3 = s => { const m = String(s==null?'':s).match(/-?[\d.]+/); return m ? parseFloat(m[0]).toFixed(3)+'%' : ''; };
+          const pctRaw = s => { const m = String(s==null?'':s).match(/-?[\d.]+\s*%/); return m ? m[0].replace(/\s+/g,'') : ''; };
           const pctCell = r => { for(let i=r.length-1;i>0;i--){ if(/%/.test(r[i]||'')) return r[i]; } return ''; };
           const dlrCell = r => { for(let i=1;i<r.length;i++){ if(/\$/.test(r[i]||'')) return r[i]; } return ''; };
+          // Keep the block verbatim — the rebalance ROA reprints it as-is,
+          // ICR footnote and all.
+          feeRows = rows.map(r => r.slice());
           rows.forEach(r => {
             const lbl = (r[0]||'').trim().toLowerCase();
-            if(/^care portfolio management fee/.test(lbl) && !mgmtFeePct) mgmtFeePct = pct3(pctCell(r));
-            if(/^total administration and trustee costs/.test(lbl) && !adminFeePct) adminFeePct = pct3(pctCell(r));
+            // The platform band ("Hub24 | Super") names the wrapper.
+            if(r.filter(Boolean).length === 2 && /^(hub\s*24|cfs edge|netwealth|macquarie|bt|expand|north)/i.test(r[0]||'') && !feeWrapper){
+              feeWrapper = (r[1]||'').trim();
+            }
+            if(/^care portfolio management fee/.test(lbl) && !mgmtFeePct){ mgmtFeePct = pct3(pctCell(r)); feeSummary.mgmtPct = pctRaw(pctCell(r)); feeSummary.mgmtDollar = dlrCell(r); }
+            if(/^administration fee/.test(lbl) && !feeSummary.adminFeePct){ feeSummary.adminFeePct = pctRaw(pctCell(r)); feeSummary.adminFeeDollar = dlrCell(r); }
+            if(/^account keeping fee/.test(lbl) && !feeSummary.keepingDollar){ feeSummary.keepingPct = pctRaw(pctCell(r)); feeSummary.keepingDollar = dlrCell(r); }
+            if(/^underlying investment cost/.test(lbl) && !feeSummary.underlyingPct){ feeSummary.underlyingPct = pctRaw(pctCell(r)); feeSummary.underlyingDollar = dlrCell(r); }
+            if(/^total administration and trustee costs/.test(lbl) && !adminFeePct){ adminFeePct = pct3(pctCell(r)); feeSummary.adminPct = pctRaw(pctCell(r)); feeSummary.adminDollar = dlrCell(r); }
+            if(/^total investment costs/.test(lbl) && !feeSummary.investPct){ feeSummary.investPct = pctRaw(pctCell(r)); feeSummary.investDollar = dlrCell(r); }
             if(/^total ongoing costs/.test(lbl)){
               if(!totalFeePct) totalFeePct = pct3(pctCell(r));
               if(!totalFeeDollar) totalFeeDollar = (dlrCell(r)||'').trim();
+              if(!feeSummary.totalPct){ feeSummary.totalPct = pctRaw(pctCell(r)); feeSummary.totalDollar = dlrCell(r); }
             }
-            if(/^total transactional costs/.test(lbl) && !txnCostDollar) txnCostDollar = (dlrCell(r)||'').trim();
+            if(/^buy\s*\/\s*sell/.test(lbl) && !txn.buySell) txn.buySell = {dollar:dlrCell(r)||(r[1]||'').trim(), pct:pctRaw(pctCell(r))||(r[2]||'').trim()};
+            if(/^brokerage/.test(lbl) && !txn.brokerage) txn.brokerage = {dollar:dlrCell(r)||(r[1]||'').trim(), pct:pctRaw(pctCell(r))||(r[2]||'').trim()};
+            if(/^total transactional costs/.test(lbl)){
+              if(!txnCostDollar) txnCostDollar = (dlrCell(r)||'').trim();
+              if(!txn.total) txn.total = {dollar:dlrCell(r)||(r[1]||'').trim(), pct:pctRaw(pctCell(r))||(r[2]||'').trim()};
+            }
           });
           return;
         }
@@ -11906,7 +11944,7 @@ function extractCareDoc(html){
           const label = (r[0]||'').trim();
           const isTotal = /^total$/i.test(label);
           if(kind === 'rebalance'){
-            if(isTotal){ if(!totalValue){ totalValue = (r[2]||'').trim(); totalChange = (r[3]||'').trim(); } continue; }
+            if(isTotal){ if(!totalValue){ totalCurrent = (r[1]||'').trim(); totalValue = (r[2]||'').trim(); totalChange = (r[3]||'').trim(); } continue; }
             trades.push({product:label, current:(r[1]||'').trim(), proposed:(r[2]||'').trim(), change:(r[3]||'').trim()});
           } else if(kind === 'comparison'){
             if(isTotal){ compTotal = {current:(r[1]||'').trim(), proposed:(r[2]||'').trim(), variance:(r[3]||'').trim()}; continue; }
@@ -11917,10 +11955,18 @@ function extractCareDoc(html){
     });
 
     const type = careClassifyType(name);
-    accounts.push({accountName:name, platform, type, owner:careOwnerOf(name),
-      riskProfile, totalValue, totalChange, trades, comparison, compTotal,
+    // A CARE-managed account discloses a "CARE Portfolio Management Fee"; anything
+    // else (a CFS Edge / index menu holding e.g. Vanguard funds) is priced by the
+    // underlying fund and gets the shorter transactional-cost disclosure instead.
+    const feeText = feeRows.map(r => r.join(' ')).join(' ');
+    const engine = /care portfolio management fee/i.test(feeText) ? 'care'
+      : (/vanguard|index fund/i.test(trades.map(t => t.product).join(' ')) ? 'vanguard'
+      : (/hub\s*24/i.test(platform||'') ? 'care' : 'vanguard'));
+    accounts.push({accountName:name, banner: banner || (name + (platform ? ' - ' + platform : '')),
+      platform, type, owner:careOwnerOf(name),
+      riskProfile, totalValue, totalCurrent, totalChange, modelReturn, trades, comparison, compTotal,
       mgmtFeePct, adminFeePct, feePercent: totalFeePct, feeDollar: totalFeeDollar,
-      txnCostDollar});
+      txnCostDollar, feeRows, feeWrapper, feeSummary, txn, engine});
   });
   // If this wasn't a "Rebalance" appendix, try the CARECalc "CARE Portfolio Fact Sheet"
   // layout (account summary table + per-account "CARE Essentials - X" breakdowns).
@@ -14684,6 +14730,7 @@ function sectionStatusText(){
 function topbarExport(){
   if(docType === 'Strategy'){ exportStrategyPaperDocx(); return; }
   if(docType === 'NAA'){ exportNAADocx(); return; }
+  if(docType === 'RBAL'){ exportRbalDocx(); return; }
   if(docType === 'NWF'){ exportNWFDocx(); return; }
   if(!selectedScenarios.length){ alert('Pick at least one scenario first — then you can export the Word document.'); return; }
   exportDocx();
@@ -15558,6 +15605,7 @@ function currentDocBaseName(){
   const cn = getFullClientName();
   if(docType === 'Strategy') return `StrategyPaper_${(cn||'client').replace(/[^a-z0-9]+/gi,'_').slice(0,40)}_${F.roaDate || todayLocalISO()}`;
   if(docType === 'NAA') return `NAA_${(cn||'Client').replace(/[^a-z0-9]/gi,'_')}_${F.roaDate || todayLocalISO()}`;
+  if(docType === 'RBAL') return `${({rebalance:'Rebalance',partial:'PartialRollover',nochange:'NoChange'})[F.rbalType||'rebalance']||'Rebalance'}_ROA_${(cn||'Client').replace(/[^a-z0-9]/gi,'_')}_${F.roaDate || todayLocalISO()}`;
   if(docType === 'NWF') return `NWF_${(cn||'Client').replace(/[^a-z0-9]/gi,'_')}_${F.roaDate || todayLocalISO()}`;
   return roaExportFileName();
 }
@@ -15602,6 +15650,7 @@ function importRoaJson(inp){
       // Re-provision so files saved under an older build pick up any new
       // tables/portfolios this build creates (edited wording is preserved).
       try{ if(docType === 'ROA' && selectedScenarios.length) consolidateScenarios(); }catch(_){}
+      try{ if(docType === 'RBAL') initRbalState(); }catch(_){}
       render();
       alert('Document loaded — you can keep working on it.');
     } catch(ex){ alert('Could not read ROA file: '+ex.message); }
@@ -15688,7 +15737,14 @@ function renderHowToPage(){
     <h3>1 · Purpose &amp; scope</h3>
     <p>Review Tools produces the two documents that come out of a client review, as formatted Word (.docx) files. Pick the category on <strong>1 · Scenarios</strong> that matches what you need:</p>
     <ul class="sop-check">
-      <li><strong>Review ROA</strong> — a <em>Record of Advice</em> for a superannuation rollover. Two scenarios: <strong>Full Rollover ROA (Super)</strong> (roll the whole balance into the recommended platform) and <strong>Partial Rollover ROA (Super)</strong> (roll part of it, retaining the minimum balance in the original fund to keep insurance cover). You can select both if the review covers both partners or both situations — they combine into one ROA.</li>
+      <li><strong>Review ROA</strong> — the <em>Record of Advice</em> that comes out of the review. Four outcomes:
+        <ul>
+          <li><strong>Rebalance ROA</strong> — the portfolio has drifted from the agreed asset allocation and is switched back. Prints the Portfolio Rebalance, Recommended Implications and Investment Fees tables from the CARE document.</li>
+          <li><strong>Partial Rollover + Rebalance ROA</strong> — the same document, with the partial rollover named in the action items.</li>
+          <li><strong>Full Rollover ROA (Super)</strong> — the whole balance moves into the recommended platform, written on the Section 1–5 Record of Advice with an allocation table and a signed acknowledgement. (<strong>Partial Rollover ROA (Super)</strong> is the Section 1–5 version of a partial rollover, kept for a rollover written outside the review cycle.)</li>
+          <li><strong>No Change ROA</strong> — no rebalance required; the document records that the allocations remain in line with the agreed risk profile and stops there.</li>
+        </ul>
+        The first two and the last are one document family and are built one at a time. The Section 1–5 rollover scenarios can still be multi-selected and combined into one ROA.</li>
       <li><strong>Review NAA</strong> — a <em>No Advice Acknowledgement</em>, the record used when a client instructs the firm to execute a transaction without receiving personal advice on it. Six transaction types: Purchase, Sell Specific Holdings &amp; Withdrawal, Partial Selldown, Full Selldown, Pension / Super Withdrawal, and Other Instruction.</li>
     </ul>
     <p><strong>Do not use it for:</strong> advice outside a super rollover (insurance, contributions, cashflow, pension commencement and so on — use the full <em>ROA Generator</em>), high-level strategy discussions (use the <em>Strategy Paper Generator</em>), or an alternative future scenario presented alongside an SOA (use the <em>NWF Generator</em>).</p>
@@ -15700,7 +15756,8 @@ function renderHowToPage(){
     <ul class="sop-check">
         <li>Client details on hand — full names (and entity details for joint / entity clients), account and platform names, current balances.</li>
         <li><strong>Review ROA:</strong> the fund being rolled out of, the amount rolling over (or the partial amount and the balance being retained), the receiving platform, and the client's agreed risk profile.</li>
-        <li><strong>Review ROA:</strong> the CARE (Hub24) rebalance document exported as <strong>Word (.docx)</strong> for the post-rollover portfolio table. A PDF export loses the table structure the importer relies on.</li>
+        <li><strong>Review ROA:</strong> the CARE rebalance document — the "Appendix to RoA" — exported as <strong>Word (.docx)</strong>. A rebalance ROA reprints its figures rather than summarising them: the account banner, risk profile, the Current → Proposed → Change trades, the Recommended Implications variations, the whole Investment Fees disclosure and the transactional costs. A PDF export loses the table structure the reader relies on.</li>
+        <li><strong>Review ROA:</strong> the meeting date, the Statement of Advice date and the Ongoing Service agreement date, in the firm's house wording (e.g. "the 17th of July 2026").</li>
         <li><strong>Review NAA:</strong> the client's instruction in their own words — what to buy or sell, the amounts, the account, and the purpose of any withdrawal.</li>
         <li><strong>Review NAA:</strong> for a Pension / Super Withdrawal with a rebalance, the CARE rebalance .docx for the post-withdrawal table.</li>
         <li>Check <strong>⚙ Admin</strong> is set up — adviser roster &amp; offices, licensee details, default FSG / adviser-profile dates and legislation figures. This is usually done once and shared with the team via an exported settings file.</li>
@@ -15713,7 +15770,8 @@ function renderHowToPage(){
       <div class="sop-step">
         <div class="sop-step-head"><span class="sop-step-num">1</span>Pick the document on 1 · Scenarios</div>
 <ul>
-        <li><strong>For a Review ROA:</strong> tap <em>Full Rollover ROA (Super)</em> or <em>Partial Rollover ROA (Super)</em> — or both, if the review covers both. Selected scenarios appear as numbered chips; use the ◀ ▶ arrows to set the order they print in Section 3. Click <strong>Continue to Builder →</strong>.</li>
+        <li><strong>For a rebalance / partial-rollover / no-change ROA:</strong> tap the card. It opens the builder straight away — there is no Continue button to press. Three steps: client &amp; adviser details, the CARE upload and account list, then the updates and action items.</li>
+        <li><strong>For a Section 1–5 rollover ROA:</strong> tap <em>Full Rollover ROA (Super)</em> or <em>Partial Rollover ROA (Super)</em> — or both, if the review covers both. Selected scenarios appear as numbered chips; use the ◀ ▶ arrows to set the order they print in Section 3. Click <strong>Continue to Builder →</strong>.</li>
         <li><strong>For a Review NAA:</strong> tap the card matching the client's instruction. This opens the builder straight away with that transaction type's standard wording already seeded — there is no Continue button to press.</li>
         <li>Switching between the two categories clears the other one's selection, so finish and export one document before starting the other.</li>
       </ul>
@@ -15728,7 +15786,16 @@ function renderHowToPage(){
       </ul>
       </div>
       <div class="sop-step">
-        <div class="sop-step-head"><span class="sop-step-num">3a</span>Build a Review ROA</div>
+        <div class="sop-step-head"><span class="sop-step-num">3a</span>Build a rebalance / partial-rollover / no-change ROA</div>
+<ul>
+        <li>On <strong>Rebalance &amp; Accounts</strong>, confirm the type, enter the three dates, then upload the CARE document. Each account it finds is listed with its risk profile, trade and variation counts and fee disclosure.</li>
+        <li>Each account carries an <strong>investment menu</strong> setting, taken from the document: a <em>CARE managed</em> account prints the full platform fee disclosure; an <em>index / Vanguard</em> account prints its transactional costs only. Override it per account when the document is ambiguous — a household with both (e.g. Hub24 CARE super plus a CFS Edge index account) prints correctly in one document.</li>
+        <li>On <strong>Updates &amp; Action Items</strong>, edit the "Updates:" list and add the meeting's actions. The first action item is written from the ROA type — change the type, or the rollover funds, to change it.</li>
+        <li>A <strong>No Change ROA</strong> prints no rebalance, implications or fee tables, so the CARE upload is optional there — type the risk profile in instead.</li>
+      </ul>
+      </div>
+      <div class="sop-step">
+        <div class="sop-step-head"><span class="sop-step-num">3b</span>Build a Section 1–5 rollover ROA</div>
 <ul>
         <li>The builder steps mirror the printed document: Sections 1 &amp; 2 (where you are now / what you want to achieve), <strong>Section 3 — My Advice to You</strong> (one block per selected rollover scenario), Section 4 Annexure, Section 5 Fees, and the Acknowledgement.</li>
         <li>Fill the rollover fields — the fund rolling out, the amount (or partial amount), the receiving platform and the risk profile. These feed the objective, recommendation, benefits and risks wording automatically.</li>
@@ -15875,19 +15942,42 @@ function renderPicker(){
   let h = `<main class="main">`;
 
   // ── Review ROA ──────────────────────────────────────────────
+  // The four documents review compliance actually asks for. Three of them
+  // (rebalance / partial rollover / no change) are the post-review rebalance
+  // Record of Advice — one document family, built by the RBAL builder. A full
+  // rollover is written on the Section 1-5 Record of Advice, so that card keeps
+  // using the scenario-based ROA builder.
   const roaList = REVIEW_ROA_SCENARIO_IDS.map(id => [id, SCENARIOS[id]]).filter(([,s]) => s);
-  const roaSelCount = docType === 'ROA' ? selectedScenarios.filter(id => REVIEW_ROA_SCENARIO_IDS.includes(id)).length : 0;
+  const roaSelCount = (docType === 'ROA' ? selectedScenarios.filter(id => REVIEW_ROA_SCENARIO_IDS.includes(id)).length : 0)
+    + (docType === 'RBAL' ? 1 : 0);
   h += `<details class="cat-group" open data-cat="Review ROA">
     <summary>Review ROA
       ${roaSelCount ? `<span class="cat-sel">${roaSelCount} selected</span>` : ''}
-      <span class="cat-count">${roaList.length}</span>
+      <span class="cat-count">${RBAL_TYPES.length + roaList.length}</span>
     </summary>
     <div class="scenario-grid">`;
+  // Rebalance / partial rollover cards first — the everyday review outcome.
+  RBAL_TYPES.filter(([v]) => v !== 'nochange').forEach(([v, label, desc]) => {
+    const sel = (docType === 'RBAL' && F.rbalType === v) ? 'selected' : '';
+    h += `<div class="scenario-card ${sel}" onclick="pickReviewRbalType('${v}')">
+      <div class="sc-name">${e(label)}</div>
+      <div class="sc-desc">${e(desc)}</div>
+    </div>`;
+  });
+  // Then the Section 1-5 rollover scenarios (full rollover lives here).
   roaList.forEach(([id, s]) => {
     const sel = (docType === 'ROA' && selectedScenarios.includes(id)) ? 'selected' : '';
     h += `<div class="scenario-card ${sel}" onclick="pickReviewRoaScenario('${id}')">
       <div class="sc-name">${e(s.label)}</div>
       <div class="sc-desc">${e(s.desc)}</div>
+    </div>`;
+  });
+  // …and the no-change document last.
+  RBAL_TYPES.filter(([v]) => v === 'nochange').forEach(([v, label, desc]) => {
+    const sel = (docType === 'RBAL' && F.rbalType === v) ? 'selected' : '';
+    h += `<div class="scenario-card ${sel}" onclick="pickReviewRbalType('${v}')">
+      <div class="sc-name">${e(label)}</div>
+      <div class="sc-desc">${e(desc)}</div>
     </div>`;
   });
   h += `</div></details>`;
@@ -15950,6 +16040,7 @@ function renderPicker(){
 function pickReviewRoaScenario(id){
   if(docType !== 'ROA'){
     if(docType === 'NAA' && F.naaType && !confirm('Switching to Review ROA will clear your current Review NAA selection. Continue?')) return;
+    if(docType === 'RBAL' && !confirm('Switching to the Section 1-5 Record of Advice will leave your rebalance ROA content behind. Continue?')) return;
     docType = 'ROA';
     selectedScenarios = [];
     F.scenarioPortfolioBinding = {};
@@ -15961,6 +16052,7 @@ function pickReviewRoaScenario(id){
 function pickReviewNaaType(t){
   if(docType !== 'NAA'){
     if(docType === 'ROA' && selectedScenarios.length && !confirm('Switching to Review NAA will clear your current Review ROA selection. Continue?')) return;
+    if(docType === 'RBAL' && !confirm('Switching to Review NAA will leave your rebalance ROA content behind. Continue?')) return;
     docType = 'NAA';
     selectedScenarios = [];
     initNAAState();
@@ -16020,6 +16112,11 @@ function switchDocType(t){
   // NWF picks its scenario from the picker cards too
   if(t === 'NWF'){
     initNWFState();
+    page = 'picker';
+  }
+  // The rebalance Record of Advice picks its outcome from the picker cards
+  if(t === 'RBAL'){
+    initRbalState();
     page = 'picker';
   }
   render();
@@ -21911,6 +22008,703 @@ async function exportNWFDocx(){
   setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 0);
 }
 
+// ═══════════════════════════════════════════════════════════
+// REVIEW REBALANCE RECORD OF ADVICE  (docType 'RBAL')
+// ───────────────────────────────────────────────────────────
+// The Record of Advice the firm writes after an annual review. Three outcomes
+// share one document family:
+//   rebalance — "Recommendation to rebalance in line with client's agreed risk profile."
+//   partial   — the same document, with a partial rollover in the action items
+//   nochange  — "No Change Rebalance Record of Advice": nothing to trade
+// A FULL rollover is written on the Section 1-5 Record of Advice instead (the
+// "Full Rollover + Rebalance" card on the picker) because that is how the firm
+// writes it — so it stays with the existing ROA builder.
+//
+// Every figure is reprinted from the CARE rebalance document rather than
+// summarised: the account banner, the Portfolio Rebalance trades, the
+// Recommended Implications variations and the whole Investment Fees disclosure.
+// A CARE-managed account prints the full platform fee block; an index / Vanguard
+// account prints its transactional costs only, as the exemplar CFS Edge ROA does.
+// ═══════════════════════════════════════════════════════════
+const RBAL_TYPES = [
+  ['rebalance', 'Rebalance ROA',
+   'Portfolio has drifted from the agreed asset allocation — switch it back. Works for CARE and for a Vanguard / index menu.',
+   'Recommendation to rebalance in line with client’s agreed risk profile.'],
+  ['partial',   'Partial Rollover + Rebalance ROA',
+   'Part of an external fund is coming across to the platform, then the portfolio is rebalanced.',
+   'Recommendation to rebalance in line with client’s agreed risk profile.'],
+  ['nochange',  'No Change ROA',
+   'No rebalance required — allocations remain in line with the agreed risk profile.',
+   'No Change Rebalance Record of Advice'],
+];
+const RBAL_CGT_DEFAULT = 'There are no estimated capital gains or losses. The information shown is subject to change and should not be used as a basis for tax return preparation. You should consult your accountant for the exact amount of any tax payable if any.';
+const RBAL_UPDATES_DEFAULT = [
+  'We have updated your assets, liabilities, income and expenses on file as per discussions in your review meeting.',
+  'We have revisited your risk profile to assure it is still appropriate for your circumstances.',
+];
+function rbalTypeMeta(){ return RBAL_TYPES.find(t => t[0] === (F.rbalType||'rebalance')) || RBAL_TYPES[0]; }
+function rbalAccounts(){ return Array.isArray(F.rbalAccounts) ? F.rbalAccounts : []; }
+function rbalHasHub24(){ return rbalAccounts().some(a => /hub\s*24/i.test((a.platform||'') + ' ' + (a.banner||''))); }
+function rbalIsNoChange(){ return (F.rbalType||'rebalance') === 'nochange'; }
+// Risk profile for the "You remain a … investor" sentence: whatever the CARE
+// document states, falling back to the ROA's global risk profile.
+function rbalRiskProfile(){
+  const fromDoc = rbalAccounts().map(a => a.riskProfile).filter(Boolean)[0];
+  return F.globalRiskProfile || fromDoc || '[risk profile]';
+}
+// Fresh start whenever the user picks a Review Rebalance card.
+function initRbalState(){
+  F.rbalType = F.rbalType || 'rebalance';
+  if(!Array.isArray(F.rbalAccounts)) F.rbalAccounts = [];
+  if(!Array.isArray(F.rbalUpdates) || !F.rbalUpdates.length) F.rbalUpdates = RBAL_UPDATES_DEFAULT.slice();
+  if(!Array.isArray(F.rbalActions)) F.rbalActions = [];
+  if(F.rbalCgtNote == null || F.rbalCgtNote === '') F.rbalCgtNote = RBAL_CGT_DEFAULT;
+  if(F.rbalMeetingDate == null) F.rbalMeetingDate = '';
+  if(F.rbalSoaDate == null) F.rbalSoaDate = '';
+  if(F.rbalOsaDate == null) F.rbalOsaDate = '';
+  if(F.rbalRolloverFrom == null) F.rbalRolloverFrom = '';
+  if(F.rbalRolloverTo == null) F.rbalRolloverTo = '';
+  if(F.rbalShowInvestmentInfo == null) F.rbalShowInvestmentInfo = true;
+}
+// Picking a Review Rebalance card switches the active document type (clearing
+// an in-progress ROA/NAA selection first) and goes straight to the builder.
+function pickReviewRbalType(t){
+  if(docType !== 'RBAL'){
+    if(docType === 'ROA' && selectedScenarios.length && !confirm('Switching to a rebalance Record of Advice will clear your current Review ROA selection. Continue?')) return;
+    if(docType === 'NAA' && F.naaType && !confirm('Switching to a rebalance Record of Advice will clear your current Review NAA selection. Continue?')) return;
+    docType = 'RBAL';
+    selectedScenarios = [];
+    F.scenarioPortfolioBinding = {};
+    F.naaType = '';
+  }
+  initRbalState();
+  F.rbalType = t;
+  page = 'builder';
+  activeSection = 'client';
+  wizardStep = 0;
+  render();
+}
+
+// ─── The action-item lead line, which is what distinguishes the three types ───
+function rbalLeadAction(){
+  const t = F.rbalType || 'rebalance';
+  if(t === 'nochange') return 'We will not perform a rebalance of your portfolios at this stage, as your current investment allocations remain aligned with your agreed risk profile and investment strategy.';
+  if(t === 'partial'){
+    const who = getFirstName();
+    const from = F.rbalRolloverFrom || '[existing fund]';
+    const to = F.rbalRolloverTo || '[platform account]';
+    return `${who ? who + ', we' : 'We'} will perform a partial rollover from ${from} to ${to}, after which we will perform a rebalance of your portfolios in alignment with your personal risk profile.`;
+  }
+  return 'We will perform a rebalance of your portfolios in alignment with your personal risk profile.';
+}
+function rbalActionList(){ return [rbalLeadAction()].concat((F.rbalActions||[]).filter(Boolean)); }
+function rbalUpdateList(){ return (F.rbalUpdates||[]).filter(Boolean); }
+
+// ─── CARE import (this document quotes the CARE figures verbatim) ───
+async function rbalImportCare(inp){
+  const files = [...(inp.files||[])]; inp.value = '';
+  if(!files.length) return;
+  if(typeof mammoth === 'undefined'){ alert('The Word reader (mammoth) failed to load — check your internet connection and try again.'); return; }
+  const found = [], skipped = [];
+  for(const file of files){
+    const ext = (file.name.split('.').pop()||'').toLowerCase();
+    if(!(ext === 'docx' || (file.type||'').includes('wordprocessingml'))){
+      skipped.push(`${file.name} — export the CARE rebalance as Word (.docx); a PDF export loses the table structure this reader relies on`);
+      continue;
+    }
+    try{
+      showImportStatus('Reading CARE document…');
+      const res = await mammoth.convertToHtml({arrayBuffer: await file.arrayBuffer()});
+      hideImportStatus();
+      const accts = extractCareDoc(res.value).filter(a => (a.trades||[]).length || (a.comparison||[]).length);
+      if(!accts.length){ skipped.push(`${file.name} — no "Rebalance - <account>" section found`); continue; }
+      accts.forEach(a => { a.sourceFile = file.name; found.push(a); });
+    }catch(ex){
+      hideImportStatus();
+      skipped.push(`${file.name} — ${ex && ex.message ? ex.message : ex}`);
+    }
+  }
+  if(!found.length){ alert('CARE import failed.\n\n' + (skipped.join('\n') || 'No rebalance accounts were found.')); return; }
+
+  let summary = `Found ${found.length} account${found.length>1?'s':''}:\n\n`;
+  found.forEach(a => {
+    summary += `• ${a.banner}\n`;
+    summary += `     ${a.engine === 'care' ? 'CARE managed portfolios' : 'Index / external menu'}  ·  ${a.riskProfile||'risk profile not stated'}  ·  ${a.totalValue||'—'}\n`;
+    summary += `     ${a.trades.length} trade row(s), ${a.comparison.length} variation row(s)${a.feeRows.length?', investment fees':''}${(a.txn&&a.txn.total)?', transactional costs':''}\n`;
+  });
+  summary += `\nThe rebalance, implications and investment-fee tables are reprinted in the Record of Advice exactly as they appear here.`;
+  summary += `\n\nThis replaces any accounts already imported into this document. Proceed?`;
+  if(!confirm(summary)) return;
+
+  F.rbalAccounts = found.map(a => ({
+    banner: a.banner, accountName: a.accountName, owner: a.owner, type: a.type,
+    platform: a.platform, riskProfile: a.riskProfile, engine: a.engine,
+    modelReturn: a.modelReturn, sourceFile: a.sourceFile,
+    trades: a.trades, totalCurrent: a.totalCurrent, totalValue: a.totalValue, totalChange: a.totalChange,
+    comparison: a.comparison, compTotal: a.compTotal,
+    feeRows: a.feeRows, feeWrapper: a.feeWrapper, feeSummary: a.feeSummary, txn: a.txn,
+  }));
+  // Prefill what the document tells us, never overwriting what's already typed.
+  const people = [...new Set(found.map(a => a.owner).filter(o => careLooksPersonal(o)))];
+  if(people.length >= 2 && F.clientType === 'single' && !F.client1Name && !F.client2Name){
+    F.clientType = 'joint'; F.client1Name = people[0]; F.client2Name = people[1];
+  } else if(people.length === 1 && !F.client1Name){
+    F.client1Name = people[0];
+  }
+  const rp = found.map(a => a.riskProfile).filter(Boolean)[0];
+  if(rp && !F.globalRiskProfile) F.globalRiskProfile = rp;
+  if(rbalIsNoChange() && found.some(a => a.trades.length)) F.rbalType = 'rebalance';
+  render();
+  alert(`Imported ${F.rbalAccounts.length} account${F.rbalAccounts.length>1?'s':''} from the CARE document.${skipped.length?`\n\nSkipped:\n${skipped.join('\n')}`:''}`);
+}
+function rbalSetEngine(i, v){ if(F.rbalAccounts[i]) F.rbalAccounts[i].engine = v; render(); }
+function rbalRemoveAccount(i){ F.rbalAccounts.splice(i, 1); render(); }
+
+// ─── Builder ──────────────────────────────────────────────
+function renderRbalBuilder(){
+  const meta = rbalTypeMeta();
+  const steps = [
+    {k:'client',  l:'Client & Adviser Details', render: () => naaBlockClient()},
+    {k:'accounts',l:'Rebalance & Accounts',     render: () => rbalBlockSetup() + rbalBlockAccounts()},
+    {k:'content', l:'Updates & Action Items',   render: () => rbalBlockContent()},
+  ];
+  if(wizardStep >= steps.length) wizardStep = steps.length - 1;
+  if(wizardStep < 0) wizardStep = 0;
+  const cur = steps[wizardStep];
+
+  let h = `<main class="main builder-main-wide">`;
+  h += `<section class="hero" style="min-height:90px;padding:16px 20px">
+    <div class="hero-inner">
+      <div class="hero-left">
+        <div class="hero-sub">Step 2 of 3 · Record of Advice · Build Content</div>
+        <h1>${e(getFullClientName())}</h1>
+        <div class="hero-tag"><span class="badge lime">${e(meta[1])}</span></div>
+      </div>
+      <div class="hero-right">
+        <button class="hero-btn" onclick="page='preview';render()">Preview →</button>
+        <button class="hero-btn ghost" onclick="page='picker';render()">← Back to ROA Types</button>
+      </div>
+    </div>
+  </section>`;
+
+  h += `<div class="wizard-wrap ${livePreviewOn ? 'with-preview' : ''}">`;
+  h += `<aside class="wizard-side"><div class="wizard-steps-v">
+    <div class="sidebar-page-heading" style="margin:2px 4px 6px">Rebalance ROA steps</div>`;
+  steps.forEach((s, i) => {
+    h += `<button class="wizard-step ${i === wizardStep ? 'current' : 'todo'}" onclick="wizardStep=${i};render();window.scrollTo(0,0)">
+      <span class="ws-dot">${i + 1}</span><span class="ws-label">${e(s.l)}</span></button>`;
+  });
+  h += `</div>
+    <button class="btn btn-sm" style="width:100%;margin-top:10px" onclick="toggleLivePreview()">${livePreviewOn ? '✕ Hide live preview' : '👁 Show live preview'}</button>
+  </aside>`;
+
+  h += `<div class="builder-single-column wizard-main" style="width:100%">`;
+  h += `<div class="page-separator">
+    <span class="page-separator-num">Step ${wizardStep + 1} of ${steps.length}</span>
+    <span class="page-separator-label">${e(cur.l)}</span>
+  </div>`;
+  h += cur.render();
+  h += `<div class="wizard-nav">
+    ${wizardStep > 0
+      ? `<button class="btn" onclick="wizardStep--;render();window.scrollTo(0,0)">← ${e(steps[wizardStep - 1].l)}</button>`
+      : `<button class="btn" onclick="page='picker';render();window.scrollTo(0,0)">← ROA Types</button>`}
+    <span class="wizard-nav-mid">Step ${wizardStep + 1} of ${steps.length}</span>
+    ${wizardStep < steps.length - 1
+      ? `<button class="btn btn-blue" onclick="wizardStep++;render();window.scrollTo(0,0)">Next: ${e(steps[wizardStep + 1].l)}</button>`
+      : `<button class="btn btn-green" onclick="page='preview';render();window.scrollTo(0,0)">Finish → Preview</button>`}
+  </div>`;
+  h += `</div>`;
+  if(livePreviewOn) h += `<aside class="live-preview"><div class="preview-doc">${renderRbalDocHTML()}</div></aside>`;
+  h += `</div></main>`;
+  return h;
+}
+
+function rbalBlockSetup(){
+  const t = F.rbalType || 'rebalance';
+  let h = `<div class="section-block">
+    <div class="section-block-head">
+      <div class="section-block-title"><span>Type of Record of Advice</span></div>
+    </div>
+    <div class="section-block-body"><div class="card">
+      <div class="card-sub">Which of the review-compliance documents this is. The advice-type line on the cover page and the sections that print both follow from it.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">`;
+  RBAL_TYPES.forEach(([v, label, desc]) => {
+    h += `<button class="btn btn-sm ${t === v ? 'btn-blue' : ''}" title="${e(desc)}" onclick="F.rbalType='${v}';render()">${e(label)}</button>`;
+  });
+  h += `</div>
+      <div class="card-sub" style="margin:0"><strong>Type of Record of Advice:</strong> ${e(rbalTypeMeta()[3])}</div>
+    </div>`;
+
+  if(t === 'partial'){
+    h += `<div class="card">
+      <h4 style="margin:0 0 6px 0">Partial rollover</h4>
+      <div class="card-sub">Names the funds in the action item — e.g. "Matt, we will perform a partial rollover from QSuper to Hub24, after which we will perform a rebalance…".</div>
+      <div class="grid-2">
+        <div class="field"><label>Rolling over from</label><input value="${e(F.rbalRolloverFrom||'')}" placeholder="e.g. QSuper" onchange="F.rbalRolloverFrom=this.value;render()"></div>
+        <div class="field"><label>Rolling over to</label><input value="${e(F.rbalRolloverTo||'')}" placeholder="e.g. Hub24" onchange="F.rbalRolloverTo=this.value;render()"></div>
+      </div>
+    </div>`;
+  }
+
+  h += `<div class="card">
+      <h4 style="margin:0 0 6px 0">Dates</h4>
+      <div class="card-sub">Written into the document in the firm's house format — enter them as they should read, e.g. "the 17th of July 2026".</div>
+      <div class="grid-3">
+        <div class="field"><label>Review meeting date</label><input value="${e(F.rbalMeetingDate||'')}" placeholder="e.g. the 17th of July 2026" onchange="F.rbalMeetingDate=this.value;render()"></div>
+        <div class="field"><label>Statement of Advice dated</label><input value="${e(F.rbalSoaDate||'')}" placeholder="e.g. the 2nd of May 2025" onchange="F.rbalSoaDate=this.value;render()"></div>
+        <div class="field"><label>Ongoing Service agreement dated</label><input value="${e(F.rbalOsaDate||'')}" placeholder="e.g. the 22nd of July 2026" onchange="F.rbalOsaDate=this.value;render()"></div>
+      </div>
+      <div class="card-sub" style="margin:6px 0 0">The cover-page "Dated" line uses the ROA date on the Client &amp; Adviser step.</div>
+    </div>
+    <div class="card">
+      <h4 style="margin:0 0 6px 0">Risk profile</h4>
+      <div class="card-sub">Prints as "You remain a &lt;profile&gt; investor as stated in the SoA referred to above." Filled from the CARE document on import; type it here for a no-change ROA.</div>
+      <div class="field" style="max-width:340px;margin:0"><label>Risk profile</label>
+        <input value="${e(F.globalRiskProfile||'')}" placeholder="e.g. High Growth" onchange="F.globalRiskProfile=this.value;render()"></div>
+    </div>
+  </div></div>`;
+  return h;
+}
+
+function rbalBlockAccounts(){
+  const accts = rbalAccounts();
+  let h = `<div class="section-block">
+    <div class="section-block-head">
+      <div class="section-block-title"><span>CARE rebalance</span></div>
+      <div class="section-block-actions">${accts.length ? `<span class="pre-filled-badge">${accts.length} account${accts.length>1?'s':''}</span>` : ''}</div>
+    </div>
+    <div class="section-block-body"><div class="card">
+      <div class="card-sub">Upload the CARE rebalance document — the "Appendix to RoA" Word export. Everything the Record of Advice quotes is read from it: the account banner, risk profile, the Current → Proposed → Change trades, the Recommended Implications variations, the whole Investment Fees disclosure and the transactional costs. Export from CARE as <strong>Word, not PDF</strong> — a PDF loses the table structure.</div>
+      <label class="btn btn-blue btn-sm" style="cursor:pointer">⇪ Upload CARE document (.docx)
+        <input type="file" accept=".docx" multiple style="display:none" onchange="rbalImportCare(this)"></label>`;
+  if(rbalIsNoChange()){
+    h += `<div class="card-sub" style="margin-top:8px"><strong>No Change ROA:</strong> the rebalance, implications and fee tables are not printed. Uploading is optional — it only fills the risk profile and client names.</div>`;
+  }
+  h += `</div>`;
+
+  if(!accts.length){
+    h += `<div class="card"><div class="card-sub" style="margin:0">No CARE document imported yet.${rbalIsNoChange()?'':' The rebalance, implications and investment-fee tables will be empty until one is.'}</div></div>`;
+  }
+  accts.forEach((a, i) => {
+    const buys = (a.trades||[]).filter(t => !/^-/.test(String(t.change||'').trim())).length;
+    h += `<div class="card">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <h4 style="margin:0;flex:1">${e(a.banner)}</h4>
+        <button class="btn btn-xs btn-danger" onclick="rbalRemoveAccount(${i})">✕ Remove</button>
+      </div>
+      <div class="card-sub" style="margin:6px 0 8px">
+        ${e(a.riskProfile||'risk profile not stated')} · ${e(a.totalValue||'—')} ·
+        ${(a.trades||[]).length} trade row(s) (${buys} buy) · ${(a.comparison||[]).length} variation row(s) ·
+        ${(a.feeRows||[]).length ? (a.feeRows.length + ' fee-disclosure row(s)') : 'no fee disclosure'}${(a.txn&&a.txn.total&&a.txn.total.dollar)?` · transactional costs ${e(a.txn.total.dollar)}`:''}
+        ${a.sourceFile ? `· <em>${e(a.sourceFile)}</em>` : ''}
+      </div>
+      <div class="field" style="max-width:340px;margin:0">
+        <label>Investment menu (drives the fee disclosure)</label>
+        <select onchange="rbalSetEngine(${i}, this.value)">
+          <option value="care" ${a.engine==='care'?'selected':''}>CARE managed portfolios — full platform fee disclosure</option>
+          <option value="vanguard" ${a.engine!=='care'?'selected':''}>Index / Vanguard menu — transactional costs only</option>
+        </select>
+      </div>
+    </div>`;
+  });
+  h += `</div></div>`;
+  return h;
+}
+
+function rbalBlockContent(){
+  const t = F.rbalType || 'rebalance';
+  let h = `<div class="section-block">
+    <div class="section-block-head"><div class="section-block-title"><span>What this Record of Advice covers</span></div></div>
+    <div class="section-block-body">
+    <div class="card">
+      <h4 style="margin:0 0 6px 0">Updates</h4>
+      <div class="card-sub">What was refreshed on file at the review. Prints under "Updates:".</div>`;
+  (F.rbalUpdates||[]).forEach((b, i) => {
+    h += `<div style="display:grid;grid-template-columns:1fr auto;gap:5px;align-items:center;margin-bottom:5px">
+      <input class="field" style="margin:0" value="${e(b)}" onchange="F.rbalUpdates[${i}]=this.value" placeholder="Update">
+      <button class="btn btn-xs btn-danger" onclick="F.rbalUpdates.splice(${i},1);render()">✕</button></div>`;
+  });
+  h += `<button class="add-inline" onclick="if(!Array.isArray(F.rbalUpdates))F.rbalUpdates=[];F.rbalUpdates.push('');render()">+ Add update</button>
+    </div>
+    <div class="card">
+      <h4 style="margin:0 0 6px 0">Action items</h4>
+      <div class="card-sub">The first action item is written from the ROA type and can't be edited here — change the type or the rollover funds to change it. Add the rest of the meeting's actions below.</div>
+      <div class="card-sub" style="background:var(--surface-2);border-radius:6px;padding:8px 10px;margin-bottom:8px"><strong>●</strong> ${e(rbalLeadAction())}</div>`;
+  (F.rbalActions||[]).forEach((b, i) => {
+    h += `<div style="display:grid;grid-template-columns:1fr auto;gap:5px;align-items:start;margin-bottom:5px">
+      <textarea class="field" style="margin:0;min-height:48px" onchange="F.rbalActions[${i}]=this.value" placeholder="Action item">${e(b)}</textarea>
+      <button class="btn btn-xs btn-danger" onclick="F.rbalActions.splice(${i},1);render()">✕</button></div>`;
+  });
+  h += `<button class="add-inline" onclick="if(!Array.isArray(F.rbalActions))F.rbalActions=[];F.rbalActions.push('');render()">+ Add action item</button>
+    </div>`;
+
+  if(t !== 'nochange'){
+    h += `<div class="card">
+      <h4 style="margin:0 0 6px 0">Estimated capital gains and losses</h4>
+      <div class="card-sub">Prints after the Recommended Implications tables. Edit when a platform has an actual gain or loss to disclose.</div>
+      <textarea class="field" style="min-height:70px" onchange="F.rbalCgtNote=this.value;render()">${e(F.rbalCgtNote||RBAL_CGT_DEFAULT)}</textarea>
+    </div>
+    <div class="card">
+      <h4 style="margin:0 0 6px 0">Investment information &amp; conflicts</h4>
+      <label style="display:flex;gap:8px;align-items:center;font-size:13px">
+        <input type="checkbox" ${F.rbalShowInvestmentInfo!==false?'checked':''} onchange="F.rbalShowInvestmentInfo=this.checked;render()">
+        Include the Investment information section${rbalHasHub24()?', the Hub24 conflict paragraph and Associations and Conflicts':''}
+      </label>
+      <div class="card-sub" style="margin:6px 0 0">${rbalHasHub24()?'A Hub24 account was imported, so the Hub24 shareholding disclosure and the Associations and Conflicts section print automatically.':'No Hub24 account imported — the Hub24 conflict paragraphs are omitted.'}</div>
+    </div>`;
+  }
+  h += `</div></div>`;
+  return h;
+}
+
+// ─── Document content, shared by the preview and the Word export ──────────
+// Each entry is {kind:'h2'|'p'|'ul'|'table', ...} so the two renderers stay in
+// step — the preview can't drift from what actually exports.
+function rbalDocBlocks(){
+  const B = [];
+  const noChange = rbalIsNoChange();
+  const accts = rbalAccounts();
+  const showInfo = F.rbalShowInvestmentInfo !== false;
+
+  B.push({kind:'h2', text:'What this Record of Advice covers'});
+  B.push({kind:'p', text:`At our meeting on ${F.rbalMeetingDate||'[meeting date]'}, we discussed and reviewed your financial situation. I made the following recommendations to you:`});
+  B.push({kind:'h3', text:'Updates:'});
+  B.push({kind:'ul', items: rbalUpdateList()});
+  B.push({kind:'h3', text:'Action items'});
+  B.push({kind:'ul', items: rbalActionList()});
+
+  B.push({kind:'h2', text:'Basis of this Advice'});
+  B.push({kind:'p', text:`I have previously provided you with a Statement of Advice (SoA) dated ${F.rbalSoaDate||'[SoA date]'} which set out my recommendations to assist you achieve your stated goals, needs and objectives.`});
+  B.push({kind:'p', text:'I have considered your previous SoA, and discussed your situation with you, and have come to the view that:'});
+  B.push({kind:'ul', items:[
+    'your personal and financial circumstances are not significantly different from those described in the previous SoA referred to above; and',
+    'the basis on which this advice is given is not significantly different from the basis on which my previous advice was given.'
+  ]});
+  B.push({kind:'p', text:'If anything has changed in your personal circumstances, including your attitude to risk, or your needs or objectives, please disregard this advice and contact me to discuss your changed circumstances.'});
+
+  B.push({kind:'h2', text:'Risk Profile'});
+  B.push({kind:'p', text:`You remain a ${rbalRiskProfile()} investor as stated in the SoA referred to above.`});
+
+  if(!noChange){
+    B.push({kind:'h2', text:'Portfolio Rebalance'});
+    B.push({kind:'p', text:'You are no longer invested in line with the agreed asset allocation due to market movements and other transactions on your account. To bring you back in line with your investment strategy I recommend that you switch your investments to be invested as follows:'});
+    accts.filter(a => (a.trades||[]).length).forEach(a => {
+      B.push({kind:'table', caption:a.banner,
+        head:['Asset / Fund name','Current Amount','Proposed Amount','Change (Buy/Sell)'],
+        rows:(a.trades||[]).map(t => [t.product, t.current, t.proposed, t.change]),
+        foot:a.totalValue ? ['Total', a.totalCurrent||'', a.totalValue||'', a.totalChange||''] : null});
+    });
+    if(!accts.some(a => (a.trades||[]).length)) B.push({kind:'missing', text:'Portfolio Rebalance table — upload the CARE document'});
+    B.push({kind:'p', text:'The amounts shown are an estimate only, and is calculated using the latest available unit price. The actual value for this order may be more or less depending on the final unit price.'});
+
+    B.push({kind:'h2', text:'Recommended Implications'});
+    B.push({kind:'p', text:'Here is a summary of your current portfolio asset allocation compared with your recommended portfolio asset allocation.'});
+    accts.filter(a => (a.comparison||[]).length).forEach(a => {
+      B.push({kind:'table', caption:a.banner,
+        head:['Portfolio name','Current %','Proposed %','Variance, %'],
+        rows:(a.comparison||[]).map(c => [c.name, c.current, c.proposed, c.variance]),
+        foot:a.compTotal ? ['Total', a.compTotal.current||'', a.compTotal.proposed||'', a.compTotal.variance||''] : null});
+    });
+    if(!accts.some(a => (a.comparison||[]).length)) B.push({kind:'missing', text:'Recommended Implications table — upload the CARE document'});
+
+    B.push({kind:'h2', text:'Estimated capital gains and losses'});
+    B.push({kind:'p', text:F.rbalCgtNote||RBAL_CGT_DEFAULT});
+
+    B.push({kind:'h2', text:'Investment Fees'});
+    B.push({kind:'p', text:'Based on my recommendations, your fees will be as follows:'});
+    let anyFees = false;
+    accts.forEach(a => {
+      // A CARE-managed account reprints the platform's whole disclosure block.
+      if(a.engine === 'care' && (a.feeRows||[]).length){
+        B.push({kind:'table', layout:'fees', rows:a.feeRows.map(r => r.slice())});
+        anyFees = true; return;
+      }
+      // An index / external account discloses its transactional costs only.
+      const t = a.txn || {};
+      if(t.total && t.total.dollar){
+        B.push({kind:'table', layout:'fees', rows:[
+          [a.banner], ['Transactional Costs'],
+          ['Buy / Sell', (t.buySell&&t.buySell.dollar)||'', (t.buySell&&t.buySell.pct)||''],
+          ['Brokerage', (t.brokerage&&t.brokerage.dollar)||'Nil', (t.brokerage&&t.brokerage.pct)||'Nil'],
+          ['Total Transactional Costs', t.total.dollar||'', t.total.pct||'']
+        ]});
+        anyFees = true;
+      }
+    });
+    if(!anyFees) B.push({kind:'missing', text:'Investment Fees disclosure — upload the CARE document'});
+  }
+
+  B.push({kind:'h2', text:'Advice Fees'});
+  B.push({kind:'p', text:`There are no additional advice fees payable for this Record of Advice, as the cost of this advice is included as part of the Ongoing Service agreement dated ${F.rbalOsaDate||'[OSA date]'} that we have entered into.`});
+
+  if(!noChange && showInfo){
+    B.push({kind:'h2', text:'Investment information'});
+    B.push({kind:'p', text:'I have provided you with the Funds Information and Product Disclosure Statements for or any new managed funds being invested into as part of this advice. You can locate the latest versions of these documents by contacting me. I have also provided you with copies of research reports for any new direct equity holdings or ETFs invested as part of this advice.'});
+    if(rbalHasHub24()){
+      B.push({kind:'p', text:'Hub24 is a platform provider on our APL that has a material shareholding in GPS Wealth’s parent company Diverger Limited. Importantly, I am not subject to any incentive, sales target, or obligation to recommend the Hub24 platform. I manage this conflict by ensuring that any advice that I provide to you is demonstrably in your best interests and appropriate for your needs, objectives, and circumstances.'});
+    }
+  }
+
+  B.push({kind:'h2', text:'Disclosures'});
+  B.push({kind:'p', text:'The disclosures under the Remuneration in the above-mentioned SOA have not changed.'});
+
+  if(!noChange && showInfo && rbalHasHub24()){
+    B.push({kind:'h2', text:'Associations and Conflicts'});
+    B.push({kind:'p', text:'Diverger Limited (Diverger), an ASX listed company, is the owner of GPS Wealth Ltd. Hub24, a platform provider, has a material shareholding in Diverger. The Hub24 platform is on the GPS Wealth approved product list and GPS Wealth advisers do recommend Hub24 when it is appropriate and in a client’s best interests. This creates a potential conflict of interest for GPS Wealth which must be managed. Importantly, no GPS Wealth adviser or practice is under any incentive, sales target or obligation to recommend the Hub24 platform. I may hold an immaterial shareholding in Hub24.'});
+    B.push({kind:'p', text:'We manage these conflicts by ensuring that any advice we provide to you is demonstrably in your best interests and appropriate for your needs, objectives and circumstances.'});
+  }
+  return B;
+}
+// A one-cell row in a fee block is either a section band (short: "Super",
+// "Transactional Costs") or the ICR footnote (long) — they print differently.
+function rbalFeeRowKind(row){
+  if(row.filter(c => String(c||'').length) .length > 1) return 'data';
+  return String(row[0]||'').length > 70 ? 'note' : 'band';
+}
+
+function renderRbalDocHTML(){
+  const cn = getFullClientName();
+  let h = `<img src="data:image/png;base64,${BRAND_HEADER_PNG_B64}" alt="My Wealth Solutions" style="display:block;width:100%;max-width:700px;margin:0 0 18px 0" />
+    <h1>Record of Advice</h1>
+    <div class="cover-grid">
+      <div class="cover-left">
+        Prepared for <strong>${e(cn)}</strong><br><br>
+        By ${e(F.adviserName||'[Adviser]')}<br>
+        ${F.subAuthRepNo ? `Sub-Authorised Representative ${e(F.subAuthRepNo)} of <br>` : ''}
+        ${e(F.corpRepName||'My Wealth Solutions')}<br>
+        Corporate Authorised Representative ${e(F.corpRepNo||'414145')} of<br>
+        ${e(F.licensee||'GPS Wealth Ltd')} AFSL ${e(F.licenseeAFSL||'254 544')}<br>
+        ABN ${e(F.licenseeABN||'17 005 482 726')}<br><br>
+        ${e(F.licenseeAddress||'')}<br>
+        T: ${e(F.licenseePhone||'')}<br>
+        E: ${e(F.licenseeEmail||'')}<br><br>
+        Dated: <strong>${e(ordD(F.roaDate)||'[Date]')}</strong>
+      </div>
+      <div class="cover-right">
+        <strong>What this Document is About</strong><br><br>
+        This Record of Advice (RoA) explains my advice.<br><br>
+        Please make sure you read each section of the RoA. If you feel any information is incorrect, please contact me directly, as it may affect the recommendations contained in this document.<br><br>
+        <strong>My Contact Details</strong><br>
+        You can contact me on: ${e(F.adviserPhone||'[Phone]')}<br>
+        My email address is: ${e(F.adviserEmail||'[Email]')}<br><br>
+        Street address: ${e(F.adviserStreet||'[Address]')}<br><br>
+        You can also visit the GPS Wealth website at ${e(F.licenseeWeb||'www.gpswealth.com.au')}
+      </div>
+    </div>
+    <table class="roa-type-table"><tbody>
+      <tr><td class="head" colspan="2"><strong>Type of Record of Advice:</strong></td></tr>
+      <tr><td class="head" style="width:35%"><strong>Additional Advice</strong></td><td>${e(rbalTypeMeta()[3])}</td></tr>
+    </tbody></table>`;
+
+  rbalDocBlocks().forEach(b => {
+    if(b.kind === 'h2') h += `<h2>${e(b.text)}</h2>`;
+    else if(b.kind === 'h3') h += `<h3>${e(b.text)}</h3>`;
+    else if(b.kind === 'p') h += `<p>${e(b.text)}</p>`;
+    else if(b.kind === 'ul'){ h += `<ul>${(b.items||[]).map(i => `<li>${e(i)}</li>`).join('')}</ul>`; }
+    else if(b.kind === 'missing') h += `<p style="color:#B45309;font-style:italic">[${e(b.text)}]</p>`;
+    else if(b.kind === 'table'){
+      const width = Math.max(b.head?b.head.length:0, b.foot?b.foot.length:0, ...(b.rows||[]).map(r => r.length), 1);
+      h += `<table class="alloc-doc"><thead>`;
+      if(b.caption) h += `<tr class="dca-band"><td colspan="${width}">${e(b.caption)}</td></tr>`;
+      if(b.head) h += `<tr>${b.head.map(x => `<th>${e(x)}</th>`).join('')}</tr>`;
+      h += `</thead><tbody>`;
+      (b.rows||[]).forEach(r => {
+        if(b.layout === 'fees'){
+          const kind = rbalFeeRowKind(r);
+          if(kind === 'band'){ h += `<tr class="dca-band"><td colspan="${width}">${e(r[0]||'')}</td></tr>`; return; }
+          if(kind === 'note'){ h += `<tr class="dca-body"><td colspan="${width}" style="font-size:8.5px;line-height:1.45;color:#4a5a67">${e(r[0]||'')}</td></tr>`; return; }
+        }
+        const pad = width - r.length;
+        h += `<tr>${r.map((c, i) => {
+          const last = i === r.length - 1;
+          return `<td${last && pad > 0 ? ` colspan="${pad+1}"` : ''}${i>0?' style="text-align:right"':''}>${e(c)}</td>`;
+        }).join('')}</tr>`;
+      });
+      if(b.foot) h += `<tr class="alloc-total">${b.foot.map((c, i) => `<td${i>0?' style="text-align:right"':''}><strong>${e(c)}</strong></td>`).join('')}</tr>`;
+      h += `</tbody></table>`;
+    }
+  });
+  return h;
+}
+
+function renderRbalPreview(){
+  let h = `<main class="main">`;
+  h += `<section class="hero" style="min-height:90px;padding:16px 20px">
+    <div class="hero-inner">
+      <div class="hero-left">
+        <div class="hero-sub">Step 3 of 3 · ${e(rbalTypeMeta()[1])} · Preview &amp; Export</div>
+        <h1>Preview</h1>
+      </div>
+      <div class="hero-right">
+        <button class="hero-btn" onclick="exportRbalDocx()">📄 Export to Word</button>
+        <button class="hero-btn ghost" onclick="exportRoaJson()" title="Save this document's data as a .json file so you can reopen and keep working on it later.">💾 Save (JSON)</button>
+        <label class="hero-btn ghost" title="Load a previously-saved .json working file." style="cursor:pointer">📂 Load (JSON)
+          <input type="file" accept=".json,application/json" style="display:none" onchange="importRoaJson(this)">
+        </label>
+        <button class="hero-btn ghost" onclick="page='builder';render()">← Back to Builder</button>
+      </div>
+    </div>
+  </section>`;
+  h += `<div class="preview-wrap"><div class="preview-doc" id="preview-doc">` + renderRbalDocHTML() + `</div></div></main>`;
+  return h;
+}
+
+// ─── Word export — same brand chrome as the ROA / NAA exporters ───────────
+async function exportRbalDocx(){
+  if(typeof docx === 'undefined'){ alert('docx library not loaded. Please refresh the page.'); return; }
+  const D = docx;
+  const { Document, Packer, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType,
+    BorderStyle, ShadingType, PageOrientation, LevelFormat, convertInchesToTwip, Header, Footer, ImageRun,
+    HorizontalPositionAlign, VerticalPositionAlign, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom,
+    TextWrappingType, TableLayoutType } = D;
+
+  const NY = "0C2E3F", BL = "2F6FE4", BAND = "5EA6FF", TL = "E5F4F6", BORD = "D4E2EE";
+  const TW = 9950;                      // table width, matching the other exporters
+  const cn = getFullClientName();
+
+  const H1 = t => new Paragraph({spacing:{before:240, after:360},
+    children:[new TextRun({text:t, font:"ABC Arizona Flare", size:48, color:NY})]});
+  const H2 = t => new Paragraph({spacing:{before:400, after:200},
+    border:{bottom:{color:BL, space:4, style:BorderStyle.SINGLE, size:12}},
+    children:[new TextRun({text:t, font:"ABC Arizona Flare", size:32, color:NY})]});
+  const H3 = t => new Paragraph({spacing:{before:180, after:100},
+    children:[new TextRun({text:t, font:"Nunito", size:19, bold:true, color:NY})]});
+  const P = t => new Paragraph({spacing:{before:0, after:160},
+    children:[new TextRun({text:t, font:"Nunito", size:19, color:"1a1a1a"})]});
+  const Bul = t => new Paragraph({numbering:{reference:"bullets", level:0}, spacing:{after:80},
+    children:[new TextRun({text:t, font:"Nunito", size:19, color:"1a1a1a"})]});
+  const Missing = t => new Paragraph({spacing:{after:160},
+    children:[new TextRun({text:'[' + t + ']', font:"Nunito", size:19, color:"B45309", italics:true})]});
+  const cell = (txt, o={}) => new TableCell({
+    columnSpan: o.span || 1,
+    width:{size:o.w||TW, type:WidthType.DXA},
+    shading:{type:ShadingType.CLEAR, fill:o.shade||TL, color:"auto"},
+    margins:{top:70, bottom:70, left:130, right:130},
+    borders:{ top:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4}, bottom:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4},
+              left:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4}, right:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4} },
+    children:[new Paragraph({alignment:o.align||AlignmentType.LEFT, spacing:{before:0, after:0},
+      children:[new TextRun({text:String(txt==null?'':txt), font:o.font||"Nunito", size:o.size||18,
+        color:o.color||"1a1a1a", bold:!!o.bold})]})]
+  });
+  const docxTable = b => {
+    const width = Math.max(b.head?b.head.length:0, b.foot?b.foot.length:0, ...(b.rows||[]).map(r => r.length), 1);
+    const firstW = width > 1 ? Math.round(TW * (width > 3 ? 0.40 : 0.50)) : TW;
+    const restW = width > 1 ? Math.round((TW - firstW) / (width - 1)) : 0;
+    const cw = [firstW]; for(let i=1;i<width;i++) cw.push(restW);
+    const span = (from, n) => { let w = 0; for(let i=from;i<Math.min(from+n, cw.length);i++) w += cw[i]; return w; };
+    const rows = [];
+    if(b.caption) rows.push(new TableRow({children:[cell(b.caption, {w:TW, span:width, shade:BAND, color:"FFFFFF", bold:true})]}));
+    if(b.head) rows.push(new TableRow({tableHeader:true, children:b.head.map((t, i) =>
+      cell(t, {w:cw[i], shade:NY, color:"FFFFFF", bold:true, font:"ABC Arizona Flare",
+        align:i ? AlignmentType.CENTER : AlignmentType.LEFT}))}));
+    (b.rows||[]).forEach(r => {
+      if(b.layout === 'fees'){
+        const kind = rbalFeeRowKind(r);
+        if(kind === 'band'){ rows.push(new TableRow({children:[cell(r[0]||'', {w:TW, span:width, shade:BAND, color:"FFFFFF", bold:true})]})); return; }
+        if(kind === 'note'){ rows.push(new TableRow({children:[cell(r[0]||'', {w:TW, span:width, shade:"FFFFFF", size:15})]})); return; }
+      }
+      const pad = width - r.length;
+      const cells = r.map((c, i) => {
+        const last = i === r.length - 1;
+        return cell(c, {w: last && pad > 0 ? span(i, pad + 1) : cw[i],
+          span: last && pad > 0 ? pad + 1 : 1,
+          align: i ? AlignmentType.RIGHT : AlignmentType.LEFT});
+      });
+      rows.push(new TableRow({children:cells}));
+    });
+    if(b.foot) rows.push(new TableRow({children:b.foot.map((c, i) =>
+      cell(c, {w:cw[i], bold:true, align:i ? AlignmentType.RIGHT : AlignmentType.LEFT}))}));
+    return new Table({layout:TableLayoutType.FIXED, width:{size:TW, type:WidthType.DXA}, columnWidths:cw, rows});
+  };
+  function b64ToUint8(b64){ const bin = atob(b64); const u = new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i] = bin.charCodeAt(i); return u; }
+
+  const children = [];
+  children.push(H1("Record of Advice"));
+
+  // Cover two-column "prepared for" / "what this document is about"
+  const coverW = [4975, 4975];
+  const coverLine = t => new Paragraph({spacing:{before:0, after:60}, children:[new TextRun({text:t, font:"Nunito", size:19})]});
+  const coverLeft = [
+    new Paragraph({spacing:{after:60}, children:[new TextRun({text:"Prepared for ", font:"Nunito", size:19}), new TextRun({text:cn, font:"Nunito", size:19, bold:true})]}),
+    coverLine("By " + (F.adviserName||"[Adviser]")),
+  ];
+  if(F.subAuthRepNo) coverLeft.push(coverLine("Sub-Authorised Representative " + F.subAuthRepNo + " of"));
+  coverLeft.push(coverLine(F.corpRepName||"My Wealth Solutions"));
+  coverLeft.push(coverLine("Corporate Authorised Representative " + (F.corpRepNo||"414145") + " of"));
+  coverLeft.push(coverLine((F.licensee||"GPS Wealth Ltd") + " AFSL " + (F.licenseeAFSL||"254 544")));
+  coverLeft.push(coverLine("ABN " + (F.licenseeABN||"17 005 482 726")));
+  coverLeft.push(coverLine(F.licenseeAddress||""));
+  coverLeft.push(coverLine("T: " + (F.licenseePhone||"")));
+  coverLeft.push(coverLine("E: " + (F.licenseeEmail||"")));
+  coverLeft.push(new Paragraph({spacing:{before:120, after:0}, children:[
+    new TextRun({text:"Dated: ", font:"Nunito", size:19}),
+    new TextRun({text:(ordD(F.roaDate)||"[Date]"), font:"Nunito", size:19, bold:true})]}));
+  const coverRight = [
+    new Paragraph({spacing:{after:100}, children:[new TextRun({text:"What this Document is About", font:"Nunito", size:19, bold:true})]}),
+    coverLine("This Record of Advice (RoA) explains my advice."),
+    coverLine("Please make sure you read each section of the RoA. If you feel any information is incorrect, please contact me directly, as it may affect the recommendations contained in this document."),
+    new Paragraph({spacing:{before:120, after:100}, children:[new TextRun({text:"My Contact Details", font:"Nunito", size:19, bold:true})]}),
+    coverLine("You can contact me on: " + (F.adviserPhone||"[Phone]")),
+    coverLine("My email address is: " + (F.adviserEmail||"[Email]")),
+    coverLine("Street address: " + (F.adviserStreet||"[Address]")),
+    coverLine("You can also visit the GPS Wealth website at " + (F.licenseeWeb||"www.gpswealth.com.au")),
+  ];
+  const coverCell = (kids, w) => new TableCell({width:{size:w, type:WidthType.DXA},
+    shading:{type:ShadingType.CLEAR, fill:TL, color:"auto"}, margins:{top:120, bottom:120, left:150, right:150},
+    borders:{ top:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4}, bottom:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4},
+              left:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4}, right:{color:BORD,space:0,style:BorderStyle.SINGLE,size:4} },
+    children:kids});
+  children.push(new Table({layout:TableLayoutType.FIXED, width:{size:TW, type:WidthType.DXA}, columnWidths:coverW,
+    rows:[new TableRow({children:[coverCell(coverLeft, coverW[0]), coverCell(coverRight, coverW[1])]})]}));
+  children.push(new Paragraph({spacing:{after:200}, children:[]}));
+
+  // Type of Record of Advice
+  children.push(docxTable({rows:[['Type of Record of Advice:'], ['Additional Advice', rbalTypeMeta()[3]]], layout:'fees'}));
+  children.push(new Paragraph({spacing:{after:120}, children:[]}));
+
+  rbalDocBlocks().forEach(b => {
+    if(b.kind === 'h2') children.push(H2(b.text));
+    else if(b.kind === 'h3') children.push(H3(b.text));
+    else if(b.kind === 'p') children.push(P(b.text));
+    else if(b.kind === 'ul') (b.items||[]).forEach(i => children.push(Bul(i)));
+    else if(b.kind === 'missing') children.push(Missing(b.text));
+    else if(b.kind === 'table'){ children.push(docxTable(b)); children.push(new Paragraph({spacing:{after:140}, children:[]})); }
+  });
+
+  const doc = new Document({
+    creator:"My Wealth Solutions",
+    title:"Record of Advice",
+    styles:{default:{document:{run:{font:"Nunito", size:19}}}},
+    numbering:{config:[{reference:"bullets", levels:[{level:0, format:LevelFormat.BULLET, text:"•",
+      alignment:AlignmentType.LEFT, style:{paragraph:{indent:{left:convertInchesToTwip(0.4), hanging:convertInchesToTwip(0.25)}}}}]}]},
+    sections:[{
+      properties:{ page:{ size:{width:11906, height:16838, orientation:PageOrientation.PORTRAIT},
+        margin:{top:3402, right:978, bottom:1077, left:978, header:992, footer:896} } },
+      headers:{ default: new Header({children:[new Paragraph({spacing:{before:0, after:0}, children:[new ImageRun({
+        type:"png", data:b64ToUint8(BRAND_HEADER_PNG_B64), transformation:{width:794, height:224},
+        floating:{ horizontalPosition:{relative:HorizontalPositionRelativeFrom.PAGE, align:HorizontalPositionAlign.LEFT},
+                   verticalPosition:{relative:VerticalPositionRelativeFrom.PAGE, align:VerticalPositionAlign.TOP},
+                   behindDocument:false, wrap:{type:TextWrappingType.NONE} }})]})]}) },
+      footers:{ default: new Footer({children:[new Paragraph({spacing:{before:0, after:0}, children:[new ImageRun({
+        type:"png", data:b64ToUint8(BRAND_FOOTER_PNG_B64), transformation:{width:794, height:84},
+        floating:{ horizontalPosition:{relative:HorizontalPositionRelativeFrom.PAGE, align:HorizontalPositionAlign.LEFT},
+                   verticalPosition:{relative:VerticalPositionRelativeFrom.PAGE, align:VerticalPositionAlign.BOTTOM},
+                   behindDocument:false, wrap:{type:TextWrappingType.NONE} }})]})]}) },
+      children
+    }]
+  });
+
+  const blob = await Packer.toBlob(doc);
+  const kind = {rebalance:'Rebalance', partial:'PartialRollover', nochange:'NoChange'}[F.rbalType||'rebalance'] || 'Rebalance';
+  const filename = `${kind}_ROA_${(cn||'Client').replace(/[^a-z0-9]/gi,'_')}_${F.roaDate || todayLocalISO()}.docx`;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  exportRoaJson();   // paired JSON working copy, same name
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 0);
+}
+
 function renderNAABuilder(){
   const NAA_TYPE_LABELS = {purchase:'Purchase (Execution Only)', selldown:'Sell Specific Holdings & Withdrawal', selldown_partial:'Partial Selldown & Withdrawal', selldown_full:'Full Selldown & Withdrawal', pension_withdrawal:'Pension / Super Withdrawal', other:'Other Instruction'};
   const steps = [
@@ -22797,12 +23591,14 @@ function render(){
   else if(page==='builder') {
     if(docType === 'Strategy') html += renderStrategyBuilder();
     else if(docType === 'NAA') html += renderNAABuilder();
+    else if(docType === 'RBAL') html += renderRbalBuilder();
     else if(docType === 'NWF') html += renderNWFBuilder();
     else html += renderBuilder();
   }
   else if(page==='preview') {
     if(docType === 'Strategy') html += renderStrategyPreview();
     else if(docType === 'NAA') html += renderNAAPreview();
+    else if(docType === 'RBAL') html += renderRbalPreview();
     else if(docType === 'NWF') html += renderNWFPreview();
     else html += renderPreview();
   }
