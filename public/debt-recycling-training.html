@@ -1499,7 +1499,7 @@ function svgLanes() {
     '<path id="ln4" d="M426 252 L454 252" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
 
     '<path id="ln5" d="M335 222 L335 108" style="stroke:var(--green);stroke-width:3" marker-end="url(#ab)"/>' +
-    '<text x="352" y="150" style="font:800 12px var(--bf);fill:var(--green)">✓ income &amp; tax refunds</text>' +
+    '<text x="352" y="150" style="font:800 12px var(--bf);fill:var(--green)">✓ the tax refund</text>' +
     '<text x="352" y="170" style="' + F.s + '">the one crossing the strategy is built on</text>' +
 
     '<path d="M125 222 L125 108" style="stroke:var(--red);stroke-width:3;stroke-dasharray:6 5"/>' +
@@ -1810,7 +1810,7 @@ MODULES.push({
    ========================================================================== */
 MODULES.push({
   slug: "why-you",
-  mins: 3,
+  mins: 2,
   title: "Why this matters, and where you fit in",
   sub: "The problem, the cast, your part",
   lede: "You will never recommend this strategy or sell it. You will be the one keeping it on the rails — " +
@@ -1824,10 +1824,17 @@ MODULES.push({
     '<figcaption>Figure 1 — the first two columns are the choice most people think they have. ' +
     'The third is what an adviser can build for them.</figcaption></figure>' +
 
-    '<div class="callout c-tip"><h4>💡 The strategy in one line</h4>' +
-    '<p style="margin:0">Use the equity already sitting in the home to invest, so that part of the mortgage interest ' +
-    'becomes deductible — then send the investment income and the tax refund straight back at the mortgage. ' +
-    'The debt slowly turns from bad debt into good debt. That is the whole idea — the next ten modules are the mechanics.</p></div>' +
+    '<div class="callout c-tip"><h4>💡 The strategy, step by step</h4>' +
+    '<p>Same total debt, different character. A slice of non-deductible home loan is swapped for a deductible ' +
+    'investment split:</p>' +
+    '<ol style="margin-bottom:10px">' +
+      '<li><strong>Repay a slice of the home loan.</strong> That part of the mortgage is gone.</li>' +
+      '<li><strong>Re-borrow the same amount</strong> as a separate investment split, and buy income-producing ' +
+      'assets with it.</li>' +
+      '<li><strong>The interest on that split is deductible.</strong> The interest on the slice it replaced was not.</li>' +
+    '</ol>' +
+    '<p style="margin:0">The deduction produces a tax refund, which goes back against the home loan. The investment ' +
+    'income is reinvested, so the portfolio compounds. Then it repeats — each round moving another slice across.</p></div>' +
 
     '<h2>Who does what</h2>' +
     '<p>Six roles sit around this strategy, and two of them are yours depending on the seat you are in. ' +
@@ -1871,37 +1878,12 @@ MODULES.push({
              "They can only claim what they can evidence — which comes from the documents you have been filing all year.</p>" }
       } },
 
-    '<h3>A typical month on a debt recycling client</h3>' +
-    '<div class="tablewrap"><table class="t"><thead><tr><th style="width:34%">What lands</th><th>What you do with it</th></tr></thead><tbody>' +
-    '<tr><td>A distribution hits the client\'s cash account</td><td>Check it arrived, check it was swept where the plan says.</td></tr>' +
-    '<tr><td>The broker sends a new loan schedule</td><td>Check the amount, the repayment type, and that no offset is attached to the investment split.</td></tr>' +
-    '<tr><td>Monthly loan statements</td><td>Confirm the home loan is falling and the investment split has not moved.</td></tr>' +
-    '<tr><td>A client asks “can I take $20k out?”</td><td>Work out which account it should come from — and escalate if the answer is the wrong one.</td></tr>' +
-    '<tr><td>A review is booked in six weeks</td><td>Start pulling statements, valuations and interest summaries now, not the night before.</td></tr>' +
-    '</tbody></table></div>' +
-
     '<div class="callout c-rule"><h4>💸 Why the accuracy matters, in dollars</h4>' +
     '<p>Suppose $20,000 of a $100,000 investment split gets spent on something private. At 6% interest, ' +
     'that is $1,200 of interest a year that is no longer deductible. For a client on 47%, that is ' +
     '<strong>$564 of lost tax benefit every single year</strong> — and it does not fix itself.</p>' +
     '<p style="margin:0">Over a twenty-year loan, one transfer to the wrong account costs the client more than ' +
     '<strong>$11,000</strong>. That is the whole reason this course exists.</p></div>',
-
-    { id: "m0bq1", kind: "cloze",
-      q: "Who would you take each of these to?",
-      rows: [
-        { lbl: "“Should I put the next $50,000 into a new split or leave it in the offset?”",
-          opts: ["The adviser", "The associate adviser", "The mortgage broker", "The accountant", "Answer it yourself"], a: 0 },
-        { lbl: "The debt transfer instruction for this client has not been refreshed this year.",
-          opts: ["The adviser", "The associate adviser", "The mortgage broker", "The accountant", "Answer it yourself"], a: 1 },
-        { lbl: "“How much can I actually borrow against the house?”",
-          opts: ["The adviser", "The associate adviser", "The mortgage broker", "The accountant", "Answer it yourself"], a: 2 },
-        { lbl: "“How do I actually claim this in my tax return?”",
-          opts: ["The adviser", "The associate adviser", "The mortgage broker", "The accountant", "Answer it yourself"], a: 3 },
-        { lbl: "“Has my quarterly distribution come through yet?”",
-          opts: ["The adviser", "The associate adviser", "The mortgage broker", "The accountant", "Answer it yourself"], a: 4 }
-      ],
-      why: "Anything starting with “should I” is the adviser. The transfer instructions and the calcs behind them are the associate. Borrowing capacity and loan mechanics are the broker. Lodging the return is the accountant. Facts about what has already happened in the accounts are yours — and answering those quickly is most of the value you add." },
 
     ]
 });
@@ -1948,8 +1930,8 @@ MODULES.push({
     '<div class="grid3">' +
       '<div class="tile"><h4>1. The tax deduction</h4><p>Interest on the investment split reduces taxable income, ' +
       'so the ATO effectively pays part of the interest bill.</p></div>' +
-      '<div class="tile"><h4>2. Redirected cash flow</h4><p>Investment income and the annual tax refund are pushed onto the ' +
-      'home loan, killing the non-deductible balance faster.</p></div>' +
+      '<div class="tile"><h4>2. Redirected cash flow</h4><p>The annual tax refund is pushed onto the home loan, ' +
+      'killing the non-deductible balance faster and freeing up the next slice sooner.</p></div>' +
       '<div class="tile"><h4>3. Time in the market</h4><p>The portfolio starts compounding <em>now</em> instead of after ' +
       'the 25–30 years it takes most families to clear a mortgage.</p></div>' +
     '</div>' +
@@ -2258,12 +2240,12 @@ MODULES.push({
            "and distributions. Property is also used. The borrowed funds must buy income-producing assets for the interest to be deductible.</p>" +
            "<p style='margin:0'><strong>What you do:</strong> invest the <em>full</em> drawn amount promptly, in the correct entity name, " +
            "and file the contract notes. Money left sitting in the CMA weakens the link between the borrowing and the investment.</p>" },
-      { n: "5", t: "Point the income and the tax refund at the home loan",
-        d: "<p>Cash distributions and the annual tax refund flow back to reduce the non-deductible balance — which frees up more " +
-           "equity to recycle. Some clients instead reinvest dividends to compound the portfolio; our guide notes both approaches " +
-           "work, and it is the adviser who decides which applies.</p>" +
-           "<p style='margin:0'><strong>What you do:</strong> check each period that distributions actually arrived and were actually " +
-           "swept where the strategy says they should go. This is the step that quietly fails.</p>" },
+      { n: "5", t: "Reinvest the income, and point the refund at the home loan",
+        d: "<p>Dividends and distributions are <strong>reinvested</strong> back into the portfolio, so the holding " +
+           "compounds on itself. The annual <strong>tax refund</strong> is the flow that goes the other way — onto the " +
+           "non-deductible balance, freeing up the next slice sooner.</p>" +
+           "<p style='margin:0'><strong>What you do:</strong> check each period that the income actually arrived and was " +
+           "actually reinvested, and that the refund landed where the strategy says. This is the step that quietly fails.</p>" },
       { n: "6", t: "Repeat",
         d: "<p>The home loan shrinks, the portfolio grows, and the next split is drawn. The strategy rewards consistency and " +
            "patience rather than timing the market.</p>" +
@@ -2283,7 +2265,7 @@ MODULES.push({
         "Set up a separate investment loan split with the lender",
         "Redraw from the investment split into a clean account",
         "Invest the funds into income-producing assets",
-        "Direct investment income and the tax refund back at the home loan",
+        "Reinvest the income; send the tax refund to the home loan",
         "Repeat — recycle the next tranche"
       ],
       why: "Equity first, structure second, then draw, invest, redirect the income, and go again. The order matters: drawing before the split exists is exactly how loans get contaminated." },
@@ -2315,7 +2297,7 @@ MODULES.push({
     '<div class="tablewrap"><table class="t"><thead><tr><th style="width:30%">Money event</th><th style="width:26%">Where it goes</th><th>Why</th></tr></thead><tbody>' +
     '<tr><td>Salary and surplus cash</td><td>Offset (Split A)</td><td>Works against the non-deductible balance while staying liquid.</td></tr>' +
     '<tr><td>Split B drawdown</td><td>Clean, nil-balance CMA → straight to the investment</td><td>Keeps borrowed funds traceable to their investment purpose.</td></tr>' +
-    '<tr><td>Dividends and distributions</td><td>CMA → swept to the offset (or reinvested, per the advice)</td><td>Investment income doing the work of paying down bad debt.</td></tr>' +
+    '<tr><td>Dividends and distributions</td><td>CMA → reinvested into the portfolio</td><td>The holding compounds on itself instead of the cash leaking away.</td></tr>' +
     '<tr><td>Annual tax refund</td><td>Offset / Split A</td><td>It exists because of the deduction — send it where it accelerates the strategy.</td></tr>' +
     '<tr><td>Interest charged on Split B</td><td>Paid from the CMA or a personal account</td><td>Never capitalised onto the split itself without specific advice.</td></tr>' +
     '<tr><td>A bonus or inheritance</td><td>Offset first — then flag it to the adviser</td><td>Parking it is always safe; whether to recycle it is an advice decision.</td></tr>' +
@@ -2324,12 +2306,13 @@ MODULES.push({
     '</tbody></table></div>' +
 
     '<figure class="figure">' + svgLanes() +
-    '<figcaption>Figure 1 — two streams of money, running in parallel. Investment income and tax refunds cross ' +
-    'upward on purpose; nothing crosses downward.</figcaption></figure>' +
+    '<figcaption>Figure 1 — two streams running in parallel. The tax refund crosses upward on purpose. Investment ' +
+    'income stays on the investment side and is reinvested. Nothing crosses downward.</figcaption></figure>' +
 
     '<div class="callout c-note"><h4>🧠 The rule behind the whole table</h4>' +
-    '<p style="margin:0"><strong>Personal money attacks non-deductible debt. Borrowed money buys investments. ' +
-    'The two streams never touch.</strong> Hold onto that and most routing questions answer themselves.</p></div>',
+    '<p style="margin:0"><strong>Personal money attacks non-deductible debt. Borrowed money buys investments, and ' +
+    'what those investments earn is reinvested.</strong> The only thing crossing between the two is the tax refund. ' +
+    'Hold onto that and most routing questions answer themselves.</p></div>',
 
     { id: "m5q1", kind: "cloze",
       q: "Route each of these. Choose the correct destination from the list.",
@@ -2339,7 +2322,7 @@ MODULES.push({
         { lbl: "A $60,000 drawdown from the new investment split should be paid into…",
           opts: ["The client's everyday account", "The offset account", "A clean, nil-balance CMA", "Split A, to reduce it"], a: 2 },
         { lbl: "A $3,100 quarterly ETF distribution arrives in the CMA. Per the strategy it should be…",
-          opts: ["Left in the CMA indefinitely", "Swept to the offset, or reinvested if that is what the advice says", "Paid off Split B", "Sent to the client's credit card"], a: 1 },
+          opts: ["Left in the CMA indefinitely", "Reinvested into the portfolio", "Paid off Split B", "Sent to the client's credit card"], a: 1 },
         { lbl: "The client's $8,400 tax refund from the interest deduction should go to…",
           opts: ["The offset / Split A", "Split B", "The investment account, to buy more units", "Wherever the client prefers"], a: 0 },
         { lbl: "The client asks to take $15,000 out for a holiday. The funds should come from…",
@@ -2929,7 +2912,7 @@ renderEx = function (ex) { return LATE_KINDS[ex.kind] ? LATE_KINDS[ex.kind](ex) 
    ========================================================================== */
 MODULES.push({
   slug: "assessment",
-  mins: 4,
+  mins: 5,
   title: "Glossary & final assessment",
   sub: "Reference and assessment",
   lede: "The vocabulary you will hear in adviser file notes and broker emails, followed by the assessment. " +
