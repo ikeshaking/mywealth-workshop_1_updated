@@ -973,7 +973,7 @@ function renderModule(slug) {
   main.appendChild(row);
   main.appendChild(el("p", { class: "footnote", html:
     "MyWealth Solutions — internal staff training. Tax rates and thresholds are the resident individual rates for the " +
-    "<strong>2026–27 income year, current as at 4 July 2026</strong>; review this module whenever the rates change. " +
+    "<strong>2026–27 income year, and the law as at 5 August 2026</strong>; review this module whenever either changes. " +
     "General information for training purposes only; it is not financial or tax advice and must not be given to clients. " +
     "My Wealth Solutions Pty Ltd is a Corporate Authorised Representative (414145) of GPS Wealth Ltd, AFSL 254544." }));
 
@@ -1235,29 +1235,31 @@ function svgDeduction() {
 
 /* ------------------------------------- same loan, two uses, two costs */
 function svgTwoLoans() {
-  function panel(x, ok, what, back, net, barW) {
+  function panel(x, ok, what, back, net, rate, barW) {
     var col = ok ? 'var(--green)' : 'var(--red)';
     var bg = ok ? 'var(--green-light)' : 'var(--red-light)';
-    var out = '<rect x="' + x + '" y="16" width="352" height="252" rx="12" style="fill:' + bg + ';stroke:' + col + ';stroke-width:2"/>' +
+    var out = '<rect x="' + x + '" y="16" width="352" height="264" rx="12" style="fill:' + bg + ';stroke:' + col + ';stroke-width:2"/>' +
       '<text x="' + (x + 176) + '" y="44" text-anchor="middle" style="font:800 13.5px var(--bf);fill:' + col + '">' + what + '</text>';
-    [['Interest at 6% a year', '$6,000'], ['The ATO gives back', back], ['What it really costs', net]].forEach(function (r, i) {
-      var y = 60 + i * 40;
+    [['Interest at 6% a year', '$6,000'], ['The ATO gives back', back],
+     ['What it really costs', net], ['Effective interest rate', rate]].forEach(function (r, i) {
+      var y = 58 + i * 40;
       out += '<rect x="' + (x + 16) + '" y="' + y + '" width="320" height="32" rx="7" style="fill:var(--surface);stroke:var(--border);stroke-width:1"/>' +
         '<text x="' + (x + 30) + '" y="' + (y + 21) + '" style="' + F.b + '">' + r[0] + '</text>' +
-        '<text x="' + (x + 322) + '" y="' + (y + 21) + '" text-anchor="end" style="font:800 13px var(--bf);fill:var(--heading)">' + r[1] + '</text>';
+        '<text x="' + (x + 322) + '" y="' + (y + 21) + '" text-anchor="end" style="font:800 13px var(--bf);fill:' +
+          (i === 3 ? col : 'var(--heading)') + '">' + r[1] + '</text>';
     });
-    out += '<text x="' + (x + 16) + '" y="' + 202 + '" style="' + F.cap + '">REAL ANNUAL COST</text>' +
-      '<rect x="' + (x + 16) + '" y="212" width="320" height="30" rx="7" style="fill:var(--surface);stroke:var(--border);stroke-width:1"/>' +
-      '<rect x="' + (x + 16) + '" y="212" width="' + barW + '" height="30" rx="7" style="fill:' + col + ';opacity:.85">' +
+    out += '<text x="' + (x + 16) + '" y="228" style="' + F.cap + '">REAL ANNUAL COST</text>' +
+      '<rect x="' + (x + 16) + '" y="238" width="320" height="30" rx="7" style="fill:var(--surface);stroke:var(--border);stroke-width:1"/>' +
+      '<rect x="' + (x + 16) + '" y="238" width="' + barW + '" height="30" rx="7" style="fill:' + col + ';opacity:.85">' +
         grow('width', barW, '0.3s') + '</rect>' +
-      '<text x="' + (x + 28) + '" y="' + 232 + '" style="font:800 13px var(--bf);fill:#fff">' + net + '</text>';
+      '<text x="' + (x + 28) + '" y="258" style="font:800 13px var(--bf);fill:#fff">' + net + '</text>';
     return out;
   }
-  return '<svg data-anim viewBox="0 0 760 296" role="img" aria-label="Two clients each borrow $100,000 at 6%. The one who bought a boat pays $6,000 a year; the one who bought ETFs pays a net $3,180 after the deduction.">' +
-    panel(16, false, 'Borrowed $100,000 &#8594; bought a boat', '$0', '$6,000', 320) +
-    panel(392, true, 'Borrowed $100,000 &#8594; bought ETFs', '$2,820', '$3,180', 170) +
-    '<text x="380" y="288" text-anchor="middle" style="' + F.s + '">' +
-      'Same bank, same loan, same rate. The only difference is what the borrowed money bought.</text>' +
+  return '<svg data-anim viewBox="0 0 760 306" role="img" aria-label="Two clients each borrow $100,000 at 6%. The one who bought a boat pays a real 6.00%; the one who bought ETFs pays an effective 3.18% after the deduction.">' +
+    panel(16, false, 'Borrowed $100,000 &#8594; bought a boat', '$0', '$6,000', '6.00%', 320) +
+    panel(392, true, 'Borrowed $100,000 &#8594; bought ETFs', '$2,820', '$3,180', '3.18%', 170) +
+    '<text x="380" y="298" text-anchor="middle" style="' + F.s + '">' +
+      'Same bank, same loan, same 6% rate. The only difference is what the borrowed money bought.</text>' +
     '</svg>';
 }
 
@@ -1527,12 +1529,14 @@ function renderCalc(spec) {
     .forEach(function (o) { mtr.appendChild(el("option", { value: o[0], text: o[1] })); });
 
   var amtV = el("span", { class: "cv" }), rateV = el("span", { class: "cv" });
-  var oInt = el("div", { class: "ov" }), oSave = el("div", { class: "ov good" }), oNet = el("div", { class: "ov" });
+  var oInt = el("div", { class: "ov" }), oSave = el("div", { class: "ov good" }),
+      oNet = el("div", { class: "ov" }), oEff = el("div", { class: "ov good" });
 
   var out = el("div", { class: "calcout" }, [
     el("div", {}, [el("div", { class: "ol", text: "Interest a year" }), oInt]),
     el("div", {}, [el("div", { class: "ol", text: "Tax saved" }), oSave]),
-    el("div", {}, [el("div", { class: "ol", text: "Real cost after tax" }), oNet])
+    el("div", {}, [el("div", { class: "ol", text: "Real cost after tax" }), oNet]),
+    el("div", {}, [el("div", { class: "ol", text: "Effective rate" }), oEff])
   ]);
 
   function update() {
@@ -1543,6 +1547,7 @@ function renderCalc(spec) {
     oInt.textContent = money(interest);
     oSave.textContent = money(interest * m);
     oNet.textContent = money(interest * (1 - m));
+    oEff.textContent = (r * (1 - m)).toFixed(2) + "%";
     State.mark(spec.id, true);
   }
   [amt, rate, mtr].forEach(function (n) { n.addEventListener("input", update); n.addEventListener("change", update); });
@@ -1571,8 +1576,8 @@ MODULES.push({
         "Here is what they mean, and why the difference is worth real money.",
   blocks: [
     '<h2>Where deductions fit in</h2>' +
-    '<p>You earn income. The ATO taxes it — but not all of it. Some costs come off the top first, and you pay ' +
-    'tax on what is left.</p>' +
+    '<p>You earn income. The ATO taxes it — but not all of it. Certain costs are subtracted from that income ' +
+    'first, and you pay tax on the smaller amount that is left.</p>' +
     '<p>Those costs are <strong>deductions</strong>. A cost is <strong>tax deductible</strong> when the ATO lets ' +
     'you take it off. It is <strong>non-deductible</strong> when you cannot — so you pay for it out of money ' +
     'that has already been taxed.</p>' +
@@ -1582,7 +1587,7 @@ MODULES.push({
 
     '<h3>The rates this course uses</h3>' +
     '<p>Every figure here is worked at the resident individual rates for the <strong>2026–27 income year</strong>, ' +
-    'as at 4 July 2026. The Medicare levy adds 2% on top, so the rate that actually applies to a deduction is the ' +
+    'as at 5 August 2026. The Medicare levy adds 2% on top, so the rate that actually applies to a deduction is the ' +
     'combined figure in the last column — that is the number advisers quote.</p>' +
     '<div class="tablewrap"><table class="t"><thead><tr><th>Taxable income</th><th>Tax rate</th>' +
     '<th>With Medicare levy</th></tr></thead><tbody>' +
@@ -1593,20 +1598,9 @@ MODULES.push({
     '<tr><td>$190,001 and over</td><td>45%</td><td><strong>47%</strong></td></tr>' +
     '</tbody></table></div>' +
 
-    '<div class="callout c-warn"><h4>📅 If you see 32.5% anywhere, it is out of date</h4>' +
-    '<p style="margin:0">The 32.5% bracket was abolished on 1 July 2024 and the 16% rate dropped to 15% on ' +
-    '1 July 2026. Older file notes, calculators, articles and templates still carry the previous scale, so check ' +
-    'the date on anything you are working from before you use a rate out of it. When a rate changes, so does every ' +
-    'tax-benefit figure calculated with it.</p></div>' +
-
-    '<div class="callout c-note"><h4>🔑 The bit that matters</h4>' +
-    '<p style="margin:0">A deduction is a <strong>discount on a cost</strong>, not a refund of it. Spending ' +
-    '$10,000 to save $4,700 still leaves you $5,300 down. So nobody spends money just to get a deduction — ' +
-    'it only stacks up when the cost was coming anyway, or when the money buys something worth owning.</p></div>' +
-
     '<h2>Now apply that to debt</h2>' +
-    '<p>Interest is a cost, so the same question applies: <strong>can this interest come off the top?</strong> ' +
-    'It depends on one thing — <strong>what the borrowed money was spent on</strong>:</p>' +
+    '<p>Interest is a cost, so the same question applies: <strong>can this interest be subtracted from the ' +
+    'client\'s income?</strong> It depends on one thing — <strong>what the borrowed money was spent on</strong>:</p>' +
     '<ul>' +
       '<li>Borrowed to buy something that <strong>earns income</strong> (shares, a rental property) → the interest ' +
       'is generally <span class="pill p-ded">deductible</span>.</li>' +
@@ -1615,11 +1609,18 @@ MODULES.push({
     '</ul>' +
 
     '<figure class="figure">' + svgTwoLoans() +
-    '<figcaption>Figure 2 — two clients, identical loans. One pays $6,000 a year; the other pays a real cost of ' +
-    '$3,180 once the deduction is counted. Nothing about the loan changed — only what the money bought.</figcaption></figure>',
+    '<figcaption>Figure 2 — two clients, identical loans. One pays $6,000 a year; the other pays $3,180 once the ' +
+    'deduction is counted. Nothing about the loan changed — only what the money bought.</figcaption></figure>' +
+
+    '<div class="callout c-tip"><h4>📉 The effective interest rate</h4>' +
+    '<p>That last line is the one advisers use. The <strong>effective interest rate</strong> is the headline rate ' +
+    'after the deduction is taken off — what the borrowing actually costs the client.</p>' +
+    '<p style="margin:0"><strong>Effective rate = headline rate × (1 − marginal rate)</strong>. So 6% for a client on ' +
+    '47% is <strong>6% × 53% = 3.18%</strong>. Same loan, same bank — the deductible one is costing barely half as much. ' +
+    'That gap is the whole reason the strategy works.</p></div>',
 
     { id: "m0calc", kind: "calc",
-      q: "Move the sliders and watch the real cost of the interest change. This is the engine the strategy runs on." },
+      q: "Move the sliders and watch the effective rate move. This is the engine the strategy runs on." },
 
     '<h3>Why a home loan is the worst of it</h3>' +
     '<p>It is usually the client\'s <strong>biggest debt, their longest debt, and none of it is deductible</strong>. ' +
@@ -1683,7 +1684,7 @@ MODULES.push({
       why: "80% of $850,000 is $680,000. Take off the $520,000 still owing and $160,000 is available. The $330,000 is their total equity — a bigger, and misleading, number. $680,000 is the lending ceiling, not the amount available; $170,000 is just the 20% the lender holds back." },
 
     { id: "m0flip", kind: "flip",
-      q: "Eleven terms that come up constantly. Flip any you want to check.",
+      q: "Twelve terms that come up constantly. Flip any you want to check.",
       cards: [
         { t: "Deduction", d: "A cost the ATO lets you subtract from your income before tax is worked out." },
         { t: "Marginal tax rate", d: "The rate of tax on your <em>next</em> dollar earned. It is also the rate a deduction saves you." },
@@ -1695,6 +1696,7 @@ MODULES.push({
         { t: "Offset account", d: "A savings account linked to a loan. Its balance reduces the amount interest is charged on." },
         { t: "Loan split", d: "One loan divided into separate portions, each with its own account number and statements." },
         { t: "Term loan", d: "A set amount over a set term, advanced up front. Money repaid generally cannot be re-borrowed." },
+        { t: "Effective interest rate", d: "The rate after the deduction: headline rate × (1 − marginal rate). 6% at a 47% rate is 3.18%." },
         { t: "Redraw", d: "Taking back money you previously repaid into a loan. It counts as brand-new borrowing." }
       ] },
 
@@ -1946,6 +1948,14 @@ MODULES.push({
     'client gets a credit for that tax, which can reduce their tax bill further or even generate a refund. ' +
     'You will see franking credits on the annual tax statements you collect at review time.</p></div>' +
 
+    '<div class="callout c-note"><h4>📰 What the 2026 tax reform did — and did not — change</h4>' +
+    '<p>The <em>Treasury Laws Amendment (Tax Reform No. 1)</em> package passed in June 2026. ' +
+    '<strong>It did not change interest deductibility.</strong> The purpose test on this page still governs, and ' +
+    'debt recycling into <strong>shares, ETFs and managed funds is untouched</strong> — which is what most of our ' +
+    'clients do.</p>' +
+    '<p style="margin:0">What changed sits one step further along: what a client can do with a rental <em>loss</em>, ' +
+    'and how a capital gain is taxed. Both start 1 July 2027, and both are covered in Module 11.</p></div>' +
+
     '<div class="callout c-warn"><h4>🚩 Traceability is the whole game</h4>' +
     '<p style="margin:0">The ATO must be able to trace borrowed funds directly to their investment purpose. That is why each split ' +
     'gets <strong>its own account number and its own statement trail</strong>. If investment and personal debt are mixed in the same ' +
@@ -1984,7 +1994,7 @@ MODULES.push({
    ========================================================================== */
 MODULES.push({
   slug: "accounts",
-  mins: 5,
+  mins: 4,
   title: "The accounts, and what each one is for",
   sub: "Splits, offsets, CMA, portfolio",
   lede: "Almost every mistake in debt recycling is an account mistake. Get the map straight and the " +
@@ -2346,7 +2356,7 @@ MODULES.push({
    ========================================================================== */
 MODULES.push({
   slug: "role",
-  mins: 4,
+  mins: 3,
   title: "Your role as a client service officer",
   sub: "Implementation and review",
   lede: "The adviser owns the strategy and the associate writes the instructions. You are the reason it survives " +
@@ -2566,7 +2576,7 @@ MODULES.push({
    ========================================================================== */
 MODULES.push({
   slug: "risk",
-  mins: 2,
+  mins: 4,
   title: "Risks and when to escalate",
   sub: "The downside, and your triggers",
   lede: "Debt recycling amplifies returns and it amplifies losses, on a strategy secured against the family home. " +
@@ -2593,12 +2603,47 @@ MODULES.push({
     'income protection in particular — as part of doing this properly, not an optional extra. ' +
     'If you notice a client\'s cover has lapsed or their income has changed, that is worth raising.</p></div>' +
 
+    '<h2>What changed in 2026 — and when it bites</h2>' +
+    '<p>Two measures became law in June 2026. Neither has started yet: <strong>both apply from 1 July 2027</strong>. ' +
+    'They do not touch interest deductibility, but they change the answer to two questions clients ask.</p>' +
+
+    '<div class="tablewrap"><table class="t"><thead><tr><th style="width:22%">Measure</th><th style="width:30%">What it does</th>' +
+    '<th>Who it hits</th></tr></thead><tbody>' +
+    '<tr><td><strong>Rental losses ring-fenced</strong></td>' +
+    '<td>Net rental losses can no longer be offset against salary or other income. They are quarantined and can only ' +
+    'be used against future residential rental income or a capital gain.</td>' +
+    '<td><strong>Established residential property bought after 7:30pm AEST 12 May 2026.</strong> Property owned before ' +
+    '13 May 2026 and newly built property bought at any time are unaffected. Commercial property, shares, ETFs and ' +
+    'managed funds are unaffected.</td></tr>' +
+    '<tr><td><strong>CGT discount replaced</strong></td>' +
+    '<td>The general 50% CGT discount is replaced by cost base indexation plus a 30% minimum tax on net capital gains ' +
+    'for assets held over 12 months.</td>' +
+    '<td><strong>All CGT assets</strong> held by individuals, trusts and partnerships — shares, ETFs, managed funds and ' +
+    'property alike. Gains realised before 1 July 2027 keep the 50% discount.</td></tr>' +
+    '</tbody></table></div>' +
+
+    '<div class="callout c-tip"><h4>✅ What this means for a normal share-based strategy</h4>' +
+    '<p style="margin:0">Very little, until a client sells. The interest stays deductible, the loan structure is ' +
+    'unchanged, and the ring-fencing does not apply to shares or ETFs at all. The CGT change does apply to them — ' +
+    'so the timing of any sale is now a live question for the adviser, not a detail.</p></div>' +
+
+    '<div class="callout c-rule"><h4>🚩 Where it changes your job</h4>' +
+    '<ul style="margin-bottom:0">' +
+    '<li>A client recycling equity into an <strong>established residential property</strong> now has a different ' +
+    'tax outcome from an older file doing the same thing. Do not reason from the old file.</li>' +
+    '<li>Anything touching a <strong>sale</strong> — before or after 1 July 2027 — goes to the adviser and the ' +
+    'accountant. Never model it yourself.</li>' +
+    '<li>Older templates, calculators and marketing built on the 50% discount or on unrestricted negative gearing ' +
+    'are now out of date. Check the date on anything you work from.</li>' +
+    '</ul></div>' +
+
     '<h3>Debt recycling vs negative gearing — not the same thing</h3>' +
     '<div class="tablewrap"><table class="t"><thead><tr><th>Debt recycling</th><th>Negative gearing</th></tr></thead><tbody>' +
     '<tr><td>Restructures debt the client already has</td><td>Involves new borrowing to acquire an asset</td></tr>' +
     '<tr><td>Does not increase total borrowing</td><td>Increases total borrowing</td></tr>' +
-    '<tr><td>Converts non-deductible debt into deductible debt</td><td>Costs exceed income, and the loss reduces taxable income</td></tr>' +
+    '<tr><td>Converts non-deductible debt into deductible debt</td><td>Costs exceed income, and the loss is used against other income</td></tr>' +
     '<tr><td>Usually shares, ETFs and managed funds</td><td>Most often investment property</td></tr>' +
+    '<tr><td>Unaffected by the 2026 ring-fencing measure</td><td>From 1 July 2027, losses on established residential property bought after 12 May 2026 are quarantined</td></tr>' +
     '</tbody></table></div>' +
 
     '<h3>Your escalation triggers</h3>' +
@@ -2632,10 +2677,28 @@ MODULES.push({
       { t: "Relationship or estate changes",
         d: "<p>Separation, death, a change of ownership. Ownership drives who claims the deduction, so any shift " +
            "affects the whole structure.</p>" },
+      { t: "The client is buying an established residential property with the equity",
+        d: "<p>If the contract is after 7:30pm on 12 May 2026, from 1 July 2027 any rental loss is quarantined — it " +
+           "cannot reduce their salary. The interest is still deductible, but the cash-flow benefit is not what an " +
+           "older file would suggest. Adviser and accountant, before anything is signed.</p>" },
+      { t: "Anything involving a sale, before or after 1 July 2027",
+        d: "<p>The 50% CGT discount is replaced from 1 July 2027 by cost base indexation and a 30% minimum tax on net " +
+           "gains, across all assets including shares and ETFs. Timing a sale either side of that date is an advice " +
+           "decision with real money attached.</p>" },
       { t: "Insurance has lapsed or been cancelled",
         d: "<p>Personal protection is part of doing this properly — it is what keeps both loans serviced if the " +
            "client cannot work.</p>" }
     ] },
+
+    { id: "m9q4", kind: "mcq",
+      q: "A client is recycling into an ETF portfolio. Which of the 2026 measures affects them?",
+      opts: [
+        "Both — the ring-fencing and the CGT change.",
+        "Neither — the reforms only apply to property.",
+        "Only the CGT change. Rental-loss ring-fencing applies to established residential property, not shares or ETFs.",
+        "Only the ring-fencing."
+      ], a: 2,
+      why: "Ring-fencing is a residential property measure. The CGT change applies to all CGT assets, shares and ETFs included, from 1 July 2027 — so it does reach this client, but only when they sell." },
 
     { id: "m9q2", kind: "mcq",
       q: "A client emails: “We're switching both loans to another bank next month for a better rate — nothing you need to do.” What is the right move?",
@@ -2803,6 +2866,7 @@ MODULES.push({
     '<tr><td><strong>Modelling tool</strong></td><td>Where the strategy is projected forward. Only as good as the debt balances and fund-use figures put into it.</td></tr>' +
     '<tr><td><strong>Contract note</strong></td><td>The confirmation of a buy or sell trade. Evidence of what borrowed funds bought, and of the cost base.</td></tr>' +
     '<tr><td><strong>Distribution</strong></td><td>Income paid by a managed fund or ETF to unit holders — the equivalent of a dividend from a company.</td></tr>' +
+    '<tr><td><strong>Effective interest rate</strong></td><td>The headline rate after the deduction is taken off — what the borrowing really costs. Headline rate × (1 − marginal rate). A 6% loan for a client on 47% has an effective rate of 3.18%.</td></tr>' +
     '<tr><td><strong>Marginal tax rate</strong></td><td>The rate applying to the client\'s next dollar of income, and therefore the rate a deduction saves them. For 2026–27, including the Medicare levy: 17%, 32%, 39% or 47%.</td></tr>' +
     '<tr><td><strong>Medicare levy</strong></td><td>2% of taxable income, on top of the tax rates. It is why the top marginal rate is quoted as 47% rather than 45%.</td></tr>' +
     '<tr><td><strong>Franking credit</strong></td><td>A credit for tax the company already paid on profits behind a dividend. Can reduce the client\'s tax or generate a refund.</td></tr>' +
@@ -2810,6 +2874,8 @@ MODULES.push({
     '<tr><td><strong>Principal &amp; interest (P&amp;I)</strong></td><td>Repayments reduce the balance as well as covering interest. Standard on the home loan split.</td></tr>' +
     '<tr><td><strong>Cross-collateralisation</strong></td><td>Using more than one property to secure the same loan. It reduces flexibility and complicates future restructures.</td></tr>' +
     '<tr><td><strong>LMI</strong></td><td>Lenders Mortgage Insurance. Generally payable below 20% equity, which is why 20% is the usual starting point.</td></tr>' +
+    '<tr><td><strong>Ring-fenced (quarantined) loss</strong></td><td>A rental loss that cannot be offset against salary or other income, only against future residential rental income or a capital gain. Applies from 1 July 2027 to established residential property bought after 12 May 2026.</td></tr>' +
+    '<tr><td><strong>Cost base indexation</strong></td><td>From 1 July 2027, replaces the general 50% CGT discount: the cost base is adjusted for inflation so only the real gain is taxed, with a 30% minimum tax on net gains. Applies to all CGT assets.</td></tr>' +
     '<tr><td><strong>Negative gearing</strong></td><td>Borrowing to invest where costs exceed income, with the loss reducing taxable income. A different strategy to debt recycling.</td></tr>' +
     '</tbody></table></div>',
 

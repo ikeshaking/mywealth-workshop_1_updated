@@ -188,6 +188,13 @@ It shares the PY tracker's brand tokens and light/dark behaviour but has no
 dependency on the app shell, so it can later be wrapped the same way
 `py-app.html` is if per-user completion tracking is wanted.
 
+Tax content is stated on the law as at **5 August 2026**: the 2026–27 rate scale
+(15/30/37/45 plus the 2% Medicare levy), and the *Treasury Laws Amendment (Tax
+Reform No. 1)* measures assented 26 June 2026 — rental-loss ring-fencing for
+established residential property and the replacement of the 50% CGT discount with
+cost base indexation, both commencing 1 July 2027. Re-check both whenever the law
+moves; module 1 carries the rate table and module 11 carries the reform.
+
 Content is based on My Wealth Solutions' own
 [comprehensive guide to debt recycling](https://mywealthsolutions.com.au/debt-recycling-guide/).
 **The final module points staff at the firm's internal debt transfer
