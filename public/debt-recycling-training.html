@@ -105,6 +105,7 @@ img,svg{max-width:100%}
   border-radius:10px;border:1px solid var(--border);background:var(--surface-2);color:var(--heading);
   font-family:var(--bf);font-size:13.5px;font-weight:800;cursor:pointer;margin-bottom:8px}
 .navlist.collapsed{display:none}
+.navpct{font-size:11.5px;font-weight:800;color:var(--blue);margin-left:6px}
 .navlist{list-style:none;margin:0}
 .navlist li{margin:0 0 2px}
 .navbtn{width:100%;text-align:left;display:flex;align-items:flex-start;gap:9px;padding:9px 10px;border-radius:10px;
@@ -243,7 +244,32 @@ html[data-theme="dark"] .fb.ok,html[data-theme="dark"] .fb.no{color:var(--text)}
 .hs-panel h4{margin-bottom:4px}
 .hs-panel .muted{color:var(--text-muted);font-style:italic}
 
-/* flip cards — plain-English glossary */
+/* content arrives as you scroll rather than all at once */
+.reveal{opacity:0;transform:translateY(16px);
+  transition:opacity .55s cubic-bezier(.22,.61,.36,1),transform .55s cubic-bezier(.22,.61,.36,1)}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+@media print{.reveal{opacity:1!important;transform:none!important}}
+
+/* expandable detail */
+.acc{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:16px 0}
+.acc-row+.acc-row{border-top:1px solid var(--border-soft)}
+.acc-btn{width:100%;display:flex;align-items:center;gap:11px;text-align:left;padding:13px 15px;
+  background:var(--surface);border:0;cursor:pointer;font-family:var(--bf);font-size:14.5px;font-weight:800;
+  color:var(--heading);line-height:1.35}
+.acc-btn:hover{background:var(--surface-2)}
+.acc-num{flex:none;width:24px;height:24px;border-radius:7px;background:var(--blue-light);color:var(--blue);
+  font-size:12px;font-weight:800;display:grid;place-items:center}
+.acc-btn .chev{margin-left:auto;flex:none;color:var(--text-faint);font-size:12px;transition:transform .25s ease}
+.acc-row.open .acc-btn{background:var(--blue-light)}
+.acc-row.open .chev{transform:rotate(90deg)}
+.acc-body{max-height:0;overflow:hidden;background:var(--surface-2);transition:max-height .34s ease}
+.acc-row.open .acc-body{max-height:900px}
+.acc-body .inner{padding:12px 16px 15px 50px;font-size:14px;color:var(--text-dim)}
+.acc-body .inner p:last-child{margin-bottom:0}
+@media (prefers-reduced-motion:reduce){.acc-body{transition:none}}
+
+/* flip cards — quick definitions */
 .flipgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:12px;margin-bottom:12px}
 .flipcard{perspective:900px;height:154px;border:0;background:none;padding:0;cursor:pointer;font-family:var(--bf)}
 .flipinner{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
@@ -301,6 +327,7 @@ html[data-theme="dark"] .stepdot[aria-current="true"]{color:var(--chrome)}
   .tool-label{display:none}
   .tp-track{width:70px}
   .nav-toggle{display:flex}
+  .top-progress{display:none}   /* the sidebar already shows progress; the topbar needs the room */
   .side-title{display:none}
   /* Diagrams stay legible by scrolling sideways inside their own box, never the page. */
   .figure svg,.svgscroll svg{min-width:640px}
@@ -329,6 +356,7 @@ html[data-theme="dark"] .stepdot[aria-current="true"]{color:var(--chrome)}
       <span id="tpText">0%</span>
       <span class="tp-track"><span class="tp-fill" id="tpFill" style="width:0%"></span></span>
     </div>
+    <button class="icon-btn" id="motionBtn" type="button" aria-label="Pause diagram animations">Pause</button>
     <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle dark mode">🌙</button>
     <button class="icon-btn no-print" id="resetBtn" type="button" title="Clear all answers and progress">Reset</button>
   </div>
@@ -339,7 +367,7 @@ html[data-theme="dark"] .stepdot[aria-current="true"]{color:var(--chrome)}
     <div class="side-card">
       <div class="side-title">Modules</div>
       <button class="nav-toggle" id="navToggle" type="button" aria-expanded="false" aria-controls="nav">
-        <span>Modules</span><span aria-hidden="true">☰</span>
+        <span>Modules <span id="navPct" class="navpct">0%</span></span><span aria-hidden="true">☰</span>
       </button>
       <ul class="navlist" id="nav"></ul>
     </div>
@@ -734,6 +762,28 @@ function renderStepper(spec) {
   return wrap;
 }
 
+/* -------------------------------------------- expandable detail rows */
+function renderAccordion(spec) {
+  var wrap = el("div", { class: "acc" });
+  spec.items.forEach(function (it, i) {
+    var row = el("div", { class: "acc-row" });
+    var body = el("div", { class: "acc-body" }, [el("div", { class: "inner", html: it.d })]);
+    var kids = [];
+    if (spec.numbered !== false) kids.push(el("span", { class: "acc-num", text: String(i + 1) }));
+    kids.push(el("span", { html: it.t }));
+    kids.push(el("span", { class: "chev", "aria-hidden": "true", text: "▶" }));
+    var btn = el("button", { class: "acc-btn", type: "button", "aria-expanded": "false" }, kids);
+    btn.addEventListener("click", function () {
+      var open = row.classList.toggle("open");
+      btn.setAttribute("aria-expanded", String(open));
+    });
+    row.appendChild(btn);
+    row.appendChild(body);
+    wrap.appendChild(row);
+  });
+  return wrap;
+}
+
 function renderEx(ex) {
   switch (ex.kind) {
     case "mcq": return renderMcq(ex);
@@ -752,7 +802,8 @@ function renderEx(ex) {
    ========================================================================== */
 function moduleExerciseIds(m) {
   var ids = [];
-  (m.blocks || []).forEach(function (b) { if (b.kind && b.id && b.kind !== "stepper") ids.push(b.id); });
+  var scored = { stepper: 0, accordion: 0 };
+  (m.blocks || []).forEach(function (b) { if (b.kind && b.id && !(b.kind in scored)) ids.push(b.id); });
   return ids;
 }
 function moduleDone(m) {
@@ -763,9 +814,11 @@ function moduleDone(m) {
 function refreshProgress() {
   var done = MODULES.filter(moduleDone).length;
   var pct = MODULES.length ? Math.round((done / MODULES.length) * 100) : 0;
-  var f = document.getElementById("tpFill"), t = document.getElementById("tpText");
+  var f = document.getElementById("tpFill"), t = document.getElementById("tpText"),
+      np = document.getElementById("navPct");
   if (f) f.style.width = pct + "%";
   if (t) t.textContent = pct + "%";
+  if (np) np.textContent = pct + "%";
   document.querySelectorAll(".navbtn").forEach(function (b) {
     var m = MODULES[Number(b.getAttribute("data-i"))];
     b.classList.toggle("done", moduleDone(m));
@@ -802,6 +855,71 @@ function markCurrent() {
     b.setAttribute("aria-current", String(m.slug === slug));
   });
 }
+var revealObserver = null;
+function reducedMotion() {
+  return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+}
+function armReveals(root) {
+  var nodes = Array.prototype.slice.call(root.querySelectorAll(".reveal"));
+  if (!window.IntersectionObserver || reducedMotion()) {
+    nodes.forEach(function (n) { n.classList.add("in"); });
+    return;
+  }
+  if (revealObserver) revealObserver.disconnect();
+
+  /* Reveal everything up to the deepest element that has come into view — not just
+     that element. Otherwise jumping down the page (anchor, End key, a long flick)
+     skips over the blocks in between and leaves them invisible for good. */
+  function showUpTo(i) {
+    var staggered = 0;
+    for (var k = 0; k <= i; k++) {
+      var n = nodes[k];
+      if (n.classList.contains("in")) continue;
+      n.style.transitionDelay = Math.min(staggered++, 6) * 45 + "ms";
+      n.classList.add("in");
+      revealObserver.unobserve(n);
+    }
+  }
+  revealObserver = new IntersectionObserver(function (entries) {
+    var deepest = -1;
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      var i = nodes.indexOf(e.target);
+      if (i > deepest) deepest = i;
+    });
+    if (deepest >= 0) showUpTo(deepest);
+  }, { rootMargin: "0px 0px -6% 0px", threshold: 0.04 });
+  nodes.forEach(function (n) { revealObserver.observe(n); });
+
+  /* Belt and braces: if nothing has been revealed shortly after render — an
+     observer that never fired, a zero-height container — show it all. */
+  window.setTimeout(function () {
+    if (!root.querySelector(".reveal.in")) nodes.forEach(function (n) { n.classList.add("in"); });
+  }, 1200);
+}
+
+var MOTION_KEY = "mws.debtrecycling.motion";
+function motionWanted() {
+  var v = null;
+  try { v = localStorage.getItem(MOTION_KEY); } catch (e) {}
+  if (v === "off") return false;
+  if (v === "on") return true;
+  return !reducedMotion();
+}
+function applyMotion() {
+  var on = motionWanted();
+  Array.prototype.forEach.call(document.querySelectorAll("svg[data-anim]"), function (svg) {
+    if (!svg.pauseAnimations) return;
+    if (on) svg.unpauseAnimations();
+    else { try { svg.setCurrentTime(0); } catch (e) {} svg.pauseAnimations(); }
+  });
+  var btn = document.getElementById("motionBtn");
+  if (btn) {
+    btn.textContent = on ? "Pause" : "Play";
+    btn.setAttribute("aria-label", on ? "Pause diagram animations" : "Play diagram animations");
+  }
+}
+
 function renderModule(slug) {
   var idx = MODULES.findIndex(function (m) { return m.slug === slug; });
   if (idx < 0) idx = 0;
@@ -816,10 +934,23 @@ function renderModule(slug) {
   ]);
   main.appendChild(head);
 
+  /* Each top-level element becomes its own reveal unit, so a module arrives in
+     pieces as you scroll rather than landing as one wall of text. */
   var card = el("div", { class: "card" });
   (m.blocks || []).forEach(function (b) {
-    if (typeof b === "string") { card.appendChild(el("div", { html: b })); return; }
-    card.appendChild(renderEx(b));
+    if (typeof b === "string") {
+      var buf = document.createElement("div");
+      buf.innerHTML = b;
+      while (buf.firstChild) {
+        var node = buf.firstChild;
+        if (node.nodeType === 1) node.classList.add("reveal");
+        card.appendChild(node);
+      }
+      return;
+    }
+    var ex = renderEx(b);
+    ex.classList.add("reveal");
+    card.appendChild(ex);
   });
   main.appendChild(card);
 
@@ -839,6 +970,8 @@ function renderModule(slug) {
   refreshProgress();
   window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
   main.focus({ preventScroll: true });
+  armReveals(main);
+  applyMotion();
 }
 
 /* ============================================================================
@@ -853,6 +986,22 @@ var F = {
   cap:'font:800 10px var(--bf);fill:var(--text-faint);letter-spacing:.14em',
   lab:'font:800 11px var(--bf);fill:var(--blue)'
 };
+/* A dot that travels a named path, hidden until its turn comes round.
+   Motion is driven by SMIL so the whole SVG can be paused with pauseAnimations(). */
+function flowDot(pathId, begin, colour, r) {
+  return '<g opacity="0">' +
+    '<animate attributeName="opacity" to="1" begin="' + begin + '" dur="0.01s" fill="freeze"/>' +
+    '<circle r="' + (r || 6) + '" style="fill:' + (colour || 'var(--blue)') + '">' +
+      '<animateMotion dur="3s" begin="' + begin + '" repeatCount="indefinite">' +
+        '<mpath href="#' + pathId + '" xlink:href="#' + pathId + '"/></animateMotion></circle></g>';
+}
+/* Grow a bar from nothing. The real size stays as the base attribute value, so a
+   paused timeline shows the finished bar rather than an empty one. */
+function grow(attr, to, begin, from) {
+  return '<animate attributeName="' + attr + '" from="' + (from === undefined ? 0 : from) + '" to="' + to +
+    '" begin="' + begin + '" dur="0.85s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".22 .61 .36 1"/>';
+}
+
 var ARROWS =
   '<defs>' +
   '<marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">' +
@@ -865,26 +1014,26 @@ var ARROWS =
 
 /* ------------------------------------------------- the character shift */
 function svgShift() {
-  function bar(x, label, ded, non) {
+  function bar(x, label, ded, non, delay) {
     var base = 250, top = base - (ded + non);
-    var out = '';
+    var out = '', d = delay || '0.15s';
     if (ded) out += '<rect x="' + x + '" y="' + (base - ded) + '" width="130" height="' + ded +
-      '" rx="6" style="fill:var(--blue);opacity:.88"/>';
+      '" rx="6" style="fill:var(--blue);opacity:.88">' + grow('height', ded, d) + grow('y', base - ded, d, base) + '</rect>';
     if (non) out += '<rect x="' + x + '" y="' + top + '" width="130" height="' + non +
-      '" rx="6" style="fill:var(--coral);opacity:.9"/>';
+      '" rx="6" style="fill:var(--coral);opacity:.9">' + grow('height', non, d) + grow('y', top, d, base - ded) + '</rect>';
     out += '<text x="' + (x + 65) + '" y="274" text-anchor="middle" style="' + F.h + '">' + label + '</text>';
     if (non) out += '<text x="' + (x + 65) + '" y="' + (top + non / 2 + 4) + '" text-anchor="middle" style="font:800 11px var(--bf);fill:#fff">' + non + 'k</text>';
     if (ded) out += '<text x="' + (x + 65) + '" y="' + (base - ded / 2 + 4) + '" text-anchor="middle" style="font:800 11px var(--bf);fill:#fff">' + ded + 'k</text>';
     return out;
   }
-  return '<svg viewBox="0 0 760 300" role="img" aria-label="Over eight years the non-deductible home loan shrinks from 170k to 20k while the deductible investment split grows to 120k, and the total debt falls slightly.">' +
+  return '<svg data-anim viewBox="0 0 760 300" role="img" aria-label="Over eight years the non-deductible home loan shrinks from 170k to 20k while the deductible investment split grows to 120k, and the total debt falls slightly.">' +
     ARROWS +
     '<rect x="16" y="16" width="150" height="16" rx="4" style="fill:var(--coral);opacity:.9"/>' +
     '<text x="174" y="29" style="' + F.b + '">Non-deductible home loan</text>' +
     '<rect x="400" y="16" width="150" height="16" rx="4" style="fill:var(--blue);opacity:.88"/>' +
     '<text x="558" y="29" style="' + F.b + '">Tax-deductible investment split</text>' +
     '<line x1="60" y1="250" x2="720" y2="250" style="stroke:var(--border-strong);stroke-width:1.5"/>' +
-    bar(110, 'Year 0', 0, 170) + bar(330, 'Year 4', 70, 85) + bar(550, 'Year 8', 120, 20) +
+    bar(110, 'Year 0', 0, 170, '0.15s') + bar(330, 'Year 4', 70, 85, '0.5s') + bar(550, 'Year 8', 120, 20, '0.85s') +
     '<path d="M258 60 L322 60" style="stroke:var(--blue);stroke-width:2" marker-end="url(#ab)"/>' +
     '<path d="M478 60 L542 60" style="stroke:var(--blue);stroke-width:2" marker-end="url(#ab)"/>' +
     '<text x="290" y="52" text-anchor="middle" style="' + F.lab + '">recycle</text>' +
@@ -932,7 +1081,7 @@ function svgAccounts() {
       '<rect class="hs-shape" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h +
       '" rx="11" style="fill:' + fill + ';stroke:' + stroke + ';stroke-width:2"/>' + t + '</g>';
   }
-  return '<svg viewBox="0 0 920 520" role="group" aria-label="Map of the accounts used in a debt recycling strategy">' +
+  return '<svg data-anim viewBox="0 0 920 520" role="group" aria-label="Map of the accounts used in a debt recycling strategy">' +
     ARROWS +
 
     /* the one loan facility, split in two */
@@ -978,22 +1127,24 @@ function svgAccounts() {
       { dy: 44, t: 'created by the Split B deduction', st: F.s }]) +
 
     /* the money movements */
-    '<path d="M264 118 C 320 118 316 172 356 182" style="fill:none;stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
+    '<path id="fp1" d="M264 118 C 320 118 316 172 356 182" style="fill:none;stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
     '<text x="272" y="110" style="' + F.lab + '">1 · drawdown</text>' +
 
-    '<path d="M566 184 L640 184" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
+    '<path id="fp2" d="M566 184 L640 184" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
     '<text x="603" y="176" text-anchor="middle" style="' + F.lab + '">2 · invest</text>' +
 
-    '<path d="M642 230 L568 230" style="stroke:var(--green);stroke-width:2.5" marker-end="url(#ab)"/>' +
+    '<path id="fp3" d="M642 230 L568 230" style="stroke:var(--green);stroke-width:2.5" marker-end="url(#ab)"/>' +
     '<text x="605" y="250" text-anchor="middle" style="font:800 11px var(--bf);fill:var(--green)">3 · income</text>' +
 
-    '<path d="M430 268 L430 366 L288 366" style="fill:none;stroke:var(--lime-dark);stroke-width:2.5" marker-end="url(#ag)"/>' +
+    '<path id="fp4" d="M430 268 L430 366 L288 366" style="fill:none;stroke:var(--lime-dark);stroke-width:2.5" marker-end="url(#ag)"/>' +
     '<text x="420" y="358" text-anchor="end" style="font:800 11px var(--bf);fill:var(--lime-dark)">4 · sweep income to the offset</text>' +
 
     '<path d="M360 421 L288 421" style="stroke:var(--lime-dark);stroke-width:2.5" marker-end="url(#ag)"/>' +
 
-    '<path d="M772 456 L772 490 L150 490 L150 434" style="fill:none;stroke:var(--lime-dark);stroke-width:2.5" marker-end="url(#ag)"/>' +
+    '<path id="fp5" d="M772 456 L772 490 L150 490 L150 434" style="fill:none;stroke:var(--lime-dark);stroke-width:2.5" marker-end="url(#ag)"/>' +
     '<text x="400" y="484" style="font:800 11px var(--bf);fill:var(--lime-dark)">5 · refund lands on the non-deductible side</text>' +
+    flowDot('fp1', '0s') + flowDot('fp2', '0.7s') + flowDot('fp3', '1.4s', 'var(--green)') +
+    flowDot('fp4', '2.1s', 'var(--lime-dark)') + flowDot('fp5', '2.8s', 'var(--lime-dark)') +
     '</svg>';
 }
 
@@ -1067,11 +1218,12 @@ function svgTwoLoans() {
     });
     out += '<text x="' + (x + 16) + '" y="' + 202 + '" style="' + F.cap + '">REAL ANNUAL COST</text>' +
       '<rect x="' + (x + 16) + '" y="212" width="320" height="30" rx="7" style="fill:var(--surface);stroke:var(--border);stroke-width:1"/>' +
-      '<rect x="' + (x + 16) + '" y="212" width="' + barW + '" height="30" rx="7" style="fill:' + col + ';opacity:.85"/>' +
+      '<rect x="' + (x + 16) + '" y="212" width="' + barW + '" height="30" rx="7" style="fill:' + col + ';opacity:.85">' +
+        grow('width', barW, '0.3s') + '</rect>' +
       '<text x="' + (x + 28) + '" y="' + 232 + '" style="font:800 13px var(--bf);fill:#fff">' + net + '</text>';
     return out;
   }
-  return '<svg viewBox="0 0 760 296" role="img" aria-label="Two clients each borrow $100,000 at 6%. The one who bought a boat pays $6,000 a year; the one who bought ETFs pays a net $3,180 after the deduction.">' +
+  return '<svg data-anim viewBox="0 0 760 296" role="img" aria-label="Two clients each borrow $100,000 at 6%. The one who bought a boat pays $6,000 a year; the one who bought ETFs pays a net $3,180 after the deduction.">' +
     panel(16, false, 'Borrowed $100,000 &#8594; bought a boat', '$0', '$6,000', 320) +
     panel(392, true, 'Borrowed $100,000 &#8594; bought ETFs', '$2,820', '$3,180', 170) +
     '<text x="380" y="288" text-anchor="middle" style="' + F.s + '">' +
@@ -1181,21 +1333,23 @@ function svgCycle() {
       '<text x="' + (x + 50) + '" y="' + (y + 31) + '" style="' + F.h + '">' + t1 + '</text>' +
       '<text x="' + (x + 16) + '" y="' + (y + 58) + '" style="' + F.s + '">' + t2 + '</text>';
   }
-  return '<svg viewBox="0 0 780 320" role="img" aria-label="The six steps run as a loop: build equity, create the split, draw clean funds, invest, redirect the income, then repeat.">' +
+  return '<svg data-anim viewBox="0 0 780 320" role="img" aria-label="The six steps run as a loop: build equity, create the split, draw clean funds, invest, redirect the income, then repeat.">' +
     ARROWS +
     step(20, 26, '1', 'Build equity', 'extra repayments on the loan') +
     step(290, 26, '2', 'Create the split', 'broker splits the facility') +
     step(560, 26, '3', 'Draw it clean', 'into a nil-balance CMA') +
-    '<path d="M226 69 L282 69" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
-    '<path d="M496 69 L552 69" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
-    '<path d="M660 118 L660 178" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
+    '<path id="cy1" d="M226 69 L282 69" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
+    '<path id="cy2" d="M496 69 L552 69" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
+    '<path id="cy3" d="M660 118 L660 178" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
     step(560, 186, '4', 'Invest it all', 'buy income-producing assets') +
     step(290, 186, '5', 'Redirect income', 'income + refund to Split A') +
     step(20, 186, '6', 'Repeat', 'bad debt down, good debt up') +
-    '<path d="M552 229 L496 229" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
-    '<path d="M282 229 L226 229" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
-    '<path d="M120 182 L120 122" style="stroke:var(--lime-dark);stroke-width:2.5;stroke-dasharray:5 4" marker-end="url(#ag)"/>' +
+    '<path id="cy4" d="M552 229 L496 229" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
+    '<path id="cy5" d="M282 229 L226 229" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
+    '<path id="cy6" d="M120 182 L120 122" style="stroke:var(--lime-dark);stroke-width:2.5;stroke-dasharray:5 4" marker-end="url(#ag)"/>' +
     '<text x="132" y="158" style="font:800 11px var(--bf);fill:var(--lime-dark)">round two</text>' +
+    flowDot('cy1', '0s') + flowDot('cy2', '0.5s') + flowDot('cy3', '1s') +
+    flowDot('cy4', '1.5s') + flowDot('cy5', '2s') + flowDot('cy6', '2.5s', 'var(--lime-dark)') +
     '<text x="390" y="308" text-anchor="middle" style="' + F.s + '">Each lap moves another slice of the mortgage from the non-deductible side to the deductible side.</text>' +
     '</svg>';
 }
@@ -1206,21 +1360,21 @@ function svgLanes() {
     return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="52" rx="10" style="fill:var(--surface);stroke:var(--border-strong);stroke-width:1.5"/>' +
       '<text x="' + (x + w / 2) + '" y="' + (y + 32) + '" text-anchor="middle" style="' + F.h + '">' + t + '</text>';
   }
-  return '<svg viewBox="0 0 780 326" role="img" aria-label="Personal money flows salary to offset to home loan; borrowed money flows investment split to cash account to investments. Income and tax refunds are the only permitted crossing; personal spending out of the investment split is never allowed.">' +
+  return '<svg data-anim viewBox="0 0 780 326" role="img" aria-label="Personal money flows salary to offset to home loan; borrowed money flows investment split to cash account to investments. Income and tax refunds are the only permitted crossing; personal spending out of the investment split is never allowed.">' +
     ARROWS +
     '<rect x="16" y="20" width="748" height="96" rx="12" style="fill:var(--lime-light);stroke:var(--lime-dark);stroke-width:2"/>' +
     '<text x="32" y="42" style="' + F.cap + '">PERSONAL MONEY</text>' +
     node(40, 50, 170, 'Salary &amp; savings') + node(250, 50, 170, 'Offset account') + node(460, 50, 200, 'Home loan (Split A)') +
-    '<path d="M216 76 L244 76" style="stroke:var(--lime-dark);stroke-width:2.5" marker-end="url(#ag)"/>' +
-    '<path d="M426 76 L454 76" style="stroke:var(--lime-dark);stroke-width:2.5" marker-end="url(#ag)"/>' +
+    '<path id="ln1" d="M216 76 L244 76" style="stroke:var(--lime-dark);stroke-width:2.5" marker-end="url(#ag)"/>' +
+    '<path id="ln2" d="M426 76 L454 76" style="stroke:var(--lime-dark);stroke-width:2.5" marker-end="url(#ag)"/>' +
 
     '<rect x="16" y="196" width="748" height="96" rx="12" style="fill:var(--blue-light);stroke:var(--blue);stroke-width:2"/>' +
     '<text x="32" y="218" style="' + F.cap + '">BORROWED MONEY</text>' +
     node(40, 226, 170, 'Investment split') + node(250, 226, 170, 'CMA') + node(460, 226, 200, 'The portfolio') +
-    '<path d="M216 252 L244 252" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
-    '<path d="M426 252 L454 252" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
+    '<path id="ln3" d="M216 252 L244 252" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
+    '<path id="ln4" d="M426 252 L454 252" style="stroke:var(--blue);stroke-width:2.5" marker-end="url(#ab)"/>' +
 
-    '<path d="M335 222 L335 108" style="stroke:var(--green);stroke-width:3" marker-end="url(#ab)"/>' +
+    '<path id="ln5" d="M335 222 L335 108" style="stroke:var(--green);stroke-width:3" marker-end="url(#ab)"/>' +
     '<text x="352" y="150" style="font:800 12px var(--bf);fill:var(--green)">✓ income &amp; tax refunds</text>' +
     '<text x="352" y="170" style="' + F.s + '">the one crossing the strategy is built on</text>' +
 
@@ -1229,6 +1383,9 @@ function svgLanes() {
     '<text x="125" y="172" text-anchor="middle" style="font:800 17px var(--bf);fill:var(--red)">✕</text>' +
     '<text x="150" y="150" style="font:800 12px var(--bf);fill:var(--red)">✕ personal spending</text>' +
     '<text x="150" y="170" style="' + F.s + '">a redraw out of the investment split</text>' +
+    flowDot('ln1', '0s', 'var(--lime-dark)', 5) + flowDot('ln2', '0.6s', 'var(--lime-dark)', 5) +
+    flowDot('ln3', '0.3s', 'var(--blue)', 5) + flowDot('ln4', '0.9s', 'var(--blue)', 5) +
+    flowDot('ln5', '1.6s', 'var(--green)', 5) +
     '<text x="390" y="318" text-anchor="middle" style="' + F.s + '">Green arrow: always. Red arrow: never. Almost every routing question is one of these two.</text>' +
     '</svg>';
 }
@@ -1264,14 +1421,14 @@ function renderFlip(spec) {
   });
   wrap.appendChild(grid);
   wrap.appendChild(el("p", { class: "footnote", style: "text-align:left;margin-top:2px",
-    text: "Flip all " + spec.cards.length + " to complete this one." }));
+    text: "Flip all " + spec.cards.length + " to mark this one done." }));
   return wrap;
 }
 
 /* -------------------------------------------- the deduction calculator */
 function renderCalc(spec) {
   var wrap = el("div", { class: "ex" }, [
-    exHead("Have a play"),
+    exHead("Try it"),
     el("p", { class: "ex-q", html: spec.q })
   ]);
   var money = function (n) { return "$" + Math.round(n).toLocaleString("en-AU"); };
@@ -1310,41 +1467,39 @@ function renderCalc(spec) {
   ]));
   wrap.appendChild(out);
   wrap.appendChild(el("p", { class: "footnote", style: "text-align:left",
-    html: "Notice what happens at a 0% marginal rate: the deduction is worth nothing. That is why the strategy suits higher income earners — and why it is never a fit for everyone." }));
+    html: "Set the marginal rate to 0% and the deduction is worth nothing. That is why the benefit grows with income — and why this is not a strategy for everyone." }));
   update();
   return wrap;
 }
 
 /* ============================================================================
-   MODULE 1 — Start here: tax and debt in plain English
+   MODULE 1 — Tax, deductions and debt
    ========================================================================== */
 MODULES.push({
   slug: "basics",
-  title: "Start here: tax and debt in plain English",
-  sub: "No assumed knowledge",
-  lede: "Before any of the strategy makes sense, two words have to make sense: <em>deductible</em> and " +
-        "<em>non-deductible</em>. Nothing here assumes you have seen them before.",
+  title: "Tax, deductions and debt",
+  sub: "Where it all starts",
+  lede: "Two words do most of the work in this strategy: <em>deductible</em> and <em>non-deductible</em>. " +
+        "Here is what they mean, and why the difference is worth real money.",
   blocks: [
-    '<h2>How income tax works, in thirty seconds</h2>' +
-    '<p>A person earns income. The ATO taxes it — but not all of it. Certain costs can be ' +
-    '<strong>subtracted from that income first</strong>. Whatever is left is the amount they actually pay tax on.</p>' +
-    '<p>Those subtractable costs are called <strong>deductions</strong>. A cost is ' +
-    '<strong>tax deductible</strong> when the ATO allows it to be subtracted. It is ' +
-    '<strong>non-deductible</strong> when it cannot be — meaning the client pays for it out of money they have ' +
-    'already been taxed on.</p>' +
+    '<h2>Where deductions fit in</h2>' +
+    '<p>You earn income. The ATO taxes it — but not all of it. Some costs come off the top first, and you pay ' +
+    'tax on what is left.</p>' +
+    '<p>Those costs are <strong>deductions</strong>. A cost is <strong>tax deductible</strong> when the ATO lets ' +
+    'you take it off. It is <strong>non-deductible</strong> when you cannot — so you pay for it out of money ' +
+    'that has already been taxed.</p>' +
 
     '<figure class="figure">' + svgDeduction() +
     '<figcaption>Figure 1 — a deduction does not come back dollar for dollar. It comes back at the client\'s tax rate.</figcaption></figure>' +
 
-    '<div class="callout c-note"><h4>🔑 The sentence to remember</h4>' +
-    '<p style="margin:0">A deduction is a <strong>discount on a cost</strong>, not a refund of it. ' +
-    'Spending $10,000 to save $4,700 in tax still leaves the client $5,300 out of pocket — which is why nobody ' +
-    'spends money purely to get a deduction. It only makes sense when they were going to incur the cost anyway, ' +
-    'or when the spending buys something worth owning.</p></div>' +
+    '<div class="callout c-note"><h4>🔑 The bit that matters</h4>' +
+    '<p style="margin:0">A deduction is a <strong>discount on a cost</strong>, not a refund of it. Spending ' +
+    '$10,000 to save $4,700 still leaves you $5,300 down. So nobody spends money just to get a deduction — ' +
+    'it only stacks up when the cost was coming anyway, or when the money buys something worth owning.</p></div>' +
 
     '<h2>Now apply that to debt</h2>' +
-    '<p>Interest is a cost. So the same question applies to it: <strong>can this interest be subtracted from income?</strong></p>' +
-    '<p>The answer depends on one thing — <strong>what the borrowed money was used for</strong>:</p>' +
+    '<p>Interest is a cost, so the same question applies: <strong>can this interest come off the top?</strong> ' +
+    'It depends on one thing — <strong>what the borrowed money was spent on</strong>:</p>' +
     '<ul>' +
       '<li>Borrowed to buy something that <strong>earns income</strong> (shares, a rental property) → the interest ' +
       'is generally <span class="pill p-ded">deductible</span>.</li>' +
@@ -1357,16 +1512,15 @@ MODULES.push({
     '$3,180 once the deduction is counted. Nothing about the loan changed — only what the money bought.</figcaption></figure>',
 
     { id: "m0calc", kind: "calc",
-      q: "Move the sliders and watch the real cost of the interest change. This is the engine the whole strategy runs on." },
+      q: "Move the sliders and watch the real cost of the interest change. This is the engine the strategy runs on." },
 
-    '<h3>So why is a home loan such a problem?</h3>' +
-    '<p>Because it is usually the client\'s <strong>biggest debt, their longest debt, and completely ' +
-    'non-deductible</strong>. Every dollar of mortgage interest is paid with money that has already been taxed, ' +
-    'and the average family carries it for 25 to 30 years.</p>' +
-    '<p>That is the problem debt recycling exists to solve. Everything else in this course is detail.</p>',
+    '<h3>Why a home loan is the worst of it</h3>' +
+    '<p>It is usually the client\'s <strong>biggest debt, their longest debt, and none of it is deductible</strong>. ' +
+    'Every dollar of mortgage interest comes out of money already taxed, and most families carry it for 25 to 30 years.</p>' +
+    '<p>That is what debt recycling sets out to fix. The rest of this course is how.</p>',
 
     { id: "m0flip", kind: "flip",
-      q: "Eight words you will hear this week. Flip each card for the plain-English meaning.",
+      q: "Eight terms that come up constantly. Flip any you want to check.",
       cards: [
         { t: "Deduction", d: "A cost the ATO lets you subtract from your income before tax is worked out." },
         { t: "Marginal tax rate", d: "The rate of tax on your <em>next</em> dollar earned. It is also the rate a deduction saves you." },
@@ -1379,7 +1533,7 @@ MODULES.push({
       ] },
 
     { id: "m0q1", kind: "mcq",
-      q: "In your own words test: what does it mean when a cost is <strong>tax deductible</strong>?",
+      q: "What does it mean when a cost is <strong>tax deductible</strong>?",
       opts: [
         "The ATO refunds the full amount of the cost.",
         "The cost can be subtracted from income before tax is calculated, so the client pays tax on a smaller amount.",
@@ -1389,7 +1543,7 @@ MODULES.push({
       why: "Deductible means subtractable. The saving equals the cost multiplied by the client's marginal rate — not the whole cost." },
 
     { id: "m0q2", kind: "sort",
-      q: "Would the ATO let this be subtracted from the client's income? Sort each one.",
+      q: "Would the ATO let this come off the client's income? Sort each one.",
       zones: [{ key: "d", label: "✓ Deductible" }, { key: "n", label: "✗ Not deductible" }],
       items: [
         { t: "Interest on money borrowed to buy shares that pay dividends", z: "d" },
@@ -1415,26 +1569,25 @@ MODULES.push({
   slug: "why-you",
   title: "Why this matters, and where you fit in",
   sub: "The problem, the cast, your part",
-  lede: "You are about to learn a strategy you will never recommend and never sell. " +
-        "Here is why it is still worth knowing better than almost anyone else in the office.",
+  lede: "You will never recommend this strategy or sell it. You will be the one keeping it on the rails — " +
+        "which is why it helps to understand it properly.",
   blocks: [
     '<h2>The client\'s problem</h2>' +
-    '<p>Picture a typical client. Mortgage of $600,000. About $1,000 a month spare after everything else. ' +
-    'They want two things at once — the mortgage gone, and some wealth built outside the house. ' +
-    'Traditionally they have to choose.</p>' +
+    '<p>A fairly typical one: $600,000 mortgage, about $1,000 a month spare. They want the mortgage gone ' +
+    '<em>and</em> some wealth built outside the house. Normally they have to pick one.</p>' +
 
     '<figure class="figure">' + svgChoices() +
     '<figcaption>Figure 1 — the first two columns are the choice most people think they have. ' +
     'The third is what an adviser can build for them.</figcaption></figure>' +
 
-    '<div class="callout c-tip"><h4>💡 So what is the strategy, in one line?</h4>' +
+    '<div class="callout c-tip"><h4>💡 The strategy in one line</h4>' +
     '<p style="margin:0">Use the equity already sitting in the home to invest, so that part of the mortgage interest ' +
     'becomes deductible — then send the investment income and the tax refund straight back at the mortgage. ' +
-    'The debt slowly changes from bad debt into good debt. That is it. The next ten modules are the how.</p></div>' +
+    'The debt slowly turns from bad debt into good debt. That is the whole idea — the next ten modules are the mechanics.</p></div>' +
 
     '<h2>Who does what</h2>' +
-    '<p>Four people surround this strategy, and confusing their jobs is how clients get bad answers. ' +
-    'Click each one — you need all five to complete this module.</p>',
+    '<p>Four people sit around this strategy. Mixing up their jobs is how clients end up with the wrong answer. ' +
+    'Click each one.</p>',
 
     { id: "m0bmap", kind: "hotspot",
       q: "Click every person to see what they own — and, just as importantly, what they don't.",
@@ -1527,8 +1680,8 @@ MODULES.push({
   slug: "what",
   title: "What debt recycling actually is",
   sub: "The one-breath explanation",
-  lede: "You will hear this strategy named in adviser file notes, review packs and broker emails every week. " +
-        "Start here: what it is, what it is not, and who it is for.",
+  lede: "You will see this named in file notes, review packs and broker emails every week. " +
+        "What it is, what it is not, and who it suits.",
   blocks: [
     '<h2>The idea in one sentence</h2>' +
     '<p>Debt recycling converts a client\'s <strong>non-deductible home loan</strong> into ' +
@@ -1624,8 +1777,8 @@ MODULES.push({
   slug: "purpose",
   title: "Deductible vs non-deductible",
   sub: "The purpose test",
-  lede: "One rule decides whether interest is deductible — and it is not the one most people guess. " +
-        "Get this rule straight and most of the strategy explains itself.",
+  lede: "One rule decides whether interest is deductible, and it is not the one most people expect. " +
+        "Once it clicks, most of the strategy follows from it.",
   blocks: [
     '<div class="callout c-rule"><h4>⚖️ The purpose test</h4>' +
     '<p style="margin:0">The ATO <strong>does not look at where the loan is secured</strong>. It looks at ' +
@@ -1636,7 +1789,7 @@ MODULES.push({
     '<figcaption>Figure 2 — the security is a red herring. Borrow against the family home to buy ETFs and the interest is ' +
     'deductible; borrow against a share portfolio to buy a car and it is not.</figcaption></figure>' +
 
-    '<h3>Two things people get wrong</h3>' +
+    '<h3>Two easy misreadings</h3>' +
     '<div class="grid2">' +
       '<div class="tile"><h4>It is the interest, not the loan</h4><p>The client does not get a $100,000 deduction for a ' +
       '$100,000 investment split. They deduct the <strong>interest charged</strong> on it each year.</p></div>' +
@@ -1700,8 +1853,8 @@ MODULES.push({
   slug: "accounts",
   title: "The accounts, and what each one is for",
   sub: "Splits, offsets, CMA, portfolio",
-  lede: "Almost every mistake in debt recycling is an account mistake. Learn the map first and the instructions " +
-        "you process every week will stop looking like alphabet soup.",
+  lede: "Almost every mistake in debt recycling is an account mistake. Get the map straight and the " +
+        "instructions you process each week start making sense on sight.",
   blocks: [
     '<h2>Five accounts, five jobs</h2>' +
     '<p>A debt recycling client typically has <strong>one loan facility divided into splits</strong>, an offset account, ' +
@@ -1747,9 +1900,8 @@ MODULES.push({
       } },
 
     '<h3>How an offset account actually works</h3>' +
-    '<p>This one trips up nearly everyone at first. Money in an offset account is <strong>not a repayment</strong>. ' +
-    'It stays the client\'s money and they can take it out tomorrow. All it does is reduce the balance the bank ' +
-    'charges interest <em>on</em>.</p>' +
+    '<p>Money in an offset account is <strong>not a repayment</strong>. It stays the client\'s money and they can ' +
+    'take it out tomorrow. All it does is shrink the balance the bank charges interest <em>on</em>.</p>' +
 
     '<figure class="figure">' + svgOffsetHow() +
     '<figcaption>Figure 1 — $500,000 owing, $50,000 in the offset, so interest is charged on $450,000. ' +
@@ -1760,7 +1912,7 @@ MODULES.push({
     'a redraw, so it cannot contaminate anything.</p>' +
 
     '<h3>Offset account vs debt recycling — they are not the same tool</h3>' +
-    '<p>Clients mix these up constantly, so know the difference cold. Our guide sets it out like this:</p>' +
+    '<p>Clients mix these up constantly, so it is worth being precise. Our guide sets it out like this:</p>' +
     '<div class="tablewrap"><table class="t"><thead><tr><th>Offset account</th><th>Debt recycling</th></tr></thead><tbody>' +
     '<tr><td>Reduces interest on the home loan</td><td>Converts non-deductible debt to deductible debt</td></tr>' +
     '<tr><td>Funds remain accessible and liquid</td><td>Funds are deployed into income-producing investments</td></tr>' +
@@ -1946,8 +2098,7 @@ MODULES.push({
 
     '<div class="callout c-note"><h4>🧠 The rule behind the whole table</h4>' +
     '<p style="margin:0"><strong>Personal money attacks non-deductible debt. Borrowed money buys investments. ' +
-    'The two streams never touch.</strong> If you can hold that sentence, you can work out most routing questions ' +
-    'without looking anything up.</p></div>',
+    'The two streams never touch.</strong> Hold onto that and most routing questions answer themselves.</p></div>',
 
     { id: "m5q1", kind: "cloze",
       q: "Route each of these. Choose the correct destination from the list.",
@@ -1985,7 +2136,7 @@ MODULES.push({
   title: "The cardinal rules",
   sub: "Contamination and how to avoid it",
   lede: "Most damage to a debt recycling strategy is done by ordinary, well-meaning admin. " +
-        "These eight rules are the ones worth knowing by heart.",
+        "These eight rules cover nearly all of it.",
   blocks: [
     '<figure class="figure">' + svgClean() +
     '<figcaption>Figure 3 — the same $100,000 drawdown. On the left it stays a single-purpose, fully deductible split. On the right ' +
@@ -1993,16 +2144,34 @@ MODULES.push({
     'across both purposes.</figcaption></figure>' +
 
     '<h3>The eight rules</h3>' +
-    '<div class="grid2">' +
-      '<div class="tile"><h4>1 · One split, one purpose</h4><p>Never let a split serve two masters. A new purpose means a new split.</p></div>' +
-      '<div class="tile"><h4>2 · Borrowed funds go somewhere clean</h4><p>A nil-balance CMA, then straight into the investment. No parking, no mixing, no detours.</p></div>' +
-      '<div class="tile"><h4>3 · Never redraw Split B for anything personal</h4><p>A redraw is new borrowing. Spend it privately and the split is contaminated forever.</p></div>' +
-      '<div class="tile"><h4>4 · Do not pay extra off the investment split</h4><p>Every dollar repaid is deductible debt destroyed. Rebuilding it requires a fresh investment purpose.</p></div>' +
-      '<div class="tile"><h4>5 · The offset belongs to Split A only</h4><p>Cash should reduce non-deductible interest, never deductible interest.</p></div>' +
-      '<div class="tile"><h4>6 · Do not capitalise interest without advice</h4><p>Adding investment interest to the loan is a tax question, not an admin one.</p></div>' +
-      '<div class="tile"><h4>7 · Ownership must line up</h4><p>Whoever borrows and owns the asset claims the deduction and declares the income. Check names on every account.</p></div>' +
-      '<div class="tile"><h4>8 · Keep the paper trail</h4><p>Drawdown confirmations, contract notes, per-split loan interest summaries, distribution statements. If it is not filed, it did not happen.</p></div>' +
-    '</div>' +
+    '<p>Open any you want the reasoning on.</p>',
+
+    { kind: "accordion", items: [
+      { t: "One split, one purpose",
+        d: "<p>Never let a split serve two masters. A new purpose means a new split. This is the rule the other seven " +
+           "are protecting.</p>" },
+      { t: "Borrowed funds go somewhere clean",
+        d: "<p>A nil-balance CMA, then straight into the investment. No parking, no mixing, no detours. The moment " +
+           "borrowed money sits alongside personal money, the trail the ATO needs is broken.</p>" },
+      { t: "Never redraw Split B for anything personal",
+        d: "<p>A redraw is new borrowing, so what it is spent on decides whether it is deductible. Spend it privately " +
+           "and the split becomes mixed-purpose — permanently.</p>" },
+      { t: "Do not pay extra off the investment split",
+        d: "<p>Every dollar repaid is deductible debt destroyed. Getting it back means a fresh drawdown for a genuine " +
+           "investment purpose, which is not always available. Spare cash belongs in the offset.</p>" },
+      { t: "The offset belongs to Split A only",
+        d: "<p>Cash should reduce non-deductible interest, never deductible interest. An offset on the investment split " +
+           "shrinks the very interest the client wants to be claiming.</p>" },
+      { t: "Do not capitalise interest without advice",
+        d: "<p>Adding investment interest to the loan balance rather than paying it is a tax question with " +
+           "anti-avoidance implications, not an admin decision. Escalate every time.</p>" },
+      { t: "Ownership must line up",
+        d: "<p>Whoever borrows and owns the asset is the one who claims the deduction and declares the income. " +
+           "Check the names on the loan, the CMA and the investment account all match what was intended.</p>" },
+      { t: "Keep the paper trail",
+        d: "<p>Drawdown confirmations, contract notes, per-split interest summaries, distribution statements. " +
+           "The deduction is only as good as the evidence behind it — if it is not filed, it did not happen.</p>" }
+    ] },
 
     '<div class="callout c-warn"><h4>🔁 Refinancing is the sleeper risk</h4>' +
     '<p style="margin:0">When a client refinances or moves lenders, splits get consolidated into one loan by default and the ' +
@@ -2074,19 +2243,31 @@ MODULES.push({
     'accountant\'s calls. Your value is that things get done properly, on time, and that problems surface early.</p></div>' +
 
     '<h3>Phase A — Implementation</h3>' +
-    '<p>Setting the structure up correctly is where nearly all of the long-term risk sits. Working checklist:</p>' +
-    '<ul>' +
-      '<li><strong>Collect the starting position:</strong> statements for every existing split, current balances, interest rates, ' +
-      'offset balance, lender and product details.</li>' +
-      '<li><strong>Brief the broker:</strong> the split amount, the repayment type, and explicitly that <em>no offset</em> is to be ' +
-      'attached to the new split. Get the loan schedule back and check it line by line.</li>' +
-      '<li><strong>Open the CMA</strong> in the correct name and confirm it is genuinely at <strong>nil balance</strong> before ' +
-      'the drawdown is scheduled.</li>' +
-      '<li><strong>Open the investment account:</strong> correct entity name, ID/AML complete, TFN supplied, adviser authority in place.</li>' +
-      '<li><strong>Set the standing instructions:</strong> distributions credited to the CMA, not to a personal account.</li>' +
-      '<li><strong>Confirm the drawdown</strong> landed clean, then confirm the full amount was invested and the contract notes are filed.</li>' +
-      '<li><strong>Update the systems:</strong> new splits, new accounts, holdings and cost base recorded so the next review is easy.</li>' +
-    '</ul>' +
+    '<p>Setting the structure up correctly is where nearly all of the long-term risk sits. Work down the list:</p>',
+
+    { kind: "accordion", items: [
+      { t: "Collect the starting position",
+        d: "<p>Statements for every existing split, current balances, interest rates, the offset balance, and the " +
+           "lender and product details. You cannot check what came back if you never recorded what went in.</p>" },
+      { t: "Brief the broker",
+        d: "<p>The split amount, the repayment type, and explicitly that <strong>no offset</strong> is to be attached " +
+           "to the new split. When the loan schedule comes back, check it line by line before anyone signs.</p>" },
+      { t: "Open the CMA",
+        d: "<p>In the correct name, and confirm it is genuinely at <strong>nil balance</strong> before the drawdown " +
+           "is scheduled. This one check protects the deduction more than anything else you will do.</p>" },
+      { t: "Open the investment account",
+        d: "<p>Correct entity name, ID and AML complete, TFN supplied, adviser authority in place. The name has to " +
+           "match whoever owns the debt.</p>" },
+      { t: "Set the standing instructions",
+        d: "<p>Distributions credited to the CMA, not to a personal account. Getting this wrong is how the sweep " +
+           "quietly stops happening six months later.</p>" },
+      { t: "Confirm the drawdown and the trade",
+        d: "<p>Check the funds landed clean, then check the full amount was invested and the contract notes are on " +
+           "file. Money left sitting in the CMA weakens the link between the borrowing and the investment.</p>" },
+      { t: "Update the systems",
+        d: "<p>New splits, new accounts, holdings and cost base all recorded — so the next review is an hour's work " +
+           "rather than a day's.</p>" }
+    ] },
 
     '<h3>Phase B — Ongoing management</h3>' +
     '<p>Between reviews, you are the early-warning system. A short recurring check catches almost everything:</p>' +
@@ -2284,19 +2465,40 @@ MODULES.push({
     '</tbody></table></div>' +
 
     '<h3>Your escalation triggers</h3>' +
-    '<p>Any of these, the same day, to the adviser:</p>' +
-    '<ul>' +
-      '<li>The client has <strong>redrawn from an investment split</strong>, or asks to.</li>' +
-      '<li>A <strong>refinance, product switch or loan consolidation</strong> is being discussed anywhere.</li>' +
-      '<li>The client wants to <strong>pay down or pay off the investment split</strong>.</li>' +
-      '<li>The client wants to <strong>sell investments</strong>.</li>' +
-      '<li><strong>Income has changed</strong> — job loss, reduced hours, parental leave, retirement.</li>' +
-      '<li>Repayments are in <strong>arrears</strong>, or interest is being <strong>capitalised</strong>.</li>' +
-      '<li>An <strong>offset has appeared on the investment split</strong>, or a split has vanished from the statements.</li>' +
-      '<li>The <strong>use of a property has changed</strong> — a rental becoming the family home, or vice versa.</li>' +
-      '<li><strong>Relationship or estate changes</strong> — separation, death, a change of ownership.</li>' +
-      '<li>The client mentions <strong>insurance has lapsed or been cancelled</strong>.</li>' +
-    '</ul>',
+    '<p>Any of these goes to the adviser the same day. Open each for why it is urgent.</p>',
+
+    { kind: "accordion", items: [
+      { t: "The client has redrawn from an investment split — or asks to",
+        d: "<p>A personal redraw makes the split mixed-purpose and the damage is permanent. If they have only asked, " +
+           "there is still time to stop it.</p>" },
+      { t: "A refinance, product switch or loan consolidation is being discussed",
+        d: "<p>Refinances merge splits back into one loan by default, wiping out the separation the deduction depends on. " +
+           "Escalate before anything is signed, not after settlement.</p>" },
+      { t: "The client wants to pay down the investment split",
+        d: "<p>Every dollar repaid is deductible debt gone, and rebuilding it needs a fresh investment purpose. " +
+           "Usually the money should go to the offset instead — but that is the adviser's call.</p>" },
+      { t: "The client wants to sell investments",
+        d: "<p>Capital gains tax, the deductible balance and the whole plan are all in play at once. Never a routing " +
+           "decision.</p>" },
+      { t: "Their income has changed",
+        d: "<p>Job loss, reduced hours, parental leave, retirement. The strategy assumes stable surplus income across " +
+           "two loans — if that assumption breaks, the adviser needs to know early.</p>" },
+      { t: "Repayments are in arrears, or interest is being capitalised",
+        d: "<p>Arrears signal a cash-flow problem. Capitalising investment interest is a tax question with " +
+           "anti-avoidance implications. Either way, not yours to action.</p>" },
+      { t: "An offset has appeared on the investment split, or a split has vanished",
+        d: "<p>Usually the fallout of a product change or a refinance you were not told about. The structure has " +
+           "moved without anyone deciding it should.</p>" },
+      { t: "A property's use has changed",
+        d: "<p>A rental becoming the family home, or the family home becoming a rental. Deductibility follows use, " +
+           "so a change of use changes the tax position.</p>" },
+      { t: "Relationship or estate changes",
+        d: "<p>Separation, death, a change of ownership. Ownership drives who claims the deduction, so any shift " +
+           "affects the whole structure.</p>" },
+      { t: "Insurance has lapsed or been cancelled",
+        d: "<p>Personal protection is part of doing this properly — it is what keeps both loans serviced if the " +
+           "client cannot work.</p>" }
+    ] },
 
     { id: "m9q1", kind: "multi",
       q: "Select every genuine risk of debt recycling as our guide describes it.",
@@ -2402,7 +2604,7 @@ function renderExam(spec) {
       out.appendChild(buildCertificate());
     } else {
       out.appendChild(el("div", { class: "callout c-rule" }, [
-        el("h4", { text: "Not there yet" }),
+        el("h4", { text: "Just short" }),
         el("p", { style: "margin:0", html: "You need " + Math.round(spec.pass * 100) + "% to pass. Read the explanations above, " +
           "revisit the modules they point to, then retake it." })
       ]));
@@ -2442,7 +2644,7 @@ function buildCertificate() {
 
 /* extend the dispatcher without editing the switch above */
 var _renderExBase = renderEx;
-var LATE_KINDS = { exam: renderExam, flip: renderFlip, calc: renderCalc };
+var LATE_KINDS = { exam: renderExam, flip: renderFlip, calc: renderCalc, accordion: renderAccordion };
 renderEx = function (ex) { return LATE_KINDS[ex.kind] ? LATE_KINDS[ex.kind](ex) : _renderExBase(ex); };
 
 /* ============================================================================
@@ -2451,7 +2653,7 @@ renderEx = function (ex) { return LATE_KINDS[ex.kind] ? LATE_KINDS[ex.kind](ex) 
 MODULES.push({
   slug: "assessment",
   title: "Glossary & final assessment",
-  sub: "Prove it, then keep the reference",
+  sub: "Reference and assessment",
   lede: "The vocabulary you will hear in adviser file notes and broker emails, followed by the assessment. " +
         "Bookmark this page — the glossary is the bit you will come back to.",
   blocks: [
@@ -2478,7 +2680,7 @@ MODULES.push({
     '</tbody></table></div>',
 
     { id: "m10q1", kind: "cloze",
-      q: "Warm-up: match the definition to the term.",
+      q: "Match each definition to its term.",
       rows: [
         { lbl: "Taking back money you previously repaid into a loan — counts as fresh borrowing", opts: ["Offset", "Redraw", "Capitalising", "Distribution"], a: 1 },
         { lbl: "One loan used for both private and investment purposes, so interest must be apportioned", opts: ["Cross-collateralisation", "Interest-only loan", "Mixed-purpose loan", "Loan split"], a: 2 },
@@ -2573,6 +2775,11 @@ MODULES.push({
     State.save();
     renderNav();
     renderModule((location.hash || "").replace("#/", "") || MODULES[0].slug);
+  });
+
+  document.getElementById("motionBtn").addEventListener("click", function () {
+    try { localStorage.setItem(MOTION_KEY, motionWanted() ? "off" : "on"); } catch (e) {}
+    applyMotion();
   });
 
   document.getElementById("navToggle").addEventListener("click", function () {

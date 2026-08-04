@@ -162,10 +162,10 @@ officers** who are new to the debt recycling strategy. It is served as a static
 page — open it at `/debt-recycling-training.html`, or just double-click the file.
 
 Twelve modules, each ending in exercises that must be answered correctly before
-the module is marked complete. Modules 1 and 2 assume no prior knowledge at all —
-they explain what "tax deductible" means, what a deduction is actually worth, and
-where a client service officer sits among the adviser, the broker and the
-accountant — before any of the strategy is introduced.
+the module is marked complete. Modules 1 and 2 start from the ground up — what
+"tax deductible" means, what a deduction is actually worth, and where a client
+service officer sits among the adviser, the broker and the accountant — before
+any of the strategy itself is introduced.
 
 Eight interaction types: multiple choice, select-all, drag-and-drop sorting,
 drag-to-sequence, dropdown routing drills, flip-card definitions, a live
@@ -173,6 +173,13 @@ deduction calculator, and two clickable diagrams. Ten inline SVG figures, all
 themed from the CSS tokens rather than shipped as images. It finishes with a
 12-question assessment (80% to pass) and a printable certificate. Progress and
 answers persist per browser in `localStorage`.
+
+Content arrives progressively rather than as a wall: blocks fade in as you
+scroll, the denser reference sections (the eight rules, the implementation
+checklist, the escalation triggers) are expandable rows, and five of the diagrams
+animate — money travels the account map, the six-step cycle circulates, and the
+bar charts grow. A **Pause** control in the header stops all diagram motion, and
+`prefers-reduced-motion` is honoured by default.
 
 It shares the PY tracker's brand tokens and light/dark behaviour but has no
 dependency on the app shell, so it can later be wrapped the same way
