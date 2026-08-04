@@ -26,7 +26,7 @@ and a set of pure render functions; there is no framework.
 | `docx` 8.5 | Word (.docx) generation | Export Word disabled until loaded |
 | `xlsx` 0.18 | Read PTW / rebalance / legacy checklist | Those imports disabled |
 | `pdf.js` 3.11 | Read platform PDF reports | PDF imports disabled |
-| `mammoth` 1.6 | Read the prior review + the CARE rebalance appendix (.docx) | Those imports disabled |
+| `mammoth` 1.6 | Read the prior review (.docx) | Last-review import disabled |
 | `FileSaver` 2.0 | Download files | Downloads disabled |
 | Google Fonts | Playfair Display / Nunito | Falls back to system fonts |
 
@@ -39,11 +39,7 @@ libraries) require connectivity.
 `client`, `partner`, `lifestyle`, `nestegg`, `income`, `expenses`, `totalsOverride`, `foundations`,
 `estate`, `goals`, `fiGoals`, `goalTracking`, `portfolios`, `assetAlloc`, `insurance`, `actionItems`,
 `services`, `extraPlatforms`, `uploads`, `checklist{ answers, activeSection }`, `rebalance`,
-`roa` (ROA type, rollover details, CGT note, prior-advice list, per-portfolio ICRs),
 `_snapshot` / `_fileNote` / `_roa` (transient, excluded from saved JSON).
-
-`normaliseState()` tops up any key a saved draft predates, so an older `.json` never renders against
-an undefined branch.
 
 ---
 
@@ -70,10 +66,7 @@ an undefined branch.
 - **Imports (deterministic, in-browser):**
   - **Wired parsers:** HUB24, BT Panorama, Macquarie Cash (auto-detected per PDF); prior review
     (.docx via mammoth → details, assets, income, goals, goal-tracking, actions); PTW (.xlsm →
-    Financial Independence figures); **CARE rebalance appendix (.docx)** — the same document the ROA
-    Paraplanner reads: account banner, risk profile, Current → Proposed → Change trades, Recommended
-    Implications variations, the full Investment Fees disclosure, transactional costs, benchmark
-    comparison and indicative holdings; CARE rebalance (.xlsx — trades only).
+    Financial Independence figures); CARE rebalance (.xlsx).
   - **Stub slots (await a sample to wire):** Review Data Snapshot (Jotform), insurance CDM/renewal,
     property valuations, Netwealth/CFS/Mercer, etc. These accept a file and surface a "sample needed"
     state without silently failing.
@@ -91,20 +84,9 @@ an undefined branch.
 - **Hide/unhide preview** toggle for presenting.
 
 ### ④ Post Review
-- **Changes Made** (diff vs baseline), **File Note** (After Review Summary format), **ROA** — each
-  shown as a **live Word-style document preview** beside the editable text.
-- **ROA types** (the four review-compliance outcomes; `Auto` picks from what was imported):
-  | Type | Advice line | Body |
-  |---|---|---|
-  | No change | "No Change Rebalance Record of Advice" | records that no rebalance is required |
-  | Rebalance | "Recommendation to rebalance in line with client's agreed risk profile." | + Portfolio Rebalance / Recommended Implications / Investment Fees tables |
-  | Partial rollover + rebalance | as above | as above, with the partial rollover in the action items |
-  | Full rollover + rebalance | "Rollover and Rebalance of Superannuation Account" | Section 1–5 template: prior advice, allocation table, transaction costs, signed acknowledgement |
-
-  A **CARE** account gets the full Hub24 fee disclosure (reproduced row for row from the CARE
-  document); an **index / Vanguard** account gets the transactional-cost table. `[[TBL:key]]` markers
-  in the editable draft are expanded by `roaTableHTML()` (preview) and `roaDocxTables()` (Word) from
-  the same `roaTableData()`, so the prose stays editable while the figures stay driven by the import.
+- **Changes Made** (diff vs baseline), **File Note** (After Review Summary format), **ROA**
+  (No-change / Rebalance variants) — each shown as a **live Word-style document preview** beside the
+  editable text.
 - **Copy review summary + to-dos** handoff (for the "Donna" email flow / bcc Xeppo).
 
 ### Word generation (`generateDocx`) — fidelity vs the MWS FINAL template

@@ -54,12 +54,7 @@ repopulate the questionnaire.)*
 3. **Work through the sections** (Current Situation, Foundations & Estate, Goals, Goal Tracking,
    Portfolio, Asset Allocation, Insurance, Actions & Services, Rebalance). The **Actions** section
    carries the checklist to-dos plus a one-click **standard review to-do** set.
-4. **Rebalance (draft):** upload the **CARE rebalance document** (`.docx` — the "Appendix to RoA"
-   Word export). It reads the account banner, risk profile, the Current → Proposed → Change trades, the
-   Recommended Implications variation table, the whole Investment Fees disclosure, the transactional
-   costs and the indicative holdings — everything the rebalance ROA quotes. The CARE rebalance
-   spreadsheet (`.xlsx`) still works but carries the trades only. Export from CARE as **Word, not PDF**:
-   a PDF loses the table structure the reader relies on.
+4. **Rebalance (draft):** upload the CARE rebalance spreadsheet(s) — this feeds the rebalance ROA.
 5. Use the **live preview** on the right (toggle with the **Preview** button) to see the Word document
    as you build it; **Export Word** downloads the `.docx`.
 
@@ -81,20 +76,8 @@ repopulate the questionnaire.)*
 1. **Changes Made** — review the tracked changes since the baseline.
 2. **Review File Note** — auto-drafted in the firm's After-Review-Summary format; edit on the left and
    watch the **live document preview** on the right. **Word** downloads it; **Copy** copies the text.
-3. **Review ROA** — choose the type this review needs (or leave it on **Auto**, which follows what was
-   imported), edit any wording, and download as Word (adds the branded header) or copy:
-
-   | Type | When | What it produces |
-   | --- | --- | --- |
-   | **No change** | allocations still in line with the agreed risk profile | records that no rebalance is required and stops there |
-   | **Rebalance** | switching back to the agreed asset allocation | Portfolio Rebalance + Recommended Implications + Investment Fees tables, straight from the CARE document |
-   | **Partial rollover + rebalance** | part of an external fund is coming across | as above, with the partial rollover named in the action items |
-   | **Full rollover + rebalance** | the external fund is being closed into the platform account | the Section 1–5 template: prior-advice table, recommended allocation table, transaction-cost disclosure and a signed acknowledgement |
-
-   Works for a **CARE** account and an **index / Vanguard** menu alike — a CARE account gets the full
-   Hub24 fee disclosure, an index account gets the transactional-cost table. The `[[TBL:…]]` markers in
-   the editable text are where the real tables go; leave them in place and they render in the preview
-   and in Word.
+3. **Review ROA** — choose **No-change ROA** or **Rebalance ROA**, edit, and download as Word (adds the
+   branded header) or copy.
 4. **Copy review summary + to-dos** — use this to paste the summary/actions into the client email flow
    (Donna) and bcc Xeppo for file-noting.
 5. **Save draft** (`.json`) if you need to resume later.
