@@ -1420,6 +1420,38 @@ function svgEquity() {
     '</svg>';
 }
 
+/* ------------------- what actually happens to total debt over a cycle */
+function svgSawtooth() {
+  var base = 254, PX = 0.333;                    /* $1,000 = 0.333px, so $600k = 200px */
+  function bar(x, nd, d, label, total, note, delay) {
+    var dh = Math.round(d * PX), ndh = Math.round(nd * PX), top = base - dh - ndh, out = '';
+    if (d) out += '<rect x="' + x + '" y="' + (base - dh) + '" width="130" height="' + dh +
+      '" rx="6" style="fill:var(--blue);opacity:.88">' + grow('height', dh, delay) + grow('y', base - dh, delay, base) + '</rect>' +
+      '<text x="' + (x + 65) + '" y="' + (base - dh / 2 + 4) + '" text-anchor="middle" style="font:800 11px var(--bf);fill:#fff">$' + d + 'k</text>';
+    if (nd) out += '<rect x="' + x + '" y="' + top + '" width="130" height="' + ndh +
+      '" rx="6" style="fill:var(--coral);opacity:.9">' + grow('height', ndh, delay) + grow('y', top, delay, base - dh) + '</rect>' +
+      '<text x="' + (x + 65) + '" y="' + (top + ndh / 2 + 4) + '" text-anchor="middle" style="font:800 11px var(--bf);fill:#fff">$' + nd + 'k</text>';
+    out += '<text x="' + (x + 65) + '" y="' + (base + 22) + '" text-anchor="middle" style="' + F.h + '">' + label + '</text>' +
+      '<text x="' + (x + 65) + '" y="' + (base + 40) + '" text-anchor="middle" style="' + F.s + '">total debt ' + total + '</text>';
+    if (note) out += '<text x="' + (x + 65) + '" y="' + (top - 12) + '" text-anchor="middle" style="font:800 10.5px var(--bf);fill:var(--coral)">' + note + '</text>';
+    return out;
+  }
+  return '<svg data-anim viewBox="0 0 800 330" role="img" aria-label="Total debt starts at $400k, rises to $600k when the split is drawn, falls back to $400k as surplus pays down the home loan, and ends at $400k entirely deductible. The non-deductible block only ever shrinks.">' +
+    '<rect x="60" y="14" width="120" height="14" rx="4" style="fill:var(--coral);opacity:.9"/>' +
+    '<text x="188" y="26" style="' + F.b + '">Non-deductible</text>' +
+    '<rect x="360" y="14" width="120" height="14" rx="4" style="fill:var(--blue);opacity:.88"/>' +
+    '<text x="488" y="26" style="' + F.b + '">Deductible</text>' +
+    '<line x1="40" y1="121" x2="770" y2="121" style="stroke:var(--border-strong);stroke-width:1.5;stroke-dasharray:5 4"/>' +
+    '<text x="770" y="116" text-anchor="end" style="' + F.s + '">where total debt started — $400k</text>' +
+    '<line x1="40" y1="254" x2="770" y2="254" style="stroke:var(--border-strong);stroke-width:1.5"/>' +
+    bar(60, 400, 0, 'Today', '$400k', null, '0.15s') +
+    bar(240, 400, 200, 'Draw $200k', '$600k', 'debt up $200k', '0.5s') +
+    bar(420, 200, 200, 'Four years on', '$400k', null, '0.85s') +
+    bar(600, 0, 400, 'Keep going', '$400k', null, '1.2s') +
+    '<text x="400" y="322" text-anchor="middle" style="' + F.s + '">Total debt rises at each drawdown and falls between them. The coral block only ever shrinks.</text>' +
+    '</svg>';
+}
+
 /* -------------------------------------------- the two client service seats */
 function svgSeats() {
   function stage(x, w, fill, stroke, t, lines) {
@@ -1825,8 +1857,8 @@ MODULES.push({
     'The third is what an adviser can build for them.</figcaption></figure>' +
 
     '<div class="callout c-tip"><h4>💡 The strategy, step by step</h4>' +
-    '<p>Same total debt, different character. A slice of non-deductible home loan is swapped for a deductible ' +
-    'investment split:</p>' +
+    '<p>Debt with a different character. Non-deductible home loan is progressively replaced by deductible ' +
+    'investment debt:</p>' +
     '<ol style="margin-bottom:10px">' +
       '<li><strong>Repay a slice of the home loan.</strong> That part of the mortgage is gone.</li>' +
       '<li><strong>Re-borrow the same amount</strong> as a separate investment split, and buy income-producing ' +
@@ -1893,7 +1925,7 @@ MODULES.push({
    ========================================================================== */
 MODULES.push({
   slug: "what",
-  mins: 2,
+  mins: 4,
   title: "What debt recycling actually is",
   sub: "The one-breath explanation",
   lede: "You will see this named in file notes, review packs and broker emails every week. " +
@@ -1906,7 +1938,9 @@ MODULES.push({
     '<div class="callout c-note"><h4>💬 Straight from our guide</h4>' +
     '<p style="margin:0">“Debt recycling does not increase your total debt – it restructures it so part of your home loan becomes ' +
     'tax-deductible instead of non-deductible.”<br><span style="font-size:12.5px;color:var(--text-muted)">' +
-    '— Guy Freeman, <em>Your Comprehensive Guide to Debt Recycling</em>, My Wealth Solutions</span></p></div>' +
+    '— Guy Freeman, <em>Your Comprehensive Guide to Debt Recycling</em>, My Wealth Solutions</span></p>' +
+    '<p style="margin:10px 0 0;font-size:13.5px">That is the position across a full cycle, and it is the right thing ' +
+    'to say to a client. Operationally it is more nuanced — see “doesn\'t my debt go up?” below.</p></div>' +
 
     '<h3>Bad debt and good debt</h3>' +
     '<div class="grid2">' +
@@ -1923,8 +1957,54 @@ MODULES.push({
     'Debt recycling gradually moves dollars from the left box to the right box.</p>' +
 
     '<figure class="figure">' + svgShift() +
-    '<figcaption>Figure 1 — the same client, the same house. Over time the coral (non-deductible) block shrinks and the blue ' +
-    '(deductible) block grows. Total debt is restructured, not inflated; it also drifts down as ordinary repayments are made.</figcaption></figure>' +
+    '<figcaption>Figure 1 — the same client, the same house. Over time the coral (non-deductible) block shrinks and ' +
+    'the blue (deductible) block grows. This is the shape across a whole cycle — the next section covers what ' +
+    'happens to total debt on the day a split is actually drawn.</figcaption></figure>' +
+
+    '<h2>“Hold on — doesn\'t my debt go up?”</h2>' +
+    '<p>Yes. At the moment the split is drawn, it does. This is the part everyone trips on, so be precise about it.</p>' +
+
+    '<div class="callout c-note"><h4>🏠 Work it through</h4>' +
+    '<ul style="margin-bottom:0">' +
+    '<li>Home worth <strong>$1,000,000</strong>, still owing <strong>$400,000</strong>.</li>' +
+    '<li>Usable equity: 80% of $1m is $800,000, less the $400,000 owing → <strong>$400,000 available</strong>.</li>' +
+    '<li>The client draws a <strong>$200,000</strong> investment term loan.</li>' +
+    '<li>Total debt is now <strong>$600,000</strong>. It went up.</li>' +
+    '</ul></div>' +
+
+    '<p>Two things happened at the same instant, though: debt went up $200,000, and <strong>investments went up ' +
+    '$200,000</strong>. The client swapped borrowed cash for an asset worth the same. Their net position did not move.</p>' +
+    '<p>They are not splitting the existing home loan. They are taking an <strong>additional</strong> loan — and then ' +
+    'matching it with surplus savings capacity. That matching is the recycling.</p>' +
+
+    '<h3>So where does the “recycling” come in?</h3>' +
+    '<p>In what happens next, and it is the entire point:</p>' +
+    '<ul>' +
+      '<li>Every dollar of surplus cash flow now goes at the <strong>non-deductible $400,000</strong> — never at the investment loan.</li>' +
+      '<li>The <strong>tax refund</strong> from the deductible interest goes the same way.</li>' +
+      '<li>Investment income is reinvested, so the portfolio compounds on its own.</li>' +
+      '<li>As the non-deductible balance falls, that freed-up equity is drawn again as the next investment split.</li>' +
+    '</ul>' +
+
+    '<figure class="figure">' + svgSawtooth() +
+    '<figcaption>Figure 2 — total debt goes up at each drawdown and comes back down between them. The client ends ' +
+    'with the same $400,000 of debt they started with, except now all of it is deductible and there is a portfolio ' +
+    'beside it.</figcaption></figure>' +
+
+    '<div class="callout c-rule"><h4>📌 The number the strategy actually manages</h4>' +
+    '<p style="margin:0"><strong>Total debt goes up and down. The non-deductible balance only ever goes down.</strong> ' +
+    'That is the line to watch on every review, and the reason total debt rising is not, by itself, a problem.</p></div>' +
+
+    '<div class="callout c-tip"><h4>🔑 What caps the strategy: cash flow, not equity</h4>' +
+    '<p style="margin:0">There is no point drawing $400,000 if the client can only pay down $20,000 a year of ' +
+    'non-deductible debt — they would be sitting on gearing they cannot recycle. The adviser sizes each split against ' +
+    'what the client can realistically <em>pay back down</em>, which is why <em>“how much surplus cash flow is there?”</em> ' +
+    'matters more than <em>“how much equity is there?”</em></p></div>' +
+
+    '<div class="callout c-warn"><h4>⚖️ Recycling vs plain gearing</h4>' +
+    '<p style="margin:0">Borrow to invest and leave the home loan alone and you have simply <strong>geared</strong> — ' +
+    'more debt, more risk, no change in character. It only becomes <strong>recycling</strong> when the surplus is ' +
+    'deliberately pointed at the non-deductible side, round after round, so the debt keeps converting.</p></div>' +
 
     '<h3>The three engines that make it work</h3>' +
     '<div class="grid3">' +
@@ -1953,14 +2033,14 @@ MODULES.push({
     '</ul>',
 
     { id: "m1q1", kind: "mcq",
-      q: "A client emails: <em>“So does debt recycling mean I end up owing the bank more money?”</em> Which reply is right?",
+      q: "A client emails: <em>“So does debt recycling mean I end up owing the bank more money?”</em> Which is the accurate position?",
       opts: [
-        "Yes — you take on extra borrowings on top of your mortgage in order to invest.",
-        "No — the total debt is restructured rather than increased. Part of the home loan becomes an investment split, so the same debt is now working for you and part of the interest becomes deductible.",
-        "No — debt recycling pays your home loan off immediately using the investment.",
-        "It depends on the lender's policy for the loan product."
+        "No — total debt never changes at any point.",
+        "Yes, at each drawdown — total debt rises by the amount drawn, matched by investments of the same value. Surplus cash flow and the tax refund then work the non-deductible balance back down.",
+        "No — the investment pays the home loan off immediately.",
+        "Yes — and the client is worse off until the investment grows."
       ], a: 1,
-      why: "Restructure, not increase. The client draws back equity they have already repaid and points it at an income-producing asset. Note you would never send this answer yourself — route the question to the adviser." },
+      why: "Be honest about this one. Drawing a $200,000 split takes total debt up $200,000 — and puts $200,000 of investments on the other side of the ledger, so the net position is unchanged. What makes it recycling is everything after: surplus and refunds attack the non-deductible balance, and that balance only ever falls. Route the actual reply to the adviser." },
 
     { id: "m1q3", kind: "multi",
       q: "Select every factor our guide lists as something to look for before debt recycling is suitable.",
@@ -2555,7 +2635,7 @@ MODULES.push({
    ========================================================================== */
 MODULES.push({
   slug: "review",
-  mins: 3,
+  mins: 2,
   title: "Prepping the wealth review",
   sub: "Showing progress on the advice",
   lede: "A debt recycling review answers one question for the client: is this working? " +
@@ -2648,7 +2728,7 @@ MODULES.push({
    ========================================================================== */
 MODULES.push({
   slug: "risk",
-  mins: 4,
+  mins: 3,
   title: "Risks and when to escalate",
   sub: "The downside, and your triggers",
   lede: "Debt recycling amplifies returns and it amplifies losses, on a strategy secured against the family home. " +
