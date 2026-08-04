@@ -2624,21 +2624,20 @@ MODULES.push({
     '</div>',
 
     { id: "m8q1", kind: "sort",
-      q: "Build the review pack. Which of these belong in a debt recycling review pack, and which do not?",
-      zones: [{ key: "in", label: "📁 Into the pack" }, { key: "out", label: "Not needed for this review" }],
+      q: "Before the review, what are you gathering?",
+      zones: [{ key: "in", label: "📁 Gather it" }, { key: "out", label: "Not part of this" }],
       items: [
-        { t: "Loan statement for each split, shown separately", z: "in" },
-        { t: "Annual interest summary for the investment split", z: "in" },
-        { t: "Current offset balance", z: "in" },
-        { t: "Portfolio valuation as at the review date", z: "in" },
-        { t: "Distribution and dividend statements for the year", z: "in" },
-        { t: "The projection from the original advice document", z: "in" },
-        { t: "The current debt transfer instruction from the associate", z: "in" },
-      { t: "The client's grocery and utility spending breakdown", z: "out" },
-        { t: "A market outlook piece on where interest rates are heading", z: "out" },
-        { t: "A combined single balance across all loan splits", z: "out" }
+        { t: "Balance of each loan split, shown separately", z: "in" },
+        { t: "Offset balances on both splits", z: "in" },
+        { t: "Interest rates and current repayments", z: "in" },
+        { t: "Term loan funds drawn and used, per the CMA", z: "in" },
+        { t: "Amount actually invested, per the investment platform", z: "in" },
+        { t: "How much of the term loan funds is still remaining", z: "in" },
+        { t: "Portfolio valuation and performance", z: "in" },
+        { t: "A combined single balance across all splits", z: "out" },
+        { t: "The client's grocery and utility spending", z: "out" }
       ],
-      why: "The combined balance is the trap: it hides the only comparison that matters — deductible against non-deductible. Split it out every time. The other two exclusions are not evidence of whether this strategy is working." },
+      why: "The one people miss is the reconciliation. What the <strong>CMA</strong> says was drawn and spent has to be checked against what the <strong>investment platform</strong> says was actually invested — if those two disagree, borrowed funds went somewhere else, and that is far cheaper to find now than at tax time. What is <em>left</em> of the term loan matters too: it tells the adviser whether the next split is due. And the combined balance is the trap — it hides the only comparison that counts, deductible against non-deductible." },
 
     { id: "m8q4", kind: "mcq",
       q: "You are updating the modelling tool ahead of a review and notice the investment split shows $150,000 in the tool but $138,000 on the loan statement. What do you do?",
