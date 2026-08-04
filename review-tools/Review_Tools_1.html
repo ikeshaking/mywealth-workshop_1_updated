@@ -15393,9 +15393,17 @@ function adviserCoverBoxHTML(){
 //    benefits / risks without re-running the file through Claude. ──
 let adminWordingScenario = "";
 function renderAdminWording(){
-  // Review Tools build — only the two Review ROA scenarios are reachable from the
-  // picker, so only their wording is editable here.
+  // Only scenarios reachable from the picker are editable here. With the Section 1-5
+  // rollover cards removed there are none, so the panel explains itself instead of
+  // offering an empty dropdown. The rebalance ROAs take their wording from the CARE
+  // document and the builder fields, not from a scenario.
   const ids = REVIEW_ROA_SCENARIO_IDS.filter(id => SCENARIOS[id] && (SCENARIOS[id].obj || SCENARIOS[id].rec || SCENARIOS[id].benefits));
+  if(!ids.length){
+    return `<div class="card">
+      <h3 style="margin:0 0 6px">Suggested Wording — Review ROA</h3>
+      <div class="card-sub" style="margin-top:0">There are no scenario-based Record of Advice documents in this build, so there is no scenario wording to edit. The rebalance, rollover and no-change ROAs build their wording from the CARE document and the fields on the builder's <strong>Rebalance &amp; Accounts</strong> and <strong>Updates &amp; Action Items</strong> steps — edit them there.</div>
+    </div>`;
+  }
   let opts = `<option value="">— Select a scenario to edit its wording —</option><optgroup label="Review ROA">`;
   ids.forEach(id => {
     const ov = SETTINGS.wordingOverrides && SETTINGS.wordingOverrides[id];
@@ -15744,10 +15752,9 @@ function renderHowToPage(){
           <li><strong>Rebalance ROA</strong> — the portfolio has drifted from the agreed asset allocation and is switched back. Prints the Portfolio Rebalance, Recommended Implications and Investment Fees tables from the CARE document.</li>
           <li><strong>Partial Rollover + Rebalance ROA</strong> — the same document, with the partial rollover named in the action items.</li>
           <li><strong>Full Rollover + Rebalance ROA</strong> — the whole external fund is closed into the platform account and the portfolio rebalanced, in the same review layout.</li>
-          <li><strong>Full Rollover ROA (Super)</strong> — the Section 1–5 Record of Advice for a rollover: prior-advice table, recommended allocation table and a signed acknowledgement. Use it when the rollover is written up on its own rather than as part of the review. (<strong>Partial Rollover ROA (Super)</strong> is the Section 1–5 version of a partial rollover.)</li>
           <li><strong>No Change ROA</strong> — no rebalance required; the document records that the allocations remain in line with the agreed risk profile and stops there.</li>
         </ul>
-        The first three and the last are one document family and are built one at a time. The Section 1–5 rollover scenarios can still be multi-selected and combined into one ROA.</li>
+        All four are one document family and are built one at a time — pick the card that matches the review's outcome and the wizard opens on it.</li>
       <li><strong>Review NAA</strong> — a <em>No Advice Acknowledgement</em>, the record used when a client instructs the firm to execute a transaction without receiving personal advice on it. Six transaction types: Purchase, Sell Specific Holdings &amp; Withdrawal, Partial Selldown, Full Selldown, Pension / Super Withdrawal, and Other Instruction.</li>
     </ul>
     <p><strong>Do not use it for:</strong> advice outside a super rollover (insurance, contributions, cashflow, pension commencement and so on — use the full <em>ROA Generator</em>), high-level strategy discussions (use the <em>Strategy Paper Generator</em>), or an alternative future scenario presented alongside an SOA (use the <em>NWF Generator</em>).</p>
@@ -15758,7 +15765,7 @@ function renderHowToPage(){
     <h3>2 · Before you start</h3>
     <ul class="sop-check">
         <li>Client details on hand — full names (and entity details for joint / entity clients), account and platform names, current balances.</li>
-        <li><strong>Review ROA:</strong> the fund being rolled out of, the amount rolling over (or the partial amount and the balance being retained), the receiving platform, and the client's agreed risk profile.</li>
+        <li><strong>Review ROA:</strong> for a rollover, the fund being rolled out of, the receiving platform and (optionally) the amount coming across.</li>
         <li><strong>Review ROA:</strong> the CARE rebalance document — the "Appendix to RoA" — exported as <strong>Word (.docx)</strong>. A rebalance ROA reprints its figures rather than summarising them: the account banner, risk profile, the Current → Proposed → Change trades, the Recommended Implications variations, the whole Investment Fees disclosure and the transactional costs. A PDF export loses the table structure the reader relies on.</li>
         <li><strong>Review ROA:</strong> the meeting date, the Statement of Advice date and the Ongoing Service agreement date, in the firm's house wording (e.g. "the 17th of July 2026").</li>
         <li><strong>Review NAA:</strong> the client's instruction in their own words — what to buy or sell, the amounts, the account, and the purpose of any withdrawal.</li>
@@ -15773,8 +15780,7 @@ function renderHowToPage(){
       <div class="sop-step">
         <div class="sop-step-head"><span class="sop-step-num">1</span>Pick the document on 1 · Scenarios</div>
 <ul>
-        <li><strong>For a rebalance / partial-rollover / no-change ROA:</strong> tap the card. It opens the builder straight away — there is no Continue button to press. Three steps: client &amp; adviser details, the CARE upload and account list, then the updates and action items.</li>
-        <li><strong>For a Section 1–5 rollover ROA:</strong> tap <em>Full Rollover ROA (Super)</em> or <em>Partial Rollover ROA (Super)</em> — or both, if the review covers both. Selected scenarios appear as numbered chips; use the ◀ ▶ arrows to set the order they print in Section 3. Click <strong>Continue to Builder →</strong>.</li>
+        <li><strong>For a Review ROA:</strong> tap the card matching the review's outcome. It opens the builder straight away — there is no Continue button to press. Three steps: client &amp; adviser details, the CARE upload and account list, then the updates and action items. The type is fixed once you're in the wizard; use <em>Change document ↩</em> on the first step to come back here.</li>
         <li><strong>For a Review NAA:</strong> tap the card matching the client's instruction. This opens the builder straight away with that transaction type's standard wording already seeded — there is no Continue button to press.</li>
         <li>Switching between the two categories clears the other one's selection, so finish and export one document before starting the other.</li>
       </ul>
@@ -15795,15 +15801,6 @@ function renderHowToPage(){
         <li>Each account carries an <strong>investment menu</strong> setting, taken from the document: a <em>CARE managed</em> account prints the full platform fee disclosure; an <em>index / Vanguard</em> account prints its transactional costs only. Override it per account when the document is ambiguous — a household with both (e.g. Hub24 CARE super plus a CFS Edge index account) prints correctly in one document.</li>
         <li>On <strong>Updates &amp; Action Items</strong>, edit the "Updates:" list and add the meeting's actions. The first action item is written from the ROA type — change the type, or the rollover funds, to change it.</li>
         <li>A <strong>No Change ROA</strong> prints no rebalance, implications or fee tables, so the CARE upload is optional there — type the risk profile in instead.</li>
-      </ul>
-      </div>
-      <div class="sop-step">
-        <div class="sop-step-head"><span class="sop-step-num">3b</span>Build a Section 1–5 rollover ROA</div>
-<ul>
-        <li>The builder steps mirror the printed document: Sections 1 &amp; 2 (where you are now / what you want to achieve), <strong>Section 3 — My Advice to You</strong> (one block per selected rollover scenario), Section 4 Annexure, Section 5 Fees, and the Acknowledgement.</li>
-        <li>Fill the rollover fields — the fund rolling out, the amount (or partial amount), the receiving platform and the risk profile. These feed the objective, recommendation, benefits and risks wording automatically.</li>
-        <li><strong>Prefill the portfolio table:</strong> drag the CARE rebalance .docx straight onto the super table — rows fill automatically and stay editable.</li>
-        <li>On a <em>Partial Rollover</em>, check the retained-fund wording: the benefits and risks about keeping insurance cover alive and monitoring the minimum balance should match what was actually agreed.</li>
       </ul>
       </div>
       <div class="sop-step">
@@ -15932,7 +15929,11 @@ function renderHowToPage(){
 // pick one card and go straight to the builder). Picking a card in a category
 // switches the active document type if needed via pickReviewRoaScenario /
 // pickReviewNaaType below.
-const REVIEW_ROA_SCENARIO_IDS = ['super_rollover_partial', 'super_rollover'];
+// Section 1-5 scenario ROAs offered on the picker. Empty in this build: a review
+// rollover is written on the rebalance Record of Advice (the Full/Partial Rollover
+// + Rebalance cards), so the scenario-based "Rollover ROA (Super)" cards were
+// removed. Adding an id back here restores its card and its Admin wording entry.
+const REVIEW_ROA_SCENARIO_IDS = [];
 const REVIEW_NAA_TYPES = [
   ['purchase',           'NAA — Purchase (Execution Only)',        'Client-directed purchase of specific securities (e.g. $5,000 of Tesla shares via Hub24)'],
   ['selldown',           'NAA — Sell Specific Holdings & Withdrawal', 'Sell nominated holdings within an account and withdraw the proceeds'],
@@ -15945,11 +15946,10 @@ function renderPicker(){
   let h = `<main class="main">`;
 
   // ── Review ROA ──────────────────────────────────────────────
-  // The four documents review compliance actually asks for. Three of them
-  // (rebalance / partial rollover / no change) are the post-review rebalance
-  // Record of Advice — one document family, built by the RBAL builder. A full
-  // rollover is written on the Section 1-5 Record of Advice, so that card keeps
-  // using the scenario-based ROA builder.
+  // The four documents review compliance asks for — rebalance, partial rollover,
+  // full rollover and no change. All four are the post-review rebalance Record of
+  // Advice, one document family built by the RBAL builder. REVIEW_ROA_SCENARIO_IDS
+  // adds Section 1-5 scenario cards alongside them and is empty in this build.
   const roaList = REVIEW_ROA_SCENARIO_IDS.map(id => [id, SCENARIOS[id]]).filter(([,s]) => s);
   const roaSelCount = (docType === 'ROA' ? selectedScenarios.filter(id => REVIEW_ROA_SCENARIO_IDS.includes(id)).length : 0)
     + (docType === 'RBAL' ? 1 : 0);
@@ -15959,7 +15959,7 @@ function renderPicker(){
       <span class="cat-count">${RBAL_TYPES.length + roaList.length}</span>
     </summary>
     <div class="scenario-grid">`;
-  // Rebalance / partial rollover cards first — the everyday review outcome.
+  // Rebalance and the two rollover outcomes first — the everyday review documents.
   RBAL_TYPES.filter(([v]) => v !== 'nochange').forEach(([v, label, desc]) => {
     const sel = (docType === 'RBAL' && F.rbalType === v) ? 'selected' : '';
     h += `<div class="scenario-card ${sel}" onclick="pickReviewRbalType('${v}')">
@@ -15967,7 +15967,7 @@ function renderPicker(){
       <div class="sc-desc">${e(desc)}</div>
     </div>`;
   });
-  // Then the Section 1-5 rollover scenarios (full rollover lives here).
+  // Then any Section 1-5 scenario cards still configured (none by default).
   roaList.forEach(([id, s]) => {
     const sel = (docType === 'ROA' && selectedScenarios.includes(id)) ? 'selected' : '';
     h += `<div class="scenario-card ${sel}" onclick="pickReviewRoaScenario('${id}')">
@@ -22252,18 +22252,19 @@ function renderRbalBuilder(){
 
 function rbalBlockSetup(){
   const t = F.rbalType || 'rebalance';
+  // The document type is chosen on the Scenarios page before the wizard starts,
+  // so this is a read-out, not a second picker — change it by going back.
   let h = `<div class="section-block">
     <div class="section-block-head">
       <div class="section-block-title"><span>Type of Record of Advice</span></div>
+      <div class="section-block-actions"><button class="btn btn-xs" onclick="page='picker';render();window.scrollTo(0,0)">Change document ↩</button></div>
     </div>
     <div class="section-block-body"><div class="card">
-      <div class="card-sub">Which of the review-compliance documents this is. The advice-type line on the cover page and the sections that print both follow from it.</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">`;
-  RBAL_TYPES.forEach(([v, label, desc]) => {
-    h += `<button class="btn btn-sm ${t === v ? 'btn-blue' : ''}" title="${e(desc)}" onclick="F.rbalType='${v}';render()">${e(label)}</button>`;
-  });
-  h += `</div>
-      <div class="card-sub" style="margin:0"><strong>Type of Record of Advice:</strong> ${e(rbalTypeMeta()[3])}</div>
+      <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">
+        <span class="badge lime">${e(rbalTypeMeta()[1])}</span>
+        <span class="card-sub" style="margin:0;flex:1;min-width:220px">${e(rbalTypeMeta()[2])}</span>
+      </div>
+      <div class="card-sub" style="margin:8px 0 0"><strong>Type of Record of Advice:</strong> ${e(rbalTypeMeta()[3])}</div>
     </div>`;
 
   if(t === 'partial' || t === 'full'){
